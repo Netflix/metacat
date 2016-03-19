@@ -1,0 +1,71 @@
+package com.netflix.metacat.thrift;
+
+import com.facebook.presto.metadata.Metadata;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.inject.Inject;
+import com.netflix.metacat.common.api.MetacatV1;
+import com.netflix.metacat.common.api.PartitionV1;
+import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.converters.HiveConverters;
+import com.netflix.metacat.converters.TypeConverterProvider;
+
+import java.util.Objects;
+
+public class CatalogThriftServiceFactoryImpl implements CatalogThriftServiceFactory {
+    private final Config config;
+    private final HiveConverters hiveConverters;
+    private final MetacatV1 metacatV1;
+    private final Metadata metadata;
+    private final PartitionV1 partitionV1;
+    private final TypeConverterProvider typeConverterProvider;
+    private final LoadingCache<CacheKey, CatalogThriftService> cache = CacheBuilder.newBuilder()
+            .build(new CacheLoader<CacheKey, CatalogThriftService>() {
+                public CatalogThriftService load(CacheKey key) {
+                    return new CatalogThriftService(config, typeConverterProvider, hiveConverters, metadata, metacatV1,
+                            partitionV1, key.catalogName, key.portNumber);
+                }
+            });
+
+    @Inject
+    public CatalogThriftServiceFactoryImpl(Config config, TypeConverterProvider typeConverterProvider,
+            HiveConverters hiveConverters, Metadata metadata, MetacatV1 metacatV1, PartitionV1 partitionV1) {
+        this.config = config;
+        this.typeConverterProvider = typeConverterProvider;
+        this.hiveConverters = hiveConverters;
+        this.metadata = metadata;
+        this.metacatV1 = metacatV1;
+        this.partitionV1 = partitionV1;
+    }
+
+    @Override
+    public CatalogThriftService create(String catalogName, int portNumber) {
+        return cache.getUnchecked(new CacheKey(catalogName, portNumber));
+    }
+
+    private static class CacheKey {
+        public final String catalogName;
+        public final int portNumber;
+
+        private CacheKey(String catalogName, int portNumber) {
+            this.catalogName = catalogName;
+            this.portNumber = portNumber;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof CacheKey))
+                return false;
+            CacheKey cacheKey = (CacheKey) o;
+            return Objects.equals(portNumber, cacheKey.portNumber) && Objects.equals(catalogName, cacheKey.catalogName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(catalogName, portNumber);
+        }
+    }
+}

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" version="2.0">
+    <persistence-unit name="s3" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        <class>com.netflix.metacat.s3.connector.model.BaseEntity</class>
+        <class>com.netflix.metacat.s3.connector.model.BaseTable</class>
+        <class>com.netflix.metacat.s3.connector.model.Database</class>
+        <class>com.netflix.metacat.s3.connector.model.Field</class>
+        <class>com.netflix.metacat.s3.connector.model.IdEntity</class>
+        <class>com.netflix.metacat.s3.connector.model.Info</class>
+        <class>com.netflix.metacat.s3.connector.model.Location</class>
+        <class>com.netflix.metacat.s3.connector.model.Partition</class>
+        <class>com.netflix.metacat.s3.connector.model.Schema</class>
+        <class>com.netflix.metacat.s3.connector.model.Source</class>
+        <class>com.netflix.metacat.s3.connector.model.Table</class>
+        <class>com.netflix.metacat.s3.connector.model.View</class>
+    </persistence-unit>
+</persistence>

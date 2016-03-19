@@ -1,0 +1,62 @@
+apply plugin: 'java'
+
+ext {
+    generatedMapperSourcesDir = "${buildDir}/generated-src/mapstruct/main"
+}
+
+configurations {
+    mapstruct
+}
+
+dependencies {
+    compile project(':metacat-common-server')
+    compile "com.facebook.presto:presto-main:${presto_version}"
+    compile "com.google.guava:guava:${guava_version}"
+    compile "com.google.inject:guice:${guice_version}"
+    compile "org.slf4j:slf4j-api:${slf4j_version}"
+    compile 'org.apache.pig:pig:0.14.0'
+    compile "com.facebook.presto:presto-hive-hadoop2:${presto_version}"
+    compile 'org.mapstruct:mapstruct-jdk8:1.0.0.Beta4'
+    testCompile 'de.danielbechler:java-object-diff:0.91.1'
+    mapstruct('org.mapstruct:mapstruct-processor:1.0.0.Beta4')
+}
+
+sourceSets.main {
+    ext.originalJavaSrcDirs = java.srcDirs
+    java.srcDir "${generatedMapperSourcesDir}"
+}
+
+task generateMainMapperClasses(type: JavaCompile) {
+    //class output dir, required by JavaCompile
+    ext.aptDumpDir = file("${buildDir}/tmp/apt/mapstruct")
+    destinationDir = aptDumpDir
+
+    classpath = compileJava.classpath + configurations.mapstruct
+    source = sourceSets.main.originalJavaSrcDirs
+    ext.sourceDestDir = file("$generatedMapperSourcesDir")
+
+    options.define(
+            compilerArgs: [
+                    '-nowarn',
+                    '-proc:only',
+                    '-encoding', 'UTF-8',
+                    '-processor', 'org.mapstruct.ap.MappingProcessor',
+                    '-s', sourceDestDir.absolutePath,
+                    '-source', '1.8',
+                    '-target', '1.8',
+            ]
+    );
+
+    inputs.dir source
+    outputs.dir generatedMapperSourcesDir;
+    doFirst {
+        sourceDestDir.mkdirs()
+    }
+    doLast {
+        aptDumpDir.delete()
+    }
+}
+
+compileJava.dependsOn generateMainMapperClasses
+compileJava.options.define(compilerArgs: ['-proc:none', '-encoding', 'UTF-8'])
+compileTestJava.options.define(compilerArgs: ['-proc:none', '-encoding', 'UTF-8'])

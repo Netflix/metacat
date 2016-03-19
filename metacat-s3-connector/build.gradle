@@ -1,0 +1,15 @@
+dependencies {
+    compile project(':metacat-converters')
+    compile 'org.hibernate:hibernate-entitymanager:5.0.0.Final'
+    compile 'mysql:mysql-connector-java:5.1.35'
+    compile 'joda-time:joda-time:2.8.2'
+    compile "com.google.guava:guava:${guava_version}"
+    compile "com.google.inject:guice:${guice_version}"
+    compile "com.google.inject.extensions:guice-persist:${guice_version}"
+    compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
+    compile "com.google.inject.extensions:guice-servlet:${guice_version}"
+    compile "com.facebook.presto:presto-spi:${presto_version}"
+    compile "com.facebook.presto:presto-main:${presto_version}"
+    compile "com.facebook.presto:presto-hive-hadoop2:${presto_version}"
+    testCompile 'io.airlift:testing-mysql-server:0.1'
+}

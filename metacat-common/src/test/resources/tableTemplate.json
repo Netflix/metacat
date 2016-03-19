@@ -1,0 +1,55 @@
+{
+    "audit": {
+        "createdBy": "%4$s",
+        "createdDate": "2015-07-13T15:50:13.907+0000"
+    },
+    "fields": [
+    {
+        "comment": "testing",
+        "name": "two",
+        "pos":1,
+        "type": "chararray"
+    },
+    {
+        "comment": "",
+        "name": "one",
+        "partition_key": true,
+        "pos": 2,
+        "type": "chararray"
+    }
+    ],
+    "name": {
+    "catalogName": "%1$s",
+    "databaseName": "%2$s",
+    "tableName": "%3$s"
+    },
+    "serde": {
+        "inputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+        "outputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+        "owner": "%4$s",
+        "parameters": {
+            "serialization.format": "1"
+        },
+        "uri": "%5$s"
+    },
+    "definitionMetadata": {
+        "hive": {
+            "cleanup": true
+        },
+        "aegisthus": {},
+        "rds": {},
+        "redshift": {},
+        "owner": {
+            "team": "Engineering",
+            "userId": "%4$s",
+            "name": "%4$s"
+        },
+        "s3": {},
+        "job": {
+            "name": "unused?"
+        },
+        "teradata": {}
+    },
+    "partition_keys": ["one"],
+    "dataExternal": true
+}

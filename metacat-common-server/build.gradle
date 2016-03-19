@@ -1,0 +1,11 @@
+dependencies {
+    compile project(':metacat-common')
+    compile "com.facebook.presto:presto-spi:${presto_version}"
+    compile 'org.apache.tomcat:tomcat-jdbc:8.0.22'
+    compile "com.google.guava:guava:${guava_version}"
+    compile "com.google.inject:guice:${guice_version}"
+    compile 'com.netflix.archaius:archaius-core:0.6.5'
+    compile 'com.netflix.servo:servo-core:0.8.3'
+    compile "io.airlift:configuration:${airlift_version}"
+    compile "org.slf4j:slf4j-api:${slf4j_version}"
+}

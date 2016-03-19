@@ -1,0 +1,16 @@
+{"audit": {
+    "createdDate": "2015-07-13T18:14:38.920+0000",
+    "lastModifiedDate": "2015-07-13T18:14:38.920+0000"
+}, "name": {
+    "catalogName": "%1$s",
+    "partitionName": "%4$s",
+    "databaseName": "%2$s",
+    "tableName": "%3$s"
+}, "serde": {
+    "inputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+    "outputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+    "uri": "%5$s"
+}, "dataExternal": true
+ ,"dataMetadata" : {
+    "metrics" : {}
+}}

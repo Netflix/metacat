@@ -1,0 +1,36 @@
+dependencies {
+    compile project(':metacat-converters')
+    compile project(':metacat-hive-connector')
+    compile project(':metacat-mysql-connector')
+    compile project(':metacat-postgres-connector')
+    compile project(':metacat-s3-connector')
+    compile project(':metacat-common-server')
+    compile project(':metacat-thrift')
+    testCompile project(':metacat-user-metadata-mysql')
+
+    compile 'org.elasticsearch:elasticsearch:1.7.1'
+    compile 'com.github.rholder:guava-retrying:2.0.0'
+
+    compile "com.facebook.presto:presto-main:${presto_version}"
+    compile "com.facebook.presto:presto-hive:${presto_version}"
+    compile "com.facebook.presto:presto-mysql:${presto_version}"
+    compile "com.facebook.presto:presto-postgresql:${presto_version}"
+    compile "com.facebook.presto:presto-cassandra:${presto_version}"
+    compile "com.facebook.presto:presto-example-http:${presto_version}"
+
+    compile "com.google.inject:guice:${guice_version}"
+    compile "com.google.inject.extensions:guice-persist:${guice_version}"
+    compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
+    compile "com.google.inject.extensions:guice-servlet:${guice_version}"
+
+    testCompile 'io.airlift:testing-mysql-server:0.1'
+    testCompile project(':metacat-common').sourceSets.test.output
+}
+
+test {
+    systemProperty 'metacat.plugin.config.location', 'src/test/resources/etc/catalog'
+    systemProperty 'metacat.usermetadata.config.location', 'src/test/resources/usermetadata.properties'
+    testLogging {
+        exceptionFormat = 'full'
+    }
+}

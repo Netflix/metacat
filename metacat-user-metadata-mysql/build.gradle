@@ -1,0 +1,13 @@
+dependencies {
+    compile project(':metacat-common-server')
+
+    compile "com.google.guava:guava:${guava_version}"
+    compile "com.google.inject:guice:${guice_version}"
+    compile "org.slf4j:slf4j-api:${slf4j_version}"
+    compile 'commons-dbutils:commons-dbutils:1.6'
+    compile 'org.apache.tomcat:tomcat-jdbc:8.0.22'
+    compile 'mysql:mysql-connector-java:5.1.35'
+
+    testCompile 'io.airlift:testing-mysql-server:0.1'
+    testCompile project(':metacat-common').sourceSets.test.output
+}

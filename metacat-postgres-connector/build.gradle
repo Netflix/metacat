@@ -1,0 +1,5 @@
+dependencies {
+    compile project(':metacat-common-server')
+
+    compile "com.facebook.presto:presto-postgresql:${presto_version}"
+}

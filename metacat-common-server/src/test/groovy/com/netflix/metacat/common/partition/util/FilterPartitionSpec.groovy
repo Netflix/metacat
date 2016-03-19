@@ -1,0 +1,56 @@
+package com.netflix.metacat.common.partition.util
+
+import spock.lang.Shared
+import spock.lang.Specification
+import spock.lang.Unroll
+
+/**
+ * Created by amajumdar on 3/1/16.
+ */
+class FilterPartitionSpec extends Specification{
+    @Shared
+    def filterPartition = new FilterPartition()
+
+    @Unroll
+    def 'evaluate expression #expression for name #name to #result'(){
+        expect:
+        filterPartition.evaluatePartitionExpression( expression, name, null) == result
+        where:
+        name                    | expression                                            | result
+        "dateint=1"             | "dateint>1"                                           | false
+        "dateint=1"             | "dateint>=1"                                          | true
+        "dateint=1"             | "dateint<1"                                           | false
+        "dateint=1"             | "dateint<=1"                                          | true
+        "dateint=1"             | "dateint==1"                                          | true
+        "dateint=1"             | "dateint!=1"                                          | false
+        "dateint=1"             | "(dateint>1) or (dateint<1)"                          | false
+        "dateint=1"             | "(dateint>1) or (dateint<=1)"                         | true
+        "dateint=1"             | "(dateint>1) and (dateint<=1)"                        | false
+        "dateint=1"             | "(dateint==1) and ((dateint<=1) or (dateint>=1))"     | true
+        "dateint=1"             | "(((dateint>1) or (dateint<=1)) and (dateint==1))"    | true
+        "dateint=1"             | "('12' < 2)"                                          | false
+        "dateint=1"             | "(12 < 2)"                                            | false
+        "dateint=1"             | "('12' < '2')"                                        | true
+        "dateint=1"             | "(12 < '2')"                                          | true
+        "dateint=1"             | "(batchid>=1)"                                        | false
+
+        "dateint=12"            | "(dateint < 2)"                                       | false
+        "dateint=12"            | "(dateint <= 2)"                                      | false
+        "dateint=12"            | "(dateint < '2')"                                     | true
+        "dateint=12"            | "(dateint <= '2')"                                    | true
+        "dateint=12"            | "(dateint2 != 2)"                                     | false
+        "dateint=12"            | "(dateint2 == 12)"                                    | false
+
+        "apath"                 | "(batchid>=1)"                                        | false
+
+        "dateint=1/batchid=2"   | "(batchid>=1)"                                        | true
+        "dateint=1/batchid=2"   | "((dateint==1) and (batchid>=1))"                     | true
+
+        "dateint=1/type=java"   | "((dateint==1) and (type=='java'))"                   | true
+        "dateint=1/type=java"   | "((dateint==1) and (type=='bava'))"                   | false
+
+        "dateint=1/type=java"   | "(dateint>1 and type=='java') or (dateint==1 and type=='java')" | true
+        "dateint=1/type=java"   | "(dateint>1 or dateint<1) and (type=='bava' or type=='java')" | false
+        "dateint=1/type=java"   | "(dateint>1 or dateint<1) or (type=='bava' or type=='java')" | true
+    }
+}
