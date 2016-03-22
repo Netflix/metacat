@@ -37,9 +37,9 @@ subprojects {
     apply plugin: 'nebula.source-jar'
     apply plugin: 'java'
     apply plugin: 'groovy'
-    apply plugin: 'checkstyle'
-    apply plugin: 'findbugs'
-    apply plugin: 'pmd'
+//    apply plugin: 'checkstyle'
+//    apply plugin: 'findbugs'
+//    apply plugin: 'pmd'
 
     group = "com.netflix.${githubProjectName}"
 
