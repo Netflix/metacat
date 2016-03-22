@@ -53,17 +53,17 @@ subprojects {
         testCompile 'org.objenesis:objenesis:2.2' // Required by spock to mock classes
     }
 
-    checkstyle {
-        toolVersion = '6.11'
-        configFile = new File(project.parent.projectDir, "codequality/checkstyle/checkstyle.xml")
-    }
+    /* checkstyle { */
+    /*     toolVersion = '6.11' */
+    /*     configFile = new File(project.parent.projectDir, "codequality/checkstyle/checkstyle.xml") */
+    /* } */
 
-    findbugs {
-        ignoreFailures = true
-        excludeFilter = new File(project.parent.projectDir, "codequality/findbugs/excludeFilter.xml")
-    }
+    /* findbugs { */
+    /*     ignoreFailures = true */
+    /*     excludeFilter = new File(project.parent.projectDir, "codequality/findbugs/excludeFilter.xml") */
+    /* } */
 
-    tasks.withType(Pmd) {
-        reports.html.enabled true
-    }
+    /* tasks.withType(Pmd) { */
+    /*     reports.html.enabled true */
+    /* } */
 }
