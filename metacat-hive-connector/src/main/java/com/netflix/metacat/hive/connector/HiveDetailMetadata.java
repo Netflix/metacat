@@ -232,6 +232,7 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
         StorageDescriptor sd = table.getSd()!= null?table.getSd():new StorageDescriptor();
         String inputFormat = null;
         String outputFormat = null;
+        Map<String, String> sdParameters = Maps.newHashMap();
         String location = tableDetailMetadata.getStorageInfo()==null?null:tableDetailMetadata.getStorageInfo().getUri();
         if( location != null){
             sd.setLocation(location);
@@ -251,20 +252,28 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
                     if(!Strings.isNullOrEmpty(storageInfo.getSerializationLib())) {
                         serdeInfo.setSerializationLib(storageInfo.getSerializationLib());
                     }
-                    if(storageInfo.getParameters() != null && !storageInfo.getParameters().isEmpty()) {
-                        serdeInfo.setParameters(storageInfo.getParameters());
+                    if(storageInfo.getSerdeInfoParameters() != null && !storageInfo.getSerdeInfoParameters().isEmpty()) {
+                        serdeInfo.setParameters(storageInfo.getSerdeInfoParameters());
                     }
                     inputFormat = storageInfo.getInputFormat();
                     outputFormat = storageInfo.getOutputFormat();
+                    if( storageInfo.getParameters() != null && !storageInfo.getParameters().isEmpty()) {
+                        sdParameters = storageInfo.getParameters();
+                    }
                 }
             } else {
                 serdeInfo = new SerDeInfo();
                 serdeInfo.setName(tableDetailMetadata.getTable().getTableName());
                 if (storageInfo != null) {
                     serdeInfo.setSerializationLib(storageInfo.getSerializationLib());
-                    serdeInfo.setParameters(storageInfo.getParameters());
+                    if( storageInfo.getSerdeInfoParameters() != null && !storageInfo.getSerdeInfoParameters().isEmpty()) {
+                        serdeInfo.setParameters(storageInfo.getSerdeInfoParameters());
+                    }
                     inputFormat = storageInfo.getInputFormat();
                     outputFormat = storageInfo.getOutputFormat();
+                    if( storageInfo.getParameters() != null && !storageInfo.getParameters().isEmpty()) {
+                        sdParameters = storageInfo.getParameters();
+                    }
                 } else  {
                     HiveStorageFormat hiveStorageFormat = extractHiveStorageFormat(table);
                     serdeInfo.setSerializationLib(hiveStorageFormat.getSerDe());
@@ -297,7 +306,7 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
             sd.setOutputFormat(outputFormat);
         }
         if(sd.getParameters() == null) {
-            sd.setParameters(ImmutableMap.<String, String>of());
+            sd.setParameters(sdParameters);
         }
 
         //partition keys
