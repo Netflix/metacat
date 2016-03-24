@@ -39,6 +39,7 @@ import com.netflix.metacat.s3.connector.model.Table;
 import javax.inject.Inject;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -62,7 +63,7 @@ public class ConverterUtil {
                 result.setInputFormat(info.getInputFormat());
                 result.setOutputFormat(info.getOutputFormat());
                 result.setSerializationLib(info.getSerializationLib());
-                result.setParameters(Maps.newHashMap(info.getParameters()));
+                result.setSerdeInfoParameters(Maps.newHashMap(info.getParameters()));
             }
         }
         return result;
@@ -90,7 +91,14 @@ public class ConverterUtil {
             info.setInputFormat( storageInfo.getInputFormat());
             info.setOutputFormat( storageInfo.getOutputFormat());
             info.setSerializationLib( storageInfo.getSerializationLib());
-            info.setParameters( storageInfo.getParameters());
+            Map<String, String> parameters = Maps.newHashMap();
+            if( storageInfo.getParameters() != null){
+                parameters.putAll(storageInfo.getParameters());
+            }
+            if( storageInfo.getSerdeInfoParameters() != null){
+                parameters.putAll(storageInfo.getSerdeInfoParameters());
+            }
+            info.setParameters( parameters);
             result.setInfo(info);
         } else if ( owner != null){
             Info info = new Info();
