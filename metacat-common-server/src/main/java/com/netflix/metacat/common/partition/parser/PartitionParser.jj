@@ -35,7 +35,7 @@ TOKEN :
 |	< LT: "<" >   
 |   < LPAREN : "(">    
 |   < RPAREN : ")">    
-| < INT: ( <DIGIT> )+ >
+| < INT: "-"( <DIGIT> )+ | ( <DIGIT> )+>
 |   < #DIGIT: ["0" - "9"] >
 | < FLOAT: <INT> <EXPONENT> | <MANTISSA> ( <EXPONENT> )? >
 |   < #EXPONENT: ["e", "E"] ("+"|"-")? <INT> >

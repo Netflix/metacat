@@ -35,6 +35,12 @@ class FilterPartitionSpec extends Specification{
         "dateint=1"             | "dateint<1"                                           | false
         "dateint=1"             | "dateint<=1"                                          | true
         "dateint=1"             | "dateint==1"                                          | true
+        "dateint=-1"            | "dateint==-1"                                         | true
+        "dateint=-1"            | "dateint== -1"                                        | true
+        "dateint=1"             | "dateint==-1"                                         | false
+        "dateint=-12"           | "dateint==-12"                                        | true
+        "dateint=-12"           | "dateint== -12"                                       | true
+        "dateint=12"            | "dateint>=-12"                                        | true
         "dateint=1"             | "dateint!=1"                                          | false
         "dateint=1"             | "(dateint>1) or (dateint<1)"                          | false
         "dateint=1"             | "(dateint>1) or (dateint<=1)"                         | true
@@ -65,5 +71,6 @@ class FilterPartitionSpec extends Specification{
         "dateint=1/type=java"   | "(dateint>1 and type=='java') or (dateint==1 and type=='java')" | true
         "dateint=1/type=java"   | "(dateint>1 or dateint<1) and (type=='bava' or type=='java')" | false
         "dateint=1/type=java"   | "(dateint>1 or dateint<1) or (type=='bava' or type=='java')" | true
+
     }
 }
