@@ -51,7 +51,7 @@ import static com.facebook.presto.type.IntType.INT;
 
 
 public class MetacatPostgreSqlClient extends BaseJdbcClient {
-    private static final String SQL_GET_DIST_SORT_KEYS = "select column, distkey, sortkey from pg_catalog.pg_table_def where schemaname=? and tablename=?";
+    private static final String SQL_GET_DIST_SORT_KEYS = "select t.column, t.distkey, t.sortkey from pg_catalog.pg_table_def t where t.schemaname=? and t.tablename=?";
     private static final Map<Type, String> METACAT_SQL_TYPES = ImmutableMap.<Type, String>builder()
             .put(INT, IntType.TYPE)
             .put(FLOAT, FloatType.TYPE)
