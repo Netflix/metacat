@@ -146,7 +146,7 @@ public class MySqlLookupService implements LookupService{
      * Saves the lookup value
      * @param name lookup name
      * @param values multiple values
-     * @return
+     * @return returns the lookup with the given name.
      */
     public Lookup setValues(String name, Set<String> values) {
         Lookup lookup = null;
@@ -218,7 +218,7 @@ public class MySqlLookupService implements LookupService{
      * Saves the lookup value
      * @param name lookup name
      * @param values multiple values
-     * @return
+     * @return returns the lookup with the given name.
      */
     public Lookup addValues(String name, Set<String> values) {
         Lookup lookup = null;
@@ -256,7 +256,7 @@ public class MySqlLookupService implements LookupService{
      * Saves the lookup value
      * @param name lookup name
      * @param value lookup value
-     * @return
+     * @return returns the lookup with the given name.
      */
     public Lookup setValue(String name, String value) {
         return setValues(name, Sets.newHashSet(value));

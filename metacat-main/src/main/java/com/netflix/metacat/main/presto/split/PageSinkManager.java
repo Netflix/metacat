@@ -72,16 +72,15 @@ public class PageSinkManager
         return provider;
     }
 
-    /**
-     * NETFLIX addition
-     */
+    // *********************
+    //
+    // NETFLIX addition
+    //
+    // **********************
+
     public synchronized void flush(String catalogName){
         pageSinkProviders.remove(catalogName);
     }
-
-    /**
-     * NETFLIX addition
-     */
     public synchronized void flushAll(){
         pageSinkProviders.clear();
     }

@@ -63,6 +63,7 @@ public interface TagService {
      * Tags the given table with the given <code>tags</code>
      * @param qualifiedName, table name
      * @param tags list of tags
+     * @param updateUserMetadata if true, updates the tags in the user metadata
      * @return return the complete list of tags associated with the table
      */
     Set<String> setTableTags(
@@ -75,6 +76,7 @@ public interface TagService {
      * @param qualifiedName table name
      * @param deleteAll if true, will delete all tags associated with the given table
      * @param tags list of tags to be removed for the given table
+     * @param updateUserMetadata if true, updates the tags in the user metadata
      */
     Void removeTableTags(
             QualifiedName qualifiedName,
@@ -85,6 +87,7 @@ public interface TagService {
     /**
      * Delete the tag item along with its associated tags.
      * @param name table name
+     * @param updateUserMetadata if true, updates the tags in the user metadata
      * @return null
      */
     Void delete(QualifiedName name,

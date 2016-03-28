@@ -49,21 +49,21 @@ public interface LookupService {
      * Saves the lookup value
      * @param name lookup name
      * @param values multiple values
-     * @return
+     * @return updated lookup
      */
     Lookup setValues(String name, Set<String> values);
     /**
      * Saves the lookup value
      * @param name lookup name
      * @param values multiple values
-     * @return
+     * @return updated lookup
      */
     Lookup addValues(String name, Set<String> values);
     /**
      * Saves the lookup value
      * @param name lookup name
      * @param value lookup value
-     * @return
+     * @return updated lookup
      */
     Lookup setValue(String name, String value);
 }

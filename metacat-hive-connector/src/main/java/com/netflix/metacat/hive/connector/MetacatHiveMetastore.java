@@ -29,24 +29,28 @@ public interface MetacatHiveMetastore extends HiveMetastore {
     /**
      * Create schema/database
      * @param database database metadata
+     * @throws AlreadyExistsException if database with the same name exists
      */
     void createDatabase(Database database) throws AlreadyExistsException;
 
     /**
      * Update schema/database
      * @param database database metadata
+     * @throws NoSuchObjectException if the database does not exist
      */
     void updateDatabase(Database database) throws NoSuchObjectException;
 
     /**
      * Drop database
      * @param dbName database name
+     * @throws NoSuchObjectException if the database does not exist
      */
     void dropDatabase(String dbName) throws NoSuchObjectException;
 
     /**
      * Alter the given table
      * @param table the table name
+     * @throws NoSuchObjectException if the table does not exist
      */
     void alterTable(final Table table) throws NoSuchObjectException;
 
@@ -64,6 +68,7 @@ public interface MetacatHiveMetastore extends HiveMetastore {
      * @param tableName table name
      * @param filter filter expression (JSP comparable expression)
      * @return list of partitions
+     * @throws NoSuchObjectException if the table does not exist
      */
     List<Partition> getPartitions(String dbName, String tableName, String filter) throws NoSuchObjectException;
 
@@ -73,18 +78,26 @@ public interface MetacatHiveMetastore extends HiveMetastore {
      * @param tableName table name
      * @param partitionIds partition ids/names
      * @return list of partitions
+     * @throws NoSuchObjectException if the table does not exist
      */
     List<Partition> getPartitions(String dbName, String tableName, List<String> partitionIds) throws NoSuchObjectException;
 
     /**
      * Saves the partitions.
      * @param partitions list of partitions
+     * @throws NoSuchObjectException if the table does not exist
+     * @throws AlreadyExistsException if the partition already exist
      */
     void savePartitions(List<Partition> partitions) throws NoSuchObjectException, AlreadyExistsException;
 
     /**
      * Saves the partitions. Deletes the partitions with the given <code>delPartitionNames</code>
+     * @param dbName database name
+     * @param tableName table name
      * @param partitions list of partitions
+     * @param delPartitionNames list of names of the partitions to be deleted
+     * @throws NoSuchObjectException if the table does not exist
+     * @throws AlreadyExistsException if the partition already exist
      */
     void addDropPartitions(String dbName, String tableName, List<Partition> partitions, List<String> delPartitionNames) throws NoSuchObjectException, AlreadyExistsException;
 
@@ -93,6 +106,7 @@ public interface MetacatHiveMetastore extends HiveMetastore {
      * @param dbName database name
      * @param tableName table name
      * @param partitionNames partition ids/names
+     * @throws NoSuchObjectException if the partition does not exist
      */
     void dropPartitions( String dbName, String tableName, List<String> partitionNames) throws NoSuchObjectException;
 }

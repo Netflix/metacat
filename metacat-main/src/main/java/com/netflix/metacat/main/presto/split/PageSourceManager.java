@@ -71,16 +71,15 @@ public class PageSourceManager
         return provider;
     }
 
-    /**
-     * NETFLIX addition
-     */
+    // *********************
+    //
+    // NETFLIX addition
+    //
+    // **********************
+
     public synchronized void flush(String catalogName){
         pageSourceProviders.remove(catalogName);
     }
-
-    /**
-     * NETFLIX addition
-     */
     public synchronized void flushAll(){
         pageSourceProviders.clear();
     }

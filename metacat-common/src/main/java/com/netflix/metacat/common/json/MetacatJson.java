@@ -31,6 +31,10 @@ public interface MetacatJson {
      * JSON. Same converters (serializers, deserializers) will be used as for
      * data binding, meaning same object mapper configuration works.
      *
+     * @param fromValue object to be converted
+     * @param toValueType POJO class to be converted to
+     * @param <T> POJO class
+     * @return Returns the converted POJO
      * @throws MetacatJsonException If conversion fails due to incompatible type;
      *    if so, root cause will contain underlying checked exception data binding
      *    functionality threw

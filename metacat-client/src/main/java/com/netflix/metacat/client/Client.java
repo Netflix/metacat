@@ -177,8 +177,8 @@ public class Client {
 
     /**
      * Returns an API instance that conforms to the given API Type that can communicate with the Metacat server
-     *
-     * @param apiType A JAX-RS annotated Metacat interface
+     * @param apiType apiType A JAX-RS annotated Metacat interface
+     * @param <T> API Resource instance
      * @return An instance that implements the given interface and is wired up to communicate with the Metacat server.
      */
     public <T> T getApiClient(@Nonnull Class<T> apiType) {

@@ -94,16 +94,16 @@ public class IndexManager
         return result;
     }
 
-    /**
-     * NETFLIX addition
-     */
+    // *********************
+    //
+    // NETFLIX addition
+    //
+    // **********************
+
     public synchronized void flush(String catalogName){
         resolvers.remove(catalogName);
     }
 
-    /**
-     * NETFLIX addition
-     */
     public synchronized void flushAll(){
         resolvers.clear();
     }

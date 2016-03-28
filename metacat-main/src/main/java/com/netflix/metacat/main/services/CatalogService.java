@@ -22,6 +22,7 @@ import java.util.List;
 
 public interface CatalogService {
     /**
+     * @param name Qualified name of the catalog
      * @return the information about the given catalog
      * @throws javax.ws.rs.NotFoundException if the catalog is not found
      */

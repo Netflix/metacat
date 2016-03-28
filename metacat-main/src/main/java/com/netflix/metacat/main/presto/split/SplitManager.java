@@ -97,18 +97,16 @@ public class SplitManager extends com.facebook.presto.split.SplitManager
         return result;
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////////
+    // *********************
+    //
+    // NETFLIX addition
+    //
+    // **********************
 
-    /**
-     * NETFLIX addition
-     */
     public synchronized void flush(String catalogName){
         splitManagers.remove(catalogName);
     }
 
-    /**
-     * NETFLIX addition
-     */
     public synchronized void flushAll(){
         splitManagers.clear();
     }

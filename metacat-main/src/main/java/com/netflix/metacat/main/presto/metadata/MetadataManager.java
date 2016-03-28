@@ -787,20 +787,18 @@ public class MetadataManager
     }
 
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // *********************
+    //
+    // NETFLIX addition
+    //
+    // **********************
 
-    /**
-     * NETFLIX addition
-     */
     public synchronized void flush(String catalogName){
         informationSchemasByCatalog.remove(catalogName);
         connectorsByCatalog.remove(catalogName);
         connectorsById.remove(catalogName);
     }
 
-    /**
-     * NETFLIX addition
-     */
     public synchronized void flushAll(){
         informationSchemasByCatalog.clear();
         connectorsByCatalog.clear();
@@ -810,6 +808,7 @@ public class MetadataManager
     /**
      * Creates a schema with the given <code>schemaName</code>
      * @param session connector session
+     * @param schemaMetadata schema metadata
      */
     public void createSchema(Session session, ConnectorSchemaMetadata schemaMetadata) {
         String schemaName = session.getSchema();
@@ -829,6 +828,7 @@ public class MetadataManager
     /**
      * Updates a schema with the given <code>schemaName</code>
      * @param session connector session
+     * @param schemaMetadata schema metadata
      */
     public void updateSchema(Session session, ConnectorSchemaMetadata schemaMetadata) {
         String schemaName = session.getSchema();
@@ -847,6 +847,7 @@ public class MetadataManager
 
     /**
      * Drop a schema with the given <code>schemaName</code>
+     * @param session connector session
      */
     public void dropSchema(Session session) {
         String schemaName = session.getSchema();
@@ -865,6 +866,8 @@ public class MetadataManager
 
     /**
      * Return a schema with the given <code>schemaName</code>
+     * @param session connector session
+     * @return  Return a schema with the given schemaName
      */
     public ConnectorSchemaMetadata getSchema(Session session) {
         String schemaName = session.getSchema();
@@ -883,6 +886,9 @@ public class MetadataManager
 
     /**
      * Updates a table using the specified table metadata.
+     * @param session connector session
+     * @param tableMetadata table metadata
+     * @return table handle
      */
     public ConnectorTableHandle alterTable(Session session, TableMetadata tableMetadata) {
         ConnectorMetadataEntry entry = validateCatalogName(session.getCatalog());

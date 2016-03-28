@@ -192,17 +192,16 @@ public class HandleResolver
         return resolver;
     }
 
+    // *********************
+    //
+    // NETFLIX addition
+    //
+    // **********************
 
-    /**
-     * NETFLIX addition
-     */
     public synchronized void flush(String catalogName){
         handleIdResolvers.remove(catalogName);
     }
 
-    /**
-     * NETFLIX addition
-     */
     public synchronized void flushAll(){
         handleIdResolvers.clear();
     }

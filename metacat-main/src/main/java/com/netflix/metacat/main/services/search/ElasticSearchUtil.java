@@ -137,6 +137,7 @@ public class ElasticSearchUtil {
      * Marks the document as deleted
      * @param type index type
      * @param id entity id
+     * @param metacatContext context containing the user name
      */
     public void softDelete(String type, String id, MetacatContext metacatContext) {
         try {
@@ -158,6 +159,7 @@ public class ElasticSearchUtil {
      * Marks the documents as deleted
      * @param type index type
      * @param ids list of entity ids
+     * @param metacatContext context containing the user name
      */
     public void softDelete(String type, List<String> ids, MetacatContext metacatContext) {
         if( ids != null && !ids.isEmpty()) {
@@ -198,6 +200,8 @@ public class ElasticSearchUtil {
      * Updates the documents with partial updates with the given fields
      * @param type index type
      * @param ids list of entity ids
+     * @param metacatContext context containing the user name
+     * @param node json that represents the document source
      */
     public void updates(String type, List<String> ids, MetacatContext metacatContext, ObjectNode node) {
         if(ids == null || ids.isEmpty()){

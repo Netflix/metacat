@@ -33,25 +33,80 @@ public interface TableService {
     /**
      * Deletes the table. Returns the table metadata of the table deleted.
      * @param name qualified name of the table to be deleted
-     * @return
+     * @return Returns the deleted table
      */
     TableDto delete(@Nonnull QualifiedName name);
 
+    /**
+     * Returns the table with the given name
+     * @param name qualified name of the table
+     * @param includeUserMetadata if true, the table will include the user metadata
+     * @return Returns the table with the given name
+     */
     Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeUserMetadata);
 
+    /**
+     * Returns the table with the given name
+     * @param name qualified name of the table
+     * @param includeInfo if true, the table will include the main table metadata
+     * @param includeDefinitionMetadata if true, the table will include the user definition metadata
+     * @param includeDataMetadata if true, the table will include the user data metadata
+     * @return Returns the table with the given name
+     */
     Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeInfo, boolean includeDefinitionMetadata, boolean includeDataMetadata);
 
+    /**
+     * Returns the table handle
+     * @param name qualified name of the table
+     * @return Returns the table handle with the given name
+     */
     Optional<TableHandle> getTableHandle(@Nonnull QualifiedName name);
 
+    /**
+     * Rename the table from <code>oldName</code> to <code>newName</code>
+     * @param oldName old qualified name of the existing table
+     * @param newName new qualified name of the table
+     * @param isMView true, if the object is a view
+     */
     void rename(@Nonnull QualifiedName oldName, @Nonnull QualifiedName newName, boolean isMView);
 
+    /**
+     * Updates the table
+     * @param name qualified name of the table
+     * @param tableDto table dto
+     */
     void update(@Nonnull QualifiedName name, @Nonnull TableDto tableDto);
 
+    /**
+     * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>
+     * @param name qualified name of the source table
+     * @param targetName qualified name of the target table
+     * @return Returns the copied table
+     */
     TableDto copy(@Nonnull QualifiedName name, @Nonnull QualifiedName targetName);
 
+    /**
+     * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>
+     * @param tableDto source table
+     * @param targetName qualified name of the target table
+     * @return Returns the copied table
+     */
     TableDto copy(@Nonnull TableDto tableDto, @Nonnull QualifiedName targetName);
 
+    /**
+     * Saves the user metadata for the given table
+     * @param name qualified name of the table
+     * @param definitionMetadata user definition metadata json
+     * @param dataMetadata user data metadata json
+     */
     void saveMetadata(@Nonnull QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
 
+    /**
+     * Returns a list of qualified names of tables that refers to the given <code>uri</code>. If prefixSearch is true,
+     * it will consider the uri has a prefix and so it does not do a exact match.
+     * @param uri uri/location
+     * @param prefixSearch if false, the method looks for exact match for the uri
+     * @return list of table names
+     */
     List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch);
 }
