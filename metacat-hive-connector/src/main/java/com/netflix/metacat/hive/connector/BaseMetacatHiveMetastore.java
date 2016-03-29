@@ -178,9 +178,4 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
             client.drop_partitions_req(request);
         }
     }
-
-    @Override
-    public void flushCache() {
-        //no op
-    }
 }

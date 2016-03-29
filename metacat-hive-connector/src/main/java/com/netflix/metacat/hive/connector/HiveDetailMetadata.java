@@ -109,6 +109,8 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
         try {
             Database database = new Database(schema.getSchemaName(), null, schema.getUri(), schema.getMetadata());
             ((MetacatHiveMetastore)metastore).createDatabase(database);
+            // If a method is ever exposed to flush only database related caches that could replace flushing everything
+            metastore.flushCache();
         } catch (AlreadyExistsException e) {
             throw new SchemaAlreadyExistsException(schema.getSchemaName());
         }
