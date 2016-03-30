@@ -44,6 +44,7 @@ import com.netflix.servo.tag.TagList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
@@ -211,6 +212,38 @@ public class PartitionServiceImpl implements PartitionService {
             result.addAll(qualifiedNames);
         });
         return result;
+    }
+
+    @Override
+    public void create( @Nonnull QualifiedName name, @Nonnull PartitionDto dto) {
+        save( name, Lists.newArrayList(dto), null, false);
+    }
+
+    @Override
+    public void update(@Nonnull QualifiedName name, @Nonnull PartitionDto dto) {
+        save( name, Lists.newArrayList(dto), null, true);
+    }
+
+    @Override
+    public void delete(@Nonnull QualifiedName name) {
+        QualifiedName tableName = QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
+        delete( tableName, Lists.newArrayList(name.getPartitionName()));
+    }
+
+    @Override
+    public PartitionDto get(@Nonnull QualifiedName name) {
+        PartitionDto result = null;
+        QualifiedName tableName = QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
+        List<PartitionDto> dtos = list( tableName, null, Lists.newArrayList(name.getPartitionName()), null, null, true, true, true);
+        if( !dtos.isEmpty()){
+            result = dtos.get(0);
+        }
+        return result;
+    }
+
+    @Override
+    public boolean exists(QualifiedName name) {
+        return count(name)==1;
     }
 
     private PartitionDto toPartitionDto(QualifiedName tableName, ConnectorPartition partition) {

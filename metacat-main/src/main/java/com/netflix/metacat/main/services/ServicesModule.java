@@ -36,7 +36,7 @@ public class ServicesModule extends AbstractModule {
         binder().bind(TableService.class).to(TableServiceImpl.class).in(Scopes.SINGLETON);
         binder().bind(PartitionService.class).to(PartitionServiceImpl.class).in(Scopes.SINGLETON);
         binder().bind(MViewService.class).to(MViewServiceImpl.class).in(Scopes.SINGLETON);
-
+        binder().bind(MetacatServiceHelper.class).in(Scopes.SINGLETON);
         //search
         bind(Client.class).toProvider(ElasticSearchClientProvider.class).in(Singleton.class);
         binder().bind(MetacatEventHandlers.class).in(Singleton.class);

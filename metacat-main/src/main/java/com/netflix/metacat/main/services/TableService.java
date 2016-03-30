@@ -22,20 +22,13 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
 
-public interface TableService {
-    /**
-     * Creates the table.
-     * @param name qualified name of the table
-     * @param tableDto table metadata
-     */
-    void create(@Nonnull QualifiedName name, @Nonnull TableDto tableDto);
-
+public interface TableService extends MetacatService<TableDto>{
     /**
      * Deletes the table. Returns the table metadata of the table deleted.
      * @param name qualified name of the table to be deleted
      * @return Returns the deleted table
      */
-    TableDto delete(@Nonnull QualifiedName name);
+    TableDto deleteAndReturn(@Nonnull QualifiedName name);
 
     /**
      * Returns the table with the given name
@@ -69,13 +62,6 @@ public interface TableService {
      * @param isMView true, if the object is a view
      */
     void rename(@Nonnull QualifiedName oldName, @Nonnull QualifiedName newName, boolean isMView);
-
-    /**
-     * Updates the table
-     * @param name qualified name of the table
-     * @param tableDto table dto
-     */
-    void update(@Nonnull QualifiedName name, @Nonnull TableDto tableDto);
 
     /**
      * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>

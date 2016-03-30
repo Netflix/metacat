@@ -23,6 +23,7 @@ import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -92,5 +93,21 @@ public interface MetadataV1 {
             @ApiParam(value = "Set of owners", required = true)
             @QueryParam("owner")
             Set<String> owners
+    );
+
+    @DELETE
+    @Path("definition")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            position = 4,
+            value = "Deletes the given definition metadata")
+    void deleteDefinitionMetadata(
+            @ApiParam(value = "Name of definition metadata to be deleted", required = true)
+            @QueryParam("name")
+            QualifiedName name,
+            @ApiParam(value = "If true, deletes the metadata without checking if the database/table/partition exists", required = false)
+            @DefaultValue("false") @QueryParam("force")
+            Boolean force
     );
 }

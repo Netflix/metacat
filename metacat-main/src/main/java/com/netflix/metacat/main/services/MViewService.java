@@ -26,7 +26,7 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
 
-public interface MViewService {
+public interface MViewService extends MetacatService<TableDto>{
     /**
      * Create the view and returns the newly created view
      * @param name name of the origin table
@@ -39,9 +39,8 @@ public interface MViewService {
      * @param name name of the view to be deleted
      * @return deleted view
      */
-    TableDto delete( @Nonnull QualifiedName name);
-    void update(@Nonnull QualifiedName name, @Nonnull TableDto tableDto);
-    Optional<TableDto> get( @Nonnull QualifiedName name);
+    TableDto deleteAndReturn( @Nonnull QualifiedName name);
+    Optional<TableDto> getOpt( @Nonnull QualifiedName name);
     void snapshotPartitions( @Nonnull QualifiedName name, String filter);
     PartitionsSaveResponseDto savePartitions( @Nonnull QualifiedName name, List<PartitionDto> partitionDtos, List<String> partitionIdsForDeletes, boolean merge, boolean checkIfExists);
     void deletePartitions( @Nonnull QualifiedName name, List<String> partitionIds);

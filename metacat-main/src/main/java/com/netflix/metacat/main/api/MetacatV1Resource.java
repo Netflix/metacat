@@ -53,7 +53,6 @@ import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.TableService;
-import com.wordnik.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -98,7 +97,10 @@ public class MetacatV1Resource implements MetacatV1 {
         requestWrapper(name, "createDatabase", () -> {
             eventBus.post(new MetacatCreateDatabasePreEvent(name, metacatContext));
 
-            databaseService.create(name, databaseCreateRequestDto);
+            DatabaseDto newDto = new DatabaseDto();
+            newDto.setName(name);
+            newDto.setDefinitionMetadata(databaseCreateRequestDto.getDefinitionMetadata());
+            databaseService.create(name, newDto);
 
             DatabaseDto dto = databaseService.get(name, databaseCreateRequestDto.getDefinitionMetadata() != null);
             eventBus.post(new MetacatCreateDatabasePostEvent(dto, metacatContext));
@@ -170,7 +172,7 @@ public class MetacatV1Resource implements MetacatV1 {
         return requestWrapper(name, "deleteMView", () -> {
             eventBus.post(new MetacatDeleteMViewPreEvent(name, metacatContext));
 
-            TableDto dto = mViewService.delete(name);
+            TableDto dto = mViewService.deleteAndReturn(name);
 
             eventBus.post(new MetacatDeleteMViewPostEvent(dto, metacatContext));
             return dto;
@@ -184,7 +186,7 @@ public class MetacatV1Resource implements MetacatV1 {
         return requestWrapper(name, "deleteTable", () -> {
             eventBus.post(new MetacatDeleteTablePreEvent(name, metacatContext));
 
-            TableDto dto = tableService.delete(name);
+            TableDto dto = tableService.deleteAndReturn(name);
 
             eventBus.post(new MetacatDeleteTablePostEvent(dto, metacatContext));
             return dto;
@@ -213,7 +215,7 @@ public class MetacatV1Resource implements MetacatV1 {
     public TableDto getMView(String catalogName, String databaseName, String tableName, String viewName) {
         QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
         return requestWrapper(name, "getMView", (Supplier<TableDto>) () -> {
-            Optional<TableDto> table = mViewService.get(name);
+            Optional<TableDto> table = mViewService.getOpt(name);
             return table.orElseThrow(() -> new MetacatNotFoundException("Unable to find view: " + name));
         });
     }
@@ -269,7 +271,10 @@ public class MetacatV1Resource implements MetacatV1 {
         requestWrapper(name, "updateDatabase", () -> {
             eventBus.post(new MetacatUpdateDatabasePreEvent(name, metacatContext));
 
-            databaseService.update(name, databaseUpdateRequestDto);
+            DatabaseDto newDto = new DatabaseDto();
+            newDto.setName(name);
+            newDto.setDefinitionMetadata(databaseUpdateRequestDto.getDefinitionMetadata());
+            databaseService.update(name, newDto);
 
             eventBus.post(new MetacatUpdateDatabasePostEvent(name, metacatContext));
             return null;
@@ -285,7 +290,7 @@ public class MetacatV1Resource implements MetacatV1 {
 
             mViewService.update(name, table);
 
-            TableDto dto = mViewService.get(name).orElseThrow(() -> new IllegalStateException("should exist"));
+            TableDto dto = mViewService.getOpt(name).orElseThrow(() -> new IllegalStateException("should exist"));
             eventBus.post(new MetacatUpdateMViewPostEvent(dto, metacatContext));
             return dto;
         });

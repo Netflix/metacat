@@ -23,7 +23,6 @@ import com.facebook.presto.spi.StandardErrorCode;
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
-import com.netflix.metacat.common.dto.DatabaseCreateRequestDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.converters.PrestoConverters;
@@ -36,6 +35,7 @@ import com.netflix.metacat.main.spi.MetacatCatalogConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
@@ -62,18 +62,18 @@ public class DatabaseServiceImpl implements DatabaseService {
     UserMetadataService userMetadataService;
 
     @Override
-    public void create(QualifiedName name, DatabaseCreateRequestDto databaseCreateRequestDto) {
+    public void create(QualifiedName name, DatabaseDto dto) {
         Session session = validateAndGetSession(name);
         log.info("Creating schema {}", name);
         metadataManager.createSchema(session, new ConnectorSchemaMetadata(name.getDatabaseName()));
-        if( databaseCreateRequestDto != null && databaseCreateRequestDto.getDefinitionMetadata() != null){
+        if( dto != null && dto.getDefinitionMetadata() != null){
             log.info("Saving user metadata for schema {}", name);
-            userMetadataService.saveDefinitionMetadata(name, session.getUser(), Optional.of(databaseCreateRequestDto.getDefinitionMetadata()), true);
+            userMetadataService.saveDefinitionMetadata(name, session.getUser(), Optional.of(dto.getDefinitionMetadata()), true);
         }
     }
 
     @Override
-    public void update(QualifiedName name, DatabaseCreateRequestDto databaseCreateRequestDto) {
+    public void update(QualifiedName name, DatabaseDto dto) {
         Session session = validateAndGetSession(name);
         log.info("Updating schema {}", name);
         try {
@@ -83,9 +83,9 @@ public class DatabaseServiceImpl implements DatabaseService {
                 throw e;
             }
         }
-        if( databaseCreateRequestDto != null && databaseCreateRequestDto.getDefinitionMetadata() != null){
+        if( dto != null && dto.getDefinitionMetadata() != null){
             log.info("Saving user metadata for schema {}", name);
-            userMetadataService.saveDefinitionMetadata(name, session.getUser(), Optional.of(databaseCreateRequestDto.getDefinitionMetadata()), true);
+            userMetadataService.saveDefinitionMetadata(name, session.getUser(), Optional.of(dto.getDefinitionMetadata()), true);
         }
     }
 
@@ -100,6 +100,11 @@ public class DatabaseServiceImpl implements DatabaseService {
             log.info("Deleting user metadata for schema {}", name);
             userMetadataService.deleteDefinitionMetadatas(ImmutableList.of(name));
         }
+    }
+
+    @Override
+    public DatabaseDto get( @Nonnull QualifiedName name) {
+        return get(name, true);
     }
 
     @Override

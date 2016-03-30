@@ -113,10 +113,23 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public TableDto delete(@Nonnull QualifiedName name) {
+    public void create(@Nonnull QualifiedName name, @Nonnull TableDto dto) {
+        // Ignore the dto passed
+        create(name);
+    }
+
+    @Override
+    public TableDto deleteAndReturn(@Nonnull QualifiedName name) {
         QualifiedName viewQName = QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         log.info("Deleting view {}.", viewQName);
-        return tableService.delete(viewQName);
+        return tableService.deleteAndReturn(viewQName);
+    }
+
+
+    @Override
+    public void delete(@Nonnull QualifiedName name) {
+        QualifiedName viewQName = QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
+        tableService.delete(viewQName);
     }
 
     @Override
@@ -131,7 +144,13 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public Optional<TableDto> get(@Nonnull QualifiedName name) {
+    public TableDto get(@Nonnull QualifiedName name) {
+        QualifiedName viewQName = QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
+        return tableService.get(name);
+    }
+
+    @Override
+    public Optional<TableDto> getOpt(@Nonnull QualifiedName name) {
         QualifiedName viewQName = QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         Optional<TableDto> result = tableService.get( viewQName, false);
 
@@ -302,6 +321,12 @@ public class MViewServiceImpl implements MViewService {
         QualifiedName oldViewQName = QualifiedName.ofTable( name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         QualifiedName newViewQName = QualifiedName.ofTable( newViewName.getCatalogName(), VIEW_DB_NAME, createViewName(newViewName));
         tableService.rename(oldViewQName, newViewQName, true);
+    }
+
+    @Override
+    public boolean exists(QualifiedName name) {
+        QualifiedName viewQName = QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
+        return tableService.exists(viewQName);
     }
 
     /**

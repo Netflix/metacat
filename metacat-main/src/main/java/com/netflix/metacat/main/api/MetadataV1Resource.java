@@ -14,13 +14,21 @@
 package com.netflix.metacat.main.api;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Lists;
+import com.netflix.metacat.common.MetacatContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.api.MetadataV1;
+import com.netflix.metacat.common.dto.BaseDto;
 import com.netflix.metacat.common.dto.DataMetadataDto;
 import com.netflix.metacat.common.dto.DataMetadataGetRequestDto;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
+import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.SortOrder;
+import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.util.MetacatContextManager;
+import com.netflix.metacat.main.services.MetacatService;
+import com.netflix.metacat.main.services.MetacatServiceHelper;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -34,10 +42,15 @@ import static com.netflix.metacat.main.api.RequestWrapper.requestWrapper;
  */
 public class MetadataV1Resource implements MetadataV1 {
     private final UserMetadataService userMetadataService;
-
+    private final MetacatServiceHelper helper;
+    private final MetacatEventBus eventBus;
     @Inject
-    public MetadataV1Resource(UserMetadataService userMetadataService) {
+    public MetadataV1Resource(UserMetadataService userMetadataService,
+            MetacatServiceHelper helper,
+            MetacatEventBus eventBus) {
         this.userMetadataService = userMetadataService;
+        this.helper = helper;
+        this.eventBus = eventBus;
     }
 
     @Override
@@ -77,5 +90,27 @@ public class MetadataV1Resource implements MetadataV1 {
     public List<QualifiedName> searchByOwners(Set<String> owners) {
         return requestWrapper( "searchByOwners"
                 , () -> userMetadataService.searchByOwners(owners));
+    }
+
+    @Override
+    public void deleteDefinitionMetadata(QualifiedName name, Boolean force) {
+        MetacatContext metacatContext = MetacatContextManager.getContext();
+        requestWrapper( "deleteDefinitionMetadata",
+                () -> {
+                    MetacatService service = helper.getService(name);
+                    BaseDto dto = null;
+                    try {
+                        dto = service.get(name);
+                    } catch(Exception ignored){}
+                    if( force || dto != null) {
+                        helper.postPreUpdateEvent(name, dto, metacatContext);
+                        userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
+                        if( dto instanceof  HasDefinitionMetadata) {
+                            ((HasDefinitionMetadata) dto).setDefinitionMetadata(null);
+                        }
+                        helper.postPostUpdateEvent(name, dto, metacatContext);
+                    }
+                    return null;
+                });
     }
 }

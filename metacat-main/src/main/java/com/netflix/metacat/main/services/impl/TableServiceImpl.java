@@ -129,7 +129,7 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public TableDto delete(@Nonnull QualifiedName name) {
+    public TableDto deleteAndReturn(@Nonnull QualifiedName name) {
         Session session = validateAndGetSession(name);
         QualifiedTableName tableName = prestoConverters.getQualifiedTableName(name);
 
@@ -158,7 +158,7 @@ public class TableServiceImpl implements TableService {
 
     @Override
     public Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeUserMetadata) {
-        return get( name, true, true, true);
+        return get( name, true, includeUserMetadata, includeUserMetadata);
     }
 
     @Override
@@ -291,6 +291,17 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
+    public void delete(@Nonnull QualifiedName name) {
+        deleteAndReturn(name);
+    }
+
+    @Override
+    public TableDto get(@Nonnull QualifiedName name) {
+        Optional<TableDto> dto = get( name, true);
+        return dto.orElse(null);
+    }
+
+    @Override
     public TableDto copy( @Nonnull QualifiedName sourceName, @Nonnull QualifiedName targetName) {
         // Source should be same
         if( !sourceName.getCatalogName().equals(targetName.getCatalogName())){
@@ -362,6 +373,11 @@ public class TableServiceImpl implements TableService {
             result.addAll(qualifiedNames);
         });
         return result;
+    }
+
+    @Override
+    public boolean exists(QualifiedName name) {
+        return get(name, true, false, false).isPresent();
     }
 
     private Session validateAndGetSession(QualifiedName name) {
