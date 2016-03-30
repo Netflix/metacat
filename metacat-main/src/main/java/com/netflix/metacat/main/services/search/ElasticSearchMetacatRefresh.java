@@ -238,6 +238,7 @@ public class ElasticSearchMetacatRefresh {
         List<DatabaseDto> unmarkedDatabaseDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames("database", qNames, refreshMarker, DatabaseDto.class);
         if( !unmarkedDatabaseDtos.isEmpty()) {
             if(unmarkedDatabaseDtos.size() <= config.getElasticSearchThresholdUnmarkedDatabasesDelete()) {
+                log.info("Start: Delete unmarked databases({})", unmarkedDatabaseDtos.size());
                 List<DatabaseDto> deleteDatabaseDtos = unmarkedDatabaseDtos.stream().filter(databaseDto -> {
                     boolean result = false;
                     try {
@@ -250,6 +251,7 @@ public class ElasticSearchMetacatRefresh {
                     } catch (Exception ignored) {}
                     return result;
                 }).collect(Collectors.toList());
+                log.info("Deleting databases({})", deleteDatabaseDtos.size());
                 if (!deleteDatabaseDtos.isEmpty()) {
                     List<QualifiedName> deleteDatabaseQualifiedNames = deleteDatabaseDtos.stream()
                             .map(DatabaseDto::getName)
@@ -259,6 +261,7 @@ public class ElasticSearchMetacatRefresh {
                     userMetadataService.deleteDefinitionMetadatas(deleteDatabaseQualifiedNames);
                     elasticSearchUtil.softDelete("database", deleteDatabaseNames, context);
                 }
+                log.info("End: Delete unmarked databases({})", unmarkedDatabaseDtos.size());
             }else {
                 log.info("Count of unmarked databases({}) is more than the threshold {}", unmarkedDatabaseDtos.size(), config.getElasticSearchThresholdUnmarkedDatabasesDelete());
                 CounterWrapper.incrementCounter("dse.metacat.counter.unmarked.databases.threshold.crossed");
@@ -268,6 +271,7 @@ public class ElasticSearchMetacatRefresh {
         List<TableDto> unmarkedTableDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames("table", qNames, refreshMarker, TableDto.class);
         if( !unmarkedTableDtos.isEmpty() ) {
             if(unmarkedTableDtos.size() <= config.getElasticSearchThresholdUnmarkedTablesDelete()) {
+                log.info("Start: Delete unmarked tables({})", unmarkedTableDtos.size());
                 List<TableDto> deleteTableDtos = unmarkedTableDtos.stream().filter(tableDto -> {
                     boolean result = false;
                     try {
@@ -280,12 +284,14 @@ public class ElasticSearchMetacatRefresh {
                     } catch (Exception ignored) {}
                     return result;
                 }).collect(Collectors.toList());
+                log.info("Deleting tables({})", deleteTableDtos.size());
                 if (!deleteTableDtos.isEmpty()) {
                     List<String> deleteTableNames = deleteTableDtos.stream().map(
                             dto -> dto.getName().toString()).collect(Collectors.toList());
                     userMetadataService.deleteMetadatas(Lists.newArrayList(deleteTableDtos), false);
                     elasticSearchUtil.softDelete("table", deleteTableNames, context);
                 }
+                log.info("End: Delete unmarked tables({})", unmarkedTableDtos.size());
             } else {
                 log.info("Count of unmarked tables({}) is more than the threshold {}", unmarkedTableDtos.size(), config.getElasticSearchThresholdUnmarkedTablesDelete());
                 CounterWrapper.incrementCounter("dse.metacat.counter.unmarked.tables.threshold.crossed");

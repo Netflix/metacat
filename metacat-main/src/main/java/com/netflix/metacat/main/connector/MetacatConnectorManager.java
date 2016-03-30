@@ -14,19 +14,14 @@
 package com.netflix.metacat.main.connector;
 
 import com.facebook.presto.exception.CatalogNotFoundException;
-import com.facebook.presto.security.AccessControlManager;
 import com.facebook.presto.spi.ConnectorFactory;
-import com.facebook.presto.spi.NodeManager;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.main.presto.connector.ConnectorManager;
-import com.netflix.metacat.main.presto.index.IndexManager;
 import com.netflix.metacat.main.presto.metadata.HandleResolver;
 import com.netflix.metacat.main.presto.metadata.MetadataManager;
-import com.netflix.metacat.main.presto.split.PageSinkManager;
-import com.netflix.metacat.main.presto.split.PageSourceManager;
 import com.netflix.metacat.main.presto.split.SplitManager;
 import com.netflix.metacat.main.spi.MetacatCatalogConfig;
 import org.slf4j.Logger;
@@ -47,16 +42,10 @@ public class MetacatConnectorManager extends ConnectorManager {
 
     @Inject
     public MetacatConnectorManager(MetadataManager metadataManager,
-            AccessControlManager accessControlManager,
             SplitManager splitManager,
-            PageSourceManager pageSourceManager,
-            IndexManager indexManager,
-            PageSinkManager pageSinkManager,
             HandleResolver handleResolver,
-            Map<String, ConnectorFactory> connectorFactories,
-            NodeManager nodeManager) {
-        super(metadataManager, accessControlManager, splitManager, pageSourceManager, indexManager, pageSinkManager, handleResolver,
-                connectorFactories, nodeManager);
+            Map<String, ConnectorFactory> connectorFactories) {
+        super(metadataManager, splitManager, handleResolver, connectorFactories);
     }
 
     @Override

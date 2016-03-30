@@ -16,7 +16,6 @@ package com.netflix.metacat.thrift;
 import com.facebook.presto.hive.$internal.com.facebook.fb303.FacebookBase;
 import com.facebook.presto.hive.$internal.com.facebook.fb303.FacebookService;
 import com.facebook.presto.hive.$internal.com.facebook.fb303.fb_status;
-import com.facebook.presto.metadata.Metadata;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
@@ -138,21 +137,19 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     private final String catalogName;
     private final Config config;
     private final HiveConverters hiveConverters;
-    private final Metadata metadata;
     private final PartitionV1 partV1;
     private final TypeConverterProvider typeConverterProvider;
     private final MetacatV1 v1;
     private final PartitionExpressionProxy partitionExpressionProxy = new PartitionExpressionForMetastore();
 
     public CatalogThriftHiveMetastore(Config config, TypeConverterProvider typeConverterProvider,
-            HiveConverters hiveConverters, Metadata metadata, MetacatV1 metacatV1, PartitionV1 partitionV1,
+            HiveConverters hiveConverters, MetacatV1 metacatV1, PartitionV1 partitionV1,
             String catalogName) {
         super("CatalogThriftHiveMetastore");
 
         this.config = checkNotNull(config, "config is null");
         this.typeConverterProvider = checkNotNull(typeConverterProvider, "type converters is null");
         this.hiveConverters = checkNotNull(hiveConverters, "hive converters is null");
-        this.metadata = checkNotNull(metadata, "metadata is null");
         this.v1 = checkNotNull(metacatV1, "metacat api is null");
         this.partV1 = checkNotNull(partitionV1, "partition api is null");
         this.catalogName = normalizeIdentifier(checkNotNull(catalogName, "catalog name is required"));
@@ -305,7 +302,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
                     QualifiedName newName = QualifiedName
                             .ofTable(catalogName, new_tbl.getDbName(), new_tbl.getTableName());
 
-                    TableDto dto = hiveConverters.hiveToMetacatTable(newName, new_tbl, metadata.getTypeManager());
+                    TableDto dto = hiveConverters.hiveToMetacatTable(newName, new_tbl);
                     if (!oldName.equals(newName)) {
                         v1.renameTable(catalogName, oldName.getDatabaseName(), oldName.getTableName(),
                                 newName.getTableName());
@@ -410,7 +407,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             String tbl_name = normalizeIdentifier(tbl.getTableName());
             QualifiedName name = QualifiedName.ofTable(catalogName, dbname, tbl_name);
 
-            TableDto dto = hiveConverters.hiveToMetacatTable(name, tbl, metadata.getTypeManager());
+            TableDto dto = hiveConverters.hiveToMetacatTable(name, tbl);
             v1.createTable(catalogName, dbname, tbl_name, dto);
             return null;
         });
@@ -924,7 +921,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             String tbl_name = normalizeIdentifier(_tbl_name);
 
             TableDto dto = v1.getTable(catalogName, dbname, tbl_name, true, true, true);
-            return hiveConverters.metacatToHiveTable(dto, metadata.getTypeManager());
+            return hiveConverters.metacatToHiveTable(dto);
         });
     }
 
@@ -959,7 +956,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             return tbl_names.stream()
                             .map(CatalogThriftHiveMetastore::normalizeIdentifier)
                             .map(name -> v1.getTable(catalogName, dbname, name, true, true, true))
-                            .map(tableDto -> hiveConverters.metacatToHiveTable(tableDto, metadata.getTypeManager()))
+                            .map(tableDto -> hiveConverters.metacatToHiveTable(tableDto))
                             .collect(Collectors.toList());
         });
     }

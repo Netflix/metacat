@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.thrift;
 
-import com.facebook.presto.metadata.Metadata;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -30,24 +29,22 @@ public class CatalogThriftServiceFactoryImpl implements CatalogThriftServiceFact
     private final Config config;
     private final HiveConverters hiveConverters;
     private final MetacatV1 metacatV1;
-    private final Metadata metadata;
     private final PartitionV1 partitionV1;
     private final TypeConverterProvider typeConverterProvider;
     private final LoadingCache<CacheKey, CatalogThriftService> cache = CacheBuilder.newBuilder()
             .build(new CacheLoader<CacheKey, CatalogThriftService>() {
                 public CatalogThriftService load(CacheKey key) {
-                    return new CatalogThriftService(config, typeConverterProvider, hiveConverters, metadata, metacatV1,
+                    return new CatalogThriftService(config, typeConverterProvider, hiveConverters, metacatV1,
                             partitionV1, key.catalogName, key.portNumber);
                 }
             });
 
     @Inject
     public CatalogThriftServiceFactoryImpl(Config config, TypeConverterProvider typeConverterProvider,
-            HiveConverters hiveConverters, Metadata metadata, MetacatV1 metacatV1, PartitionV1 partitionV1) {
+            HiveConverters hiveConverters, MetacatV1 metacatV1, PartitionV1 partitionV1) {
         this.config = config;
         this.typeConverterProvider = typeConverterProvider;
         this.hiveConverters = hiveConverters;
-        this.metadata = metadata;
         this.metacatV1 = metacatV1;
         this.partitionV1 = partitionV1;
     }

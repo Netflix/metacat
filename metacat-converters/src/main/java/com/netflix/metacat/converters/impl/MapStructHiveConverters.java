@@ -75,7 +75,7 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         return Date.from(instant);
     }
 
-    private FieldDto hiveToMetacatField(TypeManager typeManager, FieldSchema field, boolean isPartitionKey) {
+    private FieldDto hiveToMetacatField(FieldSchema field, boolean isPartitionKey) {
         FieldDto dto = new FieldDto();
         dto.setName(field.getName());
         dto.setType(field.getType());
@@ -95,7 +95,7 @@ public abstract class MapStructHiveConverters implements HiveConverters {
     }
 
     @Override
-    public TableDto hiveToMetacatTable(QualifiedName name, Table table, TypeManager typeManager) {
+    public TableDto hiveToMetacatTable(QualifiedName name, Table table) {
         TableDto dto = new TableDto();
         dto.setSerde(toStorageDto(table.getSd(), table.getOwner()));
         dto.setAudit(new AuditDto());
@@ -109,10 +109,10 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         List<FieldSchema> partitionColumns = table.getPartitionKeys();
         List<FieldDto> allFields = Lists.newArrayListWithCapacity(nonPartitionColumns.size() + partitionColumns.size());
         nonPartitionColumns.stream()
-                           .map(field -> this.hiveToMetacatField(typeManager, field, false))
+                           .map(field -> this.hiveToMetacatField(field, false))
                            .forEachOrdered(allFields::add);
         partitionColumns.stream()
-                        .map(field -> this.hiveToMetacatField(typeManager, field, true))
+                        .map(field -> this.hiveToMetacatField(field, true))
                         .forEachOrdered(allFields::add);
         dto.setFields(allFields);
 
@@ -151,7 +151,7 @@ public abstract class MapStructHiveConverters implements HiveConverters {
     }
 
     @Override
-    public Table metacatToHiveTable(TableDto dto, TypeManager typeManager) {
+    public Table metacatToHiveTable(TableDto dto) {
         Table table = new Table();
         String tableName = "";
         String databaseName = "";

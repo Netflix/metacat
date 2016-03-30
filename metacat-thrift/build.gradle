@@ -19,11 +19,7 @@ dependencies {
     compile "com.google.inject.extensions:guice-persist:${guice_version}"
     compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
     compile "com.google.inject.extensions:guice-servlet:${guice_version}"
-    compile "com.facebook.presto:presto-spi:${presto_version}"
     compile "com.facebook.presto:presto-hive-hadoop2:${presto_version}"
-
-    /* compile 'netflix:metacat-client:latest.snapshot' */
-    /* compile 'netflix:metacat-netflix-common:latest.snapshot' */
 
     /* compile 'commons-lang:commons-lang:2.6' */
     /* compile 'org.apache.hive:hive-common:1.0.1' */

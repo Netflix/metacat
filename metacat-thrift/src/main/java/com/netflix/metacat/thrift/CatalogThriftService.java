@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.thrift;
 
-import com.facebook.presto.metadata.Metadata;
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.PartitionV1;
 import com.netflix.metacat.common.server.Config;
@@ -33,19 +32,17 @@ public class CatalogThriftService {
     private final Config config;
     private final HiveConverters hiveConverters;
     private final MetacatV1 metacatV1;
-    private final Metadata metadata;
     private final PartitionV1 partitionV1;
     private final int portNumber;
     private final TypeConverterProvider typeConverterProvider;
     private TServer server;
 
     public CatalogThriftService(Config config, TypeConverterProvider typeConverterProvider,
-            HiveConverters hiveConverters, Metadata metadata, MetacatV1 metacatV1, PartitionV1 partitionV1,
+            HiveConverters hiveConverters, MetacatV1 metacatV1, PartitionV1 partitionV1,
             String catalogName, int portNumber) {
         this.config = config;
         this.hiveConverters = hiveConverters;
         this.typeConverterProvider = typeConverterProvider;
-        this.metadata = metadata;
         this.metacatV1 = metacatV1;
         this.partitionV1 = partitionV1;
         this.catalogName = catalogName;
@@ -55,7 +52,7 @@ public class CatalogThriftService {
     public void start() throws Exception {
         log.info("initializing thrift server for {} on port {}", catalogName, portNumber);
         CatalogThriftHiveMetastore handler = new CatalogThriftHiveMetastore(config, typeConverterProvider,
-                hiveConverters, metadata, metacatV1, partitionV1, catalogName);
+                hiveConverters, metacatV1, partitionV1, catalogName);
         ThriftHiveMetastore.Processor<CatalogThriftHiveMetastore> processor = new ThriftHiveMetastore.Processor<>(
                 handler);
 

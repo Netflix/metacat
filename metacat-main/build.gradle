@@ -25,9 +25,6 @@ dependencies {
     compile 'com.github.rholder:guava-retrying:2.0.0'
 
     compile "com.facebook.presto:presto-main:${presto_version}"
-    compile "com.facebook.presto:presto-hive:${presto_version}"
-    compile "com.facebook.presto:presto-mysql:${presto_version}"
-    compile "com.facebook.presto:presto-postgresql:${presto_version}"
     compile "com.facebook.presto:presto-cassandra:${presto_version}"
     compile "com.facebook.presto:presto-example-http:${presto_version}"
 

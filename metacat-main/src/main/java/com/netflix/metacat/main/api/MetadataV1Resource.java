@@ -43,14 +43,12 @@ import static com.netflix.metacat.main.api.RequestWrapper.requestWrapper;
 public class MetadataV1Resource implements MetadataV1 {
     private final UserMetadataService userMetadataService;
     private final MetacatServiceHelper helper;
-    private final MetacatEventBus eventBus;
     @Inject
     public MetadataV1Resource(UserMetadataService userMetadataService,
             MetacatServiceHelper helper,
             MetacatEventBus eventBus) {
         this.userMetadataService = userMetadataService;
         this.helper = helper;
-        this.eventBus = eventBus;
     }
 
     @Override
@@ -102,7 +100,7 @@ public class MetadataV1Resource implements MetadataV1 {
                     try {
                         dto = service.get(name);
                     } catch(Exception ignored){}
-                    if( force || dto != null) {
+                    if( (force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
                         helper.postPreUpdateEvent(name, dto, metacatContext);
                         userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
                         if( dto instanceof  HasDefinitionMetadata) {

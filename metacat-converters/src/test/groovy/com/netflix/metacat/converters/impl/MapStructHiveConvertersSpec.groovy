@@ -118,7 +118,7 @@ class MapStructHiveConvertersSpec extends Specification {
         TableDto dto = new TableDto()
 
         when:
-        def table = converter.metacatToHiveTable(dto, typeManager)
+        def table = converter.metacatToHiveTable(dto)
 
         then:
         table
@@ -144,7 +144,7 @@ class MapStructHiveConvertersSpec extends Specification {
 
     def 'test metacatToHiveTable'() {
         when:
-        def table = converter.metacatToHiveTable(dto, typeManager)
+        def table = converter.metacatToHiveTable(dto)
 
         then:
         table.dbName == databaseName
@@ -207,7 +207,7 @@ class MapStructHiveConvertersSpec extends Specification {
 
     def 'test hiveToMetacatTable'() {
         when:
-        def dto = converter.hiveToMetacatTable(name, table, typeManager)
+        def dto = converter.hiveToMetacatTable(name, table)
 
         then:
         hiveTypeConverter.toType('VARCHAR', typeManager) >> VarcharType.VARCHAR

@@ -25,11 +25,11 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import java.util.List;
 
 public interface HiveConverters {
-    TableDto hiveToMetacatTable(QualifiedName name, Table table, TypeManager typeManager);
+    TableDto hiveToMetacatTable(QualifiedName name, Table table);
 
     Database metacatToHiveDatabase(DatabaseDto databaseDto);
 
-    Table metacatToHiveTable(TableDto dto, TypeManager typeManager);
+    Table metacatToHiveTable(TableDto dto);
 
     PartitionDto hiveToMetacatPartition(TableDto tableDto, Partition partition);
 
