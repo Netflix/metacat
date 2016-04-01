@@ -141,7 +141,7 @@ public class QualifiedName implements Serializable {
 
     public static QualifiedName ofPartition(@Nonnull QualifiedName tableName, @Nonnull PartitionDto partitionDto) {
         return ofPartition(
-                tableName.tableName,
+                tableName.catalogName,
                 tableName.databaseName,
                 tableName.tableName,
                 partitionDto.getName().getPartitionName()
