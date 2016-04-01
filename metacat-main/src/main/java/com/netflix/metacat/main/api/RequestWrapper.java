@@ -65,7 +65,7 @@ public class RequestWrapper {
             throw new MetacatAlreadyExistsException(e.getMessage());
         } catch (NotFoundException|MetacatNotFoundException e) {
             log.error(e.getMessage(), e);
-            throw new MetacatNotFoundException("Unable to locate: " + name);
+            throw new MetacatNotFoundException(String.format("Unable to locate for %s. Details: %s", name, e.getMessage()));
         } catch (InvalidMetaException | IllegalArgumentException e) {
             log.error(e.getMessage(), e);
             throw new MetacatBadRequestException(String.format("%s.%s",e.getMessage(), e.getCause()==null?"":e.getCause().getMessage()));

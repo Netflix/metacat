@@ -19,8 +19,10 @@ import com.facebook.presto.spi.ConnectorPartition;
 import com.facebook.presto.spi.ConnectorPartitionResult;
 import com.facebook.presto.spi.Pageable;
 import com.facebook.presto.spi.SavePartitionResult;
+import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePartitionName;
 import com.facebook.presto.spi.Sort;
+import com.facebook.presto.spi.TableNotFoundException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -184,7 +186,10 @@ public class PartitionServiceImpl implements PartitionService {
         TagList tags = BasicTagList.of("catalog", name.getCatalogName(), "database", name.getDatabaseName(), "table", name.getTableName());
         DynamicGauge.set(LogConstants.GaugeDeletePartitions.toString(), tags, partitionIds.size());
         Optional<TableHandle> tableHandle = tableService.getTableHandle(name);
-        if (tableHandle.isPresent() && !partitionIds.isEmpty()) {
+        if( !tableHandle.isPresent()){
+            throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
+        }
+        if (!partitionIds.isEmpty()) {
             ConnectorPartitionResult partitionResult = splitManager.getPartitions(tableHandle.get(), null, partitionIds, null, null, false);
             log.info("Deleting partitions with names {} for {}", partitionIds, name);
             splitManager.deletePartitions( tableHandle.get(), partitionIds);

@@ -27,8 +27,22 @@ public class PartitionNotFoundException extends NotFoundException{
     }
 
     public PartitionNotFoundException(SchemaTableName tableName, String partitionId, Throwable cause) {
-        super(String.format("Partition %s not found for table %s", tableName, partitionId==null?"": partitionId), cause);
+        this(tableName, partitionId,
+                String.format("Partition %s not found for table %s", partitionId == null ? "" : partitionId, tableName),
+                cause);
+    }
+
+    public PartitionNotFoundException(SchemaTableName tableName, String partitionId, String message, Throwable cause) {
+        super(message, cause);
         this.tableName = tableName;
         this.partitionId = partitionId;
+    }
+
+    public SchemaTableName getTableName() {
+        return tableName;
+    }
+
+    public String getPartitionId() {
+        return partitionId;
     }
 }

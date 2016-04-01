@@ -69,7 +69,7 @@ public class MetacatException extends WebApplicationException {
                         .type(MediaType.APPLICATION_JSON_TYPE)
                         .entity(metacatJson.emptyObjectNode().put("error", message))
                         .build(),
-                cause
+                cause == null? new Exception(message): cause
         );
     }
 
@@ -89,7 +89,7 @@ public class MetacatException extends WebApplicationException {
                         .type(MediaType.APPLICATION_JSON_TYPE)
                         .entity(metacatJson.emptyObjectNode().put("error", message))
                         .build(),
-                cause);
+                cause == null? new Exception(message): cause);
     }
 
     /**

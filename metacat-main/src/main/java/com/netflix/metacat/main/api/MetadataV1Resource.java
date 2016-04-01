@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.main.api;
 
+import com.facebook.presto.spi.NotFoundException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatContext;
@@ -24,7 +25,6 @@ import com.netflix.metacat.common.dto.DataMetadataGetRequestDto;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
 import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.SortOrder;
-import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.main.services.MetacatService;
@@ -45,8 +45,7 @@ public class MetadataV1Resource implements MetadataV1 {
     private final MetacatServiceHelper helper;
     @Inject
     public MetadataV1Resource(UserMetadataService userMetadataService,
-            MetacatServiceHelper helper,
-            MetacatEventBus eventBus) {
+            MetacatServiceHelper helper) {
         this.userMetadataService = userMetadataService;
         this.helper = helper;
     }
@@ -99,7 +98,7 @@ public class MetadataV1Resource implements MetadataV1 {
                     BaseDto dto = null;
                     try {
                         dto = service.get(name);
-                    } catch(Exception ignored){}
+                    } catch(NotFoundException ignored){}
                     if( (force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
                         helper.postPreUpdateEvent(name, dto, metacatContext);
                         userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
