@@ -40,6 +40,7 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicStringProperty tagServiceUserAdmin;
     private final DynamicStringProperty metacatVersion;
     private final DynamicBooleanProperty usePigTypes;
+    private final DynamicIntProperty serviceMaxNumberOfThreads;
 
     public ArchaiusConfigImpl() {
         this(DynamicPropertyFactory.getInstance());
@@ -76,6 +77,8 @@ public class ArchaiusConfigImpl implements Config {
         this.pluginConfigLocation = factory.getStringProperty("metacat.plugin.config.location", null);
         this.tagServiceUserAdmin = factory.getStringProperty("metacat.tag_service.user_admin", "admin");
         this.usePigTypes = factory.getBooleanProperty("metacat.franklin.connector.use.pig.type", true);
+        this.serviceMaxNumberOfThreads = factory.getIntProperty("metacat.service.max.number.threads", 50);
+
     }
 
     @Override
@@ -181,5 +184,10 @@ public class ArchaiusConfigImpl implements Config {
     @Override
     public boolean isUsePigTypes() {
         return usePigTypes.get();
+    }
+
+    @Override
+    public int getServiceMaxNumberOfThreads() {
+        return serviceMaxNumberOfThreads.get();
     }
 }

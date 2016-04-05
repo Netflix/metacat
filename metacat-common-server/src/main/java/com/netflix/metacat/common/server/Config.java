@@ -35,4 +35,5 @@ public interface Config {
     String getTagServiceUserAdmin();
     boolean isEpochInSeconds();
     boolean isUsePigTypes();
+    int getServiceMaxNumberOfThreads();
 }

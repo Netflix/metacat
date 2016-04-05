@@ -376,7 +376,7 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public boolean exists(QualifiedName name) {
+    public boolean exists(@Nonnull QualifiedName name) {
         return get(name, true, false, false).isPresent();
     }
 

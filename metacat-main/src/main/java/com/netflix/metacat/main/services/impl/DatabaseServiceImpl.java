@@ -149,7 +149,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
-    public boolean exists(QualifiedName name) {
+    public boolean exists(@Nonnull QualifiedName name) {
         CatalogDto catalogDto = catalogService.get(QualifiedName.ofCatalog(name.getCatalogName()));
         return catalogDto.getDatabases().contains(name.getDatabaseName());
     }

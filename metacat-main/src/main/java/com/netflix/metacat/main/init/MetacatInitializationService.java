@@ -22,6 +22,7 @@ import com.google.inject.spi.ProviderInstanceBinding;
 import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.util.ThreadServiceManager;
 import com.netflix.metacat.main.manager.PluginManager;
 import com.netflix.metacat.main.presto.metadata.CatalogManager;
 import com.netflix.metacat.main.services.search.MetacatEventHandlers;
@@ -72,7 +73,8 @@ public class MetacatInitializationService {
         injector.getInstance(CatalogManager.class).loadCatalogs();
         // Initialize user metadata service
         injector.getInstance(UserMetadataService.class).start();
-
+        // Initialize the default thread pool for use in the service
+        injector.getInstance(ThreadServiceManager.class).start();
         // Start the thrift services
         MetacatThriftService thriftService = injector.getInstance(MetacatThriftService.class);
         thriftService.start();
@@ -88,7 +90,7 @@ public class MetacatInitializationService {
 
     public void stop() throws Exception {
         injector.getInstance(UserMetadataService.class).stop();
-
+        injector.getInstance(ThreadServiceManager.class).stop();
         // Start the thrift services
         MetacatThriftService thriftService = injector.getInstance(MetacatThriftService.class);
         thriftService.stop();

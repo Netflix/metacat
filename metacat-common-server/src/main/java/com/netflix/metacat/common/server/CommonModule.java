@@ -27,6 +27,7 @@ import com.netflix.metacat.common.model.TagItem;
 import com.netflix.metacat.common.server.events.DeadEventHandler;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.util.DataSourceManager;
+import com.netflix.metacat.common.util.ThreadServiceManager;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -51,6 +52,7 @@ public class CommonModule extends AbstractModule {
         // Injecting statics is a bad pattern and should be avoided, but I am doing it as a first step to allow
         // us to remove the hard coded username.
         binder().requestStaticInjection(Lookup.class, TagItem.class);
+        bind(ThreadServiceManager.class).asEagerSingleton();
     }
 
     protected MetacatEventBus createMetacatEventBus(Config config) {

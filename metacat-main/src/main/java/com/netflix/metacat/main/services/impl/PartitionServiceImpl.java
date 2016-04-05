@@ -247,8 +247,8 @@ public class PartitionServiceImpl implements PartitionService {
     }
 
     @Override
-    public boolean exists(QualifiedName name) {
-        return count(name)==1;
+    public boolean exists(@Nonnull QualifiedName name) {
+        return get(name)!=null;
     }
 
     private PartitionDto toPartitionDto(QualifiedName tableName, ConnectorPartition partition) {

@@ -324,7 +324,7 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public boolean exists(QualifiedName name) {
+    public boolean exists(@Nonnull QualifiedName name) {
         QualifiedName viewQName = QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return tableService.exists(viewQName);
     }
