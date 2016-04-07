@@ -25,8 +25,11 @@ import com.facebook.presto.spi.Sort;
 import com.facebook.presto.spi.TableNotFoundException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.HasMetadata;
 import com.netflix.metacat.common.dto.PartitionDto;
@@ -35,6 +38,7 @@ import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.monitoring.DynamicGauge;
 import com.netflix.metacat.common.monitoring.LogConstants;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.util.ThreadServiceManager;
 import com.netflix.metacat.converters.PrestoConverters;
 import com.netflix.metacat.main.presto.split.SplitManager;
 import com.netflix.metacat.main.services.CatalogService;
@@ -52,6 +56,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class PartitionServiceImpl implements PartitionService {
@@ -68,6 +73,8 @@ public class PartitionServiceImpl implements PartitionService {
     UserMetadataService userMetadataService;
     @Inject
     SessionProvider sessionProvider;
+    @Inject
+    ThreadServiceManager threadServiceManager;
 
     private ConnectorPartitionResult getPartitionResult(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable, boolean includePartitionDetails) {
         ConnectorPartitionResult result = null;
@@ -95,13 +102,23 @@ public class PartitionServiceImpl implements PartitionService {
                     })
                     .collect(Collectors.toList());
             if(includeUserDefinitionMetadata || includeUserDataMetadata){
-                Map<String,ObjectNode> dataMetadataMap = includeUserDataMetadata?userMetadataService.getDataMetadataMap(uris):
-                        Maps.newHashMap();
-                Map<String,ObjectNode> definitionMetadataMap = includeUserDefinitionMetadata?userMetadataService.getDefinitionMetadataMap(names):
-                        Maps.newHashMap();
-                result.stream().forEach(partitionDto -> userMetadataService.populateMetadata(partitionDto
-                        , definitionMetadataMap.get(partitionDto.getName().toString())
-                        , dataMetadataMap.get(partitionDto.getDataUri())));
+                List<ListenableFuture<Map<String,ObjectNode>>> futures = Lists.newArrayList();
+                futures.add(threadServiceManager.getExecutor().submit(() -> includeUserDefinitionMetadata ?
+                        userMetadataService.getDefinitionMetadataMap(names) :
+                        Maps.newHashMap()));
+                futures.add(threadServiceManager.getExecutor().submit(() -> includeUserDataMetadata?
+                        userMetadataService.getDataMetadataMap(uris):
+                        Maps.newHashMap()));
+                try {
+                    List<Map<String,ObjectNode>> metadataResults = Futures.successfulAsList(futures).get(1, TimeUnit.HOURS);
+                    Map<String,ObjectNode> definitionMetadataMap = metadataResults.get(0);
+                    Map<String,ObjectNode> dataMetadataMap = metadataResults.get(1);
+                    result.stream().forEach(partitionDto -> userMetadataService.populateMetadata(partitionDto
+                            , definitionMetadataMap.get(partitionDto.getName().toString())
+                            , dataMetadataMap.get(partitionDto.getDataUri())));
+                } catch (Exception e) {
+                    Throwables.propagate(e);
+                }
             }
         }
         TagList tags = BasicTagList.of("catalog", name.getCatalogName(), "database", name.getDatabaseName(), "table", name.getTableName());
@@ -154,12 +171,12 @@ public class PartitionServiceImpl implements PartitionService {
 
         // Save metadata
         log.info("Saving user metadata for partitions for {}", name);
-        userMetadataService.saveMetadatas(session.getUser(), partitionDtos, true);
         // delete metadata
         if( !deletePartitions.isEmpty()) {
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIdsForDeletes, name);
             userMetadataService.deleteMetadatas(deletePartitions, false);
         }
+        userMetadataService.saveMetadatas(session.getUser(), partitionDtos, true);
 
         result.setUpdated(savePartitionResult.getUpdated());
         result.setAdded(savePartitionResult.getAdded());
@@ -204,18 +221,27 @@ public class PartitionServiceImpl implements PartitionService {
 
     @Override
     public List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch){
-        List<QualifiedName> result = Lists.newArrayList();
-
+        List<QualifiedName> result = Lists.newCopyOnWriteArrayList();
+        List<ListenableFuture<Void>> futures = Lists.newArrayList();
         catalogService.getCatalogNames().stream().forEach(catalog -> {
             Session session = sessionProvider.getSession(QualifiedName.ofCatalog(catalog.getCatalogName()));
-            List<SchemaTablePartitionName> schemaTablePartitionNames = splitManager.getPartitionNames( session, uri, prefixSearch);
-            List<QualifiedName> qualifiedNames = schemaTablePartitionNames.stream().map(
-                    schemaTablePartitionName -> QualifiedName.ofPartition( catalog.getConnectorName()
-                            , schemaTablePartitionName.getTableName().getSchemaName()
-                            , schemaTablePartitionName.getTableName().getTableName()
-                            , schemaTablePartitionName.getPartitionId())).collect(Collectors.toList());
-            result.addAll(qualifiedNames);
+            futures.add(threadServiceManager.getExecutor().submit(() -> {
+                List<SchemaTablePartitionName> schemaTablePartitionNames = splitManager
+                        .getPartitionNames(session, uri, prefixSearch);
+                List<QualifiedName> qualifiedNames = schemaTablePartitionNames.stream().map(
+                        schemaTablePartitionName -> QualifiedName.ofPartition(catalog.getConnectorName()
+                                , schemaTablePartitionName.getTableName().getSchemaName()
+                                , schemaTablePartitionName.getTableName().getTableName()
+                                , schemaTablePartitionName.getPartitionId())).collect(Collectors.toList());
+                result.addAll(qualifiedNames);
+                return null;
+            }));
         });
+        try {
+            Futures.allAsList(futures).get(1, TimeUnit.HOURS);
+        } catch (Exception e) {
+            Throwables.propagate(e);
+        }
         return result;
     }
 
