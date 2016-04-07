@@ -20,18 +20,27 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static com.facebook.presto.type.FloatType.FLOAT;
+import static com.facebook.presto.type.IntType.INT;
+import static com.facebook.presto.type.TinyIntType.TINY_INT;
+import static com.facebook.presto.type.SmallIntType.SMALL_INT;
+import static com.facebook.presto.type.DecimalType.DECIMAL;
+import static com.facebook.presto.type.CharType.CHAR;
+import static com.facebook.presto.type.StringType.STRING;
+
 class HiveTypeConverterSpec extends Specification {
     @Shared
     HiveTypeConverter converter = new HiveTypeConverter()
     @Shared
-    TypeManager typeManager = new TypeRegistry()
+    TypeManager typeManager = new TypeRegistry([FLOAT,INT, TINY_INT, SMALL_INT, DECIMAL, CHAR, STRING] as Set)
 
     @Unroll
     def 'can convert "#typeString" to a presto type and back'(String typeString) {
         expect:
         def prestoType = converter.toType(typeString, typeManager)
         def hiveType = converter.fromType(prestoType)
-        prestoType == converter.toType(hiveType, typeManager)
+        def prestoTypeFromHiveType = converter.toType(hiveType, typeManager)
+        prestoTypeFromHiveType == prestoType
         where:
         typeString << [
                 'tinyint',
@@ -45,8 +54,8 @@ class HiveTypeConverterSpec extends Specification {
                 'timestamp',
                 'date',
                 'string',
-                'varchar(10)',
-                'char(10)',
+                //'varchar(10)',
+                //'char(10)',
                 'boolean',
                 'binary',
                 'array<bigint>',
