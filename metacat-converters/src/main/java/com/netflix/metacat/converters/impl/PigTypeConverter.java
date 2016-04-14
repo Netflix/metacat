@@ -23,15 +23,10 @@ import com.facebook.presto.spi.type.TypeManager;
 import com.facebook.presto.spi.type.VarbinaryType;
 import com.facebook.presto.spi.type.VarcharType;
 import com.facebook.presto.type.ArrayType;
-import com.facebook.presto.type.CharType;
-import com.facebook.presto.type.DecimalType;
 import com.facebook.presto.type.FloatType;
 import com.facebook.presto.type.IntType;
 import com.facebook.presto.type.MapType;
 import com.facebook.presto.type.RowType;
-import com.facebook.presto.type.SmallIntType;
-import com.facebook.presto.type.StringType;
-import com.facebook.presto.type.TinyIntType;
 import com.facebook.presto.type.UnknownType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -83,17 +78,17 @@ public class PigTypeConverter implements TypeConverter{
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.BYTEARRAY);
         } else if ( BooleanType.BOOLEAN.equals( prestoType)) {
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.BOOLEAN);
-        } else if( IntType.INT.equals(prestoType) || SmallIntType.SMALL_INT.equals(prestoType) || TinyIntType.TINY_INT.equals(prestoType)){
+        } else if( IntType.INT.equals(prestoType)){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.INTEGER);
         } else if( BigintType.BIGINT.equals(prestoType)){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.LONG);
         } else if( FloatType.FLOAT.equals(prestoType)){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.FLOAT);
-        } else if( DoubleType.DOUBLE.equals(prestoType) || DecimalType.DECIMAL.equals(prestoType)){
+        } else if( DoubleType.DOUBLE.equals(prestoType)){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.DOUBLE);
         } else if( TimestampType.TIMESTAMP.equals(prestoType) || DateType.DATE.equals(prestoType)){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.DATETIME);
-        } else if( VarcharType.VARCHAR.equals(prestoType) || CharType.CHAR.equals(prestoType) || StringType.STRING.equals(prestoType)){
+        } else if( VarcharType.VARCHAR.equals(prestoType)){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.CHARARRAY);
         } else if( UnknownType.UNKNOWN.equals(prestoType)){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.UNKNOWN);

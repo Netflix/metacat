@@ -53,14 +53,15 @@ public final class IntType extends AbstractFixedWidthType {
 
     @Override
     public boolean equalTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition) {
-        int leftValue = leftBlock.getInt(leftPosition, 0);
-        int rightValue = rightBlock.getInt(rightPosition, 0);
+        long leftValue = leftBlock.getInt(leftPosition, 0);
+        long rightValue = rightBlock.getInt(rightPosition, 0);
         return leftValue == rightValue;
     }
 
     @Override
     public int hash(Block block, int position) {
-        return block.getInt(position, 0);
+        long value = block.getInt(position, 0);
+        return (int) (value ^ (value >>> 32));
     }
 
     @Override

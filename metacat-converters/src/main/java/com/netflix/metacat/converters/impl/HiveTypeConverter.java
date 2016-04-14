@@ -49,25 +49,15 @@ import static com.facebook.presto.spi.type.VarbinaryType.VARBINARY;
 import static com.facebook.presto.spi.type.VarcharType.VARCHAR;
 import static com.facebook.presto.type.FloatType.FLOAT;
 import static com.facebook.presto.type.IntType.INT;
-import static com.facebook.presto.type.TinyIntType.TINY_INT;
-import static com.facebook.presto.type.SmallIntType.SMALL_INT;
-import static com.facebook.presto.type.DecimalType.DECIMAL;
-import static com.facebook.presto.type.CharType.CHAR;
-import static com.facebook.presto.type.StringType.STRING;
 import static org.apache.hadoop.hive.serde.serdeConstants.BIGINT_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.BINARY_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.BOOLEAN_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.CHAR_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.DATE_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.DECIMAL_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.DOUBLE_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.FLOAT_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.INT_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.TINYINT_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.SMALLINT_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.STRING_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.TIMESTAMP_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.VARCHAR_TYPE_NAME;
 
 public class HiveTypeConverter implements TypeConverter {
     private static Type getPrimitiveType(PrimitiveObjectInspector.PrimitiveCategory primitiveCategory) {
@@ -75,9 +65,7 @@ public class HiveTypeConverter implements TypeConverter {
         case BOOLEAN:
             return BOOLEAN;
         case BYTE:
-            return TINY_INT;
         case SHORT:
-            return SMALL_INT;
         case INT:
             return INT;
         case LONG:
@@ -85,13 +73,10 @@ public class HiveTypeConverter implements TypeConverter {
         case FLOAT:
             return FLOAT;
         case DOUBLE:
-            return DOUBLE;
         case DECIMAL:
-            return DECIMAL;
+            return DOUBLE;
         case CHAR:
-            return CHAR;
         case STRING:
-            return STRING;
         case VARCHAR:
             return VARCHAR;
         case DATE:
@@ -153,10 +138,6 @@ public class HiveTypeConverter implements TypeConverter {
     public String fromType(Type type) {
         if (BOOLEAN.equals(type)) {
             return BOOLEAN_TYPE_NAME;
-        } else if (TINY_INT.equals(type)) {
-            return TINYINT_TYPE_NAME;
-        } else if (SMALL_INT.equals(type)) {
-            return SMALLINT_TYPE_NAME;
         } else if (INT.equals(type)) {
             return INT_TYPE_NAME;
         } else if (BIGINT.equals(type)) {
@@ -165,14 +146,8 @@ public class HiveTypeConverter implements TypeConverter {
             return FLOAT_TYPE_NAME;
         } else if (DOUBLE.equals(type)) {
             return DOUBLE_TYPE_NAME;
-        } else if (DECIMAL.equals(type)) {
-            return DECIMAL_TYPE_NAME;
-        } else if (CHAR.equals(type)) {
-            return CHAR_TYPE_NAME;
-        } else if (STRING.equals(type)) {
-            return STRING_TYPE_NAME;
         } else if (VARCHAR.equals(type)) {
-            return VARCHAR_TYPE_NAME;
+            return STRING_TYPE_NAME;
         } else if (VARBINARY.equals(type)) {
             return BINARY_TYPE_NAME;
         } else if (DateType.DATE.equals(type)) {
