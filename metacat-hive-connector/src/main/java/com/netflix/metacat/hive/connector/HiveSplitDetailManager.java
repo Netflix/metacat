@@ -188,6 +188,7 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
                         existingPartitionIds.add(partitionName);
                         Partition existingPartition = ConverterUtil.toPartition(tableName, partition);
                         if( alterIfExists){
+                            existingPartition.setParameters(hivePartition.getParameters());
                             existingPartition.setCreateTime(hivePartition.getCreateTime());
                             existingHivePartitions.add(existingPartition);
                         } else {
@@ -242,7 +243,7 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
             if (!Strings.isNullOrEmpty(sd.getOutputFormat())) {
                 tableSdCopy.setOutputFormat(sd.getOutputFormat());
             }
-            if (sd.getParameters() != null) {
+            if (sd.getParameters() != null && !sd.getParameters().isEmpty()) {
                 tableSdCopy.setParameters(sd.getParameters());
             }
             if (sd.getSerdeInfo() != null) {
@@ -252,7 +253,7 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
                 if (!Strings.isNullOrEmpty(sd.getSerdeInfo().getSerializationLib())) {
                     tableSdCopy.getSerdeInfo().setSerializationLib(sd.getSerdeInfo().getSerializationLib());
                 }
-                if (sd.getSerdeInfo().getParameters() != null) {
+                if (sd.getSerdeInfo().getParameters() != null && !sd.getSerdeInfo().getParameters().isEmpty()) {
                     tableSdCopy.getSerdeInfo().setParameters(sd.getSerdeInfo().getParameters());
                 }
             }
