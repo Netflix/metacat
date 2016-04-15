@@ -43,6 +43,8 @@ public class PartitionsSaveRequestDto extends BaseDto{
     private List<String> partitionIdsForDeletes;
     // If true, we check if partition exists and drop it before adding it back. If false, we do not check and just add.
     private Boolean checkIfExists = true;
+    // If true, we alter if partition exists. If checkIfExists=false, then this is false too.
+    private Boolean alterIfExists = false;
 
     public ObjectNode getDataMetadata() {
         return dataMetadata;
@@ -82,6 +84,14 @@ public class PartitionsSaveRequestDto extends BaseDto{
 
     public void setCheckIfExists(Boolean checkIfExists) {
         this.checkIfExists = checkIfExists;
+    }
+
+    public Boolean getAlterIfExists() {
+        return alterIfExists;
+    }
+
+    public void setAlterIfExists(Boolean alterIfExists) {
+        this.alterIfExists = alterIfExists;
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {

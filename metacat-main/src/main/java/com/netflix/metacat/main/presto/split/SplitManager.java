@@ -79,10 +79,11 @@ public class SplitManager
     }
 
     public SavePartitionResult savePartitions(TableHandle table, List<ConnectorPartition> partitions
-            , List<String> partitionIdsForDeletes, boolean checkIfExists){
+            , List<String> partitionIdsForDeletes, boolean checkIfExists, boolean alterIfExists){
         ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
         if( splitManager instanceof ConnectorSplitDetailManager){
-            return ((ConnectorSplitDetailManager) splitManager).savePartitions(table.getConnectorHandle(), partitions, partitionIdsForDeletes, checkIfExists);
+            return ((ConnectorSplitDetailManager) splitManager).savePartitions(table.getConnectorHandle(), partitions, partitionIdsForDeletes,
+                    checkIfExists, alterIfExists);
         } else {
             throw new UnsupportedOperationException("Operation not supported");
         }

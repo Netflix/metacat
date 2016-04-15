@@ -140,7 +140,7 @@ public class PartitionServiceImpl implements PartitionService {
 
     @Override
     public PartitionsSaveResponseDto save(QualifiedName name, List<PartitionDto> partitionDtos
-            , List<String> partitionIdsForDeletes, boolean checkIfExists) {
+            , List<String> partitionIdsForDeletes, boolean checkIfExists, boolean alterIfExists) {
         PartitionsSaveResponseDto result = new PartitionsSaveResponseDto();
         // If no partitions are passed, then return
         if( partitionDtos == null || partitionDtos.isEmpty()){
@@ -167,7 +167,8 @@ public class PartitionServiceImpl implements PartitionService {
         // Save all the new and updated partitions
         //
         log.info("Saving partitions({}) for {}", partitions.size(), name);
-        SavePartitionResult savePartitionResult = splitManager.savePartitions(tableHandle, partitions, partitionIdsForDeletes, checkIfExists);
+        SavePartitionResult savePartitionResult = splitManager.savePartitions(tableHandle, partitions, partitionIdsForDeletes,
+                checkIfExists, alterIfExists);
 
         // Save metadata
         log.info("Saving user metadata for partitions for {}", name);
@@ -247,12 +248,12 @@ public class PartitionServiceImpl implements PartitionService {
 
     @Override
     public void create( @Nonnull QualifiedName name, @Nonnull PartitionDto dto) {
-        save( name, Lists.newArrayList(dto), null, false);
+        save( name, Lists.newArrayList(dto), null, false, false);
     }
 
     @Override
     public void update(@Nonnull QualifiedName name, @Nonnull PartitionDto dto) {
-        save( name, Lists.newArrayList(dto), null, true);
+        save( name, Lists.newArrayList(dto), null, true, false);
     }
 
     @Override

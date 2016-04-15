@@ -83,12 +83,19 @@ public interface MetacatHiveMetastore extends HiveMetastore {
     List<Partition> getPartitions(String dbName, String tableName, List<String> partitionIds) throws NoSuchObjectException;
 
     /**
-     * Saves the partitions.
+     * Saves partitions.
      * @param partitions list of partitions
      * @throws NoSuchObjectException if the table does not exist
      * @throws AlreadyExistsException if the partition already exist
      */
     void savePartitions(List<Partition> partitions) throws NoSuchObjectException, AlreadyExistsException;
+
+    /**
+     * Alter partitions.
+     * @param partitions list of partitions
+     * @throws NoSuchObjectException if the table does not exist
+     */
+    void alterPartitions(String dbName, String tableName, List<Partition> partitions) throws NoSuchObjectException;
 
     /**
      * Saves the partitions. Deletes the partitions with the given <code>delPartitionNames</code>

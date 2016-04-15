@@ -174,13 +174,13 @@ public class MViewServiceImpl implements MViewService {
         List<PartitionDto> partitionDtos = partitionService.list(name, filter, null, null, null, false, false, true);
         if( partitionDtos != null && !partitionDtos.isEmpty()) {
             log.info("Snapshot partitions({}) for view {}.", partitionDtos.size(), name);
-            savePartitions(name, partitionDtos, null, false, true);
+            savePartitions(name, partitionDtos, null, false, true, false);
         }
     }
 
     @Override
     public PartitionsSaveResponseDto savePartitions( @Nonnull QualifiedName name, List<PartitionDto> partitionDtos
-            , List<String> partitionIdsForDeletes, boolean merge, boolean checkIfExists) {
+            , List<String> partitionIdsForDeletes, boolean merge, boolean checkIfExists, boolean alterIfExists) {
         if( partitionDtos == null || partitionDtos.isEmpty()){
             return new PartitionsSaveResponseDto();
         }
@@ -202,9 +202,9 @@ public class MViewServiceImpl implements MViewService {
                         PartitionDto existingPartition = existingPartitionsMap.get(partitionName);
                         return mergePartition( partitionDto, existingPartition);
                     }).collect(Collectors.toList());
-            return partitionService.save( viewQName, mergedPartitions, partitionIdsForDeletes, checkIfExists);
+            return partitionService.save( viewQName, mergedPartitions, partitionIdsForDeletes, checkIfExists, alterIfExists);
         } else {
-            return partitionService.save( viewQName, partitionDtos, partitionIdsForDeletes, checkIfExists);
+            return partitionService.save( viewQName, partitionDtos, partitionIdsForDeletes, checkIfExists, alterIfExists);
         }
     }
 

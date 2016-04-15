@@ -440,14 +440,18 @@ public class PartitionV1Resource implements PartitionV1 {
                     "Partitions must be present");
 
             List<PartitionDto> partitionsToSave = partitionsSaveRequestDto.getPartitions();
-            boolean checkIfExists = partitionsSaveRequestDto.getCheckIfExists() == null?true:partitionsSaveRequestDto.getCheckIfExists();
+            boolean checkIfExists = partitionsSaveRequestDto.getCheckIfExists() == null?
+                    true:partitionsSaveRequestDto.getCheckIfExists();
+            boolean alterIfExists = partitionsSaveRequestDto.getAlterIfExists() == null?
+                    false:partitionsSaveRequestDto.getAlterIfExists();
             eventBus.post(new MetacatSaveTablePartitionPreEvent(name, partitionsToSave, metacatContext));
             List<String> partitionIdsForDeletes = partitionsSaveRequestDto.getPartitionIdsForDeletes();
             if( partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()){
                 eventBus.post(new MetacatDeleteTablePartitionPreEvent(name, partitionIdsForDeletes, metacatContext));
             }
 
-            PartitionsSaveResponseDto result = partitionService.save(name, partitionsToSave, partitionIdsForDeletes, checkIfExists);
+            PartitionsSaveResponseDto result = partitionService.save(name, partitionsToSave, partitionIdsForDeletes,
+                    checkIfExists, alterIfExists);
 
             // This metadata is actually for the table, if it is present update that
             if (partitionsSaveRequestDto.getDefinitionMetadata() != null
@@ -482,14 +486,18 @@ public class PartitionV1Resource implements PartitionV1 {
                     "Partitions must be present");
 
             List<PartitionDto> partitionsToSave = partitionsSaveRequestDto.getPartitions();
-            boolean checkIfExists = partitionsSaveRequestDto.getCheckIfExists() == null?true:partitionsSaveRequestDto.getCheckIfExists();
+            boolean checkIfExists = partitionsSaveRequestDto.getCheckIfExists() == null?
+                    true:partitionsSaveRequestDto.getCheckIfExists();
+            boolean alterIfExists = partitionsSaveRequestDto.getAlterIfExists() == null?
+                    false:partitionsSaveRequestDto.getAlterIfExists();
             eventBus.post(new MetacatSaveMViewPartitionPreEvent(name, partitionsToSave, metacatContext));
             List<String> partitionIdsForDeletes = partitionsSaveRequestDto.getPartitionIdsForDeletes();
             if( partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()){
                 eventBus.post(new MetacatDeleteMViewPartitionPreEvent(name, partitionIdsForDeletes, metacatContext));
             }
 
-            PartitionsSaveResponseDto result = mViewService.savePartitions(name, partitionsToSave, partitionIdsForDeletes, true, checkIfExists);
+            PartitionsSaveResponseDto result = mViewService.savePartitions(name, partitionsToSave, partitionIdsForDeletes, true,
+                    checkIfExists, alterIfExists);
 
             // This metadata is actually for the view, if it is present update that
             if (partitionsSaveRequestDto.getDefinitionMetadata() != null

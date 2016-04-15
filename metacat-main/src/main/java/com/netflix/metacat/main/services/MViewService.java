@@ -42,9 +42,13 @@ public interface MViewService extends MetacatService<TableDto>{
     TableDto deleteAndReturn( @Nonnull QualifiedName name);
     Optional<TableDto> getOpt( @Nonnull QualifiedName name);
     void snapshotPartitions( @Nonnull QualifiedName name, String filter);
-    PartitionsSaveResponseDto savePartitions( @Nonnull QualifiedName name, List<PartitionDto> partitionDtos, List<String> partitionIdsForDeletes, boolean merge, boolean checkIfExists);
+    PartitionsSaveResponseDto savePartitions( @Nonnull QualifiedName name, List<PartitionDto> partitionDtos,
+            List<String> partitionIdsForDeletes, boolean merge,
+            boolean checkIfExists, boolean alterIfExists);
     void deletePartitions( @Nonnull QualifiedName name, List<String> partitionIds);
-    List<PartitionDto> listPartitions(@Nonnull QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable, boolean includeUserMetadata, boolean includePartitionDetails);
+    List<PartitionDto> listPartitions(@Nonnull QualifiedName name, String filter, List<String> partitionNames,
+            Sort sort, Pageable pageable,
+            boolean includeUserMetadata, boolean includePartitionDetails);
     Integer partitionCount(@Nonnull QualifiedName name);
     List<NameDateDto> list(@Nonnull QualifiedName qualifiedName);
     void saveMetadata(@Nonnull QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);

@@ -211,7 +211,7 @@ public class S3SplitDetailManager implements ConnectorSplitDetailManager{
     @Override
     @Transactional
     public SavePartitionResult savePartitions(ConnectorTableHandle tableHandle, List<ConnectorPartition> partitions
-            , List<String> partitionIdsForDeletes, boolean checkIfExists) {
+            , List<String> partitionIdsForDeletes, boolean checkIfExists, boolean alterIfExists) {
         checkNotNull(tableHandle, "tableHandle is null");
         SavePartitionResult result = new SavePartitionResult();
         SchemaTableName tableName = schemaTableName(tableHandle);
@@ -258,11 +258,11 @@ public class S3SplitDetailManager implements ConnectorSplitDetailManager{
                 }
             }
         }
-        partitionDao.save(s3Partitions);
         if( partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
             partitionDao.deleteByNames(connectorId.toString(), tableName.getSchemaName(),
                     tableName.getTableName(), partitionIdsForDeletes);
         }
+        partitionDao.save(s3Partitions);
 
         result.setAdded( addedPartitionIds);
         result.setUpdated( existingPartitionIds);

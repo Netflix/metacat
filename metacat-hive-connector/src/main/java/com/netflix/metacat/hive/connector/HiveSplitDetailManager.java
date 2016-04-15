@@ -146,7 +146,7 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
 
     @Override
     public SavePartitionResult savePartitions(ConnectorTableHandle tableHandle, List<ConnectorPartition> partitions
-            , List<String> partitionIdsForDeletes, boolean checkIfExists) {
+            , List<String> partitionIdsForDeletes, boolean checkIfExists, boolean alterIfExists) {
         checkNotNull(tableHandle, "tableHandle is null");
         SavePartitionResult result = new SavePartitionResult();
         SchemaTableName tableName = schemaTableName(tableHandle);
@@ -157,6 +157,8 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
             List<String> addedPartitionIds = Lists.newArrayList();
             // Updated partition ids
             List<String> existingPartitionIds = Lists.newArrayList();
+            // Existing partitions
+            List<Partition> existingHivePartitions = Lists.newArrayList();
             // New partitions
             List<Partition> hivePartitions = Lists.newArrayList();
             // Existing partition map
@@ -184,51 +186,30 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
                     String hivePartitionUri = getUri(hivePartition);
                     if( partitionUri == null || !partitionUri.equals( hivePartitionUri)){
                         existingPartitionIds.add(partitionName);
-                        hivePartitions.add(ConverterUtil.toPartition(tableName, partition));
+                        Partition existingPartition = ConverterUtil.toPartition(tableName, partition);
+                        if( alterIfExists){
+                            existingPartition.setCreateTime(hivePartition.getCreateTime());
+                            existingHivePartitions.add(existingPartition);
+                        } else {
+                            hivePartitions.add(existingPartition);
+                        }
                     }
                 }
             }
             Set<String> deletePartitionIds = Sets.newHashSet();
-            deletePartitionIds.addAll(existingPartitionIds);
+            if( !alterIfExists) {
+                deletePartitionIds.addAll(existingPartitionIds);
+            }
             if( partitionIdsForDeletes != null){
                 deletePartitionIds.addAll(partitionIdsForDeletes);
             }
 
-            //
-            // Update the partition info based on that of the table.
-            //
-            for (Partition partition : hivePartitions) {
-                StorageDescriptor sd = partition.getSd();
-                StorageDescriptor tableSdCopy = table.getSd().deepCopy();
-                if (tableSdCopy.getSerdeInfo() == null) {
-                    SerDeInfo serDeInfo = new SerDeInfo(null, null, Collections.emptyMap());
-                    tableSdCopy.setSerdeInfo(serDeInfo);
-                }
-
-                tableSdCopy.setLocation(sd.getLocation());
-                if (!Strings.isNullOrEmpty(sd.getInputFormat())) {
-                    tableSdCopy.setInputFormat(sd.getInputFormat());
-                }
-                if (!Strings.isNullOrEmpty(sd.getOutputFormat())) {
-                    tableSdCopy.setOutputFormat(sd.getOutputFormat());
-                }
-                if (sd.getParameters() != null) {
-                    tableSdCopy.setParameters(sd.getParameters());
-                }
-                if (sd.getSerdeInfo() != null) {
-                    if (!Strings.isNullOrEmpty(sd.getSerdeInfo().getName())) {
-                        tableSdCopy.getSerdeInfo().setName(sd.getSerdeInfo().getName());
-                    }
-                    if (!Strings.isNullOrEmpty(sd.getSerdeInfo().getSerializationLib())) {
-                        tableSdCopy.getSerdeInfo().setSerializationLib(sd.getSerdeInfo().getSerializationLib());
-                    }
-                    if (sd.getSerdeInfo().getParameters() != null) {
-                        tableSdCopy.getSerdeInfo().setParameters(sd.getSerdeInfo().getParameters());
-                    }
-                }
-                partition.setSd(tableSdCopy);
+            if( alterIfExists && !existingHivePartitions.isEmpty()){
+                copyTableSdToPartitionSd( existingHivePartitions, table);
+                ((MetacatHiveMetastore)metastore).alterPartitions(tableName.getSchemaName()
+                        , tableName.getTableName(), existingHivePartitions);
             }
-
+            copyTableSdToPartitionSd( hivePartitions, table);
             ((MetacatHiveMetastore)metastore).addDropPartitions(tableName.getSchemaName()
                     , tableName.getTableName(), hivePartitions, Lists.newArrayList(deletePartitionIds));
 
@@ -240,6 +221,43 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
             throw new PartitionAlreadyExistsException(tableName, null, e);
         }
         return result;
+    }
+
+    private void copyTableSdToPartitionSd(List<Partition> hivePartitions, Table table) {
+        //
+        // Update the partition info based on that of the table.
+        //
+        for (Partition partition : hivePartitions) {
+            StorageDescriptor sd = partition.getSd();
+            StorageDescriptor tableSdCopy = table.getSd().deepCopy();
+            if (tableSdCopy.getSerdeInfo() == null) {
+                SerDeInfo serDeInfo = new SerDeInfo(null, null, Collections.emptyMap());
+                tableSdCopy.setSerdeInfo(serDeInfo);
+            }
+
+            tableSdCopy.setLocation(sd.getLocation());
+            if (!Strings.isNullOrEmpty(sd.getInputFormat())) {
+                tableSdCopy.setInputFormat(sd.getInputFormat());
+            }
+            if (!Strings.isNullOrEmpty(sd.getOutputFormat())) {
+                tableSdCopy.setOutputFormat(sd.getOutputFormat());
+            }
+            if (sd.getParameters() != null) {
+                tableSdCopy.setParameters(sd.getParameters());
+            }
+            if (sd.getSerdeInfo() != null) {
+                if (!Strings.isNullOrEmpty(sd.getSerdeInfo().getName())) {
+                    tableSdCopy.getSerdeInfo().setName(sd.getSerdeInfo().getName());
+                }
+                if (!Strings.isNullOrEmpty(sd.getSerdeInfo().getSerializationLib())) {
+                    tableSdCopy.getSerdeInfo().setSerializationLib(sd.getSerdeInfo().getSerializationLib());
+                }
+                if (sd.getSerdeInfo().getParameters() != null) {
+                    tableSdCopy.getSerdeInfo().setParameters(sd.getSerdeInfo().getParameters());
+                }
+            }
+            partition.setSd(tableSdCopy);
+        }
     }
 
     private String getUri(Partition hivePartition) {

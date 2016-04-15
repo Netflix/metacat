@@ -159,6 +159,18 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         }
     }
 
+    public void alterPartitions(String dbName, String tableName, List<Partition> partitions) {
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
+            client.alter_partitions( dbName, tableName, partitions);
+        } catch (NoSuchObjectException e) {
+            throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
+        } catch (MetaException | InvalidObjectException e) {
+            throw new InvalidMetaException("One or more partitions are invalid.", e);
+        } catch (Exception e) {
+            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+        }
+    }
+
     public void dropPartitions( String dbName, String tableName, List<String> partitionNames) {
         try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
             _dropPartitions( client, dbName, tableName, partitionNames);

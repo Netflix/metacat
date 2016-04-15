@@ -37,7 +37,8 @@ public interface ConnectorSplitDetailManager extends ConnectorSplitManager{
      * @param partitionIdsForDeletes list of partition ids/names for deletes
      * @return added/updated list of partition names
      */
-    SavePartitionResult savePartitions(ConnectorTableHandle table, List<ConnectorPartition> partitions, List<String> partitionIdsForDeletes, boolean checkIfExists);
+    SavePartitionResult savePartitions(ConnectorTableHandle table, List<ConnectorPartition> partitions, List<String> partitionIdsForDeletes,
+            boolean checkIfExists, boolean alterIfExists);
 
     /**
      * Delete partitions for a table
