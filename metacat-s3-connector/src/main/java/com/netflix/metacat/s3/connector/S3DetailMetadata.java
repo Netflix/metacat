@@ -40,6 +40,7 @@ import com.facebook.presto.spi.SchemaTablePrefix;
 import com.facebook.presto.spi.TableNotFoundException;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
+import com.google.common.base.StandardSystemProperty;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -58,7 +59,6 @@ import com.netflix.metacat.s3.connector.model.Table;
 import com.netflix.metacat.s3.connector.util.ConverterUtil;
 import io.airlift.slice.Slice;
 import org.apache.hadoop.fs.Path;
-import org.weakref.jmx.internal.guava.base.StandardSystemProperty;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -75,6 +75,7 @@ import static com.facebook.presto.hive.HiveErrorCode.HIVE_FILESYSTEM_ERROR;
 import static com.facebook.presto.hive.HiveErrorCode.HIVE_PATH_ALREADY_EXISTS;
 import static com.facebook.presto.hive.HiveUtil.schemaTableName;
 import static com.facebook.presto.hive.util.Types.checkType;
+import static com.facebook.presto.spi.StandardErrorCode.CONSTRAINT_VIOLATION;
 import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
 import static com.facebook.presto.spi.type.BigintType.BIGINT;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -125,8 +126,11 @@ public class S3DetailMetadata implements ConnectorDetailMetadata {
     public void dropSchema(ConnectorSession session, String schemaName) {
         checkNotNull(schemaName, "Schema name is null");
         Database database = databaseDao.getByName(schemaName);
-        if( database == null){
+        if (database == null) {
             throw new SchemaNotFoundException(schemaName);
+        } else if(database.getTables() != null && !database.getTables().isEmpty()) {
+            throw new PrestoException(CONSTRAINT_VIOLATION,
+                    "Schema " + schemaName + " is not empty. One or more tables exist.");
         }
         databaseDao.delete(database);
     }
