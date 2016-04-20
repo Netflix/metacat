@@ -132,6 +132,7 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
         checkNotNull( schemaName, "Schema name is null");
         try {
             ((MetacatHiveMetastore)metastore).dropDatabase(schemaName);
+            metastore.flushCache();
         } catch (NoSuchObjectException e) {
             throw new SchemaNotFoundException(schemaName);
         }
@@ -366,6 +367,8 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
     {
         HiveTableHandle handle = checkType(tableHandle, HiveTableHandle.class, "tableHandle");
         metastore.dropTable(handle.getSchemaName(), handle.getTableName());
+        // To clear the database cache
+        metastore.flushCache();
     }
 
     /**
