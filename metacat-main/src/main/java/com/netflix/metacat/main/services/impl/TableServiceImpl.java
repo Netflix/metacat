@@ -19,6 +19,7 @@ import com.facebook.presto.metadata.TableHandle;
 import com.facebook.presto.metadata.TableMetadata;
 import com.facebook.presto.spi.ConnectorTableDetailMetadata;
 import com.facebook.presto.spi.ConnectorTableMetadata;
+import com.facebook.presto.spi.NotFoundException;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.StorageInfo;
@@ -167,7 +168,11 @@ public class TableServiceImpl implements TableService {
         TableDto table;
         Optional<TableMetadata> tableMetadata = Optional.empty();
         if (includeInfo) {
-            tableMetadata = Optional.ofNullable(getTableMetadata(name, session));
+            try {
+                tableMetadata = Optional.ofNullable(getTableMetadata(name, session));
+            } catch (NotFoundException ignored) {
+                return Optional.empty();
+            }
             if (!tableMetadata.isPresent()) {
                 return Optional.empty();
             }
