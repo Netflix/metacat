@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
@@ -381,8 +380,9 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                         }
                         if( hasMetadata instanceof HasDataMetadata){
                             HasDataMetadata oData = (HasDataMetadata)hasMetadata;
-                            uris.add(oData.getDataUri());
-                            if(oData.getDataMetadata() != null){
+                            if (oData.isDataExternal() && oData.getDataMetadata() != null
+                                    && oData.getDataMetadata().size() > 0) {
+                                uris.add(oData.getDataUri());
                                 dataMetadatas.add(oData);
                             }
                         }
