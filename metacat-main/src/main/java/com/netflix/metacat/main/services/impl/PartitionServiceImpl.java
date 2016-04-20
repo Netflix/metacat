@@ -24,7 +24,6 @@ import com.facebook.presto.spi.SchemaTablePartitionName;
 import com.facebook.presto.spi.Sort;
 import com.facebook.presto.spi.TableNotFoundException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -183,20 +182,6 @@ public class PartitionServiceImpl implements PartitionService {
         result.setAdded(savePartitionResult.getAdded());
 
         return result;
-    }
-
-    private void validatePartitionName(String partitionName, List<String> partitionKeys) {
-        for (String part : Splitter.on('/').omitEmptyStrings().split(partitionName)) {
-            if (part.contains("=")) {
-                String[] values = part.split("=", 2);
-
-                if( partitionKeys == null || !partitionKeys.contains(values[0])){
-                    throw new IllegalArgumentException(String.format("Partition name %s is invalid", partitionName));
-                }
-            } else {
-                throw new IllegalArgumentException(String.format("Partition name %s is invalid", partitionName));
-            }
-        }
     }
 
     @Override
