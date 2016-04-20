@@ -20,19 +20,21 @@ public interface PartitionParserTreeConstants
   public int JJTVOID = 1;
   public int JJTAND = 2;
   public int JJTOR = 3;
-  public int JJTNEVAL = 4;
-  public int JJTEVAL = 5;
-  public int JJTGT = 6;
-  public int JJTLT = 7;
-  public int JJTLTE = 8;
-  public int JJTGTE = 9;
-  public int JJTEQ = 10;
-  public int JJTNEQ = 11;
-  public int JJTMATCHES = 12;
-  public int JJTLIKE = 13;
-  public int JJTNUM = 14;
-  public int JJTSTRING = 15;
-  public int JJTVAR = 16;
+  public int JJTNOT = 4;
+  public int JJTBETWEEN = 5;
+  public int JJTIN = 6;
+  public int JJTLIKE = 7;
+  public int JJTCOMPARE = 8;
+  public int JJTGT = 9;
+  public int JJTLT = 10;
+  public int JJTLTE = 11;
+  public int JJTGTE = 12;
+  public int JJTEQ = 13;
+  public int JJTNEQ = 14;
+  public int JJTMATCHES = 15;
+  public int JJTNUM = 16;
+  public int JJTSTRING = 17;
+  public int JJTVAR = 18;
 
 
   public String[] jjtNodeName = {
@@ -40,8 +42,11 @@ public interface PartitionParserTreeConstants
     "void",
     "AND",
     "OR",
-    "NEVAL",
-    "EVAL",
+    "NOT",
+    "BETWEEN",
+    "IN",
+    "LIKE",
+    "COMPARE",
     "GT",
     "LT",
     "LTE",
@@ -49,10 +54,9 @@ public interface PartitionParserTreeConstants
     "EQ",
     "NEQ",
     "MATCHES",
-    "LIKE",
     "NUM",
     "STRING",
     "VAR",
   };
 }
-/* JavaCC - OriginalChecksum=39fa5c3d77b7e45b2de2245168f22ad8 (do not edit this line) */
+/* JavaCC - OriginalChecksum=143adb2795ef13088e6e038e3b2f022b (do not edit this line) */

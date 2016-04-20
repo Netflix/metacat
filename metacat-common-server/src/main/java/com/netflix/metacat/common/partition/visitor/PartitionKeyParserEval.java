@@ -15,22 +15,14 @@ package com.netflix.metacat.common.partition.visitor;
 
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.partition.parser.ASTAND;
+import com.netflix.metacat.common.partition.parser.ASTBETWEEN;
+import com.netflix.metacat.common.partition.parser.ASTCOMPARE;
 import com.netflix.metacat.common.partition.parser.ASTEQ;
-import com.netflix.metacat.common.partition.parser.ASTEVAL;
-import com.netflix.metacat.common.partition.parser.ASTFILTER;
-import com.netflix.metacat.common.partition.parser.ASTGT;
-import com.netflix.metacat.common.partition.parser.ASTGTE;
+import com.netflix.metacat.common.partition.parser.ASTIN;
 import com.netflix.metacat.common.partition.parser.ASTLIKE;
-import com.netflix.metacat.common.partition.parser.ASTLT;
-import com.netflix.metacat.common.partition.parser.ASTLTE;
-import com.netflix.metacat.common.partition.parser.ASTMATCHES;
-import com.netflix.metacat.common.partition.parser.ASTNEQ;
-import com.netflix.metacat.common.partition.parser.ASTNEVAL;
-import com.netflix.metacat.common.partition.parser.ASTNUM;
+import com.netflix.metacat.common.partition.parser.ASTNOT;
 import com.netflix.metacat.common.partition.parser.ASTOR;
-import com.netflix.metacat.common.partition.parser.ASTSTRING;
 import com.netflix.metacat.common.partition.parser.ASTVAR;
-import com.netflix.metacat.common.partition.parser.PartitionParserVisitor;
 import com.netflix.metacat.common.partition.parser.SimpleNode;
 import com.netflix.metacat.common.partition.parser.Variable;
 
@@ -65,7 +57,7 @@ public class PartitionKeyParserEval extends PartitionParserEval {
     }
 
     @Override
-    public Object visit(ASTEVAL node, Object data) {
+    public Object visit(ASTCOMPARE node, Object data) {
         Set<String> result = Sets.newHashSet();
         String value = evalString(node, data);
         if( value != null){
@@ -75,12 +67,27 @@ public class PartitionKeyParserEval extends PartitionParserEval {
     }
 
     @Override
-    public Object visit(ASTNEVAL node, Object data) {
+    public Object visit(ASTOR node, Object data) {
         return new HashSet<String>();
     }
 
     @Override
-    public Object visit(ASTOR node, Object data) {
+    public Object visit(ASTBETWEEN node, Object data) {
+        return new HashSet<String>();
+    }
+
+    @Override
+    public Object visit(ASTIN node, Object data) {
+        return new HashSet<String>();
+    }
+
+    @Override
+    public Object visit(ASTLIKE node, Object data) {
+        return new HashSet<String>();
+    }
+
+    @Override
+    public Object visit(ASTNOT node, Object data) {
         return new HashSet<String>();
     }
 

@@ -31,10 +31,19 @@ public class PartitionParserDefaultVisitor implements PartitionParserVisitor{
   public Object visit(ASTOR node, Object data){
     return defaultVisit(node, data);
   }
-  public Object visit(ASTNEVAL node, Object data){
+  public Object visit(ASTNOT node, Object data){
     return defaultVisit(node, data);
   }
-  public Object visit(ASTEVAL node, Object data){
+  public Object visit(ASTBETWEEN node, Object data){
+    return defaultVisit(node, data);
+  }
+  public Object visit(ASTIN node, Object data){
+    return defaultVisit(node, data);
+  }
+  public Object visit(ASTLIKE node, Object data){
+    return defaultVisit(node, data);
+  }
+  public Object visit(ASTCOMPARE node, Object data){
     return defaultVisit(node, data);
   }
   public Object visit(ASTGT node, Object data){
@@ -58,9 +67,6 @@ public class PartitionParserDefaultVisitor implements PartitionParserVisitor{
   public Object visit(ASTMATCHES node, Object data){
     return defaultVisit(node, data);
   }
-  public Object visit(ASTLIKE node, Object data){
-    return defaultVisit(node, data);
-  }
   public Object visit(ASTNUM node, Object data){
     return defaultVisit(node, data);
   }
@@ -71,4 +77,4 @@ public class PartitionParserDefaultVisitor implements PartitionParserVisitor{
     return defaultVisit(node, data);
   }
 }
-/* JavaCC - OriginalChecksum=449d8c0abd893cbe090860f00a25fca3 (do not edit this line) */
+/* JavaCC - OriginalChecksum=c7638298b490e0556f0ac443ae5a1aa1 (do not edit this line) */

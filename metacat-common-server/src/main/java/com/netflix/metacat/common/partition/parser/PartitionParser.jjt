@@ -30,10 +30,11 @@ TOKEN :
 |	< LTE: "<=" >
 |	< LT: "<" >   
 |   < LPAREN : "(">    
-|   < RPAREN : ")">    
-| < INT: "-"( <DIGIT> )+ | ( <DIGIT> )+>
+|   < RPAREN : ")">
+|   < COMMA: "," >
+|   < INT: "-"( <DIGIT> )+ | ( <DIGIT> )+>
 |   < #DIGIT: ["0" - "9"] >
-| < FLOAT: <INT> <EXPONENT> | <MANTISSA> ( <EXPONENT> )? >
+|   < FLOAT: <INT> <EXPONENT> | <MANTISSA> ( <EXPONENT> )? >
 |   < #EXPONENT: ["e", "E"] ("+"|"-")? <INT> >
 |   < #MANTISSA: <INT> "." ( <DIGIT> )* | ( <DIGIT> )* "." <INT> >
 |   < #DIGITS : (["0"-"9"])+ >
@@ -42,6 +43,8 @@ TOKEN :
 |   < NOT: "not">
 |   < MATCHES: "matches">
 |   < LIKE: "like">
+|   < BETWEEN: "between">
+|   < IN: "in">
 |   < VARIABLE : "_" < CHARS > | ["A"-"Z"] < CHARS > | ["a"-"z"] <CHARS > >
 |   < #CHARS : (["a"-"z","0"-"9","_","A"-"Z"])+ >
 |   < QUOTE:"\"" > : STRING_STATE
@@ -65,18 +68,43 @@ void expr():
 { }
 {
 	< LPAREN > expr() < RPAREN > (< AND > expr() #AND(2) | < OR > expr() #OR(2))?
-|	neval() (< AND > expr() #AND(2) | < OR > expr() #OR(2))?
-|	eval() (< AND > expr() #AND(2) | < OR > expr() #OR(2))?
+|	EvalExpr() (< AND > expr() #AND(2) | < OR > expr() #OR(2))?
 }
-void neval() #NEVAL:
+void EvalExpr() #void:
+{ boolean not = false; }
+{
+	([ < NOT > { not=true; } ] eval()) #NOT(not)
+}
+void eval() #void:
 { }
 {
-	< NOT > eval()
+    LOOKAHEAD({ getToken(2).kind==BETWEEN || getToken(3).kind==BETWEEN })
+	    BetweenEval()
+|   LOOKAHEAD({ getToken(2).kind==IN || getToken(3).kind==IN })
+        InEval()
+|   LOOKAHEAD({ getToken(2).kind==LIKE || getToken(3).kind==LIKE })
+        LikeEval()
+|   CompareEval()
 }
-void eval() #EVAL:
-{ }
+void BetweenEval() #BETWEEN:
+{}
 {
-	term() comp() term()
+    term() [ < NOT > { jjtThis.not=true; } ] < BETWEEN > term() < AND > term()
+}
+void InEval() #IN:
+{}
+{
+    term() [ < NOT > { jjtThis.not=true; } ] < IN > <LPAREN> term() ( < COMMA > term() ) * <RPAREN>
+}
+void LikeEval() #LIKE:
+{}
+{
+    term() [ < NOT > { jjtThis.not=true; } ] < LIKE > term()
+}
+void CompareEval() #COMPARE:
+{}
+{
+    term() comp() term()
 }
 void comp():
 { }
@@ -87,7 +115,6 @@ void comp():
 | < EQUAL > #EQ
 | < NEQUAL > #NEQ
 | < MATCHES > #MATCHES
-| < LIKE > #LIKE
 }
 void term():
 {

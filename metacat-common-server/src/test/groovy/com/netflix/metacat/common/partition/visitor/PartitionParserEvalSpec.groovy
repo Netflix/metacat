@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.common.partition.visitor
 
+import com.netflix.metacat.common.partition.parser.PartitionParser
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -20,7 +21,7 @@ import spock.lang.Specification
  * Created by amajumdar on 3/2/16.
  */
 class PartitionParserEvalSpec extends Specification{
-    @Shared def eval = new PartitionParserEval()
+    @Shared def eval = new PartitionParserEval([dateint:20160418, app:'metacat'])
 
     def 'sql #sql to regex #regex'(){
         expect:
@@ -38,5 +39,23 @@ class PartitionParserEvalSpec extends Specification{
         "[def%]"                | "[def.*]"
         "[def_]"                | "[def.]"
         ""                      | ""
+    }
+
+    def 'Expr #expr evaluated to #result'(){
+        expect:
+        new PartitionParser(new StringReader(expr)).filter().jjtAccept(eval, null) == result
+        where:
+        expr                                                                                                | result
+        'dateint between 20160417 and 20160419'                                                             | true
+        'dateint not between 20160417 and 20160419'                                                         | false
+        'dateint between 20160427 and 20160429'                                                             | false
+        'dateint in (20160417, 20160419, 20160418)'                                                         | true
+        'dateint not in (20160417, 20160419, 20160418)'                                                     | false
+        'dateint in (20160417, 20160419, 20160413)'                                                         | false
+        "dateint between 20160417 and 20160419 and app=='metacat'"                                          | true
+        "dateint between 20160417 and 20160419 and app=='metaca'"                                           | false
+        "dateint between 20160417 and 20160419 or app=='metaca'"                                            | true
+        "app like '%cat%'"                                                                                  | true
+        "app not like '%cat%'"                                                                              | false
     }
 }

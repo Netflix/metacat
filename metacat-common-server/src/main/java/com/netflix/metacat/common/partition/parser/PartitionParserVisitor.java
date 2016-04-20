@@ -20,8 +20,11 @@ public interface PartitionParserVisitor
   public Object visit(ASTFILTER node, Object data);
   public Object visit(ASTAND node, Object data);
   public Object visit(ASTOR node, Object data);
-  public Object visit(ASTNEVAL node, Object data);
-  public Object visit(ASTEVAL node, Object data);
+  public Object visit(ASTNOT node, Object data);
+  public Object visit(ASTBETWEEN node, Object data);
+  public Object visit(ASTIN node, Object data);
+  public Object visit(ASTLIKE node, Object data);
+  public Object visit(ASTCOMPARE node, Object data);
   public Object visit(ASTGT node, Object data);
   public Object visit(ASTLT node, Object data);
   public Object visit(ASTLTE node, Object data);
@@ -29,9 +32,8 @@ public interface PartitionParserVisitor
   public Object visit(ASTEQ node, Object data);
   public Object visit(ASTNEQ node, Object data);
   public Object visit(ASTMATCHES node, Object data);
-  public Object visit(ASTLIKE node, Object data);
   public Object visit(ASTNUM node, Object data);
   public Object visit(ASTSTRING node, Object data);
   public Object visit(ASTVAR node, Object data);
 }
-/* JavaCC - OriginalChecksum=05c7915a864bf7b60e61bf6f66b57af6 (do not edit this line) */
+/* JavaCC - OriginalChecksum=f8158a6ab97d47a51891128f4b1f3bfd (do not edit this line) */

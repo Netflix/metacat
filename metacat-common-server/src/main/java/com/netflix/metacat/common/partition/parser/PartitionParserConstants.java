@@ -40,43 +40,49 @@ public interface PartitionParserConstants {
   /** RegularExpression Id. */
   int RPAREN = 10;
   /** RegularExpression Id. */
-  int INT = 11;
+  int COMMA = 11;
   /** RegularExpression Id. */
-  int DIGIT = 12;
+  int INT = 12;
   /** RegularExpression Id. */
-  int FLOAT = 13;
+  int DIGIT = 13;
   /** RegularExpression Id. */
-  int EXPONENT = 14;
+  int FLOAT = 14;
   /** RegularExpression Id. */
-  int MANTISSA = 15;
+  int EXPONENT = 15;
   /** RegularExpression Id. */
-  int DIGITS = 16;
+  int MANTISSA = 16;
   /** RegularExpression Id. */
-  int AND = 17;
+  int DIGITS = 17;
   /** RegularExpression Id. */
-  int OR = 18;
+  int AND = 18;
   /** RegularExpression Id. */
-  int NOT = 19;
+  int OR = 19;
   /** RegularExpression Id. */
-  int MATCHES = 20;
+  int NOT = 20;
   /** RegularExpression Id. */
-  int LIKE = 21;
+  int MATCHES = 21;
   /** RegularExpression Id. */
-  int VARIABLE = 22;
+  int LIKE = 22;
   /** RegularExpression Id. */
-  int CHARS = 23;
+  int BETWEEN = 23;
   /** RegularExpression Id. */
-  int QUOTE = 24;
+  int IN = 24;
   /** RegularExpression Id. */
-  int SQUOTE = 25;
+  int VARIABLE = 25;
   /** RegularExpression Id. */
-  int ENDQUOTE = 26;
+  int CHARS = 26;
   /** RegularExpression Id. */
-  int CHAR = 27;
+  int QUOTE = 27;
   /** RegularExpression Id. */
-  int SENDQUOTE = 28;
+  int SQUOTE = 28;
   /** RegularExpression Id. */
-  int SCHAR = 29;
+  int ENDQUOTE = 29;
+  /** RegularExpression Id. */
+  int CHAR = 30;
+  /** RegularExpression Id. */
+  int SENDQUOTE = 31;
+  /** RegularExpression Id. */
+  int SCHAR = 32;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -98,6 +104,7 @@ public interface PartitionParserConstants {
     "\"<\"",
     "\"(\"",
     "\")\"",
+    "\",\"",
     "<INT>",
     "<DIGIT>",
     "<FLOAT>",
@@ -109,6 +116,8 @@ public interface PartitionParserConstants {
     "\"not\"",
     "\"matches\"",
     "\"like\"",
+    "\"between\"",
+    "\"in\"",
     "<VARIABLE>",
     "<CHARS>",
     "\"\\\"\"",

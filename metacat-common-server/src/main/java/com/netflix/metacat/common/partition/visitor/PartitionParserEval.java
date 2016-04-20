@@ -16,17 +16,19 @@ package com.netflix.metacat.common.partition.visitor;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.partition.parser.ASTAND;
+import com.netflix.metacat.common.partition.parser.ASTBETWEEN;
+import com.netflix.metacat.common.partition.parser.ASTCOMPARE;
 import com.netflix.metacat.common.partition.parser.ASTEQ;
-import com.netflix.metacat.common.partition.parser.ASTEVAL;
 import com.netflix.metacat.common.partition.parser.ASTFILTER;
 import com.netflix.metacat.common.partition.parser.ASTGT;
 import com.netflix.metacat.common.partition.parser.ASTGTE;
+import com.netflix.metacat.common.partition.parser.ASTIN;
 import com.netflix.metacat.common.partition.parser.ASTLIKE;
 import com.netflix.metacat.common.partition.parser.ASTLT;
 import com.netflix.metacat.common.partition.parser.ASTLTE;
 import com.netflix.metacat.common.partition.parser.ASTMATCHES;
 import com.netflix.metacat.common.partition.parser.ASTNEQ;
-import com.netflix.metacat.common.partition.parser.ASTNEVAL;
+import com.netflix.metacat.common.partition.parser.ASTNOT;
 import com.netflix.metacat.common.partition.parser.ASTNUM;
 import com.netflix.metacat.common.partition.parser.ASTOR;
 import com.netflix.metacat.common.partition.parser.ASTSTRING;
@@ -34,6 +36,7 @@ import com.netflix.metacat.common.partition.parser.ASTVAR;
 import com.netflix.metacat.common.partition.parser.PartitionParserVisitor;
 import com.netflix.metacat.common.partition.parser.SimpleNode;
 import com.netflix.metacat.common.partition.parser.Variable;
+
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -68,29 +71,20 @@ public class PartitionParserEval implements PartitionParserVisitor {
 		this.context = context;
 	}
 
-	public Boolean eval(SimpleNode node, Object data) {
+	public Boolean evalCompare(SimpleNode node, Object data) {
 		Object value1 = node.jjtGetChild(0).jjtAccept(this, data);
 		Compare comparison = (Compare) node.jjtGetChild(1).jjtAccept(this, data);
 		Object value2 = node.jjtGetChild(2).jjtAccept(this, data);
-		if (value2 instanceof String) {
-			return compare(comparison, value1.toString(), value2.toString());
-		}
-		if (value2 instanceof BigDecimal) {
-			if (value1 instanceof String) {
-				value1 = new BigDecimal(value1.toString());
-			}
-			return compare(comparison, (BigDecimal) value1, (BigDecimal) value2);
-		}
-		throw new RuntimeException("error processing partition filter");
+        return compare( comparison, value1, value2);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Boolean compare(Compare comparison, Comparable value1, Comparable value2) {
+	public boolean compare(Compare comparison, Object value1, Object value2) {
 		if (value1 == null) {
 			switch (comparison) {
 			case EQ:
-            case LIKE:
             case MATCHES:
+            case LIKE:
 				return value2 == null;
 			case NEQ:
 				return value2 != null;
@@ -98,10 +92,22 @@ public class PartitionParserEval implements PartitionParserVisitor {
 				return false;
 			}
 		}
-        if( comparison.equals(Compare.LIKE) || comparison.equals(Compare.MATCHES)){
+        if (value2 instanceof String) {
+            return _compare(comparison, value1.toString(), value2.toString());
+        }
+        if (value2 instanceof BigDecimal) {
+            value1 = new BigDecimal(value1.toString());
+            return _compare(comparison, (BigDecimal) value1, (BigDecimal) value2);
+        }
+        throw new RuntimeException("error processing partition filter");
+	}
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private boolean _compare(Compare comparison, Comparable value1, Comparable value2) {
+        if( comparison.equals(Compare.MATCHES) || comparison.equals(Compare.LIKE)){
             if( value2 != null){
                 String value = value2.toString();
-                if(comparison.equals(Compare.LIKE)){
+                if(comparison.equals(Compare.LIKE) ){
                     value = sqlLiketoRegexExpression(value);
                 }
                 return value1.toString().matches(value);
@@ -123,8 +129,8 @@ public class PartitionParserEval implements PartitionParserVisitor {
                 return compare != 0;
             }
         }
-		return false;
-	}
+        return false;
+    }
 
     //TODO: Need to escape regex meta characters
     protected String sqlLiketoRegexExpression(String likeExpression) {
@@ -149,12 +155,41 @@ public class PartitionParserEval implements PartitionParserVisitor {
 		return Compare.EQ;
 	}
 
-	@Override
-	public Object visit(ASTEVAL node, Object data) {
-		return eval(node, data);
-	}
+    @Override
+    public Object visit(ASTBETWEEN node, Object data) {
+        Object value = node.jjtGetChild(0).jjtAccept(this, data);
+        Object startValue = node.jjtGetChild(1).jjtAccept(this, data);
+        Object endValue = node.jjtGetChild(2).jjtAccept(this, data);
+        boolean compare1 = compare( Compare.GTE, value, startValue);
+        boolean compare2 = compare( Compare.LTE, value, endValue);
+        boolean result = compare1 && compare2;
+        return node.not? !result: result;
+    }
 
-	@Override
+    @Override
+    public Object visit(ASTIN node, Object data) {
+        Object value = node.jjtGetChild(0).jjtAccept(this, data);
+        boolean result = false;
+        for(int i=1; i < node.jjtGetNumChildren();i++){
+            Object inValue = node.jjtGetChild(i).jjtAccept(this, data);
+            if( value != null && inValue instanceof BigDecimal){
+                value = new BigDecimal(value.toString());
+            }
+            if( (value == null && inValue ==null)
+                    || (value != null && value.equals(inValue))){
+                result = true;
+                break;
+            }
+        }
+        return node.not? !result: result;
+    }
+
+    @Override
+    public Object visit(ASTCOMPARE node, Object data) {
+        return evalCompare(node, data);
+    }
+
+    @Override
 	public Object visit(ASTFILTER node, Object data) {
 		return node.jjtGetChild(0).jjtAccept(this, data);
 	}
@@ -191,13 +226,11 @@ public class PartitionParserEval implements PartitionParserVisitor {
 
     @Override
     public Object visit(ASTLIKE node, Object data) {
-        return Compare.LIKE;
+        Object value1 = node.jjtGetChild(0).jjtAccept(this, data);
+        Object value2 = node.jjtGetChild(1).jjtAccept(this, data);
+        boolean result = compare( Compare.LIKE, value1, value2);
+        return node.not? !result: result;
     }
-
-    @Override
-	public Object visit(ASTNEVAL node, Object data) {
-		return !(Boolean) node.jjtGetChild(0).jjtAccept(this, data);
-	}
 
 	@Override
 	public Object visit(ASTNUM node, Object data) {
@@ -210,7 +243,12 @@ public class PartitionParserEval implements PartitionParserVisitor {
 		return v1 || (Boolean) node.jjtGetChild(1).jjtAccept(this, data);
 	}
 
-	@Override
+    @Override
+    public Object visit(ASTNOT node, Object data) {
+        return !(Boolean) node.jjtGetChild(0).jjtAccept(this, data);
+    }
+
+    @Override
 	public Object visit(ASTSTRING node, Object data) {
 		return node.jjtGetValue();
 	}
