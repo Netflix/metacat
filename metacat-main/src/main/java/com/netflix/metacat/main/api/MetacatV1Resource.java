@@ -99,10 +99,12 @@ public class MetacatV1Resource implements MetacatV1 {
 
             DatabaseDto newDto = new DatabaseDto();
             newDto.setName(name);
-            newDto.setDefinitionMetadata(databaseCreateRequestDto.getDefinitionMetadata());
+            if (databaseCreateRequestDto != null) {
+                newDto.setDefinitionMetadata(databaseCreateRequestDto.getDefinitionMetadata());
+            }
             databaseService.create(name, newDto);
 
-            DatabaseDto dto = databaseService.get(name, databaseCreateRequestDto.getDefinitionMetadata() != null);
+            DatabaseDto dto = databaseService.get(name, newDto.getDefinitionMetadata() != null);
             eventBus.post(new MetacatCreateDatabasePostEvent(dto, metacatContext));
             return null;
         });
