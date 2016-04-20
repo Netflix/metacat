@@ -79,7 +79,6 @@ import static java.lang.String.format;
  * Created by amajumdar on 2/4/15.
  */
 public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailMetadata {
-    public static final String PARAMETER_COMMENT = "comment";
     public static final String PARAMETER_EXTERNAL = "EXTERNAL";
     protected final HiveMetastore metastore;
     protected final TypeConverterProvider typeConverterProvider;
@@ -217,20 +216,14 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
     }
 
     private void updateTable(Table table, ConnectorSession session, ConnectorTableDetailMetadata tableDetailMetadata) {
-        Map<String, String> params = table.getParameters();
-        if( params == null){
-            params = Maps.newHashMap();
-            table.setParameters( params);
+        if (table.getParameters() == null) {
+            table.setParameters(Maps.newHashMap());
         }
-        if( tableDetailMetadata.getMetadata() != null) {
-            Object oComment = tableDetailMetadata.getMetadata().get(PARAMETER_COMMENT);
-            if (oComment != null) {
-                params.put(PARAMETER_COMMENT, String.valueOf(oComment));
-            }
+        table.getParameters().putIfAbsent(PARAMETER_EXTERNAL, "TRUE");
+        if (tableDetailMetadata.getMetadata() != null) {
+            table.getParameters().putAll(tableDetailMetadata.getMetadata());
         }
-        if (params.get(PARAMETER_EXTERNAL) == null) {
-            params.put(PARAMETER_EXTERNAL, "TRUE");
-        }
+
         //storage
         StorageDescriptor sd = table.getSd()!= null?table.getSd():new StorageDescriptor();
         String inputFormat = null;
