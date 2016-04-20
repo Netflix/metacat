@@ -31,8 +31,7 @@ public abstract class BaseUserMetadataService implements UserMetadataService{
             // If the user is updating the definition metadata do a merge on the existing metadata
             ObjectNode newMetadata = defDto.getDefinitionMetadata();
             if (newMetadata != null) {
-                HasDefinitionMetadata definitionDto = (HasDefinitionMetadata) holder;
-                saveDefinitionMetadata(definitionDto.getDefinitionName(), userId, Optional.of(newMetadata), merge);
+                saveDefinitionMetadata(defDto.getDefinitionName(), userId, Optional.of(newMetadata), merge);
             }
         }
 
