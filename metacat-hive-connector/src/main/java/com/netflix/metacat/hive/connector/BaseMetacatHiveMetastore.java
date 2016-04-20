@@ -67,7 +67,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         } catch (AlreadyExistsException e) {
             throw new SchemaAlreadyExistsException(database.getName(), e);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error creating database", e);
         }
     }
 
@@ -79,7 +79,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + database.getName(), e);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error updating database", e);
         }
     }
 
@@ -90,7 +90,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         catch (NoSuchObjectException e) {
             throw new SchemaNotFoundException(dbName);
         }catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error dropping database", e);
         }
     }
 
@@ -102,7 +102,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         } catch (AlreadyExistsException e) {
             throw new TableAlreadyExistsException(new SchemaTableName(table.getDbName(), table.getTableName()));
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error altering table", e);
         }
     }
 
@@ -111,7 +111,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
             return client.get_table_objects_by_name( dbName, tableNames);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error fetching tables", e);
         }
     }
 
@@ -121,7 +121,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
         }catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+            throw new PrestoException(HIVE_METASTORE_ERROR, String.format("Internal server error fetching partitions for table %s.%s", dbName, tableName), e);
         }
     }
 
@@ -131,7 +131,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
         }catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+            throw new PrestoException(HIVE_METASTORE_ERROR, String.format("Internal server error fetching partitions for table %s.%s", dbName, tableName), e);
         }
     }
 
@@ -145,7 +145,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+            throw new PrestoException(HIVE_METASTORE_ERROR, String.format("Internal server error adding/dropping partitions for table %s.%s", dbName, tableName), e);
         }
     }
 
@@ -155,7 +155,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error saving partitions", e);
         }
     }
 
@@ -167,7 +167,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+            throw new PrestoException(HIVE_METASTORE_ERROR, String.format("Internal server error altering partitions for table %s.%s", dbName, tableName), e);
         }
     }
 
@@ -177,7 +177,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
         }catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, e);
+            throw new PrestoException(HIVE_METASTORE_ERROR, String.format("Internal server error dropping partitions for table %s.%s", dbName, tableName), e);
         }
     }
 

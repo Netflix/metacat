@@ -92,6 +92,8 @@ public interface MetacatHiveMetastore extends HiveMetastore {
 
     /**
      * Alter partitions.
+     * @param dbName database name
+     * @param tableName table name
      * @param partitions list of partitions
      * @throws NoSuchObjectException if the table does not exist
      */
