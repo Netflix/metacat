@@ -40,8 +40,9 @@ import com.facebook.presto.spi.StorageInfo;
 import com.facebook.presto.spi.TableNotFoundException;
 import com.facebook.presto.spi.TupleDomain;
 import com.google.common.base.Strings;
+import com.google.common.cache.CacheLoader;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.partition.util.PartitionUtil;
 import com.netflix.metacat.hive.connector.util.ConverterUtil;
@@ -113,8 +114,7 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
         Map<String,Partition> partitionMap = getPartitionsByNames(
                 schemaTableName.getSchemaName(), schemaTableName.getTableName(),
                 queryPartitionIds);
-        Map<ColumnHandle, Comparable<?>> domainMap = Maps.newHashMapWithExpectedSize(1);
-        domainMap.put(new ColumnHandle(){}, "ignore");
+        Map<ColumnHandle, Comparable<?>> domainMap = ImmutableMap.of(new ColumnHandle(){}, "ignore");
         TupleDomain<ColumnHandle> tupleDomain = TupleDomain.withFixedValues(domainMap);
         partitionMap.forEach((s, partition) -> {
             StorageDescriptor sd = partition.getSd();
@@ -141,7 +141,12 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
 
     protected Map<String,Partition> getPartitionsByNames(String schemaName, String tableName, List<String> partitionNames)
     {
-        return metastore.getPartitionsByNames(schemaName, tableName, partitionNames).orElse(Maps.newHashMap());
+        try {
+            return metastore.getPartitionsByNames(schemaName, tableName, partitionNames).orElse(Collections.emptyMap());
+        } catch (CacheLoader.InvalidCacheLoadException ignored) {
+            // Ignore cache failure
+            return Collections.emptyMap();
+        }
     }
 
     @Override
@@ -162,7 +167,7 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
             // New partitions
             List<Partition> hivePartitions = Lists.newArrayList();
             // Existing partition map
-            Map<String,Partition> existingPartitionMap = Maps.newHashMap();
+            Map<String,Partition> existingPartitionMap = Collections.emptyMap();
             if( checkIfExists) {
                 List<String> partitionNames = partitions.stream().map(
                         partition -> {
@@ -216,6 +221,11 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
 
             result.setAdded( addedPartitionIds);
             result.setUpdated( existingPartitionIds);
+
+            // If partitions were added or changed we have to flush the cache so they will show in listing immediately
+            if (!result.getAdded().isEmpty() || !result.getUpdated().isEmpty()) {
+                metastore.flushCache();
+            }
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(tableName);
         } catch (AlreadyExistsException e) {
@@ -300,6 +310,8 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
         SchemaTableName tableName = schemaTableName(tableHandle);
         try {
             ((MetacatHiveMetastore)metastore).dropPartitions( tableName.getSchemaName(), tableName.getTableName(), partitionIds);
+            // Flush the cache after deleting partitions
+            metastore.flushCache();
         } catch (NoSuchObjectException e) {
             throw new PartitionNotFoundException(tableName, partitionIds.toString());
         }
