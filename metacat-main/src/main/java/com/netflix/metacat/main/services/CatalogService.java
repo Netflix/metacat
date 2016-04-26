@@ -16,6 +16,7 @@ package com.netflix.metacat.main.services;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.CatalogMappingDto;
+import com.netflix.metacat.common.dto.CreateCatalogDto;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -35,4 +36,12 @@ public interface CatalogService {
      */
     @Nonnull
     List<CatalogMappingDto> getCatalogNames();
+
+    /**
+     * @param name             Qualified name of the catalog
+     * @param createCatalogDto
+     * @throws javax.ws.rs.NotFoundException if the catalog is not found
+     */
+    @Nonnull
+    void update(@Nonnull QualifiedName name, @Nonnull CreateCatalogDto createCatalogDto);
 }

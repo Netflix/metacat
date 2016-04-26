@@ -260,7 +260,17 @@ public class MetacatV1Resource implements MetacatV1 {
     }
 
     public void updateCatalog(String catalogName, CreateCatalogDto createCatalogDto) {
-        throw new MetacatNotSupportedException();
+        MetacatContext metacatContext = MetacatContextManager.getContext();
+        QualifiedName name = qualifyName(() -> QualifiedName.ofCatalog(catalogName));
+        requestWrapper(name, "updateDatabase", () -> {
+            eventBus.post(new MetacatUpdateDatabasePreEvent(name, metacatContext));
+
+            createCatalogDto.setName(name);
+            catalogService.update(name, createCatalogDto);
+
+            eventBus.post(new MetacatUpdateDatabasePostEvent(name, metacatContext));
+            return null;
+        });
     }
 
     @Override

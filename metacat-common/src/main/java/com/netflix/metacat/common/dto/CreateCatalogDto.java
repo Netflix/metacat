@@ -13,27 +13,69 @@
 
 package com.netflix.metacat.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.netflix.metacat.common.QualifiedName;
 import com.wordnik.swagger.annotations.ApiModel;
 import com.wordnik.swagger.annotations.ApiModelProperty;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Objects;
 
 /**
  * Information required to create a new catalog
  */
 @ApiModel("Information required to create a new catalog")
-public class CreateCatalogDto extends BaseDto {
-    private static final long serialVersionUID = -5037037662666608796L;
+public class CreateCatalogDto extends BaseDto implements HasDefinitionMetadata {
+    private static final long serialVersionUID = -6745573078608938941L;
 
+    // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
+    @ApiModelProperty(value = "metadata attached to the logical catalog")
+    @JsonProperty
+    private transient ObjectNode definitionMetadata;
+    private QualifiedName name;
     @ApiModelProperty(value = "the type of the connector of this catalog", required = true)
     private String type;
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof CreateCatalogDto)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof CreateCatalogDto))
+            return false;
         CreateCatalogDto that = (CreateCatalogDto) o;
-        return Objects.equals(type, that.type);
+        return Objects.equals(definitionMetadata, that.definitionMetadata) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(type, that.type);
+    }
+
+    @Override
+    public ObjectNode getDefinitionMetadata() {
+        return definitionMetadata;
+    }
+
+    @Override
+    public void setDefinitionMetadata(ObjectNode metadata) {
+        this.definitionMetadata = metadata;
+    }
+
+    @Override
+    @JsonIgnore
+    public QualifiedName getDefinitionName() {
+        return name;
+    }
+
+    @ApiModelProperty(value = "the name of this entity", required = true)
+    @JsonProperty
+    public QualifiedName getName() {
+        return name;
+    }
+
+    public void setName(QualifiedName name) {
+        this.name = name;
     }
 
     /**
@@ -52,7 +94,16 @@ public class CreateCatalogDto extends BaseDto {
 
     @Override
     public int hashCode() {
-        return Objects.hash(type);
+        return Objects.hash(definitionMetadata, name, type);
     }
 
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        definitionMetadata = deserializeObjectNode(in);
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        serializeObjectNode(out, definitionMetadata);
+    }
 }

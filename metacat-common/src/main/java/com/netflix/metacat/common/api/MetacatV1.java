@@ -424,6 +424,7 @@ public interface MetacatV1 {
             @ApiParam(value = "The name of the catalog", required = true)
             @PathParam("catalog-name")
             String catalogName,
+            @ApiParam(value = "The metadata to update in the catalog", required = true)
             CreateCatalogDto createCatalogDto
     );
 

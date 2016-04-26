@@ -18,6 +18,7 @@ import com.google.inject.Inject;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.CatalogMappingDto;
+import com.netflix.metacat.common.dto.CreateCatalogDto;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.main.connector.MetacatConnectorManager;
@@ -75,5 +76,11 @@ public class CatalogServiceImpl implements CatalogService {
         return catalogs.entrySet().stream()
                 .map(entry -> new CatalogMappingDto(entry.getKey(), entry.getValue().getType()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void update(@Nonnull QualifiedName name, @Nonnull CreateCatalogDto createCatalogDto) {
+        Session session = sessionProvider.getSession(name);
+        userMetadataService.saveMetadata(session.getUser(), createCatalogDto, true);
     }
 }
