@@ -139,7 +139,7 @@ public class MetacatV1Resource implements MetacatV1 {
         return requestWrapper(name, "createTable", () -> {
             checkArgument(table != null, "Table cannot be null");
             checkArgument(tableName != null && !tableName.isEmpty(), "table name is required");
-            checkArgument(table.getName() != null && tableName.equals(table.getName().getTableName()),
+            checkArgument(table.getName() != null && tableName.equalsIgnoreCase(table.getName().getTableName()),
                     "Table name does not match the name in the table");
 
             eventBus.post(new MetacatCreateTablePreEvent(name, metacatContext));
@@ -315,7 +315,7 @@ public class MetacatV1Resource implements MetacatV1 {
         return requestWrapper(name, "updateTable", () -> {
             checkArgument(table != null, "Table cannot be null");
             checkArgument(tableName != null && !tableName.isEmpty(), "table name is required");
-            checkArgument(table.getName() != null && tableName.equals(table.getName().getTableName()),
+            checkArgument(table.getName() != null && tableName.equalsIgnoreCase(table.getName().getTableName()),
                     "Table name does not match the name in the table");
 
             eventBus.post(new MetacatUpdateTablePreEvent(name, table, metacatContext));
