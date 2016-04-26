@@ -230,9 +230,10 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         log.debug("Ignoring {} since metacat save partitions will do an update if it already exists", ifNotExists);
         TableDto tableDto = v1.getTable(catalogName, dbName, tblName, true, false, false);
         PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
-        List<PartitionDto> converted = parts.stream()
-                                            .map(part -> hiveConverters.hiveToMetacatPartition(tableDto, part))
-                                            .collect(Collectors.toList());
+        List<PartitionDto> converted = Lists.newArrayListWithCapacity(parts.size());
+        for (Partition partition : parts) {
+            converted.add(hiveConverters.hiveToMetacatPartition(tableDto, partition));
+        }
         partitionsSaveRequestDto.setPartitions(converted);
         partV1.savePartitions(catalogName, dbName, tblName, partitionsSaveRequestDto);
         return parts;
@@ -770,10 +771,13 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             TableDto tableDto = v1.getTable(catalogName, dbName, tableName, true, false, false);
 
             Integer maxValues = max_parts > 0 ? Short.toUnsignedInt(max_parts) : null;
-            return partV1.getPartitions(catalogName, db_name, tbl_name, null, null, null, null, maxValues, false)
-                         .stream()
-                         .map(part -> hiveConverters.metacatToHivePartition(part, tableDto))
-                         .collect(Collectors.toList());
+            List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, db_name, tbl_name, null, null,
+                    null, null, maxValues, false);
+            List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
+            for (PartitionDto partition : metacatPartitions) {
+                result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
+            }
+            return result;
         });
     }
 
@@ -791,10 +795,13 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             TableDto tableDto = v1.getTable(catalogName, dbName, tableName, true, false, false);
 
             Integer maxValues = max_parts > 0 ? Short.toUnsignedInt(max_parts) : null;
-            return partV1.getPartitions(catalogName, db_name, tbl_name, filter, null, null, null, maxValues, false)
-                    .stream()
-                    .map(part -> hiveConverters.metacatToHivePartition(part, tableDto))
-                    .collect(Collectors.toList());
+            List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, db_name, tbl_name, filter, null,
+                    null, null, maxValues, false);
+            List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
+            for (PartitionDto partition : metacatPartitions) {
+                result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
+            }
+            return result;
         });
     }
 
@@ -809,11 +816,13 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             GetPartitionsRequestDto dto = new GetPartitionsRequestDto();
             dto.setIncludePartitionDetails(true);
             dto.setPartitionNames(names);
-            return partV1.getPartitionsForRequest(catalogName, db_name, tbl_name, null, null, null, null,
-                    false, dto)
-                         .stream()
-                         .map(part -> hiveConverters.metacatToHivePartition(part, tableDto))
-                         .collect(Collectors.toList());
+            List<PartitionDto> metacatPartitions = partV1.getPartitionsForRequest(catalogName, db_name, tbl_name, null,
+                    null, null, null, false, dto);
+            List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
+            for (PartitionDto partition : metacatPartitions) {
+                result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
+            }
+            return result;
         });
     }
 
@@ -827,10 +836,13 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             String partFilter = partition_values_to_partition_filter(tableDto, part_vals);
 
             Integer maxValues = max_parts > 0 ? Short.toUnsignedInt(max_parts) : null;
-            return partV1.getPartitions(catalogName, db_name, tbl_name, partFilter, null, null, null, maxValues, false)
-                         .stream()
-                         .map(part -> hiveConverters.metacatToHivePartition(part, tableDto))
-                         .collect(Collectors.toList());
+            List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, db_name, tbl_name, partFilter,
+                    null, null, null, maxValues, false);
+            List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
+            for (PartitionDto partition : metacatPartitions) {
+                result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
+            }
+            return result;
         });
     }
 
