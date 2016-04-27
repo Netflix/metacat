@@ -14,6 +14,7 @@
 package com.netflix.metacat.hive.connector;
 
 import com.facebook.presto.hive.metastore.HiveMetastore;
+import com.facebook.presto.spi.NotFoundException;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
@@ -68,9 +69,9 @@ public interface MetacatHiveMetastore extends HiveMetastore {
      * @param tableName table name
      * @param filter filter expression (JSP comparable expression)
      * @return list of partitions
-     * @throws NoSuchObjectException if the table does not exist
+     * @throws NotFoundException if the table does not exist
      */
-    List<Partition> getPartitions(String dbName, String tableName, String filter) throws NoSuchObjectException;
+    List<Partition> getPartitions(String dbName, String tableName, String filter) throws NotFoundException;
 
     /**
      * Get partitions for the list of partition names under the given database and table name.
@@ -78,9 +79,9 @@ public interface MetacatHiveMetastore extends HiveMetastore {
      * @param tableName table name
      * @param partitionIds partition ids/names
      * @return list of partitions
-     * @throws NoSuchObjectException if the table does not exist
+     * @throws NotFoundException if the table does not exist
      */
-    List<Partition> getPartitions(String dbName, String tableName, List<String> partitionIds) throws NoSuchObjectException;
+    List<Partition> getPartitions(String dbName, String tableName, List<String> partitionIds) throws NotFoundException;
 
     /**
      * Saves partitions.

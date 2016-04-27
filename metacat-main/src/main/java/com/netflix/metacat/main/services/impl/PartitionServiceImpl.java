@@ -232,6 +232,28 @@ public class PartitionServiceImpl implements PartitionService {
     }
 
     @Override
+    public List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
+            Pageable pageable) {
+        List<String> result = Lists.newArrayList();
+        Optional<TableHandle> tableHandle = tableService.getTableHandle(name);
+        if (tableHandle.isPresent()) {
+            result = splitManager.getPartitionKeys(tableHandle.get(), filter, partitionNames, sort, pageable);
+        }
+        return result;
+    }
+
+    @Override
+    public List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
+            Pageable pageable) {
+        List<String> result = Lists.newArrayList();
+        Optional<TableHandle> tableHandle = tableService.getTableHandle(name);
+        if (tableHandle.isPresent()) {
+            result = splitManager.getPartitionUris(tableHandle.get(), filter, partitionNames, sort, pageable);
+        }
+        return result;
+    }
+
+    @Override
     public void create( @Nonnull QualifiedName name, @Nonnull PartitionDto dto) {
         save( name, Lists.newArrayList(dto), null, false, false);
     }

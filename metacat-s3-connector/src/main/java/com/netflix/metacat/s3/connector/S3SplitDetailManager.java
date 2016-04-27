@@ -303,4 +303,16 @@ public class S3SplitDetailManager implements ConnectorSplitDetailManager{
     public ConnectorSplitSource getSplits(ConnectorSession session, ConnectorTableLayoutHandle layout) {
         return null;
     }
+
+    public List<String> getPartitionKeys(ConnectorTableHandle tableHandle, String filterExpression, List<String> partitionNames, Sort sort, Pageable pageable){
+        SchemaTableName tableName = schemaTableName(tableHandle);
+        return _getPartitions( tableName, filterExpression, partitionNames, sort, pageable, true).stream().map(
+                ConnectorPartition::getPartitionId).collect(Collectors.toList());
+    }
+
+    public List<String> getPartitionUris(ConnectorTableHandle tableHandle, String filterExpression, List<String> partitionNames, Sort sort, Pageable pageable){
+        SchemaTableName tableName = schemaTableName(tableHandle);
+        return _getPartitions(tableName, filterExpression, partitionNames, sort, pageable, true).stream().map(
+                partition -> ((ConnectorPartitionDetail) partition).getStorageInfo().getUri()).collect(Collectors.toList());
+    }
 }

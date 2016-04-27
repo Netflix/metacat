@@ -40,7 +40,6 @@ import com.netflix.metacat.main.services.PartitionService;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.netflix.metacat.main.api.RequestWrapper.qualifyName;
@@ -255,11 +254,120 @@ public class PartitionV1Resource implements PartitionV1 {
             SortOrder sortOrder,
             Integer offset,
             Integer limit,
-            Boolean includeUserMetadata,
             GetPartitionsRequestDto getPartitionsRequestDto) {
-        List<PartitionDto> result = getPartitionsForRequest(catalogName, databaseName, tableName, sortBy, sortOrder,
-                offset, limit, includeUserMetadata, getPartitionsRequestDto);
-        return result.stream().map(partitionDto -> partitionDto.getName().getPartitionName()).collect(Collectors.toList());
+        String filterExpression = null;
+        List<String> partitionNames = null;
+        if( getPartitionsRequestDto != null){
+            filterExpression = getPartitionsRequestDto.getFilter();
+            partitionNames = getPartitionsRequestDto.getPartitionNames();
+        }
+        return _getPartitionKeys(catalogName, databaseName, tableName, filterExpression, partitionNames, sortBy, sortOrder, offset, limit);
+    }
+
+    private List<String> _getPartitionKeys(
+            String catalogName,
+            String databaseName,
+            String tableName,
+            String filter,
+            List<String> partitionNames,
+            String sortBy,
+            SortOrder sortOrder,
+            Integer offset,
+            Integer limit){
+        QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return requestWrapper(name, "getPartitionKeys", () -> {
+            com.facebook.presto.spi.SortOrder order = null;
+            if (sortOrder != null) {
+                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
+            }
+            return partitionService.getPartitionKeys(
+                    name,
+                    filter,
+                    partitionNames,
+                    new Sort(sortBy, order),
+                    new Pageable(limit, offset)
+            );
+        });
+    }
+
+    private List<String> _getPartitionUris(
+            String catalogName,
+            String databaseName,
+            String tableName,
+            String filter,
+            List<String> partitionNames,
+            String sortBy,
+            SortOrder sortOrder,
+            Integer offset,
+            Integer limit){
+        QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return requestWrapper(name, "getMViewPartitionUris", () -> {
+            com.facebook.presto.spi.SortOrder order = null;
+            if (sortOrder != null) {
+                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
+            }
+            return partitionService.getPartitionUris(
+                    name,
+                    filter,
+                    partitionNames,
+                    new Sort(sortBy, order),
+                    new Pageable(limit, offset)
+            );
+        });
+    }
+
+    private List<String> _getMViewPartitionKeys(
+            String catalogName,
+            String databaseName,
+            String tableName,
+            String viewName,
+            String filter,
+            List<String> partitionNames,
+            String sortBy,
+            SortOrder sortOrder,
+            Integer offset,
+            Integer limit){
+        QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return requestWrapper(name, "getMViewPartitionKeys", () -> {
+            com.facebook.presto.spi.SortOrder order = null;
+            if (sortOrder != null) {
+                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
+            }
+            return mViewService.getPartitionKeys(
+                    name,
+                    filter,
+                    partitionNames,
+                    new Sort(sortBy, order),
+                    new Pageable(limit, offset)
+            );
+        });
+    }
+
+    private List<String> _getMViewPartitionUris(
+            String catalogName,
+            String databaseName,
+            String tableName,
+            String viewName,
+            String filter,
+            List<String> partitionNames,
+            String sortBy,
+            SortOrder sortOrder,
+            Integer offset,
+            Integer limit){
+        QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return requestWrapper(name, "getMViewPartitionUris", () -> {
+            com.facebook.presto.spi.SortOrder order = null;
+            if (sortOrder != null) {
+                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
+            }
+            return mViewService.getPartitionUris(
+                    name,
+                    filter,
+                    partitionNames,
+                    new Sort(sortBy, order),
+                    new Pageable(limit, offset)
+            );
+        });
     }
 
     @Override
@@ -271,11 +379,14 @@ public class PartitionV1Resource implements PartitionV1 {
             SortOrder sortOrder,
             Integer offset,
             Integer limit,
-            Boolean includeUserMetadata,
             GetPartitionsRequestDto getPartitionsRequestDto) {
-        List<PartitionDto> result = getPartitionsForRequest(catalogName, databaseName, tableName, sortBy, sortOrder,
-                offset, limit, includeUserMetadata, getPartitionsRequestDto);
-        return result.stream().map(PartitionDto::getDataUri).collect(Collectors.toList());
+        String filterExpression = null;
+        List<String> partitionNames = null;
+        if( getPartitionsRequestDto != null){
+            filterExpression = getPartitionsRequestDto.getFilter();
+            partitionNames = getPartitionsRequestDto.getPartitionNames();
+        }
+        return _getPartitionUris(catalogName, databaseName, tableName, filterExpression, partitionNames, sortBy, sortOrder, offset, limit);
     }
 
     @Override
@@ -287,11 +398,8 @@ public class PartitionV1Resource implements PartitionV1 {
             String sortBy,
             SortOrder sortOrder,
             Integer offset,
-            Integer limit,
-            Boolean includeUserMetadata) {
-        List<PartitionDto> result = getPartitions(catalogName, databaseName, tableName, filter, sortBy, sortOrder,
-                offset, limit, includeUserMetadata);
-        return result.stream().map(partitionDto -> partitionDto.getName().getPartitionName()).collect(Collectors.toList());
+            Integer limit) {
+        return _getPartitionKeys(catalogName, databaseName, tableName, filter, null, sortBy, sortOrder, offset, limit);
     }
 
     @Override
@@ -304,11 +412,8 @@ public class PartitionV1Resource implements PartitionV1 {
             String sortBy,
             SortOrder sortOrder,
             Integer offset,
-            Integer limit,
-            Boolean includeUserMetadata) {
-        List<PartitionDto> result = getPartitions(catalogName, databaseName, tableName, viewName, filter, sortBy,
-                sortOrder, offset, limit, includeUserMetadata);
-        return result.stream().map(partitionDto -> partitionDto.getName().getPartitionName()).collect(Collectors.toList());
+            Integer limit) {
+        return _getMViewPartitionKeys(catalogName, databaseName, tableName, viewName, filter, null, sortBy, sortOrder, offset, limit);
     }
 
     @Override
@@ -344,11 +449,14 @@ public class PartitionV1Resource implements PartitionV1 {
             SortOrder sortOrder,
             Integer offset,
             Integer limit,
-            Boolean includeUserMetadata,
             GetPartitionsRequestDto getPartitionsRequestDto) {
-        List<PartitionDto> result = getPartitionsForRequest(catalogName, databaseName, tableName, viewName, sortBy,
-                sortOrder, offset, limit, includeUserMetadata, getPartitionsRequestDto);
-        return result.stream().map(partitionDto -> partitionDto.getName().getPartitionName()).collect(Collectors.toList());
+        String filterExpression = null;
+        List<String> partitionNames = null;
+        if( getPartitionsRequestDto != null){
+            filterExpression = getPartitionsRequestDto.getFilter();
+            partitionNames = getPartitionsRequestDto.getPartitionNames();
+        }
+        return _getMViewPartitionKeys(catalogName, databaseName, tableName, viewName, filterExpression, partitionNames, sortBy, sortOrder, offset, limit);
     }
 
     @Override
@@ -360,11 +468,8 @@ public class PartitionV1Resource implements PartitionV1 {
             String sortBy,
             SortOrder sortOrder,
             Integer offset,
-            Integer limit,
-            Boolean includeUserMetadata) {
-        List<PartitionDto> result = getPartitions(catalogName, databaseName, tableName, filter, sortBy, sortOrder,
-                offset, limit, includeUserMetadata);
-        return result.stream().map(PartitionDto::getDataUri).collect(Collectors.toList());
+            Integer limit) {
+        return _getPartitionUris(catalogName, databaseName, tableName, filter, null, sortBy, sortOrder, offset, limit);
     }
 
     @Override
@@ -377,11 +482,8 @@ public class PartitionV1Resource implements PartitionV1 {
             String sortBy,
             SortOrder sortOrder,
             Integer offset,
-            Integer limit,
-            Boolean includeUserMetadata) {
-        List<PartitionDto> result = getPartitions(catalogName, databaseName, tableName, viewName, filter, sortBy,
-                sortOrder, offset, limit, includeUserMetadata);
-        return result.stream().map(PartitionDto::getDataUri).collect(Collectors.toList());
+            Integer limit) {
+        return _getMViewPartitionUris(catalogName, databaseName, tableName, viewName, filter, null, sortBy, sortOrder, offset, limit);
     }
 
     @Override
@@ -408,6 +510,9 @@ public class PartitionV1Resource implements PartitionV1 {
                 offset, limit, includeUserMetadata, includePartitionDetails);
     }
 
+
+
+
     @Override
     public List<String> getPartitionUrisForRequest(
             String catalogName,
@@ -418,11 +523,14 @@ public class PartitionV1Resource implements PartitionV1 {
             SortOrder sortOrder,
             Integer offset,
             Integer limit,
-            Boolean includeUserMetadata,
             GetPartitionsRequestDto getPartitionsRequestDto) {
-        List<PartitionDto> result = getPartitionsForRequest(catalogName, databaseName, tableName, viewName, sortBy,
-                sortOrder, offset, limit, includeUserMetadata, getPartitionsRequestDto);
-        return result.stream().map(PartitionDto::getDataUri).collect(Collectors.toList());
+        String filterExpression = null;
+        List<String> partitionNames = null;
+        if( getPartitionsRequestDto != null){
+            filterExpression = getPartitionsRequestDto.getFilter();
+            partitionNames = getPartitionsRequestDto.getPartitionNames();
+        }
+        return _getMViewPartitionUris(catalogName, databaseName, tableName, viewName, filterExpression, partitionNames, sortBy, sortOrder, offset, limit);
     }
 
     @Override

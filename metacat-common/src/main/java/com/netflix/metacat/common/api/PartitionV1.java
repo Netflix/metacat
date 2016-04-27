@@ -318,10 +318,7 @@ public interface PartitionV1 {
             Integer offset,
             @ApiParam(value = "Size of the partition list", required = false)
             @QueryParam("limit")
-            Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
-            Boolean includeUserMetadata
+            Integer limit
     );
 
     @GET
@@ -363,10 +360,7 @@ public interface PartitionV1 {
             Integer offset,
             @ApiParam(value = "Size of the partition list", required = false)
             @QueryParam("limit")
-            Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
-            Boolean includeUserMetadata
+            Integer limit
     );
 
     @POST
@@ -403,9 +397,6 @@ public interface PartitionV1 {
             @ApiParam(value = "Size of the partition list", required = false)
             @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
-            Boolean includeUserMetadata,
             @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
             GetPartitionsRequestDto getPartitionsRequestDto
     );
@@ -447,9 +438,6 @@ public interface PartitionV1 {
             @ApiParam(value = "Size of the partition list", required = false)
             @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
-            Boolean includeUserMetadata,
             @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
             GetPartitionsRequestDto getPartitionsRequestDto
     );
@@ -490,10 +478,7 @@ public interface PartitionV1 {
             Integer offset,
             @ApiParam(value = "Size of the partition list", required = false)
             @QueryParam("limit")
-            Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
-            Boolean includeUserMetadata
+            Integer limit
     );
 
     @GET
@@ -535,10 +520,7 @@ public interface PartitionV1 {
             Integer offset,
             @ApiParam(value = "Size of the partition list", required = false)
             @QueryParam("limit")
-            Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
-            Boolean includeUserMetadata
+            Integer limit
     );
 
     @POST
@@ -575,9 +557,6 @@ public interface PartitionV1 {
             @ApiParam(value = "Size of the partition list", required = false)
             @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
-            Boolean includeUserMetadata,
             @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
             GetPartitionsRequestDto getPartitionsRequestDto
     );
@@ -619,9 +598,6 @@ public interface PartitionV1 {
             @ApiParam(value = "Size of the partition list", required = false)
             @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
-            Boolean includeUserMetadata,
             @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
             GetPartitionsRequestDto getPartitionsRequestDto
     );

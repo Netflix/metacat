@@ -117,7 +117,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
 
     public List<Partition> getPartitions(String dbName, String tableName, String filter) {
         try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
-            return client.get_partitions_by_filter( dbName, tableName, filter, (short)0);
+            return client.get_partitions_by_filter(dbName, tableName, filter, (short) 0);
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
         }catch (Exception e) {
@@ -127,7 +127,11 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
 
     public List<Partition> getPartitions(String dbName, String tableName, List<String> partitionIds) {
         try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
-            return client.get_partitions_by_names( dbName, tableName, partitionIds);
+            if( partitionIds != null && !partitionIds.isEmpty()) {
+                return client.get_partitions_by_names(dbName, tableName, partitionIds);
+            } else {
+                return client.get_partitions( dbName, tableName, (short) 0);
+            }
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
         }catch (Exception e) {

@@ -1013,7 +1013,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         notThrown(Exception)
-        1 * partitionV1.getPartitionKeys(_, db, tbl, null, null, null, null, 42, false) >> partitions
+        1 * partitionV1.getPartitionKeys(_, db, tbl, null, null, null, null, 42) >> partitions
         results == partitions
 
         where:
@@ -1038,7 +1038,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         notThrown(Exception)
-        1 * partitionV1.getPartitionKeys(_, db, tbl, 'filter', null, null, null, { it >= 0 || it == null }, false) >> partitions
+        1 * partitionV1.getPartitionKeys(_, db, tbl, 'filter', null, null, null, { it >= 0 || it == null }) >> partitions
         result == partitions
 
         where:

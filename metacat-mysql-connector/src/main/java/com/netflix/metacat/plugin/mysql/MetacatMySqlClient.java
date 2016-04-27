@@ -83,6 +83,7 @@ public class MetacatMySqlClient extends BaseJdbcClient {
         case Types.INTEGER:
             return INT;
         case Types.FLOAT:
+        case Types.REAL:
             return FLOAT;
         default:
             return super.toPrestoType(jdbcType);

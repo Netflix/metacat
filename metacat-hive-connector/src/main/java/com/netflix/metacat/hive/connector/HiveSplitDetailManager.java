@@ -13,8 +13,10 @@
 
 package com.netflix.metacat.hive.connector;
 
+import com.facebook.presto.exception.InvalidMetaException;
 import com.facebook.presto.exception.PartitionAlreadyExistsException;
 import com.facebook.presto.exception.PartitionNotFoundException;
+import com.facebook.presto.hadoop.shaded.com.google.common.collect.Maps;
 import com.facebook.presto.hive.DirectoryLister;
 import com.facebook.presto.hive.ForHiveClient;
 import com.facebook.presto.hive.HdfsEnvironment;
@@ -46,6 +48,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.partition.util.PartitionUtil;
 import com.netflix.metacat.hive.connector.util.ConverterUtil;
+import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
@@ -61,6 +64,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.facebook.presto.hive.HiveUtil.schemaTableName;
@@ -98,28 +103,55 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
             List<String> partitionIds,
             Sort sort, Pageable pageable,
             boolean includePartitionDetails) {
+        List<ConnectorPartition> result = getPartitions( schemaTableName, filterExpression, partitionIds);
+        if( pageable != null && pageable.isPageable()){
+            int limit = pageable.getOffset() + pageable.getLimit();
+            if( result.size() < limit){
+                limit = result.size();
+            }
+            if( pageable.getOffset() > limit) {
+                result = Lists.newArrayList();
+            } else {
+                result = result.subList(pageable.getOffset(), limit);
+            }
+        }
+        return result;
+    }
+
+    private List<ConnectorPartition> getPartitions(SchemaTableName schemaTableName, String filterExpression,
+            List<String> partitionIds) {
         List<ConnectorPartition> result = Lists.newArrayList();
         List<String> queryPartitionIds = Lists.newArrayList();
+        Table table = metastore.getTable( schemaTableName.getSchemaName(), schemaTableName.getTableName())
+                .orElseThrow(() -> new TableNotFoundException(schemaTableName));
+        Map<String,Partition> partitionMap = null;
         if (!Strings.isNullOrEmpty(filterExpression)) {
-            queryPartitionIds = metastore
-                    .getPartitionNamesByParts(schemaTableName.getSchemaName(), schemaTableName.getTableName(),
-                            Lists.newArrayList(PartitionUtil.getPartitionKeyValues(filterExpression).values())).orElse(Lists.newArrayList());
-        }
-        if (partitionIds != null) {
-            queryPartitionIds.addAll(partitionIds);
+            Map<String,Partition> filteredPartitionMap = Maps.newHashMap();
+            List<Partition> partitions = ((MetacatHiveMetastore)metastore).getPartitions( schemaTableName.getSchemaName(), schemaTableName.getTableName(), filterExpression);
+            partitions.forEach(partition -> {
+                String partitionName = null;
+                try {
+                    partitionName = Warehouse.makePartName(table.getPartitionKeys(), partition.getValues());
+                } catch (Exception e) {
+                    throw new InvalidMetaException("One or more partition names are invalid.", e);
+                }
+                if (partitionIds == null || partitionIds.contains(partitionName)) {
+                    filteredPartitionMap.put(partitionName, partition);
+                }
+            });
+            partitionMap = filteredPartitionMap;
         } else {
-            queryPartitionIds.addAll(metastore.getPartitionNames(schemaTableName.getSchemaName(),
-                    schemaTableName.getTableName()).orElse(Lists.newArrayList()));
+            partitionMap = getPartitionsByNames(
+                    schemaTableName.getSchemaName(), schemaTableName.getTableName(),
+                    partitionIds);
         }
-        Map<String,Partition> partitionMap = getPartitionsByNames(
-                schemaTableName.getSchemaName(), schemaTableName.getTableName(),
-                queryPartitionIds);
         Map<ColumnHandle, Comparable<?>> domainMap = ImmutableMap.of(new ColumnHandle(){}, "ignore");
         TupleDomain<ColumnHandle> tupleDomain = TupleDomain.withFixedValues(domainMap);
+        final List<ConnectorPartition> finalResult = result;
         partitionMap.forEach((s, partition) -> {
             StorageDescriptor sd = partition.getSd();
             StorageInfo storageInfo = null;
-            if( sd != null){
+            if (sd != null) {
                 storageInfo = new StorageInfo();
                 storageInfo.setUri(sd.getLocation());
                 storageInfo.setInputFormat(sd.getInputFormat());
@@ -132,9 +164,10 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
                 }
             }
             AuditInfo auditInfo = new AuditInfo();
-            auditInfo.setCreatedDate((long)partition.getCreateTime());
+            auditInfo.setCreatedDate((long) partition.getCreateTime());
             auditInfo.setLastUpdatedDate((long) partition.getLastAccessTime());
-            result.add( new ConnectorPartitionDetailImpl(s, tupleDomain, storageInfo, partition.getParameters(), auditInfo));
+            finalResult.add(new ConnectorPartitionDetailImpl(s, tupleDomain, storageInfo, partition.getParameters(),
+                    auditInfo));
         });
         return result;
     }
@@ -326,5 +359,35 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
     public Integer getPartitionCount(ConnectorTableHandle connectorHandle) {
         SchemaTableName schemaTableName = HiveUtil.schemaTableName(connectorHandle);
         return metastore.getPartitionNames(schemaTableName.getSchemaName(), schemaTableName.getTableName()).orElse(Lists.newArrayList()).size();
+    }
+
+    public List<String> getPartitionKeys(ConnectorTableHandle tableHandle, String filterExpression, List<String> partitionNames, Sort sort, Pageable pageable){
+        List<String> result = null;
+        SchemaTableName schemaTableName = HiveUtil.schemaTableName(tableHandle);
+        if( filterExpression != null || (partitionNames != null && !partitionNames.isEmpty())){
+            result = getPartitions(schemaTableName, filterExpression, partitionNames).stream().map(
+                    ConnectorPartition::getPartitionId).collect(Collectors.toList());
+        } else {
+            result = metastore.getPartitionNames(schemaTableName.getSchemaName(), schemaTableName.getTableName())
+                    .orElse(Lists.newArrayList());
+        }
+        if( pageable != null && pageable.isPageable()){
+            int limit = pageable.getOffset() + pageable.getLimit();
+            if( result.size() < limit){
+                limit = result.size();
+            }
+            if( pageable.getOffset() > limit) {
+                result = Lists.newArrayList();
+            } else {
+                result = result.subList(pageable.getOffset(), limit);
+            }
+        }
+        return result;
+    }
+
+    public List<String> getPartitionUris(ConnectorTableHandle table, String filterExpression, List<String> partitionNames, Sort sort, Pageable pageable){
+        SchemaTableName schemaTableName = HiveUtil.schemaTableName(table);
+        return getPartitions(schemaTableName, filterExpression, partitionNames, sort, pageable, true).stream().map(
+                partition -> ((ConnectorPartitionDetail) partition).getStorageInfo().getUri()).collect(Collectors.toList());
     }
 }

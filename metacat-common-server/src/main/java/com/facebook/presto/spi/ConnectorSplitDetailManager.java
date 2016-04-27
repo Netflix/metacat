@@ -63,4 +63,26 @@ public interface ConnectorSplitDetailManager extends ConnectorSplitManager{
     default List<SchemaTablePartitionName> getPartitionNames(String uri, boolean prefixSearch){
         return Lists.newArrayList();
     }
+
+    /**
+     * Gets the partition names/keys based on a filter expression for the specified table.
+     * @param table table handle
+     * @param filterExpression JSP based filter expression string
+     * @param partitionNames filter the list that matches the given partition names. If null or empty, it will return all.
+     * @return filtered list of partition names
+     */
+    default List<String> getPartitionKeys(ConnectorTableHandle table, String filterExpression, List<String> partitionNames, Sort sort, Pageable pageable){
+        return Lists.newArrayList();
+    }
+
+    /**
+     * Gets the partition uris based on a filter expression for the specified table.
+     * @param table table handle
+     * @param filterExpression JSP based filter expression string
+     * @param partitionNames filter the list that matches the given partition names. If null or empty, it will return all.
+     * @return filtered list of partition uris
+     */
+    default List<String> getPartitionUris(ConnectorTableHandle table, String filterExpression, List<String> partitionNames, Sort sort, Pageable pageable){
+        return Lists.newArrayList();
+    }
 }

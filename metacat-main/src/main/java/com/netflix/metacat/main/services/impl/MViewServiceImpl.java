@@ -248,6 +248,20 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
+    public List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
+            Pageable pageable) {
+        QualifiedName viewQName = QualifiedName.ofTable( name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
+        return partitionService.getPartitionKeys( viewQName, filter, partitionNames, sort, pageable);
+    }
+
+    @Override
+    public List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
+            Pageable pageable) {
+        QualifiedName viewQName = QualifiedName.ofTable( name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
+        return partitionService.getPartitionUris( viewQName, filter, partitionNames, sort, pageable);
+    }
+
+    @Override
     public Integer partitionCount(QualifiedName name) {
         QualifiedName viewQName = QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return partitionService.count(viewQName);

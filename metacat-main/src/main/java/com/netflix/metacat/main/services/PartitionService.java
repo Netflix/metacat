@@ -30,4 +30,6 @@ public interface PartitionService extends MetacatService<PartitionDto>{
             boolean checkIfExists, boolean alterIfExists);
     void delete(QualifiedName name, List<String> partitionIds);
     List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch);
+    List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable);
+    List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable);
 }

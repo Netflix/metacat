@@ -98,6 +98,24 @@ public class SplitManager
         }
     }
 
+    public List<String> getPartitionKeys(TableHandle table, String filter, List<String> partitionNames, Sort sort, Pageable pageable){
+        ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
+        if( splitManager instanceof ConnectorSplitDetailManager){
+            return ((ConnectorSplitDetailManager) splitManager).getPartitionKeys( table.getConnectorHandle(), filter, partitionNames, sort, pageable);
+        } else {
+            throw new UnsupportedOperationException("Operation not supported");
+        }
+    }
+
+    public List<String> getPartitionUris(TableHandle table, String filter, List<String> partitionNames, Sort sort, Pageable pageable){
+        ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
+        if( splitManager instanceof ConnectorSplitDetailManager){
+            return ((ConnectorSplitDetailManager) splitManager).getPartitionUris( table.getConnectorHandle(), filter, partitionNames, sort, pageable);
+        } else {
+            throw new UnsupportedOperationException("Operation not supported");
+        }
+    }
+
     public Integer getPartitionCount(Session session, TableHandle table){
         ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
         if( splitManager instanceof ConnectorSplitDetailManager){

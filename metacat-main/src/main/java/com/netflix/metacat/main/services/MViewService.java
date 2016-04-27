@@ -49,6 +49,8 @@ public interface MViewService extends MetacatService<TableDto>{
     List<PartitionDto> listPartitions(@Nonnull QualifiedName name, String filter, List<String> partitionNames,
             Sort sort, Pageable pageable,
             boolean includeUserMetadata, boolean includePartitionDetails);
+    List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable);
+    List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable);
     Integer partitionCount(@Nonnull QualifiedName name);
     List<NameDateDto> list(@Nonnull QualifiedName qualifiedName);
     void saveMetadata(@Nonnull QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);

@@ -737,7 +737,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         String tableName = normalizeIdentifier(tbl_name);
         Integer maxValues = max_parts > 0 ? Short.toUnsignedInt(max_parts) : null;
         return requestWrapper("get_partition_names", new Object[] { dbName, tableName, max_parts }, () -> partV1
-                .getPartitionKeys(catalogName, dbName, tableName, null, null, null, null, maxValues, false));
+                .getPartitionKeys(catalogName, dbName, tableName, null, null, null, null, maxValues));
     }
 
     @Override
@@ -750,9 +750,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
                     String partFilter = partition_values_to_partition_filter(db_name, tbl_name, part_vals);
 
                     Integer maxValues = max_parts > 0 ? Short.toUnsignedInt(max_parts) : null;
-                    return partV1.getPartitionKeys(
-                            catalogName, db_name, tbl_name, partFilter, null, null, null, maxValues, false
-                    );
+                    return partV1.getPartitionKeys(catalogName, db_name, tbl_name, partFilter, null, null, null, maxValues);
                 });
     }
 
