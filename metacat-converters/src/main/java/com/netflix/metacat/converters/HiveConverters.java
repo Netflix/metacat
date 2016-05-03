@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.converters;
 
-import com.facebook.presto.spi.type.TypeManager;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.PartitionDto;

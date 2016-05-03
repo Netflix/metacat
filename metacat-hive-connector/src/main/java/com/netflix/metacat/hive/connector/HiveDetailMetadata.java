@@ -17,12 +17,12 @@ import com.facebook.presto.exception.SchemaAlreadyExistsException;
 import com.facebook.presto.hive.ForHiveClient;
 import com.facebook.presto.hive.HdfsEnvironment;
 import com.facebook.presto.hive.HiveClientConfig;
-import com.facebook.presto.hive.HiveColumnHandle;
 import com.facebook.presto.hive.HiveConnectorId;
 import com.facebook.presto.hive.HiveMetadata;
 import com.facebook.presto.hive.HivePartitionManager;
 import com.facebook.presto.hive.HiveStorageFormat;
 import com.facebook.presto.hive.HiveTableHandle;
+import com.facebook.presto.hive.HiveUtil;
 import com.facebook.presto.hive.metastore.HiveMetastore;
 import com.facebook.presto.spi.ColumnDetailMetadata;
 import com.facebook.presto.spi.ColumnMetadata;
@@ -37,6 +37,7 @@ import com.facebook.presto.spi.SchemaNotFoundException;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.StorageInfo;
 import com.facebook.presto.spi.TableNotFoundException;
+import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
@@ -44,7 +45,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.netflix.metacat.converters.TypeConverterProvider;
+import com.netflix.metacat.converters.impl.HiveTypeConverter;
 import com.netflix.metacat.hive.connector.util.ConverterUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
@@ -55,6 +56,7 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -63,11 +65,12 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import static com.facebook.presto.hive.HiveColumnHandle.SAMPLE_WEIGHT_COLUMN_NAME;
 import static com.facebook.presto.hive.HiveErrorCode.HIVE_INVALID_METADATA;
 import static com.facebook.presto.hive.HiveErrorCode.HIVE_UNSUPPORTED_FORMAT;
-import static com.facebook.presto.hive.HiveUtil.hiveColumnHandles;
 import static com.facebook.presto.hive.HiveUtil.schemaTableName;
 import static com.facebook.presto.hive.util.Types.checkType;
+import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -81,10 +84,10 @@ import static java.lang.String.format;
 public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailMetadata {
     public static final String PARAMETER_EXTERNAL = "EXTERNAL";
     protected final HiveMetastore metastore;
-    protected final TypeConverterProvider typeConverterProvider;
     protected final TypeManager typeManager;
     protected final HiveConnectorId connectorId;
-    protected HiveStorageFormat hiveStorageFormat;
+    protected ConverterUtil converterUtil;
+    protected HiveTypeConverter hiveTypeConverter;
 
     @Inject
     public HiveDetailMetadata(HiveConnectorId connectorId,
@@ -92,14 +95,15 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
             HiveMetastore metastore,
             HdfsEnvironment hdfsEnvironment,
             HivePartitionManager partitionManager,
-            TypeConverterProvider typeConverterProvider,
             @ForHiveClient
-            ExecutorService executorService, TypeManager typeManager) {
+            ExecutorService executorService, TypeManager typeManager,
+            ConverterUtil converterUtil, HiveTypeConverter hiveTypeConverter) {
         super(connectorId, hiveClientConfig, metastore, hdfsEnvironment, partitionManager, executorService, typeManager);
         this.metastore = metastore;
-        this.typeConverterProvider = typeConverterProvider;
         this.typeManager = typeManager;
         this.connectorId = connectorId;
+        this.converterUtil = converterUtil;
+        this.hiveTypeConverter = hiveTypeConverter;
     }
 
     @Override
@@ -158,7 +162,7 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
         List<ColumnMetadata> columns = null;
         try {
             if (table.getSd().getColsSize() == 0) {
-                List<HiveColumnHandle> handles = hiveColumnHandles(typeManager, connectorId.toString(), table,
+                List<MetacatHiveColumnHandle> handles = hiveColumnHandles(typeManager, connectorId.toString(), table,
                         false);
                 columns = ImmutableList
                         .copyOf(transform(handles, columnMetadataGetter(table, typeManager)));
@@ -169,18 +173,55 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
 
         if (columns == null) {
             if (table.getSd().getColsSize() != 0) {
-                columns = ConverterUtil.toColumnMetadatas(table, typeConverterProvider, typeManager);
+                columns = converterUtil.toColumnMetadatas(table, typeManager);
             } else {
                 columns = Lists.newArrayList();
             }
         }
 
         return new ConnectorTableDetailMetadata(tableName, columns, table.getOwner(),
-                ConverterUtil.toStorageInfo(table.getSd()), table.getParameters(),
-                ConverterUtil.toAuditInfo(table));
+                converterUtil.toStorageInfo(table.getSd()), table.getParameters(),
+                converterUtil.toAuditInfo(table));
     }
 
-    static Function<HiveColumnHandle, ColumnMetadata> columnMetadataGetter(Table table, final TypeManager typeManager)
+    public List<MetacatHiveColumnHandle> hiveColumnHandles(TypeManager typeManager, String connectorId, Table table, boolean includeSampleWeight)
+    {
+        ImmutableList.Builder<MetacatHiveColumnHandle> columns = ImmutableList.builder();
+
+        // add the data fields first
+        int hiveColumnIndex = 0;
+        for (StructField field : HiveUtil.getTableStructFields(table)) {
+            if ( (includeSampleWeight || !field.getFieldName().equals(SAMPLE_WEIGHT_COLUMN_NAME))) {
+                Type type = hiveTypeConverter.getType(field.getFieldObjectInspector(), typeManager);
+                HiveUtil.checkCondition(type != null, NOT_SUPPORTED, "Unsupported Hive type: %s",
+                        field.getFieldObjectInspector().getTypeName());
+                columns.add(new MetacatHiveColumnHandle(connectorId, field.getFieldName(), hiveColumnIndex, field.getFieldObjectInspector().getTypeName(), type, hiveColumnIndex, false));
+            }
+            hiveColumnIndex++;
+        }
+
+        // add the partition keys last (like Hive does)
+        columns.addAll(getPartitionKeyColumnHandles(connectorId, table, hiveColumnIndex));
+
+        return columns.build();
+    }
+
+    public List<MetacatHiveColumnHandle> getPartitionKeyColumnHandles(String connectorId, Table table, int startOrdinal)
+    {
+        ImmutableList.Builder<MetacatHiveColumnHandle> columns = ImmutableList.builder();
+
+        List<FieldSchema> partitionKeys = table.getPartitionKeys();
+        for (int i = 0; i < partitionKeys.size(); i++) {
+            FieldSchema field = partitionKeys.get(i);
+
+            columns.add(new MetacatHiveColumnHandle(connectorId, field.getName(), startOrdinal + i, field.getType(), hiveTypeConverter.toType(
+                    field.getType(), typeManager), -1, true));
+        }
+
+        return columns.build();
+    }
+
+    static Function<MetacatHiveColumnHandle, ColumnMetadata> columnMetadataGetter(Table table, final TypeManager typeManager)
     {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
         for (FieldSchema field : concat(table.getSd().getCols(), table.getPartitionKeys())) {
@@ -192,11 +233,12 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
 
         return input -> new ColumnDetailMetadata(
                 input.getName(),
-                typeManager.getType(input.getTypeSignature()),
+                input.getType(),
                 input.isPartitionKey(),
                 columnComment.get(input.getName()),
                 false,
-                input.getHiveType().getHiveTypeName());
+                input.getHiveTypeName()
+                );
     }
 
     @Override
@@ -284,7 +326,7 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
         ImmutableList.Builder<FieldSchema> columnsBuilder = ImmutableList.builder();
         ImmutableList.Builder<FieldSchema> partitionKeysBuilder = ImmutableList.builder();
         for( ColumnMetadata column: tableDetailMetadata.getColumns()){
-            FieldSchema field = ConverterUtil.toFieldSchema(column);
+            FieldSchema field = converterUtil.toFieldSchema(column);
             if( column.isPartitionKey()){
                 partitionKeysBuilder.add(field);
             }else {
@@ -377,15 +419,15 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
             return tables.stream().map(table -> {
                 List<ColumnMetadata> columns;
                 if( table.getSd().getColsSize() == 0) {
-                    List<HiveColumnHandle> handles = hiveColumnHandles(typeManager, connectorId.toString(), table, false);
+                    List<MetacatHiveColumnHandle> handles = hiveColumnHandles(typeManager, connectorId.toString(), table, false);
                     columns = ImmutableList
                             .copyOf(transform(handles, columnMetadataGetter(table, typeManager)));
                 } else {
-                    columns = ConverterUtil.toColumnMetadatas(table, typeConverterProvider, typeManager);
+                    columns = converterUtil.toColumnMetadatas(table, typeManager);
                 }
                 SchemaTableName tableName = new SchemaTableName( schemaName, table.getTableName());
                 return new ConnectorTableDetailMetadata(tableName, columns, table.getOwner(),
-                        ConverterUtil.toStorageInfo(table.getSd()), Maps.newHashMap(), ConverterUtil.toAuditInfo(table));
+                        converterUtil.toStorageInfo(table.getSd()), Maps.newHashMap(), converterUtil.toAuditInfo(table));
             }).collect(Collectors.toList());
         }
         return Lists.newArrayList();

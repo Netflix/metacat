@@ -20,13 +20,13 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static com.facebook.presto.type.FloatType.FLOAT;
-import static com.facebook.presto.type.IntType.INT;
-import static com.facebook.presto.type.TinyIntType.TINY_INT;
-import static com.facebook.presto.type.SmallIntType.SMALL_INT;
-import static com.facebook.presto.type.DecimalType.DECIMAL;
-import static com.facebook.presto.type.CharType.CHAR;
-import static com.facebook.presto.type.StringType.STRING;
+import static com.facebook.presto.type.CharType.CHAR
+import static com.facebook.presto.type.DecimalType.DECIMAL
+import static com.facebook.presto.type.FloatType.FLOAT
+import static com.facebook.presto.type.IntType.INT
+import static com.facebook.presto.type.SmallIntType.SMALL_INT
+import static com.facebook.presto.type.StringType.STRING
+import static com.facebook.presto.type.TinyIntType.TINY_INT
 
 class HiveTypeConverterSpec extends Specification {
     @Shared
@@ -54,8 +54,8 @@ class HiveTypeConverterSpec extends Specification {
                 'timestamp',
                 'date',
                 'string',
-                //'varchar(10)',
-                //'char(10)',
+                'varchar(10)',
+                'char(10)',
                 'boolean',
                 'binary',
                 'array<bigint>',

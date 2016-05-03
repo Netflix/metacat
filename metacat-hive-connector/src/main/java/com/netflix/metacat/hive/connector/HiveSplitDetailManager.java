@@ -16,7 +16,6 @@ package com.netflix.metacat.hive.connector;
 import com.facebook.presto.exception.InvalidMetaException;
 import com.facebook.presto.exception.PartitionAlreadyExistsException;
 import com.facebook.presto.exception.PartitionNotFoundException;
-import com.facebook.presto.hadoop.shaded.com.google.common.collect.Maps;
 import com.facebook.presto.hive.DirectoryLister;
 import com.facebook.presto.hive.ForHiveClient;
 import com.facebook.presto.hive.HdfsEnvironment;
@@ -45,6 +44,7 @@ import com.google.common.base.Strings;
 import com.google.common.cache.CacheLoader;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.partition.util.PartitionUtil;
 import com.netflix.metacat.hive.connector.util.ConverterUtil;
@@ -64,8 +64,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.facebook.presto.hive.HiveUtil.schemaTableName;
@@ -77,6 +75,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class HiveSplitDetailManager extends HiveSplitManager implements ConnectorSplitDetailManager{
 
     protected final HiveMetastore metastore;
+    protected final ConverterUtil converterUtil;
     @Inject
     public HiveSplitDetailManager(HiveConnectorId connectorId,
             HiveClientConfig hiveClientConfig,
@@ -84,10 +83,11 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
             NamenodeStats namenodeStats, HdfsEnvironment hdfsEnvironment,
             DirectoryLister directoryLister,
             @ForHiveClient
-            ExecutorService executorService) {
+            ExecutorService executorService, ConverterUtil converterUtil) {
         super(connectorId, hiveClientConfig, metastore, namenodeStats, hdfsEnvironment, directoryLister,
                 executorService);
         this.metastore = metastore;
+        this.converterUtil = converterUtil;
     }
 
     @Override
@@ -217,14 +217,14 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
                 Partition hivePartition = existingPartitionMap.get(partitionName);
                 if(hivePartition == null){
                     addedPartitionIds.add(partitionName);
-                    hivePartitions.add(ConverterUtil.toPartition(tableName, partition));
+                    hivePartitions.add(converterUtil.toPartition(tableName, partition));
                 } else {
                     ConnectorPartitionDetail partitionDetail = (ConnectorPartitionDetail) partition;
                     String partitionUri = getUri(partitionDetail);
                     String hivePartitionUri = getUri(hivePartition);
                     if( partitionUri == null || !partitionUri.equals( hivePartitionUri)){
                         existingPartitionIds.add(partitionName);
-                        Partition existingPartition = ConverterUtil.toPartition(tableName, partition);
+                        Partition existingPartition = converterUtil.toPartition(tableName, partition);
                         if( alterIfExists){
                             existingPartition.setParameters(hivePartition.getParameters());
                             existingPartition.setCreateTime(hivePartition.getCreateTime());

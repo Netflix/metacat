@@ -13,8 +13,6 @@
 
 package com.netflix.metacat.common.util;
 
-import com.google.common.base.Throwables;
-
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.Driver;

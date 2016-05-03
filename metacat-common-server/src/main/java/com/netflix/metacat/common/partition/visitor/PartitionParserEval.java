@@ -37,7 +37,6 @@ import com.netflix.metacat.common.partition.parser.PartitionParserVisitor;
 import com.netflix.metacat.common.partition.parser.SimpleNode;
 import com.netflix.metacat.common.partition.parser.Variable;
 
-
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.regex.Matcher;

@@ -19,8 +19,11 @@ import com.facebook.presto.spi.type.StandardTypes;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
 import com.facebook.presto.spi.type.TypeSignature;
+import com.facebook.presto.type.CharType;
+import com.facebook.presto.type.DecimalType;
 import com.facebook.presto.type.MapType;
 import com.facebook.presto.type.RowType;
+import com.facebook.presto.type.VarcharType;
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.converters.TypeConverter;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
@@ -30,9 +33,12 @@ import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardStructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
+import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,31 +52,26 @@ import static com.facebook.presto.spi.type.DateType.DATE;
 import static com.facebook.presto.spi.type.DoubleType.DOUBLE;
 import static com.facebook.presto.spi.type.TimestampType.TIMESTAMP;
 import static com.facebook.presto.spi.type.VarbinaryType.VARBINARY;
-import static com.facebook.presto.spi.type.VarcharType.VARCHAR;
 import static com.facebook.presto.type.FloatType.FLOAT;
 import static com.facebook.presto.type.IntType.INT;
-import static com.facebook.presto.type.TinyIntType.TINY_INT;
 import static com.facebook.presto.type.SmallIntType.SMALL_INT;
-import static com.facebook.presto.type.DecimalType.DECIMAL;
-import static com.facebook.presto.type.CharType.CHAR;
 import static com.facebook.presto.type.StringType.STRING;
+import static com.facebook.presto.type.TinyIntType.TINY_INT;
 import static org.apache.hadoop.hive.serde.serdeConstants.BIGINT_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.BINARY_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.BOOLEAN_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.CHAR_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.DATE_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.DECIMAL_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.DOUBLE_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.FLOAT_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.INT_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.TINYINT_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.SMALLINT_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.STRING_TYPE_NAME;
 import static org.apache.hadoop.hive.serde.serdeConstants.TIMESTAMP_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.VARCHAR_TYPE_NAME;
+import static org.apache.hadoop.hive.serde.serdeConstants.TINYINT_TYPE_NAME;
 
 public class HiveTypeConverter implements TypeConverter {
-    private static Type getPrimitiveType(PrimitiveObjectInspector.PrimitiveCategory primitiveCategory) {
+    private static Type getPrimitiveType(ObjectInspector fieldInspector) {
+        PrimitiveObjectInspector.PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) fieldInspector).getPrimitiveCategory();
         switch (primitiveCategory) {
         case BOOLEAN:
             return BOOLEAN;
@@ -87,13 +88,16 @@ public class HiveTypeConverter implements TypeConverter {
         case DOUBLE:
             return DOUBLE;
         case DECIMAL:
-            return DECIMAL;
+            DecimalTypeInfo decimalTypeInfo = (DecimalTypeInfo)((PrimitiveObjectInspector) fieldInspector).getTypeInfo();
+            return DecimalType.createDecimalType(decimalTypeInfo.precision(), decimalTypeInfo.getScale());
         case CHAR:
-            return CHAR;
+            int cLength = ((CharTypeInfo)((PrimitiveObjectInspector) fieldInspector).getTypeInfo()).getLength();
+            return CharType.createCharType(cLength);
         case STRING:
             return STRING;
         case VARCHAR:
-            return VARCHAR;
+            int vLength = ((VarcharTypeInfo)((PrimitiveObjectInspector) fieldInspector).getTypeInfo()).getLength();
+            return VarcharType.createVarcharType(vLength);
         case DATE:
             return DATE;
         case TIMESTAMP:
@@ -106,11 +110,10 @@ public class HiveTypeConverter implements TypeConverter {
         }
     }
 
-    public static Type getType(ObjectInspector fieldInspector, TypeManager typeManager) {
+    public Type getType(ObjectInspector fieldInspector, TypeManager typeManager) {
         switch (fieldInspector.getCategory()) {
         case PRIMITIVE:
-            PrimitiveObjectInspector.PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) fieldInspector).getPrimitiveCategory();
-            return getPrimitiveType(primitiveCategory);
+            return getPrimitiveType(fieldInspector);
         case MAP:
             MapObjectInspector mapObjectInspector = checkType(fieldInspector, MapObjectInspector.class,
                     "fieldInspector");
@@ -165,14 +168,14 @@ public class HiveTypeConverter implements TypeConverter {
             return FLOAT_TYPE_NAME;
         } else if (DOUBLE.equals(type)) {
             return DOUBLE_TYPE_NAME;
-        } else if (DECIMAL.equals(type)) {
-            return DECIMAL_TYPE_NAME;
-        } else if (CHAR.equals(type)) {
-            return CHAR_TYPE_NAME;
+        } else if (type instanceof DecimalType) {
+            return type.getDisplayName();
+        } else if (type instanceof CharType) {
+            return type.getDisplayName();
         } else if (STRING.equals(type)) {
             return STRING_TYPE_NAME;
-        } else if (VARCHAR.equals(type)) {
-            return VARCHAR_TYPE_NAME;
+        } else if (type instanceof VarcharType) {
+            return type.getDisplayName();
         } else if (VARBINARY.equals(type)) {
             return BINARY_TYPE_NAME;
         } else if (DateType.DATE.equals(type)) {

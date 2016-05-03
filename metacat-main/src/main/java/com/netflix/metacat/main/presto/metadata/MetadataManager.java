@@ -48,8 +48,6 @@ import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
 import com.facebook.presto.spi.type.TypeSignature;
-import com.facebook.presto.split.SplitManager;
-import com.facebook.presto.sql.analyzer.FeaturesConfig;
 import com.facebook.presto.type.TypeDeserializer;
 import com.facebook.presto.type.TypeRegistry;
 import com.fasterxml.jackson.databind.JsonDeserializer;

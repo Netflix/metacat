@@ -89,11 +89,11 @@ public class PigTypeConverter implements TypeConverter{
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.LONG);
         } else if( FloatType.FLOAT.equals(prestoType)){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.FLOAT);
-        } else if( DoubleType.DOUBLE.equals(prestoType) || DecimalType.DECIMAL.equals(prestoType)){
+        } else if( DoubleType.DOUBLE.equals(prestoType) || prestoType instanceof DecimalType){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.DOUBLE);
         } else if( TimestampType.TIMESTAMP.equals(prestoType) || DateType.DATE.equals(prestoType)){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.DATETIME);
-        } else if( VarcharType.VARCHAR.equals(prestoType) || CharType.CHAR.equals(prestoType) || StringType.STRING.equals(prestoType)){
+        } else if( prestoType instanceof VarcharType || prestoType instanceof CharType || StringType.STRING.equals(prestoType) | prestoType instanceof com.facebook.presto.type.VarcharType){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.CHARARRAY);
         } else if( UnknownType.UNKNOWN.equals(prestoType)){
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.UNKNOWN);
@@ -151,7 +151,7 @@ public class PigTypeConverter implements TypeConverter{
             return TimestampType.TIMESTAMP;
         case DataType.CHARARRAY:
         case DataType.BIGCHARARRAY:
-            return VarcharType.VARCHAR;
+            return StringType.STRING;
         case DataType.MAP:
             return toPrestoMapType(field);
         case DataType.BAG:
@@ -189,7 +189,7 @@ public class PigTypeConverter implements TypeConverter{
     }
 
     private Type toPrestoMapType(LogicalSchema.LogicalFieldSchema field) {
-        Type key = VarcharType.VARCHAR;
+        Type key = StringType.STRING;
         Type value = UnknownType.UNKNOWN;
         if( field.schema != null){
             List<LogicalSchema.LogicalFieldSchema> fields = field.schema.getFields();

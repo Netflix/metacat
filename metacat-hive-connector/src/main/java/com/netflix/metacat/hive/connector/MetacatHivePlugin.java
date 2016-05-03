@@ -37,13 +37,14 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 
+import static com.facebook.presto.type.CharType.CHAR;
+import static com.facebook.presto.type.DecimalType.DECIMAL;
 import static com.facebook.presto.type.FloatType.FLOAT;
 import static com.facebook.presto.type.IntType.INT;
-import static com.facebook.presto.type.TinyIntType.TINY_INT;
 import static com.facebook.presto.type.SmallIntType.SMALL_INT;
-import static com.facebook.presto.type.DecimalType.DECIMAL;
-import static com.facebook.presto.type.CharType.CHAR;
 import static com.facebook.presto.type.StringType.STRING;
+import static com.facebook.presto.type.TinyIntType.TINY_INT;
+import static com.facebook.presto.type.VarcharType.VARCHAR;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MetacatHivePlugin implements Plugin
@@ -69,7 +70,8 @@ public class MetacatHivePlugin implements Plugin
         if (type == ConnectorFactory.class) {
             return ImmutableList.of(type.cast(new MetacatHiveConnectorFactory("metacat-hive", optionalConfig, getClassLoader(), typeManager)));
         } else if (type == Type.class){
-            return ImmutableList.of(type.cast(FLOAT), type.cast(INT), type.cast(TINY_INT), type.cast(SMALL_INT), type.cast(DECIMAL), type.cast(CHAR), type.cast(STRING));
+            return ImmutableList.of(type.cast(FLOAT), type.cast(INT), type.cast(TINY_INT), type.cast(SMALL_INT), type.cast(DECIMAL),
+                    type.cast(CHAR), type.cast(VARCHAR), type.cast(STRING));
         }
         return ImmutableList.of();
     }

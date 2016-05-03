@@ -17,22 +17,43 @@ import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.block.Block;
 import com.facebook.presto.spi.block.BlockBuilder;
 import com.facebook.presto.spi.type.AbstractFixedWidthType;
+import com.facebook.presto.spi.type.TypeSignature;
+import com.google.common.collect.Lists;
 
 import java.math.BigDecimal;
 
-import static com.facebook.presto.spi.type.TypeSignature.parseTypeSignature;
 import static io.airlift.slice.SizeOf.SIZE_OF_DOUBLE;
 
 public final class DecimalType extends AbstractFixedWidthType
 {
-    public static final DecimalType DECIMAL = new DecimalType();
+    public static final DecimalType DECIMAL = new DecimalType(10, 0);
     public static final String TYPE = "decimal";
+    private final int precision;
+    private final int scale;
 
-    private DecimalType()
-    {
-        super(parseTypeSignature(TYPE), BigDecimal.class, SIZE_OF_DOUBLE);
+    public static DecimalType createDecimalType(int precision, int scale){
+        return new DecimalType(precision, scale);
     }
 
+    private DecimalType(int precision, int scale)
+    {
+        super(new TypeSignature(
+                TYPE, Lists.newArrayList(),
+                Lists.newArrayList((long)precision, (long) scale)), BigDecimal.class, SIZE_OF_DOUBLE);
+        if (precision < 0) {
+            throw new IllegalArgumentException("Invalid decimal precision " + precision);
+        }
+        this.precision = precision;
+        this.scale = scale;
+    }
+
+    public int getPrecision() {
+        return precision;
+    }
+
+    public int getScale() {
+        return scale;
+    }
     @Override
     public boolean isComparable()
     {

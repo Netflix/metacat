@@ -13,8 +13,6 @@
 
 package com.netflix.metacat.common.usermetadata;
 
-import java.sql.SQLException;
-
 /**
  * Created by amajumdar on 3/16/16.
  */

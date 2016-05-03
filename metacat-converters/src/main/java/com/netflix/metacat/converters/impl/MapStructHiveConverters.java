@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.converters.impl;
 
-import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;

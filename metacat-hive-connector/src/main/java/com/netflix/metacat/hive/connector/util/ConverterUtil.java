@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.hive.connector.util;
 
-import com.facebook.presto.hive.HiveType;
 import com.facebook.presto.spi.AuditInfo;
 import com.facebook.presto.spi.ColumnDetailMetadata;
 import com.facebook.presto.spi.ColumnMetadata;
@@ -26,9 +25,7 @@ import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.netflix.metacat.common.MetacatContext;
 import com.netflix.metacat.common.partition.util.PartitionUtil;
-import com.netflix.metacat.converters.TypeConverterProvider;
 import com.netflix.metacat.converters.impl.HiveTypeConverter;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -38,6 +35,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,9 +45,11 @@ import java.util.stream.Collectors;
  * Created by amajumdar on 2/4/15.
  */
 public class ConverterUtil {
+    @Inject
+    HiveTypeConverter hiveTypeConverter;
     private static final Logger log = LoggerFactory.getLogger(ConverterUtil.class);
 
-    public static StorageInfo toStorageInfo(StorageDescriptor sd){
+    public StorageInfo toStorageInfo(StorageDescriptor sd){
         StorageInfo result = null;
         if( sd != null) {
             result = new StorageInfo();
@@ -66,7 +66,7 @@ public class ConverterUtil {
         return result;
     }
 
-    public static StorageDescriptor fromStorageInfo(StorageInfo storageInfo){
+    public StorageDescriptor fromStorageInfo(StorageInfo storageInfo){
         StorageDescriptor result = null;
         if( storageInfo != null) {
             result = new StorageDescriptor();
@@ -79,7 +79,7 @@ public class ConverterUtil {
         return result;
     }
 
-    public static List<FieldSchema> toFieldSchemas(ConnectorTableDetailMetadata tableDetailMetadata) {
+    public List<FieldSchema> toFieldSchemas(ConnectorTableDetailMetadata tableDetailMetadata) {
         ImmutableList.Builder<FieldSchema> columns = ImmutableList.builder();
         for( ColumnMetadata column: tableDetailMetadata.getColumns()){
             columns.add( toFieldSchema( column));
@@ -87,11 +87,11 @@ public class ConverterUtil {
         return columns.build();
     }
 
-    public static FieldSchema toFieldSchema(ColumnMetadata column) {
-        return new FieldSchema(column.getName(), HiveType.toHiveType(column.getType()).getHiveTypeName(), column.getComment());
+    public FieldSchema toFieldSchema(ColumnMetadata column) {
+        return new FieldSchema(column.getName(), hiveTypeConverter.fromType(column.getType()), column.getComment());
     }
 
-    public static AuditInfo toAuditInfo(Table table) {
+    public AuditInfo toAuditInfo(Table table) {
         AuditInfo result = new AuditInfo();
         result.setCreatedBy(table.getOwner());
         result.setCreatedDate((long) table.getCreateTime());
@@ -109,9 +109,8 @@ public class ConverterUtil {
         return result;
     }
 
-    public static Optional<ColumnMetadata> toColumnMetadata(FieldSchema field, TypeConverterProvider typeConverterProvider, TypeManager typeManager, int index, boolean isPartitionKey) {
+    public Optional<ColumnMetadata> toColumnMetadata(FieldSchema field, TypeManager typeManager, int index, boolean isPartitionKey) {
         String fieldType = field.getType();
-        HiveTypeConverter hiveTypeConverter = (HiveTypeConverter) typeConverterProvider.get(MetacatContext.DATA_TYPE_CONTEXTS.hive);
         Type type = hiveTypeConverter.toType(fieldType, typeManager);
         if (type == null) {
             log.debug("Unable to convert type '{}' for field '{}' to a hive type", fieldType, field.getName());
@@ -122,14 +121,14 @@ public class ConverterUtil {
         return Optional.of(metadata);
     }
 
-    public static List<ColumnMetadata> toColumnMetadatas(Table table, TypeConverterProvider typeConverterProvider, TypeManager typeManager) {
+    public List<ColumnMetadata> toColumnMetadatas(Table table, TypeManager typeManager) {
         List<ColumnMetadata> result = Lists.newArrayList();
         StorageDescriptor sd = table.getSd();
         int index = 0;
         if( sd != null) {
             List<FieldSchema> fields = table.getSd().getCols();
             for (FieldSchema field : fields) {
-                Optional<ColumnMetadata> columnMetadata = toColumnMetadata(field, typeConverterProvider, typeManager, index, false);
+                Optional<ColumnMetadata> columnMetadata = toColumnMetadata(field, typeManager, index, false);
                 // Ignore unsupported types rather than failing
                 if (columnMetadata.isPresent()) {
                     index++;
@@ -140,7 +139,7 @@ public class ConverterUtil {
         List<FieldSchema> pFields = table.getPartitionKeys();
         if( pFields != null) {
             for (FieldSchema pField : pFields) {
-                Optional<ColumnMetadata> columnMetadata = toColumnMetadata(pField, typeConverterProvider, typeManager, index, true);
+                Optional<ColumnMetadata> columnMetadata = toColumnMetadata(pField, typeManager, index, true);
                 // Ignore unsupported types rather than failing
                 if (columnMetadata.isPresent()) {
                     index++;
@@ -151,12 +150,12 @@ public class ConverterUtil {
         return result;
     }
 
-    public static List<Partition> toPartitions(SchemaTableName tableName, List<ConnectorPartition> partitions) {
-        return partitions.stream().map(partition -> ConverterUtil.toPartition(tableName, partition)).collect(
+    public List<Partition> toPartitions(SchemaTableName tableName, List<ConnectorPartition> partitions) {
+        return partitions.stream().map(partition -> toPartition(tableName, partition)).collect(
                 Collectors.toList());
     }
 
-    public static Partition toPartition(SchemaTableName tableName, ConnectorPartition connectorPartition) {
+    public Partition toPartition(SchemaTableName tableName, ConnectorPartition connectorPartition) {
         Partition result = new Partition();
         ConnectorPartitionDetail connectorPartitionDetail = (ConnectorPartitionDetail) connectorPartition;
         result.setValues(Lists.newArrayList(

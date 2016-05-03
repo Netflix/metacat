@@ -19,7 +19,6 @@ import com.facebook.presto.plugin.jdbc.BaseJdbcConfig;
 import com.facebook.presto.plugin.jdbc.JdbcConnectorId;
 import com.facebook.presto.plugin.jdbc.JdbcOutputTableHandle;
 import com.facebook.presto.plugin.jdbc.JdbcTableHandle;
-import com.facebook.presto.plugin.postgresql.PostgreSqlClient;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.TableNotFoundException;
 import com.facebook.presto.spi.type.Type;

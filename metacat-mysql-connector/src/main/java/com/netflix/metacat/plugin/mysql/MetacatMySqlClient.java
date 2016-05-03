@@ -18,7 +18,6 @@ import com.facebook.presto.plugin.jdbc.BaseJdbcClient;
 import com.facebook.presto.plugin.jdbc.BaseJdbcConfig;
 import com.facebook.presto.plugin.jdbc.JdbcConnectorId;
 import com.facebook.presto.plugin.jdbc.JdbcTableHandle;
-import com.facebook.presto.plugin.mysql.MySqlClient;
 import com.facebook.presto.plugin.mysql.MySqlConfig;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;

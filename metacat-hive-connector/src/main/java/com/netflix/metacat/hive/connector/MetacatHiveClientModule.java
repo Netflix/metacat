@@ -21,6 +21,7 @@ import com.facebook.presto.spi.security.ConnectorAccessControl;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.netflix.metacat.hive.connector.util.ConverterUtil;
 
 /**
  * Created by amajumdar on 4/17/15.
@@ -35,5 +36,6 @@ public class MetacatHiveClientModule implements Module {
         binder.bind(ConnectorSplitManager.class).to(HiveSplitDetailManager.class).in(Scopes.SINGLETON);
 
         binder.bind(ConnectorAccessControl.class).to(NoAccessControl.class).in(Scopes.SINGLETON);
+        binder.bind(ConverterUtil.class).in(Scopes.SINGLETON);
     }
 }
