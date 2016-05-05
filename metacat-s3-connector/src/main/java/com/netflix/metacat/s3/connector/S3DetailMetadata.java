@@ -378,6 +378,9 @@ public class S3DetailMetadata implements ConnectorDetailMetadata {
             throw new TableAlreadyExistsException(schemaTableName);
         }
         Database database = databaseDao.getBySourceDatabaseName(connectorId.toString(), schemaTableName.getSchemaName());
+        if (database == null) {
+            throw new SchemaNotFoundException(schemaTableName.getSchemaName());
+        }
         Table table = new Table();
         table.setName(schemaTableName.getTableName());
         table.setDatabase(database);
