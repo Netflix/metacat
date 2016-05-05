@@ -26,6 +26,8 @@ import org.apache.thrift.transport.TServerTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
 public class CatalogThriftService {
     private static final Logger log = LoggerFactory.getLogger(CatalogThriftService.class);
     private final String catalogName;
@@ -57,7 +59,11 @@ public class CatalogThriftService {
                 handler);
 
         TServerTransport serverTransport = new TServerSocket(portNumber);
-        TThreadPoolServer.Args serverArgs = new TThreadPoolServer.Args(serverTransport).processor(processor);
+        TThreadPoolServer.Args serverArgs = new TThreadPoolServer.Args(serverTransport)
+                .processor(processor)
+                .maxWorkerThreads(config.getThriftMaxWorkerThreadsSize())
+                .requestTimeout(config.getThriftRequestTimeoutInSeconds())
+                .requestTimeoutUnit(TimeUnit.SECONDS);
         server = new TThreadPoolServer(serverArgs);
         server.setServerEventHandler(new CatalogThriftEventHandler());
 

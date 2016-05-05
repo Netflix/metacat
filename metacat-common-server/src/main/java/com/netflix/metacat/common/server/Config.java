@@ -33,6 +33,8 @@ public interface Config {
     String getMetacatVersion();
     String getPluginConfigLocation();
     String getTagServiceUserAdmin();
+    int getThriftMaxWorkerThreadsSize();
+    int getThriftRequestTimeoutInSeconds();
     boolean isEpochInSeconds();
     boolean isUsePigTypes();
     int getServiceMaxNumberOfThreads();
