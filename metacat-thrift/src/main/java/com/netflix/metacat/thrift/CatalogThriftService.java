@@ -61,9 +61,7 @@ public class CatalogThriftService {
         TServerTransport serverTransport = new TServerSocket(portNumber);
         TThreadPoolServer.Args serverArgs = new TThreadPoolServer.Args(serverTransport)
                 .processor(processor)
-                .maxWorkerThreads(config.getThriftMaxWorkerThreadsSize())
-                .requestTimeout(config.getThriftRequestTimeoutInSeconds())
-                .requestTimeoutUnit(TimeUnit.SECONDS);
+                .maxWorkerThreads(config.getThriftMaxWorkerThreadsSize());
         server = new TThreadPoolServer(serverArgs);
         server.setServerEventHandler(new CatalogThriftEventHandler());
 
