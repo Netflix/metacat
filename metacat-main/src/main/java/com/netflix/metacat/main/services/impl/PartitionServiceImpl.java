@@ -24,6 +24,7 @@ import com.facebook.presto.spi.SchemaTablePartitionName;
 import com.facebook.presto.spi.Sort;
 import com.facebook.presto.spi.TableNotFoundException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -36,6 +37,7 @@ import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.monitoring.DynamicGauge;
 import com.netflix.metacat.common.monitoring.LogConstants;
+import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.ThreadServiceManager;
 import com.netflix.metacat.converters.PrestoConverters;
@@ -74,6 +76,8 @@ public class PartitionServiceImpl implements PartitionService {
     SessionProvider sessionProvider;
     @Inject
     ThreadServiceManager threadServiceManager;
+    @Inject
+    Config config;
 
     private ConnectorPartitionResult getPartitionResult(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable, boolean includePartitionDetails) {
         ConnectorPartitionResult result = null;
@@ -87,6 +91,10 @@ public class PartitionServiceImpl implements PartitionService {
     @Override
     public List<PartitionDto> list(QualifiedName name, String filter, List<String> partitionNames, Sort sort
             , Pageable pageable, boolean includeUserDefinitionMetadata, boolean includeUserDataMetadata, boolean includePartitionDetails) {
+        if(Strings.isNullOrEmpty(filter) && pageable != null && !pageable.isPageable()
+                && config.getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions().contains(name)){
+            throw new IllegalArgumentException(String.format("No filter or limit specified for table %s", name));
+        }
         ConnectorPartitionResult partitionResult = getPartitionResult(name, filter, partitionNames, sort, pageable, includePartitionDetails);
         List<PartitionDto> result = Collections.emptyList();
         if (partitionResult != null) {

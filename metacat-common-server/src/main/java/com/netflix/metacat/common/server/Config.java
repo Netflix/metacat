@@ -13,6 +13,10 @@
 
 package com.netflix.metacat.common.server;
 
+import com.netflix.metacat.common.QualifiedName;
+
+import java.util.List;
+
 public interface Config {
     String getDefaultTypeConverter();
     String getElasticSearchClusterName();
@@ -38,4 +42,5 @@ public interface Config {
     boolean isEpochInSeconds();
     boolean isUsePigTypes();
     int getServiceMaxNumberOfThreads();
+    List<QualifiedName> getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions();
 }

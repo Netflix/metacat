@@ -13,10 +13,17 @@
 
 package com.netflix.metacat.common.server;
 
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.netflix.config.DynamicBooleanProperty;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
+import com.netflix.metacat.common.QualifiedName;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ArchaiusConfigImpl implements Config {
     private final DynamicStringProperty defaultTypeConverter;
@@ -43,6 +50,8 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicStringProperty metacatVersion;
     private final DynamicBooleanProperty usePigTypes;
     private final DynamicIntProperty serviceMaxNumberOfThreads;
+    private final DynamicStringProperty tableNamesToThrowErrorWhenNoFilterOnListPartitions;
+    private List<QualifiedName> qualifiedNamesToThrowErrorWhenNoFilterOnListPartitions;
 
     public ArchaiusConfigImpl() {
         this(DynamicPropertyFactory.getInstance());
@@ -82,7 +91,21 @@ public class ArchaiusConfigImpl implements Config {
         this.thriftRequestTimeoutInSeconds = factory.getIntProperty("metacat.thrift.request_timeout_in_seconds", 300);
         this.usePigTypes = factory.getBooleanProperty("metacat.franklin.connector.use.pig.type", true);
         this.serviceMaxNumberOfThreads = factory.getIntProperty("metacat.service.max.number.threads", 50);
+        this.tableNamesToThrowErrorWhenNoFilterOnListPartitions = factory.getStringProperty(
+                "metacat.service.tables.error.list.partitions.no.filter",
+                null, this::setQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions);
+        setQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions();
+    }
 
+    private void setQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions() {
+        String tableNames = tableNamesToThrowErrorWhenNoFilterOnListPartitions.get();
+        if(!Strings.isNullOrEmpty(tableNames)){
+            qualifiedNamesToThrowErrorWhenNoFilterOnListPartitions = Splitter.on(',').omitEmptyStrings()
+                    .splitToList(tableNames).stream()
+                    .map(QualifiedName::fromString).collect(Collectors.toList());
+        } else {
+            qualifiedNamesToThrowErrorWhenNoFilterOnListPartitions = Lists.newArrayList();
+        }
     }
 
     @Override
@@ -203,5 +226,10 @@ public class ArchaiusConfigImpl implements Config {
     @Override
     public int getServiceMaxNumberOfThreads() {
         return serviceMaxNumberOfThreads.get();
+    }
+
+    @Override
+    public List<QualifiedName> getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions() {
+        return qualifiedNamesToThrowErrorWhenNoFilterOnListPartitions;
     }
 }
