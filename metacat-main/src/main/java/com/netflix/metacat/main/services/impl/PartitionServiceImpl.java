@@ -91,7 +91,9 @@ public class PartitionServiceImpl implements PartitionService {
     @Override
     public List<PartitionDto> list(QualifiedName name, String filter, List<String> partitionNames, Sort sort
             , Pageable pageable, boolean includeUserDefinitionMetadata, boolean includeUserDataMetadata, boolean includePartitionDetails) {
-        if(Strings.isNullOrEmpty(filter) && pageable != null && !pageable.isPageable()
+        if(Strings.isNullOrEmpty(filter)
+                && (pageable == null || !pageable.isPageable())
+                && (partitionNames == null || partitionNames.isEmpty())
                 && config.getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions().contains(name)){
             throw new IllegalArgumentException(String.format("No filter or limit specified for table %s", name));
         }
