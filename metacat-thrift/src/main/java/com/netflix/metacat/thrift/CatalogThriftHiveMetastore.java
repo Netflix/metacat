@@ -874,9 +874,10 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public PrincipalPrivilegeSet get_privilege_set(HiveObjectRef hiveObject, String user_name, List<String> group_names)
+    public PrincipalPrivilegeSet get_privilege_set(HiveObjectRef hiveObject, String userName, List<String> groupNames)
             throws TException {
-        throw unimplemented("get_privilege_set", new Object[] { hiveObject, user_name, group_names });
+        return requestWrapper("get_privilege_set", new Object[] { hiveObject, userName, groupNames },
+                PrincipalPrivilegeSet::new);
     }
 
     @Override
