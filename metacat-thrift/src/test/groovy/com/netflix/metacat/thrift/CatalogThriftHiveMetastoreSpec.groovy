@@ -1231,10 +1231,10 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_privilege_set'() {
         when:
-        ms.get_privilege_set(null, null, null)
+        def result = ms.get_privilege_set(null, null, null)
 
         then:
-        thrown(InvalidOperationException)
+        result == new PrincipalPrivilegeSet()
     }
 
     def 'test get_role_grants_for_principal'() {
