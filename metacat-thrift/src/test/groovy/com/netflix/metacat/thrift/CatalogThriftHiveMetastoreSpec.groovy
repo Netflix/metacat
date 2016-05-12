@@ -1610,7 +1610,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def result = ms.partition_values_to_partition_filter(table, ['1', '', 'three'])
 
         then:
-        result == "(field_0==1) OR (field_2=='three')"
+        result == "(field_0=1) OR (field_2='three')"
 
         where:
         db = 'db1'

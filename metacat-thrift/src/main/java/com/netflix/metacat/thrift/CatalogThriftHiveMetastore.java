@@ -1148,7 +1148,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
 
             // We only filter on partitions with values
             if (!Strings.isNullOrEmpty(partitionValueFilter)) {
-                String filter = "(" + f_dto.getName() + "==";
+                String filter = "(" + f_dto.getName() + "=";
                 try {
                     filter += Long.parseLong(partitionValueFilter) + ")";
                 } catch (NumberFormatException ignored) {
