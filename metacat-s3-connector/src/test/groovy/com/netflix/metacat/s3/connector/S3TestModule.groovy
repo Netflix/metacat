@@ -56,8 +56,9 @@ class S3TestModule implements Module{
             }
             filePath = Paths.get(metadataFile.getPath())
         }
+        def jpaProps = Maps.newHashMap(props)
         props.store(Files.newOutputStream(filePath), "test")
-        new JpaPersistModule("s3").properties(props).configure(binder)
+        binder.install(new JpaPersistModule("s3").properties(jpaProps))
         binder.bind(TestingMySqlServer.class).toInstance(mysqlServer)
 
         binder.bind(ConfigurationFactory.class).toInstance(new ConfigurationFactory(Maps.newHashMap()))

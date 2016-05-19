@@ -37,6 +37,7 @@ import com.facebook.presto.spi.security.ConnectorAccessControl;
 import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.persist.PersistService;
@@ -54,7 +55,6 @@ import org.weakref.jmx.guice.MBeanModule;
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.util.Map;
-import java.util.Properties;
 
 import static com.facebook.presto.hive.ConditionalModule.installModuleIf;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -85,8 +85,7 @@ public class S3ConnectorFactory extends HiveConnectorFactory {
             Module module = Modules.override(hiveClientModule).with(new S3Module());
 
             //JPA module
-            Properties props = new Properties();
-            props.putAll(config);
+            Map<String, Object> props = Maps.newHashMap(config);
             props.put("hibernate.connection.datasource", DataSourceManager.get().load( connectorId, config).get( connectorId));
             Module jpaModule = new JpaPersistModule("s3").properties(props);
 
