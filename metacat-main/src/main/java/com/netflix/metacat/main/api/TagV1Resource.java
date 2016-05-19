@@ -13,6 +13,8 @@
 
 package com.netflix.metacat.main.api;
 
+import com.facebook.presto.spi.SchemaTableName;
+import com.facebook.presto.spi.TableNotFoundException;
 import com.netflix.metacat.common.MetacatContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.api.TagV1;
@@ -20,6 +22,7 @@ import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.usermetadata.TagService;
 import com.netflix.metacat.common.util.MetacatContextManager;
+import com.netflix.metacat.main.services.TableService;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -34,10 +37,12 @@ import static com.netflix.metacat.main.api.RequestWrapper.requestWrapper;
 public class TagV1Resource implements TagV1{
     TagService tagService;
     MetacatEventBus eventBus;
+    TableService tableService;
     @Inject
-    public TagV1Resource( MetacatEventBus eventBus, TagService tagService) {
+    public TagV1Resource( MetacatEventBus eventBus, TagService tagService, TableService tableService) {
         this.tagService = tagService;
         this.eventBus = eventBus;
+        this.tableService = tableService;
     }
 
     @Override
@@ -72,9 +77,11 @@ public class TagV1Resource implements TagV1{
             Set<String> tags) {
         MetacatContext metacatContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return requestWrapper("TagV1Resource.setTableTags" , () -> {
-            Set<String> result = tagService.setTableTags( name, tags, true);
-
+        return requestWrapper( name, "TagV1Resource.setTableTags" , () -> {
+            if( !tableService.exists(name)){
+                throw new TableNotFoundException(new SchemaTableName( name.getDatabaseName(), name.getTableName()));
+            }
+            Set<String> result = tagService.setTableTags(name, tags, true);
             eventBus.post(new MetacatUpdateTablePostEvent(name, metacatContext));
             return result;
         });
@@ -89,7 +96,10 @@ public class TagV1Resource implements TagV1{
             Set<String> tags) {
         MetacatContext metacatContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        requestWrapper("TagV1Resource.removeTableTags" , () -> {
+        requestWrapper( name, "TagV1Resource.removeTableTags" , () -> {
+            if( !tableService.exists(name)){
+                throw new TableNotFoundException(new SchemaTableName( name.getDatabaseName(), name.getTableName()));
+            }
             tagService.removeTableTags( name, deleteAll, tags, true);
 
             eventBus.post(new MetacatUpdateTablePostEvent(name, metacatContext));

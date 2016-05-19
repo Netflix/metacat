@@ -279,9 +279,8 @@ public class TableServiceImpl implements TableService {
 
         //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
         try {
-            TypeManager typeManager = metadataManager.getTypeManager();
             log.info("Updating table {}", name);
-            metadataManager.alterTable(session, prestoConverters.fromTableDto(name, tableDto, typeManager));
+            metadataManager.alterTable(session, prestoConverters.fromTableDto(name, tableDto, metadataManager.getTypeManager()));
         } catch(PrestoException e){
             if(!NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())){
                 throw e;
