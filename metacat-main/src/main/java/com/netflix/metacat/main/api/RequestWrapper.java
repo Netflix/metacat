@@ -20,6 +20,7 @@ import com.facebook.presto.hive.TableAlreadyExistsException;
 import com.facebook.presto.spi.NotFoundException;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.StandardErrorCode;
+import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
@@ -30,10 +31,17 @@ import com.netflix.metacat.common.exception.MetacatUserMetadataException;
 import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.monitoring.TimerWrapper;
 import com.netflix.metacat.common.usermetadata.UserMetadataServiceException;
+import com.netflix.servo.monitor.DynamicCounter;
+import com.netflix.servo.monitor.DynamicTimer;
+import com.netflix.servo.monitor.Stopwatch;
+import com.netflix.servo.tag.BasicTagList;
+import com.netflix.servo.tag.TagList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class RequestWrapper {
@@ -52,8 +60,9 @@ public class RequestWrapper {
             QualifiedName name,
             String resourceRequestName,
             Supplier<R> supplier) {
-        TimerWrapper timer = TimerWrapper.createStarted("dse.metacat.timer." + resourceRequestName);
-        CounterWrapper.incrementCounter("dse.metacat.counter." + resourceRequestName);
+        BasicTagList tags = getQualifiedNameTagList(name).copy("request", resourceRequestName);
+        DynamicCounter.increment("dse.metacat.counter.requests", tags);
+        Stopwatch timer = DynamicTimer.start("dse.metacat.timer.requests", tags);
         try {
             log.info("### Calling method: {} for {}", resourceRequestName, name);
             return supplier.get();
@@ -75,27 +84,35 @@ public class RequestWrapper {
             if (e.getErrorCode() == StandardErrorCode.NOT_SUPPORTED.toErrorCode()) {
                 throw new MetacatNotSupportedException("Catalog does not support the operation");
             } else {
-                CounterWrapper.incrementCounter("dse.metacat.counter.failure." + resourceRequestName);
+                DynamicCounter.increment("dse.metacat.counter.failure.requests" , tags);
                 throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
             }
         } catch(UserMetadataServiceException e){
             String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(), e.getCause()==null?"":e.getCause().getMessage(), resourceRequestName, name);
             throw new MetacatUserMetadataException(message);
         } catch (Exception e) {
-            CounterWrapper.incrementCounter("dse.metacat.counter.failure." + resourceRequestName);
+            DynamicCounter.increment("dse.metacat.counter.failure.requests" , tags);
             String message = String.format("%s.%s -- %s failed for %s", e.getMessage(), e.getCause()==null?"":e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } finally {
-            log.info("### Time taken to complete {} is {} ms", resourceRequestName, timer.stop());
+            timer.stop();
+            log.info("### Time taken to complete {} is {} ms", resourceRequestName, timer.getDuration(TimeUnit.MILLISECONDS));
         }
+    }
+
+    private static BasicTagList getQualifiedNameTagList(QualifiedName name) {
+        Map<String, String> tags = Maps.newHashMap(name.toJson());
+        tags.remove("qualifiedName");
+        return BasicTagList.copyOf(tags);
     }
 
     public static <R> R requestWrapper(
             String resourceRequestName,
             Supplier<R> supplier) {
-        TimerWrapper timer = TimerWrapper.createStarted("dse.metacat.timer." + resourceRequestName);
-        CounterWrapper.incrementCounter("dse.metacat.counter." + resourceRequestName);
+        TagList tags = BasicTagList.of("request", resourceRequestName);
+        DynamicCounter.increment("dse.metacat.counter.requests", tags);
+        Stopwatch timer = DynamicTimer.start("dse.metacat.timer.requests", tags);
         try {
             log.info("### Calling method: {}", resourceRequestName);
             return supplier.get();
@@ -107,12 +124,13 @@ public class RequestWrapper {
             throw new MetacatBadRequestException(String.format("%s.%s", e.getMessage(),
                     e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (Exception e) {
-            CounterWrapper.incrementCounter("dse.metacat.counter.failure." + resourceRequestName);
+            DynamicCounter.increment("dse.metacat.counter.failure.requests", tags);
             String message = String.format("%s.%s -- %s failed.", e.getMessage(), e.getCause()==null?"":e.getCause().getMessage(), resourceRequestName);
             log.error(message, e);
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } finally {
-            log.info("### Time taken to complete {} is {} ms", resourceRequestName, timer.stop());
+            timer.stop();
+            log.info("### Time taken to complete {} is {} ms", resourceRequestName, timer.getDuration(TimeUnit.MILLISECONDS));
         }
     }
 }
