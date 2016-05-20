@@ -44,9 +44,11 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
     }
 
     private void publishMetric( ConnectionPool parent){
-        DynamicGauge.set(metricNameTotal, parent.getSize());
-        DynamicGauge.set(metricNameActive, parent.getActive());
-        DynamicGauge.set(metricNameIdle, parent.getIdle());
+        if( parent != null && metricNameTotal != null) {
+            DynamicGauge.set(metricNameTotal, parent.getSize());
+            DynamicGauge.set(metricNameActive, parent.getActive());
+            DynamicGauge.set(metricNameIdle, parent.getIdle());
+        }
     }
 
     public void setMetricName(String metricName) {
