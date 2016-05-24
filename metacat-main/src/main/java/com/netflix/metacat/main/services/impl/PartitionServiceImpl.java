@@ -110,6 +110,9 @@ public class PartitionServiceImpl implements PartitionService {
                         return result1;
                     })
                     .collect(Collectors.toList());
+            TagList tags = BasicTagList.of("catalog", name.getCatalogName(), "database", name.getDatabaseName(), "table", name.getTableName());
+            DynamicGauge.set(LogConstants.GaugeGetPartitionsCount.toString(), tags, result.size());
+            log.info("Got {} partitions for {} using filter: {} and partition names: {}", result.size(), name, filter, partitionNames);
             if(includeUserDefinitionMetadata || includeUserDataMetadata){
                 List<ListenableFuture<Map<String,ObjectNode>>> futures = Lists.newArrayList();
                 futures.add(threadServiceManager.getExecutor().submit(() -> includeUserDefinitionMetadata ?
@@ -130,9 +133,6 @@ public class PartitionServiceImpl implements PartitionService {
                 }
             }
         }
-        TagList tags = BasicTagList.of("catalog", name.getCatalogName(), "database", name.getDatabaseName(), "table", name.getTableName());
-        DynamicGauge.set(LogConstants.GaugeGetPartitionsCount.toString(), tags, result.size());
-        log.info("Got {} partitions for {} using filter: {} and partition names: {}", result.size(), name, filter, partitionNames);
         return result;
     }
 
