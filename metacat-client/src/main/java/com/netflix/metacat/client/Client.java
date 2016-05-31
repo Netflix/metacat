@@ -52,6 +52,7 @@ public class Client {
 
     private Client(
             @Nonnull String host,
+            @Nonnull feign.Client client,
             @Nonnull feign.Logger.Level logLevel,
             @Nonnull RequestInterceptor requestInterceptor,
             @Nonnull Retryer retryer,
@@ -67,6 +68,7 @@ public class Client {
         this.host = host;
 
         feignBuilder = Feign.builder()
+                .client(client)
                 .logger(new Slf4jLogger())
                 .logLevel(logLevel)
                 .contract(new JAXRSContract())
@@ -89,6 +91,7 @@ public class Client {
     public static class Builder {
         private String host;
         private String userName;
+        private feign.Client client;
         private String clientAppName;
         private String jobId;
         private String dataTypeContext;
@@ -124,6 +127,11 @@ public class Client {
 
         public Builder withJobId(String jobId) {
             this.jobId = jobId;
+            return this;
+        }
+
+        public Builder withClient(feign.Client client) {
+            this.client = client;
             return this;
         }
 
@@ -171,7 +179,10 @@ public class Client {
             if( logLevel == null){
                 logLevel = feign.Logger.Level.NONE;
             }
-            return new Client( host, logLevel, interceptor, retryer, requestOptions);
+            if( client == null){
+                client = new feign.Client.Default(null, null);
+            }
+            return new Client( host, client, logLevel, interceptor, retryer, requestOptions);
         }
     }
 
