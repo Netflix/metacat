@@ -38,7 +38,6 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
         @Override
         public Exception decode(String methodKey, Response response){
             try {
-                Status status = Status.fromStatusCode(response.status());
                 String message = "";
                 if (response.body() != null){
                     message = Util.toString(response.body().asReader());
@@ -46,6 +45,11 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                         ObjectNode body = metacatJson.parseJsonObject(message);
                         message = body.path("error").asText();
                     } catch (MetacatJsonException ignored) {}
+                }
+                Status status = Status.fromStatusCode(response.status());
+                //Status codes(ex:502) that cannot be resolved to a JAX-RS Response Status will return a MetacatException
+                if( status == null){
+                    return new MetacatException(message, response.status(), null);
                 }
                 switch (status) {
                     case UNSUPPORTED_MEDIA_TYPE:
