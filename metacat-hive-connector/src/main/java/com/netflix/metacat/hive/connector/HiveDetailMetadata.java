@@ -281,46 +281,44 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
             sd.setLocation(targetPath.toString());
         }
 
-        if( location != null){
-            SerDeInfo serdeInfo = sd.getSerdeInfo();
-            StorageInfo storageInfo = tableDetailMetadata.getStorageInfo();
-            if( serdeInfo != null){
-                serdeInfo.setName(tableDetailMetadata.getTable().getTableName());
-                if (storageInfo != null) {
-                    if(!Strings.isNullOrEmpty(storageInfo.getSerializationLib())) {
-                        serdeInfo.setSerializationLib(storageInfo.getSerializationLib());
-                    }
-                    if(storageInfo.getSerdeInfoParameters() != null && !storageInfo.getSerdeInfoParameters().isEmpty()) {
-                        serdeInfo.setParameters(storageInfo.getSerdeInfoParameters());
-                    }
-                    inputFormat = storageInfo.getInputFormat();
-                    outputFormat = storageInfo.getOutputFormat();
-                    if( storageInfo.getParameters() != null && !storageInfo.getParameters().isEmpty()) {
-                        sdParameters = storageInfo.getParameters();
-                    }
-                }
-            } else {
-                serdeInfo = new SerDeInfo();
-                serdeInfo.setName(tableDetailMetadata.getTable().getTableName());
-                if (storageInfo != null) {
+        SerDeInfo serdeInfo = sd.getSerdeInfo();
+        StorageInfo storageInfo = tableDetailMetadata.getStorageInfo();
+        if( serdeInfo != null){
+            serdeInfo.setName(tableDetailMetadata.getTable().getTableName());
+            if (storageInfo != null) {
+                if(!Strings.isNullOrEmpty(storageInfo.getSerializationLib())) {
                     serdeInfo.setSerializationLib(storageInfo.getSerializationLib());
-                    if( storageInfo.getSerdeInfoParameters() != null && !storageInfo.getSerdeInfoParameters().isEmpty()) {
-                        serdeInfo.setParameters(storageInfo.getSerdeInfoParameters());
-                    }
-                    inputFormat = storageInfo.getInputFormat();
-                    outputFormat = storageInfo.getOutputFormat();
-                    if( storageInfo.getParameters() != null && !storageInfo.getParameters().isEmpty()) {
-                        sdParameters = storageInfo.getParameters();
-                    }
-                } else  {
-                    HiveStorageFormat hiveStorageFormat = extractHiveStorageFormat(table);
-                    serdeInfo.setSerializationLib(hiveStorageFormat.getSerDe());
-                    serdeInfo.setParameters(ImmutableMap.<String, String>of());
-                    inputFormat = hiveStorageFormat.getInputFormat();
-                    outputFormat = hiveStorageFormat.getOutputFormat();
                 }
-                sd.setSerdeInfo(serdeInfo);
+                if(storageInfo.getSerdeInfoParameters() != null && !storageInfo.getSerdeInfoParameters().isEmpty()) {
+                    serdeInfo.setParameters(storageInfo.getSerdeInfoParameters());
+                }
+                inputFormat = storageInfo.getInputFormat();
+                outputFormat = storageInfo.getOutputFormat();
+                if( storageInfo.getParameters() != null && !storageInfo.getParameters().isEmpty()) {
+                    sdParameters = storageInfo.getParameters();
+                }
             }
+        } else {
+            serdeInfo = new SerDeInfo();
+            serdeInfo.setName(tableDetailMetadata.getTable().getTableName());
+            if (storageInfo != null) {
+                serdeInfo.setSerializationLib(storageInfo.getSerializationLib());
+                if( storageInfo.getSerdeInfoParameters() != null && !storageInfo.getSerdeInfoParameters().isEmpty()) {
+                    serdeInfo.setParameters(storageInfo.getSerdeInfoParameters());
+                }
+                inputFormat = storageInfo.getInputFormat();
+                outputFormat = storageInfo.getOutputFormat();
+                if( storageInfo.getParameters() != null && !storageInfo.getParameters().isEmpty()) {
+                    sdParameters = storageInfo.getParameters();
+                }
+            } else  {
+                HiveStorageFormat hiveStorageFormat = extractHiveStorageFormat(table);
+                serdeInfo.setSerializationLib(hiveStorageFormat.getSerDe());
+                serdeInfo.setParameters(ImmutableMap.<String, String>of());
+                inputFormat = hiveStorageFormat.getInputFormat();
+                outputFormat = hiveStorageFormat.getOutputFormat();
+            }
+            sd.setSerdeInfo(serdeInfo);
         }
 
         ImmutableList.Builder<FieldSchema> columnsBuilder = ImmutableList.builder();
