@@ -86,7 +86,7 @@ public class MetacatV1Resource implements MetacatV1 {
 
     @Override
     public void createCatalog(CreateCatalogDto createCatalogDto) {
-        throw new MetacatNotSupportedException();
+        throw new MetacatNotSupportedException("Create catalog is not supported.");
     }
 
     @Override
