@@ -46,22 +46,18 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                         message = body.path("error").asText();
                     } catch (MetacatJsonException ignored) {}
                 }
-                Status status = Status.fromStatusCode(response.status());
-                //Status codes(ex:502) that cannot be resolved to a JAX-RS Response Status will return a MetacatException
-                if( status == null){
-                    return new MetacatException(message, response.status(), null);
-                }
-                switch (status) {
-                    case UNSUPPORTED_MEDIA_TYPE:
+                switch (response.status()) {
+                    case 501: //NOT IMPLEMENTED
+                    case 415: //UNSUPPORTED_MEDIA_TYPE
                         return new MetacatNotSupportedException(message);
-                    case BAD_REQUEST:
+                    case 400: //BAD_REQUEST
                         return new MetacatBadRequestException(message);
-                    case NOT_FOUND:
+                    case 404: //NOT_FOUND
                         return new MetacatNotFoundException(message);
-                    case CONFLICT:
+                    case 409: //CONFLICT
                         return new MetacatAlreadyExistsException(message);
-                    case INTERNAL_SERVER_ERROR:
-                    case SERVICE_UNAVAILABLE:
+                    case 500: //INTERNAL_SERVER_ERROR
+                    case 503: //SERVICE_UNAVAILABLE
                         return new RetryableException(message, null);
                     default:
                         return new MetacatException(message, Status.INTERNAL_SERVER_ERROR, null);
