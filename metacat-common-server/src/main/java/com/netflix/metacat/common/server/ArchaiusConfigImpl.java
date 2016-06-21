@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 public class ArchaiusConfigImpl implements Config {
     private final DynamicStringProperty defaultTypeConverter;
+    private final DynamicStringProperty elasticSearchIndexName;
     private final DynamicStringProperty elasticSearchClusterName;
     private final DynamicStringProperty elasticSearchClusterNodes;
     private final DynamicIntProperty elasticSearchClusterPort;
@@ -60,6 +61,7 @@ public class ArchaiusConfigImpl implements Config {
     public ArchaiusConfigImpl(DynamicPropertyFactory factory) {
         this.defaultTypeConverter = factory
                 .getStringProperty("metacat.type.converter", "com.netflix.metacat.converters.impl.PrestoTypeConverter");
+        this.elasticSearchIndexName = factory.getStringProperty("metacat.elacticsearch.index.name", "metacat");
         this.elasticSearchClusterName = factory.getStringProperty("metacat.elacticsearch.cluster.name", null);
         this.elasticSearchClusterNodes = factory.getStringProperty("metacat.elacticsearch.cluster.nodes", null);
         this.elasticSearchClusterPort = factory.getIntProperty("metacat.elacticsearch.cluster.port", 7102);
@@ -231,5 +233,10 @@ public class ArchaiusConfigImpl implements Config {
     @Override
     public List<QualifiedName> getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions() {
         return qualifiedNamesToThrowErrorWhenNoFilterOnListPartitions;
+    }
+
+    @Override
+    public String getEsIndex() {
+        return elasticSearchIndexName.get();
     }
 }

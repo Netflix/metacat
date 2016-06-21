@@ -65,7 +65,7 @@ import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Type.tab
  */
 public class ElasticSearchUtil {
     private XContentType contentType = Requests.INDEX_CONTENT_TYPE;
-    private static final String ES_INDEX = "metacat";
+    private final String esIndex;
     private static final Retryer<Void> RETRY_ES_PUBLISH = RetryerBuilder.<Void>newBuilder()
             .retryIfExceptionOfType(ElasticsearchException.class)
             .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.SECONDS, 30, TimeUnit.SECONDS))
@@ -81,6 +81,7 @@ public class ElasticSearchUtil {
         this.config = config;
         this.client = client;
         this.metacatJson = metacatJson;
+        this.esIndex = config.getEsIndex();
     }
 
     /**
@@ -91,7 +92,7 @@ public class ElasticSearchUtil {
     public void delete(String type, String id) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
-                client.prepareDelete(ES_INDEX, type, id).execute().actionGet();
+                client.prepareDelete(esIndex, type, id).execute().actionGet();
                 return null;
             });
         } catch (Exception e) {
@@ -113,7 +114,7 @@ public class ElasticSearchUtil {
         try {
             RETRY_ES_PUBLISH.call(() -> {
                 BulkRequestBuilder bulkRequest = client.prepareBulk();
-                ids.forEach(id -> bulkRequest.add( client.prepareDelete(ES_INDEX, type, id)));
+                ids.forEach(id -> bulkRequest.add( client.prepareDelete(esIndex, type, id)));
                 BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if(bulkResponse.hasFailures()){
                     for(BulkItemResponse item: bulkResponse.getItems()){
@@ -145,7 +146,7 @@ public class ElasticSearchUtil {
                 XContentBuilder builder = XContentFactory.contentBuilder(contentType);
                 builder.startObject().field(DELETED, true).field(USER,
                         metacatContext.getUserName()).endObject();
-                client.prepareUpdate(ES_INDEX, type, id).setDoc(builder).get();
+                client.prepareUpdate(esIndex, type, id).setDoc(builder).get();
                 return null;
             });
         } catch (Exception e) {
@@ -175,7 +176,7 @@ public class ElasticSearchUtil {
                 XContentBuilder builder = XContentFactory.contentBuilder(contentType);
                 builder.startObject().field(DELETED, true).field(USER,
                         metacatContext.getUserName()).endObject();
-                ids.forEach(id -> bulkRequest.add( client.prepareUpdate(ES_INDEX, type, id).setDoc(builder)));
+                ids.forEach(id -> bulkRequest.add( client.prepareUpdate(esIndex, type, id).setDoc(builder)));
                 BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
@@ -212,7 +213,7 @@ public class ElasticSearchUtil {
                 BulkRequestBuilder bulkRequest = client.prepareBulk();
                 ids.forEach(id -> {
                     node.put(USER, metacatContext.getUserName());
-                    bulkRequest.add( client.prepareUpdate(ES_INDEX, type, id).setDoc(metacatJson.toJsonAsBytes(node)));
+                    bulkRequest.add( client.prepareUpdate(esIndex, type, id).setDoc(metacatJson.toJsonAsBytes(node)));
                 });
                 BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
@@ -242,7 +243,7 @@ public class ElasticSearchUtil {
     public void save(String type, String id, String body) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
-                client.prepareIndex(ES_INDEX, type, id).setSource(body).execute().actionGet();
+                client.prepareIndex(esIndex, type, id).setSource(body).execute().actionGet();
                 return null;
             });
         } catch (Exception e) {
@@ -274,7 +275,7 @@ public class ElasticSearchUtil {
             try {
                 RETRY_ES_PUBLISH.call(() -> {
                     BulkRequestBuilder bulkRequest = client.prepareBulk();
-                    docs.forEach(doc -> bulkRequest.add(client.prepareIndex(ES_INDEX, type, doc.getId())
+                    docs.forEach(doc -> bulkRequest.add(client.prepareIndex(esIndex, type, doc.getId())
                             .setSource(doc.toJsonString())));
                     if (bulkRequest.numberOfActions() > 0) {
                         BulkResponse bulkResponse = bulkRequest.execute().actionGet();
@@ -311,7 +312,7 @@ public class ElasticSearchUtil {
         if( dataUri != null) {
             //
             // Run the query and get the response.
-            SearchRequestBuilder request = client.prepareSearch(ES_INDEX)
+            SearchRequestBuilder request = client.prepareSearch(esIndex)
                     .setTypes(type)
                     .setSearchType(SearchType.QUERY_THEN_FETCH)
                     .setQuery(QueryBuilders.termQuery("serde.uri", dataUri))
@@ -329,7 +330,7 @@ public class ElasticSearchUtil {
         List<String> ids = Lists.newArrayList();
         //
         // Run the query and get the response.
-        SearchRequestBuilder request = client.prepareSearch(ES_INDEX)
+        SearchRequestBuilder request = client.prepareSearch(esIndex)
                 .setTypes(type)
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
                 .setQuery(QueryBuilders.termsQuery("name.qualifiedName.tree", qualifiedNames))
@@ -351,7 +352,7 @@ public class ElasticSearchUtil {
                 .must(QueryBuilders.termsQuery("name.qualifiedName.tree", names))
                 .must(QueryBuilders.termQuery("deleted_", false))
                 .mustNot(QueryBuilders.termQuery("refreshMarker_", marker));
-        SearchRequestBuilder request = client.prepareSearch(ES_INDEX)
+        SearchRequestBuilder request = client.prepareSearch(esIndex)
                 .setTypes(type)
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
                 .setQuery(queryBuilder)
@@ -378,12 +379,12 @@ public class ElasticSearchUtil {
     }
 
     public void refresh(){
-        client.admin().indices().refresh(new RefreshRequest(ES_INDEX)).actionGet();
+        client.admin().indices().refresh(new RefreshRequest(esIndex)).actionGet();
     }
 
     public  ElasticSearchDoc get(String type, String id) {
         ElasticSearchDoc result = null;
-        GetResponse response = client.prepareGet(ES_INDEX, type, id).execute().actionGet();
+        GetResponse response = client.prepareGet(esIndex, type, id).execute().actionGet();
         if( response.isExists()){
             result = ElasticSearchDoc.parse(response);
         }
@@ -391,7 +392,7 @@ public class ElasticSearchUtil {
     }
 
     public  void delete(MetacatContext metacatContext, String type, boolean softDelete) {
-        SearchResponse response = client.prepareSearch(ES_INDEX)
+        SearchResponse response = client.prepareSearch(esIndex)
                 .setSearchType(SearchType.SCAN)
                 .setScroll(new TimeValue(config.getElasticSearchScrollTimeout()))
                 .setSize(config.getElasticSearchScrollFetchSize())
@@ -424,7 +425,7 @@ public class ElasticSearchUtil {
             source.put("error", error);
             source.put("message", logMessage);
             source.put("details", Throwables.getStackTraceAsString(ex));
-            client.prepareIndex(ES_INDEX, "metacat-log").setSource(source).execute().actionGet();
+            client.prepareIndex(esIndex, "metacat-log").setSource(source).execute().actionGet();
         } catch(Exception e){
            log.warn("Failed saving the log message in elastic search for method {}, name {}. Message: {}", method, name, e.getMessage());
         }
@@ -432,7 +433,7 @@ public class ElasticSearchUtil {
 
     public List<TableDto> simpleSearch(String searchString){
         List<TableDto> result = Lists.newArrayList();
-        SearchResponse response = client.prepareSearch(ES_INDEX)
+        SearchResponse response = client.prepareSearch(esIndex)
                 .setTypes(table.name())
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
                 .setQuery(QueryBuilders.termQuery("_all", searchString))

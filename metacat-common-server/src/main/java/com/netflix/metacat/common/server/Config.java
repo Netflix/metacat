@@ -43,4 +43,5 @@ public interface Config {
     boolean isUsePigTypes();
     int getServiceMaxNumberOfThreads();
     List<QualifiedName> getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions();
+    String getEsIndex();
 }

@@ -100,13 +100,17 @@ public class MetacatEventHandlers {
     @Subscribe
     public void metacatDeleteMViewPartitionPostEventHandler(MetacatDeleteMViewPartitionPostEvent event) {
         List<String> partitionIds = event.getPartitionIds();
-        es.softDelete(partition.name(), partitionIds, event.getMetacatContext());
+        List<String> esPartitionIds = partitionIds.stream()
+                .map(partitionId -> event.getName().toString() + "/" + partitionId).collect(Collectors.toList());
+        es.softDelete(partition.name(), esPartitionIds, event.getMetacatContext());
     }
 
     @Subscribe
     public void metacatDeleteTablePartitionPostEventHandler(MetacatDeleteTablePartitionPostEvent event) {
         List<String> partitionIds = event.getPartitionIds();
-        es.softDelete(partition.name(), partitionIds, event.getMetacatContext());
+        List<String> esPartitionIds = partitionIds.stream()
+                .map(partitionId -> event.getName().toString() + "/" + partitionId).collect(Collectors.toList());
+        es.softDelete(partition.name(), esPartitionIds, event.getMetacatContext());
     }
 
 

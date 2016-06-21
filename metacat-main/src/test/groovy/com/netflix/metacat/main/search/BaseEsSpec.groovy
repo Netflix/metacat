@@ -58,6 +58,7 @@ class BaseEsSpec extends Specification {
         index.source(getFile('metacat.json').getText())
         client.admin().indices().create( index).actionGet()
         metacatJson = MetacatJsonLocator.INSTANCE
+        config.getEsIndex() >> "metacat"
         es = new ElasticSearchUtil(client, config, metacatJson)
     }
 
