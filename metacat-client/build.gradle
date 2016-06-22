@@ -26,14 +26,12 @@ dependencies {
     compile project(':metacat-common')
 
     compile 'com.netflix.feign:feign-core:8.6.0'
-    compile('com.netflix.feign:feign-jaxrs:8.6.0') {
-        exclude group: 'javax.ws.rs', module: 'jsr311-api'
-    }
+    compile 'com.netflix.feign:feign-jaxrs:8.6.0'
     compile 'com.netflix.feign:feign-slf4j:8.6.0'
     compile 'com.fasterxml.jackson.datatype:jackson-datatype-guava:latest.release'
     compile 'com.fasterxml.jackson.module:jackson-module-jaxb-annotations:latest.release'
     compile "org.slf4j:slf4j-api:${slf4j_version}"
-    compile "org.glassfish.jersey.core:jersey-server:${jersey_version}"
+    compile 'org.glassfish.jersey.core:jersey-server:2.15'
 
     testCompile project(':metacat-common').sourceSets.test.output
 }
