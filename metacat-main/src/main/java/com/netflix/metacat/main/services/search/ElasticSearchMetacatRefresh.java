@@ -180,7 +180,7 @@ public class ElasticSearchMetacatRefresh {
                 MetacatContext context = new MetacatContext( "admin", "elasticSearchRefresher", null, null, null);
                 MetacatContextManager.setContext(context);
                 refreshMarker = Instant.now().toString();
-                service = MoreExecutors.listeningDecorator(newFixedThreadPool(50, "elasticsearch-refresher-%d", queueSize));
+                service = MoreExecutors.listeningDecorator(newFixedThreadPool(10, "elasticsearch-refresher-%d", queueSize));
                 esService = MoreExecutors.listeningDecorator(newFixedThreadPool(5, "elasticsearch-refresher-es-%d", queueSize));
                 supplier.get().get(24, TimeUnit.HOURS);
                 log.info("End: Full refresh of metacat index in elastic search");
