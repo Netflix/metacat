@@ -343,7 +343,7 @@ public class ElasticSearchUtil {
         return ids;
     }
 
-    public <T> List<T> getQualifiedNamesByMarkerByNames(String type, List<QualifiedName> qualifiedNames, String marker, Class<T> valueType) {
+    public <T> List<T> getQualifiedNamesByMarkerByNames(String type, List<QualifiedName> qualifiedNames, String marker, List<String> excludeDatabaseNames, Class<T> valueType) {
         List<T> result = Lists.newArrayList();
         List<String> names = qualifiedNames.stream().map(QualifiedName::toString).collect(Collectors.toList());
         //
@@ -351,6 +351,7 @@ public class ElasticSearchUtil {
         QueryBuilder queryBuilder = QueryBuilders.boolQuery()
                 .must(QueryBuilders.termsQuery("name.qualifiedName.tree", names))
                 .must(QueryBuilders.termQuery("deleted_", false))
+                .mustNot(QueryBuilders.termsQuery("name.databaseName", excludeDatabaseNames))
                 .mustNot(QueryBuilders.termQuery("refreshMarker_", marker));
         SearchRequestBuilder request = client.prepareSearch(esIndex)
                 .setTypes(type)

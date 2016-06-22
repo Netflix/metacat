@@ -185,7 +185,9 @@ public class ElasticSearchMetacatRefresh {
                 supplier.get().get(24, TimeUnit.HOURS);
                 log.info("End: Full refresh of metacat index in elastic search");
                 if( delete) {
-                    deleteUnmarkedEntities(qNames);
+                    List<String> excludeDatabaseNames = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(
+                            config.getElasticSearchRefreshExcludeDatabases());
+                    deleteUnmarkedEntities(qNames, excludeDatabaseNames);
                 }
             } catch (Exception e) {
                 log.error("Full refresh of metacat index failed", e);
@@ -226,7 +228,7 @@ public class ElasticSearchMetacatRefresh {
         }
     }
 
-    private void deleteUnmarkedEntities(List<QualifiedName> qNames) {
+    private void deleteUnmarkedEntities(List<QualifiedName> qNames, List<String> excludeDatabaseNames) {
         log.info("Start: Delete unmarked entities");
         //
         // get unmarked qualified names
@@ -235,7 +237,8 @@ public class ElasticSearchMetacatRefresh {
         //
         elasticSearchUtil.refresh();
         MetacatContext context = new MetacatContext("admin", "metacat-refresh", null, null, null);
-        List<DatabaseDto> unmarkedDatabaseDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames("database", qNames, refreshMarker, DatabaseDto.class);
+
+        List<DatabaseDto> unmarkedDatabaseDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames("database", qNames, refreshMarker, excludeDatabaseNames, DatabaseDto.class);
         if( !unmarkedDatabaseDtos.isEmpty()) {
             if(unmarkedDatabaseDtos.size() <= config.getElasticSearchThresholdUnmarkedDatabasesDelete()) {
                 log.info("Start: Delete unmarked databases({})", unmarkedDatabaseDtos.size());
@@ -272,7 +275,7 @@ public class ElasticSearchMetacatRefresh {
             }
         }
 
-        List<TableDto> unmarkedTableDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames("table", qNames, refreshMarker, TableDto.class);
+        List<TableDto> unmarkedTableDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames("table", qNames, refreshMarker, excludeDatabaseNames, TableDto.class);
         if( !unmarkedTableDtos.isEmpty() ) {
             if(unmarkedTableDtos.size() <= config.getElasticSearchThresholdUnmarkedTablesDelete()) {
                 log.info("Start: Delete unmarked tables({})", unmarkedTableDtos.size());
@@ -417,6 +420,7 @@ public class ElasticSearchMetacatRefresh {
     private ListenableFuture<Void> indexDatabaseDtos(QualifiedName catalogName, List<DatabaseDto> dtos){
         return esService.submit(() -> {
             List<ElasticSearchDoc> docs = dtos.stream()
+                    .filter(dto -> dto!=null)
                     .map( dto -> new ElasticSearchDoc( dto.getName().toString(), dto, "admin", false, refreshMarker))
                     .collect(Collectors.toList());
             log.info("Saving databases for catalog: {}", catalogName);
