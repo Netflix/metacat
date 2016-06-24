@@ -15,10 +15,18 @@ package com.netflix.metacat.common.server.events;
 
 import com.netflix.metacat.common.MetacatContext;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.servo.util.Preconditions;
 
 public class MetacatCreateTablePreEvent extends MetacatEvent {
+    private final TableDto table;
 
-    public MetacatCreateTablePreEvent(QualifiedName name, MetacatContext metacatContext) {
+    public MetacatCreateTablePreEvent(QualifiedName name, TableDto table, MetacatContext metacatContext) {
         super(name, metacatContext);
+        this.table = Preconditions.checkNotNull(table, "Table is a required argument");
+    }
+
+    public TableDto getTable() {
+        return table;
     }
 }

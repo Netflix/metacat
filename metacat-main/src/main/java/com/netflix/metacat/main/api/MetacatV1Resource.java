@@ -142,7 +142,7 @@ public class MetacatV1Resource implements MetacatV1 {
             checkArgument(table.getName() != null && tableName.equalsIgnoreCase(table.getName().getTableName()),
                     "Table name does not match the name in the table");
 
-            eventBus.post(new MetacatCreateTablePreEvent(name, metacatContext));
+            eventBus.post(new MetacatCreateTablePreEvent(name, table, metacatContext));
 
             tableService.create(name, table);
 
