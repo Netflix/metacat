@@ -16,20 +16,31 @@ package com.facebook.presto.exception;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.StandardErrorCode;
+import com.google.common.base.Joiner;
+
+import java.util.List;
+
+import static com.google.common.base.Strings.nullToEmpty;
 
 /**
  * Created by amajumdar on 4/30/15.
  */
-public class PartitionAlreadyExistsException extends PrestoException{
-    private final SchemaTableName tableName;
-    private final String partitionId;
+public class PartitionAlreadyExistsException extends PrestoException {
+    private static final Joiner COMMA_JOINER = Joiner.on(',');
+
     public PartitionAlreadyExistsException(SchemaTableName tableName, String partitionId) {
         this(tableName, partitionId, null);
     }
 
     public PartitionAlreadyExistsException(SchemaTableName tableName, String partitionId, Throwable cause) {
-        super(StandardErrorCode.ALREADY_EXISTS, String.format("Partition %s already exists for table %s", tableName, partitionId==null?"": partitionId), cause);
-        this.tableName = tableName;
-        this.partitionId = partitionId;
+        super(StandardErrorCode.ALREADY_EXISTS,
+                String.format("Partition '%s' already exists for table '%s'", nullToEmpty(partitionId), tableName),
+                cause);
+    }
+
+    public PartitionAlreadyExistsException(SchemaTableName tableName, List<String> partitionIds, Throwable cause) {
+        super(StandardErrorCode.ALREADY_EXISTS,
+                String.format("One or more of the partitions '%s' already exists for table '%s'",
+                        COMMA_JOINER.join(partitionIds), tableName), cause);
     }
 }

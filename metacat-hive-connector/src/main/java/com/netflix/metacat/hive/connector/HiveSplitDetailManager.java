@@ -262,7 +262,8 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(tableName);
         } catch (AlreadyExistsException e) {
-            throw new PartitionAlreadyExistsException(tableName, null, e);
+            List<String> ids = partitions.stream().map(ConnectorPartition::getPartitionId).collect(Collectors.toList());
+            throw new PartitionAlreadyExistsException(tableName, ids, e);
         }
         return result;
     }
