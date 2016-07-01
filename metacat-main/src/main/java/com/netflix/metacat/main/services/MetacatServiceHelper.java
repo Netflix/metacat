@@ -19,6 +19,7 @@ import com.netflix.metacat.common.MetacatContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.BaseDto;
 import com.netflix.metacat.common.dto.PartitionDto;
+import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
@@ -85,7 +86,10 @@ public class MetacatServiceHelper {
             if( dto != null) {
                 dtos.add((PartitionDto) dto);
             }
-            eventBus.post(new MetacatSaveTablePartitionPostEvent(name, dtos, metacatContext));
+            // This request neither added nor updated partitions
+            PartitionsSaveResponseDto partitionsSaveResponseDto = new PartitionsSaveResponseDto();
+            eventBus.post(
+                    new MetacatSaveTablePartitionPostEvent(name, dtos, partitionsSaveResponseDto, metacatContext));
         } else if( name.isTableDefinition()){
             MetacatUpdateTablePostEvent event = new MetacatUpdateTablePostEvent(name, metacatContext);
             if( dto != null){

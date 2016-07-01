@@ -16,40 +16,53 @@ package com.netflix.metacat.common.server.events;
 import com.netflix.metacat.common.MetacatContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
+import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 
 import java.util.List;
 import java.util.Objects;
 
 public class MetacatSaveTablePartitionPostEvent extends MetacatEvent {
     private final List<PartitionDto> partitions;
+    private final PartitionsSaveResponseDto partitionsSaveResults;
 
-    public MetacatSaveTablePartitionPostEvent(QualifiedName name, List<PartitionDto> partitions, MetacatContext metacatContext) {
-        super( name, metacatContext);
+    public MetacatSaveTablePartitionPostEvent(QualifiedName name, List<PartitionDto> partitions,
+            PartitionsSaveResponseDto partitionsSaveResults, MetacatContext metacatContext) {
+        super(name, metacatContext);
         this.partitions = partitions;
+        this.partitionsSaveResults = partitionsSaveResults;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof MetacatSaveTablePartitionPostEvent)) return false;
-        if (!super.equals(o)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof MetacatSaveTablePartitionPostEvent))
+            return false;
+        if (!super.equals(o))
+            return false;
         MetacatSaveTablePartitionPostEvent that = (MetacatSaveTablePartitionPostEvent) o;
-        return Objects.equals(partitions, that.partitions);
+        return Objects.equals(partitions, that.partitions) && Objects.equals(partitionsSaveResults,
+                that.partitionsSaveResults);
     }
 
     public List<PartitionDto> getPartitions() {
         return partitions;
     }
 
+    public PartitionsSaveResponseDto getPartitionsSaveResults() {
+        return partitionsSaveResults;
+    }
+
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + Objects.hash(partitions);
+        return 31 * super.hashCode() + Objects.hash(partitions) + Objects.hash(partitionsSaveResults);
     }
 
     @Override
     public String toString() {
         return "MetacatSaveTablePartitionPostEvent{" +
                 "partitions=" + partitions +
+                "partitionsSaveResults=" + partitionsSaveResults +
                 '}';
     }
 }

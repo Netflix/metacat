@@ -570,7 +570,7 @@ public class PartitionV1Resource implements PartitionV1 {
                 v1.updateTable(catalogName, databaseName, tableName, dto);
             }
 
-            eventBus.post(new MetacatSaveTablePartitionPostEvent(name, partitionsToSave, metacatContext));
+            eventBus.post(new MetacatSaveTablePartitionPostEvent(name, partitionsToSave, result, metacatContext));
             if( partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()){
                 eventBus.post(new MetacatDeleteTablePartitionPostEvent(name, partitionIdsForDeletes, metacatContext));
             }
