@@ -22,7 +22,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.PartitionV1;
@@ -97,6 +99,7 @@ import org.apache.hadoop.hive.metastore.api.PartitionsStatsResult;
 import org.apache.hadoop.hive.metastore.api.PrincipalPrivilegeSet;
 import org.apache.hadoop.hive.metastore.api.PrincipalType;
 import org.apache.hadoop.hive.metastore.api.PrivilegeBag;
+import org.apache.hadoop.hive.metastore.api.PrivilegeGrantInfo;
 import org.apache.hadoop.hive.metastore.api.Role;
 import org.apache.hadoop.hive.metastore.api.SetPartitionsStatsRequest;
 import org.apache.hadoop.hive.metastore.api.ShowCompactRequest;
@@ -141,6 +144,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     private final TypeConverterProvider typeConverterProvider;
     private final MetacatV1 v1;
     private final PartitionExpressionProxy partitionExpressionProxy = new PartitionExpressionForMetastore();
+    private final Map<String,List<PrivilegeGrantInfo>> defaultRolesPrivilegeSet =
+            Maps.newHashMap(ImmutableMap.of("users",
+                    Lists.newArrayList(new PrivilegeGrantInfo("ALL", 0, "hadoop", PrincipalType.ROLE, true))));
 
     public CatalogThriftHiveMetastore(Config config, TypeConverterProvider typeConverterProvider,
             HiveConverters hiveConverters, MetacatV1 metacatV1, PartitionV1 partitionV1,
@@ -877,7 +883,21 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     public PrincipalPrivilegeSet get_privilege_set(HiveObjectRef hiveObject, String userName, List<String> groupNames)
             throws TException {
         return requestWrapper("get_privilege_set", new Object[] { hiveObject, userName, groupNames },
-                PrincipalPrivilegeSet::new);
+                () -> {
+                    Map<String,List<PrivilegeGrantInfo>> groupPrivilegeSet = null;
+                    Map<String,List<PrivilegeGrantInfo>> userPrivilegeSet = null;
+
+                    if( groupNames != null) {
+                        groupPrivilegeSet = groupNames.stream()
+                                .collect(Collectors.toMap(p -> p, p -> Lists.newArrayList()));
+                    }
+                    if( userName != null){
+                        userPrivilegeSet = ImmutableMap.of(userName, Lists.newArrayList());
+                    }
+                    return new PrincipalPrivilegeSet( userPrivilegeSet,
+                                groupPrivilegeSet,
+                                defaultRolesPrivilegeSet);
+                });
     }
 
     @Override

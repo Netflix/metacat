@@ -14,6 +14,9 @@
 package com.netflix.metacat.thrift
 
 import com.facebook.presto.hive.$internal.com.facebook.fb303.fb_status
+import com.google.common.collect.ImmutableMap
+import com.google.common.collect.Lists
+import com.google.common.collect.Maps
 import com.netflix.metacat.common.MetacatContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.api.MetacatV1
@@ -1234,7 +1237,10 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def result = ms.get_privilege_set(null, null, null)
 
         then:
-        result == new PrincipalPrivilegeSet()
+        result == new PrincipalPrivilegeSet(null
+                , null
+                , Maps.newHashMap(ImmutableMap.of("users",
+                Lists.newArrayList(new PrivilegeGrantInfo("ALL", 0, "hadoop", PrincipalType.ROLE, true)))))
     }
 
     def 'test get_role_grants_for_principal'() {
