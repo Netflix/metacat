@@ -34,6 +34,7 @@ import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.main.services.impl.MViewServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +95,11 @@ public class MetacatEventHandlers {
     @Subscribe
     public void metacatDeleteTablePostEventHandler(MetacatDeleteTablePostEvent event) {
         TableDto dto = event.getDto();
-        es.softDelete(table.name(), dto.getName().toString(), event.getMetacatContext());
+        if(MViewServiceImpl.VIEW_DB_NAME.equals(dto.getName().getDatabaseName())){
+            es.softDelete(mview.name(), dto.getName().toString(), event.getMetacatContext());
+        } else {
+            es.softDelete(table.name(), dto.getName().toString(), event.getMetacatContext());
+        }
     }
 
     @Subscribe
