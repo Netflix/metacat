@@ -38,6 +38,7 @@ public class TagV1Resource implements TagV1{
     TagService tagService;
     MetacatEventBus eventBus;
     TableService tableService;
+
     @Inject
     public TagV1Resource( MetacatEventBus eventBus, TagService tagService, TableService tableService) {
         this.tagService = tagService;
@@ -82,7 +83,7 @@ public class TagV1Resource implements TagV1{
                 throw new TableNotFoundException(new SchemaTableName( name.getDatabaseName(), name.getTableName()));
             }
             Set<String> result = tagService.setTableTags(name, tags, true);
-            eventBus.post(new MetacatUpdateTablePostEvent(name, metacatContext));
+            eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatContext));
             return result;
         });
     }
@@ -102,7 +103,7 @@ public class TagV1Resource implements TagV1{
             }
             tagService.removeTableTags( name, deleteAll, tags, true);
 
-            eventBus.post(new MetacatUpdateTablePostEvent(name, metacatContext));
+            eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatContext));
             return null;
         });
     }

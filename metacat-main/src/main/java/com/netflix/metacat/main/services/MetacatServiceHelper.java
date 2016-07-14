@@ -70,11 +70,11 @@ public class MetacatServiceHelper {
             if( dto != null) {
                 dtos.add((PartitionDto) dto);
             }
-            eventBus.post(new MetacatSaveTablePartitionPreEvent(name, dtos, metacatContext));
+            eventBus.postSync(new MetacatSaveTablePartitionPreEvent(name, dtos, metacatContext));
         } else if( name.isTableDefinition()){
-            eventBus.post(new MetacatUpdateTablePreEvent(name, (TableDto) dto, metacatContext));
+            eventBus.postSync(new MetacatUpdateTablePreEvent(name, (TableDto) dto, metacatContext));
         } else if( name.isDatabaseDefinition()){
-            eventBus.post(new MetacatUpdateDatabasePreEvent(name, metacatContext));
+            eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatContext));
         }  else {
             throw new IllegalArgumentException(String.format("Invalid name %s", name));
         }
@@ -88,16 +88,16 @@ public class MetacatServiceHelper {
             }
             // This request neither added nor updated partitions
             PartitionsSaveResponseDto partitionsSaveResponseDto = new PartitionsSaveResponseDto();
-            eventBus.post(
+            eventBus.postAsync(
                     new MetacatSaveTablePartitionPostEvent(name, dtos, partitionsSaveResponseDto, metacatContext));
         } else if( name.isTableDefinition()){
             MetacatUpdateTablePostEvent event = new MetacatUpdateTablePostEvent(name, metacatContext);
             if( dto != null){
                 event = new MetacatUpdateTablePostEvent((TableDto)dto, metacatContext);
             }
-            eventBus.post( event);
+            eventBus.postAsync( event);
         } else if( name.isDatabaseDefinition()){
-            eventBus.post(new MetacatUpdateDatabasePostEvent(name, metacatContext));
+            eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatContext));
         }  else {
             throw new IllegalArgumentException(String.format("Invalid name %s", name));
         }

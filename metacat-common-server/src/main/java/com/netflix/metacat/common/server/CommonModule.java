@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.common.server;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
@@ -29,9 +28,6 @@ import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.util.DataSourceManager;
 import com.netflix.metacat.common.util.ThreadServiceManager;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-
 public class CommonModule extends AbstractModule {
     @Override
     protected void configure() {
@@ -41,7 +37,7 @@ public class CommonModule extends AbstractModule {
         bind(MetacatJson.class).toInstance(MetacatJsonLocator.INSTANCE);
         bind(DeadEventHandler.class).asEagerSingleton();
         bind(DataSourceManager.class).toInstance(DataSourceManager.get());
-        MetacatEventBus eventBus = createMetacatEventBus(config);
+        MetacatEventBus eventBus = new MetacatEventBus(config);
         bind(MetacatEventBus.class).toInstance(eventBus);
         bindListener(Matchers.any(), new TypeListener() {
             public <I> void hear(TypeLiteral<I> typeLiteral, TypeEncounter<I> typeEncounter) {
@@ -53,11 +49,5 @@ public class CommonModule extends AbstractModule {
         // us to remove the hard coded username.
         binder().requestStaticInjection(Lookup.class, TagItem.class);
         bind(ThreadServiceManager.class).asEagerSingleton();
-    }
-
-    protected MetacatEventBus createMetacatEventBus(Config config) {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("metacat-event-pool-%d").build();
-        int threadCount = config.getEventBusThreadCount();
-        return new MetacatEventBus("metacat-event-bus", Executors.newFixedThreadPool(threadCount, threadFactory));
     }
 }

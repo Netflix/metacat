@@ -95,7 +95,7 @@ public class MetacatV1Resource implements MetacatV1 {
         MetacatContext metacatContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
         requestWrapper(name, "createDatabase", () -> {
-            eventBus.post(new MetacatCreateDatabasePreEvent(name, metacatContext));
+            eventBus.postSync(new MetacatCreateDatabasePreEvent(name, metacatContext));
 
             DatabaseDto newDto = new DatabaseDto();
             newDto.setName(name);
@@ -105,7 +105,7 @@ public class MetacatV1Resource implements MetacatV1 {
             databaseService.create(name, newDto);
 
             DatabaseDto dto = databaseService.get(name, newDto.getDefinitionMetadata() != null);
-            eventBus.post(new MetacatCreateDatabasePostEvent(dto, metacatContext));
+            eventBus.postAsync(new MetacatCreateDatabasePostEvent(dto, metacatContext));
             return null;
         });
     }
@@ -120,14 +120,14 @@ public class MetacatV1Resource implements MetacatV1 {
         MetacatContext metacatContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
         return requestWrapper(name, "createMView", () -> {
-            eventBus.post(new MetacatCreateMViewPreEvent(name, snapshot, filter, metacatContext));
+            eventBus.postSync(new MetacatCreateMViewPreEvent(name, snapshot, filter, metacatContext));
 
             TableDto dto = mViewService.create(name);
             if (snapshot != null && snapshot) {
                 mViewService.snapshotPartitions(name, filter);
             }
 
-            eventBus.post(new MetacatCreateMViewPostEvent(dto, snapshot, filter, metacatContext));
+            eventBus.postAsync(new MetacatCreateMViewPostEvent(dto, snapshot, filter, metacatContext));
             return dto;
         });
     }
@@ -142,12 +142,12 @@ public class MetacatV1Resource implements MetacatV1 {
             checkArgument(table.getName() != null && tableName.equalsIgnoreCase(table.getName().getTableName()),
                     "Table name does not match the name in the table");
 
-            eventBus.post(new MetacatCreateTablePreEvent(name, table, metacatContext));
+            eventBus.postSync(new MetacatCreateTablePreEvent(name, table, metacatContext));
 
             tableService.create(name, table);
 
             TableDto dto = tableService.get(name, true).orElseThrow(() -> new IllegalStateException("Should exist"));
-            eventBus.post(new MetacatCreateTablePostEvent(dto, metacatContext));
+            eventBus.postAsync(new MetacatCreateTablePostEvent(dto, metacatContext));
             return dto;
         });
     }
@@ -158,11 +158,11 @@ public class MetacatV1Resource implements MetacatV1 {
         QualifiedName name = qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
         requestWrapper(name, "deleteDatabase", () -> {
             DatabaseDto dto = databaseService.get(name, true);
-            eventBus.post(new MetacatDeleteDatabasePreEvent(dto, metacatContext));
+            eventBus.postSync(new MetacatDeleteDatabasePreEvent(dto, metacatContext));
 
             databaseService.delete(name);
 
-            eventBus.post(new MetacatDeleteDatabasePostEvent(dto, metacatContext));
+            eventBus.postAsync(new MetacatDeleteDatabasePostEvent(dto, metacatContext));
             return null;
         });
     }
@@ -172,11 +172,11 @@ public class MetacatV1Resource implements MetacatV1 {
         MetacatContext metacatContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
         return requestWrapper(name, "deleteMView", () -> {
-            eventBus.post(new MetacatDeleteMViewPreEvent(name, metacatContext));
+            eventBus.postSync(new MetacatDeleteMViewPreEvent(name, metacatContext));
 
             TableDto dto = mViewService.deleteAndReturn(name);
 
-            eventBus.post(new MetacatDeleteMViewPostEvent(dto, metacatContext));
+            eventBus.postAsync(new MetacatDeleteMViewPostEvent(dto, metacatContext));
             return dto;
         });
     }
@@ -186,11 +186,11 @@ public class MetacatV1Resource implements MetacatV1 {
         MetacatContext metacatContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
         return requestWrapper(name, "deleteTable", () -> {
-            eventBus.post(new MetacatDeleteTablePreEvent(name, metacatContext));
+            eventBus.postSync(new MetacatDeleteTablePreEvent(name, metacatContext));
 
             TableDto dto = tableService.deleteAndReturn(name);
 
-            eventBus.post(new MetacatDeleteTablePostEvent(dto, metacatContext));
+            eventBus.postAsync(new MetacatDeleteTablePostEvent(dto, metacatContext));
             return dto;
         });
     }
@@ -249,12 +249,12 @@ public class MetacatV1Resource implements MetacatV1 {
         QualifiedName oldName = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
         QualifiedName newName = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, newTableName));
         requestWrapper(oldName, "renameTable", () -> {
-            eventBus.post(new MetacatRenameTablePreEvent(newName, oldName, metacatContext));
+            eventBus.postSync(new MetacatRenameTablePreEvent(newName, oldName, metacatContext));
 
             tableService.rename(oldName, newName, false);
 
             TableDto dto = tableService.get(newName, true).orElseThrow(() -> new IllegalStateException("should exist"));
-            eventBus.post(new MetacatRenameTablePostEvent(oldName, dto, metacatContext));
+            eventBus.postAsync(new MetacatRenameTablePostEvent(oldName, dto, metacatContext));
             return null;
         });
     }
@@ -263,12 +263,12 @@ public class MetacatV1Resource implements MetacatV1 {
         MetacatContext metacatContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofCatalog(catalogName));
         requestWrapper(name, "updateDatabase", () -> {
-            eventBus.post(new MetacatUpdateDatabasePreEvent(name, metacatContext));
+            eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatContext));
 
             createCatalogDto.setName(name);
             catalogService.update(name, createCatalogDto);
 
-            eventBus.post(new MetacatUpdateDatabasePostEvent(name, metacatContext));
+            eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatContext));
             return null;
         });
     }
@@ -281,14 +281,14 @@ public class MetacatV1Resource implements MetacatV1 {
         MetacatContext metacatContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
         requestWrapper(name, "updateDatabase", () -> {
-            eventBus.post(new MetacatUpdateDatabasePreEvent(name, metacatContext));
+            eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatContext));
 
             DatabaseDto newDto = new DatabaseDto();
             newDto.setName(name);
             newDto.setDefinitionMetadata(databaseUpdateRequestDto.getDefinitionMetadata());
             databaseService.update(name, newDto);
 
-            eventBus.post(new MetacatUpdateDatabasePostEvent(name, metacatContext));
+            eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatContext));
             return null;
         });
     }
@@ -298,12 +298,12 @@ public class MetacatV1Resource implements MetacatV1 {
         MetacatContext metacatContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
         return requestWrapper(name, "getMView", () -> {
-            eventBus.post(new MetacatUpdateMViewPreEvent(name, table, metacatContext));
+            eventBus.postSync(new MetacatUpdateMViewPreEvent(name, table, metacatContext));
 
             mViewService.update(name, table);
 
             TableDto dto = mViewService.getOpt(name).orElseThrow(() -> new IllegalStateException("should exist"));
-            eventBus.post(new MetacatUpdateMViewPostEvent(dto, metacatContext));
+            eventBus.postAsync(new MetacatUpdateMViewPostEvent(dto, metacatContext));
             return dto;
         });
     }
@@ -318,13 +318,14 @@ public class MetacatV1Resource implements MetacatV1 {
             checkArgument(table.getName() != null && tableName.equalsIgnoreCase(table.getName().getTableName()),
                     "Table name does not match the name in the table");
 
-            eventBus.post(new MetacatUpdateTablePreEvent(name, table, metacatContext));
+            eventBus.postSync(new MetacatUpdateTablePreEvent(name, table, metacatContext));
 
             tableService.update(name, table);
 
             TableDto dto = tableService.get(name, true).orElseThrow(() -> new IllegalStateException("should exist"));
-            eventBus.post(new MetacatUpdateTablePostEvent(dto, metacatContext));
+            eventBus.postAsync(new MetacatUpdateTablePostEvent(dto, metacatContext));
             return dto;
         });
     }
 }
+
