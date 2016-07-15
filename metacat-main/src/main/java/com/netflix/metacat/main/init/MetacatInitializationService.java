@@ -20,10 +20,12 @@ import com.google.inject.Injector;
 import com.google.inject.Provider;
 import com.google.inject.spi.ProviderInstanceBinding;
 import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.ThreadServiceManager;
 import com.netflix.metacat.main.manager.PluginManager;
 import com.netflix.metacat.main.presto.metadata.CatalogManager;
+import com.netflix.metacat.main.services.search.MetacatEventHandlers;
 import io.airlift.configuration.ConfigurationFactory;
 import io.airlift.configuration.ConfigurationProvider;
 import org.elasticsearch.client.Client;
@@ -73,7 +75,13 @@ public class MetacatInitializationService {
         thriftService.start();
 
         // Initialize elastic search client
-        injector.getInstance(Client.class);
+        Client client = injector.getInstance(Client.class);
+        if (client != null) {
+            MetacatEventBus eventBus = injector.getInstance(MetacatEventBus.class);
+            // Only register the elastic search event handlers if the client is registered
+            MetacatEventHandlers handlers = injector.getInstance(MetacatEventHandlers.class);
+            eventBus.register(handlers);
+        }
     }
 
     public void stop() throws Exception {
