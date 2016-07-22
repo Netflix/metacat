@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by amajumdar on 5/4/15.
@@ -104,5 +105,32 @@ public class PartitionsSaveRequestDto extends BaseDto{
         out.defaultWriteObject();
         serializeObjectNode(out, dataMetadata);
         serializeObjectNode(out, definitionMetadata);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        PartitionsSaveRequestDto that = (PartitionsSaveRequestDto) o;
+        return Objects.equals(dataMetadata, that.dataMetadata) && Objects.equals(definitionMetadata,
+                that.definitionMetadata) && Objects.equals(partitions, that.partitions) && Objects.equals(
+                partitionIdsForDeletes, that.partitionIdsForDeletes) && Objects.equals(checkIfExists,
+                that.checkIfExists) && Objects.equals(alterIfExists, that.alterIfExists);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dataMetadata, definitionMetadata, partitions, partitionIdsForDeletes, checkIfExists,
+                alterIfExists);
+    }
+
+    @Override
+    public String toString() {
+        return "PartitionsSaveRequestDto{" + "dataMetadata=" + dataMetadata + ", definitionMetadata="
+                + definitionMetadata + ", partitions=" + partitions + ", partitionIdsForDeletes="
+                + partitionIdsForDeletes + ", checkIfExists=" + checkIfExists + ", alterIfExists=" + alterIfExists
+                + '}';
     }
 }

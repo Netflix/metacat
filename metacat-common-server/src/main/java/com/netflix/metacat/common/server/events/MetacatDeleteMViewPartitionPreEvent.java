@@ -15,40 +15,43 @@ package com.netflix.metacat.common.server.events;
 
 import com.netflix.metacat.common.MetacatContext;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 
-import java.util.List;
+import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class MetacatDeleteMViewPartitionPreEvent extends MetacatEvent {
-    private final List<String> partitionIds;
+    private final PartitionsSaveRequestDto saveRequestDto;
 
-    public MetacatDeleteMViewPartitionPreEvent(QualifiedName name, List<String> partitionIds, MetacatContext metacatContext) {
-        super( name, metacatContext);
-        this.partitionIds = partitionIds;
+    public MetacatDeleteMViewPartitionPreEvent(@Nonnull QualifiedName name,
+            @Nonnull PartitionsSaveRequestDto saveRequestDto, @Nonnull MetacatContext metacatContext) {
+        super(name, metacatContext);
+        this.saveRequestDto = saveRequestDto;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof MetacatDeleteMViewPartitionPreEvent)) return false;
-        if (!super.equals(o)) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
         MetacatDeleteMViewPartitionPreEvent that = (MetacatDeleteMViewPartitionPreEvent) o;
-        return Objects.equals(partitionIds, that.partitionIds);
-    }
-
-    public List<String> getPartitionIds() {
-        return partitionIds;
+        return Objects.equals(saveRequestDto, that.saveRequestDto);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + Objects.hash(partitionIds);
+        return Objects.hash(super.hashCode(), saveRequestDto);
+    }
+
+    public PartitionsSaveRequestDto getSaveRequestDto() {
+        return saveRequestDto;
     }
 
     @Override
     public String toString() {
-        return "MetacatDeleteMViewPartitionPreEvent{" +
-                ", partitions=" + partitionIds +
-                '}';
+        return "MetacatDeleteMViewPartitionPreEvent{" + "saveRequestDto=" + saveRequestDto + '}';
     }
 }

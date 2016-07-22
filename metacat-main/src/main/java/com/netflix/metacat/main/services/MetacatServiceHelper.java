@@ -13,12 +13,14 @@
 
 package com.netflix.metacat.main.services;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.netflix.metacat.common.MetacatContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.BaseDto;
 import com.netflix.metacat.common.dto.PartitionDto;
+import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
@@ -65,12 +67,12 @@ public class MetacatServiceHelper {
     }
 
     public void postPreUpdateEvent(QualifiedName name, BaseDto dto, MetacatContext metacatContext) {
-        if( name.isPartitionDefinition()){
-            List<PartitionDto> dtos = Lists.newArrayList();
-            if( dto != null) {
-                dtos.add((PartitionDto) dto);
+        if (name.isPartitionDefinition()) {
+            PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
+            if (dto != null) {
+                partitionsSaveRequestDto.setPartitions(ImmutableList.of((PartitionDto) dto));
             }
-            eventBus.postSync(new MetacatSaveTablePartitionPreEvent(name, dtos, metacatContext));
+            eventBus.postSync(new MetacatSaveTablePartitionPreEvent(name, partitionsSaveRequestDto, metacatContext));
         } else if( name.isTableDefinition()){
             eventBus.postSync(new MetacatUpdateTablePreEvent(name, (TableDto) dto, metacatContext));
         } else if( name.isDatabaseDefinition()){
