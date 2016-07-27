@@ -35,6 +35,7 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.monitoring.TimerWrapper;
@@ -51,6 +52,7 @@ import org.apache.hadoop.hive.metastore.api.AddDynamicPartitions;
 import org.apache.hadoop.hive.metastore.api.AddPartitionsRequest;
 import org.apache.hadoop.hive.metastore.api.AddPartitionsResult;
 import org.apache.hadoop.hive.metastore.api.AggrStats;
+import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.CheckLockRequest;
 import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
 import org.apache.hadoop.hive.metastore.api.CommitTxnRequest;
@@ -1213,6 +1215,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         try {
             log.info("+++ Thrift({}): Calling {}({})", catalogName, methodName, args);
             return supplier.get();
+        } catch (MetacatAlreadyExistsException e) {
+            log.error(e.getMessage(), e);
+            throw new AlreadyExistsException(e.getMessage());
         } catch (InvalidOperationException e) {
             log.error(e.getMessage(), e);
             throw e;
