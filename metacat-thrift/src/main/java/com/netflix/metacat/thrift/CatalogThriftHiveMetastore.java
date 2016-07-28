@@ -131,7 +131,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class CatalogThriftHiveMetastore extends FacebookBase
         implements FacebookService.Iface, ThriftHiveMetastore.Iface {
-    private static final Joiner OR_JOINER = Joiner.on(" OR ");
+    private static final Joiner AND_JOINER = Joiner.on(" AND ");
     private static final LoadingCache<String, Pattern> PATTERNS = CacheBuilder.newBuilder()
             .build(new CacheLoader<String, Pattern>() {
                 public Pattern load(@Nonnull String regex) {
@@ -1181,7 +1181,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             }
         }
 
-        return partitionFilters.isEmpty() ? null : OR_JOINER.join(partitionFilters);
+        return partitionFilters.isEmpty() ? null : AND_JOINER.join(partitionFilters);
     }
 
     @Override
