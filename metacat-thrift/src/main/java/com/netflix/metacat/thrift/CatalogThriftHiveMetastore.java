@@ -131,7 +131,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class CatalogThriftHiveMetastore extends FacebookBase
         implements FacebookService.Iface, ThriftHiveMetastore.Iface {
-    private static final Joiner AND_JOINER = Joiner.on(" AND ");
+    private static final Joiner AND_JOINER = Joiner.on(" and ");
     private static final LoadingCache<String, Pattern> PATTERNS = CacheBuilder.newBuilder()
             .build(new CacheLoader<String, Pattern>() {
                 public Pattern load(@Nonnull String regex) {
