@@ -1,0 +1,281 @@
+/*
+ * Copyright 2016 Netflix, Inc.
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+import com.bmuschko.gradle.docker.tasks.DockerInfo
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.Dockerfile
+
+ext {
+    if (project.hasProperty('startCluster')) {
+        startCluster = Boolean.getBoolean('startCluster')
+    } else {
+        startCluster = true
+    }
+    logger.info("metacat-functional-tests: start cluster = '${startCluster}'")
+
+    if (project.hasProperty('stopCluster')) {
+        stopCluster = Boolean.getBoolean('stopCluster')
+    } else {
+        stopCluster = true
+    }
+    logger.info("metacat-functional-tests: stop cluster = '${stopCluster}'")
+
+    if (project.hasProperty('dockerHost')) {
+        dockerHost = project['dockerHost']
+    } else if (System.getenv('DOCKER_HOST')) {
+        dockerHost = System.getenv('DOCKER_HOST')?.replace('tcp:', 'https:')
+    } else {
+        dockerHost = 'http://localhost:2375'
+    }
+    logger.info("metacat-functional-tests: docker host '${dockerHost}'")
+
+    if (project.hasProperty('dockerIp')) {
+        dockerIp = project['dockerIp']
+    } else if (System.getenv('DOCKER_IP')) {
+        dockerIp = System.getenv('DOCKER_IP')
+    } else if (System.getenv('DOCKER_HOST')?.startsWith('tcp') || System.getenv('DOCKER_HOST')?.startsWith('http')) {
+        dockerIp = (System.getenv('DOCKER_HOST') =~ /:\/\/([0-9\.]+):/)[0][1]
+    } else {
+        dockerIp = 'localhost'
+    }
+    logger.info("metacat-functional-tests: docker ip '${dockerIp}'")
+
+    if (project.hasProperty('dockerCertPath')) {
+        dockerCertPath = new File(project['dockerCertPath'] as String)
+    } else if (System.getenv('DOCKER_CERT_PATH')) {
+        dockerCertPath = new File(System.getenv('DOCKER_CERT_PATH'))
+    } else {
+        dockerCertPath = null
+    }
+    logger.info("metacat-functional-tests: docker cert path '${dockerCertPath}'")
+
+    clusterWorkingDir = file("${rootDir}/metacat-functional-tests/metacat-test-cluster")
+}
+
+configurations {
+    warproject
+    functionalTestCompile.extendsFrom testCompile
+    functionalTestRuntime.extendsFrom testRuntime
+
+    all*.exclude group: 'javax.ws.rs', module: 'javax.ws.rs-api'
+}
+
+sourceSets {
+    functionalTest {
+        compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
+
+        java.srcDir file('src/functionalTest/java')
+        groovy.srcDir file('src/functionalTest/groovy')
+        resources.srcDir file('src/functionalTest/resources')
+    }
+}
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.bmuschko:gradle-docker-plugin:3.0.1'
+    }
+}
+
+apply plugin: 'com.bmuschko.docker-remote-api'
+
+dependencies {
+    warproject project(path: ':metacat-server', configuration: 'archives')
+
+    // Test that metacat-client can be used with jersey 1
+    testCompile(project(':metacat-client')) {
+        exclude group: 'javax.ws.rs', module: 'javax.ws.rs-api'
+        exclude group: 'org.glassfish.jersey.core'
+    }
+    testCompile 'com.sun.jersey:jersey-client:1.19.1'
+
+    testCompile project(':metacat-common-server')
+    testCompile 'javax.ws.rs:jsr311-api:1.1.1'
+    testCompile "com.facebook.presto:presto-hive-hadoop2:${presto_version}"
+}
+
+docker {
+    url = project.ext.dockerHost
+    certPath = project.ext.dockerCertPath
+}
+
+task expandWar(type: Copy) {
+    dependsOn ':metacat-server:war'
+
+    from { configurations.warproject.collect { zipTree(it) } }
+    into file("${buildDir}/metacat-war-expanded/ROOT")
+}
+
+task dockerInfo(type: DockerInfo)
+
+task createWarDockerfile(type: Dockerfile) {
+    dependsOn 'expandWar'
+
+    destFile = project.file('build/metacat-war-expanded/Dockerfile')
+    from 'tomcat:8.0-jre8'
+    maintainer 'Netflix OSS "netflixoss@netflix.com"'
+    volume '/usr/local/tomcat/logs', '/etc/metacat'
+    runCommand 'rm -rf /usr/local/tomcat/webapps'
+    copyFile './ROOT', '/usr/local/tomcat/webapps/ROOT'
+}
+
+task buildWarImage(type: DockerBuildImage) {
+    dependsOn 'createWarDockerfile'
+    inputDir = createWarDockerfile.destFile.parentFile
+    tag = 'netflix_metacat_test/metacat_server'
+}
+
+task startMetacatCluster(type: Exec) {
+    workingDir = clusterWorkingDir
+
+    environment 'PATH', '/usr/local/bin:/usr/bin:/bin'
+    environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
+    if (project.ext.dockerCertPath) {
+        environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
+        environment 'DOCKER_TLS_VERIFY', '1'
+    }
+
+    commandLine './startCluster.sh'
+}
+
+task stopMetacatCluster(type: Exec) {
+    workingDir = clusterWorkingDir
+
+    environment 'PATH', '/usr/local/bin:/usr/bin:/bin'
+    environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
+    if (project.ext.dockerCertPath) {
+        environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
+        environment 'DOCKER_TLS_VERIFY', '1'
+    }
+
+    commandLine './stopCluster.sh'
+}
+
+task metacatPorts {
+    if (project.ext.startCluster) {
+        dependsOn 'startMetacatCluster'
+    }
+    ext.http_port = null
+    ext.metacat_hive_thrift_port = null
+    ext.metacat_s3_thrift_port = null
+    ext.hive_thrift_port = null
+
+    doLast {
+        new ByteArrayOutputStream().withStream { os ->
+            exec {
+                workingDir = clusterWorkingDir
+
+                environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
+                if (project.ext.dockerCertPath) {
+                    environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
+                    environment 'DOCKER_TLS_VERIFY', '1'
+                }
+
+                commandLine './printDockerPort.sh', project.ext.dockerIp, 'label=com.netflix.metacat.oss.test.war', 8080
+                standardOutput = os
+            }
+            ext.http_port = os.toString().trim()
+            logger.info("metacat-functional-tests: metacat http_port '{}'", ext.http_port)
+        }
+
+        new ByteArrayOutputStream().withStream { os ->
+            exec {
+                workingDir = clusterWorkingDir
+
+                environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
+                if (project.ext.dockerCertPath) {
+                    environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
+                    environment 'DOCKER_TLS_VERIFY', '1'
+                }
+
+                commandLine './printDockerPort.sh', project.ext.dockerIp, 'label=com.netflix.metacat.oss.test.war', 12001
+                standardOutput = os
+            }
+            ext.metacat_hive_thrift_port = os.toString().trim()
+            logger.info("metacat-functional-tests: metacat thrift_port '{}'", ext.metacat_hive_thrift_port)
+        }
+
+        new ByteArrayOutputStream().withStream { os ->
+            exec {
+                workingDir = clusterWorkingDir
+
+                environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
+                if (project.ext.dockerCertPath) {
+                    environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
+                    environment 'DOCKER_TLS_VERIFY', '1'
+                }
+
+                commandLine './printDockerPort.sh', project.ext.dockerIp, 'label=com.netflix.metacat.oss.test.war', 12002
+                standardOutput = os
+            }
+            ext.metacat_s3_thrift_port = os.toString().trim()
+            logger.info("metacat-functional-tests: metacat thrift_port '{}'", ext.metacat_s3_thrift_port)
+        }
+
+        new ByteArrayOutputStream().withStream { os ->
+            exec {
+                workingDir = clusterWorkingDir
+
+                environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
+                if (project.ext.dockerCertPath) {
+                    environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
+                    environment 'DOCKER_TLS_VERIFY', '1'
+                }
+
+                commandLine './printDockerPort.sh', project.ext.dockerIp, 'label=com.netflix.metacat.oss.test.hive', 9083
+                standardOutput = os
+            }
+            ext.hive_thrift_port = os.toString().trim()
+            logger.info("metacat-functional-tests: metacat hive_thrift_port '{}'", ext.hive_thrift_port)
+        }
+    }
+}
+
+task functionalTest(type: Test) {
+    testClassesDir = sourceSets.functionalTest.output.classesDir
+    classpath = sourceSets.functionalTest.runtimeClasspath
+    outputs.upToDateWhen { false }
+
+    doFirst {
+        def properties = [
+                'metacat_docker_ip'                     : project.ext.dockerIp as String,
+                'metacat_http_port'                     : metacatPorts.http_port as String,
+                'metacat_hive_thrift_port'              : metacatPorts.metacat_hive_thrift_port as String,
+                'metacat_s3_thrift_port'                : metacatPorts.metacat_s3_thrift_port as String,
+                'hive_thrift_port'                      : metacatPorts.hive_thrift_port as String,
+                'org.slf4j.simpleLogger.defaultLogLevel': 'debug'
+        ]
+        System.properties.stringPropertyNames().findAll { it?.toLowerCase()?.contains("metacat") }.each {
+            properties[it] = System.getProperty(it)
+        }
+        systemProperties = properties
+    }
+
+    testLogging {
+        showStandardStreams = true
+    }
+
+    if (project.ext.startCluster) {
+        dependsOn 'startMetacatCluster', 'metacatPorts'
+    } else {
+        dependsOn 'metacatPorts'
+    }
+
+    if (project.ext.stopCluster) {
+        finalizedBy 'stopMetacatCluster'
+    }
+}

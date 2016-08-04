@@ -237,6 +237,10 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             throws TException {
         log.debug("Ignoring {} since metacat save partitions will do an update if it already exists", ifNotExists);
         TableDto tableDto = v1.getTable(catalogName, dbName, tblName, true, false, false);
+        if (tableDto.getPartition_keys() == null || tableDto.getPartition_keys().isEmpty()) {
+            throw new MetaException("Unable to add partition to unpartitioned table: " + tableDto.getName());
+        }
+
         PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
         List<PartitionDto> converted = Lists.newArrayListWithCapacity(parts.size());
         for (Partition partition : parts) {

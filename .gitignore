@@ -67,3 +67,6 @@ atlassian-ide-plugin.xml
 
 # Data created by elastic search tests
 metacat-main/data/
+
+# Functional tests
+metacat-functional-tests/metacat-test-cluster/build/

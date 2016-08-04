@@ -46,6 +46,7 @@ import static com.facebook.presto.hive.HiveErrorCode.HIVE_METASTORE_ERROR;
  * Created by amajumdar on 1/16/15.
  */
 public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements MetacatHiveMetastore{
+    private final short ALL_RESULTS = -1;
 
     @Inject
     public BaseMetacatHiveMetastore(HiveCluster hiveCluster,
@@ -117,7 +118,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
 
     public List<Partition> getPartitions(String dbName, String tableName, String filter) {
         try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
-            return client.get_partitions_by_filter(dbName, tableName, filter, (short) 0);
+            return client.get_partitions_by_filter(dbName, tableName, filter, ALL_RESULTS);
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
         }catch (Exception e) {
@@ -130,7 +131,7 @@ public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements Me
             if( partitionIds != null && !partitionIds.isEmpty()) {
                 return client.get_partitions_by_names(dbName, tableName, partitionIds);
             } else {
-                return client.get_partitions( dbName, tableName, (short) 0);
+                return client.get_partitions( dbName, tableName, ALL_RESULTS);
             }
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);

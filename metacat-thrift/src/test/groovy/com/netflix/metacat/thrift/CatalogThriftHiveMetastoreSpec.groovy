@@ -21,12 +21,28 @@ import com.netflix.metacat.common.MetacatContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.api.MetacatV1
 import com.netflix.metacat.common.api.PartitionV1
-import com.netflix.metacat.common.dto.*
+import com.netflix.metacat.common.dto.CatalogDto
+import com.netflix.metacat.common.dto.DatabaseDto
+import com.netflix.metacat.common.dto.FieldDto
+import com.netflix.metacat.common.dto.PartitionDto
+import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.Config
 import com.netflix.metacat.common.util.MetacatContextManager
 import com.netflix.metacat.converters.HiveConverters
 import com.netflix.metacat.converters.TypeConverterProvider
-import org.apache.hadoop.hive.metastore.api.*
+import org.apache.hadoop.hive.metastore.api.AddPartitionsRequest
+import org.apache.hadoop.hive.metastore.api.Database
+import org.apache.hadoop.hive.metastore.api.EnvironmentContext
+import org.apache.hadoop.hive.metastore.api.FieldSchema
+import org.apache.hadoop.hive.metastore.api.InvalidOperationException
+import org.apache.hadoop.hive.metastore.api.MetaException
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
+import org.apache.hadoop.hive.metastore.api.Partition
+import org.apache.hadoop.hive.metastore.api.PrincipalPrivilegeSet
+import org.apache.hadoop.hive.metastore.api.PrincipalType
+import org.apache.hadoop.hive.metastore.api.PrivilegeGrantInfo
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor
+import org.apache.hadoop.hive.metastore.api.Table
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -82,6 +98,27 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == partition
+        1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(
+                name: QualifiedName.ofTable(catalogName, 'db1', 't1'),
+                fields: [
+                        new FieldDto(name: 'pk1', partition_key: true),
+                        new FieldDto(name: 'pk2', partition_key: true),
+                        new FieldDto(name: 'k3', partition_key: false),
+                ]
+        )
+
+        where:
+        partition = new Partition(dbName: 'db1', tableName: 't1')
+    }
+
+    def 'test add_partition fails on an unpartitioned table'() {
+        when:
+        ms.add_partition(partition)
+
+        then:
+        def e = thrown(MetaException)
+        e.message.contains('unpartitioned')
+        1 * metacatV1.getTable(_,_,_,_,_,_) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
 
         where:
         partition = new Partition(dbName: 'db1', tableName: 't1')
@@ -94,6 +131,27 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == partition
+        1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(
+                name: QualifiedName.ofTable(catalogName, 'db1', 't1'),
+                fields: [
+                        new FieldDto(name: 'pk1', partition_key: true),
+                        new FieldDto(name: 'pk2', partition_key: true),
+                        new FieldDto(name: 'k3', partition_key: false),
+                ]
+        )
+
+        where:
+        partition = new Partition(dbName: 'db1', tableName: 't1')
+    }
+
+    def 'test add_partition_with_environment_context fails on an unpartitioned table'() {
+        when:
+        ms.add_partition_with_environment_context(partition, null)
+
+        then:
+        def e = thrown(MetaException)
+        e.message.contains('unpartitioned')
+        1 * metacatV1.getTable(_,_,_,_,_,_) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
 
         where:
         partition = new Partition(dbName: 'db1', tableName: 't1')
@@ -106,9 +164,43 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == partitions.size()
+        1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(
+                name: QualifiedName.ofTable(catalogName, 'db1', 't1'),
+                fields: [
+                        new FieldDto(name: 'pk1', partition_key: true),
+                        new FieldDto(name: 'pk2', partition_key: true),
+                        new FieldDto(name: 'k3', partition_key: false),
+                ]
+        )
 
         where:
-        partitions << [[new Partition(dbName: 'db1', tableName: 't1')], []]
+        partitions << [[new Partition(dbName: 'db1', tableName: 't1')]]
+    }
+
+    def 'test add_partitions does nothing with an empty list'() {
+        when:
+        def result = ms.add_partitions(partitions)
+
+        then:
+        notThrown(Exception)
+        result == 0
+        0 * metacatV1.getTable(_, _, _, _, _, _)
+
+        where:
+        partitions << [null, []]
+    }
+
+    def 'test add_partitions fails on an unpartitioned table'() {
+        when:
+        ms.add_partitions(partitions)
+
+        then:
+        def e = thrown(MetaException)
+        e.message.contains('unpartitioned')
+        1 * metacatV1.getTable(_,_,_,_,_,_) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
+
+        where:
+        partitions << [[new Partition(dbName: 'db1', tableName: 't1')]]
     }
 
     def 'test add_partitions_pspec'() {
@@ -126,6 +218,29 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result.partitions?.size() == request.parts.size()
+        1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(
+                name: QualifiedName.ofTable(catalogName, 'db1', 't1'),
+                fields: [
+                        new FieldDto(name: 'pk1', partition_key: true),
+                        new FieldDto(name: 'pk2', partition_key: true),
+                        new FieldDto(name: 'k3', partition_key: false),
+                ]
+        )
+
+        where:
+        request << [
+                new AddPartitionsRequest('db1', 't1', [new Partition(dbName: 'db1', tableName: 't1')], true)
+        ]
+    }
+
+    def 'test add_partitions_req fails on an unpartitioned table'() {
+        when:
+        ms.add_partitions_req(request)
+
+        then:
+        def e = thrown(MetaException)
+        e.message.contains('unpartitioned')
+        1 * metacatV1.getTable(_,_,_,_,_,_) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
 
         where:
         request << [
@@ -163,6 +278,29 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         notThrown(Exception)
+        1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(
+                name: QualifiedName.ofTable(catalogName, 'db1', 't1'),
+                fields: [
+                        new FieldDto(name: 'pk1', partition_key: true),
+                        new FieldDto(name: 'pk2', partition_key: true),
+                        new FieldDto(name: 'k3', partition_key: false),
+                ]
+        )
+
+        where:
+        db = 'db1'
+        tbl = 't1'
+        partition = new Partition(dbName: db, tableName: tbl)
+    }
+
+    def 'test alter_partition should fail on an unpartitioned table'() {
+        when:
+        ms.alter_partition(db, tbl, partition)
+
+        then:
+        def e = thrown(MetaException)
+        e.message.contains('unpartitioned')
+        1 * metacatV1.getTable(_,_,_,_,_,_) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
 
         where:
         db = 'db1'
@@ -176,6 +314,29 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         notThrown(Exception)
+        1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(
+                name: QualifiedName.ofTable(catalogName, 'db1', 't1'),
+                fields: [
+                        new FieldDto(name: 'pk1', partition_key: true),
+                        new FieldDto(name: 'pk2', partition_key: true),
+                        new FieldDto(name: 'k3', partition_key: false),
+                ]
+        )
+
+        where:
+        db = 'db1'
+        tbl = 't1'
+        partition = new Partition(dbName: db, tableName: tbl)
+    }
+
+    def 'test alter_partition_with_environment_context fails on an unpartitioned table'() {
+        when:
+        ms.alter_partition_with_environment_context(db, tbl, partition, null)
+
+        then:
+        def e = thrown(MetaException)
+        e.message.contains('unpartitioned')
+        1 * metacatV1.getTable(_,_,_,_,_,_) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
 
         where:
         db = 'db1'
@@ -189,6 +350,29 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         notThrown(Exception)
+        1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(
+                name: QualifiedName.ofTable(catalogName, 'db1', 't1'),
+                fields: [
+                        new FieldDto(name: 'pk1', partition_key: true),
+                        new FieldDto(name: 'pk2', partition_key: true),
+                        new FieldDto(name: 'k3', partition_key: false),
+                ]
+        )
+
+        where:
+        db = 'db1'
+        tbl = 't1'
+        partition = new Partition(dbName: db, tableName: tbl)
+    }
+
+    def 'test alter_partitions fails on an unpartitioned table'() {
+        when:
+        ms.alter_partitions(db, tbl, [partition])
+
+        then:
+        def e = thrown(MetaException)
+        e.message.contains('unpartitioned')
+        1 * metacatV1.getTable(_,_,_,_,_,_) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
 
         where:
         db = 'db1'

@@ -41,7 +41,6 @@ import com.facebook.presto.spi.StorageInfo;
 import com.facebook.presto.spi.TableNotFoundException;
 import com.facebook.presto.spi.TupleDomain;
 import com.google.common.base.Strings;
-import com.google.common.cache.CacheLoader;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -64,6 +63,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.facebook.presto.hive.HiveUtil.schemaTableName;
@@ -141,9 +141,7 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
             });
             partitionMap = filteredPartitionMap;
         } else {
-            partitionMap = getPartitionsByNames(
-                    schemaTableName.getSchemaName(), schemaTableName.getTableName(),
-                    partitionIds);
+            partitionMap = getPartitionsByNames(table, partitionIds);
         }
         Map<ColumnHandle, Comparable<?>> domainMap = ImmutableMap.of(new ColumnHandle(){}, "ignore");
         TupleDomain<ColumnHandle> tupleDomain = TupleDomain.withFixedValues(domainMap);
@@ -172,14 +170,39 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
         return result;
     }
 
-    protected Map<String,Partition> getPartitionsByNames(String schemaName, String tableName, List<String> partitionNames)
-    {
-        try {
-            return metastore.getPartitionsByNames(schemaName, tableName, partitionNames).orElse(Collections.emptyMap());
-        } catch (CacheLoader.InvalidCacheLoadException ignored) {
-            // Ignore cache failure
-            return Collections.emptyMap();
+    protected Map<String, Partition> getPartitionsByNames(Table table, List<String> partitionNames) {
+        List<Partition> partitions =
+                ((MetacatHiveMetastore) metastore).getPartitions(table.getDbName(), table.getTableName(),
+                        partitionNames);
+        if (partitions == null || partitions.isEmpty()) {
+            if (partitionNames == null || partitionNames.isEmpty()) {
+                return Collections.emptyMap();
+            }
+
+            // Fall back to scanning all partitions ourselves if finding by name does not work
+            List<Partition> allPartitions =
+                    ((MetacatHiveMetastore) metastore).getPartitions(table.getDbName(), table.getTableName(),
+                            Collections.emptyList());
+            if (allPartitions == null || allPartitions.isEmpty()) {
+                return Collections.emptyMap();
+            }
+
+            partitions = allPartitions.stream().filter(part -> {
+                try {
+                    return partitionNames.contains(Warehouse.makePartName(table.getPartitionKeys(), part.getValues()));
+                } catch (Exception e) {
+                    throw new InvalidMetaException("One or more partition names are invalid.", e);
+                }
+            }).collect(Collectors.toList());
         }
+
+        return partitions.stream().collect(Collectors.toMap(part -> {
+            try {
+                return Warehouse.makePartName(table.getPartitionKeys(), part.getValues());
+            } catch (Exception e) {
+                throw new InvalidMetaException("One or more partition names are invalid.", e);
+            }
+        }, Function.identity()));
     }
 
     @Override
@@ -209,8 +232,7 @@ public class HiveSplitDetailManager extends HiveSplitManager implements Connecto
                                     .validatePartitionName(partitionName, getPartitionKeys(table.getPartitionKeys()));
                             return partitionName;
                         }).collect(Collectors.toList());
-                existingPartitionMap = getPartitionsByNames(tableName.getSchemaName(), tableName.getTableName(),
-                        partitionNames);
+                existingPartitionMap = getPartitionsByNames(table, partitionNames);
             }
             for(ConnectorPartition partition:partitions){
                 String partitionName = partition.getPartitionId();
