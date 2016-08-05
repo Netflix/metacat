@@ -28,8 +28,9 @@ public class PartitionParser/*@bgen(jjtree)*/implements PartitionParserTreeConst
   jjtree.openNodeScope(jjtn000);
     try {
       expr();
+      jj_consume_token(0);
 jjtree.closeNodeScope(jjtn000, true);
-           jjtc000 = false;
+                 jjtc000 = false;
 {if ("" != null) return jjtn000;}
     } catch (Throwable jjte000) {
 if (jjtc000) {
@@ -952,7 +953,7 @@ if (jjtc005) {
   }
 
   @SuppressWarnings("serial")
-  static private final class LookaheadSuccess extends Error { }
+  static private final class LookaheadSuccess extends java.lang.Error { }
   final private LookaheadSuccess jj_ls = new LookaheadSuccess();
   private boolean jj_scan_token(int kind) {
     if (jj_scanpos == jj_lastpos) {

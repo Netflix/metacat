@@ -31,6 +31,12 @@ class FilterPartitionSpec extends Specification{
         where:
         name                    | expression                                            | result
         "dateint=1"             | "dateint>1"                                           | false
+        "dateint=1"             | "dateint>1 OR dateint<1"                              | false
+        "dateint=1"             | "dateint>1 OR dateint=1"                              | true
+        "dateint=1"             | "dateint>1 OR dateint = 1"                            | true
+        "a=1"                   | "a=1"                                                 | true
+        "a=1"                   | "A=1"                                                 | false
+        "A=1"                   | "a=1"                                                 | false
         "dateint=1"             | "dateint>=1"                                          | true
         "dateint=1"             | "dateint<1"                                           | false
         "dateint=1"             | "dateint<=1"                                          | true
@@ -71,6 +77,20 @@ class FilterPartitionSpec extends Specification{
         "dateint=1/type=java"   | "(dateint>1 and type=='java') or (dateint==1 and type=='java')" | true
         "dateint=1/type=java"   | "(dateint>1 or dateint<1) and (type=='bava' or type=='java')" | false
         "dateint=1/type=java"   | "(dateint>1 or dateint<1) or (type=='bava' or type=='java')" | true
+    }
 
+    @Unroll
+    def 'evaluate invalid expression #expression for name #name'(){
+        when:
+        filterPartition.evaluatePartitionExpression( expression, name, null)
+        then:
+        thrown(IllegalArgumentException)
+        where:
+        name                    | expression
+        "dateint=1"             | "dateint>1?"
+        "dateint=1"             | "dateint>1<<<"
+        "a=1"                   | "1a=1"
+        "dateint=1"             | "('12' <- 2)"
+        "dateint=1"             | "(12 < 2))"
     }
 }

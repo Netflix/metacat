@@ -4,6 +4,7 @@
                
   STATIC = false;
                  
+  IGNORE_CASE = true;
 }
 
 PARSER_BEGIN(PartitionParser) 
@@ -42,14 +43,14 @@ TOKEN :
 |   < #EXPONENT: ["e", "E"] ("+"|"-")? <INT> >
 |   < #MANTISSA: <INT> "." ( <DIGIT> )* | ( <DIGIT> )* "." <INT> >
 |   < #DIGITS : (["0"-"9"])+ >
-|   < AND: "and" | "&&">
+|   < AND: "and" | "&&" >
 |   < OR: "or" | "||">
 |   < NOT: "not">
 |   < MATCHES: "matches">
 |   < LIKE: "like">
 |   < BETWEEN: "between">
 |   < IN: "in">
-|   < VARIABLE : "_" < CHARS > | ["A"-"Z"] < CHARS > | ["a"-"z"] <CHARS > >
+|   < VARIABLE : "_" < CHARS > | ["A"-"Z"] < CHARS > | ["a"-"z"] <CHARS > | ["a"-"z","A"-"Z"] >
 |   < #CHARS : (["a"-"z","0"-"9","_","A"-"Z"])+ >
 |   < QUOTE:"\"" > : STRING_STATE
 |   < SQUOTE:"\'" > : SSTRING_STATE
@@ -72,11 +73,11 @@ SimpleNode filter()        :
 /*@egen*/ }{/*@bgen(jjtree) FILTER */
   try {
 /*@egen*/
-  expr()/*@bgen(jjtree)*/
-         {
-           jjtree.closeNodeScope(jjtn000, true);
-           jjtc000 = false;
-         }
+  expr() <EOF>/*@bgen(jjtree)*/
+               {
+                 jjtree.closeNodeScope(jjtn000, true);
+                 jjtc000 = false;
+               }
 /*@egen*/ { return jjtn000; }/*@bgen(jjtree)*/
   } catch (Throwable jjte000) {
     if (jjtc000) {
