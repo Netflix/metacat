@@ -21,35 +21,42 @@ import java.util.Objects;
 
 public class MetacatUpdateTablePreEvent extends MetacatEvent {
     private final TableDto table;
+    private final TableDto oldTable;
 
-    public MetacatUpdateTablePreEvent(QualifiedName name, TableDto table, MetacatContext metacatContext) {
+    public MetacatUpdateTablePreEvent(QualifiedName name, TableDto oldTable, TableDto table,
+            MetacatContext metacatContext) {
         super(name, metacatContext);
+        this.oldTable = oldTable;
         this.table = table;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof MetacatUpdateTablePreEvent)) return false;
-        if (!super.equals(o)) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
         MetacatUpdateTablePreEvent that = (MetacatUpdateTablePreEvent) o;
-        return Objects.equals(table, that.table);
-    }
-
-    public TableDto getTable() {
-
-        return table;
+        return Objects.equals(table, that.table) && Objects.equals(oldTable, that.oldTable);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + Objects.hash( table);
+        return Objects.hash(super.hashCode(), table, oldTable);
+    }
+
+    public TableDto getOldTable() {
+        return oldTable;
+    }
+
+    public TableDto getTable() {
+        return table;
     }
 
     @Override
     public String toString() {
-        return "MetacatUpdateTablePreEvent{" +
-                ", table=" + table +
-                '}';
+        return "MetacatUpdateTablePreEvent{" + "table=" + table + ", oldTable=" + oldTable + '}';
     }
 }

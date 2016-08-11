@@ -318,7 +318,10 @@ public class MetacatV1Resource implements MetacatV1 {
             checkArgument(table.getName() != null && tableName.equalsIgnoreCase(table.getName().getTableName()),
                     "Table name does not match the name in the table");
 
-            eventBus.postSync(new MetacatUpdateTablePreEvent(name, table, metacatContext));
+            TableDto oldTable = tableService.get(name, false)
+                                                 .orElseThrow(() -> new IllegalStateException(
+                                                         "expect existing table to be present"));
+            eventBus.postSync(new MetacatUpdateTablePreEvent(name, oldTable, table, metacatContext));
 
             tableService.update(name, table);
 

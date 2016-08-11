@@ -74,7 +74,7 @@ public class MetacatServiceHelper {
             }
             eventBus.postSync(new MetacatSaveTablePartitionPreEvent(name, partitionsSaveRequestDto, metacatContext));
         } else if( name.isTableDefinition()){
-            eventBus.postSync(new MetacatUpdateTablePreEvent(name, (TableDto) dto, metacatContext));
+            eventBus.postSync(new MetacatUpdateTablePreEvent(name, (TableDto) dto, (TableDto) dto, metacatContext));
         } else if( name.isDatabaseDefinition()){
             eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatContext));
         }  else {
