@@ -33,8 +33,6 @@ public interface UserMetadataService {
 
     void deleteMetadatas(List<HasMetadata> holders, boolean force);
 
-    void deleteMetadatas(List<HasMetadata> holders, List<String> deleteDataMetadataUris);
-
     @Nonnull
     Optional<ObjectNode> getDataMetadata(@Nonnull String uri);
 
