@@ -39,6 +39,7 @@ import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.monitoring.TimerWrapper;
 import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.usermetadata.TagService;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.main.services.CatalogService;
@@ -57,6 +58,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -89,6 +91,8 @@ public class ElasticSearchMetacatRefresh {
     ElasticSearchUtil elasticSearchUtil;
     @Inject
     UserMetadataService userMetadataService;
+    @Inject
+    TagService tagService;
     //  Fixed thread pool
     ListeningExecutorService service;
     ListeningExecutorService esService;
@@ -301,6 +305,7 @@ public class ElasticSearchMetacatRefresh {
                     log.info("Deleting tables({}): {}", deleteTableNames.size(), deleteTableNames);
                     userMetadataService.deleteMetadatas(Lists.newArrayList(deleteTableDtos), false);
                     elasticSearchUtil.softDelete("table", deleteTableNames, context);
+                    deleteTableDtos.forEach(tableDto -> tagService.delete( tableDto.getName(), false));
                 }
                 log.info("End: Delete unmarked tables({})", unmarkedTableDtos.size());
             } else {

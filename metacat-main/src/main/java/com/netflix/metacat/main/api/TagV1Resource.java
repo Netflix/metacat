@@ -99,6 +99,8 @@ public class TagV1Resource implements TagV1{
         QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
         requestWrapper( name, "TagV1Resource.removeTableTags" , () -> {
             if( !tableService.exists(name)){
+                // Delete tags if exists
+                tagService.delete( name, false);
                 throw new TableNotFoundException(new SchemaTableName( name.getDatabaseName(), name.getTableName()));
             }
             tagService.removeTableTags( name, deleteAll, tags, true);
