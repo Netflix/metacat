@@ -54,13 +54,11 @@ class MetacatFunctionalSpec extends Specification {
     public static final long BATCH_ID = System.currentTimeSeconds()
 
     def setupSpec() {
-        String dockerIp = System.properties['metacat_docker_ip']?.toString()?.trim()
-        assert dockerIp, 'Required system property "metacat_docker_ip" is not set'
         String httpPort = System.properties['metacat_http_port']?.toString()?.trim()
         assert httpPort, 'Required system property "metacat_http_port" is not set'
 
         def client = Client.builder()
-                .withHost("http://$dockerIp:$httpPort")
+                .withHost("http://localhost:$httpPort")
                 .withDataTypeContext('pig')
                 .withUserName('metacat-test')
                 .withClientAppName('metacat-test')

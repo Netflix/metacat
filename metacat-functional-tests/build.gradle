@@ -11,55 +11,12 @@
  *    limitations under the License.
  */
 
-import com.bmuschko.gradle.docker.tasks.DockerInfo
-import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
-import com.bmuschko.gradle.docker.tasks.image.Dockerfile
-
 ext {
-    if (project.hasProperty('startCluster')) {
-        startCluster = Boolean.getBoolean('startCluster')
-    } else {
-        startCluster = true
-    }
+    startCluster = project.hasProperty('startCluster') ? Boolean.getBoolean('startCluster') : true
     logger.info("metacat-functional-tests: start cluster = '${startCluster}'")
 
-    if (project.hasProperty('stopCluster')) {
-        stopCluster = Boolean.getBoolean('stopCluster')
-    } else {
-        stopCluster = true
-    }
+    stopCluster = project.hasProperty('stopCluster') ? Boolean.getBoolean('stopCluster') : true
     logger.info("metacat-functional-tests: stop cluster = '${stopCluster}'")
-
-    if (project.hasProperty('dockerHost')) {
-        dockerHost = project['dockerHost']
-    } else if (System.getenv('DOCKER_HOST')) {
-        dockerHost = System.getenv('DOCKER_HOST')?.replace('tcp:', 'https:')
-    } else {
-        dockerHost = 'http://localhost:2375'
-    }
-    logger.info("metacat-functional-tests: docker host '${dockerHost}'")
-
-    if (project.hasProperty('dockerIp')) {
-        dockerIp = project['dockerIp']
-    } else if (System.getenv('DOCKER_IP')) {
-        dockerIp = System.getenv('DOCKER_IP')
-    } else if (System.getenv('DOCKER_HOST')?.startsWith('tcp') || System.getenv('DOCKER_HOST')?.startsWith('http')) {
-        dockerIp = (System.getenv('DOCKER_HOST') =~ /:\/\/([0-9\.]+):/)[0][1]
-    } else {
-        dockerIp = 'localhost'
-    }
-    logger.info("metacat-functional-tests: docker ip '${dockerIp}'")
-
-    if (project.hasProperty('dockerCertPath')) {
-        dockerCertPath = new File(project['dockerCertPath'] as String)
-    } else if (System.getenv('DOCKER_CERT_PATH')) {
-        dockerCertPath = new File(System.getenv('DOCKER_CERT_PATH'))
-    } else {
-        dockerCertPath = null
-    }
-    logger.info("metacat-functional-tests: docker cert path '${dockerCertPath}'")
-
-    clusterWorkingDir = file("${rootDir}/metacat-functional-tests/metacat-test-cluster")
 }
 
 configurations {
@@ -81,18 +38,6 @@ sourceSets {
     }
 }
 
-buildscript {
-    repositories {
-        jcenter()
-    }
-
-    dependencies {
-        classpath 'com.bmuschko:gradle-docker-plugin:3.0.1'
-    }
-}
-
-apply plugin: 'com.bmuschko.docker-remote-api'
-
 dependencies {
     warproject project(path: ':metacat-server', configuration: 'archives')
 
@@ -108,11 +53,6 @@ dependencies {
     testCompile "com.facebook.presto:presto-hive-hadoop2:${presto_version}"
 }
 
-docker {
-    url = project.ext.dockerHost
-    certPath = project.ext.dockerCertPath
-}
-
 task expandWar(type: Copy) {
     dependsOn ':metacat-server:war'
 
@@ -120,128 +60,75 @@ task expandWar(type: Copy) {
     into file("${buildDir}/metacat-war-expanded/ROOT")
 }
 
-task dockerInfo(type: DockerInfo)
-
-task createWarDockerfile(type: Dockerfile) {
+task createWarDockerfile() {
     dependsOn 'expandWar'
 
-    destFile = project.file('build/metacat-war-expanded/Dockerfile')
-    from 'tomcat:8.0-jre8'
-    maintainer 'Netflix OSS "netflixoss@netflix.com"'
-    volume '/usr/local/tomcat/logs', '/etc/metacat'
-    runCommand 'rm -rf /usr/local/tomcat/webapps'
-    copyFile './ROOT', '/usr/local/tomcat/webapps/ROOT'
+    ext.destFile = project.file('build/metacat-war-expanded/Dockerfile')
+
+    outputs.file ext.destFile
+
+    doLast {
+        ext.destFile.text = """
+FROM tomcat:8.0-jre8
+MAINTAINER dwatson@netflix.com
+VOLUME ["/usr/local/tomcat/logs", "/etc/metacat"]
+EXPOSE 7001 7101 12001 12002
+RUN rm -rf /usr/local/tomcat/webapps
+COPY ./ROOT /usr/local/tomcat/webapps/ROOT
+""".trim()
+    }
 }
 
-task buildWarImage(type: DockerBuildImage) {
+task buildWarImage(type: Exec) {
     dependsOn 'createWarDockerfile'
-    inputDir = createWarDockerfile.destFile.parentFile
-    tag = 'netflix_metacat_test/metacat_server'
+
+    inputs.file createWarDockerfile.destFile
+
+    commandLine 'docker', 'build', '--pull', '--tag', 'netflix_metacat_test/metacat_server', createWarDockerfile.destFile.parentFile
 }
 
 task startMetacatCluster(type: Exec) {
-    workingDir = clusterWorkingDir
-
-    environment 'PATH', '/usr/local/bin:/usr/bin:/bin'
-    environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
-    if (project.ext.dockerCertPath) {
-        environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
-        environment 'DOCKER_TLS_VERIFY', '1'
+    if (project.ext.startCluster) {
+        commandLine rootProject.file('scripts/start_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose.yml')
+    } else {
+        commandLine '/bin/echo', 'skipping cluster start'
     }
-
-    commandLine './startCluster.sh'
 }
 
 task stopMetacatCluster(type: Exec) {
-    workingDir = clusterWorkingDir
-
-    environment 'PATH', '/usr/local/bin:/usr/bin:/bin'
-    environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
-    if (project.ext.dockerCertPath) {
-        environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
-        environment 'DOCKER_TLS_VERIFY', '1'
+    if (project.ext.stopCluster) {
+        commandLine rootProject.file('scripts/stop_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose.yml')
+    } else {
+        commandLine '/bin/echo', 'skipping cluster stop'
     }
-
-    commandLine './stopCluster.sh'
 }
 
 task metacatPorts {
-    if (project.ext.startCluster) {
-        dependsOn 'startMetacatCluster'
-    }
+    dependsOn 'startMetacatCluster'
     ext.http_port = null
     ext.metacat_hive_thrift_port = null
     ext.metacat_s3_thrift_port = null
     ext.hive_thrift_port = null
 
     doLast {
-        new ByteArrayOutputStream().withStream { os ->
-            exec {
-                workingDir = clusterWorkingDir
-
-                environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
-                if (project.ext.dockerCertPath) {
-                    environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
-                    environment 'DOCKER_TLS_VERIFY', '1'
+        def get_docker_port = { String label, int exposed_port ->
+            new ByteArrayOutputStream().withStream { os ->
+                exec {
+                    commandLine rootProject.file('scripts/print_docker_port.sh'), "label=${label}", exposed_port
+                    standardOutput = os
                 }
-
-                commandLine './printDockerPort.sh', project.ext.dockerIp, 'label=com.netflix.metacat.oss.test.war', 8080
-                standardOutput = os
+                return os.toString().trim()
             }
-            ext.http_port = os.toString().trim()
-            logger.info("metacat-functional-tests: metacat http_port '{}'", ext.http_port)
         }
 
-        new ByteArrayOutputStream().withStream { os ->
-            exec {
-                workingDir = clusterWorkingDir
+        ext.http_port = get_docker_port('com.netflix.metacat.oss.test.war', 8080)
+        ext.metacat_hive_thrift_port = get_docker_port('com.netflix.metacat.oss.test.war', 12001)
+        ext.metacat_s3_thrift_port = get_docker_port('com.netflix.metacat.oss.test.war', 12002)
+        ext.hive_thrift_port = get_docker_port('com.netflix.metacat.oss.test.hive', 9083)
 
-                environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
-                if (project.ext.dockerCertPath) {
-                    environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
-                    environment 'DOCKER_TLS_VERIFY', '1'
-                }
-
-                commandLine './printDockerPort.sh', project.ext.dockerIp, 'label=com.netflix.metacat.oss.test.war', 12001
-                standardOutput = os
-            }
-            ext.metacat_hive_thrift_port = os.toString().trim()
-            logger.info("metacat-functional-tests: metacat thrift_port '{}'", ext.metacat_hive_thrift_port)
-        }
-
-        new ByteArrayOutputStream().withStream { os ->
-            exec {
-                workingDir = clusterWorkingDir
-
-                environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
-                if (project.ext.dockerCertPath) {
-                    environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
-                    environment 'DOCKER_TLS_VERIFY', '1'
-                }
-
-                commandLine './printDockerPort.sh', project.ext.dockerIp, 'label=com.netflix.metacat.oss.test.war', 12002
-                standardOutput = os
-            }
-            ext.metacat_s3_thrift_port = os.toString().trim()
-            logger.info("metacat-functional-tests: metacat thrift_port '{}'", ext.metacat_s3_thrift_port)
-        }
-
-        new ByteArrayOutputStream().withStream { os ->
-            exec {
-                workingDir = clusterWorkingDir
-
-                environment 'DOCKER_HOST', project.ext.dockerHost?.replace('http:', 'tcp:').replace('https', 'tcp:')
-                if (project.ext.dockerCertPath) {
-                    environment 'DOCKER_CERT_PATH', project.ext.dockerCertPath
-                    environment 'DOCKER_TLS_VERIFY', '1'
-                }
-
-                commandLine './printDockerPort.sh', project.ext.dockerIp, 'label=com.netflix.metacat.oss.test.hive', 9083
-                standardOutput = os
-            }
-            ext.hive_thrift_port = os.toString().trim()
-            logger.info("metacat-functional-tests: metacat hive_thrift_port '{}'", ext.hive_thrift_port)
-        }
+        logger.info('metacat-functional-tests: metacat http_port {}, metacat_hive_thrift_port {}, ' +
+                'metacat_s3_thrift_port {}, hive_thrift_port {}',
+                ext.http_port, ext.metacat_hive_thrift_port, ext.metacat_s3_thrift_port, ext.hive_thrift_port)
     }
 }
 
@@ -252,7 +139,6 @@ task functionalTest(type: Test) {
 
     doFirst {
         def properties = [
-                'metacat_docker_ip'                     : project.ext.dockerIp as String,
                 'metacat_http_port'                     : metacatPorts.http_port as String,
                 'metacat_hive_thrift_port'              : metacatPorts.metacat_hive_thrift_port as String,
                 'metacat_s3_thrift_port'                : metacatPorts.metacat_s3_thrift_port as String,
@@ -269,13 +155,6 @@ task functionalTest(type: Test) {
         showStandardStreams = true
     }
 
-    if (project.ext.startCluster) {
-        dependsOn 'startMetacatCluster', 'metacatPorts'
-    } else {
-        dependsOn 'metacatPorts'
-    }
-
-    if (project.ext.stopCluster) {
-        finalizedBy 'stopMetacatCluster'
-    }
+    dependsOn 'startMetacatCluster', 'metacatPorts'
+    finalizedBy 'stopMetacatCluster'
 }
