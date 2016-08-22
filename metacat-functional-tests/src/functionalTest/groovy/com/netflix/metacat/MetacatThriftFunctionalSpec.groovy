@@ -162,23 +162,21 @@ class MetacatThriftFunctionalSpec extends Specification {
             });
 
     def setupSpec() {
-        String dockerIp = System.properties['metacat_docker_ip']?.toString()?.trim()
-        assert dockerIp, 'Required system property "metacat_docker_ip" is not set'
         String thriftPort = System.properties['metacat_hive_thrift_port']?.toString()?.trim()
         assert thriftPort, 'Required system property "metacat_hive_thrift_port" is not set'
-        metacatHiveThriftUri = "thrift://${dockerIp}:${thriftPort}".toString()
+        metacatHiveThriftUri = "thrift://localhost:${thriftPort}".toString()
         TestCatalogs.findByCatalogName('hive-metastore').thriftUri = metacatHiveThriftUri
 
         // TODO enable this, commenting out because s3 type currently doesn't have enough places to store parameters
         // currently only table.location.info.parameters and we need 2 more parameters
 //        thriftPort = System.properties['metacat_s3_thrift_port']?.toString()?.trim()
 //        assert thriftPort, 'Required system property "metacat_s3_thrift_port" is not set'
-//        metacatS3ThriftUri = "thrift://${dockerIp}:${thriftPort}".toString()
+//        metacatS3ThriftUri = "thrift://localhost:${thriftPort}".toString()
 //        TestCatalogs.findByCatalogName('s3-mysql-db').thriftUri = metacatS3ThriftUri
 
         thriftPort = System.properties['hive_thrift_port']?.toString()?.trim()
         assert thriftPort, 'Required system property "hive_thrift_port" is not set'
-        hiveThriftUri = "thrift://${dockerIp}:${thriftPort}".toString()
+        hiveThriftUri = "thrift://localhost:${thriftPort}".toString()
 
         TestCatalogs.resetAll()
     }

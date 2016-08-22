@@ -2,15 +2,16 @@
 
 set -x
 
-# Usage: ./stopCluster.sh
+# Usage: ./stopCluster.sh docker-compose.yml
+COMPOSE_FILE=$1
 
-docker-compose stop -t 30
+docker-compose --file $COMPOSE_FILE stop -t 30
 if [ $? -ne 0 ]; then
     echo "Unable to stop docker-compose"
     exit 9
 fi
 
-docker-compose rm -f
+docker-compose --file $COMPOSE_FILE rm -f
 if [ $? -ne 0 ]; then
     echo "Unable to remove docker compose containers"
     exit 10

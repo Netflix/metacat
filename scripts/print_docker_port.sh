@@ -2,19 +2,8 @@
 
 set -x
 
-if [[ ( $# -eq 0 ) || ( -z "$1" ) || ( -z "$2" ) || ( -z "$3" ) ]]; then
-    echo "Usage: ./printDockerPort.sh [docker_host_ip] [docker_container_filter] [container_port_number]"
-    exit 1
-fi
-
-# Adding /usr/local/bin to the path if it is not already present
-if [ -d "/usr/local/bin" ] && [[ ":$PATH:" != *":/usr/local/bin:"* ]]; then
-    PATH="${PATH:+"$PATH:"}/usr/local/bin"
-fi
-
-DOCKER_IP=$1
-DOCKER_FILTER=$2
-DOCKER_PORT_NUM=$3
+DOCKER_FILTER=$1
+DOCKER_PORT_NUM=$2
 
 DOCKER_CONTAINER=$(docker ps -a -q --filter $DOCKER_FILTER 2>/dev/null)
 if [ ! "$DOCKER_CONTAINER" ]; then
