@@ -59,9 +59,11 @@ public class PartitionKeyParserEval extends PartitionParserEval {
     @Override
     public Object visit(ASTCOMPARE node, Object data) {
         Set<String> result = Sets.newHashSet();
-        String value = evalString(node, data);
-        if( value != null){
-            result = Sets.newHashSet(value);
+        if( node.jjtGetNumChildren() == 3) {
+            String value = evalString(node, data);
+            if (value != null) {
+                result = Sets.newHashSet(value);
+            }
         }
         return result;
     }

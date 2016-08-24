@@ -15,27 +15,7 @@ package com.netflix.metacat.common.partition.visitor;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.netflix.metacat.common.partition.parser.ASTAND;
-import com.netflix.metacat.common.partition.parser.ASTBETWEEN;
-import com.netflix.metacat.common.partition.parser.ASTCOMPARE;
-import com.netflix.metacat.common.partition.parser.ASTEQ;
-import com.netflix.metacat.common.partition.parser.ASTFILTER;
-import com.netflix.metacat.common.partition.parser.ASTGT;
-import com.netflix.metacat.common.partition.parser.ASTGTE;
-import com.netflix.metacat.common.partition.parser.ASTIN;
-import com.netflix.metacat.common.partition.parser.ASTLIKE;
-import com.netflix.metacat.common.partition.parser.ASTLT;
-import com.netflix.metacat.common.partition.parser.ASTLTE;
-import com.netflix.metacat.common.partition.parser.ASTMATCHES;
-import com.netflix.metacat.common.partition.parser.ASTNEQ;
-import com.netflix.metacat.common.partition.parser.ASTNOT;
-import com.netflix.metacat.common.partition.parser.ASTNUM;
-import com.netflix.metacat.common.partition.parser.ASTOR;
-import com.netflix.metacat.common.partition.parser.ASTSTRING;
-import com.netflix.metacat.common.partition.parser.ASTVAR;
-import com.netflix.metacat.common.partition.parser.PartitionParserVisitor;
-import com.netflix.metacat.common.partition.parser.SimpleNode;
-import com.netflix.metacat.common.partition.parser.Variable;
+import com.netflix.metacat.common.partition.parser.*;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -162,7 +142,7 @@ public class PartitionParserEval implements PartitionParserVisitor {
         boolean compare1 = compare( Compare.GTE, value, startValue);
         boolean compare2 = compare( Compare.LTE, value, endValue);
         boolean result = compare1 && compare2;
-        return node.not? !result: result;
+        return node.not != result;
     }
 
     @Override
@@ -180,12 +160,30 @@ public class PartitionParserEval implements PartitionParserVisitor {
                 break;
             }
         }
-        return node.not? !result: result;
+        return node.not != result;
     }
 
     @Override
     public Object visit(ASTCOMPARE node, Object data) {
-        return evalCompare(node, data);
+        if( node.jjtGetNumChildren() == 1){
+            return evalSingleTerm( node, data);
+        } else {
+            return evalCompare(node, data);
+        }
+    }
+
+    private Boolean evalSingleTerm(ASTCOMPARE node, Object data) {
+        Boolean result = Boolean.FALSE;
+        Object value = node.jjtGetChild(0).jjtAccept(this, data);
+        if( value != null){
+            result = Boolean.parseBoolean(value.toString());
+        }
+        return result;
+    }
+
+    @Override
+    public Object visit(ASTBOOLEAN node, Object data) {
+        return Boolean.parseBoolean( node.jjtGetValue().toString());
     }
 
     @Override
@@ -228,7 +226,7 @@ public class PartitionParserEval implements PartitionParserVisitor {
         Object value1 = node.jjtGetChild(0).jjtAccept(this, data);
         Object value2 = node.jjtGetChild(1).jjtAccept(this, data);
         boolean result = compare( Compare.LIKE, value1, value2);
-        return node.not? !result: result;
+        return node.not != result;
     }
 
 	@Override

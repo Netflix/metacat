@@ -73,8 +73,11 @@ public class PartitionParserDefaultVisitor implements PartitionParserVisitor{
   public Object visit(ASTSTRING node, Object data){
     return defaultVisit(node, data);
   }
+  public Object visit(ASTBOOLEAN node, Object data){
+    return defaultVisit(node, data);
+  }
   public Object visit(ASTVAR node, Object data){
     return defaultVisit(node, data);
   }
 }
-/* JavaCC - OriginalChecksum=c7638298b490e0556f0ac443ae5a1aa1 (do not edit this line) */
+/* JavaCC - OriginalChecksum=8f93406d88b272629194118e999204ef (do not edit this line) */

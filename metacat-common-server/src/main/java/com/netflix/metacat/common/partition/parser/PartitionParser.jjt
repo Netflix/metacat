@@ -46,6 +46,7 @@ TOKEN :
 |   < LIKE: "like">
 |   < BETWEEN: "between">
 |   < IN: "in">
+|   < BOOLEAN: "true" | "false" >
 |   < VARIABLE : "_" < CHARS > | ["A"-"Z"] < CHARS > | ["a"-"z"] <CHARS > | ["a"-"z","A"-"Z"] >
 |   < #CHARS : (["a"-"z","0"-"9","_","A"-"Z"])+ >
 |   < QUOTE:"\"" > : STRING_STATE
@@ -105,7 +106,7 @@ void LikeEval() #LIKE:
 void CompareEval() #COMPARE:
 {}
 {
-    term() comp() term()
+    term() (comp() term())?
 }
 void comp():
 { }
@@ -127,5 +128,6 @@ void term():
   | ( t = < FLOAT > { jjtThis.value = new java.math.BigDecimal(t.image); } #NUM)
   | ( < QUOTE > (t = < CHAR > { builder.append(t.image); })* < ENDQUOTE > { jjtThis.value = builder.toString(); } #STRING)
   | ( < SQUOTE > (t = < SCHAR > { builder.append(t.image); })* < SENDQUOTE > { jjtThis.value = builder.toString(); } #STRING)
+  | ( t = < BOOLEAN > { jjtThis.value = t.image; } #BOOLEAN )
   | ( t = < VARIABLE > { jjtThis.value = new Variable(t.image); } #VAR)
 }

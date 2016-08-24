@@ -68,21 +68,23 @@ public interface PartitionParserConstants {
   /** RegularExpression Id. */
   int IN = 24;
   /** RegularExpression Id. */
-  int VARIABLE = 25;
+  int BOOLEAN = 25;
   /** RegularExpression Id. */
-  int CHARS = 26;
+  int VARIABLE = 26;
   /** RegularExpression Id. */
-  int QUOTE = 27;
+  int CHARS = 27;
   /** RegularExpression Id. */
-  int SQUOTE = 28;
+  int QUOTE = 28;
   /** RegularExpression Id. */
-  int ENDQUOTE = 29;
+  int SQUOTE = 29;
   /** RegularExpression Id. */
-  int CHAR = 30;
+  int ENDQUOTE = 30;
   /** RegularExpression Id. */
-  int SENDQUOTE = 31;
+  int CHAR = 31;
   /** RegularExpression Id. */
-  int SCHAR = 32;
+  int SENDQUOTE = 32;
+  /** RegularExpression Id. */
+  int SCHAR = 33;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -118,6 +120,7 @@ public interface PartitionParserConstants {
     "\"like\"",
     "\"between\"",
     "\"in\"",
+    "<BOOLEAN>",
     "<VARIABLE>",
     "<CHARS>",
     "\"\\\"\"",
