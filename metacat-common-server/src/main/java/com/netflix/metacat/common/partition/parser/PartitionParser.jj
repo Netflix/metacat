@@ -50,6 +50,7 @@ TOKEN :
 |   < LIKE: "like">
 |   < BETWEEN: "between">
 |   < IN: "in">
+|   < BOOLEAN: "true" | "false" >
 |   < VARIABLE : "_" < CHARS > | ["A"-"Z"] < CHARS > | ["a"-"z"] <CHARS > | ["a"-"z","A"-"Z"] >
 |   < #CHARS : (["a"-"z","0"-"9","_","A"-"Z"])+ >
 |   < QUOTE:"\"" > : STRING_STATE
@@ -359,7 +360,7 @@ void CompareEval()         :
 {/*@bgen(jjtree) COMPARE */
     try {
 /*@egen*/
-    term() comp() term()/*@bgen(jjtree)*/
+    term() (comp() term())?/*@bgen(jjtree)*/
     } catch (Throwable jjte000) {
       if (jjtc000) {
         jjtree.clearNodeScope(jjtn000);
@@ -564,22 +565,41 @@ void term():
                                                                                }
                                                                              }
 /*@egen*/        )
+  | ( t = < BOOLEAN >/*@bgen(jjtree) BOOLEAN */
+                      {
+                        ASTBOOLEAN jjtn005 = new ASTBOOLEAN(JJTBOOLEAN);
+                        boolean jjtc005 = true;
+                        jjtree.openNodeScope(jjtn005);
+                      }
+                      try {
+/*@egen*//*@bgen(jjtree)*/
+                      {
+                        jjtree.closeNodeScope(jjtn005, true);
+                        jjtc005 = false;
+                      }
+/*@egen*/ { jjtn005.value = t.image; }/*@bgen(jjtree)*/
+                      } finally {
+                        if (jjtc005) {
+                          jjtree.closeNodeScope(jjtn005, true);
+                        }
+                      }
+/*@egen*/          )
   | ( t = < VARIABLE >/*@bgen(jjtree) VAR */
                        {
-                         ASTVAR jjtn005 = new ASTVAR(JJTVAR);
-                         boolean jjtc005 = true;
-                         jjtree.openNodeScope(jjtn005);
+                         ASTVAR jjtn006 = new ASTVAR(JJTVAR);
+                         boolean jjtc006 = true;
+                         jjtree.openNodeScope(jjtn006);
                        }
                        try {
 /*@egen*//*@bgen(jjtree)*/
                        {
-                         jjtree.closeNodeScope(jjtn005, true);
-                         jjtc005 = false;
+                         jjtree.closeNodeScope(jjtn006, true);
+                         jjtc006 = false;
                        }
-/*@egen*/ { jjtn005.value = new Variable(t.image); }/*@bgen(jjtree)*/
+/*@egen*/ { jjtn006.value = new Variable(t.image); }/*@bgen(jjtree)*/
                        } finally {
-                         if (jjtc005) {
-                           jjtree.closeNodeScope(jjtn005, true);
+                         if (jjtc006) {
+                           jjtree.closeNodeScope(jjtn006, true);
                          }
                        }
 /*@egen*/     )

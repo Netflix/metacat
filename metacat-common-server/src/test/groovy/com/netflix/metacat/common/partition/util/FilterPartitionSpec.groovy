@@ -31,6 +31,11 @@ class FilterPartitionSpec extends Specification{
         where:
         name                    | expression                                            | result
         "dateint=1"             | "dateint>1"                                           | false
+        "dateint=1"             | "false and dateint=1"                                 | false
+        "dateint=1"             | "true and dateint=1"                                  | true
+        "dateint=1"             | "false=false and dateint=1"                           | false
+        "dateint=1"             | "true=true and dateint=1"                             | false
+        "dateint=1"             | "1=1 and dateint=1"                                   | true
         "dateint=1"             | "dateint>1 OR dateint<1"                              | false
         "dateint=1"             | "dateint>1 OR dateint=1"                              | true
         "dateint=1"             | "dateint>1 OR dateint = 1"                            | true

@@ -34,7 +34,8 @@ public interface PartitionParserTreeConstants
   public int JJTMATCHES = 15;
   public int JJTNUM = 16;
   public int JJTSTRING = 17;
-  public int JJTVAR = 18;
+  public int JJTBOOLEAN = 18;
+  public int JJTVAR = 19;
 
 
   public String[] jjtNodeName = {
@@ -56,7 +57,8 @@ public interface PartitionParserTreeConstants
     "MATCHES",
     "NUM",
     "STRING",
+    "BOOLEAN",
     "VAR",
   };
 }
-/* JavaCC - OriginalChecksum=143adb2795ef13088e6e038e3b2f022b (do not edit this line) */
+/* JavaCC - OriginalChecksum=ce17fea735ca77b457031d6eb6193077 (do not edit this line) */

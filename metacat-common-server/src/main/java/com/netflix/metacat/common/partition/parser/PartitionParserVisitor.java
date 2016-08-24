@@ -34,6 +34,7 @@ public interface PartitionParserVisitor
   public Object visit(ASTMATCHES node, Object data);
   public Object visit(ASTNUM node, Object data);
   public Object visit(ASTSTRING node, Object data);
+  public Object visit(ASTBOOLEAN node, Object data);
   public Object visit(ASTVAR node, Object data);
 }
-/* JavaCC - OriginalChecksum=f8158a6ab97d47a51891128f4b1f3bfd (do not edit this line) */
+/* JavaCC - OriginalChecksum=1de74351d15b038ff4d89a7eba6e4e0b (do not edit this line) */
