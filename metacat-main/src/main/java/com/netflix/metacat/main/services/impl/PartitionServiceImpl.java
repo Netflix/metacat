@@ -31,6 +31,7 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.HasDataMetadata;
 import com.netflix.metacat.common.dto.HasMetadata;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
@@ -213,6 +214,18 @@ public class PartitionServiceImpl implements PartitionService {
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIds, name);
             userMetadataService.deleteMetadatas(partitions, false);
         }
+    }
+
+    private void deleteMetadatas(List<HasMetadata> partitions) {
+        // Spawning off since this is a time consuming task
+        threadServiceManager.getExecutor().submit(() -> {
+            List<String> canDeleteMetadatForUris = partitions.stream().filter(m -> m instanceof HasDataMetadata)
+                    .map(m -> ((HasDataMetadata)m).getDataUri())
+                    .filter(s -> !Strings.isNullOrEmpty(s))
+                    .filter(s -> getQualifiedNames(s, false).size() == 0)
+                    .collect(Collectors.toList());
+            userMetadataService.deleteMetadatas(partitions, canDeleteMetadatForUris);
+        });
     }
 
     @Override

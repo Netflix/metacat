@@ -119,29 +119,33 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public void deleteMetadatas(List<HasMetadata> holders, boolean force) {
+        if(force){
+            List<String> uris = holders.stream().filter(m -> m instanceof HasDataMetadata)
+                    .map(m -> ((HasDataMetadata)m).getDataUri()).collect(Collectors.toList());
+            deleteMetadatas(holders, uris);
+        } else {
+            deleteMetadatas(holders, null);
+        }
+    }
+
+    @Override
+    public void deleteMetadatas(List<HasMetadata> holders, List<String> deleteDataMetadataUris) {
         try{
             Connection conn = poolingDataSource.getConnection();
             try {
                 List<List<HasMetadata>> subLists = Lists.partition( holders, 5000);
                 for(List<HasMetadata> hasMetadatas: subLists) {
-                    List<String> uris = Lists.newArrayList();
-                    List<QualifiedName> names = Lists.newArrayList();
-                    hasMetadatas.stream().forEach(hasMetadata -> {
-                        if( hasMetadata instanceof HasDefinitionMetadata){
-                            names.add(((HasDefinitionMetadata) hasMetadata).getDefinitionName());
-                        }
-                        if( hasMetadata instanceof HasDataMetadata){
-                            HasDataMetadata dataMetadataHolder = (HasDataMetadata) hasMetadata;
-                            if(dataMetadataHolder.isDataExternal()) {
-                                uris.add(((HasDataMetadata) hasMetadata).getDataUri());
-                            }
-                        }
-                    });
+                    List<QualifiedName> names = hasMetadatas.stream()
+                            .filter(m -> m instanceof HasDefinitionMetadata)
+                            .map(m -> ((HasDefinitionMetadata) m).getDefinitionName())
+                            .collect(Collectors.toList());
                     if( !names.isEmpty()) {
                         _deleteDefinitionMetadatas(conn, names);
                     }
-                    // TODO check that data uris are not used by another entity so we can delete them
-                    if( force){
+                }
+                if( deleteDataMetadataUris != null && !deleteDataMetadataUris.isEmpty()){
+                    List<List<String>> subUriLists = Lists.partition( deleteDataMetadataUris, 5000);
+                    for(List<String> uris: subUriLists){
                         _deleteDataMetadatas(conn, uris);
                     }
                 }
