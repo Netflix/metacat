@@ -30,7 +30,6 @@ import spock.lang.Stepwise
 
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 
 @Stepwise
 class AbstractThriftServerTest extends Specification {
@@ -83,6 +82,7 @@ class AbstractThriftServerTest extends Specification {
         config.thriftServerSocketClientTimeoutInSeconds >> 5
         def server = new TestThriftServer(config, { tProtocol, out ->
             serverConnections++
+            Thread.sleep(10)
             false
         })
 
@@ -99,6 +99,7 @@ class AbstractThriftServerTest extends Specification {
             def socket = new Socket('localhost', THRIFT_PORT)
             socket.withStreams { input, output ->
                 clientConnections++
+                Thread.sleep(10)
                 output << 'test'
             }
         }
@@ -124,6 +125,7 @@ class AbstractThriftServerTest extends Specification {
         config.thriftServerSocketClientTimeoutInSeconds >> 5
         def server = new TestThriftServer(config, { tProtocol, out ->
             serverConnections++
+            Thread.sleep(10)
             switch (exceptionType) {
                 case 'runtime': throw new RuntimeException()
                 case 'rejected': throw new RejectedExecutionException()
@@ -149,6 +151,7 @@ class AbstractThriftServerTest extends Specification {
             def socket = new Socket('localhost', THRIFT_PORT)
             socket.withStreams { input, output ->
                 clientConnections++
+                Thread.sleep(10)
                 output << 'test'
             }
         }
