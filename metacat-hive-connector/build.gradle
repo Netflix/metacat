@@ -20,5 +20,4 @@ dependencies {
     compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
     compile "com.google.inject.extensions:guice-servlet:${guice_version}"
     compile "com.facebook.presto:presto-spi:${presto_version}"
-    compile "com.facebook.presto:presto-hive-hadoop2:${presto_version}"
 }

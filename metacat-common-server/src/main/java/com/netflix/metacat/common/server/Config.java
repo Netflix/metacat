@@ -37,8 +37,7 @@ public interface Config {
     String getMetacatVersion();
     String getPluginConfigLocation();
     String getTagServiceUserAdmin();
-    int getThriftMaxWorkerThreadsSize();
-    int getThriftRequestTimeoutInSeconds();
+    int getThriftServerSocketClientTimeoutInSeconds();
     boolean isEpochInSeconds();
     boolean isUsePigTypes();
     int getServiceMaxNumberOfThreads();
