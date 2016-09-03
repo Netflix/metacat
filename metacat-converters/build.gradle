@@ -28,7 +28,14 @@ dependencies {
     compile "com.google.inject:guice:${guice_version}"
     compile "org.slf4j:slf4j-api:${slf4j_version}"
     compile 'org.apache.pig:pig:0.14.0'
-    compile "com.facebook.presto:presto-hive-hadoop2:${presto_version}"
+    compile("com.facebook.presto:presto-hive:${presto_version}") {
+        exclude group: 'org.apache.thrift'
+    }
+    compile("com.facebook.presto:presto-hive-hadoop2:${presto_version}") {
+        exclude group: 'org.apache.thrift'
+    }
+    compile 'org.apache.thrift:libfb303:0.9.0'
+    compile 'org.apache.thrift:libthrift:0.9.0'
     compile 'org.mapstruct:mapstruct-jdk8:1.0.0.Beta4'
     testCompile 'de.danielbechler:java-object-diff:0.91.1'
     mapstruct('org.mapstruct:mapstruct-processor:1.0.0.Beta4')

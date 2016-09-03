@@ -19,10 +19,4 @@ dependencies {
     compile "com.google.inject.extensions:guice-persist:${guice_version}"
     compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
     compile "com.google.inject.extensions:guice-servlet:${guice_version}"
-    compile "com.facebook.presto:presto-hive-hadoop2:${presto_version}"
-
-    /* compile 'commons-lang:commons-lang:2.6' */
-    /* compile 'org.apache.hive:hive-common:1.0.1' */
-    compile 'org.apache.thrift:libfb303:0.9.1'
-    compile 'org.apache.thrift:libthrift:0.9.1'
 }
