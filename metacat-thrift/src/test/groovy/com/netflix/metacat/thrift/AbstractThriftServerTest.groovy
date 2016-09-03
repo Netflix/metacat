@@ -26,26 +26,25 @@ import org.apache.thrift.protocol.TProtocol
 import org.apache.thrift.server.TServerEventHandler
 import org.apache.thrift.transport.TTransportException
 import spock.lang.Specification
-import spock.lang.Stepwise
 
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 
-@Stepwise
 class AbstractThriftServerTest extends Specification {
-    private static final int THRIFT_PORT = {
+    Config config = Mock(Config)
+
+    int getRandomPort() {
         def rand = new Random()
         int port = 0;
         for (; port < 1024; port = rand.nextInt(65536));
         return port
-    }.call()
-    Config config = Mock(Config)
+    }
 
     class TestThriftServer extends AbstractThriftServer {
         final Closure<Boolean> processClosure
 
-        protected TestThriftServer(Config config, Closure<Boolean> processClosure) {
-            super(config, THRIFT_PORT, "test-thrift-server-port-${THRIFT_PORT}-%d")
+        protected TestThriftServer(Config config, int port, Closure<Boolean> processClosure) {
+            super(config, port, "test-thrift-server-port-${port}-%d")
             this.processClosure = processClosure
         }
 
@@ -77,10 +76,11 @@ class AbstractThriftServerTest extends Specification {
 
     def 'calling start does not block this thread'() {
         given:
+        int port = randomPort
         int serverConnections = 0
         int clientConnections = 0
         config.thriftServerSocketClientTimeoutInSeconds >> 5
-        def server = new TestThriftServer(config, { tProtocol, out ->
+        def server = new TestThriftServer(config, port, { tProtocol, out ->
             serverConnections++
             Thread.sleep(10)
             false
@@ -96,7 +96,7 @@ class AbstractThriftServerTest extends Specification {
 
         when:
         (0..<10).each {
-            def socket = new Socket('localhost', THRIFT_PORT)
+            def socket = new Socket('localhost', port)
             socket.withStreams { input, output ->
                 clientConnections++
                 Thread.sleep(10)
@@ -120,10 +120,11 @@ class AbstractThriftServerTest extends Specification {
 
     def 'throwing an exception does not stop the server from serving'() {
         given:
+        int port = randomPort
         int serverConnections = 0
         int clientConnections = 0
         config.thriftServerSocketClientTimeoutInSeconds >> 5
-        def server = new TestThriftServer(config, { tProtocol, out ->
+        def server = new TestThriftServer(config, port, { tProtocol, out ->
             serverConnections++
             Thread.sleep(10)
             switch (exceptionType) {
@@ -148,7 +149,7 @@ class AbstractThriftServerTest extends Specification {
 
         when:
         (0..<10).each {
-            def socket = new Socket('localhost', THRIFT_PORT)
+            def socket = new Socket('localhost', port)
             socket.withStreams { input, output ->
                 clientConnections++
                 Thread.sleep(10)
@@ -175,9 +176,10 @@ class AbstractThriftServerTest extends Specification {
 
     def 'the server will close a connection after reads exceed the timeout'() {
         given:
+        int port = randomPort
         boolean readTimeout = false
         config.thriftServerSocketClientTimeoutInSeconds >> 1
-        def server = new TestThriftServer(config, { TProtocol tProtocol, out ->
+        def server = new TestThriftServer(config, port, { TProtocol tProtocol, out ->
             try {
                 tProtocol.readString()
             } catch (TTransportException tte) {
@@ -198,7 +200,7 @@ class AbstractThriftServerTest extends Specification {
         stopwatch.elapsed(TimeUnit.SECONDS) < 5
 
         when:
-        def socket = new Socket('localhost', THRIFT_PORT)
+        def socket = new Socket('localhost', port)
         socket.withStreams { input, output ->
             Thread.sleep(3 * 1000)
         }
