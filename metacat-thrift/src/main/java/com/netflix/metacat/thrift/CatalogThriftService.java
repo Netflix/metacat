@@ -56,4 +56,9 @@ public class CatalogThriftService extends AbstractThriftServer {
     public String getServerName() {
         return "thrift server for " + catalogName + " on port " + portNumber;
     }
+
+    @Override
+    public boolean hasServerEventHandler() {
+        return true;
+    }
 }
