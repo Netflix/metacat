@@ -26,10 +26,13 @@ import org.apache.thrift.protocol.TProtocol
 import org.apache.thrift.server.TServerEventHandler
 import org.apache.thrift.transport.TTransportException
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
+@Unroll
 class AbstractThriftServerTest extends Specification {
     Config config = Mock(Config)
 
@@ -41,21 +44,11 @@ class AbstractThriftServerTest extends Specification {
     }
 
     class TestThriftServer extends AbstractThriftServer {
-        final Closure<Boolean> processClosure
+        final TProcessor processor
 
-        protected TestThriftServer(Config config, int port, Closure<Boolean> processClosure) {
+        protected TestThriftServer(Config config, int port, TProcessor processor) {
             super(config, port, "test-thrift-server-port-${port}-%d")
-            this.processClosure = processClosure
-        }
-
-        @Override
-        TProcessor getProcessor() {
-            return new TProcessor() {
-                @Override
-                boolean process(TProtocol tProtocol, TProtocol out) throws TException {
-                    return processClosure.call(tProtocol, out)
-                }
-            }
+            this.processor = processor
         }
 
         @Override
@@ -77,12 +70,9 @@ class AbstractThriftServerTest extends Specification {
     def 'calling start does not block this thread'() {
         given:
         int port = randomPort
-        int serverConnections = 0
-        int clientConnections = 0
+        config.thriftServerMaxWorkerThreads >> 10
         config.thriftServerSocketClientTimeoutInSeconds >> 5
-        def server = new TestThriftServer(config, port, { tProtocol, out ->
-            serverConnections++
-            Thread.sleep(10)
+        def server = new TestThriftServer(config, port, { TProtocol tProtocol, TProtocol out ->
             false
         })
 
@@ -95,22 +85,6 @@ class AbstractThriftServerTest extends Specification {
         stopwatch.elapsed(TimeUnit.SECONDS) < 5
 
         when:
-        (0..<10).each {
-            def socket = new Socket('localhost', port)
-            socket.withStreams { input, output ->
-                clientConnections++
-                Thread.sleep(10)
-                output << 'test'
-            }
-        }
-
-        then:
-        notThrown(Throwable)
-        serverConnections == clientConnections
-        serverConnections == 10
-        stopwatch.elapsed(TimeUnit.SECONDS) < 5
-
-        when:
         server.stop()
 
         then:
@@ -118,77 +92,118 @@ class AbstractThriftServerTest extends Specification {
         stopwatch.elapsed(TimeUnit.SECONDS) < 5
     }
 
-    def 'throwing an exception does not stop the server from serving'() {
+    def 'the server will not stop responding with it runs out of worker threads'() {
         given:
         int port = randomPort
-        int serverConnections = 0
-        int clientConnections = 0
+        config.thriftServerMaxWorkerThreads >> 1
         config.thriftServerSocketClientTimeoutInSeconds >> 5
-        def server = new TestThriftServer(config, port, { tProtocol, out ->
-            serverConnections++
-            Thread.sleep(10)
-            switch (exceptionType) {
-                case 'runtime': throw new RuntimeException()
-                case 'rejected': throw new RejectedExecutionException()
-                case 'throwable': throw new Throwable()
-                case 'transport': throw new TTransportException()
-                case 'error': throw new Error()
-                default: throw new IllegalArgumentException()
-            }
-            //noinspection GroovyUnreachableStatement
-            return false
-        })
+        def server = new TestThriftServer(config, port, { TProtocol tProtocol, TProtocol out -> false })
 
         when:
-        def stopwatch = Stopwatch.createStarted()
         server.start()
 
         then:
         notThrown(Throwable)
-        stopwatch.elapsed(TimeUnit.SECONDS) < 5
 
         when:
-        (0..<10).each {
-            def socket = new Socket('localhost', port)
-            socket.withStreams { input, output ->
-                clientConnections++
-                Thread.sleep(10)
-                output << 'test'
-            }
+        def clientConnections = new AtomicInteger(0)
+        def threads = (0..<1000).collect {
+            return new Thread({
+                Thread.sleep(new Random().nextInt(5000))
+                def socket = new Socket('localhost', port)
+                socket.withStreams { input, output ->
+                    int count = clientConnections.incrementAndGet()
+                    output << "test ${count}"
+                }
+            })
+        }
+        threads.each {
+            it.start()
+        }
+        threads.each {
+            it.join()
         }
 
         then:
         notThrown(Throwable)
-        serverConnections == clientConnections
-        serverConnections == 10
-        stopwatch.elapsed(TimeUnit.SECONDS) < 5
+        clientConnections.get() == 1000
 
         when:
         server.stop()
 
         then:
         notThrown(Throwable)
-        stopwatch.elapsed(TimeUnit.SECONDS) < 5
+    }
+
+    def 'throwing an exception of type #exceptionTypeClass does not stop the server from serving'() {
+        given:
+        int port = randomPort
+        config.thriftServerMaxWorkerThreads >> 50
+        config.thriftServerSocketClientTimeoutInSeconds >> 5
+        Class exceptionType = exceptionTypeClass
+        def server = new TestThriftServer(config, port, { TProtocol tProtocol, TProtocol out ->
+            def e = exceptionType.newInstance()
+            throw e
+        })
+
+        when:
+        server.start()
+
+        then:
+        notThrown(Throwable)
+
+        when:
+        def clientConnections = new AtomicInteger(0)
+        def threads = (0..<1000).collect {
+            return new Thread({
+                Thread.sleep(new Random().nextInt(5000))
+                def socket = new Socket('localhost', port)
+                socket.withStreams { input, output ->
+                    int count = clientConnections.incrementAndGet()
+                    output << "test ${count}"
+                }
+            })
+        }
+        threads.each {
+            it.start()
+        }
+        threads.each {
+            it.join()
+        }
+
+        then:
+        notThrown(Throwable)
+        clientConnections.get() == 1000
+
+        when:
+        server.stop()
+
+        then:
+        notThrown(Throwable)
 
         where:
-        exceptionType << ['runtime', 'rejected', 'throwable', 'transport', 'error', 'default']
+        exceptionTypeClass << [RuntimeException, RejectedExecutionException, Throwable, TTransportException, Error, IllegalArgumentException]
     }
 
     def 'the server will close a connection after reads exceed the timeout'() {
         given:
         int port = randomPort
         boolean readTimeout = false
+        config.thriftServerMaxWorkerThreads >> 5
         config.thriftServerSocketClientTimeoutInSeconds >> 1
-        def server = new TestThriftServer(config, port, { TProtocol tProtocol, out ->
-            try {
-                tProtocol.readString()
-            } catch (TTransportException tte) {
-                def rootCause = Throwables.getRootCause(tte)
-                if (rootCause instanceof SocketTimeoutException) {
-                    readTimeout = true
+        def server = new TestThriftServer(config, port, new TProcessor() {
+            @Override
+            boolean process(TProtocol tProtocol, TProtocol out) throws TException {
+                try {
+                    tProtocol.readString()
+                } catch (TTransportException tte) {
+                    def rootCause = Throwables.getRootCause(tte)
+                    if (rootCause instanceof SocketTimeoutException) {
+                        readTimeout = true
+                    }
                 }
+                return false
             }
-            return false
         })
 
         when:

@@ -46,6 +46,7 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicStringProperty lookupServiceUserAdmin;
     private final DynamicStringProperty pluginConfigLocation;
     private final DynamicStringProperty tagServiceUserAdmin;
+    private final DynamicIntProperty thriftServerMaxWorkerThreads;
     private final DynamicIntProperty thriftServerSocketClientTimeoutInSeconds;
     private final DynamicStringProperty metacatVersion;
     private final DynamicBooleanProperty usePigTypes;
@@ -88,6 +89,7 @@ public class ArchaiusConfigImpl implements Config {
         this.metacatVersion = factory.getStringProperty("netflix.appinfo.version", "1.0.0");
         this.pluginConfigLocation = factory.getStringProperty("metacat.plugin.config.location", null);
         this.tagServiceUserAdmin = factory.getStringProperty("metacat.tag_service.user_admin", "admin");
+        this.thriftServerMaxWorkerThreads = factory.getIntProperty("metacat.thrift.server_max_worker_threads", 200);
         this.thriftServerSocketClientTimeoutInSeconds = factory.getIntProperty("metacat.thrift.server_socket_client_timeout_in_seconds", 60);
         this.usePigTypes = factory.getBooleanProperty("metacat.franklin.connector.use.pig.type", true);
         this.serviceMaxNumberOfThreads = factory.getIntProperty("metacat.service.max.number.threads", 50);
@@ -201,6 +203,11 @@ public class ArchaiusConfigImpl implements Config {
     @Override
     public String getTagServiceUserAdmin() {
         return tagServiceUserAdmin.get();
+    }
+
+    @Override
+    public int getThriftServerMaxWorkerThreads() {
+        return thriftServerMaxWorkerThreads.get();
     }
 
     @Override
