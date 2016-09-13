@@ -829,10 +829,21 @@ class MetacatFunctionalSpec extends Specification {
         thrown(Exception)
 
         when:
-        f('pk3="1"')
+        def result = null
+        try {
+            result = f('pk3="1"')
+        } catch(Throwable t) {
+            result = t
+        }
 
-        then: 'an exception is thrown when using a quoted long'
-        thrown(Exception)
+        then:
+        if (TestCatalogs.findByCatalogName(name.catalogName).validateFilterExpressionBasedOnPartitionKeyType) {
+            assert result instanceof Throwable,
+                    'an exception should be thrown when using a quoted long when types are verified'
+        } else {
+            assert result.size() == 8
+            assert result.every { PartitionDto partition -> partition.name.partitionName.endsWith('/pk3=1') }
+        }
 
         expect:
         f('').size() == 16

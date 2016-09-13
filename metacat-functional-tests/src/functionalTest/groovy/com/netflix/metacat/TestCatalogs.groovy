@@ -36,6 +36,7 @@ class TestCatalogs {
         List<QualifiedName> preExistingTables = []
         String thriftUri
         String type
+        boolean validateFilterExpressionBasedOnPartitionKeyType = true
     }
 
     static final Set<TestCatalog> ALL = [
@@ -49,15 +50,16 @@ class TestCatalogs {
                     partitionKeysAppearLast: true,
                     type: 'metacat-hive',
             ),
-//            new TestCatalog(
-//                    createDatabase: true,
-//                    createPartition: true,
-//                    createTable: true,
-//                    deleteDatabase: true,
-//                    deleteTable: true,
-//                    name: 's3-mysql-db',
-//                    type: 's3',
-//            ),
+            new TestCatalog(
+                    createDatabase: true,
+                    createPartition: true,
+                    createTable: true,
+                    deleteDatabase: true,
+                    deleteTable: true,
+                    name: 's3-mysql-db',
+                    type: 's3',
+                    validateFilterExpressionBasedOnPartitionKeyType: false
+            ),
             new TestCatalog(
                     name: 'mysql-55-db',
                     preExistingDatabases: [
