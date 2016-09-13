@@ -33,15 +33,15 @@ class FilterPartitionSpec extends Specification{
         "dateint=1"             | "dateint>1"                                           | false
         "dateint=1"             | "false and dateint=1"                                 | false
         "dateint=1"             | "true and dateint=1"                                  | true
-        "dateint=1"             | "false=false and dateint=1"                           | false
-        "dateint=1"             | "true=true and dateint=1"                             | false
+        "dateint=1"             | "false=false and dateint=1"                           | true
+        "dateint=1"             | "true=true and dateint=1"                             | true
+        "dateint=1"             | "false=true and dateint=1"                            | false
+        "dateint=1"             | "true=false and dateint=1"                            | false
         "dateint=1"             | "1=1 and dateint=1"                                   | true
         "dateint=1"             | "dateint>1 OR dateint<1"                              | false
         "dateint=1"             | "dateint>1 OR dateint=1"                              | true
         "dateint=1"             | "dateint>1 OR dateint = 1"                            | true
         "a=1"                   | "a=1"                                                 | true
-        "a=1"                   | "A=1"                                                 | false
-        "A=1"                   | "a=1"                                                 | false
         "dateint=1"             | "dateint>=1"                                          | true
         "dateint=1"             | "dateint<1"                                           | false
         "dateint=1"             | "dateint<=1"                                          | true
@@ -62,14 +62,10 @@ class FilterPartitionSpec extends Specification{
         "dateint=1"             | "(12 < 2)"                                            | false
         "dateint=1"             | "('12' < '2')"                                        | true
         "dateint=1"             | "(12 < '2')"                                          | true
-        "dateint=1"             | "(batchid>=1)"                                        | false
-
         "dateint=12"            | "(dateint < 2)"                                       | false
         "dateint=12"            | "(dateint <= 2)"                                      | false
         "dateint=12"            | "(dateint < '2')"                                     | true
         "dateint=12"            | "(dateint <= '2')"                                    | true
-        "dateint=12"            | "(dateint2 != 2)"                                     | false
-        "dateint=12"            | "(dateint2 == 12)"                                    | false
 
         "apath"                 | "(batchid>=1)"                                        | false
 
@@ -92,6 +88,11 @@ class FilterPartitionSpec extends Specification{
         thrown(IllegalArgumentException)
         where:
         name                    | expression
+        "a=1"                   | "A=1"
+        "A=1"                   | "a=1"
+        "dateint=1"             | "(batchid>=1)"
+        "dateint=12"            | "(dateint2 != 2)"
+        "dateint=12"            | "(dateint2 == 12)"
         "dateint=1"             | "dateint>1?"
         "dateint=1"             | "dateint>1<<<"
         "a=1"                   | "1a=1"

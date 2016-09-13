@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.common.partition.util;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.partition.parser.ParseException;
 import com.netflix.metacat.common.partition.parser.PartitionParser;
@@ -58,8 +59,10 @@ public class FilterPartition {
                 }
             } catch(ParseException | TokenMgrError e){
                 throw new IllegalArgumentException(String.format("Invalid expression: %s", partitionExpression), e);
-            } catch(Exception e) {
-                log.warn("Caught unexpected exception during evaluatePartitionExpression," + e);
+            } catch(IllegalArgumentException e){
+                throw e;
+            } catch(Throwable t) {
+                log.warn("Caught unexpected exception during evaluatePartitionExpression,", t);
                 return false;
             }
         }
