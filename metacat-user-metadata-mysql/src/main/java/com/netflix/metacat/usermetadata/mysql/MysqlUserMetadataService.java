@@ -246,6 +246,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 return null;
             };
             new QueryRunner().query( connection, query, handler, (Object[]) aKeys);
+            connection.commit();
         } catch (SQLException e) {
             log.error("Sql exception", e);
             throw new UserMetadataServiceException(String.format("Failed to get data for %s", keys), e);
@@ -267,7 +268,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 if (Strings.isNullOrEmpty(json)) {
                     return Optional.empty();
                 }
-
+                connection.commit();
                 return Optional.ofNullable(metacatJson.parseJsonObject(json));
             }
         } catch (SQLException e) {
@@ -522,6 +523,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 return null;
             };
             new QueryRunner().query( connection, query.toString(), handler, paramList.toArray(params));
+            connection.commit();
         } catch (SQLException e) {
             log.error("Sql exception", e);
             throw new UserMetadataServiceException("Failed to get definition data", e);
@@ -550,6 +552,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 return null;
             };
             new QueryRunner().query( connection, query.toString(), handler, paramList.toArray(params));
+            connection.commit();
         } catch (SQLException e) {
             log.error("Sql exception", e);
             throw new UserMetadataServiceException("Failed to get definition data", e);
