@@ -27,6 +27,7 @@ import com.netflix.metacat.common.usermetadata.LookupService;
 import com.netflix.metacat.common.usermetadata.TagService;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.usermetadata.UserMetadataServiceException;
+import com.netflix.metacat.common.util.DBUtil;
 import com.netflix.metacat.common.util.DataSourceManager;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
@@ -111,10 +112,10 @@ public class MySqlTagService implements TagService{
      */
     public TagItem get(String name) {
         TagItem result = null;
+        Connection connection = DBUtil.getReadConnection(getDataSource());
         try{
-            QueryRunner runner = new QueryRunner(getDataSource());
             ResultSetHandler<TagItem> handler = new BeanHandler<>(TagItem.class);
-            result =  runner.query(SQL_GET_TAG_ITEM, handler, name);
+            result =  new QueryRunner().query(connection, SQL_GET_TAG_ITEM, handler, name);
             if( result != null){
                 result.setValues(getValues(result.getId()));
             }
@@ -122,6 +123,8 @@ public class MySqlTagService implements TagService{
             String message = String.format("Failed to get the tag item for name %s", name);
             log.error( message, e);
             throw new UserMetadataServiceException( message, e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
         }
         return result;
     }
@@ -132,9 +135,9 @@ public class MySqlTagService implements TagService{
      * @return list of tags
      */
     public Set<String> getValues(Long tagItemId) {
+        Connection connection = DBUtil.getReadConnection(getDataSource());
         try{
-            QueryRunner runner = new QueryRunner(getDataSource());
-            return runner.query(SQL_GET_TAG_ITEM_TAGS, rs -> {
+            return new QueryRunner().query(connection, SQL_GET_TAG_ITEM_TAGS, rs -> {
                 Set<String> result = Sets.newHashSet();
                 while(rs.next()){
                     result.add( rs.getString("value"));
@@ -145,15 +148,16 @@ public class MySqlTagService implements TagService{
             String message = String.format("Failed to get the tags for id %s", tagItemId);
             log.error( message, e);
             throw new UserMetadataServiceException( message, e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
         }
     }
 
     private TagItem findOrCreateTagItemByName(String name, Connection conn) throws SQLException {
         TagItem result = get(name);
-        QueryRunner runner = new QueryRunner();
         if( result == null){
             Object[] params = { name, config.getTagServiceUserAdmin(), config.getTagServiceUserAdmin() };
-            Long id = runner.insert( conn, SQL_INSERT_TAG_ITEM, new ScalarHandler<>(1), params);
+            Long id = new QueryRunner().insert( conn, SQL_INSERT_TAG_ITEM, new ScalarHandler<>(1), params);
             result = new TagItem();
             result.setName( name);
             result.setId(id);
@@ -270,23 +274,26 @@ public class MySqlTagService implements TagService{
             String databaseName, String tableName) {
         Set<String> includedNames = Sets.newHashSet();
         Set<String> excludedNames = Sets.newHashSet();
+        Connection connection = DBUtil.getReadConnection(getDataSource());
         try {
-            QueryRunner runner = new QueryRunner(getDataSource());
+            QueryRunner runner = new QueryRunner();
             String wildCardName = QualifiedName.toWildCardString(sourceName, databaseName, tableName);
             //Includes
             String query = String.format(QUERY_SEARCH, "in ('" + Joiner.on( "','").skipNulls().join(includeTags) + "')");
             Object[] params = {includeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
-            includedNames.addAll(runner.query(query, new ColumnListHandler<>("name"), params));
+            includedNames.addAll(runner.query(connection, query, new ColumnListHandler<>("name"), params));
             if (excludeTags != null && !excludeTags.isEmpty()) {
                 //Excludes
                 query = String.format(QUERY_SEARCH, "in ('" + Joiner.on( "','").skipNulls().join(excludeTags) + "')");
                 Object[] eParams = {excludeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
-                excludedNames.addAll(runner.query(query, new ColumnListHandler<>("name"), eParams));
+                excludedNames.addAll(runner.query(connection, query, new ColumnListHandler<>("name"), eParams));
             }
         } catch (SQLException e) {
             String message = String.format("Failed getting the list of qualified names for tags %s" , includeTags);
             log.error(message, e);
             throw new UserMetadataServiceException( message, e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
         }
 
         if (excludeTags != null && !excludeTags.isEmpty()) {
@@ -306,17 +313,19 @@ public class MySqlTagService implements TagService{
      */
     @Override
     public List<QualifiedName> search(String tag, String sourceName, String databaseName, String tableName) {
+        Connection connection = DBUtil.getReadConnection(getDataSource());
         try {
-            QueryRunner runner = new QueryRunner(getDataSource());
             String wildCardName = QualifiedName.toWildCardString(sourceName, databaseName, tableName);
             //Includes
             String query = String.format(QUERY_SEARCH, "like ?");
             Object[] params = {tag == null ? 1 : 0, tag + "%", wildCardName == null ? 1 : 0, wildCardName};
-            return runner.query(query, new ColumnListHandler<>("name"), params);
+            return new QueryRunner().query(connection, query, new ColumnListHandler<>("name"), params);
         } catch (SQLException e) {
             String message = String.format("Failed getting the list of qualified names for tag %s" , tag);
             log.error(message, e);
             throw new UserMetadataServiceException( message, e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
         }
     }
 
@@ -377,14 +386,13 @@ public class MySqlTagService implements TagService{
     }
 
     private void insertTagItemTags(Long id, Set<String> tags, Connection conn) throws SQLException {
-        QueryRunner runner = new QueryRunner();
         Object[][] params = new Object[tags.size()][];
         Iterator<String> iter = tags.iterator();
         int index = 0;
         while( iter.hasNext()){
             params[index++] = ImmutableList.of(id, iter.next()).toArray();
         }
-        runner.batch( conn, SQL_INSERT_TAG_ITEM_TAGS, params);
+        new QueryRunner().batch( conn, SQL_INSERT_TAG_ITEM_TAGS, params);
     }
 
     /**

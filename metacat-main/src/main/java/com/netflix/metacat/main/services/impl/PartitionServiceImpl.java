@@ -185,7 +185,7 @@ public class PartitionServiceImpl implements PartitionService {
         // delete metadata
         if( !deletePartitions.isEmpty()) {
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIdsForDeletes, name);
-            userMetadataService.deleteMetadatas(deletePartitions, false);
+            deleteMetadatas(session.getUser(), deletePartitions);
         }
         userMetadataService.saveMetadatas(session.getUser(), partitionDtos, true);
 
@@ -204,6 +204,7 @@ public class PartitionServiceImpl implements PartitionService {
             throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
         }
         if (!partitionIds.isEmpty()) {
+            Session session = sessionProvider.getSession(name);
             ConnectorPartitionResult partitionResult = splitManager.getPartitions(tableHandle.get(), null, partitionIds, null, null, false);
             log.info("Deleting partitions with names {} for {}", partitionIds, name);
             splitManager.deletePartitions( tableHandle.get(), partitionIds);
@@ -212,20 +213,13 @@ public class PartitionServiceImpl implements PartitionService {
                     .collect(Collectors.toList());
             // delete metadata
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIds, name);
-            userMetadataService.deleteMetadatas(partitions, false);
+            deleteMetadatas(session.getUser(), partitions);
         }
     }
 
-    private void deleteMetadatas(List<HasMetadata> partitions) {
+    private void deleteMetadatas(String userId, List<HasMetadata> partitions) {
         // Spawning off since this is a time consuming task
-        threadServiceManager.getExecutor().submit(() -> {
-            List<String> canDeleteMetadatForUris = partitions.stream().filter(m -> m instanceof HasDataMetadata)
-                    .map(m -> ((HasDataMetadata)m).getDataUri())
-                    .filter(s -> !Strings.isNullOrEmpty(s))
-                    .filter(s -> getQualifiedNames(s, false).size() == 0)
-                    .collect(Collectors.toList());
-            userMetadataService.deleteMetadatas(partitions, canDeleteMetadatForUris);
-        });
+        threadServiceManager.getExecutor().submit(() -> userMetadataService.deleteMetadatas(userId, partitions));
     }
 
     @Override

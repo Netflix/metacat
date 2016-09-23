@@ -13,6 +13,16 @@ CREATE TABLE metacat.data_metadata (
   KEY uri (uri(767))
 ) DEFAULT CHARSET=latin1;
 
+CREATE TABLE metacat.data_metadata_delete (
+  id bigint(20) NOT NULL AUTO_INCREMENT,
+  uri varchar(4000) NOT NULL DEFAULT '',
+  created_by varchar(255) NOT NULL,
+  date_created datetime NOT NULL,
+  PRIMARY KEY (id),
+  KEY uri(uri(767)),
+  KEY date_created (date_created)
+) DEFAULT CHARSET=latin1;
+
 -- Create syntax for TABLE 'definition_metadata'
 CREATE TABLE metacat.definition_metadata (
   id bigint(20) NOT NULL AUTO_INCREMENT,

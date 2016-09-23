@@ -26,9 +26,10 @@ public interface TableService extends MetacatService<TableDto>{
     /**
      * Deletes the table. Returns the table metadata of the table deleted.
      * @param name qualified name of the table to be deleted
+     * @param isMView true if this table is created for a mview
      * @return Returns the deleted table
      */
-    TableDto deleteAndReturn(@Nonnull QualifiedName name);
+    TableDto deleteAndReturn(@Nonnull QualifiedName name, boolean isMView);
 
     /**
      * Returns the table with the given name

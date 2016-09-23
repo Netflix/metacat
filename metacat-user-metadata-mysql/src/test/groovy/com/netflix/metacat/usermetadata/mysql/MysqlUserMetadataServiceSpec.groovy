@@ -43,7 +43,7 @@ class MysqlUserMetadataServiceSpec extends BaseSpec{
         then:
         mysqlUserMetadataService.getDefinitionMetadata(qualifiedName) != null
         when:
-        mysqlUserMetadataService.deleteMetadatas(Lists.newArrayList(table), true)
+        mysqlUserMetadataService.deleteMetadatas("test", Lists.newArrayList(table))
         then:
         !mysqlUserMetadataService.getDefinitionMetadata(qualifiedName).isPresent()
         when:
@@ -60,7 +60,7 @@ class MysqlUserMetadataServiceSpec extends BaseSpec{
         then:
         mysqlUserMetadataService.getDefinitionMetadataMap(names).size() == 5
         when:
-        mysqlUserMetadataService.deleteMetadatas(tables, true)
+        mysqlUserMetadataService.deleteMetadatas("test", tables)
         then:
         mysqlUserMetadataService.getDefinitionMetadataMap(names).size() == 0
     }

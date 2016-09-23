@@ -24,7 +24,6 @@ import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.StorageInfo;
 import com.facebook.presto.spi.TableNotFoundException;
-import com.facebook.presto.spi.type.TypeManager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.MoreObjects;
@@ -38,11 +37,13 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.usermetadata.TagService;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.util.ThreadServiceManager;
 import com.netflix.metacat.converters.PrestoConverters;
 import com.netflix.metacat.main.connector.MetacatConnectorManager;
 import com.netflix.metacat.main.presto.metadata.MetadataManager;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.MViewService;
+import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.SessionProvider;
 import com.netflix.metacat.main.services.TableService;
 import org.slf4j.Logger;
@@ -79,6 +80,10 @@ public class TableServiceImpl implements TableService {
     TagService tagService;
     @Inject
     MViewService mViewService;
+    @Inject
+    PartitionService partitionService;
+    @Inject
+    ThreadServiceManager threadServiceManager;
     private static final String NAME_TAGS = "tags";
 
     @Override
@@ -130,7 +135,7 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public TableDto deleteAndReturn(@Nonnull QualifiedName name) {
+    public TableDto deleteAndReturn(@Nonnull QualifiedName name, boolean isMView) {
         Session session = validateAndGetSession(name);
         QualifiedTableName tableName = prestoConverters.getQualifiedTableName(name);
 
@@ -150,10 +155,38 @@ public class TableServiceImpl implements TableService {
 
         // Delete the metadata.  Type doesn't matter since we discard the result
         log.info("Deleting user metadata for table {}", name);
-        userMetadataService.deleteMetadatas(Lists.newArrayList(tableDto), false);
+        userMetadataService.deleteMetadatas(session.getUser(), Lists.newArrayList(tableDto));
         log.info("Deleting tags for table {}", name);
         tagService.delete(name, false);
-
+        if( !isMView){
+            // Spawning off since this is a time consuming task
+            threadServiceManager.getExecutor().submit(() -> {
+                try {
+                    // delete views associated with this table
+                    List<NameDateDto> viewNames = mViewService.list(name);
+                    viewNames.forEach(viewName -> mViewService.deleteAndReturn(viewName.getName()));
+                } catch(Exception e){
+                    log.warn("Failed cleaning mviews after deleting table {}", name);
+                }
+                // delete table partitions metadata
+                try {
+                    List<QualifiedName> names = userMetadataService.getDescendantDefinitionNames(name);
+                    if (names != null && !names.isEmpty()) {
+                        userMetadataService.deleteDefinitionMetadatas(names);
+                    }
+                } catch(Exception e){
+                    log.warn("Failed cleaning partition definition metadata after deleting table {}", name);
+                }
+                try {
+                    List<String> uris = userMetadataService.getDescendantDataUris(tableDto.getDataUri());
+                    if( !uris.isEmpty()){
+                        userMetadataService.softDeleteDataMetadatas(session.getUser(), uris);
+                    }
+                } catch(Exception e){
+                    log.warn("Failed cleaning partition data metadata after deleting table {}", name);
+                }
+            });
+        }
         return tableDto;
     }
 
@@ -296,7 +329,7 @@ public class TableServiceImpl implements TableService {
 
     @Override
     public void delete(@Nonnull QualifiedName name) {
-        deleteAndReturn(name);
+        deleteAndReturn(name, false);
     }
 
     @Override

@@ -100,6 +100,12 @@ public class MetacatEventHandlers {
         } else {
             es.softDelete(table.name(), dto.getName().toString(), event.getMetacatContext());
         }
+        try {
+            List<String> partitionIdsToBeDeleted = es.getIdsByQualifiedName(partition.name(), dto.getName());
+            es.delete(partition.name(), partitionIdsToBeDeleted);
+        } catch(Exception e){
+            log.warn("Failed deleting the partitions for the dropped table/view:{}", dto.getName().toString());
+        }
     }
 
     @Subscribe

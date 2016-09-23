@@ -21,6 +21,7 @@ import com.netflix.metacat.common.model.Lookup;
 import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.usermetadata.LookupService;
 import com.netflix.metacat.common.usermetadata.UserMetadataServiceException;
+import com.netflix.metacat.common.util.DBUtil;
 import com.netflix.metacat.common.util.DataSourceManager;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
@@ -69,10 +70,10 @@ public class MySqlLookupService implements LookupService{
      */
     public Lookup get(String name) {
         Lookup result = null;
+        Connection connection = DBUtil.getReadConnection(getDataSource());
         try{
-            QueryRunner runner = new QueryRunner(getDataSource());
             ResultSetHandler<Lookup> handler = new BeanHandler<>(Lookup.class);
-            result =  runner.query(SQL_GET_LOOKUP, handler, name);
+            result =  new QueryRunner().query(connection, SQL_GET_LOOKUP, handler, name);
             if( result != null){
                 result.setValues(getValues(result.getId()));
             }
@@ -80,6 +81,8 @@ public class MySqlLookupService implements LookupService{
             String message = String.format("Failed to get the lookup for name %s", name);
             log.error( message, e);
             throw new UserMetadataServiceException( message, e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
         }
         return result;
     }
@@ -104,9 +107,9 @@ public class MySqlLookupService implements LookupService{
      * @return list of lookup values
      */
     public Set<String> getValues(Long lookupId) {
+        Connection connection = DBUtil.getReadConnection(getDataSource());
         try{
-            QueryRunner runner = new QueryRunner(getDataSource());
-            return runner.query(SQL_GET_LOOKUP_VALUES, rs -> {
+            return new QueryRunner().query(connection, SQL_GET_LOOKUP_VALUES, rs -> {
                 Set<String> result = Sets.newHashSet();
                 while(rs.next()){
                     result.add( rs.getString("value"));
@@ -117,6 +120,8 @@ public class MySqlLookupService implements LookupService{
             String message = String.format("Failed to get the lookup values for id %s", lookupId);
             log.error( message, e);
             throw new UserMetadataServiceException( message, e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
         }
     }
 
@@ -126,9 +131,9 @@ public class MySqlLookupService implements LookupService{
      * @return list of lookup values
      */
     public Set<String> getValues(String name) {
+        Connection connection = DBUtil.getReadConnection(getDataSource());
         try{
-            QueryRunner runner = new QueryRunner(getDataSource());
-            return runner.query(SQL_GET_LOOKUP_VALUES_BY_NAME, rs -> {
+            return new QueryRunner().query(connection, SQL_GET_LOOKUP_VALUES_BY_NAME, rs -> {
                 Set<String> result = Sets.newHashSet();
                 while(rs.next()){
                     result.add( rs.getString("value"));
@@ -139,6 +144,8 @@ public class MySqlLookupService implements LookupService{
             String message = String.format("Failed to get the lookup values for name %s", name);
             log.error( message, e);
             throw new UserMetadataServiceException( message, e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
         }
     }
 
@@ -186,14 +193,13 @@ public class MySqlLookupService implements LookupService{
     }
 
     private void insertLookupValues(Long id, Set<String> inserts, Connection conn) throws SQLException {
-        QueryRunner runner = new QueryRunner();
         Object[][] params = new Object[inserts.size()][];
         Iterator<String> iter = inserts.iterator();
         int index = 0;
         while( iter.hasNext()){
            params[index++] = ImmutableList.of( id, iter.next()).toArray();
         }
-        runner.batch( conn, SQL_INSERT_LOOKUP_VALUES, params);
+        new QueryRunner().batch( conn, SQL_INSERT_LOOKUP_VALUES, params);
     }
 
     private void deleteLookupValues(Long id, Set<String> deletes, Connection conn) throws SQLException {
@@ -202,11 +208,10 @@ public class MySqlLookupService implements LookupService{
 
     private Lookup findOrCreateLookupByName(String name, Connection conn) throws SQLException {
         Lookup lookup = get(name);
-        QueryRunner runner = new QueryRunner();
         if( lookup == null){
             Object[] params = { name, STRING_TYPE, config.getLookupServiceUserAdmin(),
                     config.getLookupServiceUserAdmin() };
-            Long lookupId = runner.insert( conn, SQL_INSERT_LOOKUP, new ScalarHandler<>(1), params);
+            Long lookupId = new QueryRunner().insert( conn, SQL_INSERT_LOOKUP, new ScalarHandler<>(1), params);
             lookup = new Lookup();
             lookup.setName( name);
             lookup.setId(lookupId);

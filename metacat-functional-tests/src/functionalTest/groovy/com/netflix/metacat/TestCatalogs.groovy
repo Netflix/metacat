@@ -27,6 +27,7 @@ class TestCatalogs {
         boolean createTable
         boolean deleteDatabase
         boolean deleteTable
+        boolean createView
         List<QualifiedName> createdDatabases = []
         List<QualifiedName> createdPartitions = []
         List<QualifiedName> createdTables = []
@@ -48,6 +49,7 @@ class TestCatalogs {
                     name: 'hive-metastore',
                     partitionKeysAppearLast: true,
                     type: 'metacat-hive',
+                    createView: true,
             ),
 //            new TestCatalog(
 //                    createDatabase: true,
@@ -176,6 +178,10 @@ class TestCatalogs {
 
     static Collection<TestCatalog> getCanDeleteTable(Collection<TestCatalog> source) {
         return source.findAll { it.deleteTable }
+    }
+
+    static Collection<TestCatalog> getCanCreateView(Collection<TestCatalog> source) {
+        return source.findAll { it.createView }
     }
 
     static Collection<TestCatalog> getCanNotDeleteTable(Collection<TestCatalog> source) {

@@ -188,7 +188,7 @@ public class MetacatV1Resource implements MetacatV1 {
         return requestWrapper(name, "deleteTable", () -> {
             eventBus.postSync(new MetacatDeleteTablePreEvent(name, metacatContext));
 
-            TableDto dto = tableService.deleteAndReturn(name);
+            TableDto dto = tableService.deleteAndReturn(name, false);
 
             eventBus.postAsync(new MetacatDeleteTablePostEvent(dto, metacatContext));
             return dto;

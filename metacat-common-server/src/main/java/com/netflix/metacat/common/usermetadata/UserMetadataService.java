@@ -19,6 +19,7 @@ import com.netflix.metacat.common.dto.DefinitionMetadataDto;
 import com.netflix.metacat.common.dto.HasMetadata;
 
 import javax.annotation.Nonnull;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,11 +30,11 @@ public interface UserMetadataService {
 
     void deleteDataMetadatas(@Nonnull List<String> uris);
 
+    void softDeleteDataMetadatas(String userId, @Nonnull List<String> uris);
+
     void deleteDefinitionMetadatas(@Nonnull List<QualifiedName> names);
 
-    void deleteMetadatas(List<HasMetadata> holders, boolean force);
-
-    void deleteMetadatas(List<HasMetadata> holders, List<String> deleteDataMetadataUris);
+    void deleteMetadatas(String userId, List<HasMetadata> holders);
 
     @Nonnull
     Optional<ObjectNode> getDataMetadata(@Nonnull String uri);
@@ -43,6 +44,10 @@ public interface UserMetadataService {
 
     @Nonnull
     Optional<ObjectNode> getDefinitionMetadata(@Nonnull QualifiedName name);
+
+    List<QualifiedName> getDescendantDefinitionNames(@Nonnull QualifiedName name);
+
+    List<String> getDescendantDataUris(@Nonnull String uri);
 
     @Nonnull
     Map<String, ObjectNode> getDefinitionMetadataMap(@Nonnull List<QualifiedName> names);
@@ -72,4 +77,6 @@ public interface UserMetadataService {
                                 , String sortBy, String sortOrder, Integer offset, Integer limit);
 
     List<QualifiedName> searchByOwners(Set<String> owners);
+
+    List<String> getDeletedDataMetadataUris(Date deletedPriorTo);
 }

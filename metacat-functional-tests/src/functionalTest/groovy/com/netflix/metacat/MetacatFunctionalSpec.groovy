@@ -950,6 +950,35 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getAllDatabases(TestCatalogs.getCanCreateTable(TestCatalogs.ALL))
     }
 
+    def 'createMView: #name'() {
+        given:
+        def viewName = "v1"
+        def viewQName = QualifiedName.ofView(name.catalogName, name.databaseName, name.tableName, viewName)
+
+        when:
+        def database = api.getDatabase(name.catalogName, name.databaseName, false)
+
+        then:
+        database.tables.contains(name.tableName)
+
+        when:
+        api.createMView(name.catalogName, name.databaseName, name.tableName, viewName, false, null)
+        def views = api.getMViews(name.catalogName, name.databaseName, name.tableName)
+        def viewNames = views.collect(it.getName)
+
+        then:
+        viewNames.contains(viewQName)
+
+        when:
+        def view = api.getMView(name.catalogName, name.databaseName, name.tableName, viewName)
+
+        then:
+        view.name == viewQName
+
+        where:
+        name << TestCatalogs.getCreatedTables(TestCatalogs.getCanDeleteTable(TestCatalogs.ALL))
+    }
+
     def 'deletePartition: #name'() {
         given:
         def spec = Warehouse.makeSpecFromName(name.partitionName)

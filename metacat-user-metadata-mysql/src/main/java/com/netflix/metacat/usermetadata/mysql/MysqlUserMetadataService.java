@@ -28,9 +28,11 @@ import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonException;
 import com.netflix.metacat.common.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.usermetadata.UserMetadataServiceException;
+import com.netflix.metacat.common.util.DBUtil;
 import com.netflix.metacat.common.util.DataSourceManager;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
+import org.apache.commons.dbutils.handlers.ColumnListHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +51,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -71,6 +74,28 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     public MysqlUserMetadataService(DataSourceManager dataSourceManager, MetacatJson metacatJson) {
         this.dataSourceManager = dataSourceManager;
         this.metacatJson = metacatJson;
+    }
+
+    @Override
+    public void softDeleteDataMetadatas(String user, @Nonnull List<String> uris) {
+        try{
+            Connection conn = poolingDataSource.getConnection();
+            try {
+                List<List<String>> subLists = Lists.partition(uris, 5000);
+                for (List<String> subUris : subLists) {
+                    _softDeleteDataMetadatas(conn, user, subUris);
+                }
+                conn.commit();
+            } catch( SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.close();
+            }
+        }catch (SQLException e) {
+            log.error("Sql exception", e);
+            throw new UserMetadataServiceException(String.format("Failed deleting the data metadata for %s", uris), e);
+        }
     }
 
     @Override
@@ -118,18 +143,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
-    public void deleteMetadatas(List<HasMetadata> holders, boolean force) {
-        if(force){
-            List<String> uris = holders.stream().filter(m -> m instanceof HasDataMetadata)
-                    .map(m -> ((HasDataMetadata)m).getDataUri()).collect(Collectors.toList());
-            deleteMetadatas(holders, uris);
-        } else {
-            deleteMetadatas(holders, null);
-        }
-    }
-
-    @Override
-    public void deleteMetadatas(List<HasMetadata> holders, List<String> deleteDataMetadataUris) {
+    public void deleteMetadatas(String userId, List<HasMetadata> holders) {
         try{
             Connection conn = poolingDataSource.getConnection();
             try {
@@ -142,11 +156,10 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     if( !names.isEmpty()) {
                         _deleteDefinitionMetadatas(conn, names);
                     }
-                }
-                if( deleteDataMetadataUris != null && !deleteDataMetadataUris.isEmpty()){
-                    List<List<String>> subUriLists = Lists.partition( deleteDataMetadataUris, 5000);
-                    for(List<String> uris: subUriLists){
-                        _deleteDataMetadatas(conn, uris);
+                    List<String> uris = hasMetadatas.stream().filter(m -> m instanceof HasDataMetadata)
+                            .map(m -> ((HasDataMetadata)m).getDataUri()).collect(Collectors.toList());
+                    if( !uris.isEmpty()){
+                        _softDeleteDataMetadatas(conn, userId, uris);
                     }
                 }
                 conn.commit();
@@ -171,12 +184,25 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         return null;
     }
 
+    private Void _softDeleteDataMetadatas(Connection conn, String userId, List<String> uris) throws SQLException {
+        if( uris != null && !uris.isEmpty()) {
+            List<Object[]> deleteDataMetadatas = Lists.newArrayList();
+            uris.forEach(uri -> deleteDataMetadatas.add(new Object[] { uri, userId }));
+            new QueryRunner().batch(conn, SQL.SOFT_DELETE_DATA_METADATA,
+                    deleteDataMetadatas.toArray(new Object[deleteDataMetadatas.size()][3]));
+        }
+        return null;
+    }
+
     private Void _deleteDataMetadatas(Connection conn, List<String> uris) throws SQLException {
         if( uris != null && !uris.isEmpty()) {
             List<String> paramVariables = uris.stream().map(s -> "?").collect(Collectors.toList());
             String[] aUris = uris.stream().toArray(String[]::new);
+            String paramString = Joiner.on(",").skipNulls().join(paramVariables);
             new QueryRunner().update(conn,
-                    String.format(SQL.DELETE_DATA_METADATA, Joiner.on(",").skipNulls().join(paramVariables)), (Object[]) aUris);
+                    String.format(SQL.DELETE_DATA_METADATA, paramString), (Object[]) aUris);
+            new QueryRunner().update(conn,
+                    String.format(SQL.DELETE_DATA_METADATA_DELETE, paramString), (Object[]) aUris);
         }
         return null;
     }
@@ -206,6 +232,38 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         return getJsonForKey(SQL.GET_DEFINITION_METADATA, name.toString());
     }
 
+    @Override
+    public List<QualifiedName> getDescendantDefinitionNames(@Nonnull QualifiedName name) {
+        List<String> result = null;
+        Connection connection = DBUtil.getReadConnection(poolingDataSource);
+        try {
+            ColumnListHandler<String> handler = new ColumnListHandler<>("name");
+            result = new QueryRunner().query( connection, SQL.GET_DESCENDANT_DEFINITION_NAMES, handler, name.toString() + "/%");
+        } catch (SQLException e) {
+            log.error("Sql exception", e);
+            throw new UserMetadataServiceException(String.format("Failed to get descendant names for %s", name), e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
+        }
+        return result.stream().map(QualifiedName::fromString).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getDescendantDataUris(@Nonnull String uri) {
+        List<String> result = null;
+        Connection connection = DBUtil.getReadConnection(poolingDataSource);
+        try {
+            ColumnListHandler<String> handler = new ColumnListHandler<>("uri");
+            result = new QueryRunner().query( connection, SQL.GET_DESCENDANT_DATA_URIS, handler, uri + "/%");
+        } catch (SQLException e) {
+            log.error("Sql exception", e);
+            throw new UserMetadataServiceException(String.format("Failed to get descendant uris for %s", uri), e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
+        }
+        return result;
+    }
+
     @Nonnull
     @Override
     public Map<String, ObjectNode> getDefinitionMetadataMap(@Nonnull List<QualifiedName> names) {
@@ -229,9 +287,10 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         List<String> paramVariables = keys.stream().map(s -> "?").collect(Collectors.toList());
         String[] aKeys = keys.stream().map(Object::toString).toArray(String[]::new);
         String query = String.format(sql, Joiner.on(",").join(paramVariables));
-        try (Connection connection = poolingDataSource.getConnection()) {
+        Connection connection = DBUtil.getReadConnection(poolingDataSource);
+        try {
             ResultSetHandler<Void> handler = resultSet -> {
-                while(resultSet.next()) {
+                while (resultSet.next()) {
                     String json = resultSet.getString("data");
                     String name = resultSet.getString("name");
                     if (json != null) {
@@ -245,31 +304,34 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 }
                 return null;
             };
-            new QueryRunner().query( connection, query, handler, (Object[]) aKeys);
-            connection.commit();
+            new QueryRunner().query(connection, query, handler, (Object[]) aKeys);
         } catch (SQLException e) {
             log.error("Sql exception", e);
             throw new UserMetadataServiceException(String.format("Failed to get data for %s", keys), e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
         }
         return result;
     }
 
     protected Optional<ObjectNode> getJsonForKey(String query, String keyValue) {
+        Optional<ObjectNode> result = Optional.empty();
         String json = null;
-        try (Connection connection = poolingDataSource.getConnection();
-                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+        Connection connection = DBUtil.getReadConnection(poolingDataSource);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, keyValue);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (!resultSet.next()) {
-                    return Optional.empty();
+                while( resultSet.next()){
+                    String key = resultSet.getString(1);
+                    if( keyValue.equals( key)){
+                        json = resultSet.getString(2);
+                        if (Strings.isNullOrEmpty(json)) {
+                            return Optional.empty();
+                        }
+                        result = Optional.ofNullable(metacatJson.parseJsonObject(json));
+                        break;
+                    }
                 }
-
-                json = resultSet.getString(1);
-                if (Strings.isNullOrEmpty(json)) {
-                    return Optional.empty();
-                }
-                connection.commit();
-                return Optional.ofNullable(metacatJson.parseJsonObject(json));
             }
         } catch (SQLException e) {
             log.error("Sql exception", e);
@@ -277,7 +339,10 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         } catch (MetacatJsonException e) {
             log.error("Invalid json '{}' for keyValue '{}'", json, keyValue, e);
             throw new UserMetadataServiceException(String.format("Invalid json %s for name %s", json, keyValue), e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
         }
+        return result;
     }
 
     protected int executeUpdateForKey(String query, String... keyValues) {
@@ -509,7 +574,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             query.append( limit);
         }
         Object[] params = new Object[paramList.size()];
-        try (Connection connection = poolingDataSource.getConnection()) {
+        Connection connection = DBUtil.getReadConnection(poolingDataSource);
+        try {
             // Handler for reading the result set
             ResultSetHandler<Void> handler = rs -> {
                 while (rs.next()) {
@@ -523,10 +589,11 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 return null;
             };
             new QueryRunner().query( connection, query.toString(), handler, paramList.toArray(params));
-            connection.commit();
         } catch (SQLException e) {
             log.error("Sql exception", e);
             throw new UserMetadataServiceException("Failed to get definition data", e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
         }
         return result;
     }
@@ -542,7 +609,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             paramList.add( "%\"userId\":\"" + s.trim() + "\"%");
         });
         Object[] params = new Object[paramList.size()];
-        try (Connection connection = poolingDataSource.getConnection()) {
+        Connection connection = DBUtil.getReadConnection(poolingDataSource);
+        try {
             // Handler for reading the result set
             ResultSetHandler<Void> handler = rs -> {
                 while (rs.next()) {
@@ -552,13 +620,31 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 return null;
             };
             new QueryRunner().query( connection, query.toString(), handler, paramList.toArray(params));
-            connection.commit();
         } catch (SQLException e) {
             log.error("Sql exception", e);
             throw new UserMetadataServiceException("Failed to get definition data", e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
         }
         return result;
 
+    }
+
+    @Override
+    public List<String> getDeletedDataMetadataUris(Date deletedPriorTo) {
+        List<String> result = null;
+        Connection connection = DBUtil.getReadConnection(poolingDataSource);
+        try {
+            ColumnListHandler<String> handler = new ColumnListHandler<>("uri");
+            result = new QueryRunner().query( connection, SQL.GET_DELETED_DATA_METADATA_URI, handler, deletedPriorTo);
+            connection.commit();
+        } catch (SQLException e) {
+            log.error("Sql exception", e);
+            throw new UserMetadataServiceException(String.format("Failed to get deleted data metadata uris deleted prior to %s", deletedPriorTo), e);
+        } finally {
+            DBUtil.closeReadConnection(connection);
+        }
+        return result;
     }
 
     @Override
@@ -598,11 +684,16 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     private static class SQL {
+        public static final String SOFT_DELETE_DATA_METADATA = "insert into data_metadata_delete(uri, created_by,date_created) values( ?,?, now())";
+        public static final String DELETE_DATA_METADATA_DELETE = "delete from data_metadata_delete where uri in (%s)";
         public static final String DELETE_DATA_METADATA = "delete from data_metadata where uri in (%s)";
         public static final String DELETE_DEFINITION_METADATA = "delete from definition_metadata where name in (%s)";
-        public static final String GET_DATA_METADATA = "select data from data_metadata where uri=?";
+        public static final String GET_DATA_METADATA = "select uri name, data from data_metadata where uri=?";
+        public static final String GET_DELETED_DATA_METADATA_URI = "select uri from data_metadata_delete where date_created < ?";
+        public static final String GET_DESCENDANT_DATA_URIS = "select uri from data_metadata where uri like ?";
+        public static final String GET_DESCENDANT_DEFINITION_NAMES = "select name from definition_metadata where name like ?";
         public static final String GET_DATA_METADATAS = "select uri name,data from data_metadata where uri in (%s)";
-        public static final String GET_DEFINITION_METADATA = "select data from definition_metadata where name=?";
+        public static final String GET_DEFINITION_METADATA = "select name, data from definition_metadata where name=?";
         public static final String GET_DEFINITION_METADATAS = "select name,data from definition_metadata where name in (%s)";
         public static final String SEARCH_DEFINITION_METADATAS = "select name,data from definition_metadata where 1=1";
         public static final String SEARCH_DEFINITION_METADATA_NAMES = "select name from definition_metadata";
