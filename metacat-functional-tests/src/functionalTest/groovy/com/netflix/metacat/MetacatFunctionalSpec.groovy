@@ -455,8 +455,8 @@ class MetacatFunctionalSpec extends Specification {
                                 partition_key: false
                         ),
                         new FieldDto(
-                                comment: 'added 3st - partition key',
-                                name: 'field3',
+                                comment: 'added 3rd, a single char partition key to test that use case',
+                                name: 'p',
                                 pos: 2,
                                 type: 'boolean',
                                 partition_key: true
@@ -496,14 +496,14 @@ class MetacatFunctionalSpec extends Specification {
         table.dataMetadata == dataMetadata
         table.fields.find { it.name == 'field1' }.partition_key
         !table.fields.find { it.name == 'field2' }.partition_key
-        table.fields.find { it.name == 'field3' }.partition_key
+        table.fields.find { it.name == 'p' }.partition_key
         !table.fields.find { it.name == 'field4' }.partition_key
         // Hive partitions keys are always sorted to the end of the fields.
         if (TestCatalogs.findByQualifiedName(name).partitionKeysAppearLast) {
-            assert table.fields*.name == ['field2', 'field4', 'field1', 'field3']
+            assert table.fields*.name == ['field2', 'field4', 'field1', 'p']
             table.fields*.partition_key == [false, false, true, true]
         } else {
-            assert table.fields*.name == ['field1', 'field2', 'field3', 'field4']
+            assert table.fields*.name == ['field1', 'field2', 'p', 'field4']
             table.fields*.partition_key == [true, false, true, false]
         }
         table.fields*.type == ['boolean', 'boolean', 'boolean', 'boolean']
@@ -597,16 +597,16 @@ class MetacatFunctionalSpec extends Specification {
         pname << TestCatalogs.getCreatedTables(TestCatalogs.ALL)
                 .collect { tname ->
             [
-                    [field1: 'null', field3: 'valid'],
-                    [field1: '', field3: 'valid'],
-                    [field1: 'valid', field3: 'null'],
-                    [field1: 'valid', field3: ''],
-                    [field1: 'null', field3: 'null'],
-                    [field1: 'null', field3: ''],
-                    [field1: '', field3: 'null'],
-                    [field1: '', field3: ''],
+                    [field1: 'null', p: 'valid'],
+                    [field1: '', p: 'valid'],
+                    [field1: 'valid', p: 'null'],
+                    [field1: 'valid', p: ''],
+                    [field1: 'null', p: 'null'],
+                    [field1: 'null', p: ''],
+                    [field1: '', p: 'null'],
+                    [field1: '', p: ''],
             ].collect {
-                String unescapedPartitionName = "field1=${it.field1}/field3=${it.field3}".toString()
+                String unescapedPartitionName = "field1=${it.field1}/p=${it.p}".toString()
                 QualifiedName.ofPartition(tname.catalogName, tname.databaseName, tname.tableName, unescapedPartitionName)
             }
         }.flatten()
@@ -733,20 +733,20 @@ class MetacatFunctionalSpec extends Specification {
         args << TestCatalogs.getCreatedTables(TestCatalogs.ALL)
                 .collect { tname ->
             [
-                    [field1: 'lower', field3: 'UPPER'],
-                    [field1: 'UPPER', field3: 'UPPER'],
-                    [field1: 'UPPER', field3: 'lower'],
-                    [field1: 'lower', field3: 'lower'],
-                    [field1: 'camelCase', field3: 'camelCase'],
-                    [field1: 'string with space', field3: 'valid'],
-                    [field1: 'valid', field3: 'string with space'],
+                    [field1: 'lower', p: 'UPPER'],
+                    [field1: 'UPPER', p: 'UPPER'],
+                    [field1: 'UPPER', p: 'lower'],
+                    [field1: 'lower', p: 'lower'],
+                    [field1: 'camelCase', p: 'camelCase'],
+                    [field1: 'string with space', p: 'valid'],
+                    [field1: 'valid', p: 'string with space'],
                     // TODO test escaping
-//                    [field1: 'foo:bar', field3: 'valid'],
-//                    [field1: 'valid', field3: 'foo:bar'],
-//                    [field1: 'http://www.example.com/service?field1=value1&field3=value3', field3: 'valid'],
-//                    [field1: 'valid', field3: 'http://www.example.com/service?field1=value1&field3=value3'],
+//                    [field1: 'foo:bar', p: 'valid'],
+//                    [field1: 'valid', p: 'foo:bar'],
+//                    [field1: 'http://www.example.com/service?field1=value1&p=value3', p: 'valid'],
+//                    [field1: 'valid', p: 'http://www.example.com/service?field1=value1&p=value3'],
             ].collect {
-                String unescapedPartitionName = "field1=${it.field1}/field3=${it.field3}".toString()
+                String unescapedPartitionName = "field1=${it.field1}/p=${it.p}".toString()
                 String escapedPartitionName = unescapedPartitionName // TODO test escaping
                 return [
                         name       : QualifiedName.ofPartition(tname.catalogName, tname.databaseName, tname.tableName, unescapedPartitionName),
@@ -829,10 +829,21 @@ class MetacatFunctionalSpec extends Specification {
         thrown(Exception)
 
         when:
-        f('pk3="1"')
+        def result = null
+        try {
+            result = f('pk3="1"')
+        } catch(Throwable t) {
+            result = t
+        }
 
-        then: 'an exception is thrown when using a quoted long'
-        thrown(Exception)
+        then:
+        if (TestCatalogs.findByCatalogName(name.catalogName).validateFilterExpressionBasedOnPartitionKeyType) {
+            assert result instanceof Throwable,
+                    'an exception should be thrown when using a quoted long when types are verified'
+        } else {
+            assert result.size() == 8
+            assert result.every { PartitionDto partition -> partition.name.partitionName.endsWith('/pk3=1') }
+        }
 
         expect:
         f('').size() == 16
@@ -982,7 +993,7 @@ class MetacatFunctionalSpec extends Specification {
     def 'deletePartition: #name'() {
         given:
         def spec = Warehouse.makeSpecFromName(name.partitionName)
-        String unescapedPartitionName = "field1=${spec.field1}/field3=${spec.field3}".toString()
+        String unescapedPartitionName = "field1=${spec.field1}/p=${spec.p}".toString()
 
         when:
         def keys = partitionApi.getPartitionKeys(name.catalogName, name.databaseName, name.tableName, null, null, null, null, null)

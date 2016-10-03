@@ -78,7 +78,10 @@ public class PartitionParserEval implements PartitionParserVisitor {
             value1 = new BigDecimal(value1.toString());
             return _compare(comparison, (BigDecimal) value1, (BigDecimal) value2);
         }
-        throw new RuntimeException("error processing partition filter");
+        if(value1 instanceof Comparable && value2 instanceof Comparable) {
+            return _compare(comparison, (Comparable) value1, (Comparable) value2);
+        }
+        throw new IllegalStateException("error processing partition filter");
 	}
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -253,7 +256,7 @@ public class PartitionParserEval implements PartitionParserVisitor {
 	@Override
 	public Object visit(ASTVAR node, Object data) {
 	    if (!context.containsKey(((Variable)node.jjtGetValue()).getName())) {
-	        throw new RuntimeException("Missing variable: " + ((Variable)node.jjtGetValue()).getName());
+	        throw new IllegalArgumentException("Missing variable: " + ((Variable)node.jjtGetValue()).getName());
 	    }
 		return context.get(((Variable)node.jjtGetValue()).getName());
 	}
