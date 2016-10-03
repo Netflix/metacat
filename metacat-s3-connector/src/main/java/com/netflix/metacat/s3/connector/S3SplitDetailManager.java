@@ -52,10 +52,9 @@ import com.netflix.metacat.s3.connector.util.ConverterUtil;
 
 import javax.inject.Inject;
 import java.io.StringReader;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.facebook.presto.hive.HiveUtil.schemaTableName;
@@ -290,12 +289,11 @@ public class S3SplitDetailManager implements ConnectorSplitDetailManager{
     }
 
     @Override
-    public List<SchemaTablePartitionName> getPartitionNames(String uri, boolean prefixSearch) {
-        List<Partition> partitions = partitionDao.getByUri( uri, prefixSearch);
-        return partitions.stream().map(partition ->
-                new SchemaTablePartitionName(
-                        new SchemaTableName(partition.getTable().getDatabase().getName(), partition.getTable().getName()), partition.getName()))
-                .collect(Collectors.toList());
+    public Map<String, List<SchemaTablePartitionName>> getPartitionNames(List<String> uris, boolean prefixSearch) {
+        return partitionDao.getByUris( uris, prefixSearch).stream()
+                .collect(Collectors.groupingBy(Partition::getUri, Collectors.mapping(p -> new SchemaTablePartitionName(
+                        new SchemaTableName(p.getTable().getDatabase().getName(), p.getTable().getName()), p.getName()),
+                        Collectors.toList())));
     }
 
 

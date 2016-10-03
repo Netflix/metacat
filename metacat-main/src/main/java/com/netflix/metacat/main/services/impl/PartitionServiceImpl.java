@@ -54,12 +54,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PartitionServiceImpl implements PartitionService {
     private static final Logger log = LoggerFactory.getLogger(PartitionServiceImpl.class);
@@ -224,19 +225,32 @@ public class PartitionServiceImpl implements PartitionService {
 
     @Override
     public List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch){
-        List<QualifiedName> result = Lists.newCopyOnWriteArrayList();
+        return getQualifiedNames(Lists.newArrayList(uri), prefixSearch).values().stream().flatMap(Collection::stream)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, List<QualifiedName>> getQualifiedNames(List<String> uris, boolean prefixSearch) {
+        Map<String,List<QualifiedName>> result = Maps.newConcurrentMap();
         List<ListenableFuture<Void>> futures = Lists.newArrayList();
-        catalogService.getCatalogNames().stream().forEach(catalog -> {
+        catalogService.getCatalogNames().forEach(catalog -> {
             Session session = sessionProvider.getSession(QualifiedName.ofCatalog(catalog.getCatalogName()));
             futures.add(threadServiceManager.getExecutor().submit(() -> {
-                List<SchemaTablePartitionName> schemaTablePartitionNames = splitManager
-                        .getPartitionNames(session, uri, prefixSearch);
-                List<QualifiedName> qualifiedNames = schemaTablePartitionNames.stream().map(
-                        schemaTablePartitionName -> QualifiedName.ofPartition(catalog.getConnectorName()
-                                , schemaTablePartitionName.getTableName().getSchemaName()
-                                , schemaTablePartitionName.getTableName().getTableName()
-                                , schemaTablePartitionName.getPartitionId())).collect(Collectors.toList());
-                result.addAll(qualifiedNames);
+                Map<String, List<SchemaTablePartitionName>> schemaTablePartitionNames = splitManager
+                        .getPartitionNames(session, uris, prefixSearch);
+                schemaTablePartitionNames.forEach((uri, schemaTablePartitionNames1) -> {
+                    List<QualifiedName> partitionNames = schemaTablePartitionNames1.stream().map(
+                            schemaTablePartitionName -> QualifiedName.ofPartition(catalog.getConnectorName()
+                                    , schemaTablePartitionName.getTableName().getSchemaName()
+                                    , schemaTablePartitionName.getTableName().getTableName()
+                                    , schemaTablePartitionName.getPartitionId())).collect(Collectors.toList());
+                    List<QualifiedName> existingPartitionNames = result.get(uri);
+                    if( existingPartitionNames == null){
+                        result.put(uri, partitionNames);
+                    } else {
+                        existingPartitionNames.addAll(partitionNames);
+                    }
+                });
                 return null;
             }));
         });

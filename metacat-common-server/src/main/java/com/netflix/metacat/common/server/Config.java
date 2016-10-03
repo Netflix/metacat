@@ -24,9 +24,9 @@ public interface Config {
     int getElasticSearchClusterPort();
     int getElasticSearchScrollFetchSize();
     int getElasticSearchScrollTimeout();
-    String getElasticSearchRefreshExcludeDatabases();
+    List<QualifiedName> getElasticSearchRefreshExcludeQualifiedNames();
     String getElasticSearchRefreshIncludeCatalogs();
-    String getElasticSearchRefreshIncludeDatabases();
+    List<QualifiedName> getElasticSearchRefreshIncludeDatabases();
     String getElasticSearchRefreshPartitionsIncludeCatalogs();
     int getElasticSearchThresholdUnmarkedDatabasesDelete();
     int getElasticSearchThresholdUnmarkedTablesDelete();
@@ -44,4 +44,5 @@ public interface Config {
     int getServiceMaxNumberOfThreads();
     List<QualifiedName> getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions();
     String getEsIndex();
+    int getDataMetadataDeleteMarkerLifetimeInDays();
 }

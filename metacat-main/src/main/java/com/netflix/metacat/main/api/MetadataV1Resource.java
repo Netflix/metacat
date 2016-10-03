@@ -29,8 +29,10 @@ import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.main.services.MetacatService;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
+import com.netflix.metacat.main.services.MetadataService;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,11 +45,13 @@ import static com.netflix.metacat.main.api.RequestWrapper.requestWrapper;
 public class MetadataV1Resource implements MetadataV1 {
     private final UserMetadataService userMetadataService;
     private final MetacatServiceHelper helper;
+    private final MetadataService metadataService;
     @Inject
     public MetadataV1Resource(UserMetadataService userMetadataService,
-            MetacatServiceHelper helper) {
+            MetacatServiceHelper helper, MetadataService metadataService) {
         this.userMetadataService = userMetadataService;
         this.helper = helper;
+        this.metadataService = metadataService;
     }
 
     @Override
@@ -109,5 +113,11 @@ public class MetadataV1Resource implements MetadataV1 {
                     }
                     return null;
                 });
+    }
+
+    @Override
+    public Response processDeletedDataMetadata() {
+        metadataService.processDeletedDataMetadata();
+        return Response.ok().build();
     }
 }

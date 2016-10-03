@@ -92,14 +92,15 @@ public class PartitionDaoImpl extends IdEntityDaoImpl<Partition> implements Part
     }
 
     @Override
-    public List<Partition> getByUri(String uri, boolean prefixSearch) {
+    public List<Partition> getByUris(List<String> uris, boolean prefixSearch) {
         TypedQuery<Partition> query = null;
         if( prefixSearch){
-            query = em.get().createNamedQuery(Partition.NAME_QUERY_GET_BY_URI_PREFIX, Partition.class);
-            query.setParameter("uri", uri + "%");
+            StringBuilder builder = new StringBuilder("select p from Partition p where 1=2");
+            uris.forEach(uri -> builder.append(" or uri like '").append(uri).append("%'"));
+            query = em.get().createNamedQuery(builder.toString(), Partition.class);
         } else {
             query = em.get().createNamedQuery(Partition.NAME_QUERY_GET_BY_URI, Partition.class);
-            query.setParameter("uri", uri);
+            query.setParameter("uris", uris);
         }
         return query.getResultList();
     }

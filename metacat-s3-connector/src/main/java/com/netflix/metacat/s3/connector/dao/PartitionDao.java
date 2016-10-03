@@ -49,9 +49,9 @@ public interface PartitionDao extends BaseDao<Partition> {
 
     /**
      * Returns the list of partitions with the given uri.
-     * @param uri uri path
+     * @param uris uri paths
      * @param prefixSearch true, if the given uri is partial
      * @return list of partitions
      */
-    List<Partition> getByUri(String uri, boolean prefixSearch);
+    List<Partition> getByUris(List<String> uris, boolean prefixSearch);
 }

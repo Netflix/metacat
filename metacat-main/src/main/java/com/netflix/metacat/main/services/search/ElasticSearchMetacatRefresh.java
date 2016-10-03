@@ -24,11 +24,7 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.util.concurrent.*;
 import com.netflix.metacat.common.MetacatContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
@@ -48,7 +44,6 @@ import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
-import org.joda.time.DateTime;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,32 +127,9 @@ public class ElasticSearchMetacatRefresh {
         _process( qualifiedNames, () -> _processPartitions(qualifiedNames), "processPartitions", false, 500);
     }
 
-    public void processDeletedDataMetadata(){
-        // Get the data metadata that were marked deleted a number of days back
-        // Check if the uri is being used
-        // If uri is not used then delete the entry from data_metadata
-        log.info("Start deleting data metadata");
-        try {
-            DateTime priorTo = DateTime.now().minusDays(30);
-            List<String> uris = userMetadataService.getDeletedDataMetadataUris(priorTo.toDate());
-            log.info("Count of deleted marked data metadata: {}", uris.size());
-            List<String> canDeleteMetadataForUris = uris.parallelStream()
-                    .filter(s -> !Strings.isNullOrEmpty(s))
-                    .filter(s -> partitionService.getQualifiedNames(s, false).size() == 0)
-                    .collect(Collectors.toList());
-            log.info("Start deleting data metadata: {}", canDeleteMetadataForUris.size());
-            userMetadataService.deleteDataMetadatas(canDeleteMetadataForUris);
-        } catch(Exception e){
-            CounterWrapper.incrementCounter("dse.metacat.processDeletedDataMetadata");
-            log.warn("Failed deleting data metadata");
-        }
-        log.info("End deleting data metadata");
-    }
-
     private ListenableFuture<Void> _processPartitions(List<QualifiedName> qNames) {
-        List<String> tables = elasticSearchUtil.getTableIdsByCatalogs(table.name(), qNames);
-        final List<String> excludeDatabaseNames = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(
-                config.getElasticSearchRefreshExcludeDatabases());
+        final List<QualifiedName> excludeQualifiedNames = config.getElasticSearchRefreshExcludeQualifiedNames();
+        List<String> tables = elasticSearchUtil.getTableIdsByCatalogs(table.name(), qNames, excludeQualifiedNames);
         List<ListenableFuture<ListenableFuture<Void>>> futures = tables.stream().map(s -> service.submit(() -> {
             QualifiedName tableName = QualifiedName.fromString(s, false);
             List<ListenableFuture<Void>> indexFutures = Lists.newArrayList();
@@ -182,26 +154,30 @@ public class ElasticSearchMetacatRefresh {
                     pageable.setOffset( offset);
                 }
             } while (count == 10000);
-            return Futures.transform(Futures.successfulAsList(indexFutures), new Function<List<Void>, Void>() {
-                @Nullable
-                @Override
-                public Void apply(@Nullable List<Void> input) {
-                    return partitionsCleanUp( tableName, excludeDatabaseNames);
-                }
-            });
+            return Futures.transform(Futures.successfulAsList(indexFutures), Functions.constant((Void) null));
         })).collect(Collectors.toList());
-        return Futures.transformAsync(Futures.successfulAsList(futures),
+        ListenableFuture<Void> processPartitionsFuture = Futures.transformAsync(Futures.successfulAsList(futures),
                 input -> {
                     List<ListenableFuture<Void>> inputFuturesWithoutNulls = input.stream().filter(notNull).collect(Collectors.toList());
                     return Futures.transform(Futures.successfulAsList(inputFuturesWithoutNulls), Functions.constant(null));
                 });
+        return Futures.transformAsync(processPartitionsFuture, new AsyncFunction<Void, Void>() {
+            @Override
+            public ListenableFuture<Void> apply(@Nullable Void input) throws Exception {
+                elasticSearchUtil.refresh();
+                List<ListenableFuture<Void>> cleanUpFutures = tables.stream()
+                        .map( s -> service.submit(() -> partitionsCleanUp( QualifiedName.fromString(s, false), excludeQualifiedNames)))
+                        .collect(Collectors.toList());
+                return Futures.transform(Futures.successfulAsList(cleanUpFutures), Functions.constant(null));
+            }
+        });
     }
 
-    private Void partitionsCleanUp(QualifiedName tableName, List<String> excludeDatabaseNames) {
+    private Void partitionsCleanUp(QualifiedName tableName, List<QualifiedName> excludeQualifiedNames) {
         try {
             final List<PartitionDto> unmarkedPartitionDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames(
                     ElasticSearchDoc.Type.partition.name(),
-                    Lists.newArrayList(tableName), refreshMarker, excludeDatabaseNames, PartitionDto.class);
+                    Lists.newArrayList(tableName), refreshMarker, excludeQualifiedNames, PartitionDto.class);
             if (!unmarkedPartitionDtos.isEmpty()) {
                 log.info("Start deleting unmarked partitions({}) for table {}", unmarkedPartitionDtos.size(), tableName.toString());
                 try {
@@ -262,9 +238,7 @@ public class ElasticSearchMetacatRefresh {
                 supplier.get().get(24, TimeUnit.HOURS);
                 log.info("End: Full refresh of metacat index in elastic search");
                 if( delete) {
-                    List<String> excludeDatabaseNames = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(
-                            config.getElasticSearchRefreshExcludeDatabases());
-                    deleteUnmarkedEntities(qNames, excludeDatabaseNames);
+                    deleteUnmarkedEntities(qNames, config.getElasticSearchRefreshExcludeQualifiedNames());
                 }
             } catch (Exception e) {
                 log.error("Full refresh of metacat index failed", e);
@@ -305,7 +279,7 @@ public class ElasticSearchMetacatRefresh {
         }
     }
 
-    private void deleteUnmarkedEntities(List<QualifiedName> qNames, List<String> excludeDatabaseNames) {
+    private void deleteUnmarkedEntities(List<QualifiedName> qNames, List<QualifiedName> excludeQualifiedNames) {
         log.info("Start: Delete unmarked entities");
         //
         // get unmarked qualified names
@@ -315,7 +289,7 @@ public class ElasticSearchMetacatRefresh {
         elasticSearchUtil.refresh();
         MetacatContext context = new MetacatContext("admin", "metacat-refresh", null, null, null);
 
-        List<DatabaseDto> unmarkedDatabaseDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames("database", qNames, refreshMarker, excludeDatabaseNames, DatabaseDto.class);
+        List<DatabaseDto> unmarkedDatabaseDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames("database", qNames, refreshMarker, excludeQualifiedNames, DatabaseDto.class);
         if( !unmarkedDatabaseDtos.isEmpty()) {
             if(unmarkedDatabaseDtos.size() <= config.getElasticSearchThresholdUnmarkedDatabasesDelete()) {
                 log.info("Start: Delete unmarked databases({})", unmarkedDatabaseDtos.size());
@@ -352,7 +326,7 @@ public class ElasticSearchMetacatRefresh {
             }
         }
 
-        List<TableDto> unmarkedTableDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames("table", qNames, refreshMarker, excludeDatabaseNames, TableDto.class);
+        List<TableDto> unmarkedTableDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames("table", qNames, refreshMarker, excludeQualifiedNames, TableDto.class);
         if( !unmarkedTableDtos.isEmpty() ) {
             if(unmarkedTableDtos.size() <= config.getElasticSearchThresholdUnmarkedTablesDelete()) {
                 log.info("Start: Delete unmarked tables({})", unmarkedTableDtos.size());
@@ -416,24 +390,20 @@ public class ElasticSearchMetacatRefresh {
     }
 
     private List<QualifiedName> getDatabaseNamesToRefresh(CatalogDto catalogDto) {
-        List<String> databasesToRefresh = catalogDto.getDatabases();
-        if(!Strings.isNullOrEmpty(config.getElasticSearchRefreshIncludeDatabases())){
-            List<String> refreshDatabaseNames = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(
-                    config.getElasticSearchRefreshIncludeDatabases());
-            databasesToRefresh = databasesToRefresh.stream()
-                    .filter(refreshDatabaseNames::contains)
+        List<QualifiedName> result = null;
+        if(!config.getElasticSearchRefreshIncludeDatabases().isEmpty()){
+            result = config.getElasticSearchRefreshIncludeDatabases().stream()
+                    .filter(q -> catalogDto.getName().getCatalogName().equals(q.getCatalogName()))
+                    .collect(Collectors.toList());
+        } else {
+            result = catalogDto.getDatabases().stream()
+                    .map(n -> QualifiedName.ofDatabase( catalogDto.getName().getCatalogName(), n))
                     .collect(Collectors.toList());
         }
-        if(!Strings.isNullOrEmpty(config.getElasticSearchRefreshExcludeDatabases())){
-            List<String> excludeDatabaseNames = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(
-                    config.getElasticSearchRefreshExcludeDatabases());
-            databasesToRefresh = databasesToRefresh.stream()
-                    .filter(databaseName -> !excludeDatabaseNames.contains(databaseName))
-                    .collect(Collectors.toList());
+        if(!config.getElasticSearchRefreshExcludeQualifiedNames().isEmpty()){
+            result.removeAll(config.getElasticSearchRefreshExcludeQualifiedNames());
         }
-        return databasesToRefresh.stream()
-                .map(s -> QualifiedName.ofDatabase(catalogDto.getName().getCatalogName(), s))
-                .collect(Collectors.toList());
+        return result;
     }
 
     private List<String> getCatalogNamesToRefresh() {

@@ -38,9 +38,10 @@ import com.facebook.presto.spi.SavePartitionResult;
 import com.facebook.presto.spi.SchemaTablePartitionName;
 import com.facebook.presto.spi.Sort;
 import com.facebook.presto.spi.TupleDomain;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -134,12 +135,12 @@ public class SplitManager
         }
     }
 
-    public List<SchemaTablePartitionName> getPartitionNames(Session session, String uri, boolean prefixSearch){
+    public Map<String,List<SchemaTablePartitionName>> getPartitionNames(Session session, List<String> uri, boolean prefixSearch){
         ConnectorSplitManager splitManager = getConnectorSplitManager(session.getCatalog());
         if( splitManager instanceof ConnectorSplitDetailManager){
             ConnectorSplitDetailManager splitDetailManager = (ConnectorSplitDetailManager) splitManager;
             return splitDetailManager.getPartitionNames(uri, prefixSearch);
         }
-        return Lists.newArrayList();
+        return Maps.newHashMap();
     }
 }

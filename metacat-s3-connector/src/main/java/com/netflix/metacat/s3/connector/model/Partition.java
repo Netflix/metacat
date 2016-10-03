@@ -46,7 +46,7 @@ import javax.persistence.UniqueConstraint;
         ,
         @NamedQuery(
                 name = Partition.NAME_QUERY_GET_BY_URI,
-                query = "select p from Partition p where p.uri=:uri"
+                query = "select p from Partition p where p.uri in :uris"
         ),
         @NamedQuery(
                 name = Partition.NAME_QUERY_GET_BY_URI_PREFIX,

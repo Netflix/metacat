@@ -17,6 +17,8 @@ import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.util.DataProvider
 
+import java.time.Instant
+
 /**
  * Created by amajumdar on 9/11/15.
  */
@@ -46,11 +48,14 @@ class MysqlUserMetadataServiceSpec extends BaseSpec{
         mysqlUserMetadataService.deleteMetadatas("test", Lists.newArrayList(table))
         then:
         !mysqlUserMetadataService.getDefinitionMetadata(qualifiedName).isPresent()
+        mysqlUserMetadataService.getDescendantDefinitionNames(qualifiedName).size() == 0
         when:
         mysqlUserMetadataService.saveMetadatas( userName, partitions, true)
         then:
         mysqlUserMetadataService.getDataMetadata('s3:/a/b0') != null
         mysqlUserMetadataService.getDataMetadataMap(uris).size() == 5
+        mysqlUserMetadataService.getDescendantDataUris('s3:/a').size() == 5
+        mysqlUserMetadataService.getDescendantDataUris('s3:/z').size() == 0
         when:
         mysqlUserMetadataService.deleteDataMetadatas(uris)
         then:
@@ -59,9 +64,17 @@ class MysqlUserMetadataServiceSpec extends BaseSpec{
         mysqlUserMetadataService.saveMetadatas( userName, tables, true)
         then:
         mysqlUserMetadataService.getDefinitionMetadataMap(names).size() == 5
+        mysqlUserMetadataService.getDescendantDefinitionNames(QualifiedName.ofDatabase(catalogName, databaseName)).size() == 5
         when:
         mysqlUserMetadataService.deleteMetadatas("test", tables)
         then:
         mysqlUserMetadataService.getDefinitionMetadataMap(names).size() == 0
+        sleep(1000)
+        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date()).size() == 6
+        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date(1,1,1)).size() == 0
+        when:
+        mysqlUserMetadataService.deleteDataMetadatas(uris)
+        then:
+        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date()).size() == 1
     }
 }

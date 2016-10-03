@@ -42,5 +42,6 @@ public class ServicesModule extends AbstractModule {
         binder().bind(MetacatEventHandlers.class).in(Singleton.class);
         binder().bind(ElasticSearchUtil.class).in(Singleton.class);
         binder().bind(ElasticSearchMetacatRefresh.class).in(Singleton.class);
+        binder().bind(MetadataService.class).in(Singleton.class);
     }
 }

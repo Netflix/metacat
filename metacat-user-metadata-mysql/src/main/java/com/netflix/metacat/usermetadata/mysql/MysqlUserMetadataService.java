@@ -637,7 +637,6 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         try {
             ColumnListHandler<String> handler = new ColumnListHandler<>("uri");
             result = new QueryRunner().query( connection, SQL.GET_DELETED_DATA_METADATA_URI, handler, deletedPriorTo);
-            connection.commit();
         } catch (SQLException e) {
             log.error("Sql exception", e);
             throw new UserMetadataServiceException(String.format("Failed to get deleted data metadata uris deleted prior to %s", deletedPriorTo), e);

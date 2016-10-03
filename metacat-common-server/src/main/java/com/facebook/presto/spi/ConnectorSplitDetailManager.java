@@ -14,8 +14,10 @@
 package com.facebook.presto.spi;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by amajumdar on 2/2/15.
@@ -55,13 +57,13 @@ public interface ConnectorSplitDetailManager extends ConnectorSplitManager{
     Integer getPartitionCount(ConnectorTableHandle connectorHandle);
 
     /**
-     * Returns all the partition names referring to the given <code>uri</code>
-     * @param uri location
+     * Returns all the partition names referring to the given <code>uris</code>
+     * @param uris locations
      * @param prefixSearch if tru, we look for tables whose location starts with the given <code>uri</code>
      * @return list of partition names
      */
-    default List<SchemaTablePartitionName> getPartitionNames(String uri, boolean prefixSearch){
-        return Lists.newArrayList();
+    default Map<String, List<SchemaTablePartitionName>> getPartitionNames(List<String> uris, boolean prefixSearch){
+        return Maps.newHashMap();
     }
 
     /**

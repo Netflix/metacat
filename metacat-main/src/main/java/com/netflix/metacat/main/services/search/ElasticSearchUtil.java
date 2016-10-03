@@ -331,14 +331,19 @@ public class ElasticSearchUtil {
         return ids;
     }
 
-    public List<String> getTableIdsByCatalogs(String type, List<QualifiedName> qualifiedNames) {
+    public List<String> getTableIdsByCatalogs(String type, List<QualifiedName> qualifiedNames,
+                                              List<QualifiedName> excludeQualifiedNames) {
         List<String> ids = Lists.newArrayList();
+        QueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("name.qualifiedName.tree", qualifiedNames))
+                .must(QueryBuilders.termQuery("deleted_", false))
+                .mustNot(QueryBuilders.termsQuery("name.qualifiedName.tree", excludeQualifiedNames));
         //
         // Run the query and get the response.
         SearchRequestBuilder request = client.prepareSearch(esIndex)
                 .setTypes(type)
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
-                .setQuery(QueryBuilders.termsQuery("name.qualifiedName.tree", qualifiedNames))
+                .setQuery(queryBuilder)
                 .setSize(Integer.MAX_VALUE)
                 .setNoFields();
         SearchResponse response = request.execute().actionGet();
@@ -368,16 +373,17 @@ public class ElasticSearchUtil {
         return result;
     }
 
-    public <T> List<T> getQualifiedNamesByMarkerByNames(String type, List<QualifiedName> qualifiedNames, Instant marker, List<String> excludeDatabaseNames, Class<T> valueType) {
+    public <T> List<T> getQualifiedNamesByMarkerByNames(String type, List<QualifiedName> qualifiedNames, Instant marker, List<QualifiedName> excludeQualifiedNames, Class<T> valueType) {
         List<T> result = Lists.newArrayList();
         List<String> names = qualifiedNames.stream().map(QualifiedName::toString).collect(Collectors.toList());
+        List<String> excludeNames = excludeQualifiedNames.stream().map(QualifiedName::toString).collect(Collectors.toList());
         //
         // Run the query and get the response.
         QueryBuilder queryBuilder = QueryBuilders.boolQuery()
                 .must(QueryBuilders.termsQuery("name.qualifiedName.tree", names))
                 .must(QueryBuilders.termQuery("deleted_", false))
                 .must(QueryBuilders.rangeQuery("_timestamp").lte(marker.toDate()))
-                .mustNot(QueryBuilders.termsQuery("name.databaseName", excludeDatabaseNames))
+                .mustNot(QueryBuilders.termsQuery("name.qualifiedName.tree", excludeNames))
                 .mustNot(QueryBuilders.termQuery("refreshMarker_", marker.toString()));
         SearchRequestBuilder request = client.prepareSearch(esIndex)
                 .setTypes(type)
