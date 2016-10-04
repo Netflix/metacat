@@ -156,7 +156,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     if( !names.isEmpty()) {
                         _deleteDefinitionMetadatas(conn, names);
                     }
-                    List<String> uris = hasMetadatas.stream().filter(m -> m instanceof HasDataMetadata)
+                    List<String> uris = hasMetadatas.stream()
+                            .filter(m -> m instanceof HasDataMetadata && ((HasDataMetadata)m).isDataExternal())
                             .map(m -> ((HasDataMetadata)m).getDataUri()).collect(Collectors.toList());
                     if( !uris.isEmpty()){
                         _softDeleteDataMetadatas(conn, userId, uris);

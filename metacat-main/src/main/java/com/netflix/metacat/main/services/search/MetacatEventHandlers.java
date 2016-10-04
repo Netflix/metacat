@@ -159,10 +159,12 @@ public class MetacatEventHandlers {
     }
 
     private void updateEntitiesWIthSameUri(String metadata_type, TableDto dto, MetacatContext metacatContext) {
-        List<String> ids = es.getTableIdsByUri(metadata_type, dto.getDataUri());
-        ObjectNode node =  MetacatJsonLocator.INSTANCE.emptyObjectNode();
-        node.put("dataMetadata", dto.getDataMetadata());
-        es.updates(table.name(), ids, metacatContext, node);
+        if( dto.isDataExternal()) {
+            List<String> ids = es.getTableIdsByUri(metadata_type, dto.getDataUri());
+            ObjectNode node = MetacatJsonLocator.INSTANCE.emptyObjectNode();
+            node.put("dataMetadata", dto.getDataMetadata());
+            es.updates(table.name(), ids, metacatContext, node);
+        }
     }
 
     @Subscribe

@@ -127,7 +127,7 @@ public class PartitionServiceImpl implements PartitionService {
                     List<Map<String,ObjectNode>> metadataResults = Futures.successfulAsList(futures).get(1, TimeUnit.HOURS);
                     Map<String,ObjectNode> definitionMetadataMap = metadataResults.get(0);
                     Map<String,ObjectNode> dataMetadataMap = metadataResults.get(1);
-                    result.stream().forEach(partitionDto -> userMetadataService.populateMetadata(partitionDto
+                    result.forEach(partitionDto -> userMetadataService.populateMetadata(partitionDto
                             , definitionMetadataMap.get(partitionDto.getName().toString())
                             , dataMetadataMap.get(partitionDto.getDataUri())));
                 } catch (Exception e) {
