@@ -34,6 +34,18 @@ CREATE TABLE `data_metadata` (
 ) ENGINE=InnoDB AUTO_INCREMENT=98763993 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+DROP TABLE IF EXISTS `data_metadata_delete`;
+-- Create schema for TABLE 'data_metadata_delete'
+CREATE TABLE data_metadata_delete (
+  id bigint(20) NOT NULL AUTO_INCREMENT,
+  uri varchar(4000) NOT NULL DEFAULT '',
+  created_by varchar(255) NOT NULL,
+  date_created datetime NOT NULL,
+  PRIMARY KEY (id),
+  KEY uri(uri(767)),
+  KEY date_created (date_created)
+) DEFAULT CHARSET=latin1;
+
 --
 -- Table structure for table `definition_metadata`
 --
