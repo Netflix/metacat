@@ -178,9 +178,11 @@ public class TableServiceImpl implements TableService {
                     log.warn("Failed cleaning partition definition metadata after deleting table {}", name);
                 }
                 try {
-                    List<String> uris = userMetadataService.getDescendantDataUris(tableDto.getDataUri());
-                    if( !uris.isEmpty()){
-                        userMetadataService.softDeleteDataMetadatas(session.getUser(), uris);
+                    if( tableDto.isDataExternal()) {
+                        List<String> uris = userMetadataService.getDescendantDataUris(tableDto.getDataUri());
+                        if (!uris.isEmpty()) {
+                            userMetadataService.softDeleteDataMetadatas(session.getUser(), uris);
+                        }
                     }
                 } catch(Exception e){
                     log.warn("Failed cleaning partition data metadata after deleting table {}", name);
