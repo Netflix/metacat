@@ -20,6 +20,7 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 
 import java.util.List;
+import java.util.Map;
 
 public interface PartitionService extends MetacatService<PartitionDto>{
     List<PartitionDto> list(QualifiedName name, String filter, List<String> partitionNames,
@@ -30,6 +31,7 @@ public interface PartitionService extends MetacatService<PartitionDto>{
             boolean checkIfExists, boolean alterIfExists);
     void delete(QualifiedName name, List<String> partitionIds);
     List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch);
+    Map<String, List<QualifiedName>> getQualifiedNames(List<String> uris, boolean prefixSearch);
     List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable);
     List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable);
 }

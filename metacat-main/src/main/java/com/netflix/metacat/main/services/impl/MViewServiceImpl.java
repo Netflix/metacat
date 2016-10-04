@@ -122,14 +122,14 @@ public class MViewServiceImpl implements MViewService {
     public TableDto deleteAndReturn(@Nonnull QualifiedName name) {
         QualifiedName viewQName = QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         log.info("Deleting view {}.", viewQName);
-        return tableService.deleteAndReturn(viewQName);
+        return tableService.deleteAndReturn(viewQName, true);
     }
 
 
     @Override
     public void delete(@Nonnull QualifiedName name) {
         QualifiedName viewQName = QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
-        tableService.delete(viewQName);
+        tableService.deleteAndReturn(viewQName, true);
     }
 
     @Override

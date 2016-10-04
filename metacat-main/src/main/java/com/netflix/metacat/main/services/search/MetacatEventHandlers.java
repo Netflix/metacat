@@ -100,6 +100,12 @@ public class MetacatEventHandlers {
         } else {
             es.softDelete(table.name(), dto.getName().toString(), event.getMetacatContext());
         }
+        try {
+            List<String> partitionIdsToBeDeleted = es.getIdsByQualifiedName(partition.name(), dto.getName());
+            es.delete(partition.name(), partitionIdsToBeDeleted);
+        } catch(Exception e){
+            log.warn("Failed deleting the partitions for the dropped table/view:{}", dto.getName().toString());
+        }
     }
 
     @Subscribe
@@ -153,10 +159,12 @@ public class MetacatEventHandlers {
     }
 
     private void updateEntitiesWIthSameUri(String metadata_type, TableDto dto, MetacatContext metacatContext) {
-        List<String> ids = es.getTableIdsByUri(metadata_type, dto.getDataUri());
-        ObjectNode node =  MetacatJsonLocator.INSTANCE.emptyObjectNode();
-        node.put("dataMetadata", dto.getDataMetadata());
-        es.updates(table.name(), ids, metacatContext, node);
+        if( dto.isDataExternal()) {
+            List<String> ids = es.getTableIdsByUri(metadata_type, dto.getDataUri());
+            ObjectNode node = MetacatJsonLocator.INSTANCE.emptyObjectNode();
+            node.put("dataMetadata", dto.getDataMetadata());
+            es.updates(table.name(), ids, metacatContext, node);
+        }
     }
 
     @Subscribe

@@ -54,12 +54,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PartitionServiceImpl implements PartitionService {
     private static final Logger log = LoggerFactory.getLogger(PartitionServiceImpl.class);
@@ -126,7 +127,7 @@ public class PartitionServiceImpl implements PartitionService {
                     List<Map<String,ObjectNode>> metadataResults = Futures.successfulAsList(futures).get(1, TimeUnit.HOURS);
                     Map<String,ObjectNode> definitionMetadataMap = metadataResults.get(0);
                     Map<String,ObjectNode> dataMetadataMap = metadataResults.get(1);
-                    result.stream().forEach(partitionDto -> userMetadataService.populateMetadata(partitionDto
+                    result.forEach(partitionDto -> userMetadataService.populateMetadata(partitionDto
                             , definitionMetadataMap.get(partitionDto.getName().toString())
                             , dataMetadataMap.get(partitionDto.getDataUri())));
                 } catch (Exception e) {
@@ -185,7 +186,7 @@ public class PartitionServiceImpl implements PartitionService {
         // delete metadata
         if( !deletePartitions.isEmpty()) {
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIdsForDeletes, name);
-            userMetadataService.deleteMetadatas(deletePartitions, false);
+            deleteMetadatas(session.getUser(), deletePartitions);
         }
         userMetadataService.saveMetadatas(session.getUser(), partitionDtos, true);
 
@@ -204,6 +205,7 @@ public class PartitionServiceImpl implements PartitionService {
             throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
         }
         if (!partitionIds.isEmpty()) {
+            Session session = sessionProvider.getSession(name);
             ConnectorPartitionResult partitionResult = splitManager.getPartitions(tableHandle.get(), null, partitionIds, null, null, false);
             log.info("Deleting partitions with names {} for {}", partitionIds, name);
             splitManager.deletePartitions( tableHandle.get(), partitionIds);
@@ -212,37 +214,43 @@ public class PartitionServiceImpl implements PartitionService {
                     .collect(Collectors.toList());
             // delete metadata
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIds, name);
-            userMetadataService.deleteMetadatas(partitions, false);
+            deleteMetadatas(session.getUser(), partitions);
         }
     }
 
-    private void deleteMetadatas(List<HasMetadata> partitions) {
+    private void deleteMetadatas(String userId, List<HasMetadata> partitions) {
         // Spawning off since this is a time consuming task
-        threadServiceManager.getExecutor().submit(() -> {
-            List<String> canDeleteMetadatForUris = partitions.stream().filter(m -> m instanceof HasDataMetadata)
-                    .map(m -> ((HasDataMetadata)m).getDataUri())
-                    .filter(s -> !Strings.isNullOrEmpty(s))
-                    .filter(s -> getQualifiedNames(s, false).size() == 0)
-                    .collect(Collectors.toList());
-            userMetadataService.deleteMetadatas(partitions, canDeleteMetadatForUris);
-        });
+        threadServiceManager.getExecutor().submit(() -> userMetadataService.deleteMetadatas(userId, partitions));
     }
 
     @Override
     public List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch){
-        List<QualifiedName> result = Lists.newCopyOnWriteArrayList();
+        return getQualifiedNames(Lists.newArrayList(uri), prefixSearch).values().stream().flatMap(Collection::stream)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, List<QualifiedName>> getQualifiedNames(List<String> uris, boolean prefixSearch) {
+        Map<String,List<QualifiedName>> result = Maps.newConcurrentMap();
         List<ListenableFuture<Void>> futures = Lists.newArrayList();
-        catalogService.getCatalogNames().stream().forEach(catalog -> {
+        catalogService.getCatalogNames().forEach(catalog -> {
             Session session = sessionProvider.getSession(QualifiedName.ofCatalog(catalog.getCatalogName()));
             futures.add(threadServiceManager.getExecutor().submit(() -> {
-                List<SchemaTablePartitionName> schemaTablePartitionNames = splitManager
-                        .getPartitionNames(session, uri, prefixSearch);
-                List<QualifiedName> qualifiedNames = schemaTablePartitionNames.stream().map(
-                        schemaTablePartitionName -> QualifiedName.ofPartition(catalog.getConnectorName()
-                                , schemaTablePartitionName.getTableName().getSchemaName()
-                                , schemaTablePartitionName.getTableName().getTableName()
-                                , schemaTablePartitionName.getPartitionId())).collect(Collectors.toList());
-                result.addAll(qualifiedNames);
+                Map<String, List<SchemaTablePartitionName>> schemaTablePartitionNames = splitManager
+                        .getPartitionNames(session, uris, prefixSearch);
+                schemaTablePartitionNames.forEach((uri, schemaTablePartitionNames1) -> {
+                    List<QualifiedName> partitionNames = schemaTablePartitionNames1.stream().map(
+                            schemaTablePartitionName -> QualifiedName.ofPartition(catalog.getConnectorName()
+                                    , schemaTablePartitionName.getTableName().getSchemaName()
+                                    , schemaTablePartitionName.getTableName().getTableName()
+                                    , schemaTablePartitionName.getPartitionId())).collect(Collectors.toList());
+                    List<QualifiedName> existingPartitionNames = result.get(uri);
+                    if( existingPartitionNames == null){
+                        result.put(uri, partitionNames);
+                    } else {
+                        existingPartitionNames.addAll(partitionNames);
+                    }
+                });
                 return null;
             }));
         });

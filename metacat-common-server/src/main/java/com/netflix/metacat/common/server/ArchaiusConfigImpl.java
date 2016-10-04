@@ -31,7 +31,7 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicStringProperty elasticSearchClusterName;
     private final DynamicStringProperty elasticSearchClusterNodes;
     private final DynamicIntProperty elasticSearchClusterPort;
-    private final DynamicStringProperty elasticSearchRefreshExcludeDatabases;
+    private final DynamicStringProperty elasticSearchRefreshExcludeQualifiedNames;
     private final DynamicStringProperty elasticSearchRefreshIncludeCatalogs;
     private final DynamicStringProperty elasticSearchRefreshIncludeDatabases;
     private final DynamicStringProperty elasticSearchRefreshPartitionsIncludeCatalogs;
@@ -53,6 +53,9 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicIntProperty serviceMaxNumberOfThreads;
     private final DynamicStringProperty tableNamesToThrowErrorWhenNoFilterOnListPartitions;
     private List<QualifiedName> qualifiedNamesToThrowErrorWhenNoFilterOnListPartitions;
+    private List<QualifiedName> qualifiedNamesElasticSearchRefreshExclude;
+    private List<QualifiedName> qualifiedNamesElasticSearchRefreshIncludeDatabases;
+    private final DynamicIntProperty dataMetadataDeleteMarkerLifetimeInDays;
 
     public ArchaiusConfigImpl() {
         this(DynamicPropertyFactory.getInstance());
@@ -65,12 +68,8 @@ public class ArchaiusConfigImpl implements Config {
         this.elasticSearchClusterName = factory.getStringProperty("metacat.elacticsearch.cluster.name", null);
         this.elasticSearchClusterNodes = factory.getStringProperty("metacat.elacticsearch.cluster.nodes", null);
         this.elasticSearchClusterPort = factory.getIntProperty("metacat.elacticsearch.cluster.port", 7102);
-        this.elasticSearchRefreshExcludeDatabases = factory
-                .getStringProperty("metacat.elacticsearch.refresh.exclude.databases", null);
         this.elasticSearchRefreshIncludeCatalogs = factory
                 .getStringProperty("metacat.elacticsearch.refresh.include.catalogs", null);
-        this.elasticSearchRefreshIncludeDatabases = factory
-                .getStringProperty("metacat.elacticsearch.refresh.include.databases", null);
         this.elasticSearchRefreshPartitionsIncludeCatalogs = factory
                 .getStringProperty("metacat.elacticsearch.refresh.partitions.include.catalogs",
                         "prodhive,testhive,s3,aegisthus");
@@ -97,6 +96,37 @@ public class ArchaiusConfigImpl implements Config {
                 "metacat.service.tables.error.list.partitions.no.filter",
                 null, this::setQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions);
         setQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions();
+        this.elasticSearchRefreshExcludeQualifiedNames = factory
+                .getStringProperty("metacat.elacticsearch.refresh.exclude.qualified.names", null,
+                        this::setQualifiedNamesToElasticSearchRefreshExcludeQualifiedNames);
+        setQualifiedNamesToElasticSearchRefreshExcludeQualifiedNames();
+        this.elasticSearchRefreshIncludeDatabases = factory
+                .getStringProperty("metacat.elacticsearch.refresh.include.databases", null,
+                        this::setQualifiedNamesToElasticSearchRefreshIncludeDatabases);
+        setQualifiedNamesToElasticSearchRefreshIncludeDatabases();
+        this.dataMetadataDeleteMarkerLifetimeInDays = factory.getIntProperty("metacat.data.metadata.delete.marker.lifetime.days", 30);
+    }
+
+    private void setQualifiedNamesToElasticSearchRefreshExcludeQualifiedNames() {
+        String qNames = elasticSearchRefreshExcludeQualifiedNames.get();
+        if(!Strings.isNullOrEmpty(qNames)){
+            qualifiedNamesElasticSearchRefreshExclude = Splitter.on(',').omitEmptyStrings()
+                    .splitToList(qNames).stream()
+                    .map(QualifiedName::fromString).collect(Collectors.toList());
+        } else {
+            qualifiedNamesElasticSearchRefreshExclude = Lists.newArrayList();
+        }
+    }
+
+    private void setQualifiedNamesToElasticSearchRefreshIncludeDatabases() {
+        String databaseNames = elasticSearchRefreshIncludeDatabases.get();
+        if(!Strings.isNullOrEmpty(databaseNames)){
+            qualifiedNamesElasticSearchRefreshIncludeDatabases = Splitter.on(',').omitEmptyStrings()
+                    .splitToList(databaseNames).stream()
+                    .map(QualifiedName::fromString).collect(Collectors.toList());
+        } else {
+            qualifiedNamesElasticSearchRefreshIncludeDatabases = Lists.newArrayList();
+        }
     }
 
     private void setQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions() {
@@ -131,8 +161,8 @@ public class ArchaiusConfigImpl implements Config {
     }
 
     @Override
-    public String getElasticSearchRefreshExcludeDatabases() {
-        return elasticSearchRefreshExcludeDatabases.get();
+    public List<QualifiedName> getElasticSearchRefreshExcludeQualifiedNames() {
+        return qualifiedNamesElasticSearchRefreshExclude;
     }
 
     @Override
@@ -141,8 +171,8 @@ public class ArchaiusConfigImpl implements Config {
     }
 
     @Override
-    public String getElasticSearchRefreshIncludeDatabases() {
-        return elasticSearchRefreshIncludeDatabases.get();
+    public List<QualifiedName> getElasticSearchRefreshIncludeDatabases() {
+        return qualifiedNamesElasticSearchRefreshIncludeDatabases;
     }
 
     @Override
@@ -238,5 +268,10 @@ public class ArchaiusConfigImpl implements Config {
     @Override
     public String getEsIndex() {
         return elasticSearchIndexName.get();
+    }
+
+    @Override
+    public int getDataMetadataDeleteMarkerLifetimeInDays() {
+        return dataMetadataDeleteMarkerLifetimeInDays.get();
     }
 }

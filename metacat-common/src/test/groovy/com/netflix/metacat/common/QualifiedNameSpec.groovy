@@ -67,19 +67,19 @@ class QualifiedNameSpec extends Specification {
         QualifiedName.fromString(input) == name
 
         where:
-        input                       | name
-        'c'                         | QualifiedName.ofCatalog('c')
-        'c/'                        | QualifiedName.ofCatalog('c')
-        'c/d'                       | QualifiedName.ofDatabase('c', 'd')
-        ' c / d '                   | QualifiedName.ofDatabase('c', 'd')
-        'c/ d '                     | QualifiedName.ofDatabase('c', 'd')
-        'c/ d'                      | QualifiedName.ofDatabase('c', 'd')
-        'c/d/t'                     | QualifiedName.ofTable('c', 'd', 't')
-        ' c / d / t '               | QualifiedName.ofTable('c', 'd', 't')
-        'c/d/t/p'                   | QualifiedName.ofPartition('c', 'd', 't', 'p')
-        ' c / d / t / p '           | QualifiedName.ofPartition('c', 'd', 't', 'p')
-        'c/d/t/p/trailing'          | QualifiedName.ofPartition('c', 'd', 't', 'p/trailing')
-        ' c / d / t / p / trailing' | QualifiedName.ofPartition('c', 'd', 't', 'p / trailing')
+        input                           | name
+        'c'                             | QualifiedName.ofCatalog('c')
+        'c/'                            | QualifiedName.ofCatalog('c')
+        'c/d'                           | QualifiedName.ofDatabase('c', 'd')
+        ' c / d '                       | QualifiedName.ofDatabase('c', 'd')
+        'c/ d '                         | QualifiedName.ofDatabase('c', 'd')
+        'c/ d'                          | QualifiedName.ofDatabase('c', 'd')
+        'c/d/t'                         | QualifiedName.ofTable('c', 'd', 't')
+        ' c / d / t '                   | QualifiedName.ofTable('c', 'd', 't')
+        'c/d/t/p=1'                     | QualifiedName.ofPartition('c', 'd', 't', 'p=1')
+        ' c / d / t / p=1 '             | QualifiedName.ofPartition('c', 'd', 't', 'p=1')
+        'c/d/t/p=1/trailing=1'          | QualifiedName.ofPartition('c', 'd', 't', 'p=1/trailing=1')
+        ' c / d / t / p=1 / trailing=1' | QualifiedName.ofPartition('c', 'd', 't', 'p=1 / trailing=1')
     }
 
     @Unroll
@@ -91,11 +91,11 @@ class QualifiedNameSpec extends Specification {
         node == jsonQualifiedName
 
         where:
-        name      | json
-        'c'       | """{"qualifiedName": "c", "catalogName": "c"}"""
-        'c/d'     | """{"qualifiedName": "c/d", "catalogName": "c", "databaseName": "d"}"""
-        'c/d/t'   | """{"qualifiedName": "c/d/t", "catalogName": "c", "databaseName": "d", "tableName": "t"}"""
-        'c/d/t/p' | """{"qualifiedName": "c/d/t/p", "catalogName": "c", "databaseName": "d", "tableName": "t", "partitionName": "p"}"""
+        name        | json
+        'c'         | """{"qualifiedName": "c", "catalogName": "c"}"""
+        'c/d'       | """{"qualifiedName": "c/d", "catalogName": "c", "databaseName": "d"}"""
+        'c/d/t'     | """{"qualifiedName": "c/d/t", "catalogName": "c", "databaseName": "d", "tableName": "t"}"""
+        'c/d/t/p=1' | """{"qualifiedName": "c/d/t/p=1", "catalogName": "c", "databaseName": "d", "tableName": "t", "partitionName": "p=1"}"""
     }
 
     def 'expect exceptions when requesting parameters that a catalog does not have'() {

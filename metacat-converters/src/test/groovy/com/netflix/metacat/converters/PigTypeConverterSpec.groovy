@@ -32,6 +32,7 @@ class PigTypeConverterSpec extends Specification {
         prestoType == converter.toType(pigType, typeManager)
         where:
         typeString << [
+                "(a1:chararray,a2:chararray)",
                 "{t:(name:chararray)}",
                 "map[]",
                 "bytearray",

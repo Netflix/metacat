@@ -116,7 +116,7 @@ public class QualifiedName implements Serializable {
         case 3:
             return ofTable(parts[0], parts[1], parts[2]);
         case 4:
-            if( isView){
+            if( isView || !parts[3].contains("=")){
                 return ofView(parts[0], parts[1], parts[2], parts[3]);
             } else {
                 return ofPartition(parts[0], parts[1], parts[2], parts[3]);
