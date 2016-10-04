@@ -975,7 +975,7 @@ class MetacatFunctionalSpec extends Specification {
         when:
         api.createMView(name.catalogName, name.databaseName, name.tableName, viewName, false, null)
         def views = api.getMViews(name.catalogName, name.databaseName, name.tableName)
-        def viewNames = views.collect{it.getName}
+        def viewNames = views.collect{it.getName()}
 
         then:
         viewNames.contains(viewQName)
