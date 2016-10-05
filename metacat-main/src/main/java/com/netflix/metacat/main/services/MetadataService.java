@@ -15,10 +15,12 @@ package com.netflix.metacat.main.services;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.netflix.metacat.common.MetacatContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.util.MetacatContextManager;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +52,9 @@ public class MetadataService {
             List<String> uris = userMetadataService.getDeletedDataMetadataUris(priorTo.toDate());
             log.info("Count of deleted marked data metadata: {}", uris.size());
             List<List<String>> subListsUris = Lists.partition( uris, 5000);
+            MetacatContext metacatContext = MetacatContextManager.getContext();
             subListsUris.parallelStream().forEach(subUris -> {
+                MetacatContextManager.setContext(metacatContext);
                 Map<String, List<QualifiedName>> uriQualifiedNames = partitionService.getQualifiedNames( subUris, false);
                 List<String> canDeleteMetadataForUris = subUris.parallelStream()
                         .filter(s -> !Strings.isNullOrEmpty(s))
@@ -58,10 +62,11 @@ public class MetadataService {
                         .collect(Collectors.toList());
                 log.info("Start deleting data metadata: {}", canDeleteMetadataForUris.size());
                 userMetadataService.deleteDataMetadatas(canDeleteMetadataForUris);
+                MetacatContextManager.removeContext();
             });
         } catch(Exception e){
             CounterWrapper.incrementCounter("dse.metacat.processDeletedDataMetadata");
-            log.warn("Failed deleting data metadata");
+            log.warn("Failed deleting data metadata", e);
         }
         log.info("End deleting data metadata");
     }
