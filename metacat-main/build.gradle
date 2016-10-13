@@ -22,7 +22,9 @@ dependencies {
     testCompile project(':metacat-user-metadata-mysql')
 
     compile 'org.elasticsearch:elasticsearch:1.7.1'
-    compile 'com.github.rholder:guava-retrying:2.0.0'
+    compile ('com.github.rholder:guava-retrying:2.0.0'){
+        exclude module: 'guava'
+    }
 
     compile "com.facebook.presto:presto-main:${presto_version}"
 
