@@ -161,11 +161,15 @@ public class S3SplitDetailManager implements ConnectorSplitDetailManager{
         }).collect(Collectors.toList());
         //
         if( pageable != null && pageable.isPageable() && !Strings.isNullOrEmpty(filterExpression)){
-            int limit = pageable.getLimit();
+            int limit = pageable.getOffset() + pageable.getLimit();
             if( result.size() < limit){
                 limit = result.size();
             }
-            result = result.subList(pageable.getOffset(), limit);
+            if( pageable.getOffset() > limit) {
+                result = Lists.newArrayList();
+            } else {
+                result = result.subList(pageable.getOffset(), limit);
+            }
         }
         return result;
     }
