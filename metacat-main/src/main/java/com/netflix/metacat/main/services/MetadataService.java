@@ -48,22 +48,30 @@ public class MetadataService {
         // If uri is not used then delete the entry from data_metadata
         log.info("Start deleting data metadata");
         try {
-            DateTime priorTo = DateTime.now().minusDays(config.getDataMetadataDeleteMarkerLifetimeInDays());
-            List<String> uris = userMetadataService.getDeletedDataMetadataUris(priorTo.toDate());
-            log.info("Count of deleted marked data metadata: {}", uris.size());
-            List<List<String>> subListsUris = Lists.partition( uris, 5000);
+            final DateTime priorTo = DateTime.now().minusDays(config.getDataMetadataDeleteMarkerLifetimeInDays());
+            final int limit = 100000;
             MetacatContext metacatContext = MetacatContextManager.getContext();
-            subListsUris.parallelStream().forEach(subUris -> {
-                MetacatContextManager.setContext(metacatContext);
-                Map<String, List<QualifiedName>> uriQualifiedNames = partitionService.getQualifiedNames( subUris, false);
-                List<String> canDeleteMetadataForUris = subUris.parallelStream()
-                        .filter(s -> !Strings.isNullOrEmpty(s))
-                        .filter(s -> uriQualifiedNames.get(s)== null || uriQualifiedNames.get(s).size() == 0)
-                        .collect(Collectors.toList());
-                log.info("Start deleting data metadata: {}", canDeleteMetadataForUris.size());
-                userMetadataService.deleteDataMetadatas(canDeleteMetadataForUris);
-                MetacatContextManager.removeContext();
-            });
+            while(true) {
+                List<String> uris = userMetadataService.getDeletedDataMetadataUris(priorTo.toDate(), 0, limit);
+                log.info("Count of deleted marked data metadata: {}", uris.size());
+                if( uris.size() > 0) {
+                    List<List<String>> subListsUris = Lists.partition(uris, 1000);
+                    subListsUris.parallelStream().forEach(subUris -> {
+                        MetacatContextManager.setContext(metacatContext);
+                        Map<String, List<QualifiedName>> uriQualifiedNames = partitionService.getQualifiedNames(subUris, false);
+                        List<String> canDeleteMetadataForUris = subUris.parallelStream()
+                                .filter(s -> !Strings.isNullOrEmpty(s))
+                                .filter(s -> uriQualifiedNames.get(s) == null || uriQualifiedNames.get(s).size() == 0)
+                                .collect(Collectors.toList());
+                        log.info("Start deleting data metadata: {}", canDeleteMetadataForUris.size());
+                        userMetadataService.deleteDataMetadatas(canDeleteMetadataForUris);
+                        MetacatContextManager.removeContext();
+                    });
+                }
+                if( uris.size() < limit){
+                    break;
+                }
+            }
         } catch(Exception e){
             CounterWrapper.incrementCounter("dse.metacat.processDeletedDataMetadata");
             log.warn("Failed deleting data metadata", e);

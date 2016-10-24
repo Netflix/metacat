@@ -104,7 +104,7 @@ public class ArchaiusConfigImpl implements Config {
                 .getStringProperty("metacat.elacticsearch.refresh.include.databases", null,
                         this::setQualifiedNamesToElasticSearchRefreshIncludeDatabases);
         setQualifiedNamesToElasticSearchRefreshIncludeDatabases();
-        this.dataMetadataDeleteMarkerLifetimeInDays = factory.getIntProperty("metacat.data.metadata.delete.marker.lifetime.days", 30);
+        this.dataMetadataDeleteMarkerLifetimeInDays = factory.getIntProperty("metacat.data.metadata.delete.marker.lifetime.days", 15);
     }
 
     private void setQualifiedNamesToElasticSearchRefreshExcludeQualifiedNames() {

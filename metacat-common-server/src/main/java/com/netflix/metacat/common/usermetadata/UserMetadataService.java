@@ -78,5 +78,5 @@ public interface UserMetadataService {
 
     List<QualifiedName> searchByOwners(Set<String> owners);
 
-    List<String> getDeletedDataMetadataUris(Date deletedPriorTo);
+    List<String> getDeletedDataMetadataUris(Date deletedPriorTo, Integer offset, Integer limit);
 }
