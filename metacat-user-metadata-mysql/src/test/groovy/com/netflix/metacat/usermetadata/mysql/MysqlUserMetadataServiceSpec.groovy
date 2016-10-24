@@ -69,12 +69,26 @@ class MysqlUserMetadataServiceSpec extends BaseSpec{
         mysqlUserMetadataService.deleteMetadatas("test", tables)
         then:
         mysqlUserMetadataService.getDefinitionMetadataMap(names).size() == 0
+        mysqlUserMetadataService.getDescendantDataUris('s3:/a').size() == 0
         sleep(1000)
-        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date()).size() == 6
-        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date(1,1,1)).size() == 0
+        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date(), 0, 10).size() == 0
+        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date(1,1,1), 0, 10).size() == 0
         when:
         mysqlUserMetadataService.deleteDataMetadatas(uris)
         then:
-        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date()).size() == 1
+        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date(), 0, 10).size() == 0
+        when:
+        mysqlUserMetadataService.saveMetadatas( userName, partitions, true)
+        mysqlUserMetadataService.deleteMetadatas("test", partitions)
+        then:
+        mysqlUserMetadataService.getDefinitionMetadataMap(names).size() == 0
+        mysqlUserMetadataService.getDescendantDataUris('s3:/a').size() == 5
+        sleep(1000)
+        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date(), 0, 10).size() == 5
+        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date(1,1,1), 0, 10).size() == 0
+        when:
+        mysqlUserMetadataService.deleteDataMetadatas(uris)
+        then:
+        mysqlUserMetadataService.getDeletedDataMetadataUris(new Date(), 0, 10).size() == 0
     }
 }
