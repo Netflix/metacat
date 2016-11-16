@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -52,9 +53,14 @@ public class MetadataService {
             final int limit = 100000;
             MetacatContext metacatContext = MetacatContextManager.getContext();
             while(true) {
-                List<String> uris = userMetadataService.getDeletedDataMetadataUris(priorTo.toDate(), 0, limit);
-                log.info("Count of deleted marked data metadata: {}", uris.size());
-                if( uris.size() > 0) {
+                List<String> urisToDelete = userMetadataService.getDeletedDataMetadataUris(priorTo.toDate(), 0, limit);
+                log.info("Count of deleted marked data metadata: {}", urisToDelete.size());
+                if( urisToDelete.size() > 0) {
+                    List<String> uris = urisToDelete.parallelStream().filter(uri -> !uri.contains("="))
+                            .map(uri -> userMetadataService.getDescendantDataUris(uri))
+                            .flatMap(Collection::stream).collect(Collectors.toList());
+                    uris.addAll(urisToDelete);
+                    log.info("Count of deleted marked data metadata (including descendants) : {}", uris.size());
                     List<List<String>> subListsUris = Lists.partition(uris, 1000);
                     subListsUris.parallelStream().forEach(subUris -> {
                         MetacatContextManager.setContext(metacatContext);
@@ -68,7 +74,7 @@ public class MetadataService {
                         MetacatContextManager.removeContext();
                     });
                 }
-                if( uris.size() < limit){
+                if( urisToDelete.size() < limit){
                     break;
                 }
             }

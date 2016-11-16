@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 public class ArchaiusConfigImpl implements Config {
     private final DynamicStringProperty defaultTypeConverter;
+    private final DynamicBooleanProperty isElasticSearchEnabled;
     private final DynamicStringProperty elasticSearchIndexName;
     private final DynamicStringProperty elasticSearchClusterName;
     private final DynamicStringProperty elasticSearchClusterNodes;
@@ -56,6 +57,9 @@ public class ArchaiusConfigImpl implements Config {
     private List<QualifiedName> qualifiedNamesElasticSearchRefreshExclude;
     private List<QualifiedName> qualifiedNamesElasticSearchRefreshIncludeDatabases;
     private final DynamicIntProperty dataMetadataDeleteMarkerLifetimeInDays;
+    private final DynamicBooleanProperty canSoftDeleteDataMetadata;
+    private final DynamicBooleanProperty canCascadeViewsMetadataOnTableDelete;
+    private final DynamicIntProperty userMetadataMaxInClauseItems;
 
     public ArchaiusConfigImpl() {
         this(DynamicPropertyFactory.getInstance());
@@ -64,6 +68,7 @@ public class ArchaiusConfigImpl implements Config {
     public ArchaiusConfigImpl(DynamicPropertyFactory factory) {
         this.defaultTypeConverter = factory
                 .getStringProperty("metacat.type.converter", "com.netflix.metacat.converters.impl.PrestoTypeConverter");
+        this.isElasticSearchEnabled = factory.getBooleanProperty("metacat.elacticsearch.enabled", true);
         this.elasticSearchIndexName = factory.getStringProperty("metacat.elacticsearch.index.name", "metacat");
         this.elasticSearchClusterName = factory.getStringProperty("metacat.elacticsearch.cluster.name", null);
         this.elasticSearchClusterNodes = factory.getStringProperty("metacat.elacticsearch.cluster.nodes", null);
@@ -105,6 +110,9 @@ public class ArchaiusConfigImpl implements Config {
                         this::setQualifiedNamesToElasticSearchRefreshIncludeDatabases);
         setQualifiedNamesToElasticSearchRefreshIncludeDatabases();
         this.dataMetadataDeleteMarkerLifetimeInDays = factory.getIntProperty("metacat.data.metadata.delete.marker.lifetime.days", 15);
+        this.canSoftDeleteDataMetadata = factory.getBooleanProperty("metacat.user.metadata.soft_delete", true);
+        this.canCascadeViewsMetadataOnTableDelete = factory.getBooleanProperty("metacat.table.delete.cascade.views.metadata", true);
+        this.userMetadataMaxInClauseItems = factory.getIntProperty("metacat.user.metadata.max_in_clause_items", 2500);
     }
 
     private void setQualifiedNamesToElasticSearchRefreshExcludeQualifiedNames() {
@@ -143,6 +151,11 @@ public class ArchaiusConfigImpl implements Config {
     @Override
     public String getDefaultTypeConverter() {
         return defaultTypeConverter.get();
+    }
+
+    @Override
+    public boolean isElasticSearchEnabled() {
+        return isElasticSearchEnabled.get();
     }
 
     @Override
@@ -273,5 +286,20 @@ public class ArchaiusConfigImpl implements Config {
     @Override
     public int getDataMetadataDeleteMarkerLifetimeInDays() {
         return dataMetadataDeleteMarkerLifetimeInDays.get();
+    }
+
+    @Override
+    public boolean canSoftDeleteDataMetadata() {
+        return canSoftDeleteDataMetadata.get();
+    }
+
+    @Override
+    public boolean canCascadeViewsMetadataOnTableDelete() {
+        return canCascadeViewsMetadataOnTableDelete.get();
+    }
+
+    @Override
+    public int getUserMetadataMaxInClauseItems() {
+        return userMetadataMaxInClauseItems.get();
     }
 }

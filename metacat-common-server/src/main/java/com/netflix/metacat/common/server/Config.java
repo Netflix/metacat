@@ -19,6 +19,7 @@ import java.util.List;
 
 public interface Config {
     String getDefaultTypeConverter();
+    boolean isElasticSearchEnabled();
     String getElasticSearchClusterName();
     String getElasticSearchClusterNodes();
     int getElasticSearchClusterPort();
@@ -45,4 +46,7 @@ public interface Config {
     List<QualifiedName> getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions();
     String getEsIndex();
     int getDataMetadataDeleteMarkerLifetimeInDays();
+    boolean canSoftDeleteDataMetadata();
+    boolean canCascadeViewsMetadataOnTableDelete();
+    int getUserMetadataMaxInClauseItems();
 }

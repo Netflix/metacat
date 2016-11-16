@@ -26,6 +26,7 @@ import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.HasMetadata;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonException;
+import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.usermetadata.UserMetadataServiceException;
 import com.netflix.metacat.common.util.DBUtil;
@@ -64,16 +65,17 @@ import static com.google.common.base.Preconditions.checkState;
 public class MysqlUserMetadataService extends BaseUserMetadataService {
     private static final Logger log = LoggerFactory.getLogger(MysqlUserMetadataService.class);
     public static final String NAME_DATASOURCE = "metacat-usermetadata";
-    private static final int MAX_IN_CLAUSE_ITEMS = 1000;
     private Properties connectionProperties;
     private final DataSourceManager dataSourceManager;
     private final MetacatJson metacatJson;
+    private final Config config;
     private DataSource poolingDataSource = null;
 
     @Inject
-    public MysqlUserMetadataService(DataSourceManager dataSourceManager, MetacatJson metacatJson) {
+    public MysqlUserMetadataService(DataSourceManager dataSourceManager, MetacatJson metacatJson, Config config) {
         this.dataSourceManager = dataSourceManager;
         this.metacatJson = metacatJson;
+        this.config = config;
     }
 
     @Override
@@ -81,7 +83,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         try{
             Connection conn = poolingDataSource.getConnection();
             try {
-                List<List<String>> subLists = Lists.partition(uris, MAX_IN_CLAUSE_ITEMS);
+                List<List<String>> subLists = Lists.partition(uris, config.getUserMetadataMaxInClauseItems());
                 for (List<String> subUris : subLists) {
                     _softDeleteDataMetadatas(conn, user, subUris);
                 }
@@ -103,7 +105,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         try{
             Connection conn = poolingDataSource.getConnection();
             try {
-                List<List<String>> subLists = Lists.partition(uris, MAX_IN_CLAUSE_ITEMS);
+                List<List<String>> subLists = Lists.partition(uris, config.getUserMetadataMaxInClauseItems());
                 for (List<String> subUris : subLists) {
                     _deleteDataMetadatas(conn, subUris);
                 }
@@ -125,7 +127,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         try{
             Connection conn = poolingDataSource.getConnection();
             try {
-                List<List<QualifiedName>> subLists = Lists.partition( names, MAX_IN_CLAUSE_ITEMS);
+                List<List<QualifiedName>> subLists = Lists.partition( names, config.getUserMetadataMaxInClauseItems());
                 for(List<QualifiedName> subNames: subLists) {
                     _deleteDefinitionMetadatas(conn, subNames);
                 }
@@ -147,7 +149,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         try{
             Connection conn = poolingDataSource.getConnection();
             try {
-                List<List<HasMetadata>> subLists = Lists.partition( holders, MAX_IN_CLAUSE_ITEMS);
+                List<List<HasMetadata>> subLists = Lists.partition( holders, config.getUserMetadataMaxInClauseItems());
                 for(List<HasMetadata> hasMetadatas: subLists) {
                     List<QualifiedName> names = hasMetadatas.stream()
                             .filter(m -> m instanceof HasDefinitionMetadata)
@@ -156,11 +158,13 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     if( !names.isEmpty()) {
                         _deleteDefinitionMetadatas(conn, names);
                     }
-                    List<String> uris = hasMetadatas.stream()
-                            .filter(m -> m instanceof HasDataMetadata && ((HasDataMetadata)m).isDataExternal())
-                            .map(m -> ((HasDataMetadata)m).getDataUri()).collect(Collectors.toList());
-                    if( !uris.isEmpty()){
-                        _softDeleteDataMetadatas(conn, userId, uris);
+                    if( config.canSoftDeleteDataMetadata()) {
+                        List<String> uris = hasMetadatas.stream()
+                                .filter(m -> m instanceof HasDataMetadata && ((HasDataMetadata) m).isDataExternal())
+                                .map(m -> ((HasDataMetadata) m).getDataUri()).collect(Collectors.toList());
+                        if (!uris.isEmpty()) {
+                            _softDeleteDataMetadatas(conn, userId, uris);
+                        }
                     }
                 }
                 conn.commit();
@@ -197,8 +201,11 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 List<String> idParamVariables = ids.stream().map(s -> "?").collect(Collectors.toList());
                 Long[] aIds = ids.stream().toArray(Long[]::new);
                 String idParamString = Joiner.on(",").skipNulls().join(idParamVariables);
-                new QueryRunner().update(conn,
-                        String.format(SQL.DELETE_DATA_METADATA_DELETE, idParamString), (Object[]) aIds);
+                List<Long> dupIds = new QueryRunner().query( conn,
+                        String.format(SQL.GET_DATA_METADATA_DELETE_BY_IDS, idParamString), handler, (Object[]) aIds);
+                if( !dupIds.isEmpty()){
+                    ids.removeAll(dupIds);
+                }
                 final List<Object[]> deleteDataMetadatas = Lists.newArrayList();
                 ids.forEach(id -> deleteDataMetadatas.add(new Object[] { id, userId }));
                 new QueryRunner().batch(conn, SQL.SOFT_DELETE_DATA_METADATA,
@@ -242,7 +249,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             List<String> uris) {
         Map<String,ObjectNode> result = Maps.newHashMap();
         if( !uris.isEmpty()) {
-            List<List<String>> parts = Lists.partition(uris, MAX_IN_CLAUSE_ITEMS);
+            List<List<String>> parts = Lists.partition(uris, config.getUserMetadataMaxInClauseItems());
             parts.stream().forEach(keys -> result.putAll(_getMetadataMap(keys, SQL.GET_DATA_METADATAS)));
         }
         return result;
@@ -290,7 +297,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @Override
     public Map<String, ObjectNode> getDefinitionMetadataMap(@Nonnull List<QualifiedName> names) {
         if (!names.isEmpty()) {
-            List<List<QualifiedName>> parts = Lists.partition(names, MAX_IN_CLAUSE_ITEMS);
+            List<List<QualifiedName>> parts = Lists.partition(names, config.getUserMetadataMaxInClauseItems());
             return parts.stream()
                     .map(keys -> _getMetadataMap(keys, SQL.GET_DEFINITION_METADATAS))
                     .flatMap(it -> it.entrySet().stream())
@@ -345,7 +352,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while( resultSet.next()){
                     String key = resultSet.getString(1);
-                    if( keyValue.equals( key)){
+                    if( keyValue.equalsIgnoreCase( key)){
                         json = resultSet.getString(2);
                         if (Strings.isNullOrEmpty(json)) {
                             return Optional.empty();
@@ -455,7 +462,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             Connection conn = poolingDataSource.getConnection();
             try {
                 @SuppressWarnings("unchecked")
-                List<List<HasMetadata>> subLists = Lists.partition((List<HasMetadata>) metadatas, MAX_IN_CLAUSE_ITEMS);
+                List<List<HasMetadata>> subLists = Lists.partition((List<HasMetadata>) metadatas,
+                        config.getUserMetadataMaxInClauseItems());
                 for (List<HasMetadata> hasMetadatas : subLists) {
                     List<String> uris = Lists.newArrayList();
                     List<QualifiedName> names = Lists.newArrayList();
@@ -707,31 +715,32 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     private static class SQL {
-        public static final String SOFT_DELETE_DATA_METADATA = "insert into data_metadata_delete(id, created_by,date_created) values (?,?, now())";
-        public static final String GET_DATA_METADATA_IDS = "select id from data_metadata where uri in (%s)";
-        public static final String DELETE_DATA_METADATA_DELETE = "delete from data_metadata_delete where id in (%s)";
-        public static final String DELETE_DATA_METADATA = "delete from data_metadata where id in (%s)";
-        public static final String DELETE_DEFINITION_METADATA = "delete from definition_metadata where name in (%s)";
-        public static final String GET_DATA_METADATA = "select uri name, data from data_metadata where uri=?";
-        public static final String GET_DELETED_DATA_METADATA_URI = "select uri from data_metadata_delete dmd join data_metadata dm on dmd.id=dm.id where dmd.date_created < ? limit %d,%d";
-        public static final String GET_DESCENDANT_DATA_URIS = "select uri from data_metadata where uri like ?";
-        public static final String GET_DESCENDANT_DEFINITION_NAMES = "select name from definition_metadata where name like ?";
-        public static final String GET_DATA_METADATAS = "select uri name,data from data_metadata where uri in (%s)";
-        public static final String GET_DEFINITION_METADATA = "select name, data from definition_metadata where name=?";
-        public static final String GET_DEFINITION_METADATAS = "select name,data from definition_metadata where name in (%s)";
-        public static final String SEARCH_DEFINITION_METADATAS = "select name,data from definition_metadata where 1=1";
-        public static final String SEARCH_DEFINITION_METADATA_NAMES = "select name from definition_metadata";
-        public static final String INSERT_DATA_METADATA = "insert into data_metadata " +
+        static final String SOFT_DELETE_DATA_METADATA = "insert into data_metadata_delete(id, created_by,date_created) values (?,?, now())";
+        static final String GET_DATA_METADATA_IDS = "select id from data_metadata where uri in (%s)";
+        static final String GET_DATA_METADATA_DELETE_BY_IDS = "select id from data_metadata_delete where id in (%s)";
+        static final String DELETE_DATA_METADATA_DELETE = "delete from data_metadata_delete where id in (%s)";
+        static final String DELETE_DATA_METADATA = "delete from data_metadata where id in (%s)";
+        static final String DELETE_DEFINITION_METADATA = "delete from definition_metadata where name in (%s)";
+        static final String GET_DATA_METADATA = "select uri name, data from data_metadata where uri=?";
+        static final String GET_DELETED_DATA_METADATA_URI = "select uri from data_metadata_delete dmd join data_metadata dm on dmd.id=dm.id where dmd.date_created < ? limit %d,%d";
+        static final String GET_DESCENDANT_DATA_URIS = "select uri from data_metadata where uri like ?";
+        static final String GET_DESCENDANT_DEFINITION_NAMES = "select name from definition_metadata where name like ?";
+        static final String GET_DATA_METADATAS = "select uri name,data from data_metadata where uri in (%s)";
+        static final String GET_DEFINITION_METADATA = "select name, data from definition_metadata where name=?";
+        static final String GET_DEFINITION_METADATAS = "select name,data from definition_metadata where name in (%s)";
+        static final String SEARCH_DEFINITION_METADATAS = "select name,data from definition_metadata where 1=1";
+        static final String SEARCH_DEFINITION_METADATA_NAMES = "select name from definition_metadata";
+        static final String INSERT_DATA_METADATA = "insert into data_metadata " +
                 "(data, created_by, last_updated_by, date_created, last_updated, version, uri) values " +
                 "(?, ?, ?, now(), now(), 0, ?)";
-        public static final String INSERT_DEFINITION_METADATA = "insert into definition_metadata " +
+        static final String INSERT_DEFINITION_METADATA = "insert into definition_metadata " +
                 "(data, created_by, last_updated_by, date_created, last_updated, version, name) values " +
                 "(?, ?, ?, now(), now(), 0, ?)";
-        public static final String RENAME_DATA_METADATA = "update data_metadata set uri=? where uri=?";
-        public static final String RENAME_DEFINITION_METADATA = "update definition_metadata set name=? where name=?";
-        public static final String UPDATE_DATA_METADATA = "update data_metadata " +
+        static final String RENAME_DATA_METADATA = "update data_metadata set uri=? where uri=?";
+        static final String RENAME_DEFINITION_METADATA = "update definition_metadata set name=? where name=?";
+        static final String UPDATE_DATA_METADATA = "update data_metadata " +
                 "set data=?, last_updated=now(), last_updated_by=? where uri=?";
-        public static final String UPDATE_DEFINITION_METADATA = "update definition_metadata " +
+        static final String UPDATE_DEFINITION_METADATA = "update definition_metadata " +
                 "set data=?, last_updated=now(), last_updated_by=? where name=?";
     }
 }
