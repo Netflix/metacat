@@ -11,8 +11,6 @@ install:
   # Update docker-engine using Ubuntu 'trusty' apt repo
   - curl -sSL "https://get.docker.com/gpg" | sudo -E apt-key add -
   - echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" | sudo tee -a /etc/apt/sources.list
-  - sudo apt-get update
-  - sudo apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" --assume-yes install docker-engine
   - docker version
   # Update docker-compose via pip
   - sudo pip install docker-compose
