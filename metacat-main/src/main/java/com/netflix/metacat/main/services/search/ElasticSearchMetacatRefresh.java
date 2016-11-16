@@ -13,10 +13,7 @@
 
 package com.netflix.metacat.main.services.search;
 
-import com.facebook.presto.spi.NotFoundException;
-import com.facebook.presto.spi.Pageable;
-import com.facebook.presto.spi.Sort;
-import com.facebook.presto.spi.SortOrder;
+import com.facebook.presto.spi.*;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Splitter;
@@ -302,7 +299,7 @@ public class ElasticSearchMetacatRefresh {
                         if (dto == null) {
                             result = true;
                         }
-                    } catch (NotFoundException | MetacatNotFoundException ignored) {
+                    } catch (SchemaNotFoundException ignored) {
                         result = true;
                     } catch (Exception ignored) {}
                     return result;
@@ -339,8 +336,6 @@ public class ElasticSearchMetacatRefresh {
                         if (!dto.isPresent()) {
                             result = true;
                         }
-                    } catch (NotFoundException | MetacatNotFoundException ignored) {
-                        result = true;
                     } catch (Exception ignored) {}
                     return result;
                 }).collect(Collectors.toList());
