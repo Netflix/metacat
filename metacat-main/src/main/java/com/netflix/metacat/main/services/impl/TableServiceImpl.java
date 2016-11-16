@@ -35,6 +35,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
+import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.usermetadata.TagService;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.ThreadServiceManager;
@@ -84,6 +85,8 @@ public class TableServiceImpl implements TableService {
     PartitionService partitionService;
     @Inject
     ThreadServiceManager threadServiceManager;
+    @Inject
+    Config config;
     private static final String NAME_TAGS = "tags";
 
     @Override
@@ -158,7 +161,7 @@ public class TableServiceImpl implements TableService {
         userMetadataService.deleteMetadatas(session.getUser(), Lists.newArrayList(tableDto));
         log.info("Deleting tags for table {}", name);
         tagService.delete(name, false);
-        if( !isMView){
+        if( config.canCascadeViewsMetadataOnTableDelete() && !isMView){
             // Spawning off since this is a time consuming task
             threadServiceManager.getExecutor().submit(() -> {
                 try {
@@ -176,16 +179,6 @@ public class TableServiceImpl implements TableService {
                     }
                 } catch(Exception e){
                     log.warn("Failed cleaning partition definition metadata after deleting table {}", name);
-                }
-                try {
-                    if( tableDto.isDataExternal()) {
-                        List<String> uris = userMetadataService.getDescendantDataUris(tableDto.getDataUri());
-                        if (!uris.isEmpty()) {
-                            userMetadataService.softDeleteDataMetadatas(session.getUser(), uris);
-                        }
-                    }
-                } catch(Exception e){
-                    log.warn("Failed cleaning partition data metadata after deleting table {}", name);
                 }
             });
         }

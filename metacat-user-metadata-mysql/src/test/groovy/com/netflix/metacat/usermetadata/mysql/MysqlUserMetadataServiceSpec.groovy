@@ -80,6 +80,7 @@ class MysqlUserMetadataServiceSpec extends BaseSpec{
         when:
         mysqlUserMetadataService.saveMetadatas( userName, partitions, true)
         mysqlUserMetadataService.deleteMetadatas("test", partitions)
+        mysqlUserMetadataService.deleteMetadatas("test", partitions)
         then:
         mysqlUserMetadataService.getDefinitionMetadataMap(names).size() == 0
         mysqlUserMetadataService.getDescendantDataUris('s3:/a').size() == 5
