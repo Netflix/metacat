@@ -20,7 +20,7 @@ buildscript {
 }
 
 plugins {
-    id 'nebula.netflixoss' version '3.4.0'
+    id 'nebula.netflixoss' version '3.5.2'
 }
 
 ext.githubProjectName = rootProject.name
@@ -46,10 +46,12 @@ subprojects {
     targetCompatibility = 1.8
 
     dependencies {
+        compileOnly "org.projectlombok:lombok:1.16.10"
         testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
         testCompile 'org.spockframework:spock-guice:1.0-groovy-2.4'
         testCompile 'org.codehaus.gpars:gpars:1.2.1'
         testCompile 'org.objenesis:objenesis:2.2' // Required by spock to mock classes
+        testCompile "cglib:cglib-nodep:3.2.4"
     }
 
     /* checkstyle { */
@@ -66,7 +68,7 @@ subprojects {
     /*     reports.html.enabled true */
     /* } */
 
-// Print out full stack traces when our tests fail to assist debugging (e.g., when scanning Jenkins console output)
+    // Print out full stack traces when our tests fail to assist debugging (e.g., when scanning Jenkins console output)
     tasks.withType(Test) {
         testLogging {
             exceptionFormat = 'full'

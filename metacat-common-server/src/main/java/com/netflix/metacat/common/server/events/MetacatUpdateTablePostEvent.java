@@ -1,60 +1,53 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.server.events;
 
-import com.netflix.metacat.common.MetacatContext;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.TableDto;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
-import java.util.Objects;
+import javax.validation.constraints.NotNull;
 
+@Getter
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class MetacatUpdateTablePostEvent extends MetacatEvent {
-    private TableDto dto;
+    private TableDto oldTable;
+    private TableDto currentTable;
 
-    public MetacatUpdateTablePostEvent(TableDto dto, MetacatContext metacatContext) {
-        super(dto!=null?dto.getName():null, metacatContext);
-        this.dto = dto;
-    }
-
-    public MetacatUpdateTablePostEvent(QualifiedName name, MetacatContext metacatContext) {
-        super(name, metacatContext);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof MetacatUpdateTablePostEvent)) return false;
-        if (!super.equals(o)) return false;
-        MetacatUpdateTablePostEvent that = (MetacatUpdateTablePostEvent) o;
-        return Objects.equals(dto, that.dto);
-    }
-
-    public TableDto getDto() {
-        return dto;
-    }
-
-    public void setDto(TableDto dto) {
-        this.dto = dto;
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * super.hashCode() + Objects.hash(dto);
-    }
-
-    @Override
-    public String toString() {
-        return "MetacatUpdateTablePostEvent{dto=" + dto + '}';
+    /**
+     * Constructor.
+     *
+     * @param name           The name of the table that was updated
+     * @param requestContext The metacat request context
+     * @param oldTable       The old DTO representation of the table
+     * @param currentTable   The current DTO representation of the table
+     */
+    public MetacatUpdateTablePostEvent(
+            @NotNull final QualifiedName name,
+            @NotNull final MetacatRequestContext requestContext,
+            @NotNull final TableDto oldTable,
+            @NotNull final TableDto currentTable) {
+        super(name, requestContext);
+        this.oldTable = oldTable;
+        this.currentTable = currentTable;
     }
 }

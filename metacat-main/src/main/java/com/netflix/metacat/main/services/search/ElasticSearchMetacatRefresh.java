@@ -29,7 +29,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.netflix.metacat.common.MetacatContext;
+import com.netflix.metacat.common.MetacatRequestContext;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.CatalogMappingDto;
@@ -232,7 +233,7 @@ public class ElasticSearchMetacatRefresh {
             TimerWrapper timer = TimerWrapper.createStarted("dse.metacat.timer.ElasticSearchMetacatRefresh." + requestName);
             try {
                 log.info("Start: Full refresh of metacat index in elastic search. Processing {} ...", qNames);
-                MetacatContext context = new MetacatContext( "admin", "elasticSearchRefresher", null, null, null);
+                MetacatRequestContext context = new MetacatRequestContext( "admin", "elasticSearchRefresher", null, null, null);
                 MetacatContextManager.setContext(context);
                 refreshMarker = Instant.now();
                 refreshMarkerText = refreshMarker.toString();
@@ -290,7 +291,7 @@ public class ElasticSearchMetacatRefresh {
         // delete
         //
         elasticSearchUtil.refresh();
-        MetacatContext context = new MetacatContext("admin", "metacat-refresh", null, null, null);
+        MetacatRequestContext context = new MetacatRequestContext("admin", "metacat-refresh", null, null, null);
 
         List<DatabaseDto> unmarkedDatabaseDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames("database", qNames, refreshMarker, excludeQualifiedNames, DatabaseDto.class);
         if( !unmarkedDatabaseDtos.isEmpty()) {

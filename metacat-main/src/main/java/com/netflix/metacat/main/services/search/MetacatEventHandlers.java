@@ -15,7 +15,7 @@ package com.netflix.metacat.main.services.search;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.eventbus.Subscribe;
-import com.netflix.metacat.common.MetacatContext;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.TableDto;
@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Type.database;
@@ -61,49 +60,49 @@ public class MetacatEventHandlers {
 
     @Subscribe
     public void metacatCreateDatabasePostEventHandler(MetacatCreateDatabasePostEvent event) {
-        DatabaseDto dto = event.getDto();
-        ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(),dto,  event.getMetacatContext().getUserName(), false);
-        es.save(database.name(),doc.getId(), doc.toJsonString());
+        DatabaseDto dto = event.getDatabase();
+        ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto, event.getRequestContext().getUserName(), false);
+        es.save(database.name(), doc.getId(), doc.toJsonString());
     }
 
     @Subscribe
     public void metacatCreateMViewPostEventHandler(MetacatCreateMViewPostEvent event) {
-        TableDto dto = event.getDto();
-        ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(),dto,  event.getMetacatContext().getUserName(), false);
+        TableDto dto = event.getTable();
+        ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto, event.getRequestContext().getUserName(), false);
         es.save(mview.name(), doc.getId(), doc.toJsonString());
     }
 
     @Subscribe
     public void metacatCreateTablePostEventHandler(MetacatCreateTablePostEvent event) {
-        TableDto dto = event.getDto();
-        ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(),dto,  event.getMetacatContext().getUserName(), false);
+        TableDto dto = event.getTable();
+        ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto, event.getRequestContext().getUserName(), false);
         es.save(table.name(), doc.getId(), doc.toJsonString());
     }
 
     @Subscribe
     public void metacatDeleteDatabasePostEventHandler(MetacatDeleteDatabasePostEvent event) {
-        DatabaseDto dto = event.getDto();
-        es.softDelete(database.name(), dto.getName().toString(), event.getMetacatContext());
+        DatabaseDto dto = event.getDatabase();
+        es.softDelete(database.name(), dto.getName().toString(), event.getRequestContext());
     }
 
     @Subscribe
     public void metacatDeleteMViewPostEventHandler(MetacatDeleteMViewPostEvent event) {
-        TableDto dto = event.getDto();
-        es.softDelete(mview.name(), dto.getName().toString(), event.getMetacatContext());
+        TableDto dto = event.getTable();
+        es.softDelete(mview.name(), dto.getName().toString(), event.getRequestContext());
     }
 
     @Subscribe
     public void metacatDeleteTablePostEventHandler(MetacatDeleteTablePostEvent event) {
-        TableDto dto = event.getDto();
-        if(MViewServiceImpl.VIEW_DB_NAME.equals(dto.getName().getDatabaseName())){
-            es.softDelete(mview.name(), dto.getName().toString(), event.getMetacatContext());
+        TableDto dto = event.getTable();
+        if (MViewServiceImpl.VIEW_DB_NAME.equals(dto.getName().getDatabaseName())) {
+            es.softDelete(mview.name(), dto.getName().toString(), event.getRequestContext());
         } else {
-            es.softDelete(table.name(), dto.getName().toString(), event.getMetacatContext());
+            es.softDelete(table.name(), dto.getName().toString(), event.getRequestContext());
         }
         try {
             List<String> partitionIdsToBeDeleted = es.getIdsByQualifiedName(partition.name(), dto.getName());
             es.delete(partition.name(), partitionIdsToBeDeleted);
-        } catch(Exception e){
+        } catch (Exception e) {
             log.warn("Failed deleting the partitions for the dropped table/view:{}", dto.getName().toString());
         }
     }
@@ -113,7 +112,7 @@ public class MetacatEventHandlers {
         List<String> partitionIds = event.getPartitionIds();
         List<String> esPartitionIds = partitionIds.stream()
                 .map(partitionId -> event.getName().toString() + "/" + partitionId).collect(Collectors.toList());
-        es.softDelete(partition.name(), esPartitionIds, event.getMetacatContext());
+        es.softDelete(partition.name(), esPartitionIds, event.getRequestContext());
     }
 
     @Subscribe
@@ -121,7 +120,7 @@ public class MetacatEventHandlers {
         List<String> partitionIds = event.getPartitionIds();
         List<String> esPartitionIds = partitionIds.stream()
                 .map(partitionId -> event.getName().toString() + "/" + partitionId).collect(Collectors.toList());
-        es.softDelete(partition.name(), esPartitionIds, event.getMetacatContext());
+        es.softDelete(partition.name(), esPartitionIds, event.getRequestContext());
     }
 
 
@@ -129,50 +128,41 @@ public class MetacatEventHandlers {
     public void metacatRenameTablePostEventHandler(MetacatRenameTablePostEvent event) {
         es.delete(table.name(), event.getName().toString());
 
-        TableDto dto = event.getDto();
-        ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(),dto,  event.getMetacatContext().getUserName(), false);
+        TableDto dto = event.getCurrentTable();
+        ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto, event.getRequestContext().getUserName(), false);
         es.save(table.name(), doc.getId(), doc.toJsonString());
     }
 
     @Subscribe
     public void metacatUpdateMViewPostEventHandler(MetacatUpdateMViewPostEvent event) {
-        TableDto dto = event.getDto();
-        ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(),dto,  event.getMetacatContext().getUserName(), false);
+        TableDto dto = event.getTable();
+        ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto, event.getRequestContext().getUserName(), false);
         es.save(mview.name(), doc.getId(), doc.toJsonString());
     }
 
     @Subscribe
     public void metacatUpdateTablePostEventHandler(MetacatUpdateTablePostEvent event) {
-        TableDto dto = event.getDto();
-        if( dto == null){
-            Optional<TableDto> oDto = tableService.get(event.getName(), true);
-            if( oDto.isPresent()){
-                dto = oDto.get();
-                event.setDto(dto);
-            }
-        }
-        if( dto != null) {
-            ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(),dto,  event.getMetacatContext().getUserName(), false);
-            es.save(table.name(), doc.getId(), doc.toJsonString());
-            updateEntitiesWIthSameUri(table.name(), dto, event.getMetacatContext());
-        }
+        TableDto dto = event.getCurrentTable();
+        ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto, event.getRequestContext().getUserName(), false);
+        es.save(table.name(), doc.getId(), doc.toJsonString());
+        updateEntitiesWIthSameUri(table.name(), dto, event.getRequestContext());
     }
 
-    private void updateEntitiesWIthSameUri(String metadata_type, TableDto dto, MetacatContext metacatContext) {
-        if( dto.isDataExternal()) {
+    private void updateEntitiesWIthSameUri(String metadata_type, TableDto dto, MetacatRequestContext metacatRequestContext) {
+        if (dto.isDataExternal()) {
             List<String> ids = es.getTableIdsByUri(metadata_type, dto.getDataUri());
             ObjectNode node = MetacatJsonLocator.INSTANCE.emptyObjectNode();
             node.put("dataMetadata", dto.getDataMetadata());
-            es.updates(table.name(), ids, metacatContext, node);
+            es.updates(table.name(), ids, metacatRequestContext, node);
         }
     }
 
     @Subscribe
     public void metacatSaveMViewPartitionPostEventHandler(MetacatSaveMViewPartitionPostEvent event) {
         List<PartitionDto> partitionDtos = event.getPartitions();
-        MetacatContext context = event.getMetacatContext();
+        MetacatRequestContext context = event.getRequestContext();
         List<ElasticSearchDoc> docs = partitionDtos.stream()
-                .map(dto -> new ElasticSearchDoc( dto.getName().toString(), dto, context.getUserName(), false))
+                .map(dto -> new ElasticSearchDoc(dto.getName().toString(), dto, context.getUserName(), false))
                 .collect(Collectors.toList());
         es.save(partition.name(), docs);
     }
@@ -180,9 +170,9 @@ public class MetacatEventHandlers {
     @Subscribe
     public void metacatSaveTablePartitionPostEventHandler(MetacatSaveTablePartitionPostEvent event) {
         List<PartitionDto> partitionDtos = event.getPartitions();
-        MetacatContext context = event.getMetacatContext();
+        MetacatRequestContext context = event.getRequestContext();
         List<ElasticSearchDoc> docs = partitionDtos.stream()
-                .map( dto -> new ElasticSearchDoc( dto.getName().toString(), dto, context.getUserName(), false))
+                .map(dto -> new ElasticSearchDoc(dto.getName().toString(), dto, context.getUserName(), false))
                 .collect(Collectors.toList());
         es.save(partition.name(), docs);
     }

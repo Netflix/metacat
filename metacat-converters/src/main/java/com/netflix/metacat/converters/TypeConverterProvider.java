@@ -14,7 +14,7 @@
 package com.netflix.metacat.converters;
 
 import com.google.common.base.Throwables;
-import com.netflix.metacat.common.MetacatContext;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.converters.impl.HiveTypeConverter;
@@ -24,52 +24,60 @@ import com.netflix.metacat.converters.impl.PrestoTypeConverter;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-import static com.netflix.metacat.common.MetacatContext.DATA_TYPE_CONTEXTS.hive;
-import static com.netflix.metacat.common.MetacatContext.DATA_TYPE_CONTEXTS.pig;
-import static com.netflix.metacat.common.MetacatContext.DATA_TYPE_CONTEXTS.presto;
+import static com.netflix.metacat.common.MetacatRequestContext.DataTypeContext.hive;
+import static com.netflix.metacat.common.MetacatRequestContext.DataTypeContext.pig;
+import static com.netflix.metacat.common.MetacatRequestContext.DataTypeContext.presto;
 
 /**
- * Created by amajumdar on 10/7/15.
+ * @author amajumdar
+ * @author tgianos
  */
 public class TypeConverterProvider implements Provider<TypeConverter> {
+
+    private final Config config;
+    private final HiveTypeConverter hiveTypeConverter;
+    private final PigTypeConverter pigTypeConverter;
+    private final PrestoTypeConverter prestoTypeConverter;
+
     @Inject
-    Config config;
-    @Inject
-    HiveTypeConverter hiveTypeConverter;
-    @Inject
-    PigTypeConverter pigTypeConverter;
-    @Inject
-    PrestoTypeConverter prestoTypeConverter;
+    public TypeConverterProvider(
+            final Config config,
+            final HiveTypeConverter hiveTypeConverter,
+            final PigTypeConverter pigTypeConverter,
+            final PrestoTypeConverter prestoTypeConverter
+    ) {
+        this.config = config;
+        this.hiveTypeConverter = hiveTypeConverter;
+        this.pigTypeConverter = pigTypeConverter;
+        this.prestoTypeConverter = prestoTypeConverter;
+    }
 
     @Override
     public TypeConverter get() {
-        MetacatContext metacatContext = MetacatContextManager.getContext();
-        String dataTypeContext = metacatContext.getDataTypeContext();
-        if (hive.name().equalsIgnoreCase(dataTypeContext)) {
-            return hiveTypeConverter;
-        } else if (pig.name().equalsIgnoreCase(dataTypeContext)) {
-            return pigTypeConverter;
-        } else if (presto.name().equalsIgnoreCase(dataTypeContext)) {
-            return prestoTypeConverter;
+        MetacatRequestContext requestContext = MetacatContextManager.getContext();
+        MetacatRequestContext.DataTypeContext dataTypeContext = requestContext.getDataTypeContext();
+
+        if (dataTypeContext == null) {
+            return this.getDefaultConverter();
         } else {
-            return getDefaultConverter();
+            return this.get(dataTypeContext);
         }
     }
 
-    public TypeConverter get(MetacatContext.DATA_TYPE_CONTEXTS context) {
+    public TypeConverter get(MetacatRequestContext.DataTypeContext context) {
         switch (context) {
-        case hive:
-            return hiveTypeConverter;
-        case pig:
-            return pigTypeConverter;
-        case presto:
-            return prestoTypeConverter;
-        default:
-            throw new IllegalArgumentException("No handler for " + context);
+            case hive:
+                return this.hiveTypeConverter;
+            case pig:
+                return this.pigTypeConverter;
+            case presto:
+                return this.prestoTypeConverter;
+            default:
+                throw new IllegalArgumentException("No handler for " + context);
         }
     }
 
-    public TypeConverter getDefaultConverter() {
+    private TypeConverter getDefaultConverter() {
         try {
             return (TypeConverter) Class.forName(config.getDefaultTypeConverter()).newInstance();
         } catch (Exception e) {
@@ -77,7 +85,7 @@ public class TypeConverterProvider implements Provider<TypeConverter> {
         }
     }
 
-    public MetacatContext.DATA_TYPE_CONTEXTS getDefaultConverterType() {
+    public MetacatRequestContext.DataTypeContext getDefaultConverterType() {
         TypeConverter converter = getDefaultConverter();
         if (converter instanceof HiveTypeConverter) {
             return hive;

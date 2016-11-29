@@ -15,7 +15,8 @@ package com.netflix.metacat.main.services;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.netflix.metacat.common.MetacatContext;
+import com.netflix.metacat.common.MetacatRequestContext;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.Config;
@@ -51,7 +52,7 @@ public class MetadataService {
         try {
             final DateTime priorTo = DateTime.now().minusDays(config.getDataMetadataDeleteMarkerLifetimeInDays());
             final int limit = 100000;
-            MetacatContext metacatContext = MetacatContextManager.getContext();
+            MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
             while(true) {
                 List<String> urisToDelete = userMetadataService.getDeletedDataMetadataUris(priorTo.toDate(), 0, limit);
                 log.info("Count of deleted marked data metadata: {}", urisToDelete.size());
@@ -63,7 +64,7 @@ public class MetadataService {
                     log.info("Count of deleted marked data metadata (including descendants) : {}", uris.size());
                     List<List<String>> subListsUris = Lists.partition(uris, 1000);
                     subListsUris.parallelStream().forEach(subUris -> {
-                        MetacatContextManager.setContext(metacatContext);
+                        MetacatContextManager.setContext(metacatRequestContext);
                         Map<String, List<QualifiedName>> uriQualifiedNames = partitionService.getQualifiedNames(subUris, false);
                         List<String> canDeleteMetadataForUris = subUris.parallelStream()
                                 .filter(s -> !Strings.isNullOrEmpty(s))

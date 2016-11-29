@@ -19,35 +19,21 @@ import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.json.MetacatJsonLocator;
+import lombok.Getter;
 import org.elasticsearch.action.get.GetResponse;
 
 import java.util.Map;
 
 /**
- * Created by amajumdar on 8/17/15.
+ * @author amajumdar
  */
+@Getter
 public class ElasticSearchDoc {
-    protected interface Field {
-        public static final String USER = "user_";
-        public static final String DELETED = "deleted_";
-        public static final String REFRESH_MARKER = "refreshMarker_";
-
-    }
-    public enum Type { catalog(CatalogDto.class), database(DatabaseDto.class), table(TableDto.class), mview(TableDto.class), partition(PartitionDto.class);
-        Class clazz;
-        Type(Class clazz) {
-           this.clazz = clazz;
-        }
-
-        public Class getClazz() {
-            return clazz;
-        }
-    }
-    String id;
-    Object dto;
-    String user;
-    boolean deleted;
-    String refreshMarker;
+    private String id;
+    private Object dto;
+    private String user;
+    private boolean deleted;
+    private String refreshMarker;
 
     public ElasticSearchDoc(String id, Object dto, String user, boolean deleted) {
         this.id = id;
@@ -56,7 +42,7 @@ public class ElasticSearchDoc {
         this.deleted = deleted;
     }
 
-    public ElasticSearchDoc(String id, Object dto, String user, boolean deleted, String refreshMarker){
+    public ElasticSearchDoc(String id, Object dto, String user, boolean deleted, String refreshMarker) {
         this.id = id;
         this.dto = dto;
         this.user = user;
@@ -64,53 +50,64 @@ public class ElasticSearchDoc {
         this.refreshMarker = refreshMarker;
     }
 
-    private static Class getClass(String type){
+    private static Class getClass(String type) {
         return Type.valueOf(type).getClazz();
     }
 
-    public ObjectNode toJsonObject(){
+    public static ElasticSearchDoc parse(GetResponse response) {
+        ElasticSearchDoc result = null;
+        if (response.isExists()) {
+            Map<String, Object> responseMap = response.getSourceAsMap();
+            String user = (String) responseMap.get(Field.USER);
+            boolean deleted = (boolean) responseMap.get(Field.DELETED);
+            @SuppressWarnings("unchecked")
+            Object dto = MetacatJsonLocator.INSTANCE.parseJsonValue(
+                    response.getSourceAsBytes(),
+                    getClass(response.getType())
+            );
+            result = new ElasticSearchDoc(response.getId(), dto, user, deleted);
+        }
+        return result;
+    }
+
+    private ObjectNode toJsonObject() {
         ObjectNode oMetadata = MetacatJsonLocator.INSTANCE.toJsonObject(dto);
         //True if this entity has been deleted
         oMetadata.put(Field.DELETED, deleted);
         //True if this entity has been deleted
         oMetadata.put(Field.USER, user);
-        if( refreshMarker != null){
+        if (refreshMarker != null) {
             oMetadata.put(Field.REFRESH_MARKER, refreshMarker);
         }
         return oMetadata;
     }
 
-    public String toJsonString(){
+    String toJsonString() {
         String result = MetacatJsonLocator.INSTANCE.toJsonString(toJsonObject());
         return result.replace("{}", "null");
     }
 
-    public static ElasticSearchDoc parse(GetResponse response){
-        ElasticSearchDoc result = null;
-        if(response.isExists() ){
-            Map<String,Object> responseMap = response.getSourceAsMap();
-            String user = (String) responseMap.get(Field.USER);
-            boolean deleted = (boolean) responseMap.get(Field.DELETED);
-            Object dto = MetacatJsonLocator.INSTANCE.parseJsonValue(response.getSourceAsBytes(), getClass(
-                    response.getType()));
-            result = new ElasticSearchDoc( response.getId(), dto, user, deleted);
+    public enum Type {
+        catalog(CatalogDto.class),
+        database(DatabaseDto.class),
+        table(TableDto.class),
+        mview(TableDto.class),
+        partition(PartitionDto.class);
+
+        private Class clazz;
+
+        Type(Class clazz) {
+            this.clazz = clazz;
         }
-        return result;
+
+        public Class getClazz() {
+            return clazz;
+        }
     }
 
-    public Object getDto() {
-        return dto;
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    public boolean isDeleted() {
-        return deleted;
-    }
-
-    public String getId(){
-        return id;
+    protected interface Field {
+        String USER = "user_";
+        String DELETED = "deleted_";
+        String REFRESH_MARKER = "refreshMarker_";
     }
 }

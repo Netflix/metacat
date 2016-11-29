@@ -19,7 +19,7 @@ import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import com.netflix.metacat.client.module.JacksonDecoder;
 import com.netflix.metacat.client.module.JacksonEncoder;
 import com.netflix.metacat.client.module.MetacatErrorDecoder;
-import com.netflix.metacat.common.MetacatContext;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.MetadataV1;
 import com.netflix.metacat.common.api.PartitionV1;
@@ -167,10 +167,10 @@ public class Client {
                     if( requestInterceptor != null) {
                         requestInterceptor.apply(template);
                     }
-                    template.header(MetacatContext.HEADER_KEY_USER_NAME, userName);
-                    template.header(MetacatContext.HEADER_KEY_CLIENT_APP_NAME, clientAppName);
-                    template.header(MetacatContext.HEADER_KEY_JOB_ID, jobId);
-                    template.header(MetacatContext.HEADER_KEY_DATA_TYPE_CONTEXT, dataTypeContext);
+                    template.header(MetacatRequestContext.HEADER_KEY_USER_NAME, userName);
+                    template.header(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME, clientAppName);
+                    template.header(MetacatRequestContext.HEADER_KEY_JOB_ID, jobId);
+                    template.header(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT, dataTypeContext);
                 }
             };
             if( requestOptions == null){
