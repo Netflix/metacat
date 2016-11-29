@@ -15,20 +15,28 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.common.server.events;
+package com.netflix.metacat.common;
 
-import com.netflix.metacat.common.MetacatRequestContext;
-import com.netflix.metacat.common.QualifiedName;
 import lombok.Data;
 
 /**
- * Event within the Metacat JVM.
+ * The context of the request to Metacat.
  *
  * @author amajumdar
  * @author tgianos
  */
 @Data
-public class MetacatEvent {
-    private final QualifiedName name;
-    private final MetacatRequestContext requestContext;
+public class MetacatRequestContext {
+    public static final String HEADER_KEY_USER_NAME = "X-Netflix.user.name";
+    public static final String HEADER_KEY_CLIENT_APP_NAME = "X-Netflix.client.app.name";
+    public static final String HEADER_KEY_JOB_ID = "X-Netflix.job.id";
+    public static final String HEADER_KEY_DATA_TYPE_CONTEXT = "X-Netflix.data.type.context";
+
+    private final String userName;
+    private final String clientAppName;
+    private final String clientId;
+    private final String jobId;
+    private final DataTypeContext dataTypeContext;
+
+    public enum DataTypeContext {hive, pig, presto}
 }

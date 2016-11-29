@@ -13,7 +13,7 @@
 
 package com.netflix.metacat.main.search
 
-import com.netflix.metacat.common.MetacatContext
+import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.Config
@@ -38,7 +38,7 @@ class BaseEsSpec extends Specification {
     @Shared
     MetacatJson metacatJson
     @Shared
-    MetacatContext metacatContext = new MetacatContext("test", "testApp", "testClientId", "testJobId", null)
+    MetacatRequestContext metacatContext = new MetacatRequestContext("test", "testApp", "testClientId", "testJobId", null)
 
     def setupSpec() {
         Settings settings = ImmutableSettings.settingsBuilder()

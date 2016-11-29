@@ -17,7 +17,7 @@ import com.facebook.presto.Session;
 import com.facebook.presto.metadata.SessionPropertyManager;
 import com.facebook.presto.spi.security.Identity;
 import com.google.inject.Inject;
-import com.netflix.metacat.common.MetacatContext;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.main.connector.MetacatConnectorManager;
@@ -47,7 +47,7 @@ public class SessionProvider {
 
     private Session getSession(String catalogName, String databaseName) {
         String source = metacatConnectorManager.getCatalogConfig(catalogName).getType();
-        MetacatContext context = MetacatContextManager.getContext();
+        MetacatRequestContext context = MetacatContextManager.getContext();
         return Session.builder(sessionPropertyManager)
                 .setIdentity(new Identity(context.getUserName(), Optional.empty()))
                 .setRemoteUserAddress(context.getClientId())

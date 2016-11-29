@@ -13,7 +13,8 @@
 
 package com.netflix.metacat.main.search
 
-import com.netflix.metacat.common.MetacatContext
+import com.netflix.metacat.common.MetacatRequestContext
+import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.util.DataProvider
@@ -97,7 +98,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         given:
         def table = DataProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        es.updates(Type.table.name(), [id], new MetacatContext("testUpdate", null, null, null, null), MetacatJsonLocator.INSTANCE.parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
+        es.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), MetacatJsonLocator.INSTANCE.parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
         def result = es.get(Type.table.name(),id)
         es.refresh()
         def resultByUri = es.getTableIdsByUri(Type.table.name(), uri)
@@ -124,7 +125,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         }
         es.save(Type.table.name(), docs)
         es.refresh()
-        es.delete( new MetacatContext("testUpdate", null, null, null, null), Type.table.name(), softDelete)
+        es.delete( new MetacatRequestContext("testUpdate", null, null, null, null), Type.table.name(), softDelete)
         where:
         catalogName     | databaseName  | tableName     | noOfTables     | softDelete
         'prodhive'      | 'amajumdar'   | 'part'        | 10             | false

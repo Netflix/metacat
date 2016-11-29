@@ -22,7 +22,8 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.netflix.metacat.common.MetacatContext;
+import com.netflix.metacat.common.MetacatRequestContext;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.json.MetacatJson;
@@ -143,14 +144,14 @@ public class ElasticSearchUtil {
      * Marks the document as deleted
      * @param type index type
      * @param id entity id
-     * @param metacatContext context containing the user name
+     * @param metacatRequestContext context containing the user name
      */
-    public void softDelete(String type, String id, MetacatContext metacatContext) {
+    public void softDelete(String type, String id, MetacatRequestContext metacatRequestContext) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
                 XContentBuilder builder = XContentFactory.contentBuilder(contentType);
                 builder.startObject().field(DELETED, true).field(USER,
-                        metacatContext.getUserName()).endObject();
+                        metacatRequestContext.getUserName()).endObject();
                 client.prepareUpdate(esIndex, type, id).setDoc(builder).get();
                 return null;
             });
@@ -165,22 +166,22 @@ public class ElasticSearchUtil {
      * Marks the documents as deleted
      * @param type index type
      * @param ids list of entity ids
-     * @param metacatContext context containing the user name
+     * @param metacatRequestContext context containing the user name
      */
-    public void softDelete(String type, List<String> ids, MetacatContext metacatContext) {
+    public void softDelete(String type, List<String> ids, MetacatRequestContext metacatRequestContext) {
         if( ids != null && !ids.isEmpty()) {
             List<List<String>> partitionedDocs = Lists.partition(ids, 100);
-            partitionedDocs.forEach(subIds -> _softDelete( type, subIds, metacatContext));
+            partitionedDocs.forEach(subIds -> _softDelete( type, subIds, metacatRequestContext));
         }
     }
 
-    private void _softDelete(String type, List<String> ids, MetacatContext metacatContext) {
+    private void _softDelete(String type, List<String> ids, MetacatRequestContext metacatRequestContext) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
                 BulkRequestBuilder bulkRequest = client.prepareBulk();
                 XContentBuilder builder = XContentFactory.contentBuilder(contentType);
                 builder.startObject().field(DELETED, true).field(USER,
-                        metacatContext.getUserName()).endObject();
+                        metacatRequestContext.getUserName()).endObject();
                 ids.forEach(id -> bulkRequest.add( client.prepareUpdate(esIndex, type, id).setDoc(builder)));
                 BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
@@ -206,10 +207,10 @@ public class ElasticSearchUtil {
      * Updates the documents with partial updates with the given fields
      * @param type index type
      * @param ids list of entity ids
-     * @param metacatContext context containing the user name
+     * @param metacatRequestContext context containing the user name
      * @param node json that represents the document source
      */
-    public void updates(String type, List<String> ids, MetacatContext metacatContext, ObjectNode node) {
+    public void updates(String type, List<String> ids, MetacatRequestContext metacatRequestContext, ObjectNode node) {
         if(ids == null || ids.isEmpty()){
             return;
         }
@@ -217,7 +218,7 @@ public class ElasticSearchUtil {
             RETRY_ES_PUBLISH.call(() -> {
                 BulkRequestBuilder bulkRequest = client.prepareBulk();
                 ids.forEach(id -> {
-                    node.put(USER, metacatContext.getUserName());
+                    node.put(USER, metacatRequestContext.getUserName());
                     bulkRequest.add( client.prepareUpdate(esIndex, type, id).setDoc(metacatJson.toJsonAsBytes(node)));
                 });
                 BulkResponse bulkResponse = bulkRequest.execute().actionGet();
@@ -307,7 +308,7 @@ public class ElasticSearchUtil {
         }
     }
 
-    public String toJsonString(String id, Object dto, MetacatContext context, boolean isDeleted){
+    public String toJsonString(String id, Object dto, MetacatRequestContext context, boolean isDeleted){
         return new ElasticSearchDoc( id, dto, context.getUserName(), isDeleted).toJsonString();
     }
 
@@ -424,7 +425,7 @@ public class ElasticSearchUtil {
         return result;
     }
 
-    public  void delete(MetacatContext metacatContext, String type, boolean softDelete) {
+    public  void delete(MetacatRequestContext metacatRequestContext, String type, boolean softDelete) {
         SearchResponse response = client.prepareSearch(esIndex)
                 .setSearchType(SearchType.SCAN)
                 .setScroll(new TimeValue(config.getElasticSearchScrollTimeout()))
@@ -441,7 +442,7 @@ public class ElasticSearchUtil {
             }
             List<String> ids = getIds(response);
             if( softDelete){
-                softDelete( type, ids, metacatContext);
+                softDelete( type, ids, metacatRequestContext);
             } else {
                 delete( type, ids);
             }

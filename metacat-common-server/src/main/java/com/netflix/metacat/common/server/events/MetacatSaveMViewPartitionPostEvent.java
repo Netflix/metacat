@@ -1,55 +1,56 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.server.events;
 
-import com.netflix.metacat.common.MetacatContext;
+import com.google.common.collect.Lists;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
+import javax.validation.constraints.NotNull;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
+@Getter
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class MetacatSaveMViewPartitionPostEvent extends MetacatEvent {
+
     private final List<PartitionDto> partitions;
 
-    public MetacatSaveMViewPartitionPostEvent(QualifiedName name, List<PartitionDto> partitions, MetacatContext metacatContext) {
-        super( name, metacatContext);
-        this.partitions = partitions;
+    public MetacatSaveMViewPartitionPostEvent(
+            @NotNull final QualifiedName name,
+            @NotNull final MetacatRequestContext requestContext,
+            @NotNull final List<PartitionDto> partitions
+    ) {
+        super(name, requestContext);
+        this.partitions = Lists.newArrayList(partitions);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof MetacatSaveMViewPartitionPostEvent)) return false;
-        if (!super.equals(o)) return false;
-        MetacatSaveMViewPartitionPostEvent that = (MetacatSaveMViewPartitionPostEvent) o;
-        return Objects.equals(partitions, that.partitions);
-    }
-
+    /**
+     * Get an unmodifiable view of the partitions.
+     *
+     * @return A view of the partitions which if an attempt is made to modify will throw an exception
+     */
     public List<PartitionDto> getPartitions() {
-        return partitions;
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * super.hashCode() + Objects.hash(partitions);
-    }
-
-    @Override
-    public String toString() {
-        return "MetacatSaveMViewPartitionPostEvent{" +
-                "partitions=" + partitions +
-                '}';
+        return Collections.unmodifiableList(this.partitions);
     }
 }

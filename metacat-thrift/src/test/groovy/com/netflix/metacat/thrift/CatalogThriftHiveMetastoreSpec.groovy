@@ -17,7 +17,7 @@ import com.facebook.presto.hive.$internal.com.facebook.fb303.fb_status
 import com.google.common.collect.ImmutableMap
 import com.google.common.collect.Lists
 import com.google.common.collect.Maps
-import com.netflix.metacat.common.MetacatContext
+import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.api.MetacatV1
 import com.netflix.metacat.common.api.PartitionV1
@@ -50,7 +50,7 @@ import spock.lang.Unroll
 class CatalogThriftHiveMetastoreSpec extends Specification {
     TypeConverterProvider typeConverterProvider = {
         def mock = Mock(TypeConverterProvider)
-        mock.defaultConverterType >> MetacatContext.DATA_TYPE_CONTEXTS.pig
+        mock.defaultConverterType >> MetacatRequestContext.DataTypeContext.pig
 
         return mock
     }()
@@ -59,7 +59,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     MetacatV1 metacatV1 = Mock(MetacatV1)
     PartitionV1 partitionV1 = Mock(PartitionV1)
     String catalogName = 'testCatalogName'
-    CatalogThriftEventHandler.CatalogServerContext catalogServerContext = Mock(CatalogThriftEventHandler.CatalogServerContext)
+    CatalogThriftEventHandler.CatalogServerRequestContext catalogServerContext = Mock(CatalogThriftEventHandler.CatalogServerRequestContext)
     CatalogThriftHiveMetastore ms = new CatalogThriftHiveMetastore(
             config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName)
 

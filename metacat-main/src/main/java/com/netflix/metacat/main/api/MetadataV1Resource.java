@@ -16,7 +16,7 @@ package com.netflix.metacat.main.api;
 import com.facebook.presto.spi.NotFoundException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
-import com.netflix.metacat.common.MetacatContext;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.api.MetadataV1;
 import com.netflix.metacat.common.dto.BaseDto;
@@ -40,15 +40,16 @@ import java.util.Set;
 import static com.netflix.metacat.main.api.RequestWrapper.requestWrapper;
 
 /**
- * Created by amajumdar on 6/28/15.
+ * @author amajumdar
  */
 public class MetadataV1Resource implements MetadataV1 {
     private final UserMetadataService userMetadataService;
     private final MetacatServiceHelper helper;
     private final MetadataService metadataService;
+
     @Inject
     public MetadataV1Resource(UserMetadataService userMetadataService,
-            MetacatServiceHelper helper, MetadataService metadataService) {
+                              MetacatServiceHelper helper, MetadataService metadataService) {
         this.userMetadataService = userMetadataService;
         this.helper = helper;
         this.metadataService = metadataService;
@@ -56,13 +57,13 @@ public class MetadataV1Resource implements MetadataV1 {
 
     @Override
     public DataMetadataDto getDataMetadata(DataMetadataGetRequestDto metadataGetRequestDto) {
-        return requestWrapper( "getDataMetadata", () -> {
+        return requestWrapper("getDataMetadata", () -> {
             DataMetadataDto result = null;
-            if( metadataGetRequestDto.getUri() != null){
+            if (metadataGetRequestDto.getUri() != null) {
                 Optional<ObjectNode> o = userMetadataService.getDataMetadata(metadataGetRequestDto.getUri());
-                if(o.isPresent()){
+                if (o.isPresent()) {
                     result = new DataMetadataDto();
-                    result.setDataMetadata( o.get());
+                    result.setDataMetadata(o.get());
                     result.setUri(metadataGetRequestDto.getUri());
                 }
             }
@@ -80,36 +81,38 @@ public class MetadataV1Resource implements MetadataV1 {
             String type,
             String name,
             Set<String> propertyNames) {
-        if(lifetime){
+        if (lifetime) {
             propertyNames.add("lifetime");
         }
-        return requestWrapper( "getDefinitionMetadataList"
-                , () -> userMetadataService.searchDefinitionMetadatas(propertyNames, type, name, sortBy, sortOrder!=null?sortOrder.name():null, offset, limit));
+        return requestWrapper("getDefinitionMetadataList"
+                , () -> userMetadataService.searchDefinitionMetadatas(propertyNames, type, name, sortBy, sortOrder != null ? sortOrder.name() : null, offset, limit));
     }
 
     @Override
     public List<QualifiedName> searchByOwners(Set<String> owners) {
-        return requestWrapper( "searchByOwners"
+        return requestWrapper("searchByOwners"
                 , () -> userMetadataService.searchByOwners(owners));
     }
 
     @Override
     public void deleteDefinitionMetadata(QualifiedName name, Boolean force) {
-        MetacatContext metacatContext = MetacatContextManager.getContext();
-        requestWrapper( "deleteDefinitionMetadata",
+        MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        requestWrapper("deleteDefinitionMetadata",
                 () -> {
                     MetacatService service = helper.getService(name);
                     BaseDto dto = null;
                     try {
                         dto = service.get(name);
-                    } catch(NotFoundException ignored){}
-                    if( (force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
-                        helper.postPreUpdateEvent(name, dto, metacatContext);
+                    } catch (NotFoundException ignored) {
+                    }
+                    if ((force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
+                        helper.postPreUpdateEvent(name, metacatRequestContext, dto);
                         userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
-                        if( dto instanceof  HasDefinitionMetadata) {
+                        if (dto instanceof HasDefinitionMetadata) {
                             ((HasDefinitionMetadata) dto).setDefinitionMetadata(null);
                         }
-                        helper.postPostUpdateEvent(name, dto, metacatContext);
+                        BaseDto newDto = service.get(name);
+                        helper.postPostUpdateEvent(name, metacatRequestContext, dto, newDto);
                     }
                     return null;
                 });
