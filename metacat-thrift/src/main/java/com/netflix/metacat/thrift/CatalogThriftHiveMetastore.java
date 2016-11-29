@@ -1222,19 +1222,19 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         } catch (MetacatAlreadyExistsException e) {
             log.error(e.getMessage(), e);
             throw new AlreadyExistsException(e.getMessage());
-        } catch (InvalidOperationException e) {
-            log.error(e.getMessage(), e);
-            throw e;
         } catch (MetacatNotFoundException e) {
             log.error(e.getMessage(), e);
             throw new NoSuchObjectException(e.getMessage());
+        } catch (TException e) {
+            log.error(e.getMessage(), e);
+            throw e;
         } catch (Exception e) {
             CounterWrapper.incrementCounter("dse.metacat.thrift.counter.failure." + methodName);
             String message = String.format("%s -- %s failed", e.getMessage(), methodName);
             log.error(message, e);
             MetaException me = new MetaException(message);
             me.initCause(e);
-            throw e;
+            throw me;
         } finally {
             log.info("+++ Thrift({}): Time taken to complete {} is {} ms", catalogName, methodName, timer.stop());
         }
