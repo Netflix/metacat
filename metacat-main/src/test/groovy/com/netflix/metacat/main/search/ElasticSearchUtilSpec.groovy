@@ -14,7 +14,6 @@
 package com.netflix.metacat.main.search
 
 import com.netflix.metacat.common.MetacatRequestContext
-import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.util.DataProvider
@@ -36,6 +35,22 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         def result = (TableDto)es.get(Type.table.name(),id).getDto()
         expect:
         id==result.getName().toString()
+        where:
+        catalogName     | databaseName  | tableName     | id
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
+    }
+
+    @Unroll
+    def "Test migSave for #id"() {
+        given:
+        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
+        for (String index : [esIndex, esMergeIndex]) {
+            def result = (TableDto) es.get(Type.table.name(), id, esIndex).getDto()
+            expect:
+            id == result.getName().toString()
+        }
         where:
         catalogName     | databaseName  | tableName     | id
         'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
@@ -133,5 +148,19 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         'prodhive'      | 'amajumdar'   | 'part'        | 1000           | false
         'prodhive'      | 'amajumdar'   | 'part'        | 10             | true
         'prodhive'      | 'amajumdar'   | 'part'        | 0              | true
+    }
+
+    @Unroll
+    def "Test mig save for #id"(){
+        given:
+        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
+        def result = (TableDto)esMig.get(Type.table.name(),id).getDto()
+        expect:
+        id==result.getName().toString()
+        where:
+        catalogName     | databaseName  | tableName     | id
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
     }
 }

@@ -157,6 +157,11 @@ public interface Config {
      */
     String getEsIndex();
     /**
+     * Elastic search index.
+     * @return elastic search merge index name ( new index to migrate to )
+     */
+    String getMergeEsIndex();
+    /**
      * Lifetime.
      * @return lifetime
      */
@@ -176,4 +181,5 @@ public interface Config {
      * @return Max. number of in clause items in user metadata service queries
      */
     int getUserMetadataMaxInClauseItems();
+
 }

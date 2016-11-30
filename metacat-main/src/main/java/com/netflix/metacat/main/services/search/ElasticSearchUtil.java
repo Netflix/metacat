@@ -56,19 +56,22 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Field.DELETED;
+import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Field.USER;
+
 /**
  * Elastic search client utility.
  */
 @Slf4j
 public class ElasticSearchUtil {
-    private static final Retryer<Void> RETRY_ES_PUBLISH = RetryerBuilder.<Void>newBuilder()
+    protected XContentType contentType = Requests.INDEX_CONTENT_TYPE;
+    protected final String esIndex;
+    protected static final Retryer<Void> RETRY_ES_PUBLISH = RetryerBuilder.<Void>newBuilder()
         .retryIfExceptionOfType(ElasticsearchException.class)
         .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.SECONDS, 30, TimeUnit.SECONDS))
         .withStopStrategy(StopStrategies.stopAfterAttempt(3))
         .build();
-    private XContentType contentType = Requests.INDEX_CONTENT_TYPE;
-    private final String esIndex;
-    private final Client client;
+    protected final Client client;
     private final Config config;
     private final MetacatJson metacatJson;
 
@@ -113,7 +116,7 @@ public class ElasticSearchUtil {
      */
     public void delete(final String type, final List<String> ids) {
         if (ids != null && !ids.isEmpty()) {
-            final List<List<String>> partitionedDocs = Lists.partition(ids, 500);
+            final List<List<String>> partitionedDocs = Lists.partition(ids, 10000);
             partitionedDocs.forEach(subIds -> _delete(type, subIds));
         }
     }
@@ -123,13 +126,13 @@ public class ElasticSearchUtil {
         try {
             RETRY_ES_PUBLISH.call(() -> {
                 final BulkRequestBuilder bulkRequest = client.prepareBulk();
-                ids.forEach(id -> bulkRequest.add(client.prepareDelete(esIndex, type, id)));
+                ids.forEach(id -> bulkRequest.add( client.prepareDelete(esIndex, type, id)));
                 final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-                if (bulkResponse.hasFailures()) {
-                    for (BulkItemResponse item : bulkResponse.getItems()) {
-                        if (item.isFailed()) {
-                            log.error("Failed deleting metadata of type {} with id {}. Message: {}", type, item.getId(),
-                                item.getFailureMessage());
+                log.info("Deleting metadata of type {} with count {}", type, ids.size());
+                if(bulkResponse.hasFailures()){
+                    for(BulkItemResponse item: bulkResponse.getItems()){
+                        if( item.isFailed()){
+                            log.error("Failed deleting metadata of type {} with id {}. Message: {}", type, item.getId(), item.getFailureMessage());
                             CounterWrapper.incrementCounter("dse.metacat.esDeleteFailure");
                             log("ElasticSearchUtil.bulkDelete", type, item.getId(), null, item.getFailureMessage(),
                                 null, true);
@@ -149,14 +152,14 @@ public class ElasticSearchUtil {
      * Marks the document as deleted.
      * @param type index type
      * @param id entity id
-     * @param metacatRequestContext context containing the user name
+     * @param metacatContext context containing the user name
      */
-    public void softDelete(final String type, final String id, final MetacatRequestContext metacatRequestContext) {
+    public void softDelete(final String type, final String id, final MetacatRequestContext metacatContext) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
                 final XContentBuilder builder = XContentFactory.contentBuilder(contentType);
-                builder.startObject().field(ElasticSearchDoc.Field.DELETED, true).field(ElasticSearchDoc.Field.USER,
-                    metacatRequestContext.getUserName()).endObject();
+                builder.startObject().field(DELETED, true).field(USER,
+                    metacatContext.getUserName()).endObject();
                 client.prepareUpdate(esIndex, type, id).setDoc(builder).get();
                 return null;
             });
@@ -181,22 +184,24 @@ public class ElasticSearchUtil {
         }
     }
 
-    @SuppressWarnings("checkstyle:methodname")
-    private void _softDelete(final String type, final List<String> ids,
-        final MetacatRequestContext metacatRequestContext) {
+    /* Use elasticSearch bulk API to mark the documents as deleted
+     * @param type index type
+     * @param ids list of entity ids
+     * @param metacatContext context containing the user name
+     */
+    void _softDelete(final String type, final List<String> ids, final MetacatRequestContext metacatContext) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
                 final BulkRequestBuilder bulkRequest = client.prepareBulk();
                 final XContentBuilder builder = XContentFactory.contentBuilder(contentType);
-                builder.startObject().field(ElasticSearchDoc.Field.DELETED, true).field(ElasticSearchDoc.Field.USER,
-                    metacatRequestContext.getUserName()).endObject();
-                ids.forEach(id -> bulkRequest.add(client.prepareUpdate(esIndex, type, id).setDoc(builder)));
-                final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                builder.startObject().field(DELETED, true).field(USER,
+                    metacatContext.getUserName()).endObject();
+                ids.forEach(id -> bulkRequest.add( client.prepareUpdate(esIndex, type, id).setDoc(builder)));
+                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
                         if (item.isFailed()) {
-                            log.error("Failed soft deleting metadata of type {} with id {}. Message: {}", type,
-                                item.getId(),
+                            log.error("Failed soft deleting metadata of type {} with id {}. Message: {}", type, item.getId(),
                                 item.getFailureMessage());
                             CounterWrapper.incrementCounter("dse.metacat.esDeleteFailure");
                             log("ElasticSearchUtil.bulkSoftDelete", type, item.getId(), null, item.getFailureMessage(),
@@ -220,16 +225,15 @@ public class ElasticSearchUtil {
      * @param metacatRequestContext context containing the user name
      * @param node json that represents the document source
      */
-    public void updates(final String type, final List<String> ids, final MetacatRequestContext metacatRequestContext,
-        final ObjectNode node) {
-        if (ids == null || ids.isEmpty()) {
+    public void updates(final String type, final List<String> ids, final MetacatRequestContext metacatRequestContext, final ObjectNode node) {
+        if(ids == null || ids.isEmpty()){
             return;
         }
         try {
             RETRY_ES_PUBLISH.call(() -> {
                 final BulkRequestBuilder bulkRequest = client.prepareBulk();
                 ids.forEach(id -> {
-                    node.put(ElasticSearchDoc.Field.USER, metacatRequestContext.getUserName());
+                    node.put(USER, metacatRequestContext.getUserName());
                     bulkRequest.add(client.prepareUpdate(esIndex, type, id).setDoc(metacatJson.toJsonAsBytes(node)));
                 });
                 final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
@@ -258,15 +262,26 @@ public class ElasticSearchUtil {
      * @param body source string of the entity
      */
     public void save(final String type, final String id, final String body) {
+        _saveToIndex(type, id, body, esIndex);
+    }
+
+    /**
+     * Save of a single entity to an index
+     * @param type index type
+     * @param id id of the entity
+     * @param body source string of the entity
+     * @param index the index name
+     */
+     void _saveToIndex(final String type, final String id, final String body, final String index){
         try {
             RETRY_ES_PUBLISH.call(() -> {
-                client.prepareIndex(esIndex, type, id).setSource(body).execute().actionGet();
+                client.prepareIndex(index, type, id).setSource(body).execute().actionGet();
                 return null;
             });
         } catch (Exception e) {
-            log.error(String.format("Failed saving metadata of type %s with id %s", type, id), e);
+            log.error(String.format("Failed saving metadata of index %s type %s with id %s", index, type, id), e);
             CounterWrapper.incrementCounter("dse.metacat.esSaveFailure");
-            log("ElasticSearchUtil.save", type, id, null, e.getMessage(), e, true);
+            log("ElasticSearchUtil.save", type, id, null, e.getMessage(), e, true, index);
         }
     }
 
@@ -276,9 +291,9 @@ public class ElasticSearchUtil {
      * @param docs metacat documents
      */
     public void save(final String type, final List<ElasticSearchDoc> docs) {
-        if (docs != null && !docs.isEmpty()) {
-            final List<List<ElasticSearchDoc>> partitionedDocs = Lists.partition(docs, 100);
-            partitionedDocs.forEach(subDocs -> _save(type, subDocs));
+        if( docs != null && !docs.isEmpty()) {
+            List<List<ElasticSearchDoc>> partitionedDocs = Lists.partition(docs, 100);
+            partitionedDocs.forEach(subDocs -> _bulkSaveToIndex(type, subDocs, esIndex));
         }
     }
 
@@ -287,36 +302,36 @@ public class ElasticSearchUtil {
      * @param type index type
      * @param docs metacat documents
      */
-    @SuppressWarnings("checkstyle:methodname")
-    private void _save(final String type, final List<ElasticSearchDoc> docs) {
-        if (docs != null && !docs.isEmpty()) {
-            try {
-                RETRY_ES_PUBLISH.call(() -> {
-                    final BulkRequestBuilder bulkRequest = client.prepareBulk();
-                    docs.forEach(doc -> bulkRequest.add(client.prepareIndex(esIndex, type, doc.getId())
-                        .setSource(doc.toJsonString())));
-                    if (bulkRequest.numberOfActions() > 0) {
-                        final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-                        if (bulkResponse.hasFailures()) {
-                            for (BulkItemResponse item : bulkResponse.getItems()) {
-                                if (item.isFailed()) {
-                                    log.error("Failed saving metadata of type {} with id {}. Message: {}", type,
-                                        item.getId(),
-                                        item.getFailureMessage());
-                                    CounterWrapper.incrementCounter("dse.metacat.esSaveFailure");
-                                    log("ElasticSearchUtil.bulkSave", type, item.getId(), null,
-                                        item.getFailureMessage(), null, true);
+     void _bulkSaveToIndex(final String type, final List<ElasticSearchDoc> docs, final String...indices) {
+        if( docs != null && !docs.isEmpty()) {
+            for ( String index : indices ) {
+                try {
+                    RETRY_ES_PUBLISH.call(() -> {
+                        BulkRequestBuilder bulkRequest = client.prepareBulk();
+                        docs.forEach(doc -> bulkRequest.add(client.prepareIndex(index, type, doc.getId())
+                            .setSource(doc.toJsonString())));
+                        if (bulkRequest.numberOfActions() > 0) {
+                            BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                            if (bulkResponse.hasFailures()) {
+                                for (BulkItemResponse item : bulkResponse.getItems()) {
+                                    if (item.isFailed()) {
+                                        log.error("Failed saving metadata of type {} with id {}. Message: {}", type, item.getId(),
+                                            item.getFailureMessage());
+                                        CounterWrapper.incrementCounter("dse.metacat.esSaveFailure");
+                                        log("ElasticSearchUtil.bulkSave", type, item.getId(), null,
+                                            item.getFailureMessage(), null, true);
+                                    }
                                 }
                             }
                         }
-                    }
-                    return null;
-                });
-            } catch (Exception e) {
-                log.error(String.format("Failed saving metadatas of type %s", type), e);
-                CounterWrapper.incrementCounter("dse.metacat.esBulkSaveFailure");
-                final List<String> docIds = docs.stream().map(ElasticSearchDoc::getId).collect(Collectors.toList());
-                log("ElasticSearchUtil.bulkSave", type, docIds.toString(), null, e.getMessage(), e, true);
+                        return null;
+                    });
+                } catch (Exception e) {
+                    log.error(String.format("Failed saving metadatas of type %s %s", index, type), e);
+                    CounterWrapper.incrementCounter("dse.metacat.esBulkSaveFailure");
+                    List<String> docIds = docs.stream().map(ElasticSearchDoc::getId).collect(Collectors.toList());
+                    log("ElasticSearchUtil.bulkSave", type, docIds.toString(), null, e.getMessage(), e, true, index);
+                }
             }
         }
     }
@@ -450,11 +465,11 @@ public class ElasticSearchUtil {
         return result;
     }
 
-    private static List<String> getIds(final SearchResponse response) {
+    protected static List<String> getIds(final SearchResponse response) {
         return FluentIterable.from(response.getHits()).transform(SearchHit::getId).toList();
     }
 
-    private <T> List<T> parseResponse(final SearchResponse response, final Class<T> valueType) {
+    protected  <T> List<T> parseResponse(final SearchResponse response, final Class<T> valueType) {
         return FluentIterable.from(response.getHits()).transform(hit -> {
             try {
                 return metacatJson.parseJsonValue(hit.getSourceAsString(), valueType);
@@ -478,9 +493,13 @@ public class ElasticSearchUtil {
      * @return doc
      */
     public ElasticSearchDoc get(final String type, final String id) {
+        return get(type, id, esIndex);
+    }
+
+    ElasticSearchDoc get(final String type, final String id, final String index) {
         ElasticSearchDoc result = null;
-        final GetResponse response = client.prepareGet(esIndex, type, id).execute().actionGet();
-        if (response.isExists()) {
+        GetResponse response = client.prepareGet(index, type, id).execute().actionGet();
+        if( response.isExists()){
             result = ElasticSearchDoc.parse(response);
         }
         return result;
@@ -530,6 +549,10 @@ public class ElasticSearchUtil {
      */
     public void log(final String method, final String type, final String name, final String data,
         final String logMessage, final Exception ex, final boolean error) {
+        log(method, type, name, data, logMessage, ex, error, esIndex);
+    }
+
+    void log(final String method, final String type, final String name, final String data, final String logMessage, final Exception ex, final boolean error, final String index) {
         try {
             final Map<String, Object> source = Maps.newHashMap();
             source.put("method", method);
