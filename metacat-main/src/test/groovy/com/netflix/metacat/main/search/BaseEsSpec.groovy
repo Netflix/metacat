@@ -17,7 +17,7 @@ import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.Config
-import com.netflix.metacat.main.services.search.ElasticSearchUtil
+import com.netflix.metacat.main.services.search.ElasticSearchUtilImpl
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
@@ -34,11 +34,19 @@ class BaseEsSpec extends Specification {
     @Shared
     Config config = Mock(Config)
     @Shared
-    ElasticSearchUtil es
+    Config config2 = Mock(Config)
+    @Shared
+    ElasticSearchUtilImpl es
+    @Shared
+    ElasticSearchUtilImpl esMig
     @Shared
     MetacatJson metacatJson
     @Shared
     MetacatRequestContext metacatContext = new MetacatRequestContext("test", "testApp", "testClientId", "testJobId", null)
+    @Shared
+    String esIndex = "metacat"
+    @Shared
+    String esMergeIndex = "metacat_v2"
 
     def setupSpec() {
         Settings settings = ImmutableSettings.settingsBuilder()
@@ -49,17 +57,28 @@ class BaseEsSpec extends Specification {
                 .put("index.number_of_shards", 1)
                 .put("index.number_of_replicas", 0).build();
         Client client = org.elasticsearch.node.NodeBuilder.nodeBuilder().local(true).settings(settings).node().client()
-        // First delete the index if created previously
-        if( client.admin().indices().exists(new IndicesExistsRequest('metacat')).actionGet().exists) {
-            client.admin().indices().delete(new DeleteIndexRequest('metacat')).actionGet()
+        String[] indices = [esIndex, esMergeIndex];
+        for (String _index : indices) {
+            if (client.admin().indices().exists(new IndicesExistsRequest(_index)).actionGet().exists) {
+                client.admin().indices().delete(new DeleteIndexRequest(_index)).actionGet()
+            }
         }
         // Create a new index
-        def index = new CreateIndexRequest('metacat')
-        index.source(getFile('metacat.json').getText())
-        client.admin().indices().create( index).actionGet()
+        for (String _index : indices ) {
+            def index = new CreateIndexRequest(_index)
+            index.source(getFile('metacat.json').getText())
+            client.admin().indices().create( index).actionGet()
+        }
+
         metacatJson = MetacatJsonLocator.INSTANCE
-        config.getEsIndex() >> "metacat"
-        es = new ElasticSearchUtil(client, config, metacatJson)
+        config.getEsIndex() >> esIndex
+        config.isIndexMigration() >> false
+        es = new ElasticSearchUtilImpl(client, config, metacatJson)
+
+        config2.getEsIndex() >> esIndex
+        config2.getMergeEsIndex() >> esMergeIndex
+        config2.isIndexMigration() >> true
+        esMig = new ElasticSearchUtilImpl(client, config2, metacatJson)
     }
 
     def getFile(String name){

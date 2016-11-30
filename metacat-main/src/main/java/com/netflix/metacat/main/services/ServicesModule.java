@@ -24,7 +24,10 @@ import com.netflix.metacat.main.services.notifications.NotificationsModule;
 import com.netflix.metacat.main.services.search.ElasticSearchClientProvider;
 import com.netflix.metacat.main.services.search.ElasticSearchMetacatRefresh;
 import com.netflix.metacat.main.services.search.ElasticSearchUtil;
+import com.netflix.metacat.main.services.search.ElasticSearchUtilImpl;
+import com.netflix.metacat.main.services.search.ElasticSearchClientProvider;
 import com.netflix.metacat.main.services.search.MetacatEventHandlers;
+import com.netflix.metacat.main.services.search.ElasticSearchMetacatRefresh;
 import org.elasticsearch.client.Client;
 
 import javax.inject.Singleton;
@@ -46,7 +49,7 @@ public class ServicesModule extends AbstractModule {
         //search
         bind(Client.class).toProvider(ElasticSearchClientProvider.class).in(Singleton.class);
         binder().bind(MetacatEventHandlers.class).in(Singleton.class);
-        binder().bind(ElasticSearchUtil.class).in(Singleton.class);
+        binder().bind(ElasticSearchUtil.class).to(ElasticSearchUtilImpl.class).in(Singleton.class);
         binder().bind(ElasticSearchMetacatRefresh.class).in(Singleton.class);
         binder().bind(MetadataService.class).in(Singleton.class);
     }
