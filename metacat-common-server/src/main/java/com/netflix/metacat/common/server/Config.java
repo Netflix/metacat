@@ -181,5 +181,5 @@ public interface Config {
      * @return Max. number of in clause items in user metadata service queries
      */
     int getUserMetadataMaxInClauseItems();
-
+    boolean isIndexMigration();
 }

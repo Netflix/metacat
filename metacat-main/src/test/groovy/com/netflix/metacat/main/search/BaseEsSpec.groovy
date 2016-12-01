@@ -45,7 +45,7 @@ class BaseEsSpec extends Specification {
     @Shared
     String esIndex = "metacat"
     @Shared
-    String esMergeIndex = "meatacat_v2"
+    String esMergeIndex = "metacat_v2"
 
     def setupSpec() {
         Settings settings = ImmutableSettings.settingsBuilder()
@@ -71,7 +71,7 @@ class BaseEsSpec extends Specification {
 
         metacatJson = MetacatJsonLocator.INSTANCE
         config.getEsIndex() >> esIndex
-        config.getWriteEsIndex() >> esMergeIndex
+        config.getMergeEsIndex() >> esMergeIndex
         es = new ElasticSearchUtil(client, config, metacatJson)
         esMig = new ElasticSearchMigrationUtil(client, config, metacatJson);
     }

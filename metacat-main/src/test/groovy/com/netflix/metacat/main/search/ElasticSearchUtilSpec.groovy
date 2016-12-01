@@ -42,22 +42,6 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     }
 
     @Unroll
-    def "Test migSave for #id"() {
-        given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
-        esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        for (String index : [esIndex, esMergeIndex]) {
-            def result = (TableDto) es.get(Type.table.name(), id, esIndex).getDto()
-            expect:
-            id == result.getName().toString()
-        }
-        where:
-        catalogName     | databaseName  | tableName     | id
-        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
-        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
-    }
-
-    @Unroll
     def "Test saves for #id"(){
         given:
         def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b/c")
@@ -70,15 +54,17 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         'prodhive'      | 'amajumdar'   | 'part_test'   | 'prodhive/amajumdar/part_test'
     }
 
+
+
     @Unroll
     def "Test delete for #id"(){
         given:
         def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
         softDelete?es.softDelete(Type.table.name(), id, metacatContext):es.delete(Type.table.name(), id)
-        def result =  es.get(Type.table.name(),id)
+        def result =  es.get(Type.table.name(),id, esIndex)
         expect:
-        if( softDelete){
+        if( softDelete && result.isDeleted()){
             id==((TableDto)result.getDto()).getName().toString()
         } else {
             result == null
@@ -97,7 +83,8 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         softDelete?es.softDelete(Type.table.name(), [id], metacatContext):es.delete(Type.table.name(), [id])
         def result = es.get(Type.table.name(),id)
         expect:
-        if( softDelete){
+        if( softDelete ){
+            result.isDeleted()
             id==((TableDto)result.getDto()).getName().toString()
         } else {
             result == null
@@ -129,6 +116,8 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part' | 's3:/a/b'
     }
 
+
+
     @Unroll
     def "Test deletes for #type"(){
         given:
@@ -151,7 +140,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     }
 
     @Unroll
-    def "Test mig save for #id"(){
+    def "Test migSave for #id"(){
         given:
         def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
@@ -162,5 +151,125 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         catalogName     | databaseName  | tableName     | id
         'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
         'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
+    }
+
+    @Unroll
+    def "Test migSave for list of #id"() {
+        given:
+        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        esMig.save(Type.table.name(), [new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false)])
+        for (String index : [esIndex, esMergeIndex]) {
+            def result = (TableDto) es.get(Type.table.name(), id, index).getDto()
+            expect:
+            id == result.getName().toString()
+        }
+        where:
+        catalogName     | databaseName  | tableName     | id
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
+    }
+
+    @Unroll
+    def "Test migSoftDelete for #id that does not exists in mergeIndex"(){
+        given:
+        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
+        esMig.softDelete(Type.table.name(), id, metacatContext)
+        for (String index : [esIndex, esMergeIndex]) {
+            def result = es.get(Type.table.name(), id, index)
+            expect:
+            result.isDeleted()
+            id==((TableDto)result.getDto()).getName().toString()
+        }
+        where:
+        catalogName     | databaseName  | tableName     | id
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
+    }
+
+    @Unroll
+    def "Test migSoftDeletes for list of #id that exists in mergeIndex"(){
+        given:
+        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        def docs = [new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
+                    new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
+                    new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false)]
+        esMig.save(Type.table.name(), docs)
+        esMig.softDelete(Type.table.name(), [id], metacatContext)
+        for (String index : [esIndex, esMergeIndex]) {
+            def result = es.get(Type.table.name(), id, index)
+            expect:
+            result.isDeleted()
+            id==((TableDto)result.getDto()).getName().toString()
+        }
+        where:
+        catalogName     | databaseName  | tableName     | id
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
+    }
+
+    @Unroll
+    def "Test migSoftDeletes for list of #id that do not exist in mergeIndex"(){
+        given:
+        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        def docs = [new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
+                    new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
+                    new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false)]
+        es.save(Type.table.name(), docs)
+        esMig.softDelete(Type.table.name(), [id], metacatContext)
+        for (String index : [esIndex, esMergeIndex]) {
+            def result = es.get(Type.table.name(), id, index)
+            expect:
+            result.isDeleted()
+            id==((TableDto)result.getDto()).getName().toString()
+        }
+        where:
+        catalogName     | databaseName  | tableName     | id
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'
+    }
+
+    @Unroll
+    def "Test migUpdates for #id that exists in mergeIndex"(){
+        given:
+        def table = DataProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
+        esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
+        esMig.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), MetacatJsonLocator.INSTANCE.parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
+        for ( String index : [esIndex, esMergeIndex]) {
+            def result = es.get(Type.table.name(), id, index)
+            es.refresh()
+            def resultByUri = es.getTableIdsByUri(Type.table.name(), uri)
+            expect:
+            result != null
+            result.getUser() == "testUpdate"
+            ((TableDto) result.getDto()).getDataMetadata() != null
+            resultByUri != null
+            resultByUri.size() == 1
+            resultByUri[0] == id
+        }
+        where:
+        catalogName     | databaseName  | tableName     | id                        | uri
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part' | 's3:/a/b'
+    }
+
+    @Unroll
+    def "Test migUpdates for #id that does not exists in mergeIndex"(){
+        given:
+        def table = DataProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
+        es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
+        esMig.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), MetacatJsonLocator.INSTANCE.parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
+        for ( String index : [esIndex, esMergeIndex]) {
+            def result = es.get(Type.table.name(), id, index)
+            es.refresh()
+            def resultByUri = es.getTableIdsByUri(Type.table.name(), uri)
+            expect:
+            result != null
+            result.getUser() == "testUpdate"
+            ((TableDto) result.getDto()).getDataMetadata() != null
+            resultByUri != null
+            resultByUri.size() == 1
+            resultByUri[0] == id
+        }
+        where:
+        catalogName     | databaseName  | tableName     | id                        | uri
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part' | 's3:/a/b'
     }
 }

@@ -60,17 +60,21 @@ import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Field.DE
 import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Field.USER;
 
 /**
+<<<<<<< fb87b724b3b218401d3c7f7fc5e42c2c833578c0
  * Elastic search client utility.
+=======
+ * Utility class for index, update, delete metacat doc from elastic search
+>>>>>>> adding the elastic search migration util
  */
 @Slf4j
 public class ElasticSearchUtil {
     protected XContentType contentType = Requests.INDEX_CONTENT_TYPE;
     protected final String esIndex;
     protected static final Retryer<Void> RETRY_ES_PUBLISH = RetryerBuilder.<Void>newBuilder()
-        .retryIfExceptionOfType(ElasticsearchException.class)
-        .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.SECONDS, 30, TimeUnit.SECONDS))
-        .withStopStrategy(StopStrategies.stopAfterAttempt(3))
-        .build();
+    .retryIfExceptionOfType(ElasticsearchException.class)
+    .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.SECONDS, 30, TimeUnit.SECONDS))
+    .withStopStrategy(StopStrategies.stopAfterAttempt(3))
+    .build();
     protected final Client client;
     private final Config config;
     private final MetacatJson metacatJson;
@@ -312,6 +316,7 @@ public class ElasticSearchUtil {
                             .setSource(doc.toJsonString())));
                         if (bulkRequest.numberOfActions() > 0) {
                             BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                            log.info("Bulk saving metadata of index{} type {} with size {}.", index, type, docs.size());
                             if (bulkResponse.hasFailures()) {
                                 for (BulkItemResponse item : bulkResponse.getItems()) {
                                     if (item.isFailed()) {
@@ -496,7 +501,13 @@ public class ElasticSearchUtil {
         return get(type, id, esIndex);
     }
 
-    ElasticSearchDoc get(final String type, final String id, final String index) {
+    /**
+     * Gets the document for the given type and id.
+     * @param type doc type
+     * @param id doc id
+     * @return index the es index
+     */
+    public ElasticSearchDoc get(final String type, final String id, final String index) {
         ElasticSearchDoc result = null;
         GetResponse response = client.prepareGet(index, type, id).execute().actionGet();
         if( response.isExists()){

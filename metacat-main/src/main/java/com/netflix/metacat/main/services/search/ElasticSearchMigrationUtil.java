@@ -13,35 +13,38 @@
 
 package com.netflix.metacat.main.services.search;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.Config;
 import org.elasticsearch.client.Client;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.*;
 
 /**
- * Created by zhenli on 11/29/16.
+ * Class for migrating the elastic search index to a new one. It overrides the save, update, and softdelete
+ * to populate the doc to both the original and new indexes
  */
 public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
     private final String esMergeIndex;
     private final String[] esWriteIndices;
-    private static final Logger log = LoggerFactory.getLogger(ElasticSearchMigrationUtil.class);
 
     @Inject
-    public ElasticSearchMigrationUtil(@Nullable Client client, Config config, MetacatJson metacatJson) {
+    public ElasticSearchMigrationUtil(
+        @Nullable
+        final Client client,
+        final Config config,
+        final MetacatJson metacatJson) {
         super(client, config, metacatJson);
         esMergeIndex = config.getMergeEsIndex();
         esWriteIndices = new String[] {esIndex, esMergeIndex};
     }
 
     /**
-     * Save of a single entity to multiple indices
+     * Save of a single entity to default index and merge index
      * @param type index type
      * @param id id of the entity
      * @param body source string of the entity
@@ -54,7 +57,7 @@ public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
     }
 
     /**
-     * Bulk save of the entities
+     * Bulk save of the docs to default index and merge index
      * @param type index type
      * @param docs metacat documents
      */
@@ -67,9 +70,9 @@ public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
     }
 
     /**
-     * Marks the document as deleted from multiple indices
+     * Marks the document as deleted from default index and copy the marked docs to merge index
      * @param type index type
-     * @param id entity id
+     * @param id doc id
      * @param metacatContext context containing the user name
      */
     @Override
@@ -79,15 +82,36 @@ public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
         _copyDataToMergeIndex(type, Collections.singletonList(id));
     }
 
+    /**
+     * Marks the document as deleted from default index and copy the marked docs to merge index
+     * @param type index type
+     * @param ids list of doc id
+     * @param metacatContext context containing the user name
+     */
     @Override
     protected void _softDelete(String type, List<String> ids, MetacatRequestContext metacatContext) {
         super._softDelete(type, ids, metacatContext);
         _copyDataToMergeIndex(type, ids);
     }
 
+    /**
+     * Updates the documents with partial updates with the given fields in default index
+     * copy the updated doc to merge index
+     * @param type index type
+     * @param ids list of doc ids
+     * @param metacatContext context containing the user name
+     * @param node json that represents the document source
+     */
+    @Override
+    public void updates(String type, List<String> ids, MetacatRequestContext metacatContext, ObjectNode node) {
+        super.updates(type, ids, metacatContext, node);
+        _copyDataToMergeIndex(type, ids);
+    }
+
     /*
-     * Read the document from source index
-     * Reindex it to the merge index
+     * Read the documents from source index copy to the merge index
+     * @param type index type
+     * @param ids list of doc ids
      */
     private void _copyDataToMergeIndex(String type, List<String> ids) {
         List<ElasticSearchDoc> docs = new ArrayList<>();
