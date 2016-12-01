@@ -42,15 +42,15 @@ public class MetacatConnectorManager extends ConnectorManager {
 
     @Inject
     public MetacatConnectorManager(MetadataManager metadataManager,
-            SplitManager splitManager,
-            HandleResolver handleResolver,
-            Map<String, ConnectorFactory> connectorFactories) {
+        SplitManager splitManager,
+        HandleResolver handleResolver,
+        Map<String, ConnectorFactory> connectorFactories) {
         super(metadataManager, splitManager, handleResolver, connectorFactories);
     }
 
     @Override
     public synchronized void createConnection(
-            String catalogName, ConnectorFactory connectorFactory, Map<String, String> properties) {
+        String catalogName, ConnectorFactory connectorFactory, Map<String, String> properties) {
         properties = Maps.newHashMap(properties);
         MetacatCatalogConfig config = createFromMapAndRemoveProperties(connectorFactory.getName(), properties);
 

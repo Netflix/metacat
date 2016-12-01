@@ -17,7 +17,6 @@
  */
 package com.netflix.metacat.common.server.events;
 
-import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
@@ -30,6 +29,9 @@ import javax.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Post table partition save event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -38,23 +40,25 @@ public class MetacatSaveTablePartitionPostEvent extends MetacatEvent {
     private final List<PartitionDto> partitions;
     private final PartitionsSaveResponseDto partitionsSaveResponse;
 
+    /**
+     * Constructor.
+     * @param name name
+     * @param metacatRequestContext context
+     * @param partitions partitions
+     * @param partitionsSaveResponse resposne
+     */
     public MetacatSaveTablePartitionPostEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext metacatRequestContext,
-            @NotNull final List<PartitionDto> partitions,
-            @NotNull final PartitionsSaveResponseDto partitionsSaveResponse
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext metacatRequestContext,
+        @NotNull
+        final List<PartitionDto> partitions,
+        @NotNull
+        final PartitionsSaveResponseDto partitionsSaveResponse
     ) {
         super(name, metacatRequestContext);
-        this.partitions = Lists.newArrayList(partitions);
+        this.partitions = Collections.unmodifiableList(partitions);
         this.partitionsSaveResponse = partitionsSaveResponse;
-    }
-
-    /**
-     * Get an unmodifiable view of the partitions.
-     *
-     * @return A list of partitions that can't be modified or it will throw an exception
-     */
-    public List<PartitionDto> getPartitions() {
-        return Collections.unmodifiableList(this.partitions);
     }
 }

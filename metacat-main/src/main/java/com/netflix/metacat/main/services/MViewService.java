@@ -26,33 +26,66 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
 
-public interface MViewService extends MetacatService<TableDto>{
+public interface MViewService extends MetacatService<TableDto> {
     /**
      * Create the view and returns the newly created view
      * @param name name of the origin table
      * @return view
      */
-    TableDto create( @Nonnull QualifiedName name);
+    TableDto create(
+        @Nonnull
+            QualifiedName name);
 
     /**
      * Deletes the view and returns the deleted view.
      * @param name name of the view to be deleted
      * @return deleted view
      */
-    TableDto deleteAndReturn( @Nonnull QualifiedName name);
-    Optional<TableDto> getOpt( @Nonnull QualifiedName name);
-    void snapshotPartitions( @Nonnull QualifiedName name, String filter);
-    PartitionsSaveResponseDto savePartitions( @Nonnull QualifiedName name, List<PartitionDto> partitionDtos,
-            List<String> partitionIdsForDeletes, boolean merge,
-            boolean checkIfExists, boolean alterIfExists);
-    void deletePartitions( @Nonnull QualifiedName name, List<String> partitionIds);
-    List<PartitionDto> listPartitions(@Nonnull QualifiedName name, String filter, List<String> partitionNames,
-            Sort sort, Pageable pageable,
-            boolean includeUserMetadata, boolean includePartitionDetails);
-    List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable);
-    List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable);
-    Integer partitionCount(@Nonnull QualifiedName name);
-    List<NameDateDto> list(@Nonnull QualifiedName qualifiedName);
-    void saveMetadata(@Nonnull QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
+    TableDto deleteAndReturn(
+        @Nonnull
+            QualifiedName name);
+
+    Optional<TableDto> getOpt(
+        @Nonnull
+            QualifiedName name);
+
+    void snapshotPartitions(
+        @Nonnull
+            QualifiedName name, String filter);
+
+    PartitionsSaveResponseDto savePartitions(
+        @Nonnull
+            QualifiedName name, List<PartitionDto> partitionDtos,
+        List<String> partitionIdsForDeletes, boolean merge,
+        boolean checkIfExists, boolean alterIfExists);
+
+    void deletePartitions(
+        @Nonnull
+            QualifiedName name, List<String> partitionIds);
+
+    List<PartitionDto> listPartitions(
+        @Nonnull
+            QualifiedName name, String filter, List<String> partitionNames,
+        Sort sort, Pageable pageable,
+        boolean includeUserMetadata, boolean includePartitionDetails);
+
+    List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
+        Pageable pageable);
+
+    List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
+        Pageable pageable);
+
+    Integer partitionCount(
+        @Nonnull
+            QualifiedName name);
+
+    List<NameDateDto> list(
+        @Nonnull
+            QualifiedName qualifiedName);
+
+    void saveMetadata(
+        @Nonnull
+            QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
+
     void rename(QualifiedName name, QualifiedName newViewName);
 }

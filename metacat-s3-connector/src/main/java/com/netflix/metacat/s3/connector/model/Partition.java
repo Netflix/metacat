@@ -24,40 +24,49 @@ import javax.persistence.NamedQuery;
 import javax.persistence.UniqueConstraint;
 
 /**
- * Created by amajumdar on 12/22/14.
+ * Partition.
  */
 @Entity
-@javax.persistence.Table(name="partition_table",
-        indexes = { @Index(name="partition_table_i1", columnList = "name"),@Index(name="partition_table_i2",columnList = "uri") },
-        uniqueConstraints= @UniqueConstraint(name="partition_table_u1",columnNames = {"table_id", "name"}))
+@javax.persistence.Table(name = "partition_table",
+    indexes = { @Index(name = "partition_table_i1", columnList = "name"),
+        @Index(name = "partition_table_i2", columnList = "uri") },
+    uniqueConstraints = @UniqueConstraint(name = "partition_table_u1", columnNames = { "table_id", "name" }))
 @NamedQueries({
-        @NamedQuery(
-                name = Partition.NAME_QUERY_GET_FOR_TABLE,
-                query = "select p from Partition p where p.table.name=:tableName and p.table.database.name=:databaseName and p.table.database.source.name=:sourceName"
-        ),
-        @NamedQuery(
-                name = Partition.NAME_QUERY_GET_COUNT_FOR_TABLE,
-                query = "select count(p) from Partition p where p.table.name=:tableName and p.table.database.name=:databaseName and p.table.database.source.name=:sourceName"
-        ),
-        @NamedQuery(
-                name = Partition.NAME_QUERY_DELETE_BY_PARTITION_NAMES,
-                query = "delete from Partition p where p.table.id = (select t.id from Table t where t.name=:tableName and t.database.name=:databaseName and t.database.source.name=:sourceName) and p.name in (:partitionNames)"
-        )
-        ,
-        @NamedQuery(
-                name = Partition.NAME_QUERY_GET_BY_URI,
-                query = "select p from Partition p where p.uri in :uris"
-        ),
-        @NamedQuery(
-                name = Partition.NAME_QUERY_GET_BY_URI_PREFIX,
-                query = "select p from Partition p where p.uri like :uri"
-        )
+    @NamedQuery(
+        name = Partition.NAME_QUERY_GET_FOR_TABLE,
+        query = "select p from Partition p where p.table.name=:tableName and p.table.database.name=:databaseName"
+            + " and p.table.database.source.name=:sourceName"
+    ),
+    @NamedQuery(
+        name = Partition.NAME_QUERY_GET_COUNT_FOR_TABLE,
+        query = "select count(p) from Partition p where p.table.name=:tableName"
+            + " and p.table.database.name=:databaseName and p.table.database.source.name=:sourceName"
+    ),
+    @NamedQuery(
+        name = Partition.NAME_QUERY_DELETE_BY_PARTITION_NAMES,
+        query = "delete from Partition p where p.table.id = (select t.id from Table t where t.name=:tableName"
+            + " and t.database.name=:databaseName and t.database.source.name=:sourceName)"
+            + " and p.name in (:partitionNames)"
+    ),
+    @NamedQuery(
+        name = Partition.NAME_QUERY_GET_BY_URI,
+        query = "select p from Partition p where p.uri in :uris"
+    ),
+    @NamedQuery(
+        name = Partition.NAME_QUERY_GET_BY_URI_PREFIX,
+        query = "select p from Partition p where p.uri like :uri"
+    )
 })
-public class Partition extends IdEntity{
+public class Partition extends IdEntity {
+    /** Query name to get partition for a given table. */
     public static final String NAME_QUERY_GET_FOR_TABLE = "getForTable";
+    /** Query name to get partition count for a given table. */
     public static final String NAME_QUERY_GET_COUNT_FOR_TABLE = "getCountForTable";
+    /** Query name to delete. */
     public static final String NAME_QUERY_DELETE_BY_PARTITION_NAMES = "deleteByPartitionNames";
+    /** Query name to get partition for a given uri . */
     public static final String NAME_QUERY_GET_BY_URI = "getByUri";
+    /** Query name to get partition for a given uri prefix. */
     public static final String NAME_QUERY_GET_BY_URI_PREFIX = "getByUriPrefix";
     private String name;
     private String uri;
@@ -68,7 +77,7 @@ public class Partition extends IdEntity{
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
@@ -77,17 +86,17 @@ public class Partition extends IdEntity{
         return uri;
     }
 
-    public void setUri(String uri) {
+    public void setUri(final String uri) {
         this.uri = uri;
     }
 
-    @ManyToOne(fetch = FetchType.LAZY, optional=false )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "table_id", nullable = false)
     public Table getTable() {
         return table;
     }
 
-    public void setTable(Table table) {
+    public void setTable(final Table table) {
         this.table = table;
     }
 }

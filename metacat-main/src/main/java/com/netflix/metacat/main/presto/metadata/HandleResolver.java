@@ -45,28 +45,23 @@ import java.util.concurrent.ConcurrentMap;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
-public class HandleResolver
-{
+public class HandleResolver {
     private final ConcurrentMap<String, ConnectorHandleResolver> handleIdResolvers = new ConcurrentHashMap<>();
 
-    public HandleResolver()
-    {
+    public HandleResolver() {
     }
 
     @Inject
-    public HandleResolver(Map<String, ConnectorHandleResolver> handleIdResolvers)
-    {
+    public HandleResolver(Map<String, ConnectorHandleResolver> handleIdResolvers) {
         this.handleIdResolvers.putAll(handleIdResolvers);
     }
 
-    public void addHandleResolver(String id, ConnectorHandleResolver connectorHandleResolver)
-    {
+    public void addHandleResolver(String id, ConnectorHandleResolver connectorHandleResolver) {
         ConnectorHandleResolver existingResolver = handleIdResolvers.putIfAbsent(id, connectorHandleResolver);
         checkState(existingResolver == null, "Id %s is already assigned to resolver %s", id, existingResolver);
     }
 
-    public String getId(ConnectorTableHandle tableHandle)
-    {
+    public String getId(ConnectorTableHandle tableHandle) {
         for (Entry<String, ConnectorHandleResolver> entry : handleIdResolvers.entrySet()) {
             if (entry.getValue().canHandle(tableHandle)) {
                 return entry.getKey();
@@ -75,8 +70,7 @@ public class HandleResolver
         throw new IllegalArgumentException("No connector for table handle: " + tableHandle);
     }
 
-    public String getId(ConnectorTableLayoutHandle handle)
-    {
+    public String getId(ConnectorTableLayoutHandle handle) {
         if (handle instanceof LegacyTableLayoutHandle) {
             LegacyTableLayoutHandle legacyHandle = (LegacyTableLayoutHandle) handle;
             for (Entry<String, ConnectorHandleResolver> entry : handleIdResolvers.entrySet()) {
@@ -84,8 +78,7 @@ public class HandleResolver
                     return entry.getKey();
                 }
             }
-        }
-        else {
+        } else {
             for (Entry<String, ConnectorHandleResolver> entry : handleIdResolvers.entrySet()) {
                 if (entry.getValue().canHandle(handle)) {
                     return entry.getKey();
@@ -95,8 +88,7 @@ public class HandleResolver
         throw new IllegalArgumentException("No connector for table handle: " + handle);
     }
 
-    public String getId(ColumnHandle columnHandle)
-    {
+    public String getId(ColumnHandle columnHandle) {
         for (Entry<String, ConnectorHandleResolver> entry : handleIdResolvers.entrySet()) {
             if (entry.getValue().canHandle(columnHandle)) {
                 return entry.getKey();
@@ -105,8 +97,7 @@ public class HandleResolver
         throw new IllegalArgumentException("No connector for column handle: " + columnHandle);
     }
 
-    public String getId(ConnectorSplit split)
-    {
+    public String getId(ConnectorSplit split) {
         for (Entry<String, ConnectorHandleResolver> entry : handleIdResolvers.entrySet()) {
             if (entry.getValue().canHandle(split)) {
                 return entry.getKey();
@@ -115,8 +106,7 @@ public class HandleResolver
         throw new IllegalArgumentException("No connector for split: " + split);
     }
 
-    public String getId(ConnectorIndexHandle indexHandle)
-    {
+    public String getId(ConnectorIndexHandle indexHandle) {
         for (Entry<String, ConnectorHandleResolver> entry : handleIdResolvers.entrySet()) {
             if (entry.getValue().canHandle(indexHandle)) {
                 return entry.getKey();
@@ -125,8 +115,7 @@ public class HandleResolver
         throw new IllegalArgumentException("No connector for index handle: " + indexHandle);
     }
 
-    public String getId(ConnectorOutputTableHandle outputHandle)
-    {
+    public String getId(ConnectorOutputTableHandle outputHandle) {
         for (Entry<String, ConnectorHandleResolver> entry : handleIdResolvers.entrySet()) {
             if (entry.getValue().canHandle(outputHandle)) {
                 return entry.getKey();
@@ -135,8 +124,7 @@ public class HandleResolver
         throw new IllegalArgumentException("No connector for output table handle: " + outputHandle);
     }
 
-    public String getId(ConnectorInsertTableHandle insertHandle)
-    {
+    public String getId(ConnectorInsertTableHandle insertHandle) {
         for (Entry<String, ConnectorHandleResolver> entry : handleIdResolvers.entrySet()) {
             if (entry.getValue().canHandle(insertHandle)) {
                 return entry.getKey();
@@ -145,48 +133,39 @@ public class HandleResolver
         throw new IllegalArgumentException("No connector for insert table handle: " + insertHandle);
     }
 
-    public Class<? extends ConnectorTableHandle> getTableHandleClass(String id)
-    {
+    public Class<? extends ConnectorTableHandle> getTableHandleClass(String id) {
         return resolverFor(id).getTableHandleClass();
     }
 
-    public Class<? extends ConnectorTableLayoutHandle> getTableLayoutHandleClass(String id)
-    {
+    public Class<? extends ConnectorTableLayoutHandle> getTableLayoutHandleClass(String id) {
         try {
             return resolverFor(id).getTableLayoutHandleClass();
-        }
-        catch (UnsupportedOperationException e) {
+        } catch (UnsupportedOperationException e) {
             return LegacyTableLayoutHandle.class;
         }
     }
 
-    public Class<? extends ColumnHandle> getColumnHandleClass(String id)
-    {
+    public Class<? extends ColumnHandle> getColumnHandleClass(String id) {
         return resolverFor(id).getColumnHandleClass();
     }
 
-    public Class<? extends ConnectorSplit> getSplitClass(String id)
-    {
+    public Class<? extends ConnectorSplit> getSplitClass(String id) {
         return resolverFor(id).getSplitClass();
     }
 
-    public Class<? extends ConnectorIndexHandle> getIndexHandleClass(String id)
-    {
+    public Class<? extends ConnectorIndexHandle> getIndexHandleClass(String id) {
         return resolverFor(id).getIndexHandleClass();
     }
 
-    public Class<? extends ConnectorOutputTableHandle> getOutputTableHandleClass(String id)
-    {
+    public Class<? extends ConnectorOutputTableHandle> getOutputTableHandleClass(String id) {
         return resolverFor(id).getOutputTableHandleClass();
     }
 
-    public Class<? extends ConnectorInsertTableHandle> getInsertTableHandleClass(String id)
-    {
+    public Class<? extends ConnectorInsertTableHandle> getInsertTableHandleClass(String id) {
         return resolverFor(id).getInsertTableHandleClass();
     }
 
-    public ConnectorHandleResolver resolverFor(String id)
-    {
+    public ConnectorHandleResolver resolverFor(String id) {
         ConnectorHandleResolver resolver = handleIdResolvers.get(id);
         checkArgument(resolver != null, "No handle resolver for %s", id);
         return resolver;
@@ -198,11 +177,11 @@ public class HandleResolver
     //
     // **********************
 
-    public synchronized void flush(String catalogName){
+    public synchronized void flush(String catalogName) {
         handleIdResolvers.remove(catalogName);
     }
 
-    public synchronized void flushAll(){
+    public synchronized void flushAll() {
         handleIdResolvers.clear();
     }
 }

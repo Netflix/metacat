@@ -38,678 +38,882 @@ import java.net.HttpURLConnection;
 import java.util.List;
 
 /**
- * Created by amajumdar on 6/17/15.
+ * Metacat API for managing partition.
+ * @author amajumdar
  */
 @Path("mds/v1/partition")
 @Api(value = "PartitionV1",
-        description = "Federated partition metadata operations",
-        produces = MediaType.APPLICATION_JSON,
-        consumes = MediaType.APPLICATION_JSON)
+    description = "Federated partition metadata operations",
+    produces = MediaType.APPLICATION_JSON,
+    consumes = MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface PartitionV1 {
+    /**
+     * Delete named partitions from a table.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param partitionIds lis of partition names
+     */
     @DELETE
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Delete named partitions from a table",
-            notes = "List of partitions names of the given table name under the given catalog and database")
+        value = "Delete named partitions from a table",
+        notes = "List of partitions names of the given table name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or table cannot be located"
-            ),
-            @ApiResponse(code = HttpURLConnection.HTTP_BAD_REQUEST,
-                    message = "The list of partitionNames is not present"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or table cannot be located"
+        ),
+        @ApiResponse(code = HttpURLConnection.HTTP_BAD_REQUEST,
+            message = "The list of partitionNames is not present"
+        )
     })
     void deletePartitions(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "partitionId of the partitions to be deleted from this table", required = true)
+        @ApiParam(value = "partitionId of the partitions to be deleted from this table", required = true)
             List<String> partitionIds
     );
 
-
+    /**
+     * Delete partitions for the given view.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param viewName metacat view name
+     * @param partitionIds list of partition names
+     */
     @DELETE
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Delete partitions for the given view",
-            notes = "Delete partitions for the given view")
+        value = "Delete partitions for the given view",
+        notes = "Delete partitions for the given view")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or metacat view cannot be located"
-            ),
-            @ApiResponse(code = HttpURLConnection.HTTP_BAD_REQUEST,
-                    message = "The list of partitionNames is not present"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or metacat view cannot be located"
+        ),
+        @ApiResponse(code = HttpURLConnection.HTTP_BAD_REQUEST,
+            message = "The list of partitionNames is not present"
+        )
     })
     void deletePartitions(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "The name of the metacat view", required = true)
-            @PathParam("view-name")
+        @ApiParam(value = "The name of the metacat view", required = true)
+        @PathParam("view-name")
             String viewName,
-            @ApiParam(value = "partitionId of the partitions to be deleted from this table", required = true)
+        @ApiParam(value = "partitionId of the partitions to be deleted from this table", required = true)
             List<String> partitionIds
     );
 
+    /**
+     * Return list of partitions for a table.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param filter filter expression
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @param includeUserMetadata whether to include user metadata for every partition in the list
+     * @return list of partitions for a table
+     */
     @GET
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partitions for a table",
-            notes = "List of partitions for the given table name under the given catalog and database")
+        value = "List of partitions for a table",
+        notes = "List of partitions for the given table name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or table cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or table cannot be located"
+        )
     })
     List<PartitionDto> getPartitions(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "Filter expression string to use", required = false)
-            @QueryParam("filter")
+        @ApiParam(value = "Filter expression string to use", required = false)
+        @QueryParam("filter")
             String filter,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
+        @ApiParam(value = "Whether to include user metadata information to the response", required = false)
+        @DefaultValue("false")
+        @QueryParam("includeUserMetadata")
             Boolean includeUserMetadata
     );
 
+    /**
+     * Return list of partitions for a metacat view.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param viewName view name
+     * @param filter filter expression
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @param includeUserMetadata whether to include user metadata for every partition in the list
+     * @return list of partitions for a metacat view
+     */
     @GET
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partitions for a metacat view",
-            notes = "List of partitions for the given view name under the given catalog and database")
+        value = "List of partitions for a metacat view",
+        notes = "List of partitions for the given view name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or metacat view cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or metacat view cannot be located"
+        )
     })
     List<PartitionDto> getPartitions(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "The name of the metacat view", required = true)
-            @PathParam("view-name")
+        @ApiParam(value = "The name of the metacat view", required = true)
+        @PathParam("view-name")
             String viewName,
-            @ApiParam(value = "Filter expression string to use", required = false)
-            @QueryParam("filter")
+        @ApiParam(value = "Filter expression string to use", required = false)
+        @QueryParam("filter")
             String filter,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
+        @ApiParam(value = "Whether to include user metadata information to the response", required = false)
+        @DefaultValue("false")
+        @QueryParam("includeUserMetadata")
             Boolean includeUserMetadata
     );
 
+    /**
+     * Return list of partitions for a table.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @param includeUserMetadata whether to include user metadata for every partition in the list
+     * @param getPartitionsRequestDto request
+     * @return list of partitions for a table
+     */
     @POST
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/request")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partitions for a table",
-            notes = "List of partitions for the given table name under the given catalog and database")
+        value = "List of partitions for a table",
+        notes = "List of partitions for the given table name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or table cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or table cannot be located"
+        )
     })
     List<PartitionDto> getPartitionsForRequest(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
+        @ApiParam(value = "Whether to include user metadata information to the response", required = false)
+        @DefaultValue("false")
+        @QueryParam("includeUserMetadata")
             Boolean includeUserMetadata,
-            @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
+    /**
+     * Return list of partitions for a view.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param viewName view name
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @param includeUserMetadata whether to include user metadata for every partition in the list
+     * @param getPartitionsRequestDto request
+     * @return list of partitions for a view
+     */
     @POST
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/request")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partitions for a metacat view",
-            notes = "List of partitions for the given view name under the given catalog and database")
+        value = "List of partitions for a metacat view",
+        notes = "List of partitions for the given view name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or metacat view cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or metacat view cannot be located"
+        )
     })
     List<PartitionDto> getPartitionsForRequest(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "The name of the metacat view", required = true)
-            @PathParam("view-name")
+        @ApiParam(value = "The name of the metacat view", required = true)
+        @PathParam("view-name")
             String viewName,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Whether to include user metadata information to the response", required = false)
-            @DefaultValue("false") @QueryParam("includeUserMetadata")
+        @ApiParam(value = "Whether to include user metadata information to the response", required = false)
+        @DefaultValue("false")
+        @QueryParam("includeUserMetadata")
             Boolean includeUserMetadata,
-            @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
+    /**
+     * Return list of partition names for a table.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param filter filter expression
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @return list of partition names for a table
+     */
     @GET
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/keys")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partition keys for a table",
-            notes = "List of partition keys for the given table name under the given catalog and database")
+        value = "List of partition keys for a table",
+        notes = "List of partition keys for the given table name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or table cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or table cannot be located"
+        )
     })
     List<String> getPartitionKeys(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "Filter expression string to use", required = false)
-            @QueryParam("filter")
+        @ApiParam(value = "Filter expression string to use", required = false)
+        @QueryParam("filter")
             String filter,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit
     );
 
+    /**
+     * Return list of partition names for a view.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param viewName view name
+     * @param filter filter expression
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @return list of partition names for a view
+     */
     @GET
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/keys")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partition keys for a metacat view",
-            notes = "List of partition keys for the given view name under the given catalog and database")
+        value = "List of partition keys for a metacat view",
+        notes = "List of partition keys for the given view name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or metacat view cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or metacat view cannot be located"
+        )
     })
     List<String> getPartitionKeys(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "The name of the metacat view", required = true)
-            @PathParam("view-name")
+        @ApiParam(value = "The name of the metacat view", required = true)
+        @PathParam("view-name")
             String viewName,
-            @ApiParam(value = "Filter expression string to use", required = false)
-            @QueryParam("filter")
+        @ApiParam(value = "Filter expression string to use", required = false)
+        @QueryParam("filter")
             String filter,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit
     );
 
+    /**
+     * Return list of partition names for a table.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @param getPartitionsRequestDto request
+     * @return list of partition names for a table
+     */
     @POST
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/keys-request")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partition keys for a table",
-            notes = "List of partition keys for the given table name under the given catalog and database")
+        value = "List of partition keys for a table",
+        notes = "List of partition keys for the given table name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or table cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or table cannot be located"
+        )
     })
     List<String> getPartitionKeysForRequest(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
+    /**
+     * Return list of partition names for a view.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param viewName view name
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @param getPartitionsRequestDto request
+     * @return list of partition names for a view
+     */
     @POST
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/keys-request")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partition keys for a metacat view",
-            notes = "List of partition keys for the given view name under the given catalog and database")
+        value = "List of partition keys for a metacat view",
+        notes = "List of partition keys for the given view name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or metacat view cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or metacat view cannot be located"
+        )
     })
     List<String> getPartitionKeysForRequest(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "The name of the metacat view", required = true)
-            @PathParam("view-name")
+        @ApiParam(value = "The name of the metacat view", required = true)
+        @PathParam("view-name")
             String viewName,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
+    /**
+     * Return list of partition uris for a table.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param filter filter expression
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @return list of partition uris for a table
+     */
     @GET
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/uris")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partition uris for a table",
-            notes = "List of partition uris for the given table name under the given catalog and database")
+        value = "List of partition uris for a table",
+        notes = "List of partition uris for the given table name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or table cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or table cannot be located"
+        )
     })
     List<String> getPartitionUris(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "Filter expression string to use", required = false)
-            @QueryParam("filter")
+        @ApiParam(value = "Filter expression string to use", required = false)
+        @QueryParam("filter")
             String filter,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit
     );
 
+    /**
+     * Return list of partition uris for a table.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param viewName view name
+     * @param filter filter expression
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @return list of partition uris for a table
+     */
     @GET
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/uris")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partition uris for a metacat view",
-            notes = "List of partition uris for the given view name under the given catalog and database")
+        value = "List of partition uris for a metacat view",
+        notes = "List of partition uris for the given view name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or metacat view cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or metacat view cannot be located"
+        )
     })
     List<String> getPartitionUris(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "The name of the metacat view", required = true)
-            @PathParam("view-name")
+        @ApiParam(value = "The name of the metacat view", required = true)
+        @PathParam("view-name")
             String viewName,
-            @ApiParam(value = "Filter expression string to use", required = false)
-            @QueryParam("filter")
+        @ApiParam(value = "Filter expression string to use", required = false)
+        @QueryParam("filter")
             String filter,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit
     );
 
+    /**
+     * Return list of partition uris for a table.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @param getPartitionsRequestDto request
+     * @return list of partition uris for a table
+     */
     @POST
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/uris-request")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partition uris for a table",
-            notes = "List of partition uris for the given table name under the given catalog and database")
+        value = "List of partition uris for a table",
+        notes = "List of partition uris for the given table name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or table cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or table cannot be located"
+        )
     })
     List<String> getPartitionUrisForRequest(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
+    /**
+     * Return list of partition uris for a view.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param viewName view name
+     * @param sortBy sort by this name
+     * @param sortOrder sort order to use
+     * @param offset offset of the list
+     * @param limit size of the list
+     * @param getPartitionsRequestDto request
+     * @return list of partition uris for a view
+     */
     @POST
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/uris-request")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List of partition uris for a metacat view",
-            notes = "List of partition uris for the given view name under the given catalog and database")
+        value = "List of partition uris for a metacat view",
+        notes = "List of partition uris for the given view name under the given catalog and database")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or metacat view cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or metacat view cannot be located"
+        )
     })
     List<String> getPartitionUrisForRequest(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "The name of the metacat view", required = true)
-            @PathParam("view-name")
+        @ApiParam(value = "The name of the metacat view", required = true)
+        @PathParam("view-name")
             String viewName,
-            @ApiParam(value = "Sort the partition list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the partition list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the partition list", required = false)
+        @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
-
+    /**
+     * Add/update partitions to the given table.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param partitionsSaveRequestDto partition request containing the list of partitions to be added/updated
+     * @return Response with the number of partitions added/updated
+     */
     @POST
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            position = 5,
-            value = "Add/update partitions to the given table",
-            notes = "Add/update partitions to the given table")
+        position = 5,
+        value = "Add/update partitions to the given table",
+        notes = "Add/update partitions to the given table")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or table cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or table cannot be located"
+        )
     })
     PartitionsSaveResponseDto savePartitions(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "Request containing the list of partitions", required = true)
+        @ApiParam(value = "Request containing the list of partitions", required = true)
             PartitionsSaveRequestDto partitionsSaveRequestDto
     );
 
+    /**
+     * Add/update partitions to the given metacat view.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param viewName view name
+     * @param partitionsSaveRequestDto partition request containing the list of partitions to be added/updated
+     * @return Response with the number of partitions added/updated
+     */
     @POST
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            position = 5,
-            value = "Add/update partitions to the given table",
-            notes = "Add/update partitions to the given table")
+        position = 5,
+        value = "Add/update partitions to the given table",
+        notes = "Add/update partitions to the given table")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or table cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or table cannot be located"
+        )
     })
     PartitionsSaveResponseDto savePartitions(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "The name of the view", required = true)
-            @PathParam("view-name")
+        @ApiParam(value = "The name of the view", required = true)
+        @PathParam("view-name")
             String viewName,
-            @ApiParam(value = "Request containing the list of partitions", required = true)
+        @ApiParam(value = "Request containing the list of partitions", required = true)
             PartitionsSaveRequestDto partitionsSaveRequestDto
     );
 
+    /**
+     * Get the partition count for the given table.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @return partition count for the given table
+     */
     @GET
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/count")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            position = 5,
-            value = "Partition count for the given table",
-            notes = "Partition count for the given table")
+        position = 5,
+        value = "Partition count for the given table",
+        notes = "Partition count for the given table")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or table cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or table cannot be located"
+        )
     })
     Integer getPartitionCount(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName
     );
 
+    /**
+     * Get the partition count for the given metacat view.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @param viewName view name
+     * @return partition count for the given view
+     */
     @GET
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/count")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            position = 5,
-            value = "Partition count for the given table",
-            notes = "Partition count for the given table")
+        position = 5,
+        value = "Partition count for the given table",
+        notes = "Partition count for the given table")
     @ApiResponses(value = {
-            @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-                    message = "The requested catalog or database or table cannot be located"
-            )
+        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
+            message = "The requested catalog or database or table cannot be located"
+        )
     })
     Integer getPartitionCount(
-            @ApiParam(value = "The name of the catalog", required = true)
-            @PathParam("catalog-name")
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathParam("catalog-name")
             String catalogName,
-            @ApiParam(value = "The name of the database", required = true)
-            @PathParam("database-name")
+        @ApiParam(value = "The name of the database", required = true)
+        @PathParam("database-name")
             String databaseName,
-            @ApiParam(value = "The name of the table", required = true)
-            @PathParam("table-name")
+        @ApiParam(value = "The name of the table", required = true)
+        @PathParam("table-name")
             String tableName,
-            @ApiParam(value = "The name of the view", required = true)
-            @PathParam("view-name")
+        @ApiParam(value = "The name of the view", required = true)
+        @PathParam("view-name")
             String viewName
     );
 }

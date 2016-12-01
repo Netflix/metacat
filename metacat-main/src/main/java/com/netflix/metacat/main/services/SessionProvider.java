@@ -34,7 +34,8 @@ public class SessionProvider {
     SessionPropertyManager sessionPropertyManager;
 
     public Session getSession(QualifiedName name) {
-        if (name.isDatabaseDefinition() || name.isTableDefinition() || name.isPartitionDefinition() || name.isViewDefinition()) {
+        if (name.isDatabaseDefinition() || name.isTableDefinition() || name.isPartitionDefinition() || name
+            .isViewDefinition()) {
             return getSession(name.getCatalogName(), name.getDatabaseName());
         } else {
             return getSession(name.getCatalogName());
@@ -49,13 +50,13 @@ public class SessionProvider {
         String source = metacatConnectorManager.getCatalogConfig(catalogName).getType();
         MetacatRequestContext context = MetacatContextManager.getContext();
         return Session.builder(sessionPropertyManager)
-                .setIdentity(new Identity(context.getUserName(), Optional.empty()))
-                .setRemoteUserAddress(context.getClientId())
-                .setSource(source)
-                .setCatalog(catalogName)
-                .setSchema(databaseName)
-                .setTimeZoneKey(UTC_KEY)
-                .setLocale(ENGLISH)
-                .build();
+            .setIdentity(new Identity(context.getUserName(), Optional.empty()))
+            .setRemoteUserAddress(context.getClientId())
+            .setSource(source)
+            .setCatalog(catalogName)
+            .setSchema(databaseName)
+            .setTimeZoneKey(UTC_KEY)
+            .setLocale(ENGLISH)
+            .build();
     }
 }

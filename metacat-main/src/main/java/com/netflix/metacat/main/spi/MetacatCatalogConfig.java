@@ -32,11 +32,14 @@ public class MetacatCatalogConfig {
     private final String type;
 
     private MetacatCatalogConfig(
-            @Nonnull String type,
-            boolean includeViewsWithTables,
-            @Nonnull List<String> schemaWhitelist,
-            @Nonnull List<String> schemaBlacklist,
-            int thriftPort) {
+        @Nonnull
+            String type,
+        boolean includeViewsWithTables,
+        @Nonnull
+            List<String> schemaWhitelist,
+        @Nonnull
+            List<String> schemaBlacklist,
+        int thriftPort) {
         this.type = type;
         this.includeViewsWithTables = includeViewsWithTables;
         this.schemaBlacklist = schemaBlacklist;
@@ -48,22 +51,22 @@ public class MetacatCatalogConfig {
         checkArgument(!Strings.isNullOrEmpty(type), "type is required");
         String catalogType = properties.containsKey(Keys.CATALOG_TYPE) ? properties.remove(Keys.CATALOG_TYPE) : type;
         List<String> schemaWhitelist = properties.containsKey(Keys.SCHEMA_WHITELIST) ?
-                COMMA_LIST_SPLITTER.splitToList(properties.remove(Keys.SCHEMA_WHITELIST)) :
-                Collections.EMPTY_LIST;
+            COMMA_LIST_SPLITTER.splitToList(properties.remove(Keys.SCHEMA_WHITELIST)) :
+            Collections.EMPTY_LIST;
 
         List<String> schemaBlacklist = properties.containsKey(Keys.SCHEMA_BLACKLIST) ?
-                COMMA_LIST_SPLITTER.splitToList(properties.remove(Keys.SCHEMA_BLACKLIST)) :
-                Collections.EMPTY_LIST;
+            COMMA_LIST_SPLITTER.splitToList(properties.remove(Keys.SCHEMA_BLACKLIST)) :
+            Collections.EMPTY_LIST;
 
         boolean includeViewsWithTables = Boolean.parseBoolean(properties.remove(Keys.INCLUDE_VIEWS_WITH_TABLES));
 
         int thriftPort = 0;
         if (properties.containsKey(Keys.THRIFT_PORT)) {
-            thriftPort = Integer.valueOf(properties.remove(Keys.THRIFT_PORT));
+            thriftPort = Integer.parseInt(properties.remove(Keys.THRIFT_PORT));
         }
 
         return new MetacatCatalogConfig(catalogType, includeViewsWithTables, schemaWhitelist, schemaBlacklist,
-                thriftPort);
+            thriftPort);
     }
 
     public List<String> getSchemaBlacklist() {

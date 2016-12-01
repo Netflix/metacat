@@ -21,16 +21,55 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.TableDto;
 
+/**
+ * Converters.
+ */
 public interface PrestoConverters {
+    /**
+     * Converts from table DTO to presto Table.
+     * @param name name
+     * @param table table info
+     * @param typeManager manager
+     * @return TableMetadata
+     */
     TableMetadata fromTableDto(QualifiedName name, TableDto table, TypeManager typeManager);
 
+    /**
+     * Converts qualified name to presto table name.
+     * @param name qualified name
+     * @return presto table name
+     */
     QualifiedTableName getQualifiedTableName(QualifiedName name);
 
+    /**
+     * Converts from presto partition object to Partition DTO.
+     *
+     * @param name name
+     * @param partition partition info
+     * @return Partition DTO
+     */
     PartitionDto toPartitionDto(QualifiedName name, ConnectorPartition partition);
 
+    /**
+     * Converts presto table name to qualified name.
+     * @param qualifiedTableName table name
+     * @return qualified name
+     */
     QualifiedName toQualifiedName(QualifiedTableName qualifiedTableName);
 
+    /**
+     * Converts from presto table to Table DTO.
+     * @param name name
+     * @param type type
+     * @param ptm table info
+     * @return TableDto
+     */
     TableDto toTableDto(QualifiedName name, String type, TableMetadata ptm);
 
+    /**
+     * Converts from partition DTO to presto partition.
+     * @param partitionDto partition info
+     * @return ConnectorPartition
+     */
     ConnectorPartition fromPartitionDto(PartitionDto partitionDto);
 }

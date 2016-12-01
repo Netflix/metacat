@@ -25,39 +25,41 @@ import javax.persistence.OneToOne;
 import javax.persistence.UniqueConstraint;
 
 /**
- * Created by amajumdar on 12/19/14.
+ * Table.
  */
 @Entity
-@javax.persistence.Table(name="table_object",
-        indexes = { @Index(name="table_object_i1", columnList = "name") },
-        uniqueConstraints= @UniqueConstraint(name="table_object_u1", columnNames = {"database_id", "name"}))
+@javax.persistence.Table(name = "table_object",
+    indexes = { @Index(name = "table_object_i1", columnList = "name") },
+    uniqueConstraints = @UniqueConstraint(name = "table_object_u1", columnNames = { "database_id", "name" }))
 @NamedQueries({
-        @NamedQuery(
-                name = Table.NAME_QUERY_GET_BY_SOURCE_DATABASE_TABLE_NAMES,
-                query = "select t from Table t where t.database.source.name=:sourceName and t.database.name=:databaseName and t.name in (:tableNames)"
-        )
+    @NamedQuery(
+        name = Table.NAME_QUERY_GET_BY_SOURCE_DATABASE_TABLE_NAMES,
+        query = "select t from Table t where t.database.source.name=:sourceName and t.database.name=:databaseName"
+            + " and t.name in (:tableNames)"
+    )
 })
-public class Table extends BaseTable{
+public class Table extends BaseTable {
+    /** Query name to get table for the given source, database and table names. */
     public static final String NAME_QUERY_GET_BY_SOURCE_DATABASE_TABLE_NAMES = "getBySourceDatabaseTableNames";
     private Database database;
     private Location location;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional=false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "database_id", nullable = false)
     public Database getDatabase() {
         return database;
     }
 
-    public void setDatabase(Database database) {
+    public void setDatabase(final Database database) {
         this.database = database;
     }
 
-    @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.EAGER, mappedBy = "table")
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "table")
     public Location getLocation() {
         return location;
     }
 
-    public void setLocation(Location location) {
+    public void setLocation(final Location location) {
         this.location = location;
     }
 }

@@ -24,11 +24,15 @@ import javax.persistence.TypedQuery;
 import java.util.List;
 
 /**
- * Created by amajumdar on 1/2/15.
+ * Table DAO impl.
  */
 public class TableDaoImpl extends IdEntityDaoImpl<Table> implements TableDao {
+    /**
+     * Constructor.
+     * @param em entity manager
+     */
     @Inject
-    public TableDaoImpl(Provider<EntityManager> em) {
+    public TableDaoImpl(final Provider<EntityManager> em) {
         super(em);
     }
 
@@ -38,19 +42,22 @@ public class TableDaoImpl extends IdEntityDaoImpl<Table> implements TableDao {
     }
 
     @Override
-    public Table getBySourceDatabaseTableName(String sourceName, String databaseName, String tableName) {
+    public Table getBySourceDatabaseTableName(final String sourceName, final String databaseName,
+        final String tableName) {
         Table result = null;
-        List<Table> tables = getBySourceDatabaseTableNames(sourceName, databaseName, Lists.newArrayList(tableName));
-        if( !tables.isEmpty()){
+        final List<Table> tables = getBySourceDatabaseTableNames(sourceName, databaseName,
+            Lists.newArrayList(tableName));
+        if (!tables.isEmpty()) {
             result = tables.get(0);
         }
         return result;
     }
 
     @Override
-    public List<Table> getBySourceDatabaseTableNames(String sourceName, String databaseName, List<String> tableNames) {
-        TypedQuery<Table> query = em.get().createNamedQuery(Table.NAME_QUERY_GET_BY_SOURCE_DATABASE_TABLE_NAMES,
-                Table.class);
+    public List<Table> getBySourceDatabaseTableNames(final String sourceName, final String databaseName,
+        final List<String> tableNames) {
+        final TypedQuery<Table> query = em.get().createNamedQuery(Table.NAME_QUERY_GET_BY_SOURCE_DATABASE_TABLE_NAMES,
+            Table.class);
         query.setParameter("sourceName", sourceName);
         query.setParameter("databaseName", databaseName);
         query.setParameter("tableNames", tableNames);

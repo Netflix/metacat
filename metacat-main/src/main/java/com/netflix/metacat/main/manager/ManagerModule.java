@@ -70,7 +70,7 @@ public class ManagerModule extends AbstractModule {
         // handle resolver
         binder().bind(HandleResolver.class).in(Scopes.SINGLETON);
         MapBinder<String, ConnectorHandleResolver> connectorHandleResolverBinder = newMapBinder(binder(), String.class,
-                ConnectorHandleResolver.class);
+            ConnectorHandleResolver.class);
         connectorHandleResolverBinder.addBinding("remote").to(RemoteSplitHandleResolver.class).in(Scopes.SINGLETON);
 
         // connector

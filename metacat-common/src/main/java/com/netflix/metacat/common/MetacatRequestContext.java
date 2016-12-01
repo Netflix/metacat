@@ -27,9 +27,21 @@ import lombok.Data;
  */
 @Data
 public class MetacatRequestContext {
+    /**
+     * Request header representing the user name.
+     */
     public static final String HEADER_KEY_USER_NAME = "X-Netflix.user.name";
+    /**
+     * Request header representing the client application name.
+     */
     public static final String HEADER_KEY_CLIENT_APP_NAME = "X-Netflix.client.app.name";
+    /**
+     * Request header representing the job id.
+     */
     public static final String HEADER_KEY_JOB_ID = "X-Netflix.job.id";
+    /**
+     * Request header representing the data type context.
+     */
     public static final String HEADER_KEY_DATA_TYPE_CONTEXT = "X-Netflix.data.type.context";
 
     private final String userName;
@@ -38,5 +50,8 @@ public class MetacatRequestContext {
     private final String jobId;
     private final DataTypeContext dataTypeContext;
 
-    public enum DataTypeContext {hive, pig, presto}
+    /**
+     * Data type context.
+     */
+    public enum DataTypeContext { hive, pig, presto }
 }

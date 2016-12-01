@@ -15,11 +15,13 @@ package com.netflix.metacat.common.dto;
 
 import com.wordnik.swagger.annotations.ApiModel;
 import com.wordnik.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.Map;
-import java.util.Objects;
 
 /**
+ * Storage DTO.
  * <pre>
  {
  "inputFormat": "org.apache.hadoop.mapred.TextInputFormat",
@@ -34,6 +36,8 @@ import java.util.Objects;
  */
 @ApiModel("Serialization/Deserialization metadata of the table data")
 @SuppressWarnings("unused")
+@Data
+@EqualsAndHashCode(callSuper = false)
 public class StorageDto extends BaseDto {
     private static final long serialVersionUID = 4933906340321707232L;
 
@@ -51,79 +55,4 @@ public class StorageDto extends BaseDto {
     private String serializationLib;
     @ApiModelProperty(value = "URI of the table. Only applies to certain data sources like hive, S3", required = false)
     private String uri;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof StorageDto)) return false;
-        StorageDto that = (StorageDto) o;
-        return Objects.equals(inputFormat, that.inputFormat) &&
-                Objects.equals(outputFormat, that.outputFormat) &&
-                Objects.equals(owner, that.owner) &&
-                Objects.equals(parameters, that.parameters) &&
-                Objects.equals(serdeInfoParameters, that.serdeInfoParameters) &&
-                Objects.equals(serializationLib, that.serializationLib) &&
-                Objects.equals(uri, that.uri);
-    }
-
-    public String getInputFormat() {
-        return inputFormat;
-    }
-
-    public void setInputFormat(String inputFormat) {
-        this.inputFormat = inputFormat;
-    }
-
-    public String getOutputFormat() {
-        return outputFormat;
-    }
-
-    public void setOutputFormat(String outputFormat) {
-        this.outputFormat = outputFormat;
-    }
-
-    public String getOwner() {
-        return owner;
-    }
-
-    public void setOwner(String owner) {
-        this.owner = owner;
-    }
-
-    public Map<String, String> getParameters() {
-        return parameters;
-    }
-
-    public void setParameters(Map<String, String> parameters) {
-        this.parameters = parameters;
-    }
-
-    public Map<String, String> getSerdeInfoParameters() {
-        return serdeInfoParameters;
-    }
-
-    public void setSerdeInfoParameters(Map<String, String> serdeInfoParameters) {
-        this.serdeInfoParameters = serdeInfoParameters;
-    }
-
-    public String getSerializationLib() {
-        return serializationLib;
-    }
-
-    public void setSerializationLib(String serializationLib) {
-        this.serializationLib = serializationLib;
-    }
-
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(inputFormat, outputFormat, owner, parameters, serdeInfoParameters, serializationLib, uri);
-    }
 }

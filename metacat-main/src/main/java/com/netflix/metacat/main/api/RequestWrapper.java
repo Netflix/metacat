@@ -28,8 +28,6 @@ import com.netflix.metacat.common.exception.MetacatException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.exception.MetacatUserMetadataException;
-import com.netflix.metacat.common.monitoring.CounterWrapper;
-import com.netflix.metacat.common.monitoring.TimerWrapper;
 import com.netflix.metacat.common.usermetadata.UserMetadataServiceException;
 import com.netflix.servo.monitor.DynamicCounter;
 import com.netflix.servo.monitor.DynamicTimer;
@@ -57,9 +55,9 @@ public class RequestWrapper {
     }
 
     public static <R> R requestWrapper(
-            QualifiedName name,
-            String resourceRequestName,
-            Supplier<R> supplier) {
+        QualifiedName name,
+        String resourceRequestName,
+        Supplier<R> supplier) {
         BasicTagList tags = getQualifiedNameTagList(name).copy("request", resourceRequestName);
         DynamicCounter.increment("dse.metacat.counter.requests", tags);
         Stopwatch timer = DynamicTimer.start("dse.metacat.timer.requests", tags);
@@ -69,35 +67,41 @@ public class RequestWrapper {
         } catch (UnsupportedOperationException e) {
             log.error(e.getMessage(), e);
             throw new MetacatNotSupportedException("Catalog does not support the operation");
-        } catch (SchemaAlreadyExistsException | TableAlreadyExistsException |PartitionAlreadyExistsException e) {
+        } catch (SchemaAlreadyExistsException | TableAlreadyExistsException | PartitionAlreadyExistsException e) {
             log.error(e.getMessage(), e);
             throw new MetacatAlreadyExistsException(e.getMessage());
-        } catch (NotFoundException|MetacatNotFoundException e) {
+        } catch (NotFoundException | MetacatNotFoundException e) {
             log.error(e.getMessage(), e);
-            throw new MetacatNotFoundException(String.format("Unable to locate for %s. Details: %s", name, e.getMessage()));
+            throw new MetacatNotFoundException(
+                String.format("Unable to locate for %s. Details: %s", name, e.getMessage()));
         } catch (InvalidMetaException | IllegalArgumentException e) {
             log.error(e.getMessage(), e);
-            throw new MetacatBadRequestException(String.format("%s.%s",e.getMessage(), e.getCause()==null?"":e.getCause().getMessage()));
+            throw new MetacatBadRequestException(
+                String.format("%s.%s", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (PrestoException e) {
-            String message = String.format("%s.%s -- %s failed for %s", e.getMessage(), e.getCause()==null?"":e.getCause().getMessage(), resourceRequestName, name);
+            String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
+                e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
             if (e.getErrorCode() == StandardErrorCode.NOT_SUPPORTED.toErrorCode()) {
                 throw new MetacatNotSupportedException("Catalog does not support the operation");
             } else {
-                DynamicCounter.increment("dse.metacat.counter.failure.requests" , tags);
+                DynamicCounter.increment("dse.metacat.counter.failure.requests", tags);
                 throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
             }
-        } catch(UserMetadataServiceException e){
-            String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(), e.getCause()==null?"":e.getCause().getMessage(), resourceRequestName, name);
+        } catch (UserMetadataServiceException e) {
+            String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(),
+                e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             throw new MetacatUserMetadataException(message);
         } catch (Exception e) {
-            DynamicCounter.increment("dse.metacat.counter.failure.requests" , tags);
-            String message = String.format("%s.%s -- %s failed for %s", e.getMessage(), e.getCause()==null?"":e.getCause().getMessage(), resourceRequestName, name);
+            DynamicCounter.increment("dse.metacat.counter.failure.requests", tags);
+            String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
+                e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } finally {
             timer.stop();
-            log.info("### Time taken to complete {} is {} ms", resourceRequestName, timer.getDuration(TimeUnit.MILLISECONDS));
+            log.info("### Time taken to complete {} is {} ms", resourceRequestName,
+                timer.getDuration(TimeUnit.MILLISECONDS));
         }
     }
 
@@ -108,8 +112,8 @@ public class RequestWrapper {
     }
 
     public static <R> R requestWrapper(
-            String resourceRequestName,
-            Supplier<R> supplier) {
+        String resourceRequestName,
+        Supplier<R> supplier) {
         TagList tags = BasicTagList.of("request", resourceRequestName);
         DynamicCounter.increment("dse.metacat.counter.requests", tags);
         Stopwatch timer = DynamicTimer.start("dse.metacat.timer.requests", tags);
@@ -122,15 +126,18 @@ public class RequestWrapper {
         } catch (IllegalArgumentException e) {
             log.error(e.getMessage(), e);
             throw new MetacatBadRequestException(String.format("%s.%s", e.getMessage(),
-                    e.getCause() == null ? "" : e.getCause().getMessage()));
+                e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (Exception e) {
             DynamicCounter.increment("dse.metacat.counter.failure.requests", tags);
-            String message = String.format("%s.%s -- %s failed.", e.getMessage(), e.getCause()==null?"":e.getCause().getMessage(), resourceRequestName);
+            String message = String
+                .format("%s.%s -- %s failed.", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage(),
+                    resourceRequestName);
             log.error(message, e);
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } finally {
             timer.stop();
-            log.info("### Time taken to complete {} is {} ms", resourceRequestName, timer.getDuration(TimeUnit.MILLISECONDS));
+            log.info("### Time taken to complete {} is {} ms", resourceRequestName,
+                timer.getDuration(TimeUnit.MILLISECONDS));
         }
     }
 }

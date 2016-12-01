@@ -32,6 +32,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
@@ -90,7 +91,11 @@ public class TableServiceImpl implements TableService {
     private static final String NAME_TAGS = "tags";
 
     @Override
-    public void create(@Nonnull QualifiedName name, @Nonnull TableDto tableDto) {
+    public void create(
+        @Nonnull
+            QualifiedName name,
+        @Nonnull
+            TableDto tableDto) {
         Session session = validateAndGetSession(name);
         //
         // Set the owner,if null, with the session user name.
@@ -98,20 +103,20 @@ public class TableServiceImpl implements TableService {
         setOwnerIfNull(tableDto, session.getUser());
         log.info("Creating table {}", name);
         metadataManager.createTable(
-                session,
-                name.getCatalogName(),
-                prestoConverters.fromTableDto(name, tableDto, metadataManager.getTypeManager())
+            session,
+            name.getCatalogName(),
+            prestoConverters.fromTableDto(name, tableDto, metadataManager.getTypeManager())
         );
 
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for table {}", name);
             userMetadataService.saveMetadata(session.getUser(), tableDto, false);
-            tag( name, tableDto.getDefinitionMetadata());
+            tag(name, tableDto.getDefinitionMetadata());
         }
     }
 
     private void setOwnerIfNull(TableDto tableDto, String user) {
-        if(!Strings.isNullOrEmpty(user)) {
+        if (!Strings.isNullOrEmpty(user)) {
             StorageDto serde = tableDto.getSerde();
             if (serde == null) {
                 serde = new StorageDto();
@@ -124,21 +129,23 @@ public class TableServiceImpl implements TableService {
     }
 
     private void tag(QualifiedName name, ObjectNode definitionMetadata) {
-        if( definitionMetadata != null && definitionMetadata.get(NAME_TAGS) != null){
+        if (definitionMetadata != null && definitionMetadata.get(NAME_TAGS) != null) {
             JsonNode tagsNode = definitionMetadata.get(NAME_TAGS);
             Set<String> tags = Sets.newHashSet();
-            if( tagsNode.isArray() && tagsNode.size() > 0){
-                for(JsonNode tagNode: tagsNode){
-                    tags.add( tagNode.textValue());
+            if (tagsNode.isArray() && tagsNode.size() > 0) {
+                for (JsonNode tagNode : tagsNode) {
+                    tags.add(tagNode.textValue());
                 }
                 log.info("Setting tags {} for table {}", tags, name);
-                tagService.setTableTags( name, tags, false);
+                tagService.setTableTags(name, tags, false);
             }
         }
     }
 
     @Override
-    public TableDto deleteAndReturn(@Nonnull QualifiedName name, boolean isMView) {
+    public TableDto deleteAndReturn(
+        @Nonnull
+            QualifiedName name, boolean isMView) {
         Session session = validateAndGetSession(name);
         QualifiedTableName tableName = prestoConverters.getQualifiedTableName(name);
 
@@ -161,14 +168,14 @@ public class TableServiceImpl implements TableService {
         userMetadataService.deleteMetadatas(session.getUser(), Lists.newArrayList(tableDto));
         log.info("Deleting tags for table {}", name);
         tagService.delete(name, false);
-        if( config.canCascadeViewsMetadataOnTableDelete() && !isMView){
+        if (config.canCascadeViewsMetadataOnTableDelete() && !isMView) {
             // Spawning off since this is a time consuming task
             threadServiceManager.getExecutor().submit(() -> {
                 try {
                     // delete views associated with this table
                     List<NameDateDto> viewNames = mViewService.list(name);
                     viewNames.forEach(viewName -> mViewService.deleteAndReturn(viewName.getName()));
-                } catch(Exception e){
+                } catch (Exception e) {
                     log.warn("Failed cleaning mviews after deleting table {}", name);
                 }
                 // delete table partitions metadata
@@ -177,7 +184,7 @@ public class TableServiceImpl implements TableService {
                     if (names != null && !names.isEmpty()) {
                         userMetadataService.deleteDefinitionMetadatas(names);
                     }
-                } catch(Exception e){
+                } catch (Exception e) {
                     log.warn("Failed cleaning partition definition metadata after deleting table {}", name);
                 }
             });
@@ -186,12 +193,16 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeUserMetadata) {
-        return get( name, true, includeUserMetadata, includeUserMetadata);
+    public Optional<TableDto> get(
+        @Nonnull
+            QualifiedName name, boolean includeUserMetadata) {
+        return get(name, true, includeUserMetadata, includeUserMetadata);
     }
 
     @Override
-    public Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeInfo, boolean includeDefinitionMetadata, boolean includeDataMetadata) {
+    public Optional<TableDto> get(
+        @Nonnull
+            QualifiedName name, boolean includeInfo, boolean includeDefinitionMetadata, boolean includeDataMetadata) {
         Session session = validateAndGetSession(name);
         TableDto table;
         Optional<TableMetadata> tableMetadata = Optional.empty();
@@ -241,7 +252,9 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public Optional<TableHandle> getTableHandle(@Nonnull QualifiedName name) {
+    public Optional<TableHandle> getTableHandle(
+        @Nonnull
+            QualifiedName name) {
         Session session = validateAndGetSession(name);
 
         QualifiedTableName qualifiedTableName = prestoConverters.getQualifiedTableName(name);
@@ -267,7 +280,11 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public void rename(@Nonnull QualifiedName oldName, @Nonnull QualifiedName newName, boolean isMView) {
+    public void rename(
+        @Nonnull
+            QualifiedName oldName,
+        @Nonnull
+            QualifiedName newName, boolean isMView) {
         Session session = validateAndGetSession(oldName);
 
         QualifiedTableName oldPrestoName = prestoConverters.getQualifiedTableName(oldName);
@@ -277,22 +294,24 @@ public class TableServiceImpl implements TableService {
         if (tableHandle.isPresent()) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
             try {
-                log.info("Renaming {} {} to {}", isMView?"view":"table", oldName, newName);
+                log.info("Renaming {} {} to {}", isMView ? "view" : "table", oldName, newName);
                 metadataManager.renameTable(session, tableHandle.get(), newPrestoName);
 
-                if( !isMView) {
+                if (!isMView) {
                     final String prefix = String.format("%s_%s_", oldName.getDatabaseName(),
-                            MoreObjects.firstNonNull(oldName.getTableName(), ""));
+                        MoreObjects.firstNonNull(oldName.getTableName(), ""));
                     List<NameDateDto> views = mViewService.list(oldName);
                     if (views != null && !views.isEmpty()) {
                         views.forEach(view -> {
-                            QualifiedName newViewName = QualifiedName.ofView(oldName.getCatalogName(), oldName.getDatabaseName(), newName.getTableName(), view.getName().getViewName());
+                            QualifiedName newViewName = QualifiedName
+                                .ofView(oldName.getCatalogName(), oldName.getDatabaseName(), newName.getTableName(),
+                                    view.getName().getViewName());
                             mViewService.rename(view.getName(), newViewName);
                         });
                     }
                 }
-            } catch(PrestoException e){
-                if(!NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())){
+            } catch (PrestoException e) {
+                if (!NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())) {
                     throw e;
                 }
             }
@@ -302,15 +321,20 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public void update(@Nonnull QualifiedName name, @Nonnull TableDto tableDto) {
+    public void update(
+        @Nonnull
+            QualifiedName name,
+        @Nonnull
+            TableDto tableDto) {
         Session session = validateAndGetSession(name);
 
         //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
         try {
             log.info("Updating table {}", name);
-            metadataManager.alterTable(session, prestoConverters.fromTableDto(name, tableDto, metadataManager.getTypeManager()));
-        } catch(PrestoException e){
-            if(!NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())){
+            metadataManager
+                .alterTable(session, prestoConverters.fromTableDto(name, tableDto, metadataManager.getTypeManager()));
+        } catch (PrestoException e) {
+            if (!NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())) {
                 throw e;
             }
         }
@@ -323,46 +347,60 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public void delete(@Nonnull QualifiedName name) {
+    public void delete(
+        @Nonnull
+            QualifiedName name) {
         deleteAndReturn(name, false);
     }
 
     @Override
-    public TableDto get(@Nonnull QualifiedName name) {
-        Optional<TableDto> dto = get( name, true);
+    public TableDto get(
+        @Nonnull
+            QualifiedName name) {
+        Optional<TableDto> dto = get(name, true);
         return dto.orElse(null);
     }
 
     @Override
-    public TableDto copy( @Nonnull QualifiedName sourceName, @Nonnull QualifiedName targetName) {
+    public TableDto copy(
+        @Nonnull
+            QualifiedName sourceName,
+        @Nonnull
+            QualifiedName targetName) {
         // Source should be same
-        if( !sourceName.getCatalogName().equals(targetName.getCatalogName())){
+        if (!sourceName.getCatalogName().equals(targetName.getCatalogName())) {
             throw new MetacatNotSupportedException("Cannot copy a table from a different source");
         }
         // Error out when source table does not exists
         Optional<TableDto> oTable = get(sourceName, false);
-        if( !oTable.isPresent()){
-            throw new TableNotFoundException(new SchemaTableName(sourceName.getDatabaseName(), sourceName.getTableName()));
+        if (!oTable.isPresent()) {
+            throw new TableNotFoundException(
+                new SchemaTableName(sourceName.getDatabaseName(), sourceName.getTableName()));
         }
         // Error out when target table already exists
-        Optional<TableDto> oTargetTable = get( targetName, false);
-        if( oTargetTable.isPresent()){
-            throw new TableNotFoundException(new SchemaTableName(targetName.getDatabaseName(), targetName.getTableName()));
+        Optional<TableDto> oTargetTable = get(targetName, false);
+        if (oTargetTable.isPresent()) {
+            throw new TableNotFoundException(
+                new SchemaTableName(targetName.getDatabaseName(), targetName.getTableName()));
         }
         return copy(oTable.get(), targetName);
     }
 
     @Override
-    public TableDto copy(@Nonnull TableDto tableDto, @Nonnull QualifiedName targetName) {
-        if( !databaseService.exists( targetName)){
-            databaseService.create( targetName, null);
+    public TableDto copy(
+        @Nonnull
+            TableDto tableDto,
+        @Nonnull
+            QualifiedName targetName) {
+        if (!databaseService.exists(targetName)) {
+            databaseService.create(targetName, new DatabaseDto());
         }
         TableDto targetTableDto = new TableDto();
-        targetTableDto.setName( targetName);
+        targetTableDto.setName(targetName);
         targetTableDto.setFields(tableDto.getFields());
-        targetTableDto.setPartition_keys( tableDto.getPartition_keys());
+        targetTableDto.setPartition_keys(tableDto.getPartition_keys());
         StorageDto storageDto = tableDto.getSerde();
-        if( storageDto != null) {
+        if (storageDto != null) {
             StorageDto targetStorageDto = new StorageDto();
             targetStorageDto.setInputFormat(storageDto.getInputFormat());
             targetStorageDto.setOwner(storageDto.getOwner());
@@ -372,43 +410,47 @@ public class TableServiceImpl implements TableService {
             targetStorageDto.setSerializationLib(storageDto.getSerializationLib());
             targetTableDto.setSerde(targetStorageDto);
         }
-        create( targetName, targetTableDto);
+        create(targetName, targetTableDto);
         return targetTableDto;
     }
 
     @Override
     public void saveMetadata(
-            @Nonnull
+        @Nonnull
             QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata) {
         Session session = validateAndGetSession(name);
-        Optional<TableDto> tableDtoOptional = get( name, false);
-        if( tableDtoOptional.isPresent()){
+        Optional<TableDto> tableDtoOptional = get(name, false);
+        if (tableDtoOptional.isPresent()) {
             TableDto tableDto = tableDtoOptional.get();
-            tableDto.setDefinitionMetadata( definitionMetadata);
-            tableDto.setDataMetadata( dataMetadata);
+            tableDto.setDefinitionMetadata(definitionMetadata);
+            tableDto.setDataMetadata(dataMetadata);
             log.info("Saving user metadata for table {}", name);
-            userMetadataService.saveMetadata( session.getUser(), tableDto, true);
-            tag( name, tableDto.getDefinitionMetadata());
+            userMetadataService.saveMetadata(session.getUser(), tableDto, true);
+            tag(name, tableDto.getDefinitionMetadata());
         }
     }
 
     @Override
-    public List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch){
+    public List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch) {
         List<QualifiedName> result = Lists.newArrayList();
         Map<String, String> catalogNames = metadataManager.getCatalogNames();
 
         catalogNames.values().stream().forEach(catalogName -> {
             Session session = sessionProvider.getSession(QualifiedName.ofCatalog(catalogName));
-            List<SchemaTableName> schemaTableNames = metadataManager.getTableNames( session, uri, prefixSearch);
+            List<SchemaTableName> schemaTableNames = metadataManager.getTableNames(session, uri, prefixSearch);
             List<QualifiedName> qualifiedNames = schemaTableNames.stream().map(
-                    schemaTableName -> QualifiedName.ofTable( catalogName, schemaTableName.getSchemaName(), schemaTableName.getTableName())).collect(Collectors.toList());
+                schemaTableName -> QualifiedName
+                    .ofTable(catalogName, schemaTableName.getSchemaName(), schemaTableName.getTableName()))
+                .collect(Collectors.toList());
             result.addAll(qualifiedNames);
         });
         return result;
     }
 
     @Override
-    public boolean exists(@Nonnull QualifiedName name) {
+    public boolean exists(
+        @Nonnull
+            QualifiedName name) {
         return get(name, true, false, false).isPresent();
     }
 

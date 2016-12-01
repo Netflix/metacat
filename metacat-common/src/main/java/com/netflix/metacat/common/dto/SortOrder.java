@@ -13,6 +13,12 @@
 
 package com.netflix.metacat.common.dto;
 
+/**
+ * Sort order.
+ */
 public enum SortOrder {
-    ASC, DESC
+    /** Ascending order. */
+    ASC,
+    /** Descending order. */
+    DESC
 }

@@ -18,15 +18,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 import com.wordnik.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
-import java.util.Objects;
 
+/**
+ * Partition DTO.
+ */
 @SuppressWarnings("unused")
+@Data
+@EqualsAndHashCode(callSuper = false)
 public class PartitionDto extends BaseDto implements HasDataMetadata, HasDefinitionMetadata {
     private static final long serialVersionUID = 783462697901395508L;
     @ApiModelProperty(value = "audit information about the partition")
@@ -47,42 +53,11 @@ public class PartitionDto extends BaseDto implements HasDataMetadata, HasDefinit
     @ApiModelProperty(value = "Any extra metadata properties of the partition", required = false)
     private Map<String, String> metadata;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof PartitionDto)) return false;
-        PartitionDto that = (PartitionDto) o;
-        return Objects.equals(audit, that.audit) &&
-                Objects.equals(dataMetadata, that.dataMetadata) &&
-                Objects.equals(definitionMetadata, that.definitionMetadata) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(serde, that.serde) &&
-                Objects.equals(metadata, that.metadata);
-    }
-
-    public AuditDto getAudit() {
-        return audit;
-    }
-
-    public void setAudit(AuditDto audit) {
-        this.audit = audit;
-    }
-
-    @Override
-    public ObjectNode getDataMetadata() {
-        return dataMetadata;
-    }
-
-    @Override
-    public void setDataMetadata(ObjectNode metadata) {
-        this.dataMetadata = metadata;
-    }
-
     @Nonnull
     @Override
     @JsonIgnore
     public String getDataUri() {
-        String uri = serde != null ? serde.getUri() : null;
+        final String uri = serde != null ? serde.getUri() : null;
         if (uri == null || uri.isEmpty()) {
             throw new IllegalStateException("This instance does not have external data");
         }
@@ -90,48 +65,9 @@ public class PartitionDto extends BaseDto implements HasDataMetadata, HasDefinit
         return uri;
     }
 
-    @Override
-    public ObjectNode getDefinitionMetadata() {
-        return definitionMetadata;
-    }
-
-    @Override
-    public void setDefinitionMetadata(ObjectNode metadata) {
-        this.definitionMetadata = metadata;
-    }
-
-    public QualifiedName getName() {
-        return name;
-    }
-
-    public void setName(QualifiedName name) {
-        this.name = name;
-    }
-
     @JsonIgnore
     public QualifiedName getDefinitionName() {
         return name;
-    }
-
-    public StorageDto getSerde() {
-        return serde;
-    }
-
-    public void setSerde(StorageDto serde) {
-        this.serde = serde;
-    }
-
-    public Map<String, String> getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(Map<String, String> metadata) {
-        this.metadata = metadata;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(audit, dataMetadata, definitionMetadata, name, serde, metadata);
     }
 
     @Override
@@ -140,17 +76,21 @@ public class PartitionDto extends BaseDto implements HasDataMetadata, HasDefinit
         return serde != null && serde.getUri() != null && !serde.getUri().isEmpty();
     }
 
+    /**
+     * Sets the data external property.
+     * @param ignored is data external
+     */
     @SuppressWarnings("EmptyMethod")
-    public void setDataExternal(boolean ignored) {
+    public void setDataExternal(final boolean ignored) {
     }
 
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         dataMetadata = deserializeObjectNode(in);
         definitionMetadata = deserializeObjectNode(in);
     }
 
-    private void writeObject(ObjectOutputStream out) throws IOException {
+    private void writeObject(final ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         serializeObjectNode(out, dataMetadata);
         serializeObjectNode(out, definitionMetadata);

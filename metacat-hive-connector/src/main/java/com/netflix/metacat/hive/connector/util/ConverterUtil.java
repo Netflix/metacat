@@ -27,13 +27,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.partition.util.PartitionUtil;
 import com.netflix.metacat.converters.impl.HiveTypeConverter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -42,22 +41,28 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Created by amajumdar on 2/4/15.
+ * Hive converter utility.
  */
+@Slf4j
 public class ConverterUtil {
+    /** Hive type converter. */
     @Inject
-    HiveTypeConverter hiveTypeConverter;
-    private static final Logger log = LoggerFactory.getLogger(ConverterUtil.class);
+    private HiveTypeConverter hiveTypeConverter;
 
-    public StorageInfo toStorageInfo(StorageDescriptor sd){
+    /**
+     * Converts from hive storage info to presto storage info.
+     * @param sd storage descriptor
+     * @return StorageInfo
+     */
+    public StorageInfo toStorageInfo(final StorageDescriptor sd) {
         StorageInfo result = null;
-        if( sd != null) {
+        if (sd != null) {
             result = new StorageInfo();
-            result.setUri( sd.getLocation());
+            result.setUri(sd.getLocation());
             result.setInputFormat(sd.getInputFormat());
             result.setOutputFormat(sd.getOutputFormat());
-            SerDeInfo serde = sd.getSerdeInfo();
-            if( serde != null){
+            final SerDeInfo serde = sd.getSerdeInfo();
+            if (serde != null) {
                 result.setSerializationLib(serde.getSerializationLib());
                 result.setSerdeInfoParameters(serde.getParameters());
             }
@@ -66,42 +71,63 @@ public class ConverterUtil {
         return result;
     }
 
-    public StorageDescriptor fromStorageInfo(StorageInfo storageInfo){
+    /**
+     * Converts from presto storage info.
+     * @param storageInfo storage info
+     * @return StorageDescriptor
+     */
+    public StorageDescriptor fromStorageInfo(final StorageInfo storageInfo) {
         StorageDescriptor result = null;
-        if( storageInfo != null) {
+        if (storageInfo != null) {
             result = new StorageDescriptor();
-            result.setInputFormat( storageInfo.getInputFormat());
+            result.setInputFormat(storageInfo.getInputFormat());
             result.setLocation(storageInfo.getUri());
             result.setOutputFormat(storageInfo.getOutputFormat());
             result.setParameters(storageInfo.getParameters());
-            result.setSerdeInfo( new SerDeInfo(null, storageInfo.getSerializationLib(), storageInfo.getSerdeInfoParameters()));
+            result.setSerdeInfo(
+                new SerDeInfo(null, storageInfo.getSerializationLib(), storageInfo.getSerdeInfoParameters()));
         }
         return result;
     }
 
-    public List<FieldSchema> toFieldSchemas(ConnectorTableDetailMetadata tableDetailMetadata) {
-        ImmutableList.Builder<FieldSchema> columns = ImmutableList.builder();
-        for( ColumnMetadata column: tableDetailMetadata.getColumns()){
-            columns.add( toFieldSchema( column));
+    /**
+     * Creates list of hive fields.
+     * @param tableDetailMetadata table info
+     * @return list of fields
+     */
+    public List<FieldSchema> toFieldSchemas(final ConnectorTableDetailMetadata tableDetailMetadata) {
+        final ImmutableList.Builder<FieldSchema> columns = ImmutableList.builder();
+        for (ColumnMetadata column : tableDetailMetadata.getColumns()) {
+            columns.add(toFieldSchema(column));
         }
         return columns.build();
     }
 
-    public FieldSchema toFieldSchema(ColumnMetadata column) {
+    /**
+     * Converts from presto column to hive field.
+     * @param column column
+     * @return field
+     */
+    public FieldSchema toFieldSchema(final ColumnMetadata column) {
         return new FieldSchema(column.getName(), hiveTypeConverter.fromType(column.getType()), column.getComment());
     }
 
-    public AuditInfo toAuditInfo(Table table) {
-        AuditInfo result = new AuditInfo();
+    /**
+     * Creates audit info from Table dto..
+     * @param table table info
+     * @return audit info
+     */
+    public AuditInfo toAuditInfo(final Table table) {
+        final AuditInfo result = new AuditInfo();
         result.setCreatedBy(table.getOwner());
         result.setCreatedDate((long) table.getCreateTime());
-        Map<String, String> parameters = table.getParameters();
-        if( parameters != null) {
+        final Map<String, String> parameters = table.getParameters();
+        if (parameters != null) {
             result.setLastUpdatedBy(parameters.get("last_modified_by"));
             Long lastModifiedDate = null;
-            try{
+            try {
                 lastModifiedDate = Long.valueOf(parameters.get("last_modified_time"));
-            }catch(Exception ignored){
+            } catch (Exception ignored) {
 
             }
             result.setLastUpdatedDate(lastModifiedDate);
@@ -109,26 +135,41 @@ public class ConverterUtil {
         return result;
     }
 
-    public Optional<ColumnMetadata> toColumnMetadata(FieldSchema field, TypeManager typeManager, int index, boolean isPartitionKey) {
-        String fieldType = field.getType();
-        Type type = hiveTypeConverter.toType(fieldType, typeManager);
+    /**
+     * Converts from hive field to column metadata.
+     * @param field field
+     * @param typeManager manager
+     * @param index index
+     * @param isPartitionKey is it a partition key
+     * @return column metadata
+     */
+    public Optional<ColumnMetadata> toColumnMetadata(final FieldSchema field, final TypeManager typeManager,
+        final int index, final boolean isPartitionKey) {
+        final String fieldType = field.getType();
+        final Type type = hiveTypeConverter.toType(fieldType, typeManager);
         if (type == null) {
             log.debug("Unable to convert type '{}' for field '{}' to a hive type", fieldType, field.getName());
             return Optional.empty();
         }
-        ColumnDetailMetadata metadata = new ColumnDetailMetadata(field.getName(), type, isPartitionKey,
-                field.getComment(), false, fieldType);
+        final ColumnDetailMetadata metadata = new ColumnDetailMetadata(field.getName(), type, isPartitionKey,
+            field.getComment(), false, fieldType);
         return Optional.of(metadata);
     }
 
-    public List<ColumnMetadata> toColumnMetadatas(Table table, TypeManager typeManager) {
-        List<ColumnMetadata> result = Lists.newArrayList();
-        StorageDescriptor sd = table.getSd();
+    /**
+     * Creates a list of columns from hive table.
+     * @param table hive table
+     * @param typeManager manager
+     * @return list of columns
+     */
+    public List<ColumnMetadata> toColumnMetadatas(final Table table, final TypeManager typeManager) {
+        final List<ColumnMetadata> result = Lists.newArrayList();
+        final StorageDescriptor sd = table.getSd();
         int index = 0;
-        if( sd != null) {
-            List<FieldSchema> fields = table.getSd().getCols();
+        if (sd != null) {
+            final List<FieldSchema> fields = table.getSd().getCols();
             for (FieldSchema field : fields) {
-                Optional<ColumnMetadata> columnMetadata = toColumnMetadata(field, typeManager, index, false);
+                final Optional<ColumnMetadata> columnMetadata = toColumnMetadata(field, typeManager, index, false);
                 // Ignore unsupported types rather than failing
                 if (columnMetadata.isPresent()) {
                     index++;
@@ -136,10 +177,10 @@ public class ConverterUtil {
                 }
             }
         }
-        List<FieldSchema> pFields = table.getPartitionKeys();
-        if( pFields != null) {
+        final List<FieldSchema> pFields = table.getPartitionKeys();
+        if (pFields != null) {
             for (FieldSchema pField : pFields) {
-                Optional<ColumnMetadata> columnMetadata = toColumnMetadata(pField, typeManager, index, true);
+                final Optional<ColumnMetadata> columnMetadata = toColumnMetadata(pField, typeManager, index, true);
                 // Ignore unsupported types rather than failing
                 if (columnMetadata.isPresent()) {
                     index++;
@@ -150,33 +191,45 @@ public class ConverterUtil {
         return result;
     }
 
-    public List<Partition> toPartitions(SchemaTableName tableName, List<ConnectorPartition> partitions) {
+    /**
+     * Converts from a list of presto partitions to hive partitions.
+     * @param tableName table name
+     * @param partitions list of partitions
+     * @return list of hive partitions
+     */
+    public List<Partition> toPartitions(final SchemaTableName tableName, final List<ConnectorPartition> partitions) {
         return partitions.stream().map(partition -> toPartition(tableName, partition)).collect(
-                Collectors.toList());
+            Collectors.toList());
     }
 
-    public Partition toPartition(SchemaTableName tableName, ConnectorPartition connectorPartition) {
-        Partition result = new Partition();
-        ConnectorPartitionDetail connectorPartitionDetail = (ConnectorPartitionDetail) connectorPartition;
+    /**
+     * Converts from a presto partition to hive partition.
+     * @param tableName table name
+     * @param connectorPartition partition
+     * @return hive partition
+     */
+    public Partition toPartition(final SchemaTableName tableName, final ConnectorPartition connectorPartition) {
+        final Partition result = new Partition();
+        final ConnectorPartitionDetail connectorPartitionDetail = (ConnectorPartitionDetail) connectorPartition;
         result.setValues(Lists.newArrayList(
-                PartitionUtil.getPartitionKeyValues(connectorPartitionDetail.getPartitionId()).values()));
-        result.setDbName( tableName.getSchemaName());
-        result.setTableName( tableName.getTableName());
+            PartitionUtil.getPartitionKeyValues(connectorPartitionDetail.getPartitionId()).values()));
+        result.setDbName(tableName.getSchemaName());
+        result.setTableName(tableName.getTableName());
         result.setSd(fromStorageInfo(connectorPartitionDetail.getStorageInfo()));
         result.setParameters(connectorPartitionDetail.getMetadata());
-        AuditInfo auditInfo = connectorPartitionDetail.getAuditInfo();
-        if( auditInfo != null){
-            Long createdDate = auditInfo.getCreatedDate();
-            int currentTime = (int) (System.currentTimeMillis() / 1000);
-            if( createdDate != null){
-                result.setCreateTime( createdDate.intValue());
+        final AuditInfo auditInfo = connectorPartitionDetail.getAuditInfo();
+        if (auditInfo != null) {
+            final Long createdDate = auditInfo.getCreatedDate();
+            final int currentTime = (int) (System.currentTimeMillis() / 1000);
+            if (createdDate != null) {
+                result.setCreateTime(createdDate.intValue());
             } else {
                 result.setCreateTime(currentTime);
             }
-            Long lastUpdatedDate = auditInfo.getLastUpdatedDate();
-            if( lastUpdatedDate != null){
-                result.setLastAccessTime( lastUpdatedDate.intValue());
-            }else {
+            final Long lastUpdatedDate = auditInfo.getLastUpdatedDate();
+            if (lastUpdatedDate != null) {
+                result.setLastAccessTime(lastUpdatedDate.intValue());
+            } else {
                 result.setLastAccessTime(currentTime);
             }
         }

@@ -25,8 +25,8 @@ import javax.ws.rs.core.Response;
  * Created by amajumdar on 3/27/15.
  */
 public class MetacatException extends WebApplicationException {
-    private static final MetacatJson metacatJson = MetacatJsonLocator.INSTANCE;
-    private static final ObjectNode EMPTY_ERROR = metacatJson.emptyObjectNode().put("error", "");
+    private static final MetacatJson METACAT_JSON = MetacatJsonLocator.INSTANCE;
+    private static final ObjectNode EMPTY_ERROR = METACAT_JSON.emptyObjectNode().put("error", "");
 
     /**
      * Construct a new client error exception.
@@ -36,7 +36,7 @@ public class MetacatException extends WebApplicationException {
      *                                  {@link javax.ws.rs.core.Response.Status.Family#CLIENT_ERROR} status code
      *                                  family.
      */
-    public MetacatException(Response.Status status) {
+    public MetacatException(final Response.Status status) {
         this(Response.status(status).type(MediaType.APPLICATION_JSON_TYPE).entity(EMPTY_ERROR).build(), null);
     }
 
@@ -45,10 +45,10 @@ public class MetacatException extends WebApplicationException {
      *
      * @param status client error status. Must be a {@code 4xx} status code.
      * @throws IllegalArgumentException in case the status code is not a valid HTTP status code or
-     *                                  if it is not from the {@link javax.ws.rs.core.Response.Status.Family#CLIENT_ERROR}
-     *                                  status code family.
+     *                              if it is not from the {@link javax.ws.rs.core.Response.Status.Family#CLIENT_ERROR}
+     *                              status code family.
      */
-    public MetacatException(int status) {
+    public MetacatException(final int status) {
         this(Response.status(status).type(MediaType.APPLICATION_JSON_TYPE).entity(EMPTY_ERROR).build(), null);
     }
 
@@ -63,13 +63,13 @@ public class MetacatException extends WebApplicationException {
      *                                  {@link javax.ws.rs.core.Response.Status.Family#CLIENT_ERROR} status code
      *                                  family.
      */
-    public MetacatException(String message, Response.Status status, Throwable cause) {
+    public MetacatException(final String message, final Response.Status status, final Throwable cause) {
         this(
-                Response.status(status)
-                        .type(MediaType.APPLICATION_JSON_TYPE)
-                        .entity(metacatJson.emptyObjectNode().put("error", message))
-                        .build(),
-                cause == null? new Exception(message): cause
+            Response.status(status)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(METACAT_JSON.emptyObjectNode().put("error", message))
+                .build(),
+            cause == null ? new Exception(message) : cause
         );
     }
 
@@ -81,15 +81,15 @@ public class MetacatException extends WebApplicationException {
      * @param status  client error status. Must be a {@code 4xx} status code.
      * @param cause   the underlying cause of the exception.
      * @throws IllegalArgumentException in case the status code is not a valid HTTP status code or
-     *                                  if it is not from the {@link javax.ws.rs.core.Response.Status.Family#CLIENT_ERROR}
-     *                                  status code family.
+     *                               if it is not from the {@link javax.ws.rs.core.Response.Status.Family#CLIENT_ERROR}
+     *                               status code family.
      */
-    public MetacatException(String message, int status, Throwable cause) {
+    public MetacatException(final String message, final int status, final Throwable cause) {
         this(Response.status(status)
-                        .type(MediaType.APPLICATION_JSON_TYPE)
-                        .entity(metacatJson.emptyObjectNode().put("error", message))
-                        .build(),
-                cause == null? new Exception(message): cause);
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(METACAT_JSON.emptyObjectNode().put("error", message))
+                .build(),
+            cause == null ? new Exception(message) : cause);
     }
 
     /**
@@ -101,7 +101,7 @@ public class MetacatException extends WebApplicationException {
      * @throws IllegalArgumentException in case the response status code is not from the
      *                                  {@link javax.ws.rs.core.Response.Status.Family#CLIENT_ERROR} status code family.
      */
-    public MetacatException(Response response, Throwable cause) {
+    public MetacatException(final Response response, final Throwable cause) {
         super(cause, response);
     }
 }

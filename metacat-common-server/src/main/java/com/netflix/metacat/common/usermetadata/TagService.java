@@ -19,18 +19,19 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by amajumdar on 6/29/15.
+ * Tag Service API.
+ * @author amajumdar
  */
 public interface TagService {
     /**
-     * Returns the list of tags
+     * Returns the list of tags.
      * @return list of tag names
      */
     Set<String> getTags();
 
     /**
      * Returns the list of <code>QualifiedName</code> of items that are tagged by the given <code>includeTags</code> and
-     * do not contain the given <code>excludeTags</code>
+     * do not contain the given <code>excludeTags</code>.
      * @param includeTags include items that contain tags
      * @param excludeTags include items that do not contain tags
      * @param sourceName catalog/source name
@@ -39,11 +40,11 @@ public interface TagService {
      * @return list of qualified names of the items
      */
     List<QualifiedName> list(
-            Set<String> includeTags,
-            Set<String> excludeTags,
-            String sourceName,
-            String databaseName,
-            String tableName);
+        Set<String> includeTags,
+        Set<String> excludeTags,
+        String sourceName,
+        String databaseName,
+        String tableName);
 
     /**
      * Returns the list of <code>QualifiedName</code> of items that have tags containing the given tag text.
@@ -54,35 +55,36 @@ public interface TagService {
      * @return list of qualified names of the items
      */
     List<QualifiedName> search(
-            String tag,
-            String sourceName,
-            String databaseName,
-            String tableName);
+        String tag,
+        String sourceName,
+        String databaseName,
+        String tableName);
 
     /**
-     * Tags the given table with the given <code>tags</code>
-     * @param qualifiedName, table name
+     * Tags the given table with the given <code>tags</code>.
+     * @param qualifiedName table name
      * @param tags list of tags
      * @param updateUserMetadata if true, updates the tags in the user metadata
      * @return return the complete list of tags associated with the table
      */
     Set<String> setTableTags(
-            QualifiedName qualifiedName,
-            Set<String> tags,
-            boolean updateUserMetadata);
+        QualifiedName qualifiedName,
+        Set<String> tags,
+        boolean updateUserMetadata);
 
     /**
-     * Removes the tags from the given table
+     * Removes the tags from the given table.
      * @param qualifiedName table name
      * @param deleteAll if true, will delete all tags associated with the given table
      * @param tags list of tags to be removed for the given table
      * @param updateUserMetadata if true, updates the tags in the user metadata
+     * @return null
      */
     Void removeTableTags(
-            QualifiedName qualifiedName,
-            Boolean deleteAll,
-            Set<String> tags,
-            boolean updateUserMetadata);
+        QualifiedName qualifiedName,
+        Boolean deleteAll,
+        Set<String> tags,
+        boolean updateUserMetadata);
 
     /**
      * Delete the tag item along with its associated tags.
@@ -91,10 +93,10 @@ public interface TagService {
      * @return null
      */
     Void delete(QualifiedName name,
-            boolean updateUserMetadata);
+        boolean updateUserMetadata);
 
     /**
-     * Renames the tag item name with the new table name
+     * Renames the tag item name with the new table name.
      * @param name table qualified name
      * @param newTableName new table name
      * @return null

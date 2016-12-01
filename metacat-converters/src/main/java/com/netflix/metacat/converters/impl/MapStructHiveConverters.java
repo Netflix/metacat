@@ -45,23 +45,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.EMPTY_MAP;
-
+/**
+ * Hive converter.
+ */
 @Mapper(uses = DateConverters.class,
-        unmappedTargetPolicy = ReportingPolicy.ERROR,
-        componentModel = "default")
+    unmappedTargetPolicy = ReportingPolicy.ERROR,
+    componentModel = "default")
 public abstract class MapStructHiveConverters implements HiveConverters {
     private static final Splitter SLASH_SPLITTER = Splitter.on('/');
     private static final Splitter EQUAL_SPLITTER = Splitter.on('=').limit(2);
 
     @VisibleForTesting
-    Integer dateToEpochSeconds(Date date) {
+    Integer dateToEpochSeconds(final Date date) {
         if (date == null) {
             return null;
         }
 
-        Instant instant = date.toInstant();
-        long seconds = instant.getEpochSecond();
+        final Instant instant = date.toInstant();
+        final long seconds = instant.getEpochSecond();
         if (seconds <= Integer.MAX_VALUE) {
             return (int) seconds;
         }
@@ -69,13 +70,13 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         throw new IllegalStateException("Unable to convert date " + date + " to an integer seconds value");
     }
 
-    private Date epochSecondsToDate(long seconds) {
-        Instant instant = Instant.ofEpochSecond(seconds);
+    private Date epochSecondsToDate(final long seconds) {
+        final Instant instant = Instant.ofEpochSecond(seconds);
         return Date.from(instant);
     }
 
-    private FieldDto hiveToMetacatField(FieldSchema field, boolean isPartitionKey) {
-        FieldDto dto = new FieldDto();
+    private FieldDto hiveToMetacatField(final FieldSchema field, final boolean isPartitionKey) {
+        final FieldDto dto = new FieldDto();
         dto.setName(field.getName());
         dto.setType(field.getType());
         dto.setSource_type(field.getType());
@@ -85,8 +86,8 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         return dto;
     }
 
-    private FieldSchema metacatToHiveField(FieldDto fieldDto) {
-        FieldSchema result = new FieldSchema();
+    private FieldSchema metacatToHiveField(final FieldDto fieldDto) {
+        final FieldSchema result = new FieldSchema();
         result.setName(fieldDto.getName());
         result.setType(fieldDto.getType());
         result.setComment(fieldDto.getComment());
@@ -94,8 +95,8 @@ public abstract class MapStructHiveConverters implements HiveConverters {
     }
 
     @Override
-    public TableDto hiveToMetacatTable(QualifiedName name, Table table) {
-        TableDto dto = new TableDto();
+    public TableDto hiveToMetacatTable(final QualifiedName name, final Table table) {
+        final TableDto dto = new TableDto();
         dto.setSerde(toStorageDto(table.getSd(), table.getOwner()));
         dto.setAudit(new AuditDto());
         dto.setName(name);
@@ -104,15 +105,16 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         }
         dto.setMetadata(table.getParameters());
 
-        List<FieldSchema> nonPartitionColumns = table.getSd().getCols();
-        List<FieldSchema> partitionColumns = table.getPartitionKeys();
-        List<FieldDto> allFields = Lists.newArrayListWithCapacity(nonPartitionColumns.size() + partitionColumns.size());
+        final List<FieldSchema> nonPartitionColumns = table.getSd().getCols();
+        final List<FieldSchema> partitionColumns = table.getPartitionKeys();
+        final List<FieldDto> allFields =
+            Lists.newArrayListWithCapacity(nonPartitionColumns.size() + partitionColumns.size());
         nonPartitionColumns.stream()
-                           .map(field -> this.hiveToMetacatField(field, false))
-                           .forEachOrdered(allFields::add);
+            .map(field -> this.hiveToMetacatField(field, false))
+            .forEachOrdered(allFields::add);
         partitionColumns.stream()
-                        .map(field -> this.hiveToMetacatField(field, true))
-                        .forEachOrdered(allFields::add);
+            .map(field -> this.hiveToMetacatField(field, true))
+            .forEachOrdered(allFields::add);
         dto.setFields(allFields);
 
         return dto;
@@ -120,12 +122,12 @@ public abstract class MapStructHiveConverters implements HiveConverters {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Database metacatToHiveDatabase(DatabaseDto dto) {
-        Database database = new Database();
+    public Database metacatToHiveDatabase(final DatabaseDto dto) {
+        final Database database = new Database();
 
         String name = "";
         String description = "";
-        QualifiedName databaseName = dto.getName();
+        final QualifiedName databaseName = dto.getName();
         if (databaseName != null) {
             name = databaseName.getDatabaseName();
             // Since this is required setting it to the same as the DB name for now
@@ -142,7 +144,7 @@ public abstract class MapStructHiveConverters implements HiveConverters {
 
         Map<String, String> metadata = dto.getMetadata();
         if (metadata == null) {
-            metadata = EMPTY_MAP;
+            metadata = Collections.EMPTY_MAP;
         }
         database.setParameters(metadata);
 
@@ -150,12 +152,12 @@ public abstract class MapStructHiveConverters implements HiveConverters {
     }
 
     @Override
-    public Table metacatToHiveTable(TableDto dto) {
-        Table table = new Table();
+    public Table metacatToHiveTable(final TableDto dto) {
+        final Table table = new Table();
         String tableName = "";
         String databaseName = "";
 
-        QualifiedName name = dto.getName();
+        final QualifiedName name = dto.getName();
         if (name != null) {
             tableName = name.getTableName();
             databaseName = name.getDatabaseName();
@@ -163,14 +165,14 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         table.setTableName(tableName);
         table.setDbName(databaseName);
 
-        StorageDto storageDto = dto.getSerde();
+        final StorageDto storageDto = dto.getSerde();
         String owner = "";
         if (storageDto != null && storageDto.getOwner() != null) {
             owner = storageDto.getOwner();
         }
         table.setOwner(owner);
 
-        AuditDto auditDto = dto.getAudit();
+        final AuditDto auditDto = dto.getAudit();
         if (auditDto != null && auditDto.getCreatedDate() != null) {
             table.setCreateTime(dateToEpochSeconds(auditDto.getCreatedDate()));
         }
@@ -185,17 +187,17 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         table.setTableType("EXTERNAL_TABLE");
 
         table.setSd(fromStorageDto(storageDto));
-        StorageDescriptor sd = table.getSd();
+        final StorageDescriptor sd = table.getSd();
 
-        List<FieldDto> fields = dto.getFields();
+        final List<FieldDto> fields = dto.getFields();
         if (fields == null) {
             table.setPartitionKeys(Collections.emptyList());
             sd.setCols(Collections.emptyList());
         } else {
-            List<FieldSchema> nonPartitionFields = Lists.newArrayListWithCapacity(fields.size());
-            List<FieldSchema> partitionFields = Lists.newArrayListWithCapacity(fields.size());
+            final List<FieldSchema> nonPartitionFields = Lists.newArrayListWithCapacity(fields.size());
+            final List<FieldSchema> partitionFields = Lists.newArrayListWithCapacity(fields.size());
             for (FieldDto fieldDto : fields) {
-                FieldSchema f = metacatToHiveField(fieldDto);
+                final FieldSchema f = metacatToHiveField(fieldDto);
 
                 if (fieldDto.isPartition_key()) {
                     partitionFields.add(f);
@@ -210,15 +212,15 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         return table;
     }
 
-    private StorageDto toStorageDto(StorageDescriptor sd, String owner) {
-        StorageDto result = new StorageDto();
+    private StorageDto toStorageDto(final StorageDescriptor sd, final String owner) {
+        final StorageDto result = new StorageDto();
         if (sd != null) {
             result.setOwner(owner);
             result.setUri(sd.getLocation());
             result.setInputFormat(sd.getInputFormat());
             result.setOutputFormat(sd.getOutputFormat());
             result.setParameters(sd.getParameters());
-            SerDeInfo serde = sd.getSerdeInfo();
+            final SerDeInfo serde = sd.getSerdeInfo();
             if (serde != null) {
                 result.setSerializationLib(serde.getSerializationLib());
                 result.setSerdeInfoParameters(serde.getParameters());
@@ -227,16 +229,16 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         return result;
     }
 
-    private StorageDescriptor fromStorageDto(StorageDto storageDto) {
+    private StorageDescriptor fromStorageDto(final StorageDto storageDto) {
         // Set all required fields to a non-null value
-        StorageDescriptor result = new StorageDescriptor();
+        final StorageDescriptor result = new StorageDescriptor();
         String inputFormat = "";
         String location = "";
         String outputFormat = "";
-        String serdeName = "";
+        final String serdeName = "";
         String serializationLib = "";
-        Map<String, String> sdParams = EMPTY_MAP;
-        Map<String, String> serdeParams = EMPTY_MAP;
+        Map<String, String> sdParams = Collections.EMPTY_MAP;
+        Map<String, String> serdeParams = Collections.EMPTY_MAP;
 
         if (storageDto != null) {
             if (storageDto.getInputFormat() != null) {
@@ -271,12 +273,13 @@ public abstract class MapStructHiveConverters implements HiveConverters {
     }
 
     @Override
-    public PartitionDto hiveToMetacatPartition(TableDto tableDto, Partition partition) {
-        QualifiedName tableName = tableDto.getName();
-        QualifiedName partitionName = QualifiedName.ofPartition(tableName.getCatalogName(), tableName.getDatabaseName(),
-                tableName.getTableName(), getNameFromPartVals(tableDto, partition.getValues()));
+    public PartitionDto hiveToMetacatPartition(final TableDto tableDto, final Partition partition) {
+        final QualifiedName tableName = tableDto.getName();
+        final QualifiedName partitionName = QualifiedName.ofPartition(tableName.getCatalogName(),
+            tableName.getDatabaseName(),
+            tableName.getTableName(), getNameFromPartVals(tableDto, partition.getValues()));
 
-        PartitionDto result = new PartitionDto();
+        final PartitionDto result = new PartitionDto();
         String owner = "";
         if (tableDto.getSerde() != null) {
             owner = tableDto.getSerde().getOwner();
@@ -284,7 +287,7 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         result.setSerde(toStorageDto(partition.getSd(), owner));
         result.setMetadata(partition.getParameters());
 
-        AuditDto auditDto = new AuditDto();
+        final AuditDto auditDto = new AuditDto();
         auditDto.setCreatedDate(epochSecondsToDate(partition.getCreateTime()));
         auditDto.setLastModifiedDate(epochSecondsToDate(partition.getLastAccessTime()));
         result.setAudit(auditDto);
@@ -293,7 +296,7 @@ public abstract class MapStructHiveConverters implements HiveConverters {
     }
 
     @Override
-    public List<String> getPartValsFromName(TableDto tableDto, String partName) {
+    public List<String> getPartValsFromName(final TableDto tableDto, final String partName) {
         // Unescape the partition name
 
         LinkedHashMap<String, String> hm = null;
@@ -303,9 +306,9 @@ public abstract class MapStructHiveConverters implements HiveConverters {
             throw new IllegalArgumentException("Invalid partition name", e);
         }
 
-        List<String> partVals = Lists.newArrayList();
+        final List<String> partVals = Lists.newArrayList();
         for (String key : tableDto.getPartition_keys()) {
-            String val = hm.get(key);
+            final String val = hm.get(key);
             if (val == null) {
                 throw new IllegalArgumentException("Invalid partition name - missing " + key);
             }
@@ -315,13 +318,13 @@ public abstract class MapStructHiveConverters implements HiveConverters {
     }
 
     @Override
-    public String getNameFromPartVals(TableDto tableDto, List<String> partVals) {
-        List<String> partitionKeys = tableDto.getPartition_keys();
+    public String getNameFromPartVals(final TableDto tableDto, final List<String> partVals) {
+        final List<String> partitionKeys = tableDto.getPartition_keys();
         if (partitionKeys.size() != partVals.size()) {
             throw new IllegalArgumentException("Not the same number of partition columns and partition values");
         }
 
-        StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder();
         for (int i = 0; i < partitionKeys.size(); i++) {
             if (builder.length() > 0) {
                 builder.append('/');
@@ -335,21 +338,21 @@ public abstract class MapStructHiveConverters implements HiveConverters {
     }
 
     @Override
-    public Partition metacatToHivePartition(PartitionDto partitionDto, TableDto tableDto) {
-        Partition result = new Partition();
+    public Partition metacatToHivePartition(final PartitionDto partitionDto, final TableDto tableDto) {
+        final Partition result = new Partition();
 
-        QualifiedName name = partitionDto.getName();
-        List<String> values = Lists.newArrayListWithCapacity(16);
+        final QualifiedName name = partitionDto.getName();
+        final List<String> values = Lists.newArrayListWithCapacity(16);
         String databaseName = "";
         String tableName = "";
         if (name != null) {
             if (name.getPartitionName() != null) {
                 for (String partialPartName : SLASH_SPLITTER.split(partitionDto.getName().getPartitionName())) {
-                    List<String> nameValues = ImmutableList.copyOf(EQUAL_SPLITTER.split(partialPartName));
+                    final List<String> nameValues = ImmutableList.copyOf(EQUAL_SPLITTER.split(partialPartName));
                     if (nameValues.size() != 2) {
                         throw new IllegalStateException("Unrecognized partition name: " + partitionDto.getName());
                     }
-                    String value = nameValues.get(1);
+                    final String value = nameValues.get(1);
                     values.add(value);
                 }
             }
@@ -368,30 +371,30 @@ public abstract class MapStructHiveConverters implements HiveConverters {
 
         Map<String, String> metadata = partitionDto.getMetadata();
         if (metadata == null) {
-            metadata = EMPTY_MAP;
+            metadata = Collections.EMPTY_MAP;
         }
         result.setParameters(metadata);
 
         result.setSd(fromStorageDto(partitionDto.getSerde()));
-        StorageDescriptor sd = result.getSd();
+        final StorageDescriptor sd = result.getSd();
         if (tableDto != null) {
             if (sd.getSerdeInfo() != null && tableDto.getSerde() != null && Strings.isNullOrEmpty(
-                    sd.getSerdeInfo().getSerializationLib())) {
+                sd.getSerdeInfo().getSerializationLib())) {
                 sd.getSerdeInfo().setSerializationLib(tableDto.getSerde().getSerializationLib());
             }
 
-            List<FieldDto> fields = tableDto.getFields();
+            final List<FieldDto> fields = tableDto.getFields();
             if (fields == null) {
                 sd.setCols(Collections.emptyList());
             } else {
                 sd.setCols(fields.stream()
-                                 .filter(field -> !field.isPartition_key())
-                                 .map(this::metacatToHiveField)
-                                 .collect(Collectors.toList()));
+                    .filter(field -> !field.isPartition_key())
+                    .map(this::metacatToHiveField)
+                    .collect(Collectors.toList()));
             }
         }
 
-        AuditDto auditDto = partitionDto.getAudit();
+        final AuditDto auditDto = partitionDto.getAudit();
         if (auditDto != null) {
             if (auditDto.getCreatedDate() != null) {
                 result.setCreateTime(dateToEpochSeconds(auditDto.getCreatedDate()));

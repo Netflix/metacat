@@ -16,15 +16,25 @@ package com.facebook.presto.exception;
 import com.facebook.presto.spi.NotFoundException;
 
 /**
- * Created by amajumdar on 4/30/15.
+ * Exception when a catalog is not found.
  */
-public class CatalogNotFoundException extends NotFoundException{
+public class CatalogNotFoundException extends NotFoundException {
     private final String catalogName;
-    public CatalogNotFoundException(String catalogName) {
+
+    /**
+     * Constructor.
+     * @param catalogName catalog name
+     */
+    public CatalogNotFoundException(final String catalogName) {
         this(catalogName, null);
     }
 
-    public CatalogNotFoundException(String catalogName, Throwable cause) {
+    /**
+     * Constructor.
+     * @param catalogName catalog name
+     * @param cause error cause
+     */
+    public CatalogNotFoundException(final String catalogName, final Throwable cause) {
         super(String.format("Catalog %s not found.", catalogName), cause);
         this.catalogName = catalogName;
     }

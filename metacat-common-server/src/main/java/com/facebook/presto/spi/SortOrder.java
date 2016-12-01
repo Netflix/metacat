@@ -14,8 +14,9 @@
 package com.facebook.presto.spi;
 
 /**
- * Created by amajumdar on 3/16/15.
+ * Sort order.
  */
 public enum SortOrder {
+    /** Ascending order, Descending order. */
     ASC, DESC
 }

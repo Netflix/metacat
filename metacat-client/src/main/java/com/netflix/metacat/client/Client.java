@@ -16,6 +16,7 @@ package com.netflix.metacat.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
+import com.google.common.base.Preconditions;
 import com.netflix.metacat.client.module.JacksonDecoder;
 import com.netflix.metacat.client.module.JacksonEncoder;
 import com.netflix.metacat.client.module.MetacatErrorDecoder;
@@ -31,19 +32,17 @@ import feign.RequestTemplate;
 import feign.Retryer;
 import feign.jaxrs.JAXRSContract;
 import feign.slf4j.Slf4jLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 /**
  * Client to communicate with Metacat.  This version depends on the Feign library.
+ * @author amajumdar
  */
-public class Client {
-    private static final Logger log = LoggerFactory.getLogger(Client.class);
+@Slf4j
+public final class Client {
     private final MetacatV1 api;
     private final Feign.Builder feignBuilder;
     private final String host;
@@ -51,43 +50,56 @@ public class Client {
     private final MetadataV1 metadataApi;
 
     private Client(
-            @Nonnull String host,
-            @Nonnull feign.Client client,
-            @Nonnull feign.Logger.Level logLevel,
-            @Nonnull RequestInterceptor requestInterceptor,
-            @Nonnull Retryer retryer,
-            @Nonnull Request.Options options
+        @Nonnull
+            final String host,
+        @Nonnull
+            final feign.Client client,
+        @Nonnull
+            final feign.Logger.Level logLevel,
+        @Nonnull
+            final RequestInterceptor requestInterceptor,
+        @Nonnull
+            final Retryer retryer,
+        @Nonnull
+            final Request.Options options
     ) {
-        ObjectMapper mapper = MetacatJsonLocator.INSTANCE
-                .getPrettyObjectMapper()
-                .copy()
-                .registerModule(new GuavaModule())
-                .registerModule(new JaxbAnnotationModule());
+        final ObjectMapper mapper = MetacatJsonLocator.INSTANCE
+            .getPrettyObjectMapper()
+            .copy()
+            .registerModule(new GuavaModule())
+            .registerModule(new JaxbAnnotationModule());
 
         log.info("Connecting to {}", host);
         this.host = host;
 
         feignBuilder = Feign.builder()
-                .client(client)
-                .logger(new Slf4jLogger())
-                .logLevel(logLevel)
-                .contract(new JAXRSContract())
-                .encoder(new JacksonEncoder(mapper))
-                .decoder(new JacksonDecoder(mapper))
-                .errorDecoder(new MetacatErrorDecoder())
-                .requestInterceptor(requestInterceptor)
-                .retryer(retryer)
-                .options(options);
+            .client(client)
+            .logger(new Slf4jLogger())
+            .logLevel(logLevel)
+            .contract(new JAXRSContract())
+            .encoder(new JacksonEncoder(mapper))
+            .decoder(new JacksonDecoder(mapper))
+            .errorDecoder(new MetacatErrorDecoder())
+            .requestInterceptor(requestInterceptor)
+            .retryer(retryer)
+            .options(options);
 
         api = getApiClient(MetacatV1.class);
         partitionApi = getApiClient(PartitionV1.class);
         metadataApi = getApiClient(MetadataV1.class);
     }
 
+    /**
+     * Returns the client builder.
+     * @return Builder to create the metacat client
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Builder class to build the metacat client.
+     */
     public static class Builder {
         private String host;
         private String userName;
@@ -100,71 +112,124 @@ public class Client {
         private RequestInterceptor requestInterceptor;
         private Request.Options requestOptions;
 
-        public Builder withLogLevel(feign.Logger.Level logLevel) {
-            this.logLevel = logLevel;
+        /**
+         * Sets the log level for the client.
+         * @param clientLogLevel log level
+         * @return Builder
+         */
+        public Builder withLogLevel(final feign.Logger.Level clientLogLevel) {
+            this.logLevel = clientLogLevel;
             return this;
         }
 
-        public Builder withHost(String host) {
-            this.host = host;
+        /**
+         * Sets the server host name.
+         * @param serverHost server host to connect
+         * @return Builder
+         */
+        public Builder withHost(final String serverHost) {
+            this.host = serverHost;
             return this;
         }
 
-        public Builder withRetryer(Retryer retryer) {
-            this.retryer = retryer;
+        /**
+         * Sets the retryer logic for the client.
+         * @param clientRetryer retry implementation
+         * @return Builder
+         */
+        public Builder withRetryer(final Retryer clientRetryer) {
+            this.retryer = clientRetryer;
             return this;
         }
 
-        public Builder withUserName(String userName) {
-            this.userName = userName;
+        /**
+         * Sets the user name to pass in the request header.
+         * @param requestUserName user name
+         * @return Builder
+         */
+        public Builder withUserName(final String requestUserName) {
+            this.userName = requestUserName;
             return this;
         }
 
-        public Builder withClientAppName(String appName) {
+        /**
+         * Sets the application name to pass in the request header.
+         * @param appName application name
+         * @return Builder
+         */
+        public Builder withClientAppName(final String appName) {
             this.clientAppName = appName;
             return this;
         }
 
-        public Builder withJobId(String jobId) {
-            this.jobId = jobId;
+        /**
+         * Sets the job id to pass in the request header.
+         * @param clientJobId job id
+         * @return Builder
+         */
+        public Builder withJobId(final String clientJobId) {
+            this.jobId = clientJobId;
             return this;
         }
 
-        public Builder withClient(feign.Client client) {
-            this.client = client;
+        /**
+         * Sets the Client implementation to use.
+         * @param feignClient Feign Client
+         * @return Builder
+         */
+        public Builder withClient(final feign.Client feignClient) {
+            this.client = feignClient;
             return this;
         }
 
-        public Builder withDataTypeContext(String dataTypeContext) {
-            this.dataTypeContext = dataTypeContext;
+        /**
+         * Sets the data type context to pass in the request header.
+         * @param requestDataTypeContext Data type conext
+         * @return Builder
+         */
+        public Builder withDataTypeContext(final String requestDataTypeContext) {
+            this.dataTypeContext = requestDataTypeContext;
             return this;
         }
 
-        public Builder withRequestInterceptor(RequestInterceptor requestInterceptor) {
-            this.requestInterceptor = requestInterceptor;
+        /**
+         * Sets the request interceptor.
+         * @param clientRrequestInterceptor request interceptor
+         * @return Builder
+         */
+        public Builder withRequestInterceptor(final RequestInterceptor clientRrequestInterceptor) {
+            this.requestInterceptor = clientRrequestInterceptor;
             return this;
         }
 
-
-        public Builder withRequestOptions(Request.Options requestOptions) {
-            this.requestOptions = requestOptions;
+        /**
+         * Sets the request options.
+         * @param clientRequestOptions request options
+         * @return Builder
+         */
+        public Builder withRequestOptions(final Request.Options clientRequestOptions) {
+            this.requestOptions = clientRequestOptions;
             return this;
         }
 
+        /**
+         * Builds the Metacat client.
+         * @return Client that can be used to make metacat API calls.
+         */
         public Client build() {
-            checkArgument(userName != null, "User name cannot be null");
-            checkArgument(clientAppName != null, "Client application name cannot be null");
-            if(host == null){
+            Preconditions.checkArgument(userName != null, "User name cannot be null");
+            Preconditions.checkArgument(clientAppName != null, "Client application name cannot be null");
+            if (host == null) {
                 host = System.getProperty("netflix.metacat.host", System.getenv("NETFLIX_METACAT_HOST"));
             }
-            checkArgument(host != null, "Host cannot be null");
-            if( retryer == null){
+            Preconditions.checkArgument(host != null, "Host cannot be null");
+            if (retryer == null) {
                 retryer = new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0);
             }
-            RequestInterceptor interceptor = new RequestInterceptor() {
+            final RequestInterceptor interceptor = new RequestInterceptor() {
                 @Override
-                public void apply(RequestTemplate template) {
-                    if( requestInterceptor != null) {
+                public void apply(final RequestTemplate template) {
+                    if (requestInterceptor != null) {
                         requestInterceptor.apply(template);
                     }
                     template.header(MetacatRequestContext.HEADER_KEY_USER_NAME, userName);
@@ -173,52 +238,55 @@ public class Client {
                     template.header(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT, dataTypeContext);
                 }
             };
-            if( requestOptions == null){
-                requestOptions = new Request.Options((int)TimeUnit.MINUTES.toMillis(10), (int)TimeUnit.MINUTES.toMillis(30));
+            if (requestOptions == null) {
+                requestOptions = new Request.Options((int) TimeUnit.MINUTES.toMillis(10),
+                    (int) TimeUnit.MINUTES.toMillis(30));
             }
-            if( logLevel == null){
+            if (logLevel == null) {
                 logLevel = feign.Logger.Level.NONE;
             }
-            if( client == null){
+            if (client == null) {
                 client = new feign.Client.Default(null, null);
             }
-            return new Client( host, client, logLevel, interceptor, retryer, requestOptions);
+            return new Client(host, client, logLevel, interceptor, retryer, requestOptions);
         }
     }
 
     /**
-     * Returns an API instance that conforms to the given API Type that can communicate with the Metacat server
+     * Returns an API instance that conforms to the given API Type that can communicate with the Metacat server.
      * @param apiType apiType A JAX-RS annotated Metacat interface
      * @param <T> API Resource instance
      * @return An instance that implements the given interface and is wired up to communicate with the Metacat server.
      */
-    public <T> T getApiClient(@Nonnull Class<T> apiType) {
-        checkArgument(apiType.isInterface(), "apiType must be an interface");
+    public <T> T getApiClient(
+        @Nonnull
+            final Class<T> apiType) {
+        Preconditions.checkArgument(apiType.isInterface(), "apiType must be an interface");
 
         return feignBuilder.target(apiType, host);
     }
 
     /**
-     *   Return an API instance that can be used to interact with the metacat server
+     * Return an API instance that can be used to interact with the metacat server.
      * @return An instance api conforming to MetacatV1 interface
      */
-    public MetacatV1 getApi(){
+    public MetacatV1 getApi() {
         return api;
     }
 
     /**
-     *   Return an API instance that can be used to interact with the metacat server for partitions
+     * Return an API instance that can be used to interact with the metacat server for partitions.
      * @return An instance api conforming to PartitionV1 interface
      */
-    public PartitionV1 getPartitionApi(){
+    public PartitionV1 getPartitionApi() {
         return partitionApi;
     }
 
     /**
-     *   Return an API instance that can be used to interact with the metacat server for only user metadata
+     * Return an API instance that can be used to interact with the metacat server for only user metadata.
      * @return An instance api conforming to MetadataV1 interface
      */
-    public MetadataV1 getMetadataApi(){
+    public MetadataV1 getMetadataApi() {
         return metadataApi;
     }
 }

@@ -18,9 +18,22 @@ import com.netflix.metacat.s3.connector.model.Database;
 import java.util.List;
 
 /**
- * Created by amajumdar on 1/2/15.
+ * Database DAO.
  */
 public interface DatabaseDao extends BaseDao<Database> {
-    public Database getBySourceDatabaseName(String sourceName, String databaseName);
-    public List<Database> getBySourceDatabaseNames(String sourceName, List<String> databaseNames);
+    /**
+     * Get database for the given source and database name.
+     * @param sourceName source name
+     * @param databaseName database name
+     * @return Database
+     */
+    Database getBySourceDatabaseName(String sourceName, String databaseName);
+
+    /**
+     * Get list of databases for the given source name and database names.
+     * @param sourceName source name
+     * @param databaseNames list of database names
+     * @return list of databases
+     */
+    List<Database> getBySourceDatabaseNames(String sourceName, List<String> databaseNames);
 }

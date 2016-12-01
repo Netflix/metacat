@@ -23,30 +23,30 @@ import com.google.common.collect.Lists;
 import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;
 
-import static java.util.Collections.singletonList;
+import java.util.Collections;
 
 /**
- * Created by amajumdar on 4/7/16.
+ * Character type.
  */
-public final class CharType extends AbstractVariableWidthType
-{
+public final class CharType extends AbstractVariableWidthType {
+    /** Default character type. */
     public static final CharType CHAR = new CharType(1);
+    /** String representation of char type. */
     public static final String TYPE = "char";
-    public static CharType createCharType(int length)
-    {
-        return new CharType(length);
-    }
 
     private final int length;
 
+    /**
+     * Constructor.
+     * @param length length
+     */
     @JsonCreator
-    public CharType(int length)
-    {
+    public CharType(final int length) {
         super(
-                new TypeSignature(
-                        TYPE, Lists.newArrayList(),
-                        singletonList((long)length)),
-                Slice.class);
+            new TypeSignature(
+                TYPE, Lists.newArrayList(),
+                Collections.singletonList((long) length)),
+            Slice.class);
 
         if (length < 0) {
             throw new IllegalArgumentException("Invalid VARCHAR length " + length);
@@ -54,26 +54,31 @@ public final class CharType extends AbstractVariableWidthType
         this.length = length;
     }
 
-    public int getLength()
-    {
+    /**
+     * Creates the character type.
+     * @param length legnth of the type
+     * @return CharType
+     */
+    public static CharType createCharType(final int length) {
+        return new CharType(length);
+    }
+
+    public int getLength() {
         return length;
     }
 
     @Override
-    public boolean isComparable()
-    {
+    public boolean isComparable() {
         return true;
     }
 
     @Override
-    public boolean isOrderable()
-    {
+    public boolean isOrderable() {
         return true;
     }
 
     @Override
-    public Object getObjectValue(ConnectorSession session, Block block, int position)
-    {
+    public Object getObjectValue(final ConnectorSession session, final Block block, final int position) {
         if (block.isNull(position)) {
             return null;
         }
@@ -82,10 +87,10 @@ public final class CharType extends AbstractVariableWidthType
     }
 
     @Override
-    public boolean equalTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition)
-    {
-        int leftLength = leftBlock.getLength(leftPosition);
-        int rightLength = rightBlock.getLength(rightPosition);
+    public boolean equalTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final int leftLength = leftBlock.getLength(leftPosition);
+        final int rightLength = rightBlock.getLength(rightPosition);
         if (leftLength != rightLength) {
             return false;
         }
@@ -93,52 +98,51 @@ public final class CharType extends AbstractVariableWidthType
     }
 
     @Override
-    public int hash(Block block, int position)
-    {
+    public int hash(final Block block, final int position) {
         return block.hash(position, 0, block.getLength(position));
     }
 
     @Override
-    public int compareTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition)
-    {
-        int leftLength = leftBlock.getLength(leftPosition);
-        int rightLength = rightBlock.getLength(rightPosition);
+    public int compareTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final int leftLength = leftBlock.getLength(leftPosition);
+        final int rightLength = rightBlock.getLength(rightPosition);
         return leftBlock.compareTo(leftPosition, 0, leftLength, rightBlock, rightPosition, 0, rightLength);
     }
 
     @Override
-    public void appendTo(Block block, int position, BlockBuilder blockBuilder)
-    {
+    public void appendTo(final Block block, final int position, final BlockBuilder blockBuilder) {
         if (block.isNull(position)) {
             blockBuilder.appendNull();
-        }
-        else {
+        } else {
             block.writeBytesTo(position, 0, block.getLength(position), blockBuilder);
             blockBuilder.closeEntry();
         }
     }
 
     @Override
-    public Slice getSlice(Block block, int position)
-    {
+    public Slice getSlice(final Block block, final int position) {
         return block.getSlice(position, 0, block.getLength(position));
     }
 
-    public void writeString(BlockBuilder blockBuilder, String value)
-    {
+    /**
+     * Writes string.
+     * @param blockBuilder block builder
+     * @param value value
+     */
+    public void writeString(final BlockBuilder blockBuilder, final String value) {
         writeSlice(blockBuilder, Slices.utf8Slice(value));
     }
 
     @Override
-    public void writeSlice(BlockBuilder blockBuilder, Slice value)
-    {
+    public void writeSlice(final BlockBuilder blockBuilder, final Slice value) {
         writeSlice(blockBuilder, value, 0, value.length());
     }
 
     @Override
-    public void writeSlice(BlockBuilder blockBuilder, Slice value, int offset, int length)
-    {
-        blockBuilder.writeBytes(value, offset, length).closeEntry();
+    public void writeSlice(final BlockBuilder blockBuilder, final Slice value, final int offset,
+        final int sliceLength) {
+        blockBuilder.writeBytes(value, offset, sliceLength).closeEntry();
     }
 }
 

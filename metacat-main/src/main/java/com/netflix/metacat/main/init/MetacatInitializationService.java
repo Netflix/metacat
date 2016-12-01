@@ -51,7 +51,7 @@ public class MetacatInitializationService {
     public ConfigurationFactory getConfigurationFactory() {
         String pluginConfigDir = config.getPluginConfigLocation();
         checkArgument(!Strings.isNullOrEmpty(pluginConfigDir),
-                "Missing required property metacat.plugin.config.location");
+            "Missing required property metacat.plugin.config.location");
         log.info("Loading catalogs from directory '{}'", pluginConfigDir);
 
         Map<String, String> properties = ImmutableMap.of("plugin.config-dir", pluginConfigDir);
@@ -61,7 +61,7 @@ public class MetacatInitializationService {
     public void start() throws Exception {
         ConfigurationFactory configurationFactory = getConfigurationFactory();
         ProviderInstanceBinding<?> providerInstanceBinding = (ProviderInstanceBinding<?>) injector
-                .getBinding(CatalogManagerConfig.class);
+            .getBinding(CatalogManagerConfig.class);
         Provider<?> provider = providerInstanceBinding.getProviderInstance();
         ((ConfigurationProvider) provider).setConfigurationFactory(configurationFactory);
         injector.getInstance(PluginManager.class).loadPlugins();

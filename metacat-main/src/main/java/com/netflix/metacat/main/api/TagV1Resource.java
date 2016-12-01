@@ -54,29 +54,31 @@ public class TagV1Resource implements TagV1 {
 
     @Override
     public List<QualifiedName> list(
-            Set<String> includeTags,
-            Set<String> excludeTags,
-            String sourceName,
-            String databaseName,
-            String tableName) {
-        return requestWrapper("TagV1Resource.list", () -> tagService.list(includeTags, excludeTags, sourceName, databaseName, tableName));
+        Set<String> includeTags,
+        Set<String> excludeTags,
+        String sourceName,
+        String databaseName,
+        String tableName) {
+        return requestWrapper("TagV1Resource.list",
+            () -> tagService.list(includeTags, excludeTags, sourceName, databaseName, tableName));
     }
 
     @Override
     public List<QualifiedName> search(
-            String tag,
-            String sourceName,
-            String databaseName,
-            String tableName) {
-        return requestWrapper("TagV1Resource.search", () -> tagService.search(tag, sourceName, databaseName, tableName));
+        String tag,
+        String sourceName,
+        String databaseName,
+        String tableName) {
+        return requestWrapper("TagV1Resource.search",
+            () -> tagService.search(tag, sourceName, databaseName, tableName));
     }
 
     @Override
     public Set<String> setTableTags(
-            String catalogName,
-            String databaseName,
-            String tableName,
-            Set<String> tags) {
+        String catalogName,
+        String databaseName,
+        String tableName,
+        Set<String> tags) {
         MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
         return requestWrapper(name, "TagV1Resource.setTableTags", () -> {
@@ -84,12 +86,12 @@ public class TagV1Resource implements TagV1 {
                 throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
             }
             TableDto oldTable = this.tableService
-                    .get(name, true)
-                    .orElseThrow(IllegalStateException::new);
+                .get(name, true)
+                .orElseThrow(IllegalStateException::new);
             Set<String> result = tagService.setTableTags(name, tags, true);
             TableDto currentTable = this.tableService
-                    .get(name, true)
-                    .orElseThrow(IllegalStateException::new);
+                .get(name, true)
+                .orElseThrow(IllegalStateException::new);
             eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, oldTable, currentTable));
             return result;
         });
@@ -97,11 +99,11 @@ public class TagV1Resource implements TagV1 {
 
     @Override
     public void removeTableTags(
-            String catalogName,
-            String databaseName,
-            String tableName,
-            Boolean deleteAll,
-            Set<String> tags) {
+        String catalogName,
+        String databaseName,
+        String tableName,
+        Boolean deleteAll,
+        Set<String> tags) {
         MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
         requestWrapper(name, "TagV1Resource.removeTableTags", () -> {
@@ -111,12 +113,12 @@ public class TagV1Resource implements TagV1 {
                 throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
             }
             TableDto oldTable = this.tableService
-                    .get(name, true)
-                    .orElseThrow(IllegalStateException::new);
+                .get(name, true)
+                .orElseThrow(IllegalStateException::new);
             tagService.removeTableTags(name, deleteAll, tags, true);
             TableDto currentTable = this.tableService
-                    .get(name, true)
-                    .orElseThrow(IllegalStateException::new);
+                .get(name, true)
+                .orElseThrow(IllegalStateException::new);
 
             eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, oldTable, currentTable));
             return null;

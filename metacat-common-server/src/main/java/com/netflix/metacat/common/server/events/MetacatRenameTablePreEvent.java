@@ -25,6 +25,9 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Pre table rename event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -32,10 +35,19 @@ public class MetacatRenameTablePreEvent extends MetacatEvent {
 
     private final QualifiedName newName;
 
+    /**
+     * Constructor.
+     * @param name name.
+     * @param requestContext context
+     * @param newName new name
+     */
     public MetacatRenameTablePreEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext requestContext,
-            @NotNull final QualifiedName newName
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext,
+        @NotNull
+        final QualifiedName newName
     ) {
         super(name, requestContext);
         this.newName = newName;

@@ -32,8 +32,10 @@ public class SearchMetacatV1Resource implements SearchMetacatV1 {
     public SearchMetacatV1Resource(ElasticSearchUtil elasticSearchUtil) {
         this.elasticSearchUtil = elasticSearchUtil;
     }
+
     @Override
     public List<TableDto> searchTables(String searchString) {
-        return requestWrapper("SearchMetacatV1Resource.searchTables", () -> elasticSearchUtil.simpleSearch(searchString));
+        return requestWrapper("SearchMetacatV1Resource.searchTables",
+            () -> elasticSearchUtil.simpleSearch(searchString));
     }
 }

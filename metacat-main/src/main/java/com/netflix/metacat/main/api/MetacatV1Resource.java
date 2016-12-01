@@ -71,11 +71,11 @@ public class MetacatV1Resource implements MetacatV1 {
 
     @Inject
     public MetacatV1Resource(
-            CatalogService catalogService,
-            DatabaseService databaseService,
-            MetacatEventBus eventBus,
-            MViewService mViewService,
-            TableService tableService) {
+        CatalogService catalogService,
+        DatabaseService databaseService,
+        MetacatEventBus eventBus,
+        MViewService mViewService,
+        TableService tableService) {
         this.catalogService = catalogService;
         this.databaseService = databaseService;
         this.eventBus = eventBus;
@@ -90,7 +90,7 @@ public class MetacatV1Resource implements MetacatV1 {
 
     @Override
     public void createDatabase(String catalogName, String databaseName,
-                               DatabaseCreateRequestDto databaseCreateRequestDto) {
+        DatabaseCreateRequestDto databaseCreateRequestDto) {
         MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
         requestWrapper(name, "createDatabase", () -> {
@@ -111,11 +111,11 @@ public class MetacatV1Resource implements MetacatV1 {
 
     @Override
     public TableDto createMView(String catalogName,
-                                String databaseName,
-                                String tableName,
-                                String viewName,
-                                Boolean snapshot,
-                                String filter
+        String databaseName,
+        String tableName,
+        String viewName,
+        Boolean snapshot,
+        String filter
     ) {
         MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
@@ -140,7 +140,7 @@ public class MetacatV1Resource implements MetacatV1 {
             checkArgument(table != null, "Table cannot be null");
             checkArgument(tableName != null && !tableName.isEmpty(), "table name is required");
             checkArgument(table.getName() != null && tableName.equalsIgnoreCase(table.getName().getTableName()),
-                    "Table name does not match the name in the table");
+                "Table name does not match the name in the table");
 
             eventBus.postSync(new MetacatCreateTablePreEvent(name, metacatRequestContext, table));
 
@@ -235,10 +235,12 @@ public class MetacatV1Resource implements MetacatV1 {
     }
 
     @Override
-    public TableDto getTable(String catalogName, String databaseName, String tableName, Boolean includeInfo, Boolean includeDefinitionMetadata, Boolean includeDataMetadata) {
+    public TableDto getTable(String catalogName, String databaseName, String tableName, Boolean includeInfo,
+        Boolean includeDefinitionMetadata, Boolean includeDataMetadata) {
         QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
         return requestWrapper(name, "getTable", () -> {
-            Optional<TableDto> table = tableService.get(name, includeInfo, includeDefinitionMetadata, includeDataMetadata);
+            Optional<TableDto> table = tableService
+                .get(name, includeInfo, includeDefinitionMetadata, includeDataMetadata);
             return table.orElseThrow(() -> new TableNotFoundException(new SchemaTableName(databaseName, tableName)));
         });
     }
@@ -276,9 +278,9 @@ public class MetacatV1Resource implements MetacatV1 {
 
     @Override
     public void updateDatabase(
-            String catalogName,
-            String databaseName,
-            DatabaseCreateRequestDto databaseUpdateRequestDto) {
+        String catalogName,
+        String databaseName,
+        DatabaseCreateRequestDto databaseUpdateRequestDto) {
         MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
         requestWrapper(name, "updateDatabase", () -> {
@@ -295,7 +297,8 @@ public class MetacatV1Resource implements MetacatV1 {
     }
 
     @Override
-    public TableDto updateMView(String catalogName, String databaseName, String tableName, String viewName, TableDto table) {
+    public TableDto updateMView(String catalogName, String databaseName, String tableName, String viewName,
+        TableDto table) {
         MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
         return requestWrapper(name, "getMView", () -> {
@@ -317,11 +320,11 @@ public class MetacatV1Resource implements MetacatV1 {
             checkArgument(table != null, "Table cannot be null");
             checkArgument(tableName != null && !tableName.isEmpty(), "table name is required");
             checkArgument(table.getName() != null && tableName.equalsIgnoreCase(table.getName().getTableName()),
-                    "Table name does not match the name in the table");
+                "Table name does not match the name in the table");
 
             TableDto oldTable = tableService.get(name, false)
-                    .orElseThrow(() -> new IllegalStateException(
-                            "expect existing table to be present"));
+                .orElseThrow(() -> new IllegalStateException(
+                    "expect existing table to be present"));
             eventBus.postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, oldTable, table));
 
             tableService.update(name, table);

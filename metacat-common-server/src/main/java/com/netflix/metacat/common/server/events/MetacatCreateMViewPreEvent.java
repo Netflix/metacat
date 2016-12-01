@@ -25,6 +25,9 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Pre create view event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -33,11 +36,20 @@ public class MetacatCreateMViewPreEvent extends MetacatEvent {
     private final String filter;
     private final Boolean snapshot;
 
+    /**
+     * Constructor.
+     * @param name name
+     * @param requestContext context
+     * @param snapshot snapshot
+     * @param filter filter
+     */
     public MetacatCreateMViewPreEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext requestContext,
-            final Boolean snapshot,
-            final String filter
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext,
+        final Boolean snapshot,
+        final String filter
     ) {
         super(name, requestContext);
         this.snapshot = snapshot;

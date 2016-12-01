@@ -28,19 +28,22 @@ import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.util.DataSourceManager;
 import com.netflix.metacat.common.util.ThreadServiceManager;
 
+/**
+ * Guice module.
+ */
 public class CommonModule extends AbstractModule {
     @Override
     protected void configure() {
-        Config config = new ArchaiusConfigImpl();
+        final Config config = new ArchaiusConfigImpl();
 
         bind(Config.class).toInstance(config);
         bind(MetacatJson.class).toInstance(MetacatJsonLocator.INSTANCE);
         bind(DeadEventHandler.class).asEagerSingleton();
         bind(DataSourceManager.class).toInstance(DataSourceManager.get());
-        MetacatEventBus eventBus = new MetacatEventBus(config);
+        final MetacatEventBus eventBus = new MetacatEventBus(config);
         bind(MetacatEventBus.class).toInstance(eventBus);
         bindListener(Matchers.any(), new TypeListener() {
-            public <I> void hear(TypeLiteral<I> typeLiteral, TypeEncounter<I> typeEncounter) {
+            public <I> void hear(final TypeLiteral<I> typeLiteral, final TypeEncounter<I> typeEncounter) {
                 typeEncounter.register((InjectionListener<I>) eventBus::register);
             }
         });

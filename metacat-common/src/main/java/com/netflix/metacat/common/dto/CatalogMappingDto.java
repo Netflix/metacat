@@ -15,11 +15,17 @@ package com.netflix.metacat.common.dto;
 
 import com.wordnik.swagger.annotations.ApiModel;
 import com.wordnik.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.util.Objects;
-
+/**
+ * The name and type of a catalog.
+ *
+ */
 @ApiModel(description = "The name and type of a catalog")
 @SuppressWarnings("unused")
+@Data
+@EqualsAndHashCode(callSuper = false)
 public class CatalogMappingDto extends BaseDto {
     private static final long serialVersionUID = -1223516438943164936L;
 
@@ -28,42 +34,19 @@ public class CatalogMappingDto extends BaseDto {
     @ApiModelProperty(value = "The connector type of the catalog", required = true)
     private String connectorName;
 
+    /**
+     * Default constructor.
+     */
     public CatalogMappingDto() {
     }
 
-    public CatalogMappingDto(String catalogName, String connectorName) {
+    /**
+     * Constructor.
+     * @param catalogName catalog name
+     * @param connectorName connector name
+     */
+    public CatalogMappingDto(final String catalogName, final String connectorName) {
         this.catalogName = catalogName;
         this.connectorName = connectorName;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof CatalogMappingDto)) return false;
-        CatalogMappingDto that = (CatalogMappingDto) o;
-        return Objects.equals(catalogName, that.catalogName) &&
-                Objects.equals(connectorName, that.connectorName);
-    }
-
-    public String getCatalogName() {
-        return catalogName;
-    }
-
-    public void setCatalogName(String catalogName) {
-        this.catalogName = catalogName;
-    }
-
-    public String getConnectorName() {
-        return connectorName;
-    }
-
-    public void setConnectorName(String connectorName) {
-        this.connectorName = connectorName;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(catalogName, connectorName);
-    }
-
 }

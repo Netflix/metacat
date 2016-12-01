@@ -13,39 +13,34 @@
 
 package com.facebook.presto.spi;
 
+import lombok.Data;
+
 /**
- * Represents the pagination information
- * Created by amajumdar on 3/16/15.
+ * Represents the pagination information.
+ * @author amajumdar
  */
+@Data
 public class Pageable {
     private Integer limit;
     private Integer offset;
 
+    /**
+     * Default constructor.
+     */
     public Pageable() {
     }
 
-    public Pageable(Integer limit, Integer offset) {
+    /**
+     * Constructor.
+     * @param limit size of the list
+     * @param offset offset of the list
+     */
+    public Pageable(final Integer limit, final Integer offset) {
         this.limit = limit;
         this.offset = offset;
     }
 
-    public Integer getLimit() {
-        return limit;
-    }
-
-    public void setLimit(Integer limit) {
-        this.limit = limit;
-    }
-
-    public Integer getOffset() {
-        return offset==null?0:offset;
-    }
-
-    public void setOffset(Integer offset) {
-        this.offset = offset;
-    }
-
-    public boolean isPageable(){
+    public boolean isPageable() {
         return limit != null;
     }
 }

@@ -19,29 +19,46 @@ import javax.inject.Inject;
 import java.time.Instant;
 import java.util.Date;
 
+/**
+ * Date converter.
+ */
 public class DateConverters {
     private static Config config;
 
+    /**
+     * Sets the config.
+     * @param config config
+     */
     @Inject
-    public static void setConfig(Config config) {
+    public static void setConfig(final Config config) {
         DateConverters.config = config;
     }
 
-    public Long fromDateToLong(Date d) {
+    /**
+     * Converts date to epoch.
+     * @param d date
+     * @return epoch time
+     */
+    public Long fromDateToLong(final Date d) {
         if (d == null) {
             return null;
         }
 
-        Instant instant = d.toInstant();
+        final Instant instant = d.toInstant();
         return config.isEpochInSeconds() ? instant.getEpochSecond() : instant.toEpochMilli();
     }
 
-    public Date fromLongToDate(Long l) {
+    /**
+     * Converts epoch to date.
+     * @param l epoch time
+     * @return date
+     */
+    public Date fromLongToDate(final Long l) {
         if (l == null) {
             return null;
         }
 
-        Instant instant = config.isEpochInSeconds() ? Instant.ofEpochSecond(l) : Instant.ofEpochMilli(l);
+        final Instant instant = config.isEpochInSeconds() ? Instant.ofEpochSecond(l) : Instant.ofEpochMilli(l);
         return Date.from(instant);
     }
 }

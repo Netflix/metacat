@@ -21,10 +21,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.Provider;
 
+/**
+ * JSON provider.
+ */
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 @Priority(10_000)
 public class MetacatJsonProvider extends JacksonJaxbJsonProvider {
+    /**
+     * Default contructor.
+     */
     public MetacatJsonProvider() {
         super();
         setMapper(MetacatJsonLocator.INSTANCE.getObjectMapper());

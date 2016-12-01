@@ -28,7 +28,9 @@ public interface CatalogService {
      * @throws javax.ws.rs.NotFoundException if the catalog is not found
      */
     @Nonnull
-    CatalogDto get(@Nonnull QualifiedName name);
+    CatalogDto get(
+        @Nonnull
+            QualifiedName name);
 
     /**
      * @return all of the registered catalogs
@@ -43,5 +45,9 @@ public interface CatalogService {
      * @throws javax.ws.rs.NotFoundException if the catalog is not found
      */
     @Nonnull
-    void update(@Nonnull QualifiedName name, @Nonnull CreateCatalogDto createCatalogDto);
+    void update(
+        @Nonnull
+            QualifiedName name,
+        @Nonnull
+            CreateCatalogDto createCatalogDto);
 }

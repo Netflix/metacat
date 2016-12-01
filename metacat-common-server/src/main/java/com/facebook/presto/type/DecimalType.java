@@ -19,32 +19,40 @@ import com.facebook.presto.spi.block.BlockBuilder;
 import com.facebook.presto.spi.type.AbstractFixedWidthType;
 import com.facebook.presto.spi.type.TypeSignature;
 import com.google.common.collect.Lists;
+import io.airlift.slice.SizeOf;
 
 import java.math.BigDecimal;
 
-import static io.airlift.slice.SizeOf.SIZE_OF_DOUBLE;
-
-public final class DecimalType extends AbstractFixedWidthType
-{
+/**
+ * Decimal type.
+ */
+public final class DecimalType extends AbstractFixedWidthType {
+    /** Default decimal type. */
     public static final DecimalType DECIMAL = new DecimalType(10, 0);
+    /** String representation. */
     public static final String TYPE = "decimal";
     private final int precision;
     private final int scale;
 
-    public static DecimalType createDecimalType(int precision, int scale){
-        return new DecimalType(precision, scale);
-    }
-
-    private DecimalType(int precision, int scale)
-    {
+    private DecimalType(final int precision, final int scale) {
         super(new TypeSignature(
-                TYPE, Lists.newArrayList(),
-                Lists.newArrayList((long)precision, (long) scale)), BigDecimal.class, SIZE_OF_DOUBLE);
+            TYPE, Lists.newArrayList(),
+            Lists.newArrayList((long) precision, (long) scale)), BigDecimal.class, SizeOf.SIZE_OF_DOUBLE);
         if (precision < 0) {
             throw new IllegalArgumentException("Invalid decimal precision " + precision);
         }
         this.precision = precision;
         this.scale = scale;
+    }
+
+    /**
+     * Creates the decimal type.
+     * @param precision precision
+     * @param scale scale
+     * @return DecimalType
+     */
+    public static DecimalType createDecimalType(final int precision, final int scale) {
+        return new DecimalType(precision, scale);
     }
 
     public int getPrecision() {
@@ -54,21 +62,19 @@ public final class DecimalType extends AbstractFixedWidthType
     public int getScale() {
         return scale;
     }
+
     @Override
-    public boolean isComparable()
-    {
+    public boolean isComparable() {
         return true;
     }
 
     @Override
-    public boolean isOrderable()
-    {
+    public boolean isOrderable() {
         return true;
     }
 
     @Override
-    public Object getObjectValue(ConnectorSession session, Block block, int position)
-    {
+    public Object getObjectValue(final ConnectorSession session, final Block block, final int position) {
         if (block.isNull(position)) {
             return null;
         }
@@ -76,48 +82,43 @@ public final class DecimalType extends AbstractFixedWidthType
     }
 
     @Override
-    public boolean equalTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition)
-    {
-        double leftValue = leftBlock.getDouble(leftPosition, 0);
-        double rightValue = rightBlock.getDouble(rightPosition, 0);
+    public boolean equalTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final double leftValue = leftBlock.getDouble(leftPosition, 0);
+        final double rightValue = rightBlock.getDouble(rightPosition, 0);
         return leftValue == rightValue;
     }
 
     @Override
-    public int hash(Block block, int position)
-    {
-        long value = block.getLong(position, 0);
+    public int hash(final Block block, final int position) {
+        final long value = block.getLong(position, 0);
         return (int) (value ^ (value >>> 32));
     }
 
     @Override
-    public int compareTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition)
-    {
-        double leftValue = leftBlock.getDouble(leftPosition, 0);
-        double rightValue = rightBlock.getDouble(rightPosition, 0);
+    public int compareTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final double leftValue = leftBlock.getDouble(leftPosition, 0);
+        final double rightValue = rightBlock.getDouble(rightPosition, 0);
         return Double.compare(leftValue, rightValue);
     }
 
     @Override
-    public void appendTo(Block block, int position, BlockBuilder blockBuilder)
-    {
+    public void appendTo(final Block block, final int position, final BlockBuilder blockBuilder) {
         if (block.isNull(position)) {
             blockBuilder.appendNull();
-        }
-        else {
+        } else {
             blockBuilder.writeDouble(block.getDouble(position, 0)).closeEntry();
         }
     }
 
     @Override
-    public double getDouble(Block block, int position)
-    {
+    public double getDouble(final Block block, final int position) {
         return block.getDouble(position, 0);
     }
 
     @Override
-    public void writeDouble(BlockBuilder blockBuilder, double value)
-    {
-        blockBuilder.writeDouble((double)value).closeEntry();
+    public void writeDouble(final BlockBuilder blockBuilder, final double value) {
+        blockBuilder.writeDouble((double) value).closeEntry();
     }
 }

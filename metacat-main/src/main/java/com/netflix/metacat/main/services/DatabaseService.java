@@ -16,6 +16,6 @@ package com.netflix.metacat.main.services;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
 
-public interface DatabaseService extends MetacatService<DatabaseDto>{
+public interface DatabaseService extends MetacatService<DatabaseDto> {
     DatabaseDto get(QualifiedName name, boolean includeUserMetadata);
 }

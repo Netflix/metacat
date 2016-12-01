@@ -66,9 +66,10 @@ public class DatabaseServiceImpl implements DatabaseService {
         Session session = validateAndGetSession(name);
         log.info("Creating schema {}", name);
         metadataManager.createSchema(session, new ConnectorSchemaMetadata(name.getDatabaseName()));
-        if( dto != null && dto.getDefinitionMetadata() != null){
+        if (dto != null && dto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for schema {}", name);
-            userMetadataService.saveDefinitionMetadata(name, session.getUser(), Optional.of(dto.getDefinitionMetadata()), true);
+            userMetadataService
+                .saveDefinitionMetadata(name, session.getUser(), Optional.of(dto.getDefinitionMetadata()), true);
         }
     }
 
@@ -78,14 +79,15 @@ public class DatabaseServiceImpl implements DatabaseService {
         log.info("Updating schema {}", name);
         try {
             metadataManager.updateSchema(session, new ConnectorSchemaMetadata(name.getDatabaseName()));
-        } catch(PrestoException e){
-            if (e.getErrorCode() != StandardErrorCode.NOT_SUPPORTED.toErrorCode()){
+        } catch (PrestoException e) {
+            if (e.getErrorCode() != StandardErrorCode.NOT_SUPPORTED.toErrorCode()) {
                 throw e;
             }
         }
-        if( dto != null && dto.getDefinitionMetadata() != null){
+        if (dto != null && dto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for schema {}", name);
-            userMetadataService.saveDefinitionMetadata(name, session.getUser(), Optional.of(dto.getDefinitionMetadata()), true);
+            userMetadataService
+                .saveDefinitionMetadata(name, session.getUser(), Optional.of(dto.getDefinitionMetadata()), true);
         }
     }
 
@@ -103,7 +105,9 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
-    public DatabaseDto get( @Nonnull QualifiedName name) {
+    public DatabaseDto get(
+        @Nonnull
+            QualifiedName name) {
         return get(name, true);
     }
 
@@ -121,10 +125,8 @@ public class DatabaseServiceImpl implements DatabaseService {
         }
 
         // Check to see if schema exists
-        if( tableNames.isEmpty() && viewNames.isEmpty()){
-            if(!exists(name)){
-                throw new SchemaNotFoundException(name.getDatabaseName());
-            }
+        if (tableNames.isEmpty() && viewNames.isEmpty() && !exists(name)) {
+            throw new SchemaNotFoundException(name.getDatabaseName());
         }
 
         ConnectorSchemaMetadata schema = metadataManager.getSchema(session);
@@ -135,12 +137,12 @@ public class DatabaseServiceImpl implements DatabaseService {
         dto.setUri(schema.getUri());
         dto.setMetadata(schema.getMetadata());
         dto.setTables(
-                Stream.concat(tableNames.stream(), viewNames.stream())
-                        .map(QualifiedTableName::getTableName)
-                        .sorted(String.CASE_INSENSITIVE_ORDER)
-                        .collect(Collectors.toList())
+            Stream.concat(tableNames.stream(), viewNames.stream())
+                .map(QualifiedTableName::getTableName)
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .collect(Collectors.toList())
         );
-        if( includeUserMetadata) {
+        if (includeUserMetadata) {
             log.info("Populate user metadata for schema {}", name);
             userMetadataService.populateMetadata(dto);
         }
@@ -149,7 +151,9 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
-    public boolean exists(@Nonnull QualifiedName name) {
+    public boolean exists(
+        @Nonnull
+            QualifiedName name) {
         CatalogDto catalogDto = catalogService.get(QualifiedName.ofCatalog(name.getCatalogName()));
         return catalogDto.getDatabases().contains(name.getDatabaseName());
     }

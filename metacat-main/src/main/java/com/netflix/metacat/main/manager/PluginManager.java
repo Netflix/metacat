@@ -48,8 +48,8 @@ public class PluginManager {
 
     @Inject
     public PluginManager(Injector injector,
-            ConnectorManager connectorManager,
-            TypeRegistry typeRegistry) {
+        ConnectorManager connectorManager,
+        TypeRegistry typeRegistry) {
         checkNotNull(injector, "injector is null");
 
         this.injector = injector;
@@ -81,7 +81,7 @@ public class PluginManager {
     }
 
     public void loadPlugins()
-            throws Exception {
+        throws Exception {
         if (!pluginsLoading.compareAndSet(false, true)) {
             return;
         }

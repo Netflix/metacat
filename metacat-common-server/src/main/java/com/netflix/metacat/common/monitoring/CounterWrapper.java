@@ -19,32 +19,42 @@ import com.google.common.cache.LoadingCache;
 import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.Counter;
 import com.netflix.servo.monitor.Monitors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Servo counter wrapper
+ * Servo counter wrapper.
  *
  * @author amajumdar
  */
-public class CounterWrapper {
-    private static final LoadingCache<String, Counter> COUNTERS = CacheBuilder.newBuilder()
-            .build(
-                    new CacheLoader<String, Counter>() {
-                        public Counter load(@Nonnull String counterName) {
-                            Counter counter = Monitors.newCounter(counterName);
-                            DefaultMonitorRegistry.getInstance().register(counter);
-                            return counter;
-                        }
-                    });
-    private static final Logger log = LoggerFactory.getLogger(CounterWrapper.class);
+@Slf4j
+public final class CounterWrapper {
 
-    public static void incrementCounter(String counterName, long incrementAmount) {
+    private static final LoadingCache<String, Counter> COUNTERS = CacheBuilder.newBuilder()
+        .build(
+            new CacheLoader<String, Counter>() {
+                public Counter load(
+                    @Nonnull
+                    final String counterName) {
+                    final Counter counter = Monitors.newCounter(counterName);
+                    DefaultMonitorRegistry.getInstance().register(counter);
+                    return counter;
+                }
+            });
+
+    private CounterWrapper() {
+    }
+
+    /**
+     * Increments the servo counter.
+     * @param counterName counter name
+     * @param incrementAmount increment value
+     */
+    public static void incrementCounter(final String counterName, final long incrementAmount) {
         try {
-            Counter counter = COUNTERS.get(counterName);
+            final Counter counter = COUNTERS.get(counterName);
             if (incrementAmount == 1) {
                 counter.increment();
             } else {
@@ -55,7 +65,11 @@ public class CounterWrapper {
         }
     }
 
-    public static void incrementCounter(String counterName) {
+    /**
+     * Increments the servo counter by 1.
+     * @param counterName counter name
+     */
+    public static void incrementCounter(final String counterName) {
         incrementCounter(counterName, 1);
     }
 }

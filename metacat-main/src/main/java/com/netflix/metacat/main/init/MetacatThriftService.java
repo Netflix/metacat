@@ -33,11 +33,11 @@ public class MetacatThriftService {
 
     protected List<CatalogThriftService> getCatalogThriftServices() {
         return connectorManager.getCatalogs()
-                .entrySet()
-                .stream()
-                .filter(entry -> entry.getValue().isThriftInterfaceRequested())
-                .map(entry -> thriftServiceFactory.create(entry.getKey(), entry.getValue().getThriftPort()))
-                .collect(Collectors.toList());
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getValue().isThriftInterfaceRequested())
+            .map(entry -> thriftServiceFactory.create(entry.getKey(), entry.getValue().getThriftPort()))
+            .collect(Collectors.toList());
     }
 
     public void start() throws Exception {

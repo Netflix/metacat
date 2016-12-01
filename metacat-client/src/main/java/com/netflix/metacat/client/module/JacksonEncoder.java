@@ -21,10 +21,18 @@ import feign.codec.Encoder;
 
 import java.lang.reflect.Type;
 
+/**
+ * Encoder for Metacat request.
+ * @author amajumdar
+ */
 public class JacksonEncoder implements Encoder {
     private final ObjectMapper mapper;
 
-    public JacksonEncoder(ObjectMapper mapper) {
+    /**
+     * Constructor.
+     * @param mapper Jackson mapper for Metacat request
+     */
+    public JacksonEncoder(final ObjectMapper mapper) {
         this.mapper = mapper;
     }
 
@@ -38,7 +46,8 @@ public class JacksonEncoder implements Encoder {
      * @throws feign.codec.EncodeException when encoding failed due to a checked exception.
      */
     @Override
-    public void encode(Object object, Type bodyType, RequestTemplate template) throws EncodeException {
+    public void encode(final Object object, final Type bodyType, final RequestTemplate template)
+        throws EncodeException {
         try {
             template.body(mapper.writeValueAsString(object));
         } catch (JsonProcessingException e) {

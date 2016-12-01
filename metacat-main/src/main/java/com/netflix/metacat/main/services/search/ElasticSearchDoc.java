@@ -62,8 +62,8 @@ public class ElasticSearchDoc {
             boolean deleted = (boolean) responseMap.get(Field.DELETED);
             @SuppressWarnings("unchecked")
             Object dto = MetacatJsonLocator.INSTANCE.parseJsonValue(
-                    response.getSourceAsBytes(),
-                    getClass(response.getType())
+                response.getSourceAsBytes(),
+                getClass(response.getType())
             );
             result = new ElasticSearchDoc(response.getId(), dto, user, deleted);
         }

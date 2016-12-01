@@ -20,6 +20,9 @@ import com.netflix.metacat.common.usermetadata.TagService;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.DataSourceManager;
 
+/**
+ * Guice module.
+ */
 public class MysqlUserMetadataModule extends AbstractModule {
     @Override
     protected void configure() {

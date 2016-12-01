@@ -17,7 +17,6 @@
  */
 package com.netflix.metacat.common.server.events;
 
-import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.EqualsAndHashCode;
@@ -28,6 +27,9 @@ import javax.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Post delete view partiion event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -35,21 +37,21 @@ public class MetacatDeleteMViewPartitionPostEvent extends MetacatEvent {
 
     private final List<String> partitionIds;
 
+    /**
+     * Constructor.
+     * @param name name
+     * @param requestContext context
+     * @param partitionIds partition names
+     */
     public MetacatDeleteMViewPartitionPostEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext requestContext,
-            @NotNull final List<String> partitionIds
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext,
+        @NotNull
+        final List<String> partitionIds
     ) {
         super(name, requestContext);
-        this.partitionIds = Lists.newArrayList(partitionIds);
-    }
-
-    /**
-     * Get an unmodifiable view of the partition ids.
-     *
-     * @return A view of the partition ids that throws an exception on any attempt for modification.
-     */
-    public List<String> getPartitionIds() {
-        return Collections.unmodifiableList(this.partitionIds);
+        this.partitionIds = Collections.unmodifiableList(partitionIds);
     }
 }

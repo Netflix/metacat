@@ -33,12 +33,12 @@ import com.netflix.metacat.s3.connector.dao.impl.TableDaoImpl;
 import com.netflix.metacat.s3.connector.util.ConverterUtil;
 
 /**
- * Created by amajumdar on 10/9/15.
+ * Guice module.
  */
 public class S3Module implements Module {
 
     @Override
-    public void configure(Binder binder) {
+    public void configure(final Binder binder) {
         binder.bind(ConnectorMetadata.class).to(S3DetailMetadata.class).in(Scopes.SINGLETON);
         binder.bind(ConnectorSplitManager.class).to(S3SplitDetailManager.class).in(Scopes.SINGLETON);
 

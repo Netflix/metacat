@@ -21,56 +21,74 @@ import com.netflix.metacat.common.dto.HasMetadata;
 import java.util.Optional;
 
 /**
- * Created by amajumdar on 4/13/15.
+ * Base class for UserMetadataService.
+ * @author amajumdar
  */
-public abstract class BaseUserMetadataService implements UserMetadataService{
-    public void saveMetadata(String userId, HasMetadata holder, boolean merge) {
+public abstract class BaseUserMetadataService implements UserMetadataService {
+    /**
+     * Saves user metadata.
+     * @param userId user name
+     * @param holder metadata
+     * @param merge true if the metadata should be merged with existing metadata
+     */
+    public void saveMetadata(final String userId, final HasMetadata holder, final boolean merge) {
         if (holder instanceof HasDefinitionMetadata) {
-            HasDefinitionMetadata defDto = (HasDefinitionMetadata) holder;
+            final HasDefinitionMetadata defDto = (HasDefinitionMetadata) holder;
 
             // If the user is updating the definition metadata do a merge on the existing metadata
-            ObjectNode newMetadata = defDto.getDefinitionMetadata();
+            final ObjectNode newMetadata = defDto.getDefinitionMetadata();
             if (newMetadata != null) {
                 saveDefinitionMetadata(defDto.getDefinitionName(), userId, Optional.of(newMetadata), merge);
             }
         }
 
         if (holder instanceof HasDataMetadata) {
-            HasDataMetadata dataDto = (HasDataMetadata) holder;
+            final HasDataMetadata dataDto = (HasDataMetadata) holder;
 
             // If the user is updating the data metadata and a separate data location exists,
             // do a merge on the existing metadata
-            ObjectNode newMetadata = dataDto.getDataMetadata();
+            final ObjectNode newMetadata = dataDto.getDataMetadata();
             if (newMetadata != null && dataDto.isDataExternal()) {
                 saveDataMetadata(dataDto.getDataUri(), userId, Optional.of(newMetadata), merge);
             }
         }
     }
 
-    public void populateMetadata(HasMetadata holder) {
+    /**
+     * Populate the given metadata.
+     * @param holder metadata
+     */
+    public void populateMetadata(final HasMetadata holder) {
         Optional<ObjectNode> metadata = Optional.empty();
         if (holder instanceof HasDataMetadata) {
-            HasDataMetadata dataDto = (HasDataMetadata) holder;
+            final HasDataMetadata dataDto = (HasDataMetadata) holder;
             if (dataDto.isDataExternal()) {
                 metadata = getDataMetadata(dataDto.getDataUri());
             }
         }
         Optional<ObjectNode> definitionMetadata = Optional.empty();
         if (holder instanceof HasDefinitionMetadata) {
-            HasDefinitionMetadata definitionDto = (HasDefinitionMetadata) holder;
+            final HasDefinitionMetadata definitionDto = (HasDefinitionMetadata) holder;
             definitionMetadata = getDefinitionMetadata(definitionDto.getDefinitionName());
         }
-        populateMetadata( holder, definitionMetadata.orElse(null), metadata.orElse(null));
+        populateMetadata(holder, definitionMetadata.orElse(null), metadata.orElse(null));
     }
 
-    public void populateMetadata(HasMetadata holder, ObjectNode definitionMetadata, ObjectNode dataMetadata) {
+    /**
+     * Populate metadata.
+     * @param holder metadata
+     * @param definitionMetadata definition metadata
+     * @param dataMetadata data metadata
+     */
+    public void populateMetadata(final HasMetadata holder, final ObjectNode definitionMetadata,
+        final ObjectNode dataMetadata) {
         if (holder instanceof HasDefinitionMetadata) {
-            HasDefinitionMetadata defDto = (HasDefinitionMetadata) holder;
+            final HasDefinitionMetadata defDto = (HasDefinitionMetadata) holder;
             defDto.setDefinitionMetadata(definitionMetadata);
         }
 
         if (holder instanceof HasDataMetadata) {
-            HasDataMetadata dataDto = (HasDataMetadata) holder;
+            final HasDataMetadata dataDto = (HasDataMetadata) holder;
             if (dataDto.isDataExternal()) {
                 dataDto.setDataMetadata(dataMetadata);
             }

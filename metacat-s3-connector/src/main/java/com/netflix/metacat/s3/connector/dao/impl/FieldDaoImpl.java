@@ -21,11 +21,15 @@ import javax.inject.Provider;
 import javax.persistence.EntityManager;
 
 /**
- * Created by amajumdar on 1/2/15.
+ * Field DAO impl.
  */
 public class FieldDaoImpl extends IdEntityDaoImpl<Field> implements FieldDao {
+    /**
+     * Constructor.
+     * @param em entity manager
+     */
     @Inject
-    public FieldDaoImpl(Provider<EntityManager> em) {
+    public FieldDaoImpl(final Provider<EntityManager> em) {
         super(em);
     }
 

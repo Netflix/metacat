@@ -17,12 +17,24 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 
 /**
- * Marker interface for objects with data metadata
+ * Marker interface for objects with data metadata.
  */
 public interface HasDefinitionMetadata extends HasMetadata {
+    /**
+     * Returns definition metadata.
+     * @return definition metadata
+     */
     ObjectNode getDefinitionMetadata();
 
+    /**
+     * Sets definition metadata.
+     * @param metadata definition metadata
+     */
     void setDefinitionMetadata(ObjectNode metadata);
 
+    /**
+     * Returns the qualified name.
+     * @return qualified name
+     */
     QualifiedName getDefinitionName();
 }

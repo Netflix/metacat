@@ -24,39 +24,39 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import java.util.List;
 
 /**
- * Created by amajumdar on 4/20/15.
+ * Metacat Hive metastore.
  */
 public interface MetacatHiveMetastore extends HiveMetastore {
     /**
-     * Create schema/database
+     * Create schema/database.
      * @param database database metadata
      * @throws AlreadyExistsException if database with the same name exists
      */
     void createDatabase(Database database) throws AlreadyExistsException;
 
     /**
-     * Update schema/database
+     * Update schema/database.
      * @param database database metadata
      * @throws NoSuchObjectException if the database does not exist
      */
     void updateDatabase(Database database) throws NoSuchObjectException;
 
     /**
-     * Drop database
+     * Drop database.
      * @param dbName database name
      * @throws NoSuchObjectException if the database does not exist
      */
     void dropDatabase(String dbName) throws NoSuchObjectException;
 
     /**
-     * Alter the given table
+     * Alter the given table.
      * @param table the table name
      * @throws NoSuchObjectException if the table does not exist
      */
-    void alterTable(final Table table) throws NoSuchObjectException;
+    void alterTable(Table table) throws NoSuchObjectException;
 
     /**
-     * Returns the list of tables
+     * Returns the list of tables.
      * @param dbName database name
      * @param tableNames list of table names
      * @return list of tables
@@ -64,7 +64,7 @@ public interface MetacatHiveMetastore extends HiveMetastore {
     List<Table> getTablesByNames(String dbName, List<String> tableNames);
 
     /**
-     * Get partitions for the given database and table name using the filter expression
+     * Get partitions for the given database and table name using the filter expression.
      * @param dbName database name
      * @param tableName table name
      * @param filter filter expression (JSP comparable expression)
@@ -109,7 +109,8 @@ public interface MetacatHiveMetastore extends HiveMetastore {
      * @throws NoSuchObjectException if the table does not exist
      * @throws AlreadyExistsException if the partition already exist
      */
-    void addDropPartitions(String dbName, String tableName, List<Partition> partitions, List<String> delPartitionNames) throws NoSuchObjectException, AlreadyExistsException;
+    void addDropPartitions(String dbName, String tableName, List<Partition> partitions, List<String> delPartitionNames)
+        throws NoSuchObjectException, AlreadyExistsException;
 
     /**
      * Drops the partition for the given database, table and partition name.
@@ -118,5 +119,5 @@ public interface MetacatHiveMetastore extends HiveMetastore {
      * @param partitionNames partition ids/names
      * @throws NoSuchObjectException if the partition does not exist
      */
-    void dropPartitions( String dbName, String tableName, List<String> partitionNames) throws NoSuchObjectException;
+    void dropPartitions(String dbName, String tableName, List<String> partitionNames) throws NoSuchObjectException;
 }

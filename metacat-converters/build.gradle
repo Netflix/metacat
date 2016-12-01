@@ -15,6 +15,7 @@ apply plugin: 'java'
 
 ext {
     generatedMapperSourcesDir = "${buildDir}/generated-src/mapstruct/main"
+    excludePattern = "**/com/netflix/metacat/converters/impl/*ConvertersImpl.java"
 }
 
 configurations {
@@ -75,6 +76,14 @@ task generateMainMapperClasses(type: JavaCompile) {
     doLast {
         aptDumpDir.delete()
     }
+}
+
+tasks.withType(Checkstyle) {
+    exclude excludePattern
+}
+
+tasks.withType(Pmd) {
+    exclude excludePattern
 }
 
 compileJava.dependsOn generateMainMapperClasses

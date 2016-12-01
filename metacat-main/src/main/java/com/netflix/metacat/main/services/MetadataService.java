@@ -16,7 +16,6 @@ package com.netflix.metacat.main.services;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
-import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.Config;
@@ -44,7 +43,7 @@ public class MetadataService {
     @Inject
     PartitionService partitionService;
 
-    public void processDeletedDataMetadata(){
+    public void processDeletedDataMetadata() {
         // Get the data metadata that were marked deleted a number of days back
         // Check if the uri is being used
         // If uri is not used then delete the entry from data_metadata
@@ -53,33 +52,34 @@ public class MetadataService {
             final DateTime priorTo = DateTime.now().minusDays(config.getDataMetadataDeleteMarkerLifetimeInDays());
             final int limit = 100000;
             MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-            while(true) {
+            while (true) {
                 List<String> urisToDelete = userMetadataService.getDeletedDataMetadataUris(priorTo.toDate(), 0, limit);
                 log.info("Count of deleted marked data metadata: {}", urisToDelete.size());
-                if( urisToDelete.size() > 0) {
+                if (urisToDelete.size() > 0) {
                     List<String> uris = urisToDelete.parallelStream().filter(uri -> !uri.contains("="))
-                            .map(uri -> userMetadataService.getDescendantDataUris(uri))
-                            .flatMap(Collection::stream).collect(Collectors.toList());
+                        .map(uri -> userMetadataService.getDescendantDataUris(uri))
+                        .flatMap(Collection::stream).collect(Collectors.toList());
                     uris.addAll(urisToDelete);
                     log.info("Count of deleted marked data metadata (including descendants) : {}", uris.size());
                     List<List<String>> subListsUris = Lists.partition(uris, 1000);
                     subListsUris.parallelStream().forEach(subUris -> {
                         MetacatContextManager.setContext(metacatRequestContext);
-                        Map<String, List<QualifiedName>> uriQualifiedNames = partitionService.getQualifiedNames(subUris, false);
+                        Map<String, List<QualifiedName>> uriQualifiedNames = partitionService
+                            .getQualifiedNames(subUris, false);
                         List<String> canDeleteMetadataForUris = subUris.parallelStream()
-                                .filter(s -> !Strings.isNullOrEmpty(s))
-                                .filter(s -> uriQualifiedNames.get(s) == null || uriQualifiedNames.get(s).size() == 0)
-                                .collect(Collectors.toList());
+                            .filter(s -> !Strings.isNullOrEmpty(s))
+                            .filter(s -> uriQualifiedNames.get(s) == null || uriQualifiedNames.get(s).size() == 0)
+                            .collect(Collectors.toList());
                         log.info("Start deleting data metadata: {}", canDeleteMetadataForUris.size());
                         userMetadataService.deleteDataMetadatas(canDeleteMetadataForUris);
                         MetacatContextManager.removeContext();
                     });
                 }
-                if( urisToDelete.size() < limit){
+                if (urisToDelete.size() < limit) {
                     break;
                 }
             }
-        } catch(Exception e){
+        } catch (Exception e) {
             CounterWrapper.incrementCounter("dse.metacat.processDeletedDataMetadata");
             log.warn("Failed deleting data metadata", e);
         }

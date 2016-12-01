@@ -23,14 +23,36 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+/**
+ * Base class for all common DTOs.
+ * @author amajumdar
+ */
 public abstract class BaseDto implements Serializable {
+    /**
+     * Deserialize the input stream.
+     * @param inputStream input stream
+     * @return Json node
+     * @throws IOException exception deserializing the stream
+     */
     @Nullable
-    public static ObjectNode deserializeObjectNode(@Nonnull ObjectInputStream inputStream) throws IOException {
+    public static ObjectNode deserializeObjectNode(
+        @Nonnull
+            final ObjectInputStream inputStream) throws IOException {
         return MetacatJsonLocator.INSTANCE.deserializeObjectNode(inputStream);
     }
 
-    public static void serializeObjectNode(@Nonnull ObjectOutputStream outputStream, @Nullable ObjectNode json)
-            throws IOException {
+    /**
+     * Serialize the stream.
+     * @param outputStream output stream
+     * @param json Json Node
+     * @throws IOException exception serializing the json
+     */
+    public static void serializeObjectNode(
+        @Nonnull
+            final ObjectOutputStream outputStream,
+        @Nullable
+            final ObjectNode json)
+        throws IOException {
         MetacatJsonLocator.INSTANCE.serializeObjectNode(outputStream, json);
     }
 

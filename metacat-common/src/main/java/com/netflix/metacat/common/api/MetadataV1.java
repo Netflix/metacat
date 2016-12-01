@@ -35,82 +35,123 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * API to manipulate user metadata.
+ * @author amajumdar
+ */
 @Path("mds/v1/metadata")
 @Api(value = "MetadataV1",
-        description = "Federated user metadata operations",
-        produces = MediaType.APPLICATION_JSON,
-        consumes = MediaType.APPLICATION_JSON)
+    description = "Federated user metadata operations",
+    produces = MediaType.APPLICATION_JSON,
+    consumes = MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface MetadataV1 {
+    /**
+     * Returns the data metadata.
+     * @param metadataGetRequestDto metadata request
+     * @return data metadata
+     */
     @POST
     @Path("data")
     @ApiOperation(
-            position = 1,
-            value = "Returns the data metadata",
-            notes = "Returns the data metadata")
+        position = 1,
+        value = "Returns the data metadata",
+        notes = "Returns the data metadata")
     DataMetadataDto getDataMetadata(DataMetadataGetRequestDto metadataGetRequestDto);
 
+    /**
+     * Returns the list of definition metadata.
+     * @param sortBy Sort the list by this value
+     * @param sortOrder Sorting order to use
+     * @param offset Offset of the list returned
+     * @param limit Size of the list
+     * @param lifetime has lifetime set
+     * @param type Type of the metadata item. Values: database, table, partition
+     * @param name Text that matches the name of the metadata (accepts sql wildcards)
+     * @param dataProperties Set of data property names.
+     *                       Filters the returned list that only contains the given property names
+     * @return list of definition metadata
+     */
     @GET
     @Path("definition/list")
     @ApiOperation(
-            position = 2,
-            value = "Returns the definition metadata",
-            notes = "Returns the definition metadata")
+        position = 2,
+        value = "Returns the definition metadata",
+        notes = "Returns the definition metadata")
     List<DefinitionMetadataDto> getDefinitionMetadataList(
-            @ApiParam(value = "Sort the list by this value", required = false)
-            @QueryParam("sortBy")
+        @ApiParam(value = "Sort the list by this value", required = false)
+        @QueryParam("sortBy")
             String sortBy,
-            @ApiParam(value = "Sorting order to use", required = false)
-            @QueryParam("sortOrder")
+        @ApiParam(value = "Sorting order to use", required = false)
+        @QueryParam("sortOrder")
             SortOrder sortOrder,
-            @ApiParam(value = "Offset of the list returned", required = false)
-            @QueryParam("offset")
+        @ApiParam(value = "Offset of the list returned", required = false)
+        @QueryParam("offset")
             Integer offset,
-            @ApiParam(value = "Size of the list", required = false)
-            @QueryParam("limit")
+        @ApiParam(value = "Size of the list", required = false)
+        @QueryParam("limit")
             Integer limit,
-            @ApiParam(value = "has lifetime set", required = false)
-            @DefaultValue("false") @QueryParam("lifetime")
+        @ApiParam(value = "has lifetime set", required = false)
+        @DefaultValue("false")
+        @QueryParam("lifetime")
             Boolean lifetime,
-            @ApiParam(value = "Type of the metadata item. Values: database, table, partition", required = false)
-            @QueryParam("type")
+        @ApiParam(value = "Type of the metadata item. Values: database, table, partition", required = false)
+        @QueryParam("type")
             String type,
-            @ApiParam(value = "Text that matches the name of the metadata (accepts sql wildcards)", required = false)
-            @QueryParam("name")
+        @ApiParam(value = "Text that matches the name of the metadata (accepts sql wildcards)", required = false)
+        @QueryParam("name")
             String name,
-            @ApiParam(value = "Set of data property names. Filters the returned list that only contains the given property names", required = false)
-            @QueryParam("data-property")
+        @ApiParam(value = "Set of data property names. "
+            + "Filters the returned list that only contains the given property names", required = false)
+        @QueryParam("data-property")
             Set<String> dataProperties
-            );
+    );
 
+    /**
+     * Returns the list of qualified names owned by the given owners.
+     * @param owners set of owners
+     * @return the list of qualified names owned by the given owners
+     */
     @GET
     @Path("searchByOwners")
     @ApiOperation(
-            position = 3,
-            value = "Returns the qualified names owned by the given owners",
-            notes = "Returns the qualified names owned by the given owners")
+        position = 3,
+        value = "Returns the qualified names owned by the given owners",
+        notes = "Returns the qualified names owned by the given owners")
     List<QualifiedName> searchByOwners(
-            @ApiParam(value = "Set of owners", required = true)
-            @QueryParam("owner")
+        @ApiParam(value = "Set of owners", required = true)
+        @QueryParam("owner")
             Set<String> owners
     );
 
+    /**
+     * Delete the definition metadata for the given name.
+     * @param name Name of definition metadata to be deleted
+     * @param force If true, deletes the metadata without checking if the database/table/partition exists
+     */
     @DELETE
     @Path("definition")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            position = 4,
-            value = "Deletes the given definition metadata")
+        position = 4,
+        value = "Deletes the given definition metadata")
     void deleteDefinitionMetadata(
-            @ApiParam(value = "Name of definition metadata to be deleted", required = true)
-            @QueryParam("name")
+        @ApiParam(value = "Name of definition metadata to be deleted", required = true)
+        @QueryParam("name")
             QualifiedName name,
-            @ApiParam(value = "If true, deletes the metadata without checking if the database/table/partition exists", required = false)
-            @DefaultValue("false") @QueryParam("force")
+        @ApiParam(value = "If true, deletes the metadata without checking if the database/table/partition exists",
+            required = false)
+        @DefaultValue("false")
+        @QueryParam("force")
             Boolean force
     );
+
+    /**
+     * Deletes the data metadata marked for deletion.
+     * @return response
+     */
     @DELETE
     @Path("data/process")
     @Consumes(MediaType.APPLICATION_JSON)

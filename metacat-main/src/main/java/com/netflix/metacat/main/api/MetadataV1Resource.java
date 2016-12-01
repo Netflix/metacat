@@ -49,7 +49,7 @@ public class MetadataV1Resource implements MetadataV1 {
 
     @Inject
     public MetadataV1Resource(UserMetadataService userMetadataService,
-                              MetacatServiceHelper helper, MetadataService metadataService) {
+        MetacatServiceHelper helper, MetadataService metadataService) {
         this.userMetadataService = userMetadataService;
         this.helper = helper;
         this.metadataService = metadataService;
@@ -73,49 +73,50 @@ public class MetadataV1Resource implements MetadataV1 {
 
     @Override
     public List<DefinitionMetadataDto> getDefinitionMetadataList(
-            String sortBy,
-            SortOrder sortOrder,
-            Integer offset,
-            Integer limit,
-            Boolean lifetime,
-            String type,
-            String name,
-            Set<String> propertyNames) {
+        String sortBy,
+        SortOrder sortOrder,
+        Integer offset,
+        Integer limit,
+        Boolean lifetime,
+        String type,
+        String name,
+        Set<String> propertyNames) {
         if (lifetime) {
             propertyNames.add("lifetime");
         }
         return requestWrapper("getDefinitionMetadataList"
-                , () -> userMetadataService.searchDefinitionMetadatas(propertyNames, type, name, sortBy, sortOrder != null ? sortOrder.name() : null, offset, limit));
+            , () -> userMetadataService.searchDefinitionMetadatas(propertyNames, type, name, sortBy,
+                sortOrder != null ? sortOrder.name() : null, offset, limit));
     }
 
     @Override
     public List<QualifiedName> searchByOwners(Set<String> owners) {
         return requestWrapper("searchByOwners"
-                , () -> userMetadataService.searchByOwners(owners));
+            , () -> userMetadataService.searchByOwners(owners));
     }
 
     @Override
     public void deleteDefinitionMetadata(QualifiedName name, Boolean force) {
         MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         requestWrapper("deleteDefinitionMetadata",
-                () -> {
-                    MetacatService service = helper.getService(name);
-                    BaseDto dto = null;
-                    try {
-                        dto = service.get(name);
-                    } catch (NotFoundException ignored) {
+            () -> {
+                MetacatService service = helper.getService(name);
+                BaseDto dto = null;
+                try {
+                    dto = service.get(name);
+                } catch (NotFoundException ignored) {
+                }
+                if ((force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
+                    helper.postPreUpdateEvent(name, metacatRequestContext, dto);
+                    userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
+                    if (dto instanceof HasDefinitionMetadata) {
+                        ((HasDefinitionMetadata) dto).setDefinitionMetadata(null);
                     }
-                    if ((force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
-                        helper.postPreUpdateEvent(name, metacatRequestContext, dto);
-                        userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
-                        if (dto instanceof HasDefinitionMetadata) {
-                            ((HasDefinitionMetadata) dto).setDefinitionMetadata(null);
-                        }
-                        BaseDto newDto = service.get(name);
-                        helper.postPostUpdateEvent(name, metacatRequestContext, dto, newDto);
-                    }
-                    return null;
-                });
+                    BaseDto newDto = service.get(name);
+                    helper.postPostUpdateEvent(name, metacatRequestContext, dto, newDto);
+                }
+                return null;
+            });
     }
 
     @Override

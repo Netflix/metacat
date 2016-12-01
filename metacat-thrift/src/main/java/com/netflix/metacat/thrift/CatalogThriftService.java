@@ -30,8 +30,8 @@ public class CatalogThriftService extends AbstractThriftServer {
     private final TypeConverterProvider typeConverterProvider;
 
     public CatalogThriftService(Config config, TypeConverterProvider typeConverterProvider,
-            HiveConverters hiveConverters, MetacatV1 metacatV1, PartitionV1 partitionV1, String catalogName,
-            int portNumber) {
+        HiveConverters hiveConverters, MetacatV1 metacatV1, PartitionV1 partitionV1, String catalogName,
+        int portNumber) {
         super(config, portNumber, "thrift-pool-" + catalogName + "-" + portNumber + "-%d");
         this.hiveConverters = hiveConverters;
         this.typeConverterProvider = typeConverterProvider;
@@ -43,8 +43,8 @@ public class CatalogThriftService extends AbstractThriftServer {
     @Override
     public TProcessor getProcessor() {
         return new ThriftHiveMetastore.Processor<>(
-                new CatalogThriftHiveMetastore(config, typeConverterProvider, hiveConverters, metacatV1, partitionV1,
-                        catalogName));
+            new CatalogThriftHiveMetastore(config, typeConverterProvider, hiveConverters, metacatV1, partitionV1,
+                catalogName));
     }
 
     @Override

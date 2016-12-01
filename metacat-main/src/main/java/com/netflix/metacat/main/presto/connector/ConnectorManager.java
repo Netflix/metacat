@@ -50,8 +50,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-public class ConnectorManager
-{
+public class ConnectorManager {
     private static final Logger log = Logger.get(ConnectorManager.class);
 
     private final MetadataManager metadataManager;
@@ -66,10 +65,9 @@ public class ConnectorManager
 
     @Inject
     public ConnectorManager(MetadataManager metadataManager,
-            SplitManager splitManager,
-            HandleResolver handleResolver,
-            Map<String, ConnectorFactory> connectorFactories)
-    {
+        SplitManager splitManager,
+        HandleResolver handleResolver,
+        Map<String, ConnectorFactory> connectorFactories) {
         this.metadataManager = metadataManager;
         this.splitManager = splitManager;
         this.handleResolver = handleResolver;
@@ -77,32 +75,32 @@ public class ConnectorManager
     }
 
     @PreDestroy
-    public void stop()
-    {
+    public void stop() {
         if (stopped.getAndSet(true)) {
             return;
         }
 
         for (Map.Entry<String, Connector> entry : connectors.entrySet()) {
             Connector connector = entry.getValue();
-            try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(connector.getClass().getClassLoader())) {
+            try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(
+                connector.getClass().getClassLoader())) {
                 connector.shutdown();
-            }
-            catch (Throwable t) {
+            } catch (Throwable t) {
                 log.error(t, "Error shutting down connector: %s", entry.getKey());
             }
         }
     }
 
-    public void addConnectorFactory(ConnectorFactory connectorFactory)
-    {
+    public void addConnectorFactory(ConnectorFactory connectorFactory) {
         checkState(!stopped.get(), "ConnectorManager is stopped");
-        ConnectorFactory existingConnectorFactory = connectorFactories.putIfAbsent(connectorFactory.getName(), connectorFactory);
-        checkArgument(existingConnectorFactory == null, "Connector %s is already registered", connectorFactory.getName());
+        ConnectorFactory existingConnectorFactory = connectorFactories
+            .putIfAbsent(connectorFactory.getName(), connectorFactory);
+        checkArgument(existingConnectorFactory == null, "Connector %s is already registered",
+            connectorFactory.getName());
     }
 
-    public synchronized void createConnection(String catalogName, String connectorName, Map<String, String> properties)
-    {
+    public synchronized void createConnection(String catalogName, String connectorName,
+        Map<String, String> properties) {
         checkState(!stopped.get(), "ConnectorManager is stopped");
         checkNotNull(catalogName, "catalogName is null");
         checkNotNull(connectorName, "connectorName is null");
@@ -110,13 +108,14 @@ public class ConnectorManager
 
         ConnectorFactory connectorFactory = connectorFactories.get(connectorName);
         checkArgument(connectorFactory != null, "No factory for connector %s", connectorName);
-        try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(connectorFactory.getClass().getClassLoader())) {
+        try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(
+            connectorFactory.getClass().getClassLoader())) {
             createConnection(catalogName, connectorFactory, properties);
         }
     }
 
-    public synchronized void createConnection(String catalogName, ConnectorFactory connectorFactory, Map<String, String> properties)
-    {
+    public synchronized void createConnection(String catalogName, ConnectorFactory connectorFactory,
+        Map<String, String> properties) {
         checkState(!stopped.get(), "ConnectorManager is stopped");
         checkNotNull(catalogName, "catalogName is null");
         checkNotNull(properties, "properties is null");
@@ -130,8 +129,7 @@ public class ConnectorManager
         addConnector(catalogName, connectorId, connector);
     }
 
-    private synchronized void addConnector(String catalogName, String connectorId, Connector connector)
-    {
+    private synchronized void addConnector(String catalogName, String connectorId, Connector connector) {
         checkState(!stopped.get(), "ConnectorManager is stopped");
         checkState(!connectors.containsKey(connectorId), "A connector %s already exists", connectorId);
         connectors.put(connectorId, connector);
@@ -154,12 +152,12 @@ public class ConnectorManager
         metadataManager.addConnectorMetadata(connectorId, catalogName, connectorMetadata);
         splitManager.addConnectorSplitManager(connectorId, connectorSplitManager);
         handleResolver.addHandleResolver(connectorId, connectorHandleResolver);
-        metadataManager.getSessionPropertyManager().addConnectorSessionProperties(catalogName, connector.getSessionProperties());
+        metadataManager.getSessionPropertyManager()
+            .addConnectorSessionProperties(catalogName, connector.getSessionProperties());
         metadataManager.getTablePropertyManager().addTableProperties(catalogName, tableProperties);
     }
 
-    private static String getConnectorId(String catalogName)
-    {
+    private static String getConnectorId(String catalogName) {
         // for now connectorId == catalogName
         return catalogName;
     }

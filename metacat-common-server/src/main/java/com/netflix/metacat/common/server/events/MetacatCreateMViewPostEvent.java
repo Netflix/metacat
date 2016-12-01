@@ -26,6 +26,9 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Post create metacat view event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -34,12 +37,23 @@ public class MetacatCreateMViewPostEvent extends MetacatEvent {
     private final String filter;
     private final Boolean snapshot;
 
+    /**
+     * Constructor.
+     * @param name name
+     * @param requestContext context
+     * @param table table info
+     * @param snapshot snapshot
+     * @param filter filter
+     */
     public MetacatCreateMViewPostEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext requestContext,
-            @NotNull final TableDto table,
-            final Boolean snapshot,
-            final String filter
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext,
+        @NotNull
+        final TableDto table,
+        final Boolean snapshot,
+        final String filter
     ) {
         super(name, requestContext);
         this.table = table;

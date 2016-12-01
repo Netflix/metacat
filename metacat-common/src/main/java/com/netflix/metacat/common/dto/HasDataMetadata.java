@@ -18,21 +18,31 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import javax.annotation.Nonnull;
 
 /**
- * Marker interface for objects with data metadata
+ * Marker interface for objects with data metadata.
  */
 public interface HasDataMetadata extends HasMetadata {
+    /**
+     * Returns data metadata.
+     * @return data metadata
+     */
     ObjectNode getDataMetadata();
 
+    /**
+     * Sets the data metadata json.
+     * @param metadata data metadata json
+     */
     void setDataMetadata(ObjectNode metadata);
 
     /**
-     * @return The uri that points to the location of the external data
+     * Returns uri.
+     * @return The uri that points to the location of the external data.
      * @throws IllegalStateException if this instance does not have external data
      */
     @Nonnull
     String getDataUri();
 
     /**
+     * Returns true if this particular instance points to external data.
      * @return true if this particular instance points to external data
      */
     boolean isDataExternal();

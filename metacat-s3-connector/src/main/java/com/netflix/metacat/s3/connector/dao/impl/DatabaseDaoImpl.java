@@ -24,11 +24,15 @@ import javax.persistence.TypedQuery;
 import java.util.List;
 
 /**
- * Created by amajumdar on 1/2/15.
+ * Database DAO implementation.
  */
 public class DatabaseDaoImpl extends IdEntityDaoImpl<Database> implements DatabaseDao {
+    /**
+     * Constructor.
+     * @param em entity manager
+     */
     @Inject
-    public DatabaseDaoImpl(Provider<EntityManager> em) {
+    public DatabaseDaoImpl(final Provider<EntityManager> em) {
         super(em);
     }
 
@@ -38,19 +42,19 @@ public class DatabaseDaoImpl extends IdEntityDaoImpl<Database> implements Databa
     }
 
     @Override
-    public Database getBySourceDatabaseName(String sourceName, String databaseName) {
+    public Database getBySourceDatabaseName(final String sourceName, final String databaseName) {
         Database result = null;
-        List<Database> databases = getBySourceDatabaseNames(sourceName, Lists.newArrayList(databaseName));
-        if( !databases.isEmpty()){
+        final List<Database> databases = getBySourceDatabaseNames(sourceName, Lists.newArrayList(databaseName));
+        if (!databases.isEmpty()) {
             result = databases.get(0);
         }
         return result;
     }
 
     @Override
-    public List<Database> getBySourceDatabaseNames(String sourceName, List<String> databaseNames) {
-        TypedQuery<Database> query = em.get().createNamedQuery(Database.NAME_QUERY_GET_BY_SOURCE_DATABASE_NAMES,
-                Database.class);
+    public List<Database> getBySourceDatabaseNames(final String sourceName, final List<String> databaseNames) {
+        final TypedQuery<Database> query = em.get().createNamedQuery(Database.NAME_QUERY_GET_BY_SOURCE_DATABASE_NAMES,
+            Database.class);
         query.setParameter("sourceName", sourceName);
         query.setParameter("databaseNames", databaseNames);
         return query.getResultList();

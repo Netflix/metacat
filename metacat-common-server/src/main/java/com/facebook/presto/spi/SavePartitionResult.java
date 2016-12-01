@@ -17,12 +17,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by amajumdar on 7/20/15.
+ * Save partition result.
  */
 public class SavePartitionResult {
-    List<String> added;
-    List<String> updated;
+    private List<String> added;
+    private List<String> updated;
 
+    /**
+     * Default constructor.
+     */
     public SavePartitionResult() {
         added = new ArrayList<>();
         updated = new ArrayList<>();
@@ -32,8 +35,12 @@ public class SavePartitionResult {
         return added;
     }
 
-    public void setAdded(List<String> added) {
-        if( added != null) {
+    /**
+     * Sets the list of partition names added.
+     * @param added list of added partition names
+     */
+    public void setAdded(final List<String> added) {
+        if (added != null) {
             this.added = added;
         }
     }
@@ -42,8 +49,12 @@ public class SavePartitionResult {
         return updated;
     }
 
-    public void setUpdated(List<String> updated) {
-        if( updated != null) {
+    /**
+     * Sets the list of partition names updated.
+     * @param updated list of updated partition names
+     */
+    public void setUpdated(final List<String> updated) {
+        if (updated != null) {
             this.updated = updated;
         }
     }

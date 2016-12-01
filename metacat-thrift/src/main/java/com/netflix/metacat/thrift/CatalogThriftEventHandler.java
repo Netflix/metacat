@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.thrift;
 
+import com.google.common.base.Objects;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.util.MetacatContextManager;
 import org.apache.thrift.protocol.TProtocol;
@@ -26,9 +27,9 @@ public class CatalogThriftEventHandler implements TServerEventHandler {
     @Override
     public ServerContext createContext(TProtocol input, TProtocol output) {
         String userName = "metacat-thrift-interface";
-//        String clientAppName = null; //requestContext.getHeaderString(MetacatContext.HEADER_KEY_CLIENT_APP_NAME);
+        //        String clientAppName = null; //requestContext.getHeaderString(MetacatContext.HEADER_KEY_CLIENT_APP_NAME);
         String clientHost = null; //requestContext.getHeaderString("X-Forwarded-For");
-//        String jobId = null; //requestContext.getHeaderString(MetacatContext.HEADER_KEY_JOB_ID);
+        //        String jobId = null; //requestContext.getHeaderString(MetacatContext.HEADER_KEY_JOB_ID);
         long requestThreadId = Thread.currentThread().getId();
 
         TTransport transport = input.getTransport();
@@ -38,12 +39,12 @@ public class CatalogThriftEventHandler implements TServerEventHandler {
         }
 
         CatalogServerRequestContext context = new CatalogServerRequestContext(
-                userName,
-                null,
-                clientHost,
-                null,
-                MetacatRequestContext.DataTypeContext.hive,
-                requestThreadId
+            userName,
+            null,
+            clientHost,
+            null,
+            MetacatRequestContext.DataTypeContext.hive,
+            requestThreadId
         );
         MetacatContextManager.setContext(context);
         return context;
@@ -76,15 +77,29 @@ public class CatalogThriftEventHandler implements TServerEventHandler {
         final long requestThreadId;
 
         CatalogServerRequestContext(
-                String userName,
-                String clientAppName,
-                String clientId,
-                String jobId,
-                DataTypeContext dataTypeContext,
-                long requestThreadId
+            String userName,
+            String clientAppName,
+            String clientId,
+            String jobId,
+            DataTypeContext dataTypeContext,
+            long requestThreadId
         ) {
             super(userName, clientAppName, clientId, jobId, dataTypeContext);
             this.requestThreadId = requestThreadId;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+            CatalogServerRequestContext that = (CatalogServerRequestContext) o;
+            return requestThreadId == that.requestThreadId;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(super.hashCode(), requestThreadId);
         }
     }
 }

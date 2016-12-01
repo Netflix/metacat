@@ -15,22 +15,20 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=false,NODE_PREFIX=AST,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.netflix.metacat.common.partition.parser;
 
-public
-class ASTNEQ extends SimpleNode {
-  public ASTNEQ(int id) {
-    super(id);
-  }
+public class ASTNEQ extends SimpleNode {
+    public ASTNEQ(int id) {
+        super(id);
+    }
 
-  public ASTNEQ(PartitionParser p, int id) {
-    super(p, id);
-  }
+    public ASTNEQ(PartitionParser p, int id) {
+        super(p, id);
+    }
 
+    /** Accept the visitor. **/
+    public Object jjtAccept(PartitionParserVisitor visitor, Object data) {
 
-  /** Accept the visitor. **/
-  public Object jjtAccept(PartitionParserVisitor visitor, Object data) {
-
-    return
-    visitor.visit(this, data);
-  }
+        return
+            visitor.visit(this, data);
+    }
 }
 /* JavaCC - OriginalChecksum=4ed9b560c660a3074aeba567abf5c70b (do not edit this line) */

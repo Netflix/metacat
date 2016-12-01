@@ -14,10 +14,15 @@
 package com.netflix.metacat.common.usermetadata;
 
 /**
- * Created by amajumdar on 3/16/16.
+ * User metadata service exception.
  */
 public class UserMetadataServiceException extends RuntimeException {
-    public UserMetadataServiceException(String m, Exception e) {
+    /**
+     * Constructor.
+     * @param m message
+     * @param e exception
+     */
+    public UserMetadataServiceException(final String m, final Exception e) {
         super(m, e);
     }
 }

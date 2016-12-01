@@ -30,19 +30,19 @@ public class ElasticSearchClientProvider implements Provider<Client> {
 
     @Inject
     public ElasticSearchClientProvider(Config config) {
-        if( config.isElasticSearchEnabled()) {
+        if (config.isElasticSearchEnabled()) {
             String clusterName = config.getElasticSearchClusterName();
             if (clusterName != null) {
                 Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName)
-                        .put("transport.tcp.connect_timeout", "60s").build();
+                    .put("transport.tcp.connect_timeout", "60s").build();
                 client = new TransportClient(settings);
                 // Add the transport address if exists
                 String clusterNodesStr = config.getElasticSearchClusterNodes();
                 if (!Strings.isNullOrEmpty(clusterNodesStr)) {
                     Iterable<String> clusterNodes = Splitter.on(',').split(clusterNodesStr);
                     clusterNodes.forEach(clusterNode -> ((TransportClient) client)
-                            .addTransportAddress(new InetSocketTransportAddress(clusterNode,
-                                    config.getElasticSearchClusterPort())));
+                        .addTransportAddress(new InetSocketTransportAddress(clusterNode,
+                            config.getElasticSearchClusterPort())));
                 }
             }
         }

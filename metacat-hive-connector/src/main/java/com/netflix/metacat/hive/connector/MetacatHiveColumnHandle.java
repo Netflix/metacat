@@ -13,22 +13,20 @@
 
 package com.netflix.metacat.hive.connector;
 
+import com.facebook.presto.hive.util.Types;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 
 import java.util.Objects;
 
-import static com.facebook.presto.hive.util.Types.checkType;
-import static com.google.common.base.MoreObjects.toStringHelper;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * Created by amajumdar on 5/2/16.
+ * Column handle.
  */
-public class MetacatHiveColumnHandle implements ColumnHandle{
+public class MetacatHiveColumnHandle implements ColumnHandle {
     private final String clientId;
     private final String name;
     private final int ordinalPosition;
@@ -37,58 +35,65 @@ public class MetacatHiveColumnHandle implements ColumnHandle{
     private final int hiveColumnIndex;
     private final boolean partitionKey;
 
+    /**
+     * Constructor.
+     * @param clientId client id
+     * @param name name
+     * @param ordinalPosition position
+     * @param hiveTypeName hive type
+     * @param type type
+     * @param hiveColumnIndex index
+     * @param partitionKey is partition key
+     */
     public MetacatHiveColumnHandle(
-            String clientId,
-            String name,
-            int ordinalPosition,
-            String hiveTypeName,
-            Type type,
-            int hiveColumnIndex,
-            boolean partitionKey)
-    {
-        this.clientId = checkNotNull(clientId, "clientId is null");
-        this.name = checkNotNull(name, "name is null");
-        checkArgument(ordinalPosition >= 0, "ordinalPosition is negative");
+        final String clientId,
+        final String name,
+        final int ordinalPosition,
+        final String hiveTypeName,
+        final Type type,
+        final int hiveColumnIndex,
+        final boolean partitionKey) {
+        this.clientId = Preconditions.checkNotNull(clientId, "clientId is null");
+        this.name = Preconditions.checkNotNull(name, "name is null");
+        Preconditions.checkArgument(ordinalPosition >= 0, "ordinalPosition is negative");
         this.ordinalPosition = ordinalPosition;
-        checkArgument(hiveColumnIndex >= 0 || partitionKey, "hiveColumnIndex is negative");
+        Preconditions.checkArgument(hiveColumnIndex >= 0 || partitionKey, "hiveColumnIndex is negative");
         this.hiveColumnIndex = hiveColumnIndex;
-        this.hiveTypeName = checkNotNull(hiveTypeName, "hive type is null");
-        this.type = checkNotNull(type, "type is null");
+        this.hiveTypeName = Preconditions.checkNotNull(hiveTypeName, "hive type is null");
+        this.type = Preconditions.checkNotNull(type, "type is null");
         this.partitionKey = partitionKey;
     }
 
-    public String getClientId()
-    {
+    public String getClientId() {
         return clientId;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
-    public int getOrdinalPosition()
-    {
+    public int getOrdinalPosition() {
         return ordinalPosition;
     }
 
-    public int getHiveColumnIndex()
-    {
+    public int getHiveColumnIndex() {
         return hiveColumnIndex;
     }
 
-    public boolean isPartitionKey()
-    {
+    public boolean isPartitionKey() {
         return partitionKey;
     }
 
-    public ColumnMetadata getColumnMetadata(TypeManager typeManager)
-    {
+    /**
+     * Returns the column metadata.
+     * @param typeManager manager
+     * @return column
+     */
+    public ColumnMetadata getColumnMetadata(final TypeManager typeManager) {
         return new ColumnMetadata(name, type, partitionKey);
     }
 
-    public Type getType()
-    {
+    public Type getType() {
         return type;
     }
 
@@ -97,44 +102,45 @@ public class MetacatHiveColumnHandle implements ColumnHandle{
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return Objects.hash(clientId, name, hiveColumnIndex, partitionKey);
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
+    public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
         }
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        MetacatHiveColumnHandle other = (MetacatHiveColumnHandle) obj;
-        return Objects.equals(this.clientId, other.clientId) &&
-                Objects.equals(this.name, other.name) &&
-                Objects.equals(this.hiveTypeName, other.hiveTypeName) &&
-                Objects.equals(this.hiveColumnIndex, other.hiveColumnIndex) &&
-                Objects.equals(this.partitionKey, other.partitionKey);
+        final MetacatHiveColumnHandle other = (MetacatHiveColumnHandle) obj;
+        return Objects.equals(this.clientId, other.clientId)
+            && Objects.equals(this.name, other.name)
+            && Objects.equals(this.hiveTypeName, other.hiveTypeName)
+            && Objects.equals(this.hiveColumnIndex, other.hiveColumnIndex)
+            && Objects.equals(this.partitionKey, other.partitionKey);
     }
 
     @Override
-    public String toString()
-    {
-        return toStringHelper(this)
-                .add("clientId", clientId)
-                .add("name", name)
-                .add("ordinalPosition", ordinalPosition)
-                .add("hiveColumnIndex", hiveColumnIndex)
-                .add("hiveTypeName", hiveTypeName)
-                .add("partitionKey", partitionKey)
-                .toString();
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+            .add("clientId", clientId)
+            .add("name", name)
+            .add("ordinalPosition", ordinalPosition)
+            .add("hiveColumnIndex", hiveColumnIndex)
+            .add("hiveTypeName", hiveTypeName)
+            .add("partitionKey", partitionKey)
+            .toString();
     }
 
-    public static MetacatHiveColumnHandle toHiveColumnHandle(ColumnHandle columnHandle)
-    {
-        return checkType(columnHandle, MetacatHiveColumnHandle.class, "columnHandle");
+    /**
+     * Creates column handle.
+     * @param columnHandle column handle
+     * @return column handle
+     */
+    public static MetacatHiveColumnHandle toHiveColumnHandle(final ColumnHandle columnHandle) {
+        return Types.checkType(columnHandle, MetacatHiveColumnHandle.class, "columnHandle");
     }
 
 }

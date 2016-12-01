@@ -48,17 +48,15 @@ import java.util.concurrent.ConcurrentMap;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
-public class SplitManager
-{
+public class SplitManager {
     private final ConcurrentMap<String, ConnectorSplitManager> splitManagers = new ConcurrentHashMap<>();
 
-    public void addConnectorSplitManager(String connectorId, ConnectorSplitManager connectorSplitManager)
-    {
-        checkState(splitManagers.putIfAbsent(connectorId, connectorSplitManager) == null, "SplitManager for connector '%s' is already registered", connectorId);
+    public void addConnectorSplitManager(String connectorId, ConnectorSplitManager connectorSplitManager) {
+        checkState(splitManagers.putIfAbsent(connectorId, connectorSplitManager) == null,
+            "SplitManager for connector '%s' is already registered", connectorId);
     }
 
-    public ConnectorSplitManager getConnectorSplitManager(String connectorId)
-    {
+    public ConnectorSplitManager getConnectorSplitManager(String connectorId) {
         ConnectorSplitManager result = splitManagers.get(connectorId);
         checkArgument(result != null, "No split manager for connector '%s'", connectorId);
 
@@ -71,73 +69,83 @@ public class SplitManager
     //
     // **********************
 
-    public synchronized void flush(String catalogName){
+    public synchronized void flush(String catalogName) {
         splitManagers.remove(catalogName);
     }
 
-    public synchronized void flushAll(){
+    public synchronized void flushAll() {
         splitManagers.clear();
     }
 
     public SavePartitionResult savePartitions(TableHandle table, List<ConnectorPartition> partitions
-            , List<String> partitionIdsForDeletes, boolean checkIfExists, boolean alterIfExists){
+        , List<String> partitionIdsForDeletes, boolean checkIfExists, boolean alterIfExists) {
         ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
-        if( splitManager instanceof ConnectorSplitDetailManager){
-            return ((ConnectorSplitDetailManager) splitManager).savePartitions(table.getConnectorHandle(), partitions, partitionIdsForDeletes,
+        if (splitManager instanceof ConnectorSplitDetailManager) {
+            return ((ConnectorSplitDetailManager) splitManager)
+                .savePartitions(table.getConnectorHandle(), partitions, partitionIdsForDeletes,
                     checkIfExists, alterIfExists);
         } else {
             throw new UnsupportedOperationException("Operation not supported");
         }
     }
 
-    public ConnectorPartitionResult getPartitions(TableHandle table, String filter, List<String> partitionNames, Sort sort, Pageable pageable, boolean includePartitionDetails){
+    public ConnectorPartitionResult getPartitions(TableHandle table, String filter, List<String> partitionNames,
+        Sort sort, Pageable pageable, boolean includePartitionDetails) {
         ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
-        if( splitManager instanceof ConnectorSplitDetailManager){
-            return ((ConnectorSplitDetailManager) splitManager).getPartitions( table.getConnectorHandle(), filter, partitionNames, sort, pageable, includePartitionDetails);
+        if (splitManager instanceof ConnectorSplitDetailManager) {
+            return ((ConnectorSplitDetailManager) splitManager)
+                .getPartitions(table.getConnectorHandle(), filter, partitionNames, sort, pageable,
+                    includePartitionDetails);
         } else {
             throw new UnsupportedOperationException("Operation not supported");
         }
     }
 
-    public List<String> getPartitionKeys(TableHandle table, String filter, List<String> partitionNames, Sort sort, Pageable pageable){
+    public List<String> getPartitionKeys(TableHandle table, String filter, List<String> partitionNames, Sort sort,
+        Pageable pageable) {
         ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
-        if( splitManager instanceof ConnectorSplitDetailManager){
-            return ((ConnectorSplitDetailManager) splitManager).getPartitionKeys( table.getConnectorHandle(), filter, partitionNames, sort, pageable);
+        if (splitManager instanceof ConnectorSplitDetailManager) {
+            return ((ConnectorSplitDetailManager) splitManager)
+                .getPartitionKeys(table.getConnectorHandle(), filter, partitionNames, sort, pageable);
         } else {
             throw new UnsupportedOperationException("Operation not supported");
         }
     }
 
-    public List<String> getPartitionUris(TableHandle table, String filter, List<String> partitionNames, Sort sort, Pageable pageable){
+    public List<String> getPartitionUris(TableHandle table, String filter, List<String> partitionNames, Sort sort,
+        Pageable pageable) {
         ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
-        if( splitManager instanceof ConnectorSplitDetailManager){
-            return ((ConnectorSplitDetailManager) splitManager).getPartitionUris( table.getConnectorHandle(), filter, partitionNames, sort, pageable);
+        if (splitManager instanceof ConnectorSplitDetailManager) {
+            return ((ConnectorSplitDetailManager) splitManager)
+                .getPartitionUris(table.getConnectorHandle(), filter, partitionNames, sort, pageable);
         } else {
             throw new UnsupportedOperationException("Operation not supported");
         }
     }
 
-    public Integer getPartitionCount(Session session, TableHandle table){
+    public Integer getPartitionCount(Session session, TableHandle table) {
         ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
-        if( splitManager instanceof ConnectorSplitDetailManager){
+        if (splitManager instanceof ConnectorSplitDetailManager) {
             return ((ConnectorSplitDetailManager) splitManager).getPartitionCount(table.getConnectorHandle());
         } else {
-            return splitManager.getPartitions(session.toConnectorSession(), table.getConnectorHandle(), TupleDomain.<ColumnHandle>all()).getPartitions().size();
+            return splitManager.getPartitions(session.toConnectorSession(), table.getConnectorHandle(),
+                TupleDomain.<ColumnHandle>all()).getPartitions().size();
         }
     }
 
-    public void deletePartitions(TableHandle table, List<String> partitionIds){
+    public void deletePartitions(TableHandle table, List<String> partitionIds) {
         ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
-        if( splitManager instanceof ConnectorSplitDetailManager){
-            ((ConnectorSplitDetailManager) splitManager).deletePartitions( table.getConnectorHandle(), partitionIds);
+        if (splitManager instanceof ConnectorSplitDetailManager) {
+            ((ConnectorSplitDetailManager) splitManager).deletePartitions(table.getConnectorHandle(), partitionIds);
         } else {
             throw new UnsupportedOperationException("Operation not supported");
         }
     }
 
-    public Map<String,List<SchemaTablePartitionName>> getPartitionNames(Session session, List<String> uri, boolean prefixSearch){
+    public Map<String, List<SchemaTablePartitionName>> getPartitionNames(Session session, List<String> uri,
+        boolean prefixSearch) {
         ConnectorSplitManager splitManager = getConnectorSplitManager(session.getCatalog());
-        if( splitManager instanceof ConnectorSplitDetailManager){
+        if (splitManager instanceof ConnectorSplitDetailManager) {
             ConnectorSplitDetailManager splitDetailManager = (ConnectorSplitDetailManager) splitManager;
             return splitDetailManager.getPartitionNames(uri, prefixSearch);
         }

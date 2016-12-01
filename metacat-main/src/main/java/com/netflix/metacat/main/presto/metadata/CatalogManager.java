@@ -46,8 +46,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Maps.fromProperties;
 
-public class CatalogManager
-{
+public class CatalogManager {
     private static final Logger log = Logger.get(CatalogManager.class);
     private final ConnectorManager connectorManager;
     private final File catalogConfigurationDir;
@@ -55,25 +54,21 @@ public class CatalogManager
     private final AtomicBoolean catalogsLoaded = new AtomicBoolean();
 
     @Inject
-    public CatalogManager(ConnectorManager connectorManager, CatalogManagerConfig config)
-    {
+    public CatalogManager(ConnectorManager connectorManager, CatalogManagerConfig config) {
         this(connectorManager, config.getCatalogConfigurationDir());
     }
 
-    public CatalogManager(ConnectorManager connectorManager, File catalogConfigurationDir)
-    {
+    public CatalogManager(ConnectorManager connectorManager, File catalogConfigurationDir) {
         this.connectorManager = connectorManager;
         this.catalogConfigurationDir = catalogConfigurationDir;
     }
 
-    public boolean areCatalogsLoaded()
-    {
+    public boolean areCatalogsLoaded() {
         return catalogsLoaded.get();
     }
 
     public void loadCatalogs()
-            throws Exception
-    {
+        throws Exception {
         if (!catalogsLoading.compareAndSet(false, true)) {
             return;
         }
@@ -88,13 +83,13 @@ public class CatalogManager
     }
 
     private void loadCatalog(File file)
-            throws Exception
-    {
+        throws Exception {
         log.info("-- Loading catalog %s --", file);
         Map<String, String> properties = new HashMap<>(loadProperties(file));
 
         String connectorName = properties.remove("connector.name");
-        checkState(connectorName != null, "Catalog configuration %s does not contain conector.name", file.getAbsoluteFile());
+        checkState(connectorName != null, "Catalog configuration %s does not contain conector.name",
+            file.getAbsoluteFile());
 
         String catalogName = Files.getNameWithoutExtension(file.getName());
 
@@ -102,8 +97,7 @@ public class CatalogManager
         log.info("-- Added catalog %s using connector %s --", catalogName, connectorName);
     }
 
-    private static List<File> listFiles(File installedPluginsDir)
-    {
+    private static List<File> listFiles(File installedPluginsDir) {
         if (installedPluginsDir != null && installedPluginsDir.isDirectory()) {
             File[] files = installedPluginsDir.listFiles();
             if (files != null) {
@@ -114,8 +108,7 @@ public class CatalogManager
     }
 
     private static Map<String, String> loadProperties(File file)
-            throws Exception
-    {
+        throws Exception {
         checkNotNull(file, "file is null");
 
         Properties properties = new Properties();

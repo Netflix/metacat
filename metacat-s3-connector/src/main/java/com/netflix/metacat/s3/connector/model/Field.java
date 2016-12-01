@@ -21,12 +21,12 @@ import javax.persistence.ManyToOne;
 import javax.persistence.UniqueConstraint;
 
 /**
- * Created by amajumdar on 12/23/14.
+ * Field.
  */
 @Entity
-@javax.persistence.Table(name="field",
-        uniqueConstraints= @UniqueConstraint(name="field_u1",columnNames = {"schema_id", "name", "pos"}))
-public class Field extends IdEntity{
+@javax.persistence.Table(name = "field",
+    uniqueConstraints = @UniqueConstraint(name = "field_u1", columnNames = { "schema_id", "name", "pos" }))
+public class Field extends IdEntity {
     private int pos;
     private String name;
     private String type;
@@ -35,67 +35,67 @@ public class Field extends IdEntity{
     private boolean partitionKey;
     private Schema schema;
 
-    @Column(name="pos", nullable = false)
+    @Column(name = "pos", nullable = false)
     public int getPos() {
         return pos;
     }
 
-    public void setPos(int pos) {
+    public void setPos(final int pos) {
         this.pos = pos;
     }
 
-    @Column(name="name", nullable = false)
+    @Column(name = "name", nullable = false)
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
-    @Column(name="type", nullable = false, length=4000)
+    @Column(name = "type", nullable = false, length = 4000)
     public String getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(final String type) {
         this.type = type;
     }
 
-    @Column(name="source_type", nullable = true)
+    @Column(name = "source_type", nullable = true)
     public String getSourceType() {
         return sourceType;
     }
 
-    public void setSourceType(String sourceType) {
+    public void setSourceType(final String sourceType) {
         this.sourceType = sourceType;
     }
 
-    @Column(name="comment", nullable = true)
+    @Column(name = "comment", nullable = true)
     public String getComment() {
         return comment;
     }
 
-    public void setComment(String comment) {
+    public void setComment(final String comment) {
         this.comment = comment;
     }
 
-    @Column(name="partition_key", nullable = false)
+    @Column(name = "partition_key", nullable = false)
     public boolean isPartitionKey() {
         return partitionKey;
     }
 
-    public void setPartitionKey(boolean partitionKey) {
+    public void setPartitionKey(final boolean partitionKey) {
         this.partitionKey = partitionKey;
     }
 
-    @ManyToOne(fetch = FetchType.LAZY, optional=false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "schema_id", nullable = false)
     public Schema getSchema() {
         return schema;
     }
 
-    public void setSchema(Schema schema) {
+    public void setSchema(final Schema schema) {
         this.schema = schema;
     }
 }

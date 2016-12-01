@@ -23,31 +23,31 @@ import javax.persistence.UniqueConstraint;
 import java.util.List;
 
 /**
- * Created by amajumdar on 12/22/14.
+ * Schema.
  */
 @Entity
-@javax.persistence.Table(name="schema_object",
-        uniqueConstraints= @UniqueConstraint(name="schema_object_u1",columnNames = "location_id"))
-public class Schema extends IdEntity{
+@javax.persistence.Table(name = "schema_object",
+    uniqueConstraints = @UniqueConstraint(name = "schema_object_u1", columnNames = "location_id"))
+public class Schema extends IdEntity {
     private Location location;
     private List<Field> fields;
 
     @OneToOne
-    @JoinColumn(name="location_id", nullable=false)
+    @JoinColumn(name = "location_id", nullable = false)
     public Location getLocation() {
         return location;
     }
 
-    public void setLocation(Location location) {
+    public void setLocation(final Location location) {
         this.location = location;
     }
 
-    @OneToMany(cascade= CascadeType.ALL, fetch= FetchType.LAZY, mappedBy = "schema")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "schema")
     public List<Field> getFields() {
         return fields;
     }
 
-    public void setFields(List<Field> fields) {
+    public void setFields(final List<Field> fields) {
         this.fields = fields;
     }
 }

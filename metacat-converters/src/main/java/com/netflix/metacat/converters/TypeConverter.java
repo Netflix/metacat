@@ -17,9 +17,21 @@ import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
 
 /**
- * Created by amajumdar on 4/28/15.
+ * Type converter interface.
  */
 public interface TypeConverter {
+    /**
+     * Converts to presto type.
+     * @param type type
+     * @param typeManager manager
+     * @return presto type
+     */
     Type toType(String type, TypeManager typeManager);
+
+    /**
+     * Converts from presto type.
+     * @param type type
+     * @return type
+     */
     String fromType(Type type);
 }

@@ -44,10 +44,10 @@ public class MetacatServiceHelper {
 
     @Inject
     public MetacatServiceHelper(
-            DatabaseService databaseService,
-            TableService tableService,
-            PartitionService partitionService,
-            MetacatEventBus eventBus
+        DatabaseService databaseService,
+        TableService tableService,
+        PartitionService partitionService,
+        MetacatEventBus eventBus
     ) {
         this.databaseService = databaseService;
         this.tableService = tableService;
@@ -75,9 +75,11 @@ public class MetacatServiceHelper {
             if (dto != null) {
                 partitionsSaveRequestDto.setPartitions(ImmutableList.of((PartitionDto) dto));
             }
-            eventBus.postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
+            eventBus
+                .postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
         } else if (name.isTableDefinition()) {
-            eventBus.postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, (TableDto) dto, (TableDto) dto));
+            eventBus
+                .postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, (TableDto) dto, (TableDto) dto));
         } else if (name.isDatabaseDefinition()) {
             eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext));
         } else {
@@ -86,10 +88,10 @@ public class MetacatServiceHelper {
     }
 
     public void postPostUpdateEvent(
-            final QualifiedName name,
-            final MetacatRequestContext metacatRequestContext,
-            final BaseDto oldDTo,
-            final BaseDto currentDto
+        final QualifiedName name,
+        final MetacatRequestContext metacatRequestContext,
+        final BaseDto oldDTo,
+        final BaseDto currentDto
     ) {
         if (name.isPartitionDefinition()) {
             List<PartitionDto> dtos = Lists.newArrayList();
@@ -99,19 +101,19 @@ public class MetacatServiceHelper {
             // This request neither added nor updated partitions
             PartitionsSaveResponseDto partitionsSaveResponseDto = new PartitionsSaveResponseDto();
             eventBus.postAsync(
-                    new MetacatSaveTablePartitionPostEvent(
-                            name,
-                            metacatRequestContext,
-                            dtos,
-                            partitionsSaveResponseDto
-                    )
+                new MetacatSaveTablePartitionPostEvent(
+                    name,
+                    metacatRequestContext,
+                    dtos,
+                    partitionsSaveResponseDto
+                )
             );
         } else if (name.isTableDefinition()) {
             MetacatUpdateTablePostEvent event = new MetacatUpdateTablePostEvent(
-                    name,
-                    metacatRequestContext,
-                    (TableDto) oldDTo,
-                    (TableDto) currentDto
+                name,
+                metacatRequestContext,
+                (TableDto) oldDTo,
+                (TableDto) currentDto
             );
             eventBus.postAsync(event);
         } else if (name.isDatabaseDefinition()) {

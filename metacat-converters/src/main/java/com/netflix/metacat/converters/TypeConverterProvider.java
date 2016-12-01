@@ -24,11 +24,8 @@ import com.netflix.metacat.converters.impl.PrestoTypeConverter;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-import static com.netflix.metacat.common.MetacatRequestContext.DataTypeContext.hive;
-import static com.netflix.metacat.common.MetacatRequestContext.DataTypeContext.pig;
-import static com.netflix.metacat.common.MetacatRequestContext.DataTypeContext.presto;
-
 /**
+ * Type converter provider.
  * @author amajumdar
  * @author tgianos
  */
@@ -39,12 +36,19 @@ public class TypeConverterProvider implements Provider<TypeConverter> {
     private final PigTypeConverter pigTypeConverter;
     private final PrestoTypeConverter prestoTypeConverter;
 
+    /**
+     * Constructor.
+     * @param config config
+     * @param hiveTypeConverter hive type converter
+     * @param pigTypeConverter pig type converter
+     * @param prestoTypeConverter presto type converter
+     */
     @Inject
     public TypeConverterProvider(
-            final Config config,
-            final HiveTypeConverter hiveTypeConverter,
-            final PigTypeConverter pigTypeConverter,
-            final PrestoTypeConverter prestoTypeConverter
+        final Config config,
+        final HiveTypeConverter hiveTypeConverter,
+        final PigTypeConverter pigTypeConverter,
+        final PrestoTypeConverter prestoTypeConverter
     ) {
         this.config = config;
         this.hiveTypeConverter = hiveTypeConverter;
@@ -54,8 +58,8 @@ public class TypeConverterProvider implements Provider<TypeConverter> {
 
     @Override
     public TypeConverter get() {
-        MetacatRequestContext requestContext = MetacatContextManager.getContext();
-        MetacatRequestContext.DataTypeContext dataTypeContext = requestContext.getDataTypeContext();
+        final MetacatRequestContext requestContext = MetacatContextManager.getContext();
+        final MetacatRequestContext.DataTypeContext dataTypeContext = requestContext.getDataTypeContext();
 
         if (dataTypeContext == null) {
             return this.getDefaultConverter();
@@ -64,16 +68,21 @@ public class TypeConverterProvider implements Provider<TypeConverter> {
         }
     }
 
-    public TypeConverter get(MetacatRequestContext.DataTypeContext context) {
+    /**
+     * Returns the right type converter based on the context.
+     * @param context context
+     * @return type converter
+     */
+    public TypeConverter get(final MetacatRequestContext.DataTypeContext context) {
         switch (context) {
-            case hive:
-                return this.hiveTypeConverter;
-            case pig:
-                return this.pigTypeConverter;
-            case presto:
-                return this.prestoTypeConverter;
-            default:
-                throw new IllegalArgumentException("No handler for " + context);
+        case hive:
+            return this.hiveTypeConverter;
+        case pig:
+            return this.pigTypeConverter;
+        case presto:
+            return this.prestoTypeConverter;
+        default:
+            throw new IllegalArgumentException("No handler for " + context);
         }
     }
 
@@ -85,14 +94,18 @@ public class TypeConverterProvider implements Provider<TypeConverter> {
         }
     }
 
+    /**
+     * Returns the default converter.
+     * @return converter
+     */
     public MetacatRequestContext.DataTypeContext getDefaultConverterType() {
-        TypeConverter converter = getDefaultConverter();
+        final TypeConverter converter = getDefaultConverter();
         if (converter instanceof HiveTypeConverter) {
-            return hive;
+            return MetacatRequestContext.DataTypeContext.hive;
         } else if (converter instanceof PigTypeConverter) {
-            return pig;
+            return MetacatRequestContext.DataTypeContext.pig;
         } else if (converter instanceof PrestoTypeConverter) {
-            return presto;
+            return MetacatRequestContext.DataTypeContext.presto;
         } else {
             throw new IllegalStateException("Unknown handler: " + converter);
         }

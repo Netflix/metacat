@@ -16,22 +16,36 @@ package com.netflix.metacat.common.util;
 import com.netflix.metacat.common.MetacatRequestContext;
 
 /**
- * Created by amajumdar on 8/3/15.
+ * Metacat context manager.
  */
-public class MetacatContextManager {
-    private static InheritableThreadLocal<MetacatRequestContext> context = new InheritableThreadLocal<MetacatRequestContext>();
+public final class MetacatContextManager {
+    private static InheritableThreadLocal<MetacatRequestContext> context = new InheritableThreadLocal<>();
 
+    private MetacatContextManager() {
+    }
+
+    /**
+     * Removes the context from this manager.
+     */
     public static void removeContext() {
         context.remove();
     }
 
-    public static void setContext(MetacatRequestContext context) {
+    /**
+     * Sets the context in this manager.
+     * @param context context
+     */
+    public static void setContext(final MetacatRequestContext context) {
         MetacatContextManager.context.set(context);
     }
 
+    /**
+     * Returns the current thread context.
+     * @return context
+     */
     public static MetacatRequestContext getContext() {
         MetacatRequestContext result = context.get();
-        if(result == null) {
+        if (result == null) {
             result = new MetacatRequestContext(null, null, null, null, null);
             setContext(result);
         }

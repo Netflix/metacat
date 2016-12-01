@@ -21,6 +21,7 @@ import com.facebook.presto.plugin.jdbc.JdbcTableHandle;
 import com.facebook.presto.plugin.mysql.MySqlConfig;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;
+import com.facebook.presto.spi.StandardErrorCode;
 import com.facebook.presto.spi.TableNotFoundException;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.type.FloatType;
@@ -41,21 +42,30 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
-import static com.facebook.presto.type.FloatType.FLOAT;
-import static com.facebook.presto.type.IntType.INT;
-import static java.util.Locale.ENGLISH;
-
+/**
+ * Mysql client.
+ */
 public class MetacatMySqlClient extends BaseJdbcClient {
     private static final Map<Type, String> METACAT_SQL_TYPES = ImmutableMap.<Type, String>builder()
-            .put(INT, IntType.TYPE)
-            .put(FLOAT, FloatType.TYPE)
-            .build();
+        .put(IntType.INT, IntType.TYPE)
+        .put(FloatType.FLOAT, FloatType.TYPE)
+        .build();
+
+    /**
+     * Constructor.
+     * @param connectorId connector id
+     * @param config config
+     * @param mySqlConfig mysql config
+     * @throws SQLException SQL exception
+     */
     @Inject
-    public MetacatMySqlClient(JdbcConnectorId connectorId, BaseJdbcConfig config, MySqlConfig mySqlConfig) throws SQLException {
+    public MetacatMySqlClient(final JdbcConnectorId connectorId, final BaseJdbcConfig config,
+        final MySqlConfig mySqlConfig)
+        throws SQLException {
         super(connectorId, config, "`", DataSourceManager.get().getDriver(connectorId.toString(), new Driver()));
         connectionProperties.setProperty("nullCatalogMeansCurrent", "false");
         if (mySqlConfig.isAutoReconnect()) {
@@ -63,34 +73,34 @@ public class MetacatMySqlClient extends BaseJdbcClient {
             connectionProperties.setProperty("maxReconnects", String.valueOf(mySqlConfig.getMaxReconnects()));
         }
         if (mySqlConfig.getConnectionTimeout() != null) {
-            connectionProperties.setProperty("connectTimeout", String.valueOf(mySqlConfig.getConnectionTimeout().toMillis()));
+            connectionProperties
+                .setProperty("connectTimeout", String.valueOf(mySqlConfig.getConnectionTimeout().toMillis()));
         }
     }
 
     @Override
-    protected ResultSet getTables(Connection connection, String schemaName, String tableName) throws SQLException {
+    protected ResultSet getTables(final Connection connection, final String schemaName,
+        final String tableName) throws SQLException {
         // For Metacat's purposes a view and a table are the same
-        return connection.getMetaData().getTables(schemaName, null, tableName, new String[] { "TABLE", "VIEW" });
+        return connection.getMetaData().getTables(schemaName, null, tableName, new String[] {"TABLE", "VIEW" });
     }
 
     @Override
-    protected Type toPrestoType(int jdbcType)
-    {
+    protected Type toPrestoType(final int jdbcType) {
         switch (jdbcType) {
         case Types.TINYINT:
         case Types.SMALLINT:
         case Types.INTEGER:
-            return INT;
+            return IntType.INT;
         case Types.FLOAT:
         case Types.REAL:
-            return FLOAT;
+            return FloatType.FLOAT;
         default:
             return super.toPrestoType(jdbcType);
         }
     }
 
-    protected String toSqlType(Type type)
-    {
+    protected String toSqlType(final Type type) {
         String sqlType = METACAT_SQL_TYPES.get(type);
         if (sqlType != null) {
             return sqlType;
@@ -106,88 +116,91 @@ public class MetacatMySqlClient extends BaseJdbcClient {
             case "timestamp":
             case "timestamp with timezone":
                 return "datetime";
+            default:
             }
             return sqlType;
         }
     }
 
-
-    public List<ColumnDetailHandle> getColumnsWithDetails(JdbcTableHandle tableHandle)
-    {
+    /**
+     * Returns list of columns with details.
+     * @param tableHandle table handle
+     * @return list of columns with details
+     */
+    public List<ColumnDetailHandle> getColumnsWithDetails(final JdbcTableHandle tableHandle) {
         try (Connection connection = driver.connect(connectionUrl, connectionProperties)) {
-            DatabaseMetaData metadata = connection.getMetaData();
+            final DatabaseMetaData metadata = connection.getMetaData();
             try (ResultSet resultSet = metadata.getColumns(tableHandle.getCatalogName(), tableHandle.getSchemaName(),
-                    tableHandle.getTableName(), null);
-                 ResultSet indexSet = metadata.getIndexInfo(tableHandle.getCatalogName(), tableHandle.getSchemaName(),
-                         tableHandle.getTableName(), false, true)) {
-                List<ColumnDetailHandle> columns = new ArrayList<>();
-                Set<String> indexColumns = Sets.newHashSet();
-                while( indexSet.next()){
-                    String columnName = indexSet.getString("COLUMN_NAME");
-                    if( columnName != null) {
+                tableHandle.getTableName(), null);
+                ResultSet indexSet = metadata.getIndexInfo(tableHandle.getCatalogName(), tableHandle.getSchemaName(),
+                    tableHandle.getTableName(), false, true)) {
+                final List<ColumnDetailHandle> columns = new ArrayList<>();
+                final Set<String> indexColumns = Sets.newHashSet();
+                while (indexSet.next()) {
+                    final String columnName = indexSet.getString("COLUMN_NAME");
+                    if (columnName != null) {
                         indexColumns.add(columnName);
                     }
                 }
                 boolean found = false;
                 while (resultSet.next()) {
                     found = true;
-                    Type columnType = toPrestoType(resultSet.getInt("DATA_TYPE"));
+                    final Type columnType = toPrestoType(resultSet.getInt("DATA_TYPE"));
 
                     // skip unsupported column types
                     if (columnType != null) {
-                        String columnName = resultSet.getString("COLUMN_NAME");
-                        String sourceType = resultSet.getString("TYPE_NAME");
-                        Integer size = resultSet.getInt("COLUMN_SIZE");
-                        Boolean isNullable = "yes".equalsIgnoreCase(resultSet.getString("IS_NULLABLE"));
-                        String defaultValue = resultSet.getString("COLUMN_DEF");
-                        String comment = resultSet.getString("REMARKS");
-                        Boolean isIndexKey = indexColumns.contains(columnName);
-                        columns.add(new ColumnDetailHandle(connectorId, columnName, columnType, false, comment, sourceType, size, isNullable, defaultValue, null, isIndexKey));
+                        final String columnName = resultSet.getString("COLUMN_NAME");
+                        final String sourceType = resultSet.getString("TYPE_NAME");
+                        final Integer size = resultSet.getInt("COLUMN_SIZE");
+                        final Boolean isNullable = "yes".equalsIgnoreCase(resultSet.getString("IS_NULLABLE"));
+                        final String defaultValue = resultSet.getString("COLUMN_DEF");
+                        final String comment = resultSet.getString("REMARKS");
+                        final Boolean isIndexKey = indexColumns.contains(columnName);
+                        columns.add(
+                            new ColumnDetailHandle(connectorId, columnName, columnType, false, comment, sourceType,
+                                size, isNullable, defaultValue, null, isIndexKey));
                     }
                 }
                 if (!found) {
                     throw new TableNotFoundException(tableHandle.getSchemaTableName());
                 }
                 if (columns.isEmpty()) {
-                    throw new PrestoException(NOT_SUPPORTED, "Table has no supported column types: " + tableHandle.getSchemaTableName());
+                    throw new PrestoException(StandardErrorCode.NOT_SUPPORTED,
+                        "Table has no supported column types: " + tableHandle.getSchemaTableName());
                 }
                 return ImmutableList.copyOf(columns);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw Throwables.propagate(e);
         }
     }
 
     @Override
-    public Set<String> getSchemaNames()
-    {
+    public Set<String> getSchemaNames() {
         // for MySQL, we need to list catalogs instead of schemas
         try (Connection connection = driver.connect(connectionUrl, connectionProperties);
-                ResultSet resultSet = connection.getMetaData().getCatalogs()) {
-            ImmutableSet.Builder<String> schemaNames = ImmutableSet.builder();
+            ResultSet resultSet = connection.getMetaData().getCatalogs()) {
+            final ImmutableSet.Builder<String> schemaNames = ImmutableSet.builder();
             while (resultSet.next()) {
-                String schemaName = resultSet.getString("TABLE_CAT").toLowerCase(ENGLISH);
+                final String schemaName = resultSet.getString("TABLE_CAT").toLowerCase(Locale.ENGLISH);
                 // skip internal schemas
                 if (!schemaName.equals("information_schema") && !schemaName.equals("mysql")) {
                     schemaNames.add(schemaName);
                 }
             }
             return schemaNames.build();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw Throwables.propagate(e);
         }
     }
 
     @Override
-    protected SchemaTableName getSchemaTableName(ResultSet resultSet)
-            throws SQLException
-    {
+    protected SchemaTableName getSchemaTableName(final ResultSet resultSet)
+        throws SQLException {
         // MySQL uses catalogs instead of schemas
         return new SchemaTableName(
-                resultSet.getString("TABLE_CAT").toLowerCase(ENGLISH),
-                resultSet.getString("TABLE_NAME").toLowerCase(ENGLISH));
+            resultSet.getString("TABLE_CAT").toLowerCase(Locale.ENGLISH),
+            resultSet.getString("TABLE_NAME").toLowerCase(Locale.ENGLISH));
 
     }
 }

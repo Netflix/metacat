@@ -23,15 +23,24 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
+/**
+ * Search APIs for metacat that queries the search store.
+ * @author amajumdar
+ */
 @Path("mds/v1/search")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface SearchMetacatV1 {
+    /**
+     * Searches the list of tables for the given search string.
+     * @param searchString search string
+     * @return list of tables
+     */
     @GET
     @Path("table")
     @Consumes(MediaType.APPLICATION_JSON)
     List<TableDto> searchTables(
-            @QueryParam("q")
+        @QueryParam("q")
             String searchString
     );
 }

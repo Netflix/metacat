@@ -26,6 +26,9 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Pre view partition save event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -33,10 +36,19 @@ public class MetacatSaveMViewPartitionPreEvent extends MetacatEvent {
 
     private final PartitionsSaveRequestDto saveRequest;
 
+    /**
+     * Constructor.
+     * @param name name
+     * @param requestContext context
+     * @param saveRequest request
+     */
     public MetacatSaveMViewPartitionPreEvent(
-            @NotNull QualifiedName name,
-            @NotNull MetacatRequestContext requestContext,
-            @NotNull PartitionsSaveRequestDto saveRequest
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext,
+        @NotNull
+        final PartitionsSaveRequestDto saveRequest
     ) {
         super(name, requestContext);
         this.saveRequest = saveRequest;

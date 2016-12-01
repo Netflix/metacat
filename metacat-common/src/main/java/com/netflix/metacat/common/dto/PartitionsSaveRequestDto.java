@@ -17,17 +17,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.wordnik.swagger.annotations.ApiModelProperty;
 import com.wordnik.swagger.annotations.ApiParam;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
-import java.util.Objects;
 
 /**
- * Created by amajumdar on 5/4/15.
+ * Partition save request.
  */
-public class PartitionsSaveRequestDto extends BaseDto{
+@Data
+@EqualsAndHashCode(callSuper = false)
+public class PartitionsSaveRequestDto extends BaseDto {
     private static final long serialVersionUID = -5922699691074685961L;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
     @ApiModelProperty(value = "metadata attached to this table")
@@ -47,90 +50,23 @@ public class PartitionsSaveRequestDto extends BaseDto{
     // If true, we alter if partition exists. If checkIfExists=false, then this is false too.
     private Boolean alterIfExists = false;
 
-    public ObjectNode getDataMetadata() {
-        return dataMetadata;
-    }
-
-    public void setDataMetadata(ObjectNode dataMetadata) {
-        this.dataMetadata = dataMetadata;
-    }
-
-    public ObjectNode getDefinitionMetadata() {
-        return definitionMetadata;
-    }
-
-    public void setDefinitionMetadata(ObjectNode definitionMetadata) {
-        this.definitionMetadata = definitionMetadata;
-    }
-
-    public List<PartitionDto> getPartitions() {
-        return partitions;
-    }
-
-    public void setPartitions(List<PartitionDto> partitions) {
-        this.partitions = partitions;
-    }
-
-    public List<String> getPartitionIdsForDeletes() {
-        return partitionIdsForDeletes;
-    }
-
-    public void setPartitionIdsForDeletes(List<String> partitionNamesForDeletes) {
-        this.partitionIdsForDeletes = partitionNamesForDeletes;
-    }
-
-    public Boolean getCheckIfExists() {
-        return checkIfExists;
-    }
-
-    public void setCheckIfExists(Boolean checkIfExists) {
-        this.checkIfExists = checkIfExists;
-    }
-
-    public Boolean getAlterIfExists() {
-        return alterIfExists;
-    }
-
-    public void setAlterIfExists(Boolean alterIfExists) {
-        this.alterIfExists = alterIfExists;
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         dataMetadata = deserializeObjectNode(in);
         definitionMetadata = deserializeObjectNode(in);
     }
 
-    private void writeObject(ObjectOutputStream out) throws IOException {
+    private void writeObject(final ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         serializeObjectNode(out, dataMetadata);
         serializeObjectNode(out, definitionMetadata);
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        PartitionsSaveRequestDto that = (PartitionsSaveRequestDto) o;
-        return Objects.equals(dataMetadata, that.dataMetadata) && Objects.equals(definitionMetadata,
-                that.definitionMetadata) && Objects.equals(partitions, that.partitions) && Objects.equals(
-                partitionIdsForDeletes, that.partitionIdsForDeletes) && Objects.equals(checkIfExists,
-                that.checkIfExists) && Objects.equals(alterIfExists, that.alterIfExists);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(dataMetadata, definitionMetadata, partitions, partitionIdsForDeletes, checkIfExists,
-                alterIfExists);
-    }
-
-    @Override
     public String toString() {
         return "PartitionsSaveRequestDto{" + "dataMetadata=" + dataMetadata + ", definitionMetadata="
-                + definitionMetadata + ", partitions=" + partitions + ", partitionIdsForDeletes="
-                + partitionIdsForDeletes + ", checkIfExists=" + checkIfExists + ", alterIfExists=" + alterIfExists
-                + '}';
+            + definitionMetadata + ", partitions=" + partitions + ", partitionIdsForDeletes="
+            + partitionIdsForDeletes + ", checkIfExists=" + checkIfExists + ", alterIfExists=" + alterIfExists
+            + '}';
     }
 }

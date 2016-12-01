@@ -18,9 +18,24 @@ import com.netflix.metacat.s3.connector.model.Table;
 import java.util.List;
 
 /**
- * Created by amajumdar on 1/2/15.
+ * Table DAO.
  */
 public interface TableDao extends BaseDao<Table> {
-    public Table getBySourceDatabaseTableName(String sourceName, String schemaName, String tableName);
-    public List<Table> getBySourceDatabaseTableNames(String sourceName, String schemaName, List<String> tableNames);
+    /**
+     * Get a table.
+     * @param sourceName source name
+     * @param schemaName schema name
+     * @param tableName table name
+     * @return table
+     */
+    Table getBySourceDatabaseTableName(String sourceName, String schemaName, String tableName);
+
+    /**
+     * Get list of tables.
+     * @param sourceName source name
+     * @param schemaName schema name
+     * @param tableNames table names
+     * @return tables
+     */
+    List<Table> getBySourceDatabaseTableNames(String sourceName, String schemaName, List<String> tableNames);
 }

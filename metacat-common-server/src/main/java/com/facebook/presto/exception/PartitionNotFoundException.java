@@ -17,22 +17,43 @@ import com.facebook.presto.spi.NotFoundException;
 import com.facebook.presto.spi.SchemaTableName;
 
 /**
- * Created by amajumdar on 4/30/15.
+ * Exception when partition is not found.
  */
-public class PartitionNotFoundException extends NotFoundException{
+public class PartitionNotFoundException extends NotFoundException {
     private final SchemaTableName tableName;
     private final String partitionId;
-    public PartitionNotFoundException(SchemaTableName tableName, String partitionId) {
+
+    /**
+     * Constructor.
+     * @param tableName table name
+     * @param partitionId partition name
+     */
+    public PartitionNotFoundException(final SchemaTableName tableName, final String partitionId) {
         this(tableName, partitionId, null);
     }
 
-    public PartitionNotFoundException(SchemaTableName tableName, String partitionId, Throwable cause) {
+    /**
+     * Constructor.
+     * @param tableName table name
+     * @param partitionId partition name
+     * @param cause error cause
+     */
+    public PartitionNotFoundException(final SchemaTableName tableName, final String partitionId,
+        final Throwable cause) {
         this(tableName, partitionId,
-                String.format("Partition %s not found for table %s", partitionId == null ? "" : partitionId, tableName),
-                cause);
+            String.format("Partition %s not found for table %s", partitionId == null ? "" : partitionId, tableName),
+            cause);
     }
 
-    public PartitionNotFoundException(SchemaTableName tableName, String partitionId, String message, Throwable cause) {
+    /**
+     * Constructor.
+     * @param tableName table name
+     * @param partitionId partition name
+     * @param message error message
+     * @param cause error cause
+     */
+    public PartitionNotFoundException(final SchemaTableName tableName, final String partitionId, final String message,
+        final Throwable cause) {
         super(message, cause);
         this.tableName = tableName;
         this.partitionId = partitionId;

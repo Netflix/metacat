@@ -21,22 +21,22 @@ import com.netflix.servo.monitor.MonitorConfig;
 import com.netflix.servo.monitor.Monitors;
 import com.netflix.servo.monitor.Stopwatch;
 import com.netflix.servo.monitor.Timer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Servo Timer wrapper
+ * Servo Timer wrapper.
  *
  * @author amajumdar
  */
-public class TimerWrapper {
+@Slf4j
+public final class TimerWrapper {
     private static final Stopwatch NULL_STOPWATCH = new Stopwatch() {
         @Override
-        public long getDuration(TimeUnit timeUnit) {
+        public long getDuration(final TimeUnit timeUnit) {
             return 0;
         }
 
@@ -69,7 +69,7 @@ public class TimerWrapper {
         }
 
         @Override
-        public Long getValue(int pollerIndex) {
+        public Long getValue(final int pollerIndex) {
             return null;
         }
 
@@ -79,12 +79,12 @@ public class TimerWrapper {
         }
 
         @Override
-        public void record(long duration, TimeUnit timeUnit) {
+        public void record(final long duration, final TimeUnit timeUnit) {
 
         }
 
         @Override
-        public void record(long duration) {
+        public void record(final long duration) {
 
         }
 
@@ -94,20 +94,21 @@ public class TimerWrapper {
         }
     };
     private static final LoadingCache<String, Timer> TIMERS = CacheBuilder.newBuilder()
-            .build(
-                    new CacheLoader<String, Timer>() {
-                        public Timer load(@Nonnull String timerName) {
-                            Timer timer = Monitors.newTimer(timerName);
-                            DefaultMonitorRegistry.getInstance().register(timer);
-                            return timer;
-                        }
-                    });
-    private static final Logger log = LoggerFactory.getLogger(TimerWrapper.class);
+        .build(
+            new CacheLoader<String, Timer>() {
+                public Timer load(
+                    @Nonnull
+                    final String timerName) {
+                    final Timer timer = Monitors.newTimer(timerName);
+                    DefaultMonitorRegistry.getInstance().register(timer);
+                    return timer;
+                }
+            });
     private final String name;
     private final Timer timer;
     private Stopwatch stopwatch;
 
-    private TimerWrapper(String name) {
+    private TimerWrapper(final String name) {
         this.name = name;
         Timer t = NULL_TIMER;
         try {
@@ -118,20 +119,37 @@ public class TimerWrapper {
         this.timer = t;
     }
 
-    public static TimerWrapper createStarted(String name) {
-        TimerWrapper wrapper = new TimerWrapper(name);
+    /**
+     * Creates the timer.
+     * @param name name of the timer
+     * @return TimerWrapper
+     */
+    public static TimerWrapper createStarted(final String name) {
+        final TimerWrapper wrapper = new TimerWrapper(name);
         wrapper.start();
         return wrapper;
     }
 
-    public static TimerWrapper createStopped(String name) {
+    /**
+     * Creates the timer.
+     * @param name name of the timer
+     * @return TimerWrapper
+     */
+    public static TimerWrapper createStopped(final String name) {
         return new TimerWrapper(name);
     }
 
+    /**
+     * Starts the timer.
+     */
     public void start() {
         stopwatch = timer.start();
     }
 
+    /**
+     * Stops the timer.
+     * @return duration in milliseconds
+     */
     public long stop() {
         stopwatch.stop();
         return stopwatch.getDuration(TimeUnit.MILLISECONDS);

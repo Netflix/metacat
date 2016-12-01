@@ -18,15 +18,17 @@ import com.facebook.presto.plugin.jdbc.JdbcClient;
 import com.facebook.presto.plugin.postgresql.PostgreSqlClientModule;
 import com.google.inject.Binder;
 import com.google.inject.Scopes;
+import io.airlift.configuration.ConfigBinder;
 
-import static io.airlift.configuration.ConfigBinder.configBinder;
-
+/**
+ * Guice module.
+ */
 public class MetacatPostgreSqlClientModule extends PostgreSqlClientModule {
     @Override
-    public void configure(Binder binder) {
+    public void configure(final Binder binder) {
         binder.bind(JdbcClient.class).to(MetacatPostgreSqlClient.class).in(Scopes.SINGLETON);
         binder.bind(PostgreSqlJdbcConnector.class).in(Scopes.SINGLETON);
         binder.bind(PostgreSqlJdbcMetadata.class).in(Scopes.SINGLETON);
-        configBinder(binder).bindConfig(BaseJdbcConfig.class);
+        ConfigBinder.configBinder(binder).bindConfig(BaseJdbcConfig.class);
     }
 }

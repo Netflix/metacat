@@ -36,9 +36,9 @@ subprojects {
     apply plugin: 'nebula.source-jar'
     apply plugin: 'java'
     apply plugin: 'groovy'
-//    apply plugin: 'checkstyle'
-//    apply plugin: 'findbugs'
-//    apply plugin: 'pmd'
+    apply plugin: 'checkstyle'
+    apply plugin: 'findbugs'
+    apply plugin: 'pmd'
 
     group = "com.netflix.${githubProjectName}"
 
@@ -54,19 +54,18 @@ subprojects {
         testCompile "cglib:cglib-nodep:3.2.4"
     }
 
-    /* checkstyle { */
-    /*     toolVersion = '6.11' */
-    /*     configFile = new File(project.parent.projectDir, "codequality/checkstyle/checkstyle.xml") */
-    /* } */
+    checkstyle {
+        toolVersion = "6.11"
+        configFile = new File(project.parent.projectDir, "codequality/checkstyle/checkstyle.xml")
+    }
 
-    /* findbugs { */
-    /*     ignoreFailures = true */
-    /*     excludeFilter = new File(project.parent.projectDir, "codequality/findbugs/excludeFilter.xml") */
-    /* } */
+    findbugs {
+        excludeFilter = new File(project.parent.projectDir, "codequality/findbugs/excludeFilter.xml")
+    }
 
-    /* tasks.withType(Pmd) { */
-    /*     reports.html.enabled true */
-    /* } */
+    tasks.withType(Pmd) {
+        reports.html.enabled true
+    }
 
     // Print out full stack traces when our tests fail to assist debugging (e.g., when scanning Jenkins console output)
     tasks.withType(Test) {

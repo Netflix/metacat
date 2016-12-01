@@ -18,6 +18,7 @@ import com.facebook.presto.exception.SchemaAlreadyExistsException;
 import com.facebook.presto.hive.ForHiveMetastore;
 import com.facebook.presto.hive.HiveClientConfig;
 import com.facebook.presto.hive.HiveCluster;
+import com.facebook.presto.hive.HiveErrorCode;
 import com.facebook.presto.hive.HiveMetastoreClient;
 import com.facebook.presto.hive.TableAlreadyExistsException;
 import com.facebook.presto.hive.metastore.CachingHiveMetastore;
@@ -40,157 +41,184 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-import static com.facebook.presto.hive.HiveErrorCode.HIVE_METASTORE_ERROR;
-
 /**
- * Created by amajumdar on 1/16/15.
+ * Hive metastore wrapper.
  */
-public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements MetacatHiveMetastore{
-    private final short ALL_RESULTS = -1;
+public class BaseMetacatHiveMetastore extends CachingHiveMetastore implements MetacatHiveMetastore {
+    private static final short ALL_RESULTS = -1;
 
+    /**
+     * Constructor.
+     * @param hiveCluster cluster
+     * @param executor executor
+     * @param hiveClientConfig config
+     */
     @Inject
-    public BaseMetacatHiveMetastore(HiveCluster hiveCluster,
-            @ForHiveMetastore
-            ExecutorService executor, HiveClientConfig hiveClientConfig) {
+    public BaseMetacatHiveMetastore(final HiveCluster hiveCluster,
+        @ForHiveMetastore
+        final ExecutorService executor, final HiveClientConfig hiveClientConfig) {
         super(hiveCluster, executor, hiveClientConfig);
     }
 
-    public BaseMetacatHiveMetastore(HiveCluster hiveCluster, ExecutorService executor, Duration cacheTtl,
-            Duration refreshInterval) {
+    /**
+     * Constructor.
+     * @param hiveCluster cluster
+     * @param executor executor
+     * @param cacheTtl ttl
+     * @param refreshInterval refresh interval
+     */
+    public BaseMetacatHiveMetastore(final HiveCluster hiveCluster, final ExecutorService executor,
+        final Duration cacheTtl, final Duration refreshInterval) {
         super(hiveCluster, executor, cacheTtl, refreshInterval);
     }
 
-    public void createDatabase(Database database){
-        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
+    @Override
+    public void createDatabase(final Database database) {
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()) {
             client.create_database(database);
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + database.getName(), e);
         } catch (AlreadyExistsException e) {
             throw new SchemaAlreadyExistsException(database.getName(), e);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error creating database", e);
+            throw new PrestoException(HiveErrorCode.HIVE_METASTORE_ERROR,
+                "Internal server error creating database", e);
         }
     }
 
-    public void updateDatabase(Database database){
-        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
+    @Override
+    public void updateDatabase(final Database database) {
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()) {
             client.alter_database(database.getName(), database);
         } catch (NoSuchObjectException e) {
             throw new SchemaNotFoundException(database.getName(), e);
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + database.getName(), e);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error updating database", e);
+            throw new PrestoException(HiveErrorCode.HIVE_METASTORE_ERROR, "Internal server error updating database", e);
         }
     }
 
-    public void dropDatabase(String dbName) {
-        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
+    @Override
+    public void dropDatabase(final String dbName) {
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()) {
             client.drop_database(dbName, false, false);
-        }
-        catch (NoSuchObjectException e) {
+        } catch (NoSuchObjectException e) {
             throw new SchemaNotFoundException(dbName);
-        }catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error dropping database", e);
+        } catch (Exception e) {
+            throw new PrestoException(HiveErrorCode.HIVE_METASTORE_ERROR, "Internal server error dropping database", e);
         }
     }
 
+    @Override
     public void alterTable(final Table table) {
-        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()) {
             client.alter_table(table.getDbName(), table.getTableName(), table);
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(new SchemaTableName(table.getDbName(), table.getTableName()), e);
         } catch (AlreadyExistsException e) {
             throw new TableAlreadyExistsException(new SchemaTableName(table.getDbName(), table.getTableName()));
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error altering table", e);
+            throw new PrestoException(HiveErrorCode.HIVE_METASTORE_ERROR, "Internal server error altering table", e);
         }
     }
 
     @Override
-    public List<Table> getTablesByNames(String dbName, List<String> tableNames) {
-        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
-            return client.get_table_objects_by_name( dbName, tableNames);
+    public List<Table> getTablesByNames(final String dbName, final List<String> tableNames) {
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()) {
+            return client.get_table_objects_by_name(dbName, tableNames);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error fetching tables", e);
+            throw new PrestoException(HiveErrorCode.HIVE_METASTORE_ERROR, "Internal server error fetching tables", e);
         }
     }
 
-    public List<Partition> getPartitions(String dbName, String tableName, String filter) {
-        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
+    @Override
+    public List<Partition> getPartitions(final String dbName, final String tableName, final String filter) {
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()) {
             return client.get_partitions_by_filter(dbName, tableName, filter, ALL_RESULTS);
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
-        }catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, String.format("Internal server error fetching partitions for table %s.%s", dbName, tableName), e);
-        }
-    }
-
-    public List<Partition> getPartitions(String dbName, String tableName, List<String> partitionIds) {
-        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
-            if( partitionIds != null && !partitionIds.isEmpty()) {
-                return client.get_partitions_by_names(dbName, tableName, partitionIds);
-            } else {
-                return client.get_partitions( dbName, tableName, ALL_RESULTS);
-            }
-        } catch (NoSuchObjectException e) {
-            throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
-        }catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, String.format("Internal server error fetching partitions for table %s.%s", dbName, tableName), e);
+        } catch (Exception e) {
+            throw new PrestoException(HiveErrorCode.HIVE_METASTORE_ERROR,
+                String.format("Internal server error fetching partitions for table %s.%s", dbName, tableName), e);
         }
     }
 
     @Override
-    public void addDropPartitions(String dbName, String tableName,
-            List<Partition> partitions,
-            List<String> delPartitionNames) throws NoSuchObjectException, AlreadyExistsException {
-        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
-            _dropPartitions( client, dbName, tableName, delPartitionNames);
+    public List<Partition> getPartitions(final String dbName, final String tableName, final List<String> partitionIds) {
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()) {
+            if (partitionIds != null && !partitionIds.isEmpty()) {
+                return client.get_partitions_by_names(dbName, tableName, partitionIds);
+            } else {
+                return client.get_partitions(dbName, tableName, ALL_RESULTS);
+            }
+        } catch (NoSuchObjectException e) {
+            throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
+        } catch (Exception e) {
+            throw new PrestoException(HiveErrorCode.HIVE_METASTORE_ERROR,
+                String.format("Internal server error fetching partitions for table %s.%s", dbName, tableName), e);
+        }
+    }
+
+    @Override
+    public void addDropPartitions(final String dbName, final String tableName,
+        final List<Partition> partitions,
+        final List<String> delPartitionNames) throws NoSuchObjectException, AlreadyExistsException {
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()) {
+            dropHivePartitions(client, dbName, tableName, delPartitionNames);
             client.add_partitions(partitions);
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, String.format("Internal server error adding/dropping partitions for table %s.%s", dbName, tableName), e);
+            throw new PrestoException(HiveErrorCode.HIVE_METASTORE_ERROR,
+                String.format("Internal server error adding/dropping partitions for table %s.%s", dbName, tableName),
+                e);
         }
     }
 
-    public void savePartitions(List<Partition> partitions) {
-        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
+    @Override
+    public void savePartitions(final List<Partition> partitions) {
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()) {
             client.add_partitions(partitions);
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, "Internal server error saving partitions", e);
+            throw new PrestoException(HiveErrorCode.HIVE_METASTORE_ERROR, "Internal server error saving partitions", e);
         }
     }
 
-    public void alterPartitions(String dbName, String tableName, List<Partition> partitions) {
-        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
-            client.alter_partitions( dbName, tableName, partitions);
+    @Override
+    public void alterPartitions(final String dbName, final String tableName, final List<Partition> partitions) {
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()) {
+            client.alter_partitions(dbName, tableName, partitions);
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, String.format("Internal server error altering partitions for table %s.%s", dbName, tableName), e);
+            throw new PrestoException(HiveErrorCode.HIVE_METASTORE_ERROR,
+                String.format("Internal server error altering partitions for table %s.%s", dbName, tableName), e);
         }
     }
 
-    public void dropPartitions( String dbName, String tableName, List<String> partitionNames) {
-        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()){
-            _dropPartitions( client, dbName, tableName, partitionNames);
+    @Override
+    public void dropPartitions(final String dbName, final String tableName, final List<String> partitionNames) {
+        try (HiveMetastoreClient client = clientProvider.createMetastoreClient()) {
+            dropHivePartitions(client, dbName, tableName, partitionNames);
         } catch (NoSuchObjectException e) {
             throw new TableNotFoundException(new SchemaTableName(dbName, tableName), e);
-        }catch (Exception e) {
-            throw new PrestoException(HIVE_METASTORE_ERROR, String.format("Internal server error dropping partitions for table %s.%s", dbName, tableName), e);
+        } catch (Exception e) {
+            throw new PrestoException(HiveErrorCode.HIVE_METASTORE_ERROR,
+                String.format("Internal server error dropping partitions for table %s.%s", dbName, tableName), e);
         }
     }
 
-    private void _dropPartitions(HiveMetastoreClient client, String dbName, String tableName, List<String> partitionNames)
-            throws Exception {
-        if( partitionNames != null && !partitionNames.isEmpty()) {
-            DropPartitionsRequest request = new DropPartitionsRequest(dbName, tableName, new RequestPartsSpec(
-                    RequestPartsSpec._Fields.NAMES, partitionNames));
+    private void dropHivePartitions(final HiveMetastoreClient client, final String dbName, final String tableName,
+        final List<String> partitionNames)
+        throws Exception {
+        if (partitionNames != null && !partitionNames.isEmpty()) {
+            final DropPartitionsRequest request = new DropPartitionsRequest(dbName, tableName, new RequestPartsSpec(
+                RequestPartsSpec._Fields.NAMES, partitionNames));
             request.setDeleteData(false);
             client.drop_partitions_req(request);
         }

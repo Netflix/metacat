@@ -13,22 +13,28 @@
 
 package com.netflix.metacat.common.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * Created by amajumdar on 9/22/16.
+ * DB utility.
  */
-public class DBUtil {
-    private static final Logger log = LoggerFactory.getLogger(DBUtil.class);
+@Slf4j
+public final class DBUtil {
+    private DBUtil() {
+    }
 
-    public static Connection getReadConnection(DataSource dataSource){
+    /**
+     * Returns a read only connection.
+     * @param dataSource data source
+     * @return connection
+     */
+    public static Connection getReadConnection(final DataSource dataSource) {
         Connection result = null;
-        try{
+        try {
             result = dataSource.getConnection();
             result.setAutoCommit(true);
             result.setReadOnly(true);
@@ -40,8 +46,12 @@ public class DBUtil {
         return result;
     }
 
-    public static void closeReadConnection(Connection conn){
-        if( conn != null) {
+    /**
+     * Closes the connection.
+     * @param conn connection
+     */
+    public static void closeReadConnection(final Connection conn) {
+        if (conn != null) {
             try {
                 conn.setAutoCommit(false);
                 conn.setReadOnly(false);

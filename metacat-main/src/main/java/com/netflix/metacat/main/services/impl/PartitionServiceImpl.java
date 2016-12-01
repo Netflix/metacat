@@ -31,7 +31,6 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.HasDataMetadata;
 import com.netflix.metacat.common.dto.HasMetadata;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
@@ -54,13 +53,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class PartitionServiceImpl implements PartitionService {
     private static final Logger log = LoggerFactory.getLogger(PartitionServiceImpl.class);
@@ -81,55 +80,62 @@ public class PartitionServiceImpl implements PartitionService {
     @Inject
     Config config;
 
-    private ConnectorPartitionResult getPartitionResult(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable, boolean includePartitionDetails) {
+    private ConnectorPartitionResult getPartitionResult(QualifiedName name, String filter, List<String> partitionNames,
+        Sort sort, Pageable pageable, boolean includePartitionDetails) {
         ConnectorPartitionResult result = null;
         Optional<TableHandle> tableHandle = tableService.getTableHandle(name);
         if (tableHandle.isPresent()) {
-            result = splitManager.getPartitions(tableHandle.get(), filter, partitionNames, sort, pageable, includePartitionDetails);
+            result = splitManager
+                .getPartitions(tableHandle.get(), filter, partitionNames, sort, pageable, includePartitionDetails);
         }
         return result;
     }
 
     @Override
     public List<PartitionDto> list(QualifiedName name, String filter, List<String> partitionNames, Sort sort
-            , Pageable pageable, boolean includeUserDefinitionMetadata, boolean includeUserDataMetadata, boolean includePartitionDetails) {
-        if(Strings.isNullOrEmpty(filter)
-                && (pageable == null || !pageable.isPageable())
-                && (partitionNames == null || partitionNames.isEmpty())
-                && config.getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions().contains(name)){
+        , Pageable pageable, boolean includeUserDefinitionMetadata, boolean includeUserDataMetadata,
+        boolean includePartitionDetails) {
+        if (Strings.isNullOrEmpty(filter)
+            && (pageable == null || !pageable.isPageable())
+            && (partitionNames == null || partitionNames.isEmpty())
+            && config.getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions().contains(name)) {
             throw new IllegalArgumentException(String.format("No filter or limit specified for table %s", name));
         }
-        ConnectorPartitionResult partitionResult = getPartitionResult(name, filter, partitionNames, sort, pageable, includePartitionDetails);
+        ConnectorPartitionResult partitionResult = getPartitionResult(name, filter, partitionNames, sort, pageable,
+            includePartitionDetails);
         List<PartitionDto> result = Collections.emptyList();
         if (partitionResult != null) {
             List<QualifiedName> names = Lists.newArrayList();
             List<String> uris = Lists.newArrayList();
             result = partitionResult.getPartitions().stream()
-                    .map(partition -> {
-                        PartitionDto result1 = toPartitionDto(name, partition );
-                        names.add( result1.getName());
-                        uris.add(result1.getDataUri());
-                        return result1;
-                    })
-                    .collect(Collectors.toList());
-            TagList tags = BasicTagList.of("catalog", name.getCatalogName(), "database", name.getDatabaseName(), "table", name.getTableName());
+                .map(partition -> {
+                    PartitionDto result1 = toPartitionDto(name, partition);
+                    names.add(result1.getName());
+                    uris.add(result1.getDataUri());
+                    return result1;
+                })
+                .collect(Collectors.toList());
+            TagList tags = BasicTagList
+                .of("catalog", name.getCatalogName(), "database", name.getDatabaseName(), "table", name.getTableName());
             DynamicGauge.set(LogConstants.GaugeGetPartitionsCount.toString(), tags, result.size());
-            log.info("Got {} partitions for {} using filter: {} and partition names: {}", result.size(), name, filter, partitionNames);
-            if(includeUserDefinitionMetadata || includeUserDataMetadata){
-                List<ListenableFuture<Map<String,ObjectNode>>> futures = Lists.newArrayList();
+            log.info("Got {} partitions for {} using filter: {} and partition names: {}", result.size(), name, filter,
+                partitionNames);
+            if (includeUserDefinitionMetadata || includeUserDataMetadata) {
+                List<ListenableFuture<Map<String, ObjectNode>>> futures = Lists.newArrayList();
                 futures.add(threadServiceManager.getExecutor().submit(() -> includeUserDefinitionMetadata ?
-                        userMetadataService.getDefinitionMetadataMap(names) :
-                        Maps.newHashMap()));
-                futures.add(threadServiceManager.getExecutor().submit(() -> includeUserDataMetadata?
-                        userMetadataService.getDataMetadataMap(uris):
-                        Maps.newHashMap()));
+                    userMetadataService.getDefinitionMetadataMap(names) :
+                    Maps.newHashMap()));
+                futures.add(threadServiceManager.getExecutor().submit(() -> includeUserDataMetadata ?
+                    userMetadataService.getDataMetadataMap(uris) :
+                    Maps.newHashMap()));
                 try {
-                    List<Map<String,ObjectNode>> metadataResults = Futures.successfulAsList(futures).get(1, TimeUnit.HOURS);
-                    Map<String,ObjectNode> definitionMetadataMap = metadataResults.get(0);
-                    Map<String,ObjectNode> dataMetadataMap = metadataResults.get(1);
+                    List<Map<String, ObjectNode>> metadataResults = Futures.successfulAsList(futures)
+                        .get(1, TimeUnit.HOURS);
+                    Map<String, ObjectNode> definitionMetadataMap = metadataResults.get(0);
+                    Map<String, ObjectNode> dataMetadataMap = metadataResults.get(1);
                     result.forEach(partitionDto -> userMetadataService.populateMetadata(partitionDto
-                            , definitionMetadataMap.get(partitionDto.getName().toString())
-                            , dataMetadataMap.get(partitionDto.getDataUri())));
+                        , definitionMetadataMap.get(partitionDto.getName().toString())
+                        , dataMetadataMap.get(partitionDto.getDataUri())));
                 } catch (Exception e) {
                     Throwables.propagate(e);
                 }
@@ -144,47 +150,49 @@ public class PartitionServiceImpl implements PartitionService {
         Optional<TableHandle> tableHandle = tableService.getTableHandle(name);
         if (tableHandle.isPresent()) {
             Session session = sessionProvider.getSession(name);
-            result = splitManager.getPartitionCount( session, tableHandle.get());
+            result = splitManager.getPartitionCount(session, tableHandle.get());
         }
         return result;
     }
 
     @Override
     public PartitionsSaveResponseDto save(QualifiedName name, List<PartitionDto> partitionDtos
-            , List<String> partitionIdsForDeletes, boolean checkIfExists, boolean alterIfExists) {
+        , List<String> partitionIdsForDeletes, boolean checkIfExists, boolean alterIfExists) {
         PartitionsSaveResponseDto result = new PartitionsSaveResponseDto();
         // If no partitions are passed, then return
-        if( partitionDtos == null || partitionDtos.isEmpty()){
+        if (partitionDtos == null || partitionDtos.isEmpty()) {
             return result;
         }
         TagList tags = BasicTagList.of("catalog", name.getCatalogName(), "database", name.getDatabaseName(), "table",
-                name.getTableName());
+            name.getTableName());
         DynamicGauge.set(LogConstants.GaugeAddPartitions.toString(), tags, partitionDtos.size());
         Session session = sessionProvider.getSession(name);
         TableHandle tableHandle = tableService.getTableHandle(name).orElseThrow(() ->
-                new MetacatNotFoundException("Unable to locate " + name));
+            new MetacatNotFoundException("Unable to locate " + name));
         List<ConnectorPartition> partitions = partitionDtos.stream()
-                .map(prestoConverters::fromPartitionDto)
-                .collect(Collectors.toList());
+            .map(prestoConverters::fromPartitionDto)
+            .collect(Collectors.toList());
         List<HasMetadata> deletePartitions = Lists.newArrayList();
-        if( partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
+        if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
             DynamicGauge.set(LogConstants.GaugeDeletePartitions.toString(), tags, partitionIdsForDeletes.size());
-            ConnectorPartitionResult deletePartitionResult = splitManager.getPartitions(tableHandle, null, partitionIdsForDeletes, null, null, false);
+            ConnectorPartitionResult deletePartitionResult = splitManager
+                .getPartitions(tableHandle, null, partitionIdsForDeletes, null, null, false);
             deletePartitions = deletePartitionResult.getPartitions().stream()
-                    .map(partition -> toPartitionDto(name, partition ))
-                    .collect(Collectors.toList());
+                .map(partition -> toPartitionDto(name, partition))
+                .collect(Collectors.toList());
         }
         //
         // Save all the new and updated partitions
         //
         log.info("Saving partitions({}) for {}", partitions.size(), name);
-        SavePartitionResult savePartitionResult = splitManager.savePartitions(tableHandle, partitions, partitionIdsForDeletes,
+        SavePartitionResult savePartitionResult = splitManager
+            .savePartitions(tableHandle, partitions, partitionIdsForDeletes,
                 checkIfExists, alterIfExists);
 
         // Save metadata
         log.info("Saving user metadata for partitions for {}", name);
         // delete metadata
-        if( !deletePartitions.isEmpty()) {
+        if (!deletePartitions.isEmpty()) {
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIdsForDeletes, name);
             deleteMetadatas(session.getUser(), deletePartitions);
         }
@@ -198,20 +206,22 @@ public class PartitionServiceImpl implements PartitionService {
 
     @Override
     public void delete(QualifiedName name, List<String> partitionIds) {
-        TagList tags = BasicTagList.of("catalog", name.getCatalogName(), "database", name.getDatabaseName(), "table", name.getTableName());
+        TagList tags = BasicTagList
+            .of("catalog", name.getCatalogName(), "database", name.getDatabaseName(), "table", name.getTableName());
         DynamicGauge.set(LogConstants.GaugeDeletePartitions.toString(), tags, partitionIds.size());
         Optional<TableHandle> tableHandle = tableService.getTableHandle(name);
-        if( !tableHandle.isPresent()){
+        if (!tableHandle.isPresent()) {
             throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
         }
         if (!partitionIds.isEmpty()) {
             Session session = sessionProvider.getSession(name);
-            ConnectorPartitionResult partitionResult = splitManager.getPartitions(tableHandle.get(), null, partitionIds, null, null, false);
+            ConnectorPartitionResult partitionResult = splitManager
+                .getPartitions(tableHandle.get(), null, partitionIds, null, null, false);
             log.info("Deleting partitions with names {} for {}", partitionIds, name);
-            splitManager.deletePartitions( tableHandle.get(), partitionIds);
+            splitManager.deletePartitions(tableHandle.get(), partitionIds);
             List<HasMetadata> partitions = partitionResult.getPartitions().stream()
-                    .map(partition -> toPartitionDto(name, partition ))
-                    .collect(Collectors.toList());
+                .map(partition -> toPartitionDto(name, partition))
+                .collect(Collectors.toList());
             // delete metadata
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIds, name);
             deleteMetadatas(session.getUser(), partitions);
@@ -224,28 +234,28 @@ public class PartitionServiceImpl implements PartitionService {
     }
 
     @Override
-    public List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch){
+    public List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch) {
         return getQualifiedNames(Lists.newArrayList(uri), prefixSearch).values().stream().flatMap(Collection::stream)
-                .collect(Collectors.toList());
+            .collect(Collectors.toList());
     }
 
     @Override
     public Map<String, List<QualifiedName>> getQualifiedNames(List<String> uris, boolean prefixSearch) {
-        Map<String,List<QualifiedName>> result = Maps.newConcurrentMap();
+        Map<String, List<QualifiedName>> result = Maps.newConcurrentMap();
         List<ListenableFuture<Void>> futures = Lists.newArrayList();
         catalogService.getCatalogNames().forEach(catalog -> {
             Session session = sessionProvider.getSession(QualifiedName.ofCatalog(catalog.getCatalogName()));
             futures.add(threadServiceManager.getExecutor().submit(() -> {
                 Map<String, List<SchemaTablePartitionName>> schemaTablePartitionNames = splitManager
-                        .getPartitionNames(session, uris, prefixSearch);
+                    .getPartitionNames(session, uris, prefixSearch);
                 schemaTablePartitionNames.forEach((uri, schemaTablePartitionNames1) -> {
                     List<QualifiedName> partitionNames = schemaTablePartitionNames1.stream().map(
-                            schemaTablePartitionName -> QualifiedName.ofPartition(catalog.getConnectorName()
-                                    , schemaTablePartitionName.getTableName().getSchemaName()
-                                    , schemaTablePartitionName.getTableName().getTableName()
-                                    , schemaTablePartitionName.getPartitionId())).collect(Collectors.toList());
+                        schemaTablePartitionName -> QualifiedName.ofPartition(catalog.getConnectorName()
+                            , schemaTablePartitionName.getTableName().getSchemaName()
+                            , schemaTablePartitionName.getTableName().getTableName()
+                            , schemaTablePartitionName.getPartitionId())).collect(Collectors.toList());
                     List<QualifiedName> existingPartitionNames = result.get(uri);
-                    if( existingPartitionNames == null){
+                    if (existingPartitionNames == null) {
                         result.put(uri, partitionNames);
                     } else {
                         existingPartitionNames.addAll(partitionNames);
@@ -264,7 +274,7 @@ public class PartitionServiceImpl implements PartitionService {
 
     @Override
     public List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
-            Pageable pageable) {
+        Pageable pageable) {
         List<String> result = Lists.newArrayList();
         Optional<TableHandle> tableHandle = tableService.getTableHandle(name);
         if (tableHandle.isPresent()) {
@@ -275,7 +285,7 @@ public class PartitionServiceImpl implements PartitionService {
 
     @Override
     public List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
-            Pageable pageable) {
+        Pageable pageable) {
         List<String> result = Lists.newArrayList();
         Optional<TableHandle> tableHandle = tableService.getTableHandle(name);
         if (tableHandle.isPresent()) {
@@ -285,43 +295,60 @@ public class PartitionServiceImpl implements PartitionService {
     }
 
     @Override
-    public void create( @Nonnull QualifiedName name, @Nonnull PartitionDto dto) {
-        save( name, Lists.newArrayList(dto), null, false, false);
+    public void create(
+        @Nonnull
+            QualifiedName name,
+        @Nonnull
+            PartitionDto dto) {
+        save(name, Lists.newArrayList(dto), null, false, false);
     }
 
     @Override
-    public void update(@Nonnull QualifiedName name, @Nonnull PartitionDto dto) {
-        save( name, Lists.newArrayList(dto), null, true, false);
+    public void update(
+        @Nonnull
+            QualifiedName name,
+        @Nonnull
+            PartitionDto dto) {
+        save(name, Lists.newArrayList(dto), null, true, false);
     }
 
     @Override
-    public void delete(@Nonnull QualifiedName name) {
-        QualifiedName tableName = QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
-        delete( tableName, Lists.newArrayList(name.getPartitionName()));
+    public void delete(
+        @Nonnull
+            QualifiedName name) {
+        QualifiedName tableName = QualifiedName
+            .ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
+        delete(tableName, Lists.newArrayList(name.getPartitionName()));
     }
 
     @Override
-    public PartitionDto get(@Nonnull QualifiedName name) {
+    public PartitionDto get(
+        @Nonnull
+            QualifiedName name) {
         PartitionDto result = null;
-        QualifiedName tableName = QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
-        List<PartitionDto> dtos = list( tableName, null, Lists.newArrayList(name.getPartitionName()), null, null, true, true, true);
-        if( !dtos.isEmpty()){
+        QualifiedName tableName = QualifiedName
+            .ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
+        List<PartitionDto> dtos = list(tableName, null, Lists.newArrayList(name.getPartitionName()), null, null, true,
+            true, true);
+        if (!dtos.isEmpty()) {
             result = dtos.get(0);
         }
         return result;
     }
 
     @Override
-    public boolean exists(@Nonnull QualifiedName name) {
-        return get(name)!=null;
+    public boolean exists(
+        @Nonnull
+            QualifiedName name) {
+        return get(name) != null;
     }
 
     private PartitionDto toPartitionDto(QualifiedName tableName, ConnectorPartition partition) {
         QualifiedName partitionName = QualifiedName.ofPartition(
-                tableName.getCatalogName(),
-                tableName.getDatabaseName(),
-                tableName.getTableName(),
-                partition.getPartitionId()
+            tableName.getCatalogName(),
+            tableName.getDatabaseName(),
+            tableName.getTableName(),
+            partition.getPartitionId()
         );
         return prestoConverters.toPartitionDto(partitionName, partition);
     }

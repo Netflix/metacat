@@ -22,16 +22,26 @@ import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import java.util.List;
 import java.util.Map;
 
-public interface PartitionService extends MetacatService<PartitionDto>{
+public interface PartitionService extends MetacatService<PartitionDto> {
     List<PartitionDto> list(QualifiedName name, String filter, List<String> partitionNames,
-            Sort sort, Pageable pageable,
-            boolean includeUserDefinitionMetadata, boolean includeUserDataMetadata, boolean includePartitionDetails);
+        Sort sort, Pageable pageable,
+        boolean includeUserDefinitionMetadata, boolean includeUserDataMetadata, boolean includePartitionDetails);
+
     Integer count(QualifiedName name);
-    PartitionsSaveResponseDto save(QualifiedName name, List<PartitionDto> partitionDtos, List<String> partitionIdsForDeletes,
-            boolean checkIfExists, boolean alterIfExists);
+
+    PartitionsSaveResponseDto save(QualifiedName name, List<PartitionDto> partitionDtos,
+        List<String> partitionIdsForDeletes,
+        boolean checkIfExists, boolean alterIfExists);
+
     void delete(QualifiedName name, List<String> partitionIds);
+
     List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch);
+
     Map<String, List<QualifiedName>> getQualifiedNames(List<String> uris, boolean prefixSearch);
-    List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable);
-    List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort, Pageable pageable);
+
+    List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
+        Pageable pageable);
+
+    List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
+        Pageable pageable);
 }

@@ -15,9 +15,8 @@ package com.netflix.metacat.server.jersey;
 
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.util.MetacatContextManager;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -27,33 +26,34 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 
 /**
- * Created by amajumdar on 8/3/15.
+ * REST filter.
  */
 @Provider
+@Slf4j
 public class MetacatRestFilter implements ContainerRequestFilter, ContainerResponseFilter {
-    private static final Logger log = LoggerFactory.getLogger(MetacatRestFilter.class);
 
     @Override
-    public void filter(ContainerRequestContext requestContext) throws IOException {
+    public void filter(final ContainerRequestContext requestContext) throws IOException {
         String userName = requestContext.getHeaderString(MetacatRequestContext.HEADER_KEY_USER_NAME);
         if (userName == null) {
             userName = "metacat";
         }
-        String clientAppName = requestContext.getHeaderString(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME);
-        String clientHost = requestContext.getHeaderString("X-Forwarded-For");
-        String jobId = requestContext.getHeaderString(MetacatRequestContext.HEADER_KEY_JOB_ID);
+        final String clientAppName = requestContext.getHeaderString(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME);
+        final String clientHost = requestContext.getHeaderString("X-Forwarded-For");
+        final String jobId = requestContext.getHeaderString(MetacatRequestContext.HEADER_KEY_JOB_ID);
         final MetacatRequestContext.DataTypeContext dataTypeContext = EnumUtils.getEnum(
-                MetacatRequestContext.DataTypeContext.class,
-                requestContext.getHeaderString(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT)
+            MetacatRequestContext.DataTypeContext.class,
+            requestContext.getHeaderString(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT)
         );
-        MetacatRequestContext context = new MetacatRequestContext(userName, clientAppName, clientHost, jobId, dataTypeContext);
+        final MetacatRequestContext context = new MetacatRequestContext(userName, clientAppName, clientHost, jobId,
+            dataTypeContext);
         MetacatContextManager.setContext(context);
         log.info(context.toString());
     }
 
     @Override
-    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext)
-            throws IOException {
+    public void filter(final ContainerRequestContext requestContext, final ContainerResponseContext responseContext)
+        throws IOException {
         MetacatContextManager.removeContext();
     }
 }

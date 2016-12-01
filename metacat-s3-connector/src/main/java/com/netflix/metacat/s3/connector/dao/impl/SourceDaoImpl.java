@@ -27,46 +27,52 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created by amajumdar on 1/2/15.
+ * Source DAO impl.
  */
 public class SourceDaoImpl extends IdEntityDaoImpl<Source> implements SourceDao {
-    @Inject
-    public SourceDaoImpl(Provider<EntityManager> em) {
-        super(em);
-    }
-
-    LoadingCache<String, Source> sourceCache = CacheBuilder.newBuilder().expireAfterWrite( 120, TimeUnit.MINUTES).build(
-            new CacheLoader<String, Source> () {
+    private LoadingCache<String, Source> sourceCache = CacheBuilder.newBuilder().expireAfterWrite(120, TimeUnit.MINUTES)
+        .build(
+            new CacheLoader<String, Source>() {
                 @Override
-                public Source load(String name) throws Exception {
+                public Source load(final String name) throws Exception {
                     return loadSource(name);
                 }
             });
+    /**
+     * Constructor.
+     * @param em entity manager
+     */
+    @Inject
+    public SourceDaoImpl(final Provider<EntityManager> em) {
+        super(em);
+    }
 
     @Override
     protected Class<Source> getEntityClass() {
         return Source.class;
     }
 
-    private Source loadSource(String name){
+    private Source loadSource(final String name) {
         return super.getByName(name);
     }
 
-    public Source getByName(String name){
+    @Override
+    public Source getByName(final String name) {
         Source result = null;
         try {
             result = sourceCache.get(name);
         } catch (ExecutionException ignored) {
             //
         }
-        if( result == null){
+        if (result == null) {
             throw new CatalogNotFoundException(name);
         }
         return result;
     }
 
-    public Source getByName(String name, boolean fromCache){
-        if(!fromCache){
+    @Override
+    public Source getByName(final String name, final boolean fromCache) {
+        if (!fromCache) {
             sourceCache.invalidate(name);
         }
         return getByName(name);

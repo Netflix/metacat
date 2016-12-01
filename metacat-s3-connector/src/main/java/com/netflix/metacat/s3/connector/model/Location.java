@@ -22,12 +22,12 @@ import javax.persistence.OneToOne;
 import javax.persistence.UniqueConstraint;
 
 /**
- * Created by amajumdar on 12/22/14.
+ * Location.
  */
 @Entity
-@javax.persistence.Table(name="location",
-        uniqueConstraints= @UniqueConstraint(name="location_u1",columnNames = "table_id"))
-public class Location extends IdEntity{
+@javax.persistence.Table(name = "location",
+    uniqueConstraints = @UniqueConstraint(name = "location_u1", columnNames = "table_id"))
+public class Location extends IdEntity {
     /*
         static belongsTo = [table: Table]
     static hasOne = [schema: Schema, info: Info]
@@ -44,35 +44,35 @@ public class Location extends IdEntity{
         return uri;
     }
 
-    public void setUri(String uri) {
+    public void setUri(final String uri) {
         this.uri = uri;
     }
 
     @OneToOne
-    @JoinColumn(name="table_id", nullable=false)
+    @JoinColumn(name = "table_id", nullable = false)
     public Table getTable() {
         return table;
     }
 
-    public void setTable(Table table) {
+    public void setTable(final Table table) {
         this.table = table;
     }
 
-    @OneToOne(cascade= CascadeType.ALL, fetch= FetchType.EAGER, mappedBy = "location")
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "location")
     public Schema getSchema() {
         return schema;
     }
 
-    public void setSchema(Schema schema) {
+    public void setSchema(final Schema schema) {
         this.schema = schema;
     }
 
-    @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.EAGER, mappedBy = "location")
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "location")
     public Info getInfo() {
         return info;
     }
 
-    public void setInfo(Info info) {
+    public void setInfo(final Info info) {
         this.info = info;
     }
 }
