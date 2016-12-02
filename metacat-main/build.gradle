@@ -39,10 +39,6 @@ dependencies {
     testCompile project(':metacat-common').sourceSets.test.output
 }
 
-tasks.withType(Checkstyle) {
-    exclude '**'
-}
-
 test {
     systemProperty 'metacat.plugin.config.location', 'build/resources/test/etc/catalog'
     systemProperty 'metacat.usermetadata.config.location', 'build/resources/test/usermetadata.properties'
