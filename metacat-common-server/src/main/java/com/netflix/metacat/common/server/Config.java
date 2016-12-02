@@ -158,9 +158,14 @@ public interface Config {
     String getEsIndex();
     /**
      * Elastic search index.
-     * @return elastic search merge index name ( new index to migrate to )
+     * @return elastic search merge index name that's the new index to migrate to
      */
     String getMergeEsIndex();
+    /**
+     * Is in elastic search migration.
+     * @return true if in elastic search migration mode
+     */
+    boolean isIndexMigration();
     /**
      * Lifetime.
      * @return lifetime
@@ -181,5 +186,4 @@ public interface Config {
      * @return Max. number of in clause items in user metadata service queries
      */
     int getUserMetadataMaxInClauseItems();
-    boolean isIndexMigration();
 }

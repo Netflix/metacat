@@ -13,15 +13,21 @@ import javax.inject.Provider;
  * If isIndexMigration is true, it will return the ElasticSearchMigrationUtil
  * otherwise return ElasticSearchUtil
  */
-public class ElasticSearchUtilProvider implements Provider<ElasticSearchUtil>{
+public class ElasticSearchUtilProvider implements Provider<ElasticSearchUtil> {
     private Config config;
     private Client client;
     private MetacatJson metacatJson;
 
+    /**
+     * Constructor.
+     * @param client client
+     * @param config config
+     * @param metacatJson metacatJson
+     */
     @Inject
     public ElasticSearchUtilProvider(
         @Nullable
-        final Client client,
+            final Client client,
         final Config config,
         final MetacatJson metacatJson) {
         this.config = config;
@@ -29,6 +35,7 @@ public class ElasticSearchUtilProvider implements Provider<ElasticSearchUtil>{
         this.metacatJson = metacatJson;
     }
 
+    @Override
     public ElasticSearchUtil get() {
          return config.isIndexMigration() ? new ElasticSearchMigrationUtil(client, config, metacatJson)
             : new ElasticSearchUtil(client, config, metacatJson);

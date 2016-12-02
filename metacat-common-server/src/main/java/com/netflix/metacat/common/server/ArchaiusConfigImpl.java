@@ -82,8 +82,9 @@ public class ArchaiusConfigImpl implements Config {
             .getStringProperty("metacat.type.converter", "com.netflix.metacat.converters.impl.PrestoTypeConverter");
         this.isElasticSearchEnabled = factory.getBooleanProperty("metacat.elacticsearch.enabled", true);
         this.elasticSearchIndexName = factory.getStringProperty("metacat.elacticsearch.index.name", "metacat");
-        this.elasticsearchMigration = factory.getBooleanProperty( "metacat.elacticsearch.migration.enabled", false);
-        this.elasticsearchMergeIndexName = factory.getStringProperty("metacat.elacticsearch.mergeindex.name", "metacat");
+        this.elasticsearchMigration = factory.getBooleanProperty("metacat.elacticsearch.migration.enabled", false);
+        this.elasticsearchMergeIndexName =
+            factory.getStringProperty("metacat.elacticsearch.mergeindex.name", "metacat");
         this.elasticSearchClusterName = factory.getStringProperty("metacat.elacticsearch.cluster.name", null);
         this.elasticSearchClusterNodes = factory.getStringProperty("metacat.elacticsearch.cluster.nodes", null);
         this.elasticSearchClusterPort = factory.getIntProperty("metacat.elacticsearch.cluster.port", 7102);

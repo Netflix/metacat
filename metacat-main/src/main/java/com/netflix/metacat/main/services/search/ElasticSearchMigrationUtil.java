@@ -22,16 +22,24 @@ import org.elasticsearch.client.Client;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Class for migrating the elastic search index to a new one. It overrides the save, update, and softdelete
- * to populate the doc to both the original and new indexes
+ * to populate the doc to both the original and new indices
  */
 public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
     private final String esMergeIndex;
     private final String[] esWriteIndices;
 
+    /**
+     * Constructor.
+     * @param client elastic search client
+     * @param config config
+     * @param metacatJson json utility
+     */
     @Inject
     public ElasticSearchMigrationUtil(
         @Nullable
@@ -44,58 +52,59 @@ public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
     }
 
     /**
-     * Save of a single entity to default index and merge index
+     * Save of a single entity to default index and merge index.
      * @param type index type
      * @param id id of the entity
      * @param body source string of the entity
      */
     @Override
-    public void save(String type, String id, String body) {
-        for ( String _index : esWriteIndices ) {
-            _saveToIndex(type, id, body, _index);
+    public void save(final String type, final String id, final String body) {
+        for (String index : esWriteIndices) {
+            saveToIndex(type, id, body, index);
         }
     }
 
     /**
-     * Bulk save of the docs to default index and merge index
+     * Bulk save of the docs to default index and merge index.
      * @param type index type
      * @param docs metacat documents
      */
     @Override
-    public void save(String type, List<ElasticSearchDoc> docs) {
-        if( docs != null && !docs.isEmpty()) {
-            List<List<ElasticSearchDoc>> partitionedDocs = Lists.partition(docs, 100);
-            partitionedDocs.forEach(subDocs -> _bulkSaveToIndex(type, subDocs, esWriteIndices));
+    public void save(final String type, final List<ElasticSearchDoc> docs) {
+        if (docs != null && !docs.isEmpty()) {
+            final List<List<ElasticSearchDoc>> partitionedDocs = Lists.partition(docs, 100);
+            partitionedDocs.forEach(subDocs -> bulkSaveToIndex(type, subDocs, esWriteIndices));
         }
     }
 
     /**
-     * Marks the document as deleted from default index and copy the marked docs to merge index
+     * Marks the document as deleted from default index and copy the marked docs to merge index.
      * @param type index type
      * @param id doc id
      * @param metacatContext context containing the user name
      */
     @Override
-    public void softDelete(String type, String id, MetacatRequestContext metacatContext) {
+    public void softDelete(final String type, final String id, final MetacatRequestContext metacatContext) {
         //mark the records as soft deleted in the original index
         super.softDelete(type, id, metacatContext);
-        _copyDataToMergeIndex(type, Collections.singletonList(id));
+        copyDataToMergeIndex(type, Collections.singletonList(id));
     }
 
     /**
-     * Marks the document as deleted from default index and copy the marked docs to merge index
+     * Marks the document as deleted from default index and copy the marked docs to merge index.
      * @param type index type
      * @param ids list of doc id
      * @param metacatContext context containing the user name
      */
     @Override
-    protected void _softDelete(String type, List<String> ids, MetacatRequestContext metacatContext) {
-        super._softDelete(type, ids, metacatContext);
-        _copyDataToMergeIndex(type, ids);
+    protected void softDeleteDoc(final String type, final List<String> ids,
+                                 final MetacatRequestContext metacatContext) {
+        super.softDeleteDoc(type, ids, metacatContext);
+        copyDataToMergeIndex(type, ids);
     }
 
     /**
-     * Updates the documents with partial updates with the given fields in default index
+     * Updates the documents with partial updates with the given fields in default index.
      * copy the updated doc to merge index
      * @param type index type
      * @param ids list of doc ids
@@ -103,9 +112,10 @@ public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
      * @param node json that represents the document source
      */
     @Override
-    public void updates(String type, List<String> ids, MetacatRequestContext metacatContext, ObjectNode node) {
+    public void updates(final String type, final List<String> ids,
+                        final MetacatRequestContext metacatContext, final ObjectNode node) {
         super.updates(type, ids, metacatContext, node);
-        _copyDataToMergeIndex(type, ids);
+        copyDataToMergeIndex(type, ids);
     }
 
     /*
@@ -113,12 +123,14 @@ public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
      * @param type index type
      * @param ids list of doc ids
      */
-    private void _copyDataToMergeIndex(String type, List<String> ids) {
-        List<ElasticSearchDoc> docs = new ArrayList<>();
-        ids.forEach(id->{
-                ElasticSearchDoc doc = super.get(type, id);
-                if ( doc != null ) docs.add(doc);
+    private void copyDataToMergeIndex(final String type, final List<String> ids) {
+        final List<ElasticSearchDoc> docs = new ArrayList<>();
+        ids.forEach(id-> {
+                final ElasticSearchDoc doc = super.get(type, id);
+                if (doc != null) {
+                    docs.add(doc);
+                }
             });
-        _bulkSaveToIndex(type, docs, esMergeIndex);
+        bulkSaveToIndex(type, docs, esMergeIndex);
     }
 }

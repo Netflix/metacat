@@ -33,7 +33,7 @@ public class ElasticSearchDoc {
     private String id;
     private Object dto;
     private String user;
-    @Getter private boolean deleted;
+    private boolean deleted;
     private String refreshMarker;
 
     /**
