@@ -40,6 +40,10 @@ public class Pageable {
         this.offset = offset;
     }
 
+    public Integer getOffset() {
+        return offset == null ? Integer.valueOf(0) : offset;
+    }
+
     public boolean isPageable() {
         return limit != null;
     }

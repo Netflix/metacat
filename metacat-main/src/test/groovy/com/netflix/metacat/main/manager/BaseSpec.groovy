@@ -26,6 +26,7 @@ import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.nio.file.Files
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
@@ -99,26 +100,17 @@ class BaseSpec extends Specification {
         props.setProperty('connection-user', mysqlServer.getUser())
         props.setProperty('connection-password', mysqlServer.getPassword())
 
-        File defaultFile = new File('src/test/resources/etc/catalog/default.properties')
-        if( !defaultFile.exists()){
-            defaultFile = new File('metacat-main/src/test/resources/etc/catalog/default.properties')
-        }
+        File defaultFile = new File('build/resources/test/etc/catalog/default.properties')
         props.store(new FileOutputStream(defaultFile), "test")
 
         props.setProperty('javax.jdo.option.url', mysqlServer.getJdbcUrl())
         props.setProperty('javax.jdo.option.username', mysqlServer.getUser())
         props.setProperty('javax.jdo.option.password', mysqlServer.getPassword())
-        File metadataFile = new File('src/test/resources/usermetadata.properties')
-        if( !metadataFile.exists()){
-            metadataFile = new File('metacat-main/src/test/resources/usermetadata.properties')
-        }
+        File metadataFile = new File('build/resources/test/usermetadata.properties')
         props.store(new FileOutputStream(metadataFile), "test")
 
 
-        File prepareFile = new File('src/test/resources/sql/prepare-test.sql')
-        if( !prepareFile.exists()){
-            prepareFile = new File('metacat-main/src/test/resources/sql/prepare-test.sql')
-        }
+        File prepareFile = new File('build/resources/test/sql/prepare-test.sql')
         runScript(DriverManager.getConnection(mysqlServer.getJdbcUrl()), new FileReader(prepareFile), ';')
     }
 
