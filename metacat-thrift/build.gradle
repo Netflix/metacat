@@ -20,7 +20,3 @@ dependencies {
     compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
     compile "com.google.inject.extensions:guice-servlet:${guice_version}"
 }
-
-tasks.withType(Checkstyle) {
-    exclude '**'
-}

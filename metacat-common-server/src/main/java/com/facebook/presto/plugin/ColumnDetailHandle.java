@@ -158,7 +158,7 @@ public class ColumnDetailHandle implements ColumnHandle {
             .append("sortKey=").append(isSortKey).append(", ")
             .append("indexKey=").append(isIndexKey);
 
-        return new ColumnDetailMetadata(columnName, columnType, isPartitionKey == null || isPartitionKey,
+        return new ColumnDetailMetadata(columnName, columnType, isPartitionKey != null && isPartitionKey,
             comments.toString(), false, sourceType, size, isNullable, defaultValue, isSortKey, isIndexKey);
     }
 

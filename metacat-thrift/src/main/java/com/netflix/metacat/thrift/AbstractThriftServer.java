@@ -26,8 +26,6 @@ import org.apache.thrift.server.TServerEventHandler;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
@@ -49,27 +47,47 @@ public abstract class AbstractThriftServer {
     protected final AtomicInteger serverThreadCount = new AtomicInteger(0);
     protected TServer server;
 
-    protected AbstractThriftServer(Config config, int portNumber, String threadPoolNameFormat) {
+    protected AbstractThriftServer(final Config config, final int portNumber, final String threadPoolNameFormat) {
         this.config = config;
         this.portNumber = portNumber;
         this.threadPoolNameFormat = threadPoolNameFormat;
     }
 
+    /**
+     * Returns the thrift processor.
+     * @return thrift processor
+     */
     public abstract TProcessor getProcessor();
 
+    /**
+     * Returns the server event handler.
+     * @return server event handler
+     */
     public abstract TServerEventHandler getServerEventHandler();
 
+    /**
+     * Returns the server name.
+     * @return server name
+     */
     public abstract String getServerName();
 
+    /**
+     * Returns true, if the server event handler exists.
+     * @return true, if the server event handler exists
+     */
     public abstract boolean hasServerEventHandler();
 
+    /**
+     * Server initialization.
+     * @throws Exception error
+     */
     public void start() throws Exception {
         log.info("initializing thrift server {}", getServerName());
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
             .setNameFormat(threadPoolNameFormat)
             .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in thread: " + t.getName(), e))
             .build();
-        ExecutorService executorService = new ThreadPoolExecutor(
+        final ExecutorService executorService = new ThreadPoolExecutor(
             Math.min(2, config.getThriftServerMaxWorkerThreads()),
             config.getThriftServerMaxWorkerThreads(),
             60L,
@@ -77,14 +95,14 @@ public abstract class AbstractThriftServer {
             new SynchronousQueue<>(),
             threadFactory
         );
-        int timeout = config.getThriftServerSocketClientTimeoutInSeconds() * 1000;
-        TServerTransport serverTransport = new TServerSocket(portNumber, timeout);
+        final int timeout = config.getThriftServerSocketClientTimeoutInSeconds() * 1000;
+        final TServerTransport serverTransport = new TServerSocket(portNumber, timeout);
         startServing(executorService, serverTransport);
     }
 
-    private void startServing(ExecutorService executorService, TServerTransport serverTransport) {
+    private void startServing(final ExecutorService executorService, final TServerTransport serverTransport) {
         if (!stopping.get()) {
-            TThreadPoolServer.Args serverArgs = new TThreadPoolServer.Args(serverTransport)
+            final TThreadPoolServer.Args serverArgs = new TThreadPoolServer.Args(serverTransport)
                 .processor(getProcessor())
                 .executorService(executorService);
             server = new TThreadPoolServer(serverArgs);
@@ -92,7 +110,7 @@ public abstract class AbstractThriftServer {
                 server.setServerEventHandler(getServerEventHandler());
             }
 
-            String threadName = getServerName() + "-thread-#" + serverThreadCount.incrementAndGet();
+            final String threadName = getServerName() + "-thread-#" + serverThreadCount.incrementAndGet();
             new Thread(threadName) {
                 @Override
                 public void run() {
@@ -117,6 +135,10 @@ public abstract class AbstractThriftServer {
         }
     }
 
+    /**
+     * Server shutdown.
+     * @throws Exception error
+     */
     public void stop() throws Exception {
         log.info("stopping thrift server {}", getServerName());
         if (stopping.compareAndSet(false, true) && server != null) {

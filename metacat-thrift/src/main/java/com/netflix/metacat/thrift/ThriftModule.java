@@ -15,6 +15,9 @@ package com.netflix.metacat.thrift;
 
 import com.google.inject.AbstractModule;
 
+/**
+ * Guice module.
+ */
 public class ThriftModule extends AbstractModule {
     @Override
     protected void configure() {

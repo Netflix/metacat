@@ -22,6 +22,9 @@ import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.server.TServerEventHandler;
 
+/**
+ * Thrift service.
+ */
 public class CatalogThriftService extends AbstractThriftServer {
     private final String catalogName;
     private final HiveConverters hiveConverters;
@@ -29,9 +32,19 @@ public class CatalogThriftService extends AbstractThriftServer {
     private final PartitionV1 partitionV1;
     private final TypeConverterProvider typeConverterProvider;
 
-    public CatalogThriftService(Config config, TypeConverterProvider typeConverterProvider,
-        HiveConverters hiveConverters, MetacatV1 metacatV1, PartitionV1 partitionV1, String catalogName,
-        int portNumber) {
+    /**
+     * Constructor.
+     * @param config config
+     * @param typeConverterProvider coverter
+     * @param hiveConverters hive converter
+     * @param metacatV1 Metacat V1 resource
+     * @param partitionV1 Partition V1 resource
+     * @param catalogName catalog name
+     * @param portNumber port
+     */
+    public CatalogThriftService(final Config config, final TypeConverterProvider typeConverterProvider,
+        final HiveConverters hiveConverters, final MetacatV1 metacatV1, final PartitionV1 partitionV1,
+        final String catalogName, final int portNumber) {
         super(config, portNumber, "thrift-pool-" + catalogName + "-" + portNumber + "-%d");
         this.hiveConverters = hiveConverters;
         this.typeConverterProvider = typeConverterProvider;

@@ -17,6 +17,7 @@ import com.facebook.presto.hive.$internal.com.facebook.fb303.FacebookBase;
 import com.facebook.presto.hive.$internal.com.facebook.fb303.FacebookService;
 import com.facebook.presto.hive.$internal.com.facebook.fb303.fb_status;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -42,6 +43,7 @@ import com.netflix.metacat.common.monitoring.TimerWrapper;
 import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.converters.HiveConverters;
 import com.netflix.metacat.converters.TypeConverterProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AbortTxnRequest;
@@ -112,8 +114,6 @@ import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
 import org.apache.hadoop.hive.metastore.api.Type;
 import org.apache.hadoop.hive.metastore.api.UnlockRequest;
 import org.apache.thrift.TException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -123,8 +123,10 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+/**
+ * Metacat Hive thrift implementation. This uses the Metacat Resource classes.
+ */
+@Slf4j
 public class CatalogThriftHiveMetastore extends FacebookBase
     implements FacebookService.Iface, ThriftHiveMetastore.Iface {
     private static final Joiner AND_JOINER = Joiner.on(" and ");
@@ -132,11 +134,10 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         .build(new CacheLoader<String, Pattern>() {
             public Pattern load(
                 @Nonnull
-                    String regex) {
+                final String regex) {
                 return Pattern.compile(regex);
             }
         });
-    private static final Logger log = LoggerFactory.getLogger(CatalogThriftHiveMetastore.class);
     private final String catalogName;
     private final Config config;
     private final HiveConverters hiveConverters;
@@ -148,26 +149,35 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         Maps.newHashMap(ImmutableMap.of("users",
             Lists.newArrayList(new PrivilegeGrantInfo("ALL", 0, "hadoop", PrincipalType.ROLE, true))));
 
+    /**
+     * Constructor.
+     * @param config config
+     * @param typeConverterProvider provider
+     * @param hiveConverters hive converter
+     * @param metacatV1 Metacat V1 resource
+     * @param partitionV1 Partition V1 resource
+     * @param catalogName catalog name
+     */
     public CatalogThriftHiveMetastore(
-        Config config,
-        TypeConverterProvider typeConverterProvider,
-        HiveConverters hiveConverters,
-        MetacatV1 metacatV1,
-        PartitionV1 partitionV1,
-        String catalogName
+        final Config config,
+        final TypeConverterProvider typeConverterProvider,
+        final HiveConverters hiveConverters,
+        final MetacatV1 metacatV1,
+        final PartitionV1 partitionV1,
+        final String catalogName
     ) {
         super("CatalogThriftHiveMetastore");
 
-        this.config = checkNotNull(config, "config is null");
+        this.config = Preconditions.checkNotNull(config, "config is null");
         //        this.typeConverterProvider = checkNotNull(typeConverterProvider, "type converters is null");
-        checkNotNull(typeConverterProvider, "type converters is null");
-        this.hiveConverters = checkNotNull(hiveConverters, "hive converters is null");
-        this.v1 = checkNotNull(metacatV1, "metacat api is null");
-        this.partV1 = checkNotNull(partitionV1, "partition api is null");
-        this.catalogName = normalizeIdentifier(checkNotNull(catalogName, "catalog name is required"));
+        Preconditions.checkNotNull(typeConverterProvider, "type converters is null");
+        this.hiveConverters = Preconditions.checkNotNull(hiveConverters, "hive converters is null");
+        this.v1 = Preconditions.checkNotNull(metacatV1, "metacat api is null");
+        this.partV1 = Preconditions.checkNotNull(partitionV1, "partition api is null");
+        this.catalogName = normalizeIdentifier(Preconditions.checkNotNull(catalogName, "catalog name is required"));
     }
 
-    private static String normalizeIdentifier(String s) {
+    private static String normalizeIdentifier(final String s) {
         if (s == null) {
             return null;
         } else {
@@ -176,77 +186,78 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public void abort_txn(AbortTxnRequest rqst) throws TException {
-        throw unimplemented("abort_txn", new Object[] { rqst });
+    public void abort_txn(final AbortTxnRequest rqst) throws TException {
+        throw unimplemented("abort_txn", new Object[] {rqst });
     }
 
     @Override
-    public void add_dynamic_partitions(AddDynamicPartitions rqst) throws TException {
-        throw unimplemented("add_dynamic_partitions", new Object[] { rqst });
+    public void add_dynamic_partitions(final AddDynamicPartitions rqst) throws TException {
+        throw unimplemented("add_dynamic_partitions", new Object[] {rqst });
     }
 
     @Override
-    public Index add_index(Index new_index, Table index_table) throws TException {
-        throw unimplemented("add_index", new Object[] { new_index, index_table });
+    public Index add_index(final Index newIndex, final Table indexTable) throws TException {
+        throw unimplemented("add_index", new Object[] {newIndex, indexTable });
     }
 
     @Override
-    public Partition add_partition(Partition new_part) throws TException {
-        return add_partition_with_environment_context(new_part, null);
+    public Partition add_partition(final Partition newPart) throws TException {
+        return add_partition_with_environment_context(newPart, null);
     }
 
     @Override
-    public Partition add_partition_with_environment_context(Partition new_part, EnvironmentContext ec)
+    public Partition add_partition_with_environment_context(final Partition newPart, final EnvironmentContext ec)
         throws TException {
-        String dbName = normalizeIdentifier(new_part.getDbName());
-        String tableName = normalizeIdentifier(new_part.getTableName());
-        return requestWrapper("add_partition_with_environment_context", new Object[] { dbName, tableName, ec }, () -> {
-            addPartitionsCore(dbName, tableName, ImmutableList.of(new_part), false);
-            return new_part;
+        final String dbName = normalizeIdentifier(newPart.getDbName());
+        final String tableName = normalizeIdentifier(newPart.getTableName());
+        return requestWrapper("add_partition_with_environment_context", new Object[] {dbName, tableName, ec }, () -> {
+            addPartitionsCore(dbName, tableName, ImmutableList.of(newPart), false);
+            return newPart;
         });
     }
 
     @Override
-    public int add_partitions(List<Partition> new_parts) throws TException {
-        if (new_parts == null || new_parts.size() == 0) {
+    public int add_partitions(final List<Partition> newParts) throws TException {
+        if (newParts == null || newParts.size() == 0) {
             return 0;
         }
-        String dbName = normalizeIdentifier(new_parts.get(0).getDbName());
-        String tableName = normalizeIdentifier(new_parts.get(0).getTableName());
-        return requestWrapper("add_partition", new Object[] { dbName, tableName }, () -> {
-            addPartitionsCore(dbName, tableName, new_parts, false);
-            return new_parts.size();
+        final String dbName = normalizeIdentifier(newParts.get(0).getDbName());
+        final String tableName = normalizeIdentifier(newParts.get(0).getTableName());
+        return requestWrapper("add_partition", new Object[] {dbName, tableName }, () -> {
+            addPartitionsCore(dbName, tableName, newParts, false);
+            return newParts.size();
         });
     }
 
     @Override
-    public int add_partitions_pspec(List<PartitionSpec> new_parts) throws TException {
-        throw unimplemented("add_partitions_pspec", new Object[] { new_parts });
+    public int add_partitions_pspec(final List<PartitionSpec> newParts) throws TException {
+        throw unimplemented("add_partitions_pspec", new Object[] {newParts });
     }
 
     @Override
-    public AddPartitionsResult add_partitions_req(AddPartitionsRequest request) throws TException {
-        String dbName = normalizeIdentifier(request.getDbName());
-        String tableName = normalizeIdentifier(request.getTblName());
-        return requestWrapper("add_partition", new Object[] { dbName, tableName }, () -> {
-            List<Partition> partitions = addPartitionsCore(dbName, tableName, request.getParts(),
+    public AddPartitionsResult add_partitions_req(final AddPartitionsRequest request) throws TException {
+        final String dbName = normalizeIdentifier(request.getDbName());
+        final String tableName = normalizeIdentifier(request.getTblName());
+        return requestWrapper("add_partition", new Object[] {dbName, tableName }, () -> {
+            final List<Partition> partitions = addPartitionsCore(dbName, tableName, request.getParts(),
                 request.isIfNotExists());
-            AddPartitionsResult result = new AddPartitionsResult();
+            final AddPartitionsResult result = new AddPartitionsResult();
             result.setPartitions(partitions);
             return result;
         });
     }
 
-    private List<Partition> addPartitionsCore(String dbName, String tblName, List<Partition> parts, boolean ifNotExists)
+    private List<Partition> addPartitionsCore(final String dbName, final String tblName, final List<Partition> parts,
+        final boolean ifNotExists)
         throws TException {
         log.debug("Ignoring {} since metacat save partitions will do an update if it already exists", ifNotExists);
-        TableDto tableDto = v1.getTable(catalogName, dbName, tblName, true, false, false);
+        final TableDto tableDto = v1.getTable(catalogName, dbName, tblName, true, false, false);
         if (tableDto.getPartition_keys() == null || tableDto.getPartition_keys().isEmpty()) {
             throw new MetaException("Unable to add partition to unpartitioned table: " + tableDto.getName());
         }
 
-        PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
-        List<PartitionDto> converted = Lists.newArrayListWithCapacity(parts.size());
+        final PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
+        final List<PartitionDto> converted = Lists.newArrayListWithCapacity(parts.size());
         for (Partition partition : parts) {
             converted.add(hiveConverters.hiveToMetacatPartition(tableDto, partition));
         }
@@ -256,70 +267,75 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public void alter_database(String dbname, Database db) throws TException {
-        throw unimplemented("alter_database", new Object[] { dbname, db });
+    public void alter_database(final String dbname, final Database db) throws TException {
+        throw unimplemented("alter_database", new Object[] {dbname, db });
     }
 
     @Override
-    public void alter_function(String dbName, String funcName, Function newFunc) throws TException {
-        throw unimplemented("alter_function", new Object[] { dbName, funcName, newFunc });
+    public void alter_function(final String dbName, final String funcName, final Function newFunc) throws TException {
+        throw unimplemented("alter_function", new Object[] {dbName, funcName, newFunc });
     }
 
     @Override
-    public void alter_index(String dbname, String base_tbl_name, String idx_name, Index new_idx) throws TException {
-        throw unimplemented("alter_index", new Object[] { dbname, base_tbl_name, idx_name, new_idx });
+    public void alter_index(final String dbname, final String baseTblName, final String idxName,
+        final Index newIdx) throws TException {
+        throw unimplemented("alter_index", new Object[] {dbname, baseTblName, idxName, newIdx });
     }
 
     @Override
-    public void alter_partition(String db_name, String tbl_name, Partition new_part) throws TException {
-        alter_partition_with_environment_context(db_name, tbl_name, new_part, null);
+    public void alter_partition(final String dbName, final String tblName, final Partition newPart) throws TException {
+        alter_partition_with_environment_context(dbName, tblName, newPart, null);
     }
 
     @Override
-    public void alter_partition_with_environment_context(String db_name, String tbl_name, Partition new_part,
-        EnvironmentContext ec) throws TException {
-        String dbName = normalizeIdentifier(db_name);
-        String tableName = normalizeIdentifier(tbl_name);
-        requestWrapper("alter_partition_with_environment_context", new Object[] { dbName, tableName, ec }, () -> {
-            addPartitionsCore(dbName, tableName, ImmutableList.of(new_part), false);
+    public void alter_partition_with_environment_context(final String dbName, final String tblName,
+        final Partition newPart,
+        final EnvironmentContext ec) throws TException {
+        final String databaseName = normalizeIdentifier(dbName);
+        final String tableName = normalizeIdentifier(tblName);
+        requestWrapper("alter_partition_with_environment_context", new Object[] {databaseName, tableName, ec },
+            () -> {
+            addPartitionsCore(dbName, tableName, ImmutableList.of(newPart), false);
             return null;
         });
     }
 
     @Override
-    public void alter_partitions(String db_name, String tbl_name, List<Partition> new_parts) throws TException {
-        String dbName = normalizeIdentifier(db_name);
-        String tableName = normalizeIdentifier(tbl_name);
-        requestWrapper("add_partition", new Object[] { dbName, tableName }, () -> {
-            addPartitionsCore(dbName, tableName, new_parts, false);
+    public void alter_partitions(final String dbName, final String tblName, final List<Partition> newParts)
+        throws TException {
+        final String databaseName = normalizeIdentifier(dbName);
+        final String tableName = normalizeIdentifier(tblName);
+        requestWrapper("add_partition", new Object[] {databaseName, tableName }, () -> {
+            addPartitionsCore(dbName, tableName, newParts, false);
             return null;
         });
     }
 
     @Override
-    public void alter_table(String _dbname, String _tbl_name, Table new_tbl) throws TException {
-        alter_table_with_environment_context(_dbname, _tbl_name, new_tbl, null);
+    public void alter_table(final String dbname, final String tblName, final Table newTbl) throws TException {
+        alter_table_with_environment_context(dbname, tblName, newTbl, null);
     }
 
     @Override
-    public void alter_table_with_cascade(String dbname, String tbl_name, Table new_tbl, boolean cascade)
+    public void alter_table_with_cascade(final String dbname, final String tblName, final Table newTbl,
+        final boolean cascade)
         throws TException {
         //TODO: Add logic to cascade the changes to the partitions
-        alter_table_with_environment_context(dbname, tbl_name, new_tbl, null);
+        alter_table_with_environment_context(dbname, tblName, newTbl, null);
     }
 
     @Override
-    public void alter_table_with_environment_context(String _dbname, String _tbl_name, Table new_tbl,
-        EnvironmentContext environment_context) throws TException {
+    public void alter_table_with_environment_context(final String dbname, final String tblName, final Table newTbl,
+        final EnvironmentContext environmentContext) throws TException {
         requestWrapper("alter_table_with_environment_context",
-            new Object[] { _dbname, _tbl_name, new_tbl, environment_context }, () -> {
-                String dbname = normalizeIdentifier(_dbname);
-                String tbl_name = normalizeIdentifier(_tbl_name);
-                QualifiedName oldName = QualifiedName.ofTable(catalogName, dbname, tbl_name);
-                QualifiedName newName = QualifiedName
-                    .ofTable(catalogName, new_tbl.getDbName(), new_tbl.getTableName());
+            new Object[] {dbname, tblName, newTbl, environmentContext }, () -> {
+                final String databaseName = normalizeIdentifier(dbname);
+                final String tableName = normalizeIdentifier(tblName);
+                final QualifiedName oldName = QualifiedName.ofTable(catalogName, databaseName, tableName);
+                final QualifiedName newName = QualifiedName
+                    .ofTable(catalogName, newTbl.getDbName(), newTbl.getTableName());
 
-                TableDto dto = hiveConverters.hiveToMetacatTable(newName, new_tbl);
+                final TableDto dto = hiveConverters.hiveToMetacatTable(newName, newTbl);
                 if (!oldName.equals(newName)) {
                     v1.renameTable(catalogName, oldName.getDatabaseName(), oldName.getTableName(),
                         newName.getTableName());
@@ -330,182 +346,190 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public Partition append_partition(String db_name, String tbl_name, List<String> part_vals) throws TException {
-        return append_partition_with_environment_context(db_name, tbl_name, part_vals, null);
+    public Partition append_partition(final String dbName, final String tblName, final List<String> partVals)
+        throws TException {
+        return append_partition_with_environment_context(dbName, tblName, partVals, null);
     }
 
     @Override
-    public Partition append_partition_by_name(String db_name, String tbl_name, String part_name) throws TException {
-        return append_partition_by_name_with_environment_context(db_name, tbl_name, part_name, null);
+    public Partition append_partition_by_name(final String dbName, final String tblName, final String partName)
+        throws TException {
+        return append_partition_by_name_with_environment_context(dbName, tblName, partName, null);
     }
 
     @Override
-    public Partition append_partition_by_name_with_environment_context(String db_name, String tbl_name,
-        String part_name, EnvironmentContext environment_context) throws TException {
+    public Partition append_partition_by_name_with_environment_context(final String dbName, final String tblName,
+        final String partName, final EnvironmentContext environmentContext) throws TException {
         return requestWrapper("append_partition_by_name_with_environment_context",
-            new Object[] { db_name, tbl_name, part_name },
-            () -> appendPartitionsCoreAndReturn(db_name, tbl_name, part_name));
+            new Object[] {dbName, tblName, partName },
+            () -> appendPartitionsCoreAndReturn(dbName, tblName, partName));
     }
 
     @Override
-    public Partition append_partition_with_environment_context(String db_name, String tbl_name, List<String> part_vals,
-        EnvironmentContext environment_context) throws TException {
+    public Partition append_partition_with_environment_context(final String dbName, final String tblName,
+        final List<String> partVals, final EnvironmentContext environmentContext) throws TException {
         return requestWrapper("append_partition_by_name_with_environment_context",
-            new Object[] { db_name, tbl_name, part_vals }, () -> {
-                TableDto tableDto = getTableDto(db_name, tbl_name);
-                String partName = hiveConverters.getNameFromPartVals(tableDto, part_vals);
-                appendPartitionsCore(db_name, tbl_name, partName);
+            new Object[] {dbName, tblName, partVals }, () -> {
+                final TableDto tableDto = getTableDto(dbName, tblName);
+                final String partName = hiveConverters.getNameFromPartVals(tableDto, partVals);
+                appendPartitionsCore(dbName, tblName, partName);
                 return hiveConverters.metacatToHivePartition(getPartitionDtoByName(tableDto, partName), tableDto);
             });
     }
 
-    private void appendPartitionsCore(String dbName, String tblName, String partName)
+    private void appendPartitionsCore(final String dbName, final String tblName, final String partName)
         throws TException {
-        PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
-        PartitionDto partitionDto = new PartitionDto();
+        final PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
+        final PartitionDto partitionDto = new PartitionDto();
         partitionDto.setName(QualifiedName.ofPartition(catalogName, dbName, tblName, partName));
         partitionDto.setSerde(new StorageDto());
         partitionsSaveRequestDto.setPartitions(Lists.newArrayList(partitionDto));
         partV1.savePartitions(catalogName, dbName, tblName, partitionsSaveRequestDto);
     }
 
-    private Partition appendPartitionsCoreAndReturn(String dbName, String tblName, String partName)
+    private Partition appendPartitionsCoreAndReturn(final String dbName, final String tblName, final String partName)
         throws TException {
         appendPartitionsCore(dbName, tblName, partName);
         return getPartitionByName(dbName, tblName, partName);
     }
 
     @Override
-    public void cancel_delegation_token(String token_str_form) throws TException {
-        throw unimplemented("cancel_delegation_token", new Object[] { token_str_form });
+    public void cancel_delegation_token(final String tokenStrForm) throws TException {
+        throw unimplemented("cancel_delegation_token", new Object[] {tokenStrForm });
     }
 
     @Override
-    public LockResponse check_lock(CheckLockRequest rqst) throws TException {
-        throw unimplemented("check_lock", new Object[] { rqst });
+    public LockResponse check_lock(final CheckLockRequest rqst) throws TException {
+        throw unimplemented("check_lock", new Object[] {rqst });
     }
 
     @Override
-    public void commit_txn(CommitTxnRequest rqst) throws TException {
-        throw unimplemented("commit_txn", new Object[] { rqst });
+    public void commit_txn(final CommitTxnRequest rqst) throws TException {
+        throw unimplemented("commit_txn", new Object[] {rqst });
     }
 
     @Override
-    public void compact(CompactionRequest rqst) throws TException {
-        throw unimplemented("compact", new Object[] { rqst });
+    public void compact(final CompactionRequest rqst) throws TException {
+        throw unimplemented("compact", new Object[] {rqst });
     }
 
     @Override
-    public void create_database(Database database) throws TException {
-        requestWrapper("create_database", new Object[] { database }, () -> {
-            String dbName = normalizeIdentifier(database.getName());
+    public void create_database(final Database database) throws TException {
+        requestWrapper("create_database", new Object[] {database }, () -> {
+            final String dbName = normalizeIdentifier(database.getName());
             v1.createDatabase(catalogName, dbName, null);
             return null;
         });
     }
 
     @Override
-    public void create_function(Function func) throws TException {
-        throw unimplemented("create_function", new Object[] { func });
+    public void create_function(final Function func) throws TException {
+        throw unimplemented("create_function", new Object[] {func });
     }
 
     @Override
-    public boolean create_role(Role role) throws TException {
-        throw unimplemented("create_role", new Object[] { role });
+    public boolean create_role(final Role role) throws TException {
+        throw unimplemented("create_role", new Object[] {role });
     }
 
     @Override
-    public void create_table(Table tbl) throws TException {
+    public void create_table(final Table tbl) throws TException {
         create_table_with_environment_context(tbl, null);
     }
 
     @Override
-    public void create_table_with_environment_context(Table tbl, EnvironmentContext environment_context)
+    public void create_table_with_environment_context(final Table tbl, final EnvironmentContext environmentContext)
         throws TException {
-        requestWrapper("create_table_with_environment_context", new Object[] { tbl, environment_context }, () -> {
-            String dbname = normalizeIdentifier(tbl.getDbName());
-            String tbl_name = normalizeIdentifier(tbl.getTableName());
-            QualifiedName name = QualifiedName.ofTable(catalogName, dbname, tbl_name);
+        requestWrapper("create_table_with_environment_context", new Object[] {tbl, environmentContext }, () -> {
+            final String dbname = normalizeIdentifier(tbl.getDbName());
+            final String tblName = normalizeIdentifier(tbl.getTableName());
+            final QualifiedName name = QualifiedName.ofTable(catalogName, dbname, tblName);
 
-            TableDto dto = hiveConverters.hiveToMetacatTable(name, tbl);
-            v1.createTable(catalogName, dbname, tbl_name, dto);
+            final TableDto dto = hiveConverters.hiveToMetacatTable(name, tbl);
+            v1.createTable(catalogName, dbname, tblName, dto);
             return null;
         });
     }
 
     @Override
-    public boolean create_type(Type type) throws TException {
-        throw unimplemented("create_type", new Object[] { type });
+    public boolean create_type(final Type type) throws TException {
+        throw unimplemented("create_type", new Object[] {type });
     }
 
     @Override
-    public boolean delete_partition_column_statistics(String db_name, String tbl_name, String part_name,
-        String col_name) throws TException {
+    public boolean delete_partition_column_statistics(final String dbName, final String tblName,
+        final String partName, final String colName) throws TException {
         throw unimplemented("delete_partition_column_statistics",
-            new Object[] { db_name, tbl_name, part_name, col_name });
+            new Object[] {dbName, tblName, partName, colName });
     }
 
     @Override
-    public boolean delete_table_column_statistics(String db_name, String tbl_name, String col_name) throws TException {
-        throw unimplemented("delete_table_column_statistics", new Object[] { db_name, tbl_name, col_name });
-    }
-
-    @Override
-    public void drop_database(String name, boolean deleteData, boolean cascade) throws TException {
-        throw unimplemented("drop_database", new Object[] { name, deleteData, cascade });
-    }
-
-    @Override
-    public void drop_function(String dbName, String funcName) throws TException {
-        throw unimplemented("drop_function", new Object[] { dbName, funcName });
-    }
-
-    @Override
-    public boolean drop_index_by_name(String db_name, String tbl_name, String index_name, boolean deleteData)
+    public boolean delete_table_column_statistics(final String dbName, final String tblName, final String colName)
         throws TException {
-        throw unimplemented("drop_index_by_name", new Object[] { db_name, tbl_name, index_name, deleteData });
+        throw unimplemented("delete_table_column_statistics", new Object[] {dbName, tblName, colName });
     }
 
     @Override
-    public boolean drop_partition(String db_name, String tbl_name, List<String> part_vals, boolean deleteData)
+    public void drop_database(final String name, final boolean deleteData, final boolean cascade) throws TException {
+        throw unimplemented("drop_database", new Object[] {name, deleteData, cascade });
+    }
+
+    @Override
+    public void drop_function(final String dbName, final String funcName) throws TException {
+        throw unimplemented("drop_function", new Object[] {dbName, funcName });
+    }
+
+    @Override
+    public boolean drop_index_by_name(final String dbName, final String tblName, final String indexName,
+        final boolean deleteData)
         throws TException {
-        return drop_partition_with_environment_context(db_name, tbl_name, part_vals, deleteData, null);
+        throw unimplemented("drop_index_by_name", new Object[] {dbName, tblName, indexName, deleteData });
     }
 
     @Override
-    public boolean drop_partition_by_name(String db_name, String tbl_name, String part_name, boolean deleteData)
+    public boolean drop_partition(final String dbName, final String tblName, final List<String> partVals,
+        final boolean deleteData)
         throws TException {
-        return drop_partition_by_name_with_environment_context(db_name, tbl_name, part_name, deleteData, null);
+        return drop_partition_with_environment_context(dbName, tblName, partVals, deleteData, null);
     }
 
     @Override
-    public boolean drop_partition_by_name_with_environment_context(String db_name, String tbl_name, String part_name,
-        boolean deleteData, EnvironmentContext environment_context) throws TException {
+    public boolean drop_partition_by_name(final String dbName, final String tblName, final String partName,
+        final boolean deleteData)
+        throws TException {
+        return drop_partition_by_name_with_environment_context(dbName, tblName, partName, deleteData, null);
+    }
+
+    @Override
+    public boolean drop_partition_by_name_with_environment_context(final String dbName, final String tblName,
+        final String partName, final boolean deleteData, final EnvironmentContext environmentContext)
+        throws TException {
         return requestWrapper("drop_partition_by_name_with_environment_context",
-            new Object[] { db_name, tbl_name, part_name, deleteData, environment_context }, () -> {
-                String dbName = normalizeIdentifier(db_name);
-                String tableName = normalizeIdentifier(tbl_name);
+            new Object[] {dbName, tblName, partName, deleteData, environmentContext }, () -> {
+                final String databaseName = normalizeIdentifier(dbName);
+                final String tableName = normalizeIdentifier(tblName);
 
                 if (deleteData) {
                     log.warn("Ignoring command to delete data for {}/{}/{}/{}",
-                        catalogName, dbName, tableName, part_name);
+                        catalogName, databaseName, tableName, partName);
                 }
 
-                partV1.deletePartitions(catalogName, dbName, tableName, ImmutableList.of(part_name));
+                partV1.deletePartitions(catalogName, databaseName, tableName, ImmutableList.of(partName));
 
                 return true;
             });
     }
 
     @Override
-    public boolean drop_partition_with_environment_context(String db_name, String tbl_name, List<String> part_vals,
-        boolean deleteData, EnvironmentContext environment_context) throws TException {
+    public boolean drop_partition_with_environment_context(final String dbName, final String tblName,
+        final List<String> partVals, final boolean deleteData, final EnvironmentContext environmentContext)
+        throws TException {
         return requestWrapper("drop_partition_with_environment_context",
-            new Object[] { db_name, tbl_name, part_vals, deleteData, environment_context }, () -> {
-                TableDto tableDto = getTableDto(db_name, tbl_name);
-                String partName = hiveConverters.getNameFromPartVals(tableDto, part_vals);
+            new Object[] {dbName, tblName, partVals, deleteData, environmentContext }, () -> {
+                final TableDto tableDto = getTableDto(dbName, tblName);
+                final String partName = hiveConverters.getNameFromPartVals(tableDto, partVals);
 
-                QualifiedName partitionName = getPartitionDtoByName(tableDto, partName).getName();
+                final QualifiedName partitionName = getPartitionDtoByName(tableDto, partName).getName();
 
                 if (deleteData) {
                     log.warn("Ignoring command to delete data for {}/{}/{}/{}", partitionName);
@@ -520,60 +544,62 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public DropPartitionsResult drop_partitions_req(DropPartitionsRequest req) throws TException {
-        throw unimplemented("drop_partitions_req", new Object[] { req });
+    public DropPartitionsResult drop_partitions_req(final DropPartitionsRequest req) throws TException {
+        throw unimplemented("drop_partitions_req", new Object[] {req });
     }
 
     @Override
-    public boolean drop_role(String role_name) throws TException {
-        throw unimplemented("drop_role", new Object[] { role_name });
+    public boolean drop_role(final String roleName) throws TException {
+        throw unimplemented("drop_role", new Object[] {roleName });
     }
 
     @Override
-    public void drop_table(String _dbname, String _name, boolean deleteData) throws TException {
-        drop_table_with_environment_context(_dbname, _name, deleteData, null);
+    public void drop_table(final String dbname, final String name, final boolean deleteData) throws TException {
+        drop_table_with_environment_context(dbname, name, deleteData, null);
     }
 
     @Override
-    public void drop_table_with_environment_context(String _dbname, String _name, boolean deleteData,
-        EnvironmentContext ec) throws TException {
-        requestWrapper("drop_table_with_environment_context", new Object[] { _dbname, _name, deleteData, ec }, () -> {
-            String dbname = normalizeIdentifier(_dbname);
-            String name = normalizeIdentifier(_name);
+    public void drop_table_with_environment_context(final String dbname, final String name,
+        final boolean deleteData,
+        final EnvironmentContext ec) throws TException {
+        requestWrapper("drop_table_with_environment_context", new Object[] {dbname, name, deleteData, ec }, () -> {
+            final String databaseName = normalizeIdentifier(dbname);
+            final String tableName = normalizeIdentifier(name);
 
             if (deleteData) {
-                log.warn("Ignoring command to delete data for {}/{}/{}", catalogName, dbname, name);
+                log.warn("Ignoring command to delete data for {}/{}/{}", catalogName, databaseName, tableName);
             }
 
-            return v1.deleteTable(catalogName, dbname, name);
+            return v1.deleteTable(catalogName, databaseName, tableName);
         });
     }
 
     @Override
-    public boolean drop_type(String type) throws TException {
-        throw unimplemented("drop_type", new Object[] { type });
+    public boolean drop_type(final String type) throws TException {
+        throw unimplemented("drop_type", new Object[] {type });
     }
 
     @Override
-    public Partition exchange_partition(Map<String, String> partitionSpecs, String source_db, String source_table_name,
-        String dest_db, String dest_table_name) throws TException {
+    public Partition exchange_partition(final Map<String, String> partitionSpecs, final String sourceDb,
+        final String sourceTableName,
+        final String destDb, final String destTableName) throws TException {
         throw unimplemented("exchange_partition",
-            new Object[] { partitionSpecs, source_db, source_table_name, dest_db, dest_table_name });
+            new Object[] {partitionSpecs, sourceDb, sourceTableName, destDb, destTableName });
     }
 
     @Override
-    public FireEventResponse fire_listener_event(FireEventRequest rqst) throws TException {
-        throw unimplemented("fire_listener_event", new Object[] { rqst });
+    public FireEventResponse fire_listener_event(final FireEventRequest rqst) throws TException {
+        throw unimplemented("fire_listener_event", new Object[] {rqst });
     }
 
     @Override
-    public String getCpuProfile(int i) throws TException {
+    public String getCpuProfile(final int i) throws TException {
         return "";
     }
 
     @Override
-    public String getMetaConf(String key) throws TException {
-        throw unimplemented("getMetaConf", new Object[] { key });
+    public String getMetaConf(final String key) throws TException {
+        throw unimplemented("getMetaConf", new Object[] {key });
     }
 
     @Override
@@ -589,8 +615,8 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public AggrStats get_aggr_stats_for(PartitionsStatsRequest request) throws TException {
-        throw unimplemented("get_aggr_stats_for", new Object[] { request });
+    public AggrStats get_aggr_stats_for(final PartitionsStatsRequest request) throws TException {
+        throw unimplemented("get_aggr_stats_for", new Object[] {request });
     }
 
     @Override
@@ -599,15 +625,15 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public List<String> get_all_tables(String _db_name) throws TException {
-        String db_name = normalizeIdentifier(_db_name);
-        return requestWrapper("get_all_tables", new Object[] { _db_name },
-            () -> v1.getDatabase(catalogName, db_name, false).getTables());
+    public List<String> get_all_tables(final String dbName) throws TException {
+        final String databaseName = normalizeIdentifier(dbName);
+        return requestWrapper("get_all_tables", new Object[] {dbName },
+            () -> v1.getDatabase(catalogName, databaseName, false).getTables());
     }
 
     @Override
-    public String get_config_value(String name, String defaultValue) throws TException {
-        throw unimplemented("get_config_value", new Object[] { name, defaultValue });
+    public String get_config_value(final String name, final String defaultValue) throws TException {
+        throw unimplemented("get_config_value", new Object[] {name, defaultValue });
     }
 
     @Override
@@ -616,76 +642,80 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public Database get_database(String _name) throws TException {
-        return requestWrapper("get_database", new Object[] { _name }, () -> {
-            String name = normalizeIdentifier(_name);
-            DatabaseDto dto = v1.getDatabase(catalogName, name, true);
+    public Database get_database(final String name) throws TException {
+        return requestWrapper("get_database", new Object[] {name }, () -> {
+            final String databaseName = normalizeIdentifier(name);
+            final DatabaseDto dto = v1.getDatabase(catalogName, databaseName, true);
             return hiveConverters.metacatToHiveDatabase(dto);
         });
     }
 
     @Override
-    public List<String> get_databases(String hivePattern) throws TException {
-        return requestWrapper("get_databases", new Object[] { hivePattern }, () -> {
+    public List<String> get_databases(final String hivePattern) throws TException {
+        return requestWrapper("get_databases", new Object[] {hivePattern }, () -> {
             // Unsure about the pattern format.  I couldn't find any tests.  Assuming it is regex.
-            Pattern pattern = PATTERNS.getUnchecked("(?i)" + hivePattern);
-            List<String> databaseNames = v1.getCatalog(catalogName).getDatabases();
+            final Pattern pattern = PATTERNS.getUnchecked("(?i)" + hivePattern);
+            final List<String> databaseNames = v1.getCatalog(catalogName).getDatabases();
             return databaseNames.stream().filter(name -> pattern.matcher(name).matches()).collect(Collectors.toList());
         });
     }
 
     @Override
-    public String get_delegation_token(String token_owner, String renewer_kerberos_principal_name) throws TException {
-        throw unimplemented("get_delegation_token", new Object[] { token_owner, renewer_kerberos_principal_name });
+    public String get_delegation_token(final String tokenOwner, final String renewerKerberosPrincipalName)
+        throws TException {
+        throw unimplemented("get_delegation_token", new Object[] {tokenOwner, renewerKerberosPrincipalName });
     }
 
     @Override
-    public List<FieldSchema> get_fields(String db_name, String table_name) throws TException {
-        return get_fields_with_environment_context(db_name, table_name, null);
+    public List<FieldSchema> get_fields(final String dbName, final String tableName) throws TException {
+        return get_fields_with_environment_context(dbName, tableName, null);
     }
 
     @Override
-    public List<FieldSchema> get_fields_with_environment_context(String db_name, String table_name,
-        EnvironmentContext environment_context) throws TException {
+    public List<FieldSchema> get_fields_with_environment_context(final String dbName, final String tableName,
+        final EnvironmentContext environmentContext) throws TException {
         return requestWrapper("get_fields_with_environment_context",
-            new Object[] { db_name, table_name, environment_context }, () -> {
-                Table table = get_table(db_name, table_name);
+            new Object[] {dbName, tableName, environmentContext }, () -> {
+                final Table table = get_table(dbName, tableName);
 
                 if (table == null || table.getSd() == null || table.getSd().getCols() == null) {
-                    throw new MetaException("Unable to get fields for " + db_name + "." + table_name);
+                    throw new MetaException("Unable to get fields for " + dbName + "." + tableName);
                 }
                 return table.getSd().getCols();
             });
     }
 
     @Override
-    public Function get_function(String dbName, String funcName) throws TException {
-        throw unimplemented("get_function", new Object[] { dbName, funcName });
+    public Function get_function(final String dbName, final String funcName) throws TException {
+        throw unimplemented("get_function", new Object[] {dbName, funcName });
     }
 
     @Override
-    public List<String> get_functions(String dbName, String pattern) throws TException {
-        throw unimplemented("get_functions", new Object[] { dbName, pattern });
+    public List<String> get_functions(final String dbName, final String pattern) throws TException {
+        throw unimplemented("get_functions", new Object[] {dbName, pattern });
     }
 
     @Override
-    public Index get_index_by_name(String db_name, String tbl_name, String index_name) throws TException {
-        throw unimplemented("get_index_by_name", new Object[] { db_name, tbl_name, index_name });
+    public Index get_index_by_name(final String dbName, final String tblName, final String indexName)
+        throws TException {
+        throw unimplemented("get_index_by_name", new Object[] {dbName, tblName, indexName });
     }
 
     @Override
-    public List<String> get_index_names(String db_name, String tbl_name, short max_indexes) throws TException {
-        throw unimplemented("get_index_names", new Object[] { db_name, tbl_name, max_indexes });
+    public List<String> get_index_names(final String dbName, final String tblName, final short maxIndexes)
+        throws TException {
+        throw unimplemented("get_index_names", new Object[] {dbName, tblName, maxIndexes });
     }
 
     @Override
-    public List<Index> get_indexes(String db_name, String tbl_name, short max_indexes) throws TException {
-        throw unimplemented("get_indexes", new Object[] { db_name, tbl_name, max_indexes });
+    public List<Index> get_indexes(final String dbName, final String tblName, final short maxIndexes)
+        throws TException {
+        throw unimplemented("get_indexes", new Object[] {dbName, tblName, maxIndexes });
     }
 
     @Override
-    public NotificationEventResponse get_next_notification(NotificationEventRequest rqst) throws TException {
-        throw unimplemented("get_next_notification", new Object[] { rqst });
+    public NotificationEventResponse get_next_notification(final NotificationEventRequest rqst) throws TException {
+        throw unimplemented("get_next_notification", new Object[] {rqst });
     }
 
     @Override
@@ -699,101 +729,108 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public List<PartitionSpec> get_part_specs_by_filter(String db_name, String tbl_name, String filter, int max_parts)
+    public List<PartitionSpec> get_part_specs_by_filter(final String dbName, final String tblName,
+        final String filter, final int maxParts)
         throws TException {
-        throw unimplemented("get_part_specs_by_filter", new Object[] { db_name, tbl_name, filter, max_parts });
+        throw unimplemented("get_part_specs_by_filter", new Object[] {dbName, tblName, filter, maxParts });
     }
 
     @Override
-    public Partition get_partition(String _db_name, String _tbl_name, List<String> part_vals) throws TException {
-        return requestWrapper("get_partition", new Object[] { _db_name, _tbl_name, part_vals }, () -> {
-            TableDto tableDto = getTableDto(_db_name, _tbl_name);
-            String partName = hiveConverters.getNameFromPartVals(tableDto, part_vals);
+    public Partition get_partition(final String dbName, final String tblName, final List<String> partVals)
+        throws TException {
+        return requestWrapper("get_partition", new Object[] {dbName, tblName, partVals }, () -> {
+            final TableDto tableDto = getTableDto(dbName, tblName);
+            final String partName = hiveConverters.getNameFromPartVals(tableDto, partVals);
             return hiveConverters.metacatToHivePartition(getPartitionDtoByName(tableDto, partName), tableDto);
         });
     }
 
     @Override
-    public Partition get_partition_by_name(String _db_name, String _tbl_name, String part_name) throws TException {
-        return requestWrapper("get_partition_by_name", new Object[] { _db_name, _tbl_name, part_name },
-            () -> getPartitionByName(_db_name, _tbl_name, part_name));
+    public Partition get_partition_by_name(final String dbName, final String tblName, final String partName)
+        throws TException {
+        return requestWrapper("get_partition_by_name", new Object[] {dbName, tblName, partName },
+            () -> getPartitionByName(dbName, tblName, partName));
     }
 
-    private TableDto getTableDto(String _db_name, String _tbl_name) {
-        String db_name = normalizeIdentifier(_db_name);
-        String tbl_name = normalizeIdentifier(_tbl_name);
-        return v1.getTable(catalogName, db_name, tbl_name, true, false, false);
+    private TableDto getTableDto(final String dbName, final String tblName) {
+        final String databaseName = normalizeIdentifier(dbName);
+        final String tableName = normalizeIdentifier(tblName);
+        return v1.getTable(catalogName, databaseName, tableName, true, false, false);
     }
 
-    private Partition getPartitionByName(String _db_name, String _tbl_name, String part_name) throws TException {
-        TableDto tableDto = getTableDto(_db_name, _tbl_name);
-        return hiveConverters.metacatToHivePartition(getPartitionDtoByName(tableDto, part_name), tableDto);
+    private Partition getPartitionByName(final String dbName, final String tblName, final String partName
+    ) throws TException {
+        final TableDto tableDto = getTableDto(dbName, tblName);
+        return hiveConverters.metacatToHivePartition(getPartitionDtoByName(tableDto, partName), tableDto);
     }
 
-    private PartitionDto getPartitionDtoByName(TableDto tableDto, String part_name) throws TException {
-        GetPartitionsRequestDto dto = new GetPartitionsRequestDto();
+    private PartitionDto getPartitionDtoByName(final TableDto tableDto, final String partName) throws TException {
+        final GetPartitionsRequestDto dto = new GetPartitionsRequestDto();
         dto.setIncludePartitionDetails(true);
-        dto.setPartitionNames(ImmutableList.of(part_name));
-        List<PartitionDto> partitionDtos = partV1.getPartitionsForRequest(
+        dto.setPartitionNames(ImmutableList.of(partName));
+        final List<PartitionDto> partitionDtos = partV1.getPartitionsForRequest(
             catalogName, tableDto.getName().getDatabaseName(), tableDto.getName().getTableName(), null, null, null,
             null, false, dto);
 
         if (partitionDtos == null || partitionDtos.isEmpty()) {
-            throw new NoSuchObjectException("Partition (" + part_name + ") not found on " + tableDto.getName());
+            throw new NoSuchObjectException("Partition (" + partName + ") not found on " + tableDto.getName());
         } else if (partitionDtos.size() != 1) {
             // I don't think this is even possible
-            throw new NoSuchObjectException("Partition (" + part_name + ") matched extra on " + tableDto.getName());
+            throw new NoSuchObjectException("Partition (" + partName + ") matched extra on " + tableDto.getName());
         }
         return partitionDtos.get(0);
     }
 
     @Override
-    public ColumnStatistics get_partition_column_statistics(String db_name, String tbl_name, String part_name,
-        String col_name) throws TException {
-        throw unimplemented("get_partition_column_statistics", new Object[] { db_name, tbl_name, part_name, col_name });
+    public ColumnStatistics get_partition_column_statistics(final String dbName, final String tblName,
+        final String partName, final String colName) throws TException {
+        throw unimplemented("get_partition_column_statistics", new Object[] {dbName, tblName, partName, colName });
     }
 
     @Override
-    public List<String> get_partition_names(String db_name, String tbl_name, short max_parts) throws TException {
-        String dbName = normalizeIdentifier(db_name);
-        String tableName = normalizeIdentifier(tbl_name);
-        Integer maxValues = max_parts > 0 ? Short.toUnsignedInt(max_parts) : null;
-        return requestWrapper("get_partition_names", new Object[] { dbName, tableName, max_parts }, () -> partV1
-            .getPartitionKeys(catalogName, dbName, tableName, null, null, null, null, maxValues));
+    public List<String> get_partition_names(final String dbName, final String tblName, final short maxParts)
+        throws TException {
+        final String databaseName = normalizeIdentifier(dbName);
+        final String tableName = normalizeIdentifier(tblName);
+        final Integer maxValues = maxParts > 0 ? Short.toUnsignedInt(maxParts) : null;
+        return requestWrapper("get_partition_names", new Object[] {databaseName, tableName, maxParts }, () -> partV1
+            .getPartitionKeys(catalogName, databaseName, tableName, null, null, null, null, maxValues));
     }
 
     @Override
-    public List<String> get_partition_names_ps(String _db_name, String _tbl_name, List<String> part_vals,
-        short max_parts) throws TException {
-        return requestWrapper("get_partition_names_ps", new Object[] { _db_name, _tbl_name, part_vals, max_parts },
+    public List<String> get_partition_names_ps(final String dbName, final String tblName,
+        final List<String> partVals, final short maxParts) throws TException {
+        return requestWrapper("get_partition_names_ps", new Object[] {dbName, tblName, partVals, maxParts },
             () -> {
-                String db_name = normalizeIdentifier(_db_name);
-                String tbl_name = normalizeIdentifier(_tbl_name);
-                String partFilter = partition_values_to_partition_filter(db_name, tbl_name, part_vals);
+                final String databaseName = normalizeIdentifier(dbName);
+                final String tableName = normalizeIdentifier(tblName);
+                final String partFilter = partition_values_to_partition_filter(databaseName, tableName, partVals);
 
-                Integer maxValues = max_parts > 0 ? Short.toUnsignedInt(max_parts) : null;
-                return partV1.getPartitionKeys(catalogName, db_name, tbl_name, partFilter, null, null, null, maxValues);
+                final Integer maxValues = maxParts > 0 ? Short.toUnsignedInt(maxParts) : null;
+                return partV1.getPartitionKeys(catalogName, databaseName, tableName, partFilter, null, null, null,
+                    maxValues);
             });
     }
 
     @Override
-    public Partition get_partition_with_auth(String db_name, String tbl_name, List<String> part_vals, String user_name,
-        List<String> group_names) throws TException {
+    public Partition get_partition_with_auth(final String dbName, final String tblName,
+        final List<String> partVals, final String userName, final List<String> groupNames) throws TException {
         //TODO: Handle setting the privileges
-        return get_partition(db_name, tbl_name, part_vals);
+        return get_partition(dbName, tblName, partVals);
     }
 
     @Override
-    public List<Partition> get_partitions(String db_name, String tbl_name, short max_parts) throws TException {
-        return requestWrapper("get_partitions", new Object[] { db_name, tbl_name, max_parts }, () -> {
-            String dbName = normalizeIdentifier(db_name);
-            String tableName = normalizeIdentifier(tbl_name);
-            TableDto tableDto = v1.getTable(catalogName, dbName, tableName, true, false, false);
+    public List<Partition> get_partitions(final String dbName, final String tblName, final short maxParts)
+        throws TException {
+        return requestWrapper("get_partitions", new Object[] {dbName, tblName, maxParts }, () -> {
+            final String databaseName = normalizeIdentifier(dbName);
+            final String tableName = normalizeIdentifier(tblName);
+            final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
 
-            Integer maxValues = max_parts > 0 ? Short.toUnsignedInt(max_parts) : null;
-            List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, db_name, tbl_name, null, null,
+            final Integer maxValues = maxParts > 0 ? Short.toUnsignedInt(maxParts) : null;
+            final List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, dbName, tblName, null, null,
                 null, null, maxValues, false);
-            List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
+            final List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
             for (PartitionDto partition : metacatPartitions) {
                 result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
             }
@@ -802,22 +839,25 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public PartitionsByExprResult get_partitions_by_expr(PartitionsByExprRequest req) throws TException {
-        throw unimplemented("get_partitions_by_expr", new Object[] { req });
+    public PartitionsByExprResult get_partitions_by_expr(final PartitionsByExprRequest req) throws TException {
+        throw unimplemented("get_partitions_by_expr", new Object[] {req });
     }
 
     @Override
-    public List<Partition> get_partitions_by_filter(String db_name, String tbl_name, String filter, short max_parts)
+    public List<Partition> get_partitions_by_filter(final String dbName, final String tblName, final String filter,
+        final short maxParts)
         throws TException {
-        return requestWrapper("get_partitions_by_filter", new Object[] { db_name, tbl_name, filter, max_parts }, () -> {
-            String dbName = normalizeIdentifier(db_name);
-            String tableName = normalizeIdentifier(tbl_name);
-            TableDto tableDto = v1.getTable(catalogName, dbName, tableName, true, false, false);
+        return requestWrapper("get_partitions_by_filter", new Object[] {dbName, tblName, filter, maxParts },
+            () -> {
+            final String databaseName = normalizeIdentifier(dbName);
+            final String tableName = normalizeIdentifier(tblName);
+            final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
 
-            Integer maxValues = max_parts > 0 ? Short.toUnsignedInt(max_parts) : null;
-            List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, db_name, tbl_name, filter, null,
+            final Integer maxValues = maxParts > 0 ? Short.toUnsignedInt(maxParts) : null;
+            final List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, dbName, tblName,
+                filter, null,
                 null, null, maxValues, false);
-            List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
+            final List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
             for (PartitionDto partition : metacatPartitions) {
                 result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
             }
@@ -826,19 +866,20 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public List<Partition> get_partitions_by_names(String _db_name, String _tbl_name, List<String> names)
+    public List<Partition> get_partitions_by_names(final String dbName, final String tblName,
+        final List<String> names)
         throws TException {
-        return requestWrapper("get_partitions_by_names", new Object[] { _db_name, _tbl_name, names }, () -> {
-            String db_name = normalizeIdentifier(_db_name);
-            String tbl_name = normalizeIdentifier(_tbl_name);
-            TableDto tableDto = v1.getTable(catalogName, db_name, tbl_name, true, false, false);
-
-            GetPartitionsRequestDto dto = new GetPartitionsRequestDto();
+        return requestWrapper("get_partitions_by_names", new Object[] {dbName, tblName, names }, () -> {
+            final String databaseName = normalizeIdentifier(dbName);
+            final String tableName = normalizeIdentifier(tblName);
+            final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
+            final GetPartitionsRequestDto dto = new GetPartitionsRequestDto();
             dto.setIncludePartitionDetails(true);
             dto.setPartitionNames(names);
-            List<PartitionDto> metacatPartitions = partV1.getPartitionsForRequest(catalogName, db_name, tbl_name, null,
+            final List<PartitionDto> metacatPartitions =
+                partV1.getPartitionsForRequest(catalogName, databaseName, tableName, null,
                 null, null, null, false, dto);
-            List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
+            final List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
             for (PartitionDto partition : metacatPartitions) {
                 result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
             }
@@ -847,18 +888,19 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public List<Partition> get_partitions_ps(String db_name, String tbl_name, List<String> part_vals, short max_parts)
+    public List<Partition> get_partitions_ps(final String dbName, final String tblName,
+        final List<String> partVals, final short maxParts)
         throws TException {
-        return requestWrapper("get_partitions_ps", new Object[] { db_name, tbl_name, part_vals, max_parts }, () -> {
-            String dbName = normalizeIdentifier(db_name);
-            String tableName = normalizeIdentifier(tbl_name);
-            TableDto tableDto = v1.getTable(catalogName, dbName, tableName, true, false, false);
-            String partFilter = partition_values_to_partition_filter(tableDto, part_vals);
+        return requestWrapper("get_partitions_ps", new Object[] {dbName, tblName, partVals, maxParts }, () -> {
+            final String databaseName = normalizeIdentifier(dbName);
+            final String tableName = normalizeIdentifier(tblName);
+            final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
+            final String partFilter = partition_values_to_partition_filter(tableDto, partVals);
 
-            Integer maxValues = max_parts > 0 ? Short.toUnsignedInt(max_parts) : null;
-            List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, db_name, tbl_name, partFilter,
+            final Integer maxValues = maxParts > 0 ? Short.toUnsignedInt(maxParts) : null;
+            final List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, dbName, tblName, partFilter,
                 null, null, null, maxValues, false);
-            List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
+            final List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
             for (PartitionDto partition : metacatPartitions) {
                 result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
             }
@@ -867,38 +909,42 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public List<Partition> get_partitions_ps_with_auth(String db_name, String tbl_name, List<String> part_vals,
-        short max_parts, String user_name, List<String> group_names) throws TException {
+    public List<Partition> get_partitions_ps_with_auth(final String dbName, final String tblName,
+        final List<String> partVals,
+        final short maxParts, final String userName, final List<String> groupNames) throws TException {
         //TODO: Handle setting the privileges
-        return get_partitions_ps(db_name, tbl_name, part_vals, max_parts);
+        return get_partitions_ps(dbName, tblName, partVals, maxParts);
     }
 
     @Override
-    public List<PartitionSpec> get_partitions_pspec(String db_name, String tbl_name, int max_parts) throws TException {
-        throw unimplemented("get_partitions_pspec", new Object[] { db_name, tbl_name, max_parts });
-    }
-
-    @Override
-    public PartitionsStatsResult get_partitions_statistics_req(PartitionsStatsRequest request) throws TException {
-        throw unimplemented("get_partitions_statistics_req", new Object[] { request });
-    }
-
-    @Override
-    public List<Partition> get_partitions_with_auth(String db_name, String tbl_name, short max_parts, String user_name,
-        List<String> group_names) throws TException {
-        //TODO: Handle setting the privileges
-        return get_partitions(db_name, tbl_name, max_parts);
-    }
-
-    @Override
-    public GetPrincipalsInRoleResponse get_principals_in_role(GetPrincipalsInRoleRequest request) throws TException {
-        throw unimplemented("get_principals_in_role", new Object[] { request });
-    }
-
-    @Override
-    public PrincipalPrivilegeSet get_privilege_set(HiveObjectRef hiveObject, String userName, List<String> groupNames)
+    public List<PartitionSpec> get_partitions_pspec(final String dbName, final String tblName, final int maxParts)
         throws TException {
-        return requestWrapper("get_privilege_set", new Object[] { hiveObject, userName, groupNames },
+        throw unimplemented("get_partitions_pspec", new Object[] {dbName, tblName, maxParts });
+    }
+
+    @Override
+    public PartitionsStatsResult get_partitions_statistics_req(final PartitionsStatsRequest request) throws TException {
+        throw unimplemented("get_partitions_statistics_req", new Object[] {request });
+    }
+
+    @Override
+    public List<Partition> get_partitions_with_auth(final String dbName, final String tblName, final short maxParts,
+        final String userName, final List<String> groupNames) throws TException {
+        //TODO: Handle setting the privileges
+        return get_partitions(dbName, tblName, maxParts);
+    }
+
+    @Override
+    public GetPrincipalsInRoleResponse get_principals_in_role(final GetPrincipalsInRoleRequest request)
+        throws TException {
+        throw unimplemented("get_principals_in_role", new Object[] {request });
+    }
+
+    @Override
+    public PrincipalPrivilegeSet get_privilege_set(final HiveObjectRef hiveObject, final String userName,
+        final List<String> groupNames)
+        throws TException {
+        return requestWrapper("get_privilege_set", new Object[] {hiveObject, userName, groupNames },
             () -> {
                 Map<String, List<PrivilegeGrantInfo>> groupPrivilegeSet = null;
                 Map<String, List<PrivilegeGrantInfo>> userPrivilegeSet = null;
@@ -917,9 +963,10 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public GetRoleGrantsForPrincipalResponse get_role_grants_for_principal(GetRoleGrantsForPrincipalRequest request)
+    public GetRoleGrantsForPrincipalResponse get_role_grants_for_principal(
+        final GetRoleGrantsForPrincipalRequest request)
         throws TException {
-        throw unimplemented("get_role_grants_for_principal", new Object[] { request });
+        throw unimplemented("get_role_grants_for_principal", new Object[] {request });
     }
 
     @Override
@@ -928,16 +975,16 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public List<FieldSchema> get_schema(String db_name, String table_name) throws TException {
-        return get_schema_with_environment_context(db_name, table_name, null);
+    public List<FieldSchema> get_schema(final String dbName, final String tableName) throws TException {
+        return get_schema_with_environment_context(dbName, tableName, null);
     }
 
     @Override
-    public List<FieldSchema> get_schema_with_environment_context(String db_name, String table_name,
-        EnvironmentContext environment_context) throws TException {
+    public List<FieldSchema> get_schema_with_environment_context(final String dbName, final String tableName,
+        final EnvironmentContext environmentContext) throws TException {
         return requestWrapper("get_schema_with_environment_context",
-            new Object[] { db_name, table_name, environment_context }, () -> {
-                Table table = get_table(db_name, table_name);
+            new Object[] {dbName, tableName, environmentContext }, () -> {
+                final Table table = get_table(dbName, tableName);
                 List<FieldSchema> partitionKeys = Collections.emptyList();
                 List<FieldSchema> columns = Collections.emptyList();
 
@@ -951,10 +998,10 @@ public class CatalogThriftHiveMetastore extends FacebookBase
 
                 if (partitionKeys.isEmpty() && columns.isEmpty()) {
                     throw new MetaException(
-                        "Table does not have any partition keys or cols: " + db_name + "." + table_name);
+                        "Table does not have any partition keys or cols: " + dbName + "." + tableName);
                 }
 
-                List<FieldSchema> result = Lists.newArrayListWithCapacity(partitionKeys.size() + columns.size());
+                final List<FieldSchema> result = Lists.newArrayListWithCapacity(partitionKeys.size() + columns.size());
                 result.addAll(columns);
                 result.addAll(partitionKeys);
                 return result;
@@ -962,183 +1009,187 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public Table get_table(String _dbname, String _tbl_name) throws TException {
-        return requestWrapper("get_table", new Object[] { _dbname, _tbl_name }, () -> {
-            String dbname = normalizeIdentifier(_dbname);
-            String tbl_name = normalizeIdentifier(_tbl_name);
+    public Table get_table(final String dbname, final String tblName) throws TException {
+        return requestWrapper("get_table", new Object[] {dbname, tblName }, () -> {
+            final String databaseName = normalizeIdentifier(dbname);
+            final String tableName = normalizeIdentifier(tblName);
 
-            TableDto dto = v1.getTable(catalogName, dbname, tbl_name, true, true, true);
+            final TableDto dto = v1.getTable(catalogName, databaseName, tableName, true, true, true);
             return hiveConverters.metacatToHiveTable(dto);
         });
     }
 
     @Override
-    public ColumnStatistics get_table_column_statistics(String db_name, String tbl_name, String col_name)
+    public ColumnStatistics get_table_column_statistics(final String dbName, final String tblName,
+        final String colName)
         throws TException {
-        throw unimplemented("get_table_column_statistics", new Object[] { db_name, tbl_name, col_name });
+        throw unimplemented("get_table_column_statistics", new Object[] {dbName, tblName, colName });
     }
 
     @Override
-    public List<String> get_table_names_by_filter(String _dbname, String filter, short max_tables) throws TException {
-        return requestWrapper("get_table_names_by_filter", new Object[] { _dbname, filter, max_tables }, () -> {
-            String dbname = normalizeIdentifier(_dbname);
+    public List<String> get_table_names_by_filter(final String dbname, final String filter, final short maxTables)
+        throws TException {
+        return requestWrapper("get_table_names_by_filter", new Object[] {dbname, filter, maxTables }, () -> {
+            final String databaseName = normalizeIdentifier(dbname);
 
-            List<String> tables = v1.getDatabase(catalogName, dbname, false).getTables();
+            final List<String> tables = v1.getDatabase(catalogName, databaseName, false).getTables();
             // TODO apply filter
             if (!"hive_filter_field_params__presto_view = \"true\"".equals(filter)) {
                 throw new IllegalArgumentException("Unexpected filter: '" + filter + "'");
             }
-            if (max_tables <= 0 || max_tables >= tables.size()) {
+            if (maxTables <= 0 || maxTables >= tables.size()) {
                 return tables;
             } else {
-                return tables.subList(0, max_tables);
+                return tables.subList(0, maxTables);
             }
         });
     }
 
     @Override
-    public List<Table> get_table_objects_by_name(String _dbname, List<String> tbl_names) throws TException {
-        return requestWrapper("get_table_objects_by_name", new Object[] { _dbname, tbl_names }, () -> {
-            String dbname = normalizeIdentifier(_dbname);
-            return tbl_names.stream()
+    public List<Table> get_table_objects_by_name(final String dbname, final List<String> tblNames) throws TException {
+        return requestWrapper("get_table_objects_by_name", new Object[] {dbname, tblNames }, () -> {
+            final String databaseName = normalizeIdentifier(dbname);
+            return tblNames.stream()
                 .map(CatalogThriftHiveMetastore::normalizeIdentifier)
-                .map(name -> v1.getTable(catalogName, dbname, name, true, true, true))
+                .map(name -> v1.getTable(catalogName, databaseName, name, true, true, true))
                 .map(this.hiveConverters::metacatToHiveTable)
                 .collect(Collectors.toList());
         });
     }
 
     @Override
-    public TableStatsResult get_table_statistics_req(TableStatsRequest request) throws TException {
-        throw unimplemented("get_table_statistics_req", new Object[] { request });
+    public TableStatsResult get_table_statistics_req(final TableStatsRequest request) throws TException {
+        throw unimplemented("get_table_statistics_req", new Object[] {request });
     }
 
     @Override
-    public List<String> get_tables(String db_name, String hivePattern) throws TException {
-        return requestWrapper("get_tables", new Object[] { db_name, hivePattern }, () -> {
+    public List<String> get_tables(final String dbName, final String hivePattern) throws TException {
+        return requestWrapper("get_tables", new Object[] {dbName, hivePattern }, () -> {
             // Unsure about the pattern format.  I couldn't find any tests.  Assuming it is regex.
-            Pattern pattern = PATTERNS.getUnchecked("(?i)" + hivePattern);
-            List<String> tableNames = v1.getDatabase(catalogName, db_name, false).getTables();
+            final Pattern pattern = PATTERNS.getUnchecked("(?i)" + hivePattern);
+            final List<String> tableNames = v1.getDatabase(catalogName, dbName, false).getTables();
             return tableNames.stream().filter(name -> pattern.matcher(name).matches()).collect(Collectors.toList());
         });
     }
 
     @Override
-    public Type get_type(String name) throws TException {
-        throw unimplemented("get_type", new Object[] { name });
+    public Type get_type(final String name) throws TException {
+        throw unimplemented("get_type", new Object[] {name });
     }
 
     @Override
-    public Map<String, Type> get_type_all(String name) throws TException {
-        throw unimplemented("get_type_all", new Object[] { name });
+    public Map<String, Type> get_type_all(final String name) throws TException {
+        throw unimplemented("get_type_all", new Object[] {name });
     }
 
     @Override
-    public boolean grant_privileges(PrivilegeBag privileges) throws TException {
-        throw unimplemented("grant_privileges", new Object[] { privileges });
+    public boolean grant_privileges(final PrivilegeBag privileges) throws TException {
+        throw unimplemented("grant_privileges", new Object[] {privileges });
     }
 
     @Override
-    public GrantRevokePrivilegeResponse grant_revoke_privileges(GrantRevokePrivilegeRequest request) throws TException {
-        throw unimplemented("grant_revoke_privileges", new Object[] { request });
-    }
-
-    @Override
-    public GrantRevokeRoleResponse grant_revoke_role(GrantRevokeRoleRequest request) throws TException {
-        throw unimplemented("grant_revoke_role", new Object[] { request });
-    }
-
-    @Override
-    public boolean grant_role(String role_name, String principal_name, PrincipalType principal_type, String grantor,
-        PrincipalType grantorType, boolean grant_option) throws TException {
-        throw unimplemented("grant_role",
-            new Object[] { role_name, principal_name, principal_type, grantor, grantorType });
-    }
-
-    @Override
-    public void heartbeat(HeartbeatRequest ids) throws TException {
-        throw unimplemented("heartbeat", new Object[] { ids });
-    }
-
-    @Override
-    public HeartbeatTxnRangeResponse heartbeat_txn_range(HeartbeatTxnRangeRequest txns) throws TException {
-        throw unimplemented("heartbeat_txn_range", new Object[] { txns });
-    }
-
-    @Override
-    public boolean isPartitionMarkedForEvent(String db_name, String tbl_name, Map<String, String> part_vals,
-        PartitionEventType eventType) throws TException {
-        throw unimplemented("isPartitionMarkedForEvent", new Object[] { db_name, tbl_name, part_vals, eventType });
-    }
-
-    @Override
-    public List<HiveObjectPrivilege> list_privileges(String principal_name, PrincipalType principal_type,
-        HiveObjectRef hiveObject) throws TException {
-        throw unimplemented("list_privileges", new Object[] { principal_name, principal_type, hiveObject });
-    }
-
-    @Override
-    public List<Role> list_roles(String principal_name, PrincipalType principal_type) throws TException {
-        throw unimplemented("list_roles", new Object[] { principal_name, principal_type });
-    }
-
-    @Override
-    public LockResponse lock(LockRequest rqst) throws TException {
-        throw unimplemented("lock", new Object[] { rqst });
-    }
-
-    @Override
-    public void markPartitionForEvent(String db_name, String tbl_name, Map<String, String> part_vals,
-        PartitionEventType eventType) throws TException {
-        throw unimplemented("markPartitionForEvent", new Object[] { db_name, tbl_name, part_vals, eventType });
-    }
-
-    @Override
-    public OpenTxnsResponse open_txns(OpenTxnRequest rqst) throws TException {
-        throw unimplemented("open_txns", new Object[] { rqst });
-    }
-
-    @Override
-    public boolean partition_name_has_valid_characters(List<String> part_vals, boolean throw_exception)
+    public GrantRevokePrivilegeResponse grant_revoke_privileges(final GrantRevokePrivilegeRequest request)
         throws TException {
-        return requestWrapper("partition_name_has_valid_characters", new Object[] { part_vals, throw_exception },
+        throw unimplemented("grant_revoke_privileges", new Object[] {request });
+    }
+
+    @Override
+    public GrantRevokeRoleResponse grant_revoke_role(final GrantRevokeRoleRequest request) throws TException {
+        throw unimplemented("grant_revoke_role", new Object[] {request });
+    }
+
+    @Override
+    public boolean grant_role(final String roleName, final String principalName, final PrincipalType principalType,
+        final String grantor, final PrincipalType grantorType, final boolean grantOption) throws TException {
+        throw unimplemented("grant_role",
+            new Object[] {roleName, principalName, principalType, grantor, grantorType });
+    }
+
+    @Override
+    public void heartbeat(final HeartbeatRequest ids) throws TException {
+        throw unimplemented("heartbeat", new Object[] {ids });
+    }
+
+    @Override
+    public HeartbeatTxnRangeResponse heartbeat_txn_range(final HeartbeatTxnRangeRequest txns) throws TException {
+        throw unimplemented("heartbeat_txn_range", new Object[] {txns });
+    }
+
+    @Override
+    public boolean isPartitionMarkedForEvent(final String dbName, final String tblName,
+        final Map<String, String> partVals, final PartitionEventType eventType) throws TException {
+        throw unimplemented("isPartitionMarkedForEvent", new Object[] {dbName, tblName, partVals, eventType });
+    }
+
+    @Override
+    public List<HiveObjectPrivilege> list_privileges(final String principalName, final PrincipalType principalType,
+        final HiveObjectRef hiveObject) throws TException {
+        throw unimplemented("list_privileges", new Object[] {principalName, principalType, hiveObject });
+    }
+
+    @Override
+    public List<Role> list_roles(final String principalName, final PrincipalType principalType) throws TException {
+        throw unimplemented("list_roles", new Object[] {principalName, principalType });
+    }
+
+    @Override
+    public LockResponse lock(final LockRequest rqst) throws TException {
+        throw unimplemented("lock", new Object[] {rqst });
+    }
+
+    @Override
+    public void markPartitionForEvent(final String dbName, final String tblName,
+        final Map<String, String> partVals,
+        final PartitionEventType eventType) throws TException {
+        throw unimplemented("markPartitionForEvent", new Object[] {dbName, tblName, partVals, eventType });
+    }
+
+    @Override
+    public OpenTxnsResponse open_txns(final OpenTxnRequest rqst) throws TException {
+        throw unimplemented("open_txns", new Object[] {rqst });
+    }
+
+    @Override
+    public boolean partition_name_has_valid_characters(final List<String> partVals, final boolean throwException)
+        throws TException {
+        return requestWrapper("partition_name_has_valid_characters", new Object[] {partVals, throwException },
             () -> {
                 Pattern pattern = null;
-                String partitionPattern = config.getHivePartitionWhitelistPattern();
+                final String partitionPattern = config.getHivePartitionWhitelistPattern();
                 if (!Strings.isNullOrEmpty(partitionPattern)) {
                     pattern = PATTERNS.getUnchecked(partitionPattern);
                 }
-                if (throw_exception) {
-                    MetaStoreUtils.validatePartitionNameCharacters(part_vals, pattern);
+                if (throwException) {
+                    MetaStoreUtils.validatePartitionNameCharacters(partVals, pattern);
                     return true;
                 } else {
-                    return MetaStoreUtils.partitionNameHasValidCharacters(part_vals, pattern);
+                    return MetaStoreUtils.partitionNameHasValidCharacters(partVals, pattern);
                 }
             });
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Map<String, String> partition_name_to_spec(String part_name) throws TException {
-        return requestWrapper("partition_name_to_spec", new Object[] { part_name }, () -> {
-            if (Strings.isNullOrEmpty(part_name)) {
+    public Map<String, String> partition_name_to_spec(final String partName) throws TException {
+        return requestWrapper("partition_name_to_spec", new Object[] {partName }, () -> {
+            if (Strings.isNullOrEmpty(partName)) {
                 return (Map<String, String>) Collections.EMPTY_MAP;
             }
 
-            return Warehouse.makeSpecFromName(part_name);
+            return Warehouse.makeSpecFromName(partName);
         });
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<String> partition_name_to_vals(String part_name) throws TException {
-        return requestWrapper("partition_name_to_vals", new Object[] { part_name }, () -> {
-            if (Strings.isNullOrEmpty(part_name)) {
+    public List<String> partition_name_to_vals(final String partName) throws TException {
+        return requestWrapper("partition_name_to_vals", new Object[] {partName }, () -> {
+            if (Strings.isNullOrEmpty(partName)) {
                 return (List<String>) Collections.EMPTY_LIST;
             }
 
-            Map<String, String> spec = Warehouse.makeSpecFromName(part_name);
-            List<String> vals = Lists.newArrayListWithCapacity(spec.size());
+            final Map<String, String> spec = Warehouse.makeSpecFromName(partName);
+            final List<String> vals = Lists.newArrayListWithCapacity(spec.size());
             vals.addAll(spec.values());
             return vals;
         });
@@ -1148,46 +1199,50 @@ public class CatalogThriftHiveMetastore extends FacebookBase
      * Converts the partial specification given by the part_vals to a Metacat filter statement.
      *
      * @param dbName    the name of the database
-     * @param tableName the name of the table
-     * @param part_vals the partial specification values
-     * @return A Metacat filter expression suitable for selecting out the partitions matching the specification
+     * @param tblName the name of the table
+     * @param partVals the partial specification values
+     * @return A Meta
+     * cat filter expression suitable for selecting out the partitions matching the specification
      * @throws MetaException if there are more part_vals specified than partition columns on the table.
      */
-    String partition_values_to_partition_filter(String dbName, String tableName, List<String> part_vals)
+    @SuppressWarnings("checkstyle:methodname")
+    String partition_values_to_partition_filter(final String dbName, final String tblName,
+        final List<String> partVals)
         throws MetaException {
-        dbName = normalizeIdentifier(dbName);
-        tableName = normalizeIdentifier(tableName);
-        TableDto tableDto = v1.getTable(catalogName, dbName, tableName, true, false, false);
-        return partition_values_to_partition_filter(tableDto, part_vals);
+        final String databaseName = normalizeIdentifier(dbName);
+        final String tableName = normalizeIdentifier(tblName);
+        final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
+        return partition_values_to_partition_filter(tableDto, partVals);
     }
 
     /**
      * Converts the partial specification given by the part_vals to a Metacat filter statement.
      *
      * @param tableDto  the Metacat representation of the table
-     * @param part_vals the partial specification values
+     * @param partVals the partial specification values
      * @return A Metacat filter expression suitable for selecting out the partitions matching the specification
      * @throws MetaException if there are more part_vals specified than partition columns on the table.
      */
-    String partition_values_to_partition_filter(TableDto tableDto, List<String> part_vals)
+    @SuppressWarnings("checkstyle:methodname")
+    String partition_values_to_partition_filter(final TableDto tableDto, final List<String> partVals)
         throws MetaException {
-        if (part_vals.size() > tableDto.getPartition_keys().size()) {
+        if (partVals.size() > tableDto.getPartition_keys().size()) {
             throw new MetaException("Too many partition values for " + tableDto.getName());
         }
 
-        List<FieldDto> fields = tableDto.getFields();
-        List<String> partitionFilters = Lists.newArrayListWithCapacity(fields.size());
+        final List<FieldDto> fields = tableDto.getFields();
+        final List<String> partitionFilters = Lists.newArrayListWithCapacity(fields.size());
         for (int i = 0, partitionIdx = 0; i < fields.size(); i++) {
-            FieldDto f_dto = fields.get(i);
-            if (!f_dto.isPartition_key() || partitionIdx >= part_vals.size()) {
+            final FieldDto fieldDto = fields.get(i);
+            if (!fieldDto.isPartition_key() || partitionIdx >= partVals.size()) {
                 continue;
             }
 
-            String partitionValueFilter = part_vals.get(partitionIdx++);
+            final String partitionValueFilter = partVals.get(partitionIdx++);
 
             // We only filter on partitions with values
             if (!Strings.isNullOrEmpty(partitionValueFilter)) {
-                String filter = "(" + f_dto.getName() + "=";
+                String filter = "(" + fieldDto.getName() + "=";
                 try {
                     filter += Long.parseLong(partitionValueFilter) + ")";
                 } catch (NumberFormatException ignored) {
@@ -1201,32 +1256,34 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     @Override
-    public void rename_partition(String db_name, String tbl_name, List<String> part_vals, Partition new_part)
+    public void rename_partition(final String dbName, final String tblName, final List<String> partVals,
+        final Partition newPart)
         throws TException {
-        requestWrapper("rename_partition", new Object[] { db_name, tbl_name, part_vals }, () -> {
-            TableDto tableDto = getTableDto(db_name, tbl_name);
-            String partName = hiveConverters.getNameFromPartVals(tableDto, part_vals);
-            PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
-            PartitionDto partitionDto = hiveConverters.hiveToMetacatPartition(tableDto, new_part);
+        requestWrapper("rename_partition", new Object[] {dbName, tblName, partVals }, () -> {
+            final TableDto tableDto = getTableDto(dbName, tblName);
+            final String partName = hiveConverters.getNameFromPartVals(tableDto, partVals);
+            final PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
+            final PartitionDto partitionDto = hiveConverters.hiveToMetacatPartition(tableDto, newPart);
             partitionsSaveRequestDto.setPartitions(Lists.newArrayList(partitionDto));
             partitionsSaveRequestDto.setPartitionIdsForDeletes(Lists.newArrayList(partName));
-            partV1.savePartitions(catalogName, db_name, tbl_name, partitionsSaveRequestDto);
+            partV1.savePartitions(catalogName, dbName, tblName, partitionsSaveRequestDto);
             return null;
         });
     }
 
     @Override
-    public long renew_delegation_token(String token_str_form) throws TException {
-        throw unimplemented("renew_delegation_token", new Object[] { token_str_form });
+    public long renew_delegation_token(final String tokenStrForm) throws TException {
+        throw unimplemented("renew_delegation_token", new Object[] {tokenStrForm });
     }
 
-    private TException unimplemented(String methodName, Object[] args) throws TException {
+    private TException unimplemented(final String methodName, final Object[] args) throws TException {
         log.info("+++ Thrift({}): Calling {}({})", catalogName, methodName, args);
         throw new InvalidOperationException("Not implemented yet: " + methodName);
     }
 
-    private <R> R requestWrapper(String methodName, Object[] args, ThriftSupplier<R> supplier) throws TException {
-        TimerWrapper timer = TimerWrapper.createStarted("dse.metacat.thrift.timer." + methodName);
+    private <R> R requestWrapper(final String methodName, final Object[] args, final ThriftSupplier<R> supplier)
+        throws TException {
+        final TimerWrapper timer = TimerWrapper.createStarted("dse.metacat.thrift.timer." + methodName);
         CounterWrapper.incrementCounter("dse.metacat.thrift.counter." + methodName);
         try {
             log.info("+++ Thrift({}): Calling {}({})", catalogName, methodName, args);
@@ -1242,9 +1299,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             throw e;
         } catch (Exception e) {
             CounterWrapper.incrementCounter("dse.metacat.thrift.counter.failure." + methodName);
-            String message = String.format("%s -- %s failed", e.getMessage(), methodName);
+            final String message = String.format("%s -- %s failed", e.getMessage(), methodName);
             log.error(message, e);
-            MetaException me = new MetaException(message);
+            final MetaException me = new MetaException(message);
             me.initCause(e);
             throw me;
         } finally {
@@ -1252,74 +1309,58 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         }
     }
 
-    //    private void revertToDefaultTypeConverter() {
-    //        // Switch back to the original/default type converter
-    //        CatalogThriftEventHandler.CatalogServerRequestContext orig
-    //                = (CatalogThriftEventHandler.CatalogServerRequestContext) MetacatContextManager.getContext();
-    //        CatalogThriftEventHandler.CatalogServerRequestContext context = new CatalogThriftEventHandler.CatalogServerRequestContext(
-    //                orig.getUserName(),
-    //                orig.getClientAppName(),
-    //                orig.getClientId(),
-    //                orig.getJobId(),
-    //                this.typeConverterProvider.getDefaultConverterType(),
-    //                orig.requestThreadId
-    //        );
-    //
-    //        MetacatContextManager.setContext(context);
-    //    }
-
     @Override
-    public boolean revoke_privileges(PrivilegeBag privileges) throws TException {
-        throw unimplemented("revoke_privileges", new Object[] { privileges });
+    public boolean revoke_privileges(final PrivilegeBag privileges) throws TException {
+        throw unimplemented("revoke_privileges", new Object[] {privileges });
     }
 
     @Override
-    public boolean revoke_role(String role_name, String principal_name, PrincipalType principal_type)
+    public boolean revoke_role(final String roleName, final String principalName, final PrincipalType principalType)
         throws TException {
-        throw unimplemented("revoke_role", new Object[] { role_name, principal_name, principal_type });
+        throw unimplemented("revoke_role", new Object[] {roleName, principalName, principalType });
     }
 
     @Override
-    public void setMetaConf(String key, String value) throws TException {
-        throw unimplemented("setMetaConf", new Object[] { key, value });
+    public void setMetaConf(final String key, final String value) throws TException {
+        throw unimplemented("setMetaConf", new Object[] {key, value });
     }
 
     @Override
-    public boolean set_aggr_stats_for(SetPartitionsStatsRequest request) throws TException {
-        throw unimplemented("set_aggr_stats_for", new Object[] { request });
+    public boolean set_aggr_stats_for(final SetPartitionsStatsRequest request) throws TException {
+        throw unimplemented("set_aggr_stats_for", new Object[] {request });
     }
 
     @Override
-    public List<String> set_ugi(String user_name, List<String> group_names) throws TException {
-        return requestWrapper("set_ugi", new Object[] { user_name, group_names }, () -> {
-            Collections.addAll(group_names, user_name);
-            return group_names;
+    public List<String> set_ugi(final String userName, final List<String> groupNames) throws TException {
+        return requestWrapper("set_ugi", new Object[] {userName, groupNames }, () -> {
+            Collections.addAll(groupNames, userName);
+            return groupNames;
         });
     }
 
     @Override
-    public ShowCompactResponse show_compact(ShowCompactRequest rqst) throws TException {
-        throw unimplemented("show_compact", new Object[] { rqst });
+    public ShowCompactResponse show_compact(final ShowCompactRequest rqst) throws TException {
+        throw unimplemented("show_compact", new Object[] {rqst });
     }
 
     @Override
-    public ShowLocksResponse show_locks(ShowLocksRequest rqst) throws TException {
-        throw unimplemented("show_locks", new Object[] { rqst });
+    public ShowLocksResponse show_locks(final ShowLocksRequest rqst) throws TException {
+        throw unimplemented("show_locks", new Object[] {rqst });
     }
 
     @Override
-    public void unlock(UnlockRequest rqst) throws TException {
-        throw unimplemented("unlock", new Object[] { rqst });
+    public void unlock(final UnlockRequest rqst) throws TException {
+        throw unimplemented("unlock", new Object[] {rqst });
     }
 
     @Override
-    public boolean update_partition_column_statistics(ColumnStatistics stats_obj) throws TException {
-        throw unimplemented("update_partition_column_statistics", new Object[] { stats_obj });
+    public boolean update_partition_column_statistics(final ColumnStatistics statsObj) throws TException {
+        throw unimplemented("update_partition_column_statistics", new Object[] {statsObj });
     }
 
     @Override
-    public boolean update_table_column_statistics(ColumnStatistics stats_obj) throws TException {
-        throw unimplemented("update_table_column_statistics", new Object[] { stats_obj });
+    public boolean update_table_column_statistics(final ColumnStatistics statsObj) throws TException {
+        throw unimplemented("update_table_column_statistics", new Object[] {statsObj });
     }
 
     @FunctionalInterface
