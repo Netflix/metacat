@@ -16,24 +16,31 @@ package com.netflix.metacat.main.services;
 import com.facebook.presto.Session;
 import com.facebook.presto.metadata.SessionPropertyManager;
 import com.facebook.presto.spi.security.Identity;
+import com.facebook.presto.spi.type.TimeZoneKey;
 import com.google.inject.Inject;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.main.connector.MetacatConnectorManager;
 
+import java.util.Locale;
 import java.util.Optional;
 
-import static com.facebook.presto.spi.type.TimeZoneKey.UTC_KEY;
-import static java.util.Locale.ENGLISH;
-
+/**
+ * Session provider.
+ */
 public class SessionProvider {
     @Inject
-    MetacatConnectorManager metacatConnectorManager;
+    private MetacatConnectorManager metacatConnectorManager;
     @Inject
-    SessionPropertyManager sessionPropertyManager;
+    private SessionPropertyManager sessionPropertyManager;
 
-    public Session getSession(QualifiedName name) {
+    /**
+     * Creates a session.
+     * @param name name
+     * @return session
+     */
+    public Session getSession(final QualifiedName name) {
         if (name.isDatabaseDefinition() || name.isTableDefinition() || name.isPartitionDefinition() || name
             .isViewDefinition()) {
             return getSession(name.getCatalogName(), name.getDatabaseName());
@@ -42,21 +49,21 @@ public class SessionProvider {
         }
     }
 
-    private Session getSession(String catalogName) {
+    private Session getSession(final String catalogName) {
         return getSession(catalogName, "%");
     }
 
-    private Session getSession(String catalogName, String databaseName) {
-        String source = metacatConnectorManager.getCatalogConfig(catalogName).getType();
-        MetacatRequestContext context = MetacatContextManager.getContext();
+    private Session getSession(final String catalogName, final String databaseName) {
+        final String source = metacatConnectorManager.getCatalogConfig(catalogName).getType();
+        final MetacatRequestContext context = MetacatContextManager.getContext();
         return Session.builder(sessionPropertyManager)
             .setIdentity(new Identity(context.getUserName(), Optional.empty()))
             .setRemoteUserAddress(context.getClientId())
             .setSource(source)
             .setCatalog(catalogName)
             .setSchema(databaseName)
-            .setTimeZoneKey(UTC_KEY)
-            .setLocale(ENGLISH)
+            .setTimeZoneKey(TimeZoneKey.UTC_KEY)
+            .setLocale(Locale.ENGLISH)
             .build();
     }
 }

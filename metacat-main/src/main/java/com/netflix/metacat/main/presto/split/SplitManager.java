@@ -38,6 +38,7 @@ import com.facebook.presto.spi.SavePartitionResult;
 import com.facebook.presto.spi.SchemaTablePartitionName;
 import com.facebook.presto.spi.Sort;
 import com.facebook.presto.spi.TupleDomain;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
 import java.util.List;
@@ -45,20 +46,30 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-
+/**
+ * Split Manager.
+ */
 public class SplitManager {
     private final ConcurrentMap<String, ConnectorSplitManager> splitManagers = new ConcurrentHashMap<>();
 
-    public void addConnectorSplitManager(String connectorId, ConnectorSplitManager connectorSplitManager) {
-        checkState(splitManagers.putIfAbsent(connectorId, connectorSplitManager) == null,
+    /**
+     * Adds connector split manager.
+     * @param connectorId connector id
+     * @param connectorSplitManager manager
+     */
+    public void addConnectorSplitManager(final String connectorId, final ConnectorSplitManager connectorSplitManager) {
+        Preconditions.checkState(splitManagers.putIfAbsent(connectorId, connectorSplitManager) == null,
             "SplitManager for connector '%s' is already registered", connectorId);
     }
 
-    public ConnectorSplitManager getConnectorSplitManager(String connectorId) {
-        ConnectorSplitManager result = splitManagers.get(connectorId);
-        checkArgument(result != null, "No split manager for connector '%s'", connectorId);
+    /**
+     * Gets the split manager.
+     * @param connectorId connector id
+     * @return split manager
+     */
+    public ConnectorSplitManager getConnectorSplitManager(final String connectorId) {
+        final ConnectorSplitManager result = splitManagers.get(connectorId);
+        Preconditions.checkArgument(result != null, "No split manager for connector '%s'", connectorId);
 
         return result;
     }
@@ -69,17 +80,34 @@ public class SplitManager {
     //
     // **********************
 
-    public synchronized void flush(String catalogName) {
+    /**
+     * Flushes the catalog.
+     * @param catalogName catalog name.
+     */
+    public synchronized void flush(final String catalogName) {
         splitManagers.remove(catalogName);
     }
 
+    /**
+     * Flushes all catalogs.
+     */
     public synchronized void flushAll() {
         splitManagers.clear();
     }
 
-    public SavePartitionResult savePartitions(TableHandle table, List<ConnectorPartition> partitions
-        , List<String> partitionIdsForDeletes, boolean checkIfExists, boolean alterIfExists) {
-        ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
+    /**
+     * Saves the list of partitions to the given table <code>name</code>. By default, if a partition exists, it drops
+     * the partition before adding it. If <code>alterIfExists</code> is true, then it will alter the partition.
+     * @param table table handle
+     * @param partitions list of partition info
+     * @param partitionIdsForDeletes list of partition names to be deleted
+     * @param checkIfExists if true, this method checks if any of the partitions exists for the given table
+     * @param alterIfExists if true, the method alters the partition instead of dropping and adding the partition
+     * @return no. of partitions added and updated.
+     */
+    public SavePartitionResult savePartitions(final TableHandle table, final List<ConnectorPartition> partitions,
+        final List<String> partitionIdsForDeletes, final boolean checkIfExists, final boolean alterIfExists) {
+        final ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
         if (splitManager instanceof ConnectorSplitDetailManager) {
             return ((ConnectorSplitDetailManager) splitManager)
                 .savePartitions(table.getConnectorHandle(), partitions, partitionIdsForDeletes,
@@ -89,9 +117,20 @@ public class SplitManager {
         }
     }
 
-    public ConnectorPartitionResult getPartitions(TableHandle table, String filter, List<String> partitionNames,
-        Sort sort, Pageable pageable, boolean includePartitionDetails) {
-        ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
+    /**
+     * Returns the list of partitions.
+     * @param table table handle
+     * @param filter filter expression
+     * @param partitionNames partition names to include
+     * @param sort sort info
+     * @param pageable pagination info
+     * @param includePartitionDetails if true, includes parameter details
+     * @return list of partitions
+     */
+    public ConnectorPartitionResult getPartitions(final TableHandle table, final String filter,
+        final List<String> partitionNames, final Sort sort, final Pageable pageable,
+        final boolean includePartitionDetails) {
+        final ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
         if (splitManager instanceof ConnectorSplitDetailManager) {
             return ((ConnectorSplitDetailManager) splitManager)
                 .getPartitions(table.getConnectorHandle(), filter, partitionNames, sort, pageable,
@@ -101,9 +140,18 @@ public class SplitManager {
         }
     }
 
-    public List<String> getPartitionKeys(TableHandle table, String filter, List<String> partitionNames, Sort sort,
-        Pageable pageable) {
-        ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
+    /**
+     * Returns a list of partition names.
+     * @param table table handle
+     * @param filter filter expression
+     * @param partitionNames names
+     * @param sort sort info
+     * @param pageable pagination info
+     * @return list of partition names
+     */
+    public List<String> getPartitionKeys(final TableHandle table, final String filter,
+        final List<String> partitionNames, final Sort sort, final Pageable pageable) {
+        final ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
         if (splitManager instanceof ConnectorSplitDetailManager) {
             return ((ConnectorSplitDetailManager) splitManager)
                 .getPartitionKeys(table.getConnectorHandle(), filter, partitionNames, sort, pageable);
@@ -112,9 +160,18 @@ public class SplitManager {
         }
     }
 
-    public List<String> getPartitionUris(TableHandle table, String filter, List<String> partitionNames, Sort sort,
-        Pageable pageable) {
-        ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
+    /**
+     * Returns a list of partition uris.
+     * @param table table handle
+     * @param filter filter expression
+     * @param partitionNames names
+     * @param sort sort info
+     * @param pageable pagination info
+     * @return list of partition uris
+     */
+    public List<String> getPartitionUris(final TableHandle table, final String filter,
+        final List<String> partitionNames, final Sort sort, final Pageable pageable) {
+        final ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
         if (splitManager instanceof ConnectorSplitDetailManager) {
             return ((ConnectorSplitDetailManager) splitManager)
                 .getPartitionUris(table.getConnectorHandle(), filter, partitionNames, sort, pageable);
@@ -123,8 +180,14 @@ public class SplitManager {
         }
     }
 
-    public Integer getPartitionCount(Session session, TableHandle table) {
-        ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
+    /**
+     * Partition count for the given table name.
+     * @param session session
+     * @param table table handle
+     * @return no. of partitions
+     */
+    public Integer getPartitionCount(final Session session, final TableHandle table) {
+        final ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
         if (splitManager instanceof ConnectorSplitDetailManager) {
             return ((ConnectorSplitDetailManager) splitManager).getPartitionCount(table.getConnectorHandle());
         } else {
@@ -133,8 +196,13 @@ public class SplitManager {
         }
     }
 
-    public void deletePartitions(TableHandle table, List<String> partitionIds) {
-        ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
+    /**
+     * Deletes the partitions with the given <code>partitionIds</code> for the given table name.
+     * @param table table handle
+     * @param partitionIds partition names
+     */
+    public void deletePartitions(final TableHandle table, final List<String> partitionIds) {
+        final ConnectorSplitManager splitManager = getConnectorSplitManager(table.getConnectorId());
         if (splitManager instanceof ConnectorSplitDetailManager) {
             ((ConnectorSplitDetailManager) splitManager).deletePartitions(table.getConnectorHandle(), partitionIds);
         } else {
@@ -142,12 +210,19 @@ public class SplitManager {
         }
     }
 
-    public Map<String, List<SchemaTablePartitionName>> getPartitionNames(Session session, List<String> uri,
-        boolean prefixSearch) {
-        ConnectorSplitManager splitManager = getConnectorSplitManager(session.getCatalog());
+    /**
+     * Returns a map of uri to partition names.
+     * @param session session
+     * @param uris list of uris
+     * @param prefixSearch if true, this method does a prefix search
+     * @return a map of uri to partition names
+     */
+    public Map<String, List<SchemaTablePartitionName>> getPartitionNames(final Session session, final List<String> uris,
+        final boolean prefixSearch) {
+        final ConnectorSplitManager splitManager = getConnectorSplitManager(session.getCatalog());
         if (splitManager instanceof ConnectorSplitDetailManager) {
-            ConnectorSplitDetailManager splitDetailManager = (ConnectorSplitDetailManager) splitManager;
-            return splitDetailManager.getPartitionNames(uri, prefixSearch);
+            final ConnectorSplitDetailManager splitDetailManager = (ConnectorSplitDetailManager) splitManager;
+            return splitDetailManager.getPartitionNames(uris, prefixSearch);
         }
         return Maps.newHashMap();
     }

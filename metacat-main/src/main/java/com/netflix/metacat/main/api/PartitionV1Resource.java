@@ -15,6 +15,7 @@ package com.netflix.metacat.main.api;
 
 import com.facebook.presto.spi.Pageable;
 import com.facebook.presto.spi.Sort;
+import com.google.common.base.Preconditions;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.api.MetacatV1;
@@ -41,22 +42,28 @@ import com.netflix.metacat.main.services.PartitionService;
 import javax.inject.Inject;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.netflix.metacat.main.api.RequestWrapper.qualifyName;
-import static com.netflix.metacat.main.api.RequestWrapper.requestWrapper;
-
+/**
+ * Partition V1 API implementation.
+ */
 public class PartitionV1Resource implements PartitionV1 {
     private final MViewService mViewService;
     private final MetacatEventBus eventBus;
     private final MetacatV1 v1;
     private final PartitionService partitionService;
 
+    /**
+     * Constructor.
+     * @param eventBus event bus
+     * @param v1 Metacat V1
+     * @param mViewService view service
+     * @param partitionService partition service
+     */
     @Inject
     public PartitionV1Resource(
-        MetacatEventBus eventBus,
-        MetacatV1 v1,
-        MViewService mViewService,
-        PartitionService partitionService) {
+        final MetacatEventBus eventBus,
+        final MetacatV1 v1,
+        final MViewService mViewService,
+        final PartitionService partitionService) {
         this.eventBus = eventBus;
         this.v1 = v1;
         this.mViewService = mViewService;
@@ -64,15 +71,17 @@ public class PartitionV1Resource implements PartitionV1 {
     }
 
     @Override
-    public void deletePartitions(String catalogName, String databaseName, String tableName, List<String> partitionIds) {
-        MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        requestWrapper(name, "deleteTablePartition", () -> {
+    public void deletePartitions(final String catalogName, final String databaseName, final String tableName,
+        final List<String> partitionIds) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        RequestWrapper.requestWrapper(name, "deleteTablePartition", () -> {
             if (partitionIds == null || partitionIds.isEmpty()) {
                 throw new IllegalArgumentException("partitionIds are required");
             }
 
-            PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
+            final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
             dto.setPartitionIdsForDeletes(partitionIds);
             eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, dto));
 
@@ -81,7 +90,7 @@ public class PartitionV1Resource implements PartitionV1 {
             // This metadata is actually for the table, if it is present update that
             if (dto.getDefinitionMetadata() != null
                 || dto.getDataMetadata() != null) {
-                TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, false, false, false);
+                final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, false, false, false);
                 tableDto.setDefinitionMetadata(dto.getDefinitionMetadata());
                 tableDto.setDataMetadata(dto.getDataMetadata());
                 v1.updateTable(catalogName, databaseName, tableName, tableDto);
@@ -94,19 +103,20 @@ public class PartitionV1Resource implements PartitionV1 {
 
     @Override
     public void deletePartitions(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName,
-        List<String> partitionIds) {
-        MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        requestWrapper(name, "deleteMViewPartition", () -> {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName,
+        final List<String> partitionIds) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        RequestWrapper.requestWrapper(name, "deleteMViewPartition", () -> {
             if (partitionIds == null || partitionIds.isEmpty()) {
                 throw new IllegalArgumentException("partitionIds are required");
             }
 
-            PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
+            final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
             dto.setPartitionIdsForDeletes(partitionIds);
             eventBus.postSync(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, dto));
 
@@ -115,7 +125,7 @@ public class PartitionV1Resource implements PartitionV1 {
             // This metadata is actually for the view, if it is present update that
             if (dto.getDefinitionMetadata() != null
                 || dto.getDataMetadata() != null) {
-                TableDto tableDto = v1.getMView(catalogName, databaseName, tableName, viewName);
+                final TableDto tableDto = v1.getMView(catalogName, databaseName, tableName, viewName);
                 tableDto.setDefinitionMetadata(dto.getDefinitionMetadata());
                 tableDto.setDataMetadata(dto.getDataMetadata());
                 v1.updateMView(catalogName, databaseName, tableName, viewName, tableDto);
@@ -128,36 +138,39 @@ public class PartitionV1Resource implements PartitionV1 {
 
     @Override
     public Integer getPartitionCount(
-        String catalogName,
-        String databaseName,
-        String tableName) {
-        QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return requestWrapper(name, "getPartitionCount", () -> partitionService.count(name));
+        final String catalogName,
+        final String databaseName,
+        final String tableName) {
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return RequestWrapper.requestWrapper(name, "getPartitionCount", () -> partitionService.count(name));
     }
 
     @Override
     public Integer getPartitionCount(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName) {
-        QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return requestWrapper(name, "getPartitionCount", () -> mViewService.partitionCount(name));
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName) {
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return RequestWrapper.requestWrapper(name, "getPartitionCount", () -> mViewService.partitionCount(name));
     }
 
     @Override
     public List<PartitionDto> getPartitions(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String filter,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit,
-        Boolean includeUserMetadata) {
-        QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return requestWrapper(name, "getPartitions", () -> {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String filter,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit,
+        final Boolean includeUserMetadata) {
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return RequestWrapper.requestWrapper(name, "getPartitions", () -> {
             com.facebook.presto.spi.SortOrder order = null;
             if (sortOrder != null) {
                 order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
@@ -176,19 +189,20 @@ public class PartitionV1Resource implements PartitionV1 {
     }
 
     private List<PartitionDto> getPartitions(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String filter,
-        List<String> partitionNames,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit,
-        Boolean includeUserMetadata,
-        Boolean includePartitionDetails) {
-        QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return requestWrapper(name, "getPartitions", () -> {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String filter,
+        final List<String> partitionNames,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit,
+        final Boolean includeUserMetadata,
+        final Boolean includePartitionDetails) {
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return RequestWrapper.requestWrapper(name, "getPartitions", () -> {
             com.facebook.presto.spi.SortOrder order = null;
             if (sortOrder != null) {
                 order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
@@ -208,18 +222,19 @@ public class PartitionV1Resource implements PartitionV1 {
 
     @Override
     public List<PartitionDto> getPartitions(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName,
-        String filter,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit,
-        Boolean includeUserMetadata) {
-        QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return requestWrapper(name, "getPartitions", () -> {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName,
+        final String filter,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit,
+        final Boolean includeUserMetadata) {
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return RequestWrapper.requestWrapper(name, "getPartitions", () -> {
             com.facebook.presto.spi.SortOrder order = null;
             if (sortOrder != null) {
                 order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
@@ -237,20 +252,21 @@ public class PartitionV1Resource implements PartitionV1 {
     }
 
     private List<PartitionDto> getPartitions(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName,
-        String filter,
-        List<String> partitionNames,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit,
-        Boolean includeUserMetadata,
-        Boolean includePartitionDetails) {
-        QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return requestWrapper(name, "getPartitions", () -> {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName,
+        final String filter,
+        final List<String> partitionNames,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit,
+        final Boolean includeUserMetadata,
+        final Boolean includePartitionDetails) {
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return RequestWrapper.requestWrapper(name, "getPartitions", () -> {
             com.facebook.presto.spi.SortOrder order = null;
             if (sortOrder != null) {
                 order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
@@ -269,14 +285,14 @@ public class PartitionV1Resource implements PartitionV1 {
 
     @Override
     public List<String> getPartitionKeysForRequest(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit,
-        GetPartitionsRequestDto getPartitionsRequestDto) {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit,
+        final GetPartitionsRequestDto getPartitionsRequestDto) {
         String filterExpression = null;
         List<String> partitionNames = null;
         if (getPartitionsRequestDto != null) {
@@ -287,18 +303,20 @@ public class PartitionV1Resource implements PartitionV1 {
             sortOrder, offset, limit);
     }
 
+    @SuppressWarnings("checkstyle:methodname")
     private List<String> _getPartitionKeys(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String filter,
-        List<String> partitionNames,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit) {
-        QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return requestWrapper(name, "getPartitionKeys", () -> {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String filter,
+        final List<String> partitionNames,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit) {
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return RequestWrapper.requestWrapper(name, "getPartitionKeys", () -> {
             com.facebook.presto.spi.SortOrder order = null;
             if (sortOrder != null) {
                 order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
@@ -313,18 +331,20 @@ public class PartitionV1Resource implements PartitionV1 {
         });
     }
 
+    @SuppressWarnings("checkstyle:methodname")
     private List<String> _getPartitionUris(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String filter,
-        List<String> partitionNames,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit) {
-        QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return requestWrapper(name, "getMViewPartitionUris", () -> {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String filter,
+        final List<String> partitionNames,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit) {
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return RequestWrapper.requestWrapper(name, "getMViewPartitionUris", () -> {
             com.facebook.presto.spi.SortOrder order = null;
             if (sortOrder != null) {
                 order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
@@ -339,19 +359,21 @@ public class PartitionV1Resource implements PartitionV1 {
         });
     }
 
+    @SuppressWarnings("checkstyle:methodname")
     private List<String> _getMViewPartitionKeys(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName,
-        String filter,
-        List<String> partitionNames,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit) {
-        QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return requestWrapper(name, "getMViewPartitionKeys", () -> {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName,
+        final String filter,
+        final List<String> partitionNames,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit) {
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return RequestWrapper.requestWrapper(name, "getMViewPartitionKeys", () -> {
             com.facebook.presto.spi.SortOrder order = null;
             if (sortOrder != null) {
                 order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
@@ -366,19 +388,21 @@ public class PartitionV1Resource implements PartitionV1 {
         });
     }
 
+    @SuppressWarnings("checkstyle:methodname")
     private List<String> _getMViewPartitionUris(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName,
-        String filter,
-        List<String> partitionNames,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit) {
-        QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return requestWrapper(name, "getMViewPartitionUris", () -> {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName,
+        final String filter,
+        final List<String> partitionNames,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit) {
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return RequestWrapper.requestWrapper(name, "getMViewPartitionUris", () -> {
             com.facebook.presto.spi.SortOrder order = null;
             if (sortOrder != null) {
                 order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
@@ -395,14 +419,14 @@ public class PartitionV1Resource implements PartitionV1 {
 
     @Override
     public List<String> getPartitionUrisForRequest(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit,
-        GetPartitionsRequestDto getPartitionsRequestDto) {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit,
+        final GetPartitionsRequestDto getPartitionsRequestDto) {
         String filterExpression = null;
         List<String> partitionNames = null;
         if (getPartitionsRequestDto != null) {
@@ -415,43 +439,43 @@ public class PartitionV1Resource implements PartitionV1 {
 
     @Override
     public List<String> getPartitionKeys(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String filter,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit) {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String filter,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit) {
         return _getPartitionKeys(catalogName, databaseName, tableName, filter, null, sortBy, sortOrder, offset, limit);
     }
 
     @Override
     public List<String> getPartitionKeys(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName,
-        String filter,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit) {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName,
+        final String filter,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit) {
         return _getMViewPartitionKeys(catalogName, databaseName, tableName, viewName, filter, null, sortBy, sortOrder,
             offset, limit);
     }
 
     @Override
     public List<PartitionDto> getPartitionsForRequest(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit,
-        Boolean includeUserMetadata,
-        GetPartitionsRequestDto getPartitionsRequestDto) {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit,
+        final Boolean includeUserMetadata,
+        final GetPartitionsRequestDto getPartitionsRequestDto) {
         String filterExpression = null;
         List<String> partitionNames = null;
         Boolean includePartitionDetails = false;
@@ -467,15 +491,15 @@ public class PartitionV1Resource implements PartitionV1 {
 
     @Override
     public List<String> getPartitionKeysForRequest(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit,
-        GetPartitionsRequestDto getPartitionsRequestDto) {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit,
+        final GetPartitionsRequestDto getPartitionsRequestDto) {
         String filterExpression = null;
         List<String> partitionNames = null;
         if (getPartitionsRequestDto != null) {
@@ -488,44 +512,44 @@ public class PartitionV1Resource implements PartitionV1 {
 
     @Override
     public List<String> getPartitionUris(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String filter,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit) {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String filter,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit) {
         return _getPartitionUris(catalogName, databaseName, tableName, filter, null, sortBy, sortOrder, offset, limit);
     }
 
     @Override
     public List<String> getPartitionUris(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName,
-        String filter,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit) {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName,
+        final String filter,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit) {
         return _getMViewPartitionUris(catalogName, databaseName, tableName, viewName, filter, null, sortBy, sortOrder,
             offset, limit);
     }
 
     @Override
     public List<PartitionDto> getPartitionsForRequest(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit,
-        Boolean includeUserMetadata,
-        GetPartitionsRequestDto getPartitionsRequestDto) {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit,
+        final Boolean includeUserMetadata,
+        final GetPartitionsRequestDto getPartitionsRequestDto) {
         String filterExpression = null;
         List<String> partitionNames = null;
         Boolean includePartitionDetails = false;
@@ -541,15 +565,15 @@ public class PartitionV1Resource implements PartitionV1 {
 
     @Override
     public List<String> getPartitionUrisForRequest(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName,
-        String sortBy,
-        SortOrder sortOrder,
-        Integer offset,
-        Integer limit,
-        GetPartitionsRequestDto getPartitionsRequestDto) {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName,
+        final String sortBy,
+        final SortOrder sortOrder,
+        final Integer offset,
+        final Integer limit,
+        final GetPartitionsRequestDto getPartitionsRequestDto) {
         String filterExpression = null;
         List<String> partitionNames = null;
         if (getPartitionsRequestDto != null) {
@@ -562,39 +586,39 @@ public class PartitionV1Resource implements PartitionV1 {
 
     @Override
     public PartitionsSaveResponseDto savePartitions(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        PartitionsSaveRequestDto partitionsSaveRequestDto) {
-        MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        QualifiedName name = QualifiedName.ofTable(catalogName, databaseName, tableName);
-        return requestWrapper(name, "saveTablePartition", () -> {
-            checkArgument(partitionsSaveRequestDto != null &&
-                    partitionsSaveRequestDto.getPartitions() != null &&
-                    !partitionsSaveRequestDto.getPartitions().isEmpty(),
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final PartitionsSaveRequestDto partitionsSaveRequestDto) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final QualifiedName name = QualifiedName.ofTable(catalogName, databaseName, tableName);
+        return RequestWrapper.requestWrapper(name, "saveTablePartition", () -> {
+            Preconditions.checkArgument(partitionsSaveRequestDto != null
+                    && partitionsSaveRequestDto.getPartitions() != null
+                    && !partitionsSaveRequestDto.getPartitions().isEmpty(),
                 "Partitions must be present");
 
             eventBus
                 .postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
 
-            List<PartitionDto> partitionsToSave = partitionsSaveRequestDto.getPartitions();
-            boolean checkIfExists = partitionsSaveRequestDto.getCheckIfExists() == null
+            final List<PartitionDto> partitionsToSave = partitionsSaveRequestDto.getPartitions();
+            final boolean checkIfExists = partitionsSaveRequestDto.getCheckIfExists() == null
                 || partitionsSaveRequestDto.getCheckIfExists();
-            boolean alterIfExists = partitionsSaveRequestDto.getAlterIfExists() != null
+            final boolean alterIfExists = partitionsSaveRequestDto.getAlterIfExists() != null
                 && partitionsSaveRequestDto.getAlterIfExists();
-            List<String> partitionIdsForDeletes = partitionsSaveRequestDto.getPartitionIdsForDeletes();
+            final List<String> partitionIdsForDeletes = partitionsSaveRequestDto.getPartitionIdsForDeletes();
             if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
                 eventBus.postSync(
                     new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
             }
 
-            PartitionsSaveResponseDto result = partitionService.save(name, partitionsToSave, partitionIdsForDeletes,
-                checkIfExists, alterIfExists);
+            final PartitionsSaveResponseDto result =
+                partitionService.save(name, partitionsToSave, partitionIdsForDeletes, checkIfExists, alterIfExists);
 
             // This metadata is actually for the table, if it is present update that
             if (partitionsSaveRequestDto.getDefinitionMetadata() != null
                 || partitionsSaveRequestDto.getDataMetadata() != null) {
-                TableDto dto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
+                final TableDto dto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
                 dto.setDefinitionMetadata(partitionsSaveRequestDto.getDefinitionMetadata());
                 dto.setDataMetadata(partitionsSaveRequestDto.getDataMetadata());
                 v1.updateTable(catalogName, databaseName, tableName, dto);
@@ -612,41 +636,42 @@ public class PartitionV1Resource implements PartitionV1 {
 
     @Override
     public PartitionsSaveResponseDto savePartitions(
-        String catalogName,
-        String databaseName,
-        String tableName,
-        String viewName,
-        PartitionsSaveRequestDto partitionsSaveRequestDto) {
-        MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        QualifiedName name = qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return requestWrapper(name, "saveMViewPartition", () -> {
-            checkArgument(partitionsSaveRequestDto != null &&
-                    partitionsSaveRequestDto.getPartitions() != null &&
-                    !partitionsSaveRequestDto.getPartitions().isEmpty(),
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final String viewName,
+        final PartitionsSaveRequestDto partitionsSaveRequestDto) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return RequestWrapper.requestWrapper(name, "saveMViewPartition", () -> {
+            Preconditions.checkArgument(partitionsSaveRequestDto != null
+                    && partitionsSaveRequestDto.getPartitions() != null
+                    && !partitionsSaveRequestDto.getPartitions().isEmpty(),
                 "Partitions must be present");
 
             eventBus
                 .postSync(new MetacatSaveMViewPartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
 
-            List<PartitionDto> partitionsToSave = partitionsSaveRequestDto.getPartitions();
-            boolean checkIfExists = partitionsSaveRequestDto.getCheckIfExists() == null
+            final List<PartitionDto> partitionsToSave = partitionsSaveRequestDto.getPartitions();
+            final boolean checkIfExists = partitionsSaveRequestDto.getCheckIfExists() == null
                 || partitionsSaveRequestDto.getCheckIfExists();
-            boolean alterIfExists = partitionsSaveRequestDto.getAlterIfExists() != null
+            final boolean alterIfExists = partitionsSaveRequestDto.getAlterIfExists() != null
                 && partitionsSaveRequestDto.getAlterIfExists();
-            List<String> partitionIdsForDeletes = partitionsSaveRequestDto.getPartitionIdsForDeletes();
+            final List<String> partitionIdsForDeletes = partitionsSaveRequestDto.getPartitionIdsForDeletes();
             if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
                 eventBus.postSync(
                     new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
             }
 
-            PartitionsSaveResponseDto result = mViewService
+            final PartitionsSaveResponseDto result = mViewService
                 .savePartitions(name, partitionsToSave, partitionIdsForDeletes, true,
                     checkIfExists, alterIfExists);
 
             // This metadata is actually for the view, if it is present update that
             if (partitionsSaveRequestDto.getDefinitionMetadata() != null
                 || partitionsSaveRequestDto.getDataMetadata() != null) {
-                TableDto dto = v1.getMView(catalogName, databaseName, tableName, viewName);
+                final TableDto dto = v1.getMView(catalogName, databaseName, tableName, viewName);
                 dto.setDefinitionMetadata(partitionsSaveRequestDto.getDefinitionMetadata());
                 dto.setDataMetadata(partitionsSaveRequestDto.getDataMetadata());
                 v1.updateMView(catalogName, databaseName, tableName, viewName, dto);

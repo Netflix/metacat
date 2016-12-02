@@ -26,9 +26,12 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * View service.
+ */
 public interface MViewService extends MetacatService<TableDto> {
     /**
-     * Create the view and returns the newly created view
+     * Create the view and returns the newly created view.
      * @param name name of the origin table
      * @return view
      */
@@ -45,47 +48,122 @@ public interface MViewService extends MetacatService<TableDto> {
         @Nonnull
             QualifiedName name);
 
+    /**
+     * Get the view for the given name.
+     * @param name name
+     * @return view
+     */
     Optional<TableDto> getOpt(
         @Nonnull
             QualifiedName name);
 
+    /**
+     * Copy partitions from the given table name.
+     * @param name table name
+     * @param filter filter
+     */
     void snapshotPartitions(
         @Nonnull
             QualifiedName name, String filter);
 
+    /**
+     * Saves the list of partitions to the given view.
+     * @param name name
+     * @param partitionDtos partitions
+     * @param partitionIdsForDeletes partitions to be removed
+     * @param merge if true, this method merges
+     * @param checkIfExists if true, this method checks if any of the partitions exists for the given table
+     * @param alterIfExists if true, the method alters the partition instead of dropping and adding the partition
+     * @return no. of partitions added and updated.
+     */
     PartitionsSaveResponseDto savePartitions(
         @Nonnull
             QualifiedName name, List<PartitionDto> partitionDtos,
         List<String> partitionIdsForDeletes, boolean merge,
         boolean checkIfExists, boolean alterIfExists);
 
+    /**
+     * Deletes the list of partitions with the given ids <code>partitionIds</code>.
+     * @param name view name
+     * @param partitionIds partition names
+     */
     void deletePartitions(
         @Nonnull
             QualifiedName name, List<String> partitionIds);
 
+    /**
+     * Returns the list of partitions.
+     * @param name view name
+     * @param filter filter expression
+     * @param partitionNames partition names to include
+     * @param sort sort info
+     * @param pageable pagination info
+     * @param includeUserMetadata if true, includes the user metadata
+     * @param includePartitionDetails if true, includes parameter details
+     * @return list of partitions
+     */
     List<PartitionDto> listPartitions(
         @Nonnull
             QualifiedName name, String filter, List<String> partitionNames,
         Sort sort, Pageable pageable,
         boolean includeUserMetadata, boolean includePartitionDetails);
 
+    /**
+     * Returns a list of partition names.
+     * @param name view name
+     * @param filter filter expression
+     * @param partitionNames names
+     * @param sort sort info
+     * @param pageable pagination info
+     * @return list of partition names
+     */
     List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
         Pageable pageable);
 
+    /**
+     * Returns a list of partition uris.
+     * @param name view name
+     * @param filter filter expression
+     * @param partitionNames names
+     * @param sort sort info
+     * @param pageable pagination info
+     * @return list of partition uris
+     */
     List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
         Pageable pageable);
 
+    /**
+     * Partition count for the given view name.
+     * @param name view name
+     * @return no. of partitions
+     */
     Integer partitionCount(
         @Nonnull
             QualifiedName name);
 
+    /**
+     * Returns the list of view names for the given name.
+     * @param qualifiedName name
+     * @return list of view names
+     */
     List<NameDateDto> list(
         @Nonnull
             QualifiedName qualifiedName);
 
+    /**
+     * Save metadata for the view.
+     * @param name view name
+     * @param definitionMetadata definition metadata
+     * @param dataMetadata data metadata
+     */
     void saveMetadata(
         @Nonnull
             QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
 
+    /**
+     * Rename view.
+     * @param name view name
+     * @param newViewName new view name
+     */
     void rename(QualifiedName name, QualifiedName newViewName);
 }

@@ -22,6 +22,9 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Table service.
+ */
 public interface TableService extends MetacatService<TableDto> {
     /**
      * Deletes the table. Returns the table metadata of the table deleted.
@@ -34,7 +37,7 @@ public interface TableService extends MetacatService<TableDto> {
             QualifiedName name, boolean isMView);
 
     /**
-     * Returns the table with the given name
+     * Returns the table with the given name.
      * @param name qualified name of the table
      * @param includeUserMetadata if true, the table will include the user metadata
      * @return Returns the table with the given name
@@ -44,7 +47,7 @@ public interface TableService extends MetacatService<TableDto> {
             QualifiedName name, boolean includeUserMetadata);
 
     /**
-     * Returns the table with the given name
+     * Returns the table with the given name.
      * @param name qualified name of the table
      * @param includeInfo if true, the table will include the main table metadata
      * @param includeDefinitionMetadata if true, the table will include the user definition metadata
@@ -56,7 +59,7 @@ public interface TableService extends MetacatService<TableDto> {
             QualifiedName name, boolean includeInfo, boolean includeDefinitionMetadata, boolean includeDataMetadata);
 
     /**
-     * Returns the table handle
+     * Returns the table handle.
      * @param name qualified name of the table
      * @return Returns the table handle with the given name
      */
@@ -65,7 +68,7 @@ public interface TableService extends MetacatService<TableDto> {
             QualifiedName name);
 
     /**
-     * Rename the table from <code>oldName</code> to <code>newName</code>
+     * Rename the table from <code>oldName</code> to <code>newName</code>.
      * @param oldName old qualified name of the existing table
      * @param newName new qualified name of the table
      * @param isMView true, if the object is a view
@@ -77,7 +80,7 @@ public interface TableService extends MetacatService<TableDto> {
             QualifiedName newName, boolean isMView);
 
     /**
-     * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>
+     * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>.
      * @param name qualified name of the source table
      * @param targetName qualified name of the target table
      * @return Returns the copied table
@@ -89,7 +92,7 @@ public interface TableService extends MetacatService<TableDto> {
             QualifiedName targetName);
 
     /**
-     * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>
+     * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>.
      * @param tableDto source table
      * @param targetName qualified name of the target table
      * @return Returns the copied table
@@ -101,7 +104,7 @@ public interface TableService extends MetacatService<TableDto> {
             QualifiedName targetName);
 
     /**
-     * Saves the user metadata for the given table
+     * Saves the user metadata for the given table.
      * @param name qualified name of the table
      * @param definitionMetadata user definition metadata json
      * @param dataMetadata user data metadata json

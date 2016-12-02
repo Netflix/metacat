@@ -28,6 +28,9 @@ import org.elasticsearch.client.Client;
 
 import javax.inject.Singleton;
 
+/**
+ * Guice module.
+ */
 public class ServicesModule extends AbstractModule {
     @Override
     protected void configure() {

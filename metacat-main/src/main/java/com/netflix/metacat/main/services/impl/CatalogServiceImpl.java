@@ -32,26 +32,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Catalog service implementation.
+ */
 public class CatalogServiceImpl implements CatalogService {
     @Inject
-    MetacatConnectorManager metacatConnectorManager;
+    private MetacatConnectorManager metacatConnectorManager;
     @Inject
-    MetadataManager metadataManager;
+    private MetadataManager metadataManager;
     @Inject
-    SessionProvider sessionProvider;
+    private SessionProvider sessionProvider;
     @Inject
-    UserMetadataService userMetadataService;
+    private UserMetadataService userMetadataService;
 
     @Nonnull
     @Override
     public CatalogDto get(
         @Nonnull
-            QualifiedName name) {
-        Session session = sessionProvider.getSession(name);
+        final QualifiedName name) {
+        final Session session = sessionProvider.getSession(name);
 
-        MetacatCatalogConfig config = metacatConnectorManager.getCatalogConfig(name);
+        final MetacatCatalogConfig config = metacatConnectorManager.getCatalogConfig(name);
 
-        CatalogDto result = new CatalogDto();
+        final CatalogDto result = new CatalogDto();
         result.setName(name);
         result.setType(config.getType());
         result.setDatabases(metadataManager.listSchemaNames(session, name.getCatalogName())
@@ -70,7 +73,7 @@ public class CatalogServiceImpl implements CatalogService {
     @Nonnull
     @Override
     public List<CatalogMappingDto> getCatalogNames() {
-        Map<String, MetacatCatalogConfig> catalogs = metacatConnectorManager.getCatalogs();
+        final Map<String, MetacatCatalogConfig> catalogs = metacatConnectorManager.getCatalogs();
         if (catalogs.isEmpty()) {
             throw new MetacatNotFoundException("Unable to locate any catalogs");
         }
@@ -83,10 +86,10 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public void update(
         @Nonnull
-            QualifiedName name,
+        final QualifiedName name,
         @Nonnull
-            CreateCatalogDto createCatalogDto) {
-        Session session = sessionProvider.getSession(name);
+        final CreateCatalogDto createCatalogDto) {
+        final Session session = sessionProvider.getSession(name);
         userMetadataService.saveMetadata(session.getUser(), createCatalogDto, true);
     }
 }

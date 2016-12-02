@@ -34,18 +34,27 @@ import com.netflix.servo.monitor.DynamicTimer;
 import com.netflix.servo.monitor.Stopwatch;
 import com.netflix.servo.tag.BasicTagList;
 import com.netflix.servo.tag.TagList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-public class RequestWrapper {
-    private static final Logger log = LoggerFactory.getLogger(RequestWrapper.class);
+/**
+ * Request wrapper.
+ */
+@Slf4j
+public final class RequestWrapper {
+    private RequestWrapper() {
+    }
 
-    public static QualifiedName qualifyName(Supplier<QualifiedName> nameSupplier) {
+    /**
+     * Creates the qualified name.
+     * @param nameSupplier supplier
+     * @return name
+     */
+    public static QualifiedName qualifyName(final Supplier<QualifiedName> nameSupplier) {
         try {
             return nameSupplier.get();
         } catch (Exception e) {
@@ -54,13 +63,21 @@ public class RequestWrapper {
         }
     }
 
+    /**
+     * Request wrapper.
+     * @param name name
+     * @param resourceRequestName request name
+     * @param supplier supplier
+     * @param <R> response
+     * @return response of supplier
+     */
     public static <R> R requestWrapper(
-        QualifiedName name,
-        String resourceRequestName,
-        Supplier<R> supplier) {
-        BasicTagList tags = getQualifiedNameTagList(name).copy("request", resourceRequestName);
+        final QualifiedName name,
+        final String resourceRequestName,
+        final Supplier<R> supplier) {
+        final BasicTagList tags = getQualifiedNameTagList(name).copy("request", resourceRequestName);
         DynamicCounter.increment("dse.metacat.counter.requests", tags);
-        Stopwatch timer = DynamicTimer.start("dse.metacat.timer.requests", tags);
+        final Stopwatch timer = DynamicTimer.start("dse.metacat.timer.requests", tags);
         try {
             log.info("### Calling method: {} for {}", resourceRequestName, name);
             return supplier.get();
@@ -79,7 +96,7 @@ public class RequestWrapper {
             throw new MetacatBadRequestException(
                 String.format("%s.%s", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (PrestoException e) {
-            String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
+            final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
             if (e.getErrorCode() == StandardErrorCode.NOT_SUPPORTED.toErrorCode()) {
@@ -89,12 +106,12 @@ public class RequestWrapper {
                 throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
             }
         } catch (UserMetadataServiceException e) {
-            String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(),
+            final String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             throw new MetacatUserMetadataException(message);
         } catch (Exception e) {
             DynamicCounter.increment("dse.metacat.counter.failure.requests", tags);
-            String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
+            final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
@@ -105,18 +122,25 @@ public class RequestWrapper {
         }
     }
 
-    private static BasicTagList getQualifiedNameTagList(QualifiedName name) {
-        Map<String, String> tags = Maps.newHashMap(name.toJson());
+    private static BasicTagList getQualifiedNameTagList(final QualifiedName name) {
+        final Map<String, String> tags = Maps.newHashMap(name.toJson());
         tags.remove("qualifiedName");
         return BasicTagList.copyOf(tags);
     }
 
+    /**
+     * Simple request wrapper.
+     * @param resourceRequestName request name
+     * @param supplier supplier
+     * @param <R> response
+     * @return response of the supplier
+     */
     public static <R> R requestWrapper(
-        String resourceRequestName,
-        Supplier<R> supplier) {
-        TagList tags = BasicTagList.of("request", resourceRequestName);
+        final String resourceRequestName,
+        final Supplier<R> supplier) {
+        final TagList tags = BasicTagList.of("request", resourceRequestName);
         DynamicCounter.increment("dse.metacat.counter.requests", tags);
-        Stopwatch timer = DynamicTimer.start("dse.metacat.timer.requests", tags);
+        final Stopwatch timer = DynamicTimer.start("dse.metacat.timer.requests", tags);
         try {
             log.info("### Calling method: {}", resourceRequestName);
             return supplier.get();
@@ -129,7 +153,7 @@ public class RequestWrapper {
                 e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (Exception e) {
             DynamicCounter.increment("dse.metacat.counter.failure.requests", tags);
-            String message = String
+            final String message = String
                 .format("%s.%s -- %s failed.", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage(),
                     resourceRequestName);
             log.error(message, e);

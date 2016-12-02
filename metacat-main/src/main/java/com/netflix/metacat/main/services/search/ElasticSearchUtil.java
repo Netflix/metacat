@@ -28,6 +28,7 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -47,8 +48,6 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.joda.time.Instant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -57,30 +56,32 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Field.DELETED;
-import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Field.USER;
-import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Type.table;
-
 /**
- * Created by amajumdar on 8/12/15.
+ * Elastic search client utility.
  */
+@Slf4j
 public class ElasticSearchUtil {
-    private XContentType contentType = Requests.INDEX_CONTENT_TYPE;
-    private final String esIndex;
     private static final Retryer<Void> RETRY_ES_PUBLISH = RetryerBuilder.<Void>newBuilder()
         .retryIfExceptionOfType(ElasticsearchException.class)
         .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.SECONDS, 30, TimeUnit.SECONDS))
         .withStopStrategy(StopStrategies.stopAfterAttempt(3))
         .build();
+    private XContentType contentType = Requests.INDEX_CONTENT_TYPE;
+    private final String esIndex;
     private final Client client;
     private final Config config;
     private final MetacatJson metacatJson;
-    private static final Logger log = LoggerFactory.getLogger(ElasticSearchUtil.class);
 
+    /**
+     * Constructor.
+     * @param client elastic search client
+     * @param config config
+     * @param metacatJson json utility
+     */
     @Inject
     public ElasticSearchUtil(
         @Nullable
-            Client client, Config config, MetacatJson metacatJson) {
+        final Client client, final Config config, final MetacatJson metacatJson) {
         this.config = config;
         this.client = client;
         this.metacatJson = metacatJson;
@@ -88,11 +89,11 @@ public class ElasticSearchUtil {
     }
 
     /**
-     * Delete index document
+     * Delete index document.
      * @param type index type
      * @param id entity id
      */
-    public void delete(String type, String id) {
+    public void delete(final String type, final String id) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
                 client.prepareDelete(esIndex, type, id).execute().actionGet();
@@ -106,23 +107,24 @@ public class ElasticSearchUtil {
     }
 
     /**
-     * Delete index documents
+     * Delete index documents.
      * @param type index type
      * @param ids entity ids
      */
-    public void delete(String type, List<String> ids) {
+    public void delete(final String type, final List<String> ids) {
         if (ids != null && !ids.isEmpty()) {
-            List<List<String>> partitionedDocs = Lists.partition(ids, 500);
+            final List<List<String>> partitionedDocs = Lists.partition(ids, 500);
             partitionedDocs.forEach(subIds -> _delete(type, subIds));
         }
     }
 
-    private void _delete(String type, List<String> ids) {
+    @SuppressWarnings("checkstyle:methodname")
+    private void _delete(final String type, final List<String> ids) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
-                BulkRequestBuilder bulkRequest = client.prepareBulk();
+                final BulkRequestBuilder bulkRequest = client.prepareBulk();
                 ids.forEach(id -> bulkRequest.add(client.prepareDelete(esIndex, type, id)));
-                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
                         if (item.isFailed()) {
@@ -144,16 +146,16 @@ public class ElasticSearchUtil {
     }
 
     /**
-     * Marks the document as deleted
+     * Marks the document as deleted.
      * @param type index type
      * @param id entity id
      * @param metacatRequestContext context containing the user name
      */
-    public void softDelete(String type, String id, MetacatRequestContext metacatRequestContext) {
+    public void softDelete(final String type, final String id, final MetacatRequestContext metacatRequestContext) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
-                XContentBuilder builder = XContentFactory.contentBuilder(contentType);
-                builder.startObject().field(DELETED, true).field(USER,
+                final XContentBuilder builder = XContentFactory.contentBuilder(contentType);
+                builder.startObject().field(ElasticSearchDoc.Field.DELETED, true).field(ElasticSearchDoc.Field.USER,
                     metacatRequestContext.getUserName()).endObject();
                 client.prepareUpdate(esIndex, type, id).setDoc(builder).get();
                 return null;
@@ -166,27 +168,30 @@ public class ElasticSearchUtil {
     }
 
     /**
-     * Marks the documents as deleted
+     * Marks the documents as deleted.
      * @param type index type
      * @param ids list of entity ids
      * @param metacatRequestContext context containing the user name
      */
-    public void softDelete(String type, List<String> ids, MetacatRequestContext metacatRequestContext) {
+    public void softDelete(final String type, final List<String> ids,
+        final MetacatRequestContext metacatRequestContext) {
         if (ids != null && !ids.isEmpty()) {
-            List<List<String>> partitionedDocs = Lists.partition(ids, 100);
+            final List<List<String>> partitionedDocs = Lists.partition(ids, 100);
             partitionedDocs.forEach(subIds -> _softDelete(type, subIds, metacatRequestContext));
         }
     }
 
-    private void _softDelete(String type, List<String> ids, MetacatRequestContext metacatRequestContext) {
+    @SuppressWarnings("checkstyle:methodname")
+    private void _softDelete(final String type, final List<String> ids,
+        final MetacatRequestContext metacatRequestContext) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
-                BulkRequestBuilder bulkRequest = client.prepareBulk();
-                XContentBuilder builder = XContentFactory.contentBuilder(contentType);
-                builder.startObject().field(DELETED, true).field(USER,
+                final BulkRequestBuilder bulkRequest = client.prepareBulk();
+                final XContentBuilder builder = XContentFactory.contentBuilder(contentType);
+                builder.startObject().field(ElasticSearchDoc.Field.DELETED, true).field(ElasticSearchDoc.Field.USER,
                     metacatRequestContext.getUserName()).endObject();
                 ids.forEach(id -> bulkRequest.add(client.prepareUpdate(esIndex, type, id).setDoc(builder)));
-                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
                         if (item.isFailed()) {
@@ -209,24 +214,25 @@ public class ElasticSearchUtil {
     }
 
     /**
-     * Updates the documents with partial updates with the given fields
+     * Updates the documents with partial updates with the given fields.
      * @param type index type
      * @param ids list of entity ids
      * @param metacatRequestContext context containing the user name
      * @param node json that represents the document source
      */
-    public void updates(String type, List<String> ids, MetacatRequestContext metacatRequestContext, ObjectNode node) {
+    public void updates(final String type, final List<String> ids, final MetacatRequestContext metacatRequestContext,
+        final ObjectNode node) {
         if (ids == null || ids.isEmpty()) {
             return;
         }
         try {
             RETRY_ES_PUBLISH.call(() -> {
-                BulkRequestBuilder bulkRequest = client.prepareBulk();
+                final BulkRequestBuilder bulkRequest = client.prepareBulk();
                 ids.forEach(id -> {
-                    node.put(USER, metacatRequestContext.getUserName());
+                    node.put(ElasticSearchDoc.Field.USER, metacatRequestContext.getUserName());
                     bulkRequest.add(client.prepareUpdate(esIndex, type, id).setDoc(metacatJson.toJsonAsBytes(node)));
                 });
-                BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
                         if (item.isFailed()) {
@@ -246,12 +252,12 @@ public class ElasticSearchUtil {
     }
 
     /**
-     * Save of a single entity
+     * Save of a single entity.
      * @param type index type
      * @param id id of the entity
      * @param body source string of the entity
      */
-    public void save(String type, String id, String body) {
+    public void save(final String type, final String id, final String body) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
                 client.prepareIndex(esIndex, type, id).setSource(body).execute().actionGet();
@@ -265,31 +271,32 @@ public class ElasticSearchUtil {
     }
 
     /**
-     * Bulk save of the entities
+     * Bulk save of the entities.
      * @param type index type
      * @param docs metacat documents
      */
-    public void save(String type, List<ElasticSearchDoc> docs) {
+    public void save(final String type, final List<ElasticSearchDoc> docs) {
         if (docs != null && !docs.isEmpty()) {
-            List<List<ElasticSearchDoc>> partitionedDocs = Lists.partition(docs, 100);
+            final List<List<ElasticSearchDoc>> partitionedDocs = Lists.partition(docs, 100);
             partitionedDocs.forEach(subDocs -> _save(type, subDocs));
         }
     }
 
     /**
-     * Bulk save of the entities
+     * Bulk save of the entities.
      * @param type index type
      * @param docs metacat documents
      */
-    private void _save(String type, List<ElasticSearchDoc> docs) {
+    @SuppressWarnings("checkstyle:methodname")
+    private void _save(final String type, final List<ElasticSearchDoc> docs) {
         if (docs != null && !docs.isEmpty()) {
             try {
                 RETRY_ES_PUBLISH.call(() -> {
-                    BulkRequestBuilder bulkRequest = client.prepareBulk();
+                    final BulkRequestBuilder bulkRequest = client.prepareBulk();
                     docs.forEach(doc -> bulkRequest.add(client.prepareIndex(esIndex, type, doc.getId())
                         .setSource(doc.toJsonString())));
                     if (bulkRequest.numberOfActions() > 0) {
-                        BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                        final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                         if (bulkResponse.hasFailures()) {
                             for (BulkItemResponse item : bulkResponse.getItems()) {
                                 if (item.isFailed()) {
@@ -308,28 +315,43 @@ public class ElasticSearchUtil {
             } catch (Exception e) {
                 log.error(String.format("Failed saving metadatas of type %s", type), e);
                 CounterWrapper.incrementCounter("dse.metacat.esBulkSaveFailure");
-                List<String> docIds = docs.stream().map(ElasticSearchDoc::getId).collect(Collectors.toList());
+                final List<String> docIds = docs.stream().map(ElasticSearchDoc::getId).collect(Collectors.toList());
                 log("ElasticSearchUtil.bulkSave", type, docIds.toString(), null, e.getMessage(), e, true);
             }
         }
     }
 
-    public String toJsonString(String id, Object dto, MetacatRequestContext context, boolean isDeleted) {
+    /**
+     * Creates JSON from search doc.
+     * @param id doc id
+     * @param dto dto
+     * @param context context
+     * @param isDeleted true if it has to be mark deleted
+     * @return doc
+     */
+    public String toJsonString(final String id, final Object dto, final MetacatRequestContext context,
+        final boolean isDeleted) {
         return new ElasticSearchDoc(id, dto, context.getUserName(), isDeleted).toJsonString();
     }
 
-    public List<String> getTableIdsByUri(String type, String dataUri) {
+    /**
+     * List table names by uri.
+     * @param type doc type
+     * @param dataUri uri
+     * @return list of table names
+     */
+    public List<String> getTableIdsByUri(final String type, final String dataUri) {
         List<String> ids = Lists.newArrayList();
         if (dataUri != null) {
             //
             // Run the query and get the response.
-            SearchRequestBuilder request = client.prepareSearch(esIndex)
+            final SearchRequestBuilder request = client.prepareSearch(esIndex)
                 .setTypes(type)
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
                 .setQuery(QueryBuilders.termQuery("serde.uri", dataUri))
                 .setSize(Integer.MAX_VALUE)
                 .setNoFields();
-            SearchResponse response = request.execute().actionGet();
+            final SearchResponse response = request.execute().actionGet();
             if (response.getHits().hits().length != 0) {
                 ids = getIds(response);
             }
@@ -337,68 +359,91 @@ public class ElasticSearchUtil {
         return ids;
     }
 
-    public List<String> getTableIdsByCatalogs(String type, List<QualifiedName> qualifiedNames,
-        List<QualifiedName> excludeQualifiedNames) {
+    /**
+     * List table names.
+     * @param type doc type
+     * @param qualifiedNames names
+     * @param excludeQualifiedNames exclude names
+     * @return list of table names
+     */
+    public List<String> getTableIdsByCatalogs(final String type, final List<QualifiedName> qualifiedNames,
+        final List<QualifiedName> excludeQualifiedNames) {
         List<String> ids = Lists.newArrayList();
-        QueryBuilder queryBuilder = QueryBuilders.boolQuery()
+        final QueryBuilder queryBuilder = QueryBuilders.boolQuery()
             .must(QueryBuilders.termsQuery("name.qualifiedName.tree", qualifiedNames))
             .must(QueryBuilders.termQuery("deleted_", false))
             .mustNot(QueryBuilders.termsQuery("name.qualifiedName.tree", excludeQualifiedNames));
         //
         // Run the query and get the response.
-        SearchRequestBuilder request = client.prepareSearch(esIndex)
+        final SearchRequestBuilder request = client.prepareSearch(esIndex)
             .setTypes(type)
             .setSearchType(SearchType.QUERY_THEN_FETCH)
             .setQuery(queryBuilder)
             .setSize(Integer.MAX_VALUE)
             .setNoFields();
-        SearchResponse response = request.execute().actionGet();
+        final SearchResponse response = request.execute().actionGet();
         if (response.getHits().hits().length != 0) {
             ids = getIds(response);
         }
         return ids;
     }
 
-    public List<String> getIdsByQualifiedName(String type, QualifiedName qualifiedName) {
+    /**
+     * List of names.
+     * @param type type
+     * @param qualifiedName name
+     * @return list of names
+     */
+    public List<String> getIdsByQualifiedName(final String type, final QualifiedName qualifiedName) {
         List<String> result = Lists.newArrayList();
         //
         // Run the query and get the response.
-        QueryBuilder queryBuilder = QueryBuilders.boolQuery()
+        final QueryBuilder queryBuilder = QueryBuilders.boolQuery()
             .must(QueryBuilders.termQuery("name.qualifiedName.tree", qualifiedName))
             .must(QueryBuilders.termQuery("deleted_", false));
-        SearchRequestBuilder request = client.prepareSearch(esIndex)
+        final SearchRequestBuilder request = client.prepareSearch(esIndex)
             .setTypes(type)
             .setSearchType(SearchType.QUERY_THEN_FETCH)
             .setQuery(queryBuilder)
             .setSize(Integer.MAX_VALUE)
             .setNoFields();
-        SearchResponse response = request.execute().actionGet();
+        final SearchResponse response = request.execute().actionGet();
         if (response.getHits().hits().length != 0) {
             result = getIds(response);
         }
         return result;
     }
 
-    public <T> List<T> getQualifiedNamesByMarkerByNames(String type, List<QualifiedName> qualifiedNames, Instant marker,
-        List<QualifiedName> excludeQualifiedNames, Class<T> valueType) {
-        List<T> result = Lists.newArrayList();
-        List<String> names = qualifiedNames.stream().map(QualifiedName::toString).collect(Collectors.toList());
-        List<String> excludeNames = excludeQualifiedNames.stream().map(QualifiedName::toString)
+    /**
+     * Search the names by names and by the given marker.
+     * @param type type
+     * @param qualifiedNames names
+     * @param marker marker
+     * @param excludeQualifiedNames exclude names
+     * @param valueType dto type
+     * @param <T> dto type
+     * @return dto
+     */
+    public <T> List<T> getQualifiedNamesByMarkerByNames(final String type, final List<QualifiedName> qualifiedNames,
+        final Instant marker, final List<QualifiedName> excludeQualifiedNames, final Class<T> valueType) {
+        final List<T> result = Lists.newArrayList();
+        final List<String> names = qualifiedNames.stream().map(QualifiedName::toString).collect(Collectors.toList());
+        final List<String> excludeNames = excludeQualifiedNames.stream().map(QualifiedName::toString)
             .collect(Collectors.toList());
         //
         // Run the query and get the response.
-        QueryBuilder queryBuilder = QueryBuilders.boolQuery()
+        final QueryBuilder queryBuilder = QueryBuilders.boolQuery()
             .must(QueryBuilders.termsQuery("name.qualifiedName.tree", names))
             .must(QueryBuilders.termQuery("deleted_", false))
             .must(QueryBuilders.rangeQuery("_timestamp").lte(marker.toDate()))
             .mustNot(QueryBuilders.termsQuery("name.qualifiedName.tree", excludeNames))
             .mustNot(QueryBuilders.termQuery("refreshMarker_", marker.toString()));
-        SearchRequestBuilder request = client.prepareSearch(esIndex)
+        final SearchRequestBuilder request = client.prepareSearch(esIndex)
             .setTypes(type)
             .setSearchType(SearchType.QUERY_THEN_FETCH)
             .setQuery(queryBuilder)
             .setSize(Integer.MAX_VALUE);
-        SearchResponse response = request.execute().actionGet();
+        final SearchResponse response = request.execute().actionGet();
         if (response.getHits().hits().length != 0) {
             result.addAll(parseResponse(response, valueType));
         }
@@ -419,20 +464,36 @@ public class ElasticSearchUtil {
         }).toList();
     }
 
+    /**
+     * Elastic search index refresh.
+     */
     public void refresh() {
         client.admin().indices().refresh(new RefreshRequest(esIndex)).actionGet();
     }
 
-    public ElasticSearchDoc get(String type, String id) {
+    /**
+     * Gets the document for the given type and id.
+     * @param type doc type
+     * @param id doc id
+     * @return doc
+     */
+    public ElasticSearchDoc get(final String type, final String id) {
         ElasticSearchDoc result = null;
-        GetResponse response = client.prepareGet(esIndex, type, id).execute().actionGet();
+        final GetResponse response = client.prepareGet(esIndex, type, id).execute().actionGet();
         if (response.isExists()) {
             result = ElasticSearchDoc.parse(response);
         }
         return result;
     }
 
-    public void delete(MetacatRequestContext metacatRequestContext, String type, boolean softDelete) {
+    /**
+     * Delete the records for the given type.
+     * @param metacatRequestContext context
+     * @param type doc type
+     * @param softDelete if true, marks the doc for deletion
+     */
+    public void delete(final MetacatRequestContext metacatRequestContext, final String type,
+        final boolean softDelete) {
         SearchResponse response = client.prepareSearch(esIndex)
             .setSearchType(SearchType.SCAN)
             .setScroll(new TimeValue(config.getElasticSearchScrollTimeout()))
@@ -448,7 +509,7 @@ public class ElasticSearchUtil {
             if (response.getHits().getHits().length == 0) {
                 break;
             }
-            List<String> ids = getIds(response);
+            final List<String> ids = getIds(response);
             if (softDelete) {
                 softDelete(type, ids, metacatRequestContext);
             } else {
@@ -457,10 +518,20 @@ public class ElasticSearchUtil {
         }
     }
 
-    public void log(String method, String type, String name, String data, String logMessage, Exception ex,
-        boolean error) {
+    /**
+     * Logs the message in elastic search.
+     * @param method method
+     * @param type type
+     * @param name name
+     * @param data data
+     * @param logMessage message
+     * @param ex exception
+     * @param error is an error
+     */
+    public void log(final String method, final String type, final String name, final String data,
+        final String logMessage, final Exception ex, final boolean error) {
         try {
-            Map<String, Object> source = Maps.newHashMap();
+            final Map<String, Object> source = Maps.newHashMap();
             source.put("method", method);
             source.put("name", name);
             source.put("type", type);
@@ -475,10 +546,15 @@ public class ElasticSearchUtil {
         }
     }
 
-    public List<TableDto> simpleSearch(String searchString) {
-        List<TableDto> result = Lists.newArrayList();
-        SearchResponse response = client.prepareSearch(esIndex)
-            .setTypes(table.name())
+    /**
+     * Full text search.
+     * @param searchString search text
+     * @return list of table info
+     */
+    public List<TableDto> simpleSearch(final String searchString) {
+        final List<TableDto> result = Lists.newArrayList();
+        final SearchResponse response = client.prepareSearch(esIndex)
+            .setTypes(ElasticSearchDoc.Type.table.name())
             .setSearchType(SearchType.QUERY_THEN_FETCH)
             .setQuery(QueryBuilders.termQuery("_all", searchString))
             .setSize(Integer.MAX_VALUE)

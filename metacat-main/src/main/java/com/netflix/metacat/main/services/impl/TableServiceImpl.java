@@ -22,11 +22,13 @@ import com.facebook.presto.spi.ConnectorTableMetadata;
 import com.facebook.presto.spi.NotFoundException;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;
+import com.facebook.presto.spi.StandardErrorCode;
 import com.facebook.presto.spi.StorageInfo;
 import com.facebook.presto.spi.TableNotFoundException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -48,8 +50,7 @@ import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.SessionProvider;
 import com.netflix.metacat.main.services.TableService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -59,44 +60,42 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
+/**
+ * Table service implementation.
+ */
+@Slf4j
 public class TableServiceImpl implements TableService {
-    private static final Logger log = LoggerFactory.getLogger(TableServiceImpl.class);
-    @Inject
-    MetacatConnectorManager metacatConnectorManager;
-    @Inject
-    MetadataManager metadataManager;
-    @Inject
-    PrestoConverters prestoConverters;
-    @Inject
-    SessionProvider sessionProvider;
-    @Inject
-    UserMetadataService userMetadataService;
-    @Inject
-    DatabaseService databaseService;
-    @Inject
-    TagService tagService;
-    @Inject
-    MViewService mViewService;
-    @Inject
-    PartitionService partitionService;
-    @Inject
-    ThreadServiceManager threadServiceManager;
-    @Inject
-    Config config;
     private static final String NAME_TAGS = "tags";
+    @Inject
+    private MetacatConnectorManager metacatConnectorManager;
+    @Inject
+    private MetadataManager metadataManager;
+    @Inject
+    private PrestoConverters prestoConverters;
+    @Inject
+    private SessionProvider sessionProvider;
+    @Inject
+    private UserMetadataService userMetadataService;
+    @Inject
+    private DatabaseService databaseService;
+    @Inject
+    private TagService tagService;
+    @Inject
+    private MViewService mViewService;
+    @Inject
+    private PartitionService partitionService;
+    @Inject
+    private ThreadServiceManager threadServiceManager;
+    @Inject
+    private Config config;
 
     @Override
     public void create(
         @Nonnull
-            QualifiedName name,
+        final QualifiedName name,
         @Nonnull
-            TableDto tableDto) {
-        Session session = validateAndGetSession(name);
+        final TableDto tableDto) {
+        final Session session = validateAndGetSession(name);
         //
         // Set the owner,if null, with the session user name.
         //
@@ -115,7 +114,7 @@ public class TableServiceImpl implements TableService {
         }
     }
 
-    private void setOwnerIfNull(TableDto tableDto, String user) {
+    private void setOwnerIfNull(final TableDto tableDto, final String user) {
         if (!Strings.isNullOrEmpty(user)) {
             StorageDto serde = tableDto.getSerde();
             if (serde == null) {
@@ -128,10 +127,10 @@ public class TableServiceImpl implements TableService {
         }
     }
 
-    private void tag(QualifiedName name, ObjectNode definitionMetadata) {
+    private void tag(final QualifiedName name, final ObjectNode definitionMetadata) {
         if (definitionMetadata != null && definitionMetadata.get(NAME_TAGS) != null) {
-            JsonNode tagsNode = definitionMetadata.get(NAME_TAGS);
-            Set<String> tags = Sets.newHashSet();
+            final JsonNode tagsNode = definitionMetadata.get(NAME_TAGS);
+            final Set<String> tags = Sets.newHashSet();
             if (tagsNode.isArray() && tagsNode.size() > 0) {
                 for (JsonNode tagNode : tagsNode) {
                     tags.add(tagNode.textValue());
@@ -145,20 +144,20 @@ public class TableServiceImpl implements TableService {
     @Override
     public TableDto deleteAndReturn(
         @Nonnull
-            QualifiedName name, boolean isMView) {
-        Session session = validateAndGetSession(name);
-        QualifiedTableName tableName = prestoConverters.getQualifiedTableName(name);
+        final QualifiedName name, final boolean isMView) {
+        final Session session = validateAndGetSession(name);
+        final QualifiedTableName tableName = prestoConverters.getQualifiedTableName(name);
 
-        Optional<TableHandle> tableHandle = metadataManager.getTableHandle(session, tableName);
-        Optional<TableDto> oTable = get(name, true);
+        final Optional<TableHandle> tableHandle = metadataManager.getTableHandle(session, tableName);
+        final Optional<TableDto> oTable = get(name, true);
         if (oTable.isPresent()) {
             log.info("Drop table {}", name);
             metadataManager.dropTable(session, tableHandle.get());
         }
 
-        TableDto tableDto = oTable.orElseGet(() -> {
+        final TableDto tableDto = oTable.orElseGet(() -> {
             // If the table doesn't exist construct a blank copy we can use to delete the definitionMetadata and tags
-            TableDto t = new TableDto();
+            final TableDto t = new TableDto();
             t.setName(name);
             return t;
         });
@@ -173,14 +172,14 @@ public class TableServiceImpl implements TableService {
             threadServiceManager.getExecutor().submit(() -> {
                 try {
                     // delete views associated with this table
-                    List<NameDateDto> viewNames = mViewService.list(name);
+                    final List<NameDateDto> viewNames = mViewService.list(name);
                     viewNames.forEach(viewName -> mViewService.deleteAndReturn(viewName.getName()));
                 } catch (Exception e) {
                     log.warn("Failed cleaning mviews after deleting table {}", name);
                 }
                 // delete table partitions metadata
                 try {
-                    List<QualifiedName> names = userMetadataService.getDescendantDefinitionNames(name);
+                    final List<QualifiedName> names = userMetadataService.getDescendantDefinitionNames(name);
                     if (names != null && !names.isEmpty()) {
                         userMetadataService.deleteDefinitionMetadatas(names);
                     }
@@ -195,16 +194,17 @@ public class TableServiceImpl implements TableService {
     @Override
     public Optional<TableDto> get(
         @Nonnull
-            QualifiedName name, boolean includeUserMetadata) {
+        final QualifiedName name, final boolean includeUserMetadata) {
         return get(name, true, includeUserMetadata, includeUserMetadata);
     }
 
     @Override
     public Optional<TableDto> get(
         @Nonnull
-            QualifiedName name, boolean includeInfo, boolean includeDefinitionMetadata, boolean includeDataMetadata) {
-        Session session = validateAndGetSession(name);
-        TableDto table;
+        final QualifiedName name, final boolean includeInfo, final boolean includeDefinitionMetadata,
+        final boolean includeDataMetadata) {
+        final Session session = validateAndGetSession(name);
+        final TableDto table;
         Optional<TableMetadata> tableMetadata = Optional.empty();
         if (includeInfo) {
             try {
@@ -215,7 +215,7 @@ public class TableServiceImpl implements TableService {
             if (!tableMetadata.isPresent()) {
                 return Optional.empty();
             }
-            String type = metacatConnectorManager.getCatalogConfig(name).getType();
+            final String type = metacatConnectorManager.getCatalogConfig(name).getType();
             table = prestoConverters.toTableDto(name, type, tableMetadata.get());
         } else {
             table = new TableDto();
@@ -223,7 +223,7 @@ public class TableServiceImpl implements TableService {
         }
 
         if (includeDefinitionMetadata) {
-            Optional<ObjectNode> definitionMetadata = userMetadataService.getDefinitionMetadata(name);
+            final Optional<ObjectNode> definitionMetadata = userMetadataService.getDefinitionMetadata(name);
             if (definitionMetadata.isPresent()) {
                 table.setDefinitionMetadata(definitionMetadata.get());
             }
@@ -234,12 +234,14 @@ public class TableServiceImpl implements TableService {
                 tableMetadata = Optional.ofNullable(getTableMetadata(name, session));
             }
             if (tableMetadata.isPresent()) {
-                ConnectorTableMetadata connectorTableMetadata = tableMetadata.get().getMetadata();
+                final ConnectorTableMetadata connectorTableMetadata = tableMetadata.get().getMetadata();
                 if (connectorTableMetadata instanceof ConnectorTableDetailMetadata) {
-                    ConnectorTableDetailMetadata detailMetadata = (ConnectorTableDetailMetadata) connectorTableMetadata;
-                    StorageInfo storageInfo = detailMetadata.getStorageInfo();
+                    final ConnectorTableDetailMetadata detailMetadata =
+                        (ConnectorTableDetailMetadata) connectorTableMetadata;
+                    final StorageInfo storageInfo = detailMetadata.getStorageInfo();
                     if (storageInfo != null) {
-                        Optional<ObjectNode> dataMetadata = userMetadataService.getDataMetadata(storageInfo.getUri());
+                        final Optional<ObjectNode> dataMetadata =
+                            userMetadataService.getDataMetadata(storageInfo.getUri());
                         if (dataMetadata.isPresent()) {
                             table.setDataMetadata(dataMetadata.get());
                         }
@@ -254,43 +256,44 @@ public class TableServiceImpl implements TableService {
     @Override
     public Optional<TableHandle> getTableHandle(
         @Nonnull
-            QualifiedName name) {
-        Session session = validateAndGetSession(name);
+        final QualifiedName name) {
+        final Session session = validateAndGetSession(name);
 
-        QualifiedTableName qualifiedTableName = prestoConverters.getQualifiedTableName(name);
+        final QualifiedTableName qualifiedTableName = prestoConverters.getQualifiedTableName(name);
         return metadataManager.getTableHandle(session, qualifiedTableName);
     }
 
-    private TableMetadata getTableMetadata(QualifiedName name, Optional<TableHandle> tableHandle) {
+    private TableMetadata getTableMetadata(final QualifiedName name, final Optional<TableHandle> tableHandle) {
         if (!tableHandle.isPresent()) {
             return null;
         }
-        Session session = validateAndGetSession(name);
-        TableMetadata result = metadataManager.getTableMetadata(session, tableHandle.get());
-        checkState(name.getDatabaseName().equals(result.getTable().getSchemaName()), "Unexpected database");
-        checkState(name.getTableName().equals(result.getTable().getTableName()), "Unexpected table");
+        final Session session = validateAndGetSession(name);
+        final TableMetadata result = metadataManager.getTableMetadata(session, tableHandle.get());
+        Preconditions.
+            checkState(name.getDatabaseName().equals(result.getTable().getSchemaName()), "Unexpected database");
+        Preconditions.checkState(name.getTableName().equals(result.getTable().getTableName()), "Unexpected table");
 
         return result;
     }
 
-    private TableMetadata getTableMetadata(QualifiedName name, Session session) {
-        QualifiedTableName qualifiedTableName = prestoConverters.getQualifiedTableName(name);
-        Optional<TableHandle> tableHandle = metadataManager.getTableHandle(session, qualifiedTableName);
+    private TableMetadata getTableMetadata(final QualifiedName name, final Session session) {
+        final QualifiedTableName qualifiedTableName = prestoConverters.getQualifiedTableName(name);
+        final Optional<TableHandle> tableHandle = metadataManager.getTableHandle(session, qualifiedTableName);
         return getTableMetadata(name, tableHandle);
     }
 
     @Override
     public void rename(
         @Nonnull
-            QualifiedName oldName,
+        final QualifiedName oldName,
         @Nonnull
-            QualifiedName newName, boolean isMView) {
-        Session session = validateAndGetSession(oldName);
+        final QualifiedName newName, final boolean isMView) {
+        final Session session = validateAndGetSession(oldName);
 
-        QualifiedTableName oldPrestoName = prestoConverters.getQualifiedTableName(oldName);
-        QualifiedTableName newPrestoName = prestoConverters.getQualifiedTableName(newName);
+        final QualifiedTableName oldPrestoName = prestoConverters.getQualifiedTableName(oldName);
+        final QualifiedTableName newPrestoName = prestoConverters.getQualifiedTableName(newName);
 
-        Optional<TableHandle> tableHandle = metadataManager.getTableHandle(session, oldPrestoName);
+        final Optional<TableHandle> tableHandle = metadataManager.getTableHandle(session, oldPrestoName);
         if (tableHandle.isPresent()) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
             try {
@@ -300,10 +303,10 @@ public class TableServiceImpl implements TableService {
                 if (!isMView) {
                     final String prefix = String.format("%s_%s_", oldName.getDatabaseName(),
                         MoreObjects.firstNonNull(oldName.getTableName(), ""));
-                    List<NameDateDto> views = mViewService.list(oldName);
+                    final List<NameDateDto> views = mViewService.list(oldName);
                     if (views != null && !views.isEmpty()) {
                         views.forEach(view -> {
-                            QualifiedName newViewName = QualifiedName
+                            final QualifiedName newViewName = QualifiedName
                                 .ofView(oldName.getCatalogName(), oldName.getDatabaseName(), newName.getTableName(),
                                     view.getName().getViewName());
                             mViewService.rename(view.getName(), newViewName);
@@ -311,7 +314,7 @@ public class TableServiceImpl implements TableService {
                     }
                 }
             } catch (PrestoException e) {
-                if (!NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())) {
+                if (!StandardErrorCode.NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())) {
                     throw e;
                 }
             }
@@ -323,10 +326,10 @@ public class TableServiceImpl implements TableService {
     @Override
     public void update(
         @Nonnull
-            QualifiedName name,
+        final QualifiedName name,
         @Nonnull
-            TableDto tableDto) {
-        Session session = validateAndGetSession(name);
+        final TableDto tableDto) {
+        final Session session = validateAndGetSession(name);
 
         //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
         try {
@@ -334,7 +337,7 @@ public class TableServiceImpl implements TableService {
             metadataManager
                 .alterTable(session, prestoConverters.fromTableDto(name, tableDto, metadataManager.getTypeManager()));
         } catch (PrestoException e) {
-            if (!NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())) {
+            if (!StandardErrorCode.NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())) {
                 throw e;
             }
         }
@@ -349,36 +352,36 @@ public class TableServiceImpl implements TableService {
     @Override
     public void delete(
         @Nonnull
-            QualifiedName name) {
+        final QualifiedName name) {
         deleteAndReturn(name, false);
     }
 
     @Override
     public TableDto get(
         @Nonnull
-            QualifiedName name) {
-        Optional<TableDto> dto = get(name, true);
+        final QualifiedName name) {
+        final Optional<TableDto> dto = get(name, true);
         return dto.orElse(null);
     }
 
     @Override
     public TableDto copy(
         @Nonnull
-            QualifiedName sourceName,
+        final QualifiedName sourceName,
         @Nonnull
-            QualifiedName targetName) {
+        final QualifiedName targetName) {
         // Source should be same
         if (!sourceName.getCatalogName().equals(targetName.getCatalogName())) {
             throw new MetacatNotSupportedException("Cannot copy a table from a different source");
         }
         // Error out when source table does not exists
-        Optional<TableDto> oTable = get(sourceName, false);
+        final Optional<TableDto> oTable = get(sourceName, false);
         if (!oTable.isPresent()) {
             throw new TableNotFoundException(
                 new SchemaTableName(sourceName.getDatabaseName(), sourceName.getTableName()));
         }
         // Error out when target table already exists
-        Optional<TableDto> oTargetTable = get(targetName, false);
+        final Optional<TableDto> oTargetTable = get(targetName, false);
         if (oTargetTable.isPresent()) {
             throw new TableNotFoundException(
                 new SchemaTableName(targetName.getDatabaseName(), targetName.getTableName()));
@@ -389,19 +392,19 @@ public class TableServiceImpl implements TableService {
     @Override
     public TableDto copy(
         @Nonnull
-            TableDto tableDto,
+        final TableDto tableDto,
         @Nonnull
-            QualifiedName targetName) {
+        final QualifiedName targetName) {
         if (!databaseService.exists(targetName)) {
             databaseService.create(targetName, new DatabaseDto());
         }
-        TableDto targetTableDto = new TableDto();
+        final TableDto targetTableDto = new TableDto();
         targetTableDto.setName(targetName);
         targetTableDto.setFields(tableDto.getFields());
         targetTableDto.setPartition_keys(tableDto.getPartition_keys());
-        StorageDto storageDto = tableDto.getSerde();
+        final StorageDto storageDto = tableDto.getSerde();
         if (storageDto != null) {
-            StorageDto targetStorageDto = new StorageDto();
+            final StorageDto targetStorageDto = new StorageDto();
             targetStorageDto.setInputFormat(storageDto.getInputFormat());
             targetStorageDto.setOwner(storageDto.getOwner());
             targetStorageDto.setOutputFormat(storageDto.getOutputFormat());
@@ -417,11 +420,11 @@ public class TableServiceImpl implements TableService {
     @Override
     public void saveMetadata(
         @Nonnull
-            QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata) {
-        Session session = validateAndGetSession(name);
-        Optional<TableDto> tableDtoOptional = get(name, false);
+        final QualifiedName name, final ObjectNode definitionMetadata, final ObjectNode dataMetadata) {
+        final Session session = validateAndGetSession(name);
+        final Optional<TableDto> tableDtoOptional = get(name, false);
         if (tableDtoOptional.isPresent()) {
-            TableDto tableDto = tableDtoOptional.get();
+            final TableDto tableDto = tableDtoOptional.get();
             tableDto.setDefinitionMetadata(definitionMetadata);
             tableDto.setDataMetadata(dataMetadata);
             log.info("Saving user metadata for table {}", name);
@@ -431,14 +434,14 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch) {
-        List<QualifiedName> result = Lists.newArrayList();
-        Map<String, String> catalogNames = metadataManager.getCatalogNames();
+    public List<QualifiedName> getQualifiedNames(final String uri, final boolean prefixSearch) {
+        final List<QualifiedName> result = Lists.newArrayList();
+        final Map<String, String> catalogNames = metadataManager.getCatalogNames();
 
         catalogNames.values().stream().forEach(catalogName -> {
-            Session session = sessionProvider.getSession(QualifiedName.ofCatalog(catalogName));
-            List<SchemaTableName> schemaTableNames = metadataManager.getTableNames(session, uri, prefixSearch);
-            List<QualifiedName> qualifiedNames = schemaTableNames.stream().map(
+            final Session session = sessionProvider.getSession(QualifiedName.ofCatalog(catalogName));
+            final List<SchemaTableName> schemaTableNames = metadataManager.getTableNames(session, uri, prefixSearch);
+            final List<QualifiedName> qualifiedNames = schemaTableNames.stream().map(
                 schemaTableName -> QualifiedName
                     .ofTable(catalogName, schemaTableName.getSchemaName(), schemaTableName.getTableName()))
                 .collect(Collectors.toList());
@@ -450,13 +453,13 @@ public class TableServiceImpl implements TableService {
     @Override
     public boolean exists(
         @Nonnull
-            QualifiedName name) {
+        final QualifiedName name) {
         return get(name, true, false, false).isPresent();
     }
 
-    private Session validateAndGetSession(QualifiedName name) {
-        checkNotNull(name, "name cannot be null");
-        checkArgument(name.isTableDefinition(), "Definition {} does not refer to a table", name);
+    private Session validateAndGetSession(final QualifiedName name) {
+        Preconditions.checkNotNull(name, "name cannot be null");
+        Preconditions.checkArgument(name.isTableDefinition(), "Definition {} does not refer to a table", name);
 
         return sessionProvider.getSession(name);
     }

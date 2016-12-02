@@ -30,6 +30,9 @@ import com.netflix.metacat.main.manager.ManagerModule;
 import com.netflix.metacat.main.services.ServicesModule;
 import com.netflix.metacat.thrift.ThriftModule;
 
+/**
+ * Guice module.
+ */
 public class MetacatServletModule extends ServletModule {
     @Override
     protected void configureServlets() {

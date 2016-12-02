@@ -25,21 +25,28 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+/**
+ * Elastic search provider.
+ */
 public class ElasticSearchClientProvider implements Provider<Client> {
     private Client client;
 
+    /**
+     * Constructor.
+     * @param config config
+     */
     @Inject
-    public ElasticSearchClientProvider(Config config) {
+    public ElasticSearchClientProvider(final Config config) {
         if (config.isElasticSearchEnabled()) {
-            String clusterName = config.getElasticSearchClusterName();
+            final String clusterName = config.getElasticSearchClusterName();
             if (clusterName != null) {
-                Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName)
+                final Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName)
                     .put("transport.tcp.connect_timeout", "60s").build();
                 client = new TransportClient(settings);
                 // Add the transport address if exists
-                String clusterNodesStr = config.getElasticSearchClusterNodes();
+                final String clusterNodesStr = config.getElasticSearchClusterNodes();
                 if (!Strings.isNullOrEmpty(clusterNodesStr)) {
-                    Iterable<String> clusterNodes = Splitter.on(',').split(clusterNodesStr);
+                    final Iterable<String> clusterNodes = Splitter.on(',').split(clusterNodesStr);
                     clusterNodes.forEach(clusterNode -> ((TransportClient) client)
                         .addTransportAddress(new InetSocketTransportAddress(clusterNode,
                             config.getElasticSearchClusterPort())));

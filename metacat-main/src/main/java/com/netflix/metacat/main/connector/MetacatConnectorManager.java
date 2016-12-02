@@ -24,8 +24,7 @@ import com.netflix.metacat.main.presto.metadata.HandleResolver;
 import com.netflix.metacat.main.presto.metadata.MetadataManager;
 import com.netflix.metacat.main.presto.split.SplitManager;
 import com.netflix.metacat.main.spi.MetacatCatalogConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -33,39 +32,58 @@ import javax.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.netflix.metacat.main.spi.MetacatCatalogConfig.createFromMapAndRemoveProperties;
-
+/**
+ * Metacat connector manager.
+ */
 @Singleton
+@Slf4j
 public class MetacatConnectorManager extends ConnectorManager {
-    private static final Logger log = LoggerFactory.getLogger(MetacatConnectorManager.class);
     private final ConcurrentHashMap<String, MetacatCatalogConfig> catalogs = new ConcurrentHashMap<>();
 
+    /**
+     * Constructor.
+     * @param metadataManager manager
+     * @param splitManager split manager
+     * @param handleResolver resolver
+     * @param connectorFactories connctor factories
+     */
     @Inject
-    public MetacatConnectorManager(MetadataManager metadataManager,
-        SplitManager splitManager,
-        HandleResolver handleResolver,
-        Map<String, ConnectorFactory> connectorFactories) {
+    public MetacatConnectorManager(final MetadataManager metadataManager,
+        final SplitManager splitManager,
+        final HandleResolver handleResolver,
+        final Map<String, ConnectorFactory> connectorFactories) {
         super(metadataManager, splitManager, handleResolver, connectorFactories);
     }
 
     @Override
     public synchronized void createConnection(
-        String catalogName, ConnectorFactory connectorFactory, Map<String, String> properties) {
-        properties = Maps.newHashMap(properties);
-        MetacatCatalogConfig config = createFromMapAndRemoveProperties(connectorFactory.getName(), properties);
+        final String catalogName, final ConnectorFactory connectorFactory, final Map<String, String> mProperties) {
+        final Map<String, String> properties = Maps.newHashMap(mProperties);
+        final MetacatCatalogConfig config =
+            MetacatCatalogConfig.createFromMapAndRemoveProperties(connectorFactory.getName(), properties);
 
         super.createConnection(catalogName, connectorFactory, properties);
 
         catalogs.put(catalogName, config);
     }
 
+    /**
+     * Returns the catalog config.
+     * @param name name
+     * @return catalog config
+     */
     @Nonnull
-    public MetacatCatalogConfig getCatalogConfig(QualifiedName name) {
+    public MetacatCatalogConfig getCatalogConfig(final QualifiedName name) {
         return getCatalogConfig(name.getCatalogName());
     }
 
+    /**
+     * Returns the catalog config.
+     * @param catalogName catalog name
+     * @return catalog config
+     */
     @Nonnull
-    public MetacatCatalogConfig getCatalogConfig(String catalogName) {
+    public MetacatCatalogConfig getCatalogConfig(final String catalogName) {
         if (Strings.isNullOrEmpty(catalogName)) {
             throw new IllegalArgumentException("catalog-name is required");
         }

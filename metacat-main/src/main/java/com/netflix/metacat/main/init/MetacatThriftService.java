@@ -21,12 +21,20 @@ import com.netflix.metacat.thrift.CatalogThriftServiceFactory;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Metacat thrift service.
+ */
 public class MetacatThriftService {
     private final MetacatConnectorManager connectorManager;
     private final CatalogThriftServiceFactory thriftServiceFactory;
 
+    /**
+     * Constructor.
+     * @param c factory
+     * @param m connecter manager
+     */
     @Inject
-    public MetacatThriftService(CatalogThriftServiceFactory c, MetacatConnectorManager m) {
+    public MetacatThriftService(final CatalogThriftServiceFactory c, final MetacatConnectorManager m) {
         this.thriftServiceFactory = c;
         this.connectorManager = m;
     }
@@ -40,12 +48,20 @@ public class MetacatThriftService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * Start.
+     * @throws Exception error
+     */
     public void start() throws Exception {
         for (CatalogThriftService service : getCatalogThriftServices()) {
             service.start();
         }
     }
 
+    /**
+     * Stop.
+     * @throws Exception error
+     */
     public void stop() throws Exception {
         for (CatalogThriftService service : getCatalogThriftServices()) {
             service.stop();
