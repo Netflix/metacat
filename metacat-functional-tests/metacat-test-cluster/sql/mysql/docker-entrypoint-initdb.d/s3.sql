@@ -10,8 +10,9 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
-USE metacat;
+DROP SCHEMA IF EXISTS s3;
+CREATE SCHEMA s3;
+USE s3;
 
 --
 -- Table structure for table `database_object`
@@ -184,7 +185,7 @@ CREATE TABLE `source` (
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
--- 
+--
 -- Insert into `source`
 --
 INSERT INTO `source`
