@@ -14,13 +14,18 @@
 package com.facebook.presto.spi;
 
 /**
- * Created by amajumdar on 7/13/15.
+ * Schema table partition name.
  */
 public class SchemaTablePartitionName {
     private final SchemaTableName tableName;
     private final String partitionId;
 
-    public SchemaTablePartitionName(SchemaTableName tableName, String partitionId) {
+    /**
+     * Constructor.
+     * @param tableName table name
+     * @param partitionId partition name
+     */
+    public SchemaTablePartitionName(final SchemaTableName tableName, final String partitionId) {
         this.tableName = tableName;
         this.partitionId = partitionId;
     }

@@ -26,6 +26,9 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Post table update event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -42,10 +45,14 @@ public class MetacatUpdateTablePostEvent extends MetacatEvent {
      * @param currentTable   The current DTO representation of the table
      */
     public MetacatUpdateTablePostEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext requestContext,
-            @NotNull final TableDto oldTable,
-            @NotNull final TableDto currentTable) {
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext,
+        @NotNull
+        final TableDto oldTable,
+        @NotNull
+        final TableDto currentTable) {
         super(name, requestContext);
         this.oldTable = oldTable;
         this.currentTable = currentTable;

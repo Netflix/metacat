@@ -29,10 +29,8 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Set;
 
-import static com.netflix.metacat.main.api.RequestWrapper.qualifyName;
-import static com.netflix.metacat.main.api.RequestWrapper.requestWrapper;
-
 /**
+ * Tag API implementation.
  * @author amajumdar
  */
 public class TagV1Resource implements TagV1 {
@@ -40,8 +38,15 @@ public class TagV1Resource implements TagV1 {
     private MetacatEventBus eventBus;
     private TableService tableService;
 
+    /**
+     * Constructor.
+     * @param eventBus event bus
+     * @param tagService tag service
+     * @param tableService table service
+     */
     @Inject
-    public TagV1Resource(MetacatEventBus eventBus, TagService tagService, TableService tableService) {
+    public TagV1Resource(final MetacatEventBus eventBus, final TagService tagService,
+        final TableService tableService) {
         this.tagService = tagService;
         this.eventBus = eventBus;
         this.tableService = tableService;
@@ -49,47 +54,50 @@ public class TagV1Resource implements TagV1 {
 
     @Override
     public Set<String> getTags() {
-        return requestWrapper("TagV1Resource.getTags", tagService::getTags);
+        return RequestWrapper.requestWrapper("TagV1Resource.getTags", tagService::getTags);
     }
 
     @Override
     public List<QualifiedName> list(
-            Set<String> includeTags,
-            Set<String> excludeTags,
-            String sourceName,
-            String databaseName,
-            String tableName) {
-        return requestWrapper("TagV1Resource.list", () -> tagService.list(includeTags, excludeTags, sourceName, databaseName, tableName));
+        final Set<String> includeTags,
+        final Set<String> excludeTags,
+        final String sourceName,
+        final String databaseName,
+        final String tableName) {
+        return RequestWrapper.requestWrapper("TagV1Resource.list",
+            () -> tagService.list(includeTags, excludeTags, sourceName, databaseName, tableName));
     }
 
     @Override
     public List<QualifiedName> search(
-            String tag,
-            String sourceName,
-            String databaseName,
-            String tableName) {
-        return requestWrapper("TagV1Resource.search", () -> tagService.search(tag, sourceName, databaseName, tableName));
+        final String tag,
+        final String sourceName,
+        final String databaseName,
+        final String tableName) {
+        return RequestWrapper.requestWrapper("TagV1Resource.search",
+            () -> tagService.search(tag, sourceName, databaseName, tableName));
     }
 
     @Override
     public Set<String> setTableTags(
-            String catalogName,
-            String databaseName,
-            String tableName,
-            Set<String> tags) {
-        MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return requestWrapper(name, "TagV1Resource.setTableTags", () -> {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final Set<String> tags) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return RequestWrapper.requestWrapper(name, "TagV1Resource.setTableTags", () -> {
             if (tableService.exists(name)) {
                 throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
             }
-            TableDto oldTable = this.tableService
-                    .get(name, true)
-                    .orElseThrow(IllegalStateException::new);
-            Set<String> result = tagService.setTableTags(name, tags, true);
-            TableDto currentTable = this.tableService
-                    .get(name, true)
-                    .orElseThrow(IllegalStateException::new);
+            final TableDto oldTable = this.tableService
+                .get(name, true)
+                .orElseThrow(IllegalStateException::new);
+            final Set<String> result = tagService.setTableTags(name, tags, true);
+            final TableDto currentTable = this.tableService
+                .get(name, true)
+                .orElseThrow(IllegalStateException::new);
             eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, oldTable, currentTable));
             return result;
         });
@@ -97,26 +105,27 @@ public class TagV1Resource implements TagV1 {
 
     @Override
     public void removeTableTags(
-            String catalogName,
-            String databaseName,
-            String tableName,
-            Boolean deleteAll,
-            Set<String> tags) {
-        MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        QualifiedName name = qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        requestWrapper(name, "TagV1Resource.removeTableTags", () -> {
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final Boolean deleteAll,
+        final Set<String> tags) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final QualifiedName name =
+            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        RequestWrapper.requestWrapper(name, "TagV1Resource.removeTableTags", () -> {
             if (!tableService.exists(name)) {
                 // Delete tags if exists
                 tagService.delete(name, false);
                 throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
             }
-            TableDto oldTable = this.tableService
-                    .get(name, true)
-                    .orElseThrow(IllegalStateException::new);
+            final TableDto oldTable = this.tableService
+                .get(name, true)
+                .orElseThrow(IllegalStateException::new);
             tagService.removeTableTags(name, deleteAll, tags, true);
-            TableDto currentTable = this.tableService
-                    .get(name, true)
-                    .orElseThrow(IllegalStateException::new);
+            final TableDto currentTable = this.tableService
+                .get(name, true)
+                .orElseThrow(IllegalStateException::new);
 
             eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, oldTable, currentTable));
             return null;

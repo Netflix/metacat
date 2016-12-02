@@ -13,63 +13,60 @@
 
 package com.facebook.presto.spi;
 
+import lombok.Data;
+
 import java.util.Map;
 
 /**
- * Created by amajumdar on 2/2/15.
+ * Connector partition detail.
  */
-public class ConnectorPartitionDetailImpl implements ConnectorPartitionDetail{
+@Data
+public class ConnectorPartitionDetailImpl implements ConnectorPartitionDetail {
     private final String partitionId;
     private final TupleDomain<ColumnHandle> tupleDomain;
     private final StorageInfo storageInfo;
     private Map<String, String> metadata;
     private final AuditInfo auditInfo;
 
-    public ConnectorPartitionDetailImpl(String partitionId,
-            TupleDomain<ColumnHandle> tupleDomain, Map<String, String> metadata) {
+    /**
+     * Constructor.
+     * @param partitionId partition name
+     * @param tupleDomain tuple
+     * @param metadata metadata
+     */
+    public ConnectorPartitionDetailImpl(final String partitionId,
+        final TupleDomain<ColumnHandle> tupleDomain, final Map<String, String> metadata) {
         this(partitionId, tupleDomain, null, metadata, null);
     }
 
-    public ConnectorPartitionDetailImpl(String partitionId,
-            TupleDomain<ColumnHandle> tupleDomain, StorageInfo storageInfo, Map<String, String> metadata) {
+    /**
+     * Constructor.
+     * @param partitionId partition name
+     * @param tupleDomain tuple
+     * @param storageInfo storage info
+     * @param metadata metadata
+     */
+    public ConnectorPartitionDetailImpl(final String partitionId,
+        final TupleDomain<ColumnHandle> tupleDomain, final StorageInfo storageInfo,
+        final Map<String, String> metadata) {
         this(partitionId, tupleDomain, storageInfo, metadata, null);
     }
 
-    public ConnectorPartitionDetailImpl(String partitionId,
-            TupleDomain<ColumnHandle> tupleDomain, StorageInfo storageInfo, Map<String, String> metadata, AuditInfo auditInfo) {
+    /**
+     * Constructor.
+     * @param partitionId partition name
+     * @param tupleDomain tuple
+     * @param storageInfo storage info
+     * @param metadata metadata
+     * @param auditInfo audit info
+     */
+    public ConnectorPartitionDetailImpl(final String partitionId,
+        final TupleDomain<ColumnHandle> tupleDomain, final StorageInfo storageInfo, final Map<String, String> metadata,
+        final AuditInfo auditInfo) {
         this.partitionId = partitionId;
         this.tupleDomain = tupleDomain;
         this.storageInfo = storageInfo;
         this.metadata = metadata;
-        this.auditInfo = auditInfo!=null?auditInfo:new AuditInfo();
-    }
-
-    @Override
-    public Map<String, String> getMetadata() {
-        return metadata;
-    }
-
-    @Override
-    public StorageInfo getStorageInfo() {
-        return storageInfo;
-    }
-
-    @Override
-    public String getPartitionId() {
-        return partitionId;
-    }
-
-    @Override
-    public TupleDomain<ColumnHandle> getTupleDomain() {
-        return tupleDomain;
-    }
-
-    @Override
-    public AuditInfo getAuditInfo() {
-        return auditInfo;
-    }
-
-    public void setMetadata(Map<String, String> metadata) {
-        this.metadata = metadata;
+        this.auditInfo = auditInfo != null ? auditInfo : new AuditInfo();
     }
 }

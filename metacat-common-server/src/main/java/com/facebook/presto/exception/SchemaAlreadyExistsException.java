@@ -17,15 +17,25 @@ import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.StandardErrorCode;
 
 /**
- * Created by amajumdar on 4/30/15.
+ * Exception when schema already exists.
  */
-public class SchemaAlreadyExistsException extends PrestoException{
+public class SchemaAlreadyExistsException extends PrestoException {
     private final String schemaName;
-    public SchemaAlreadyExistsException(String schemaName) {
+
+    /**
+     * Constructor.
+     * @param schemaName schema name
+     */
+    public SchemaAlreadyExistsException(final String schemaName) {
         this(schemaName, null);
     }
 
-    public SchemaAlreadyExistsException(String schemaName, Throwable cause) {
+    /**
+     * Constructor.
+     * @param schemaName schema name
+     * @param cause error cause
+     */
+    public SchemaAlreadyExistsException(final String schemaName, final Throwable cause) {
         super(StandardErrorCode.ALREADY_EXISTS, String.format("Schema %s already exists.", schemaName), cause);
         this.schemaName = schemaName;
     }

@@ -19,14 +19,13 @@ import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.type.Type;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 
 import java.util.Objects;
 
-import static com.google.common.base.MoreObjects.toStringHelper;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * Created by amajumdar on 9/30/15.
+ * Column detail handle.
  */
 public class ColumnDetailHandle implements ColumnHandle {
     private final String connectorId;
@@ -40,33 +39,48 @@ public class ColumnDetailHandle implements ColumnHandle {
     private final String defaultValue;
     private final Boolean isSortKey;
     private final Boolean isIndexKey;
+
+    /**
+     * Constructor.
+     * @param connectorId connector id
+     * @param columnName column name
+     * @param columnType column type
+     * @param isPartitionKey is the column a partition key
+     * @param comment comment
+     * @param sourceType source type
+     * @param size size
+     * @param isNullable can it be null
+     * @param defaultValue default value
+     * @param isSortKey is it a sort column
+     * @param isIndexKey is it an index column
+     */
     @JsonCreator
     public ColumnDetailHandle(
-            @JsonProperty("connectorId")
-            String connectorId,
-            @JsonProperty("columnName")
-            String columnName,
-            @JsonProperty("columnType")
-            Type columnType,
-            @JsonProperty("columnType")
-            Boolean isPartitionKey,
-            @JsonProperty("columnType")
-            String comment,
-            @JsonProperty("sourceType")
-            String sourceType,
-            @JsonProperty("size")
-            Integer size,
-            @JsonProperty("isNullable")
-            Boolean isNullable,
-            @JsonProperty("defaultValue")
-            String defaultValue,
-            @JsonProperty("isSortKey")
-            Boolean isSortKey,
-            @JsonProperty("isIndexKey")
-            Boolean isIndexKey) {
-        this.connectorId = checkNotNull(connectorId, "connectorId is null");
-        this.columnName = checkNotNull(columnName, "columnName is null");
-        this.columnType = checkNotNull(columnType, "columnType is null");
+        @JsonProperty("connectorId")
+        final String connectorId,
+        @JsonProperty("columnName")
+        final String columnName,
+        @JsonProperty("columnType")
+        final Type columnType,
+        @JsonProperty("columnType")
+        final Boolean isPartitionKey,
+        @JsonProperty("columnType")
+        final String comment,
+        @JsonProperty("sourceType")
+        final String sourceType,
+        @JsonProperty("size")
+        final Integer size,
+        @JsonProperty("isNullable")
+        final Boolean isNullable,
+        @JsonProperty("defaultValue")
+        final String defaultValue,
+        @JsonProperty("isSortKey")
+        final Boolean isSortKey,
+        @JsonProperty("isIndexKey")
+        final Boolean isIndexKey) {
+        this.connectorId = Preconditions.checkNotNull(connectorId, "connectorId is null");
+        this.columnName = Preconditions.checkNotNull(columnName, "columnName is null");
+        this.columnType = Preconditions.checkNotNull(columnType, "columnType is null");
         this.isPartitionKey = isPartitionKey;
         this.comment = comment;
         this.sourceType = sourceType;
@@ -78,20 +92,17 @@ public class ColumnDetailHandle implements ColumnHandle {
     }
 
     @JsonProperty
-    public String getConnectorId()
-    {
+    public String getConnectorId() {
         return connectorId;
     }
 
     @JsonProperty
-    public String getColumnName()
-    {
+    public String getColumnName() {
         return columnName;
     }
 
     @JsonProperty
-    public Type getColumnType()
-    {
+    public Type getColumnType() {
         return columnType;
     }
 
@@ -135,46 +146,46 @@ public class ColumnDetailHandle implements ColumnHandle {
         return isIndexKey;
     }
 
-    public ColumnMetadata getColumnMetadata()
-    {
-        StringBuilder comments = new StringBuilder(comment==null?"":comment).append(" ")
-                .append("nullable=").append(isNullable).append(", ")
-                .append("columnLength=").append(size).append(", ")
-                .append("default=").append(defaultValue).append(", ")
-                .append("sortKey=").append(isSortKey).append(", ")
-                .append("indexKey=").append(isIndexKey);
+    /**
+     * Returns the column metadata.
+     * @return column metadata
+     */
+    public ColumnMetadata getColumnMetadata() {
+        final StringBuilder comments = new StringBuilder(comment == null ? "" : comment).append(" ")
+            .append("nullable=").append(isNullable).append(", ")
+            .append("columnLength=").append(size).append(", ")
+            .append("default=").append(defaultValue).append(", ")
+            .append("sortKey=").append(isSortKey).append(", ")
+            .append("indexKey=").append(isIndexKey);
 
-        return new ColumnDetailMetadata(columnName, columnType, isPartitionKey==null?false:isPartitionKey,
-                comments.toString(), false, sourceType, size, isNullable, defaultValue, isSortKey, isIndexKey);
+        return new ColumnDetailMetadata(columnName, columnType, isPartitionKey != null && isPartitionKey,
+            comments.toString(), false, sourceType, size, isNullable, defaultValue, isSortKey, isIndexKey);
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
+    public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
         }
         if ((obj == null) || (getClass() != obj.getClass())) {
             return false;
         }
-        ColumnDetailHandle o = (ColumnDetailHandle) obj;
-        return Objects.equals(this.connectorId, o.connectorId) &&
-                Objects.equals(this.columnName, o.columnName);
+        final ColumnDetailHandle o = (ColumnDetailHandle) obj;
+        return Objects.equals(this.connectorId, o.connectorId)
+            && Objects.equals(this.columnName, o.columnName);
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return Objects.hash(connectorId, columnName);
     }
 
     @Override
-    public String toString()
-    {
-        return toStringHelper(this)
-                .add("connectorId", connectorId)
-                .add("columnName", columnName)
-                .add("columnType", columnType)
-                .toString();
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+            .add("connectorId", connectorId)
+            .add("columnName", columnName)
+            .add("columnType", columnType)
+            .toString();
     }
 }

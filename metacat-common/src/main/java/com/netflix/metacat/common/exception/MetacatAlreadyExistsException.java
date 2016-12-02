@@ -16,10 +16,14 @@ package com.netflix.metacat.common.exception;
 import javax.ws.rs.core.Response;
 
 /**
- * Created by amajumdar on 5/11/15.
+ * Metacat exception for already exists entities.
  */
-public class MetacatAlreadyExistsException extends MetacatException{
-    public MetacatAlreadyExistsException(String message) {
+public class MetacatAlreadyExistsException extends MetacatException {
+    /**
+     * Constructor.
+     * @param message exception message
+     */
+    public MetacatAlreadyExistsException(final String message) {
         super(message, Response.Status.CONFLICT, null);
     }
 }

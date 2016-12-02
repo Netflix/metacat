@@ -28,31 +28,53 @@ public class ConnectorTableDetailMetadata extends ConnectorTableMetadata {
     private StorageInfo storageInfo;
     private Map<String, String> metadata;
     private AuditInfo auditInfo;
-    public ConnectorTableDetailMetadata(SchemaTableName table,
-            List<ColumnMetadata> columns, Map<String, String> metadata) {
-        this( table, columns, null, null, metadata, null);
+
+    /**
+     * COnstructor.
+     * @param table table name
+     * @param columns list of columns
+     * @param metadata metadata
+     */
+    public ConnectorTableDetailMetadata(final SchemaTableName table,
+        final List<ColumnMetadata> columns, final Map<String, String> metadata) {
+        this(table, columns, null, null, metadata, null);
     }
 
-    public ConnectorTableDetailMetadata(SchemaTableName table,
-            List<ColumnMetadata> columns, StorageInfo storageInfo, Map<String, String> metadata) {
-        this( table, columns, null, storageInfo, metadata, null);
+    /**
+     * COnstructor.
+     * @param table table name
+     * @param columns list of columns
+     * @param storageInfo storage info
+     * @param metadata metadata
+     */
+    public ConnectorTableDetailMetadata(final SchemaTableName table,
+        final List<ColumnMetadata> columns, final StorageInfo storageInfo, final Map<String, String> metadata) {
+        this(table, columns, null, storageInfo, metadata, null);
     }
 
-    public ConnectorTableDetailMetadata(SchemaTableName table, List<ColumnMetadata> columns
-            , String owner, StorageInfo storageInfo, Map<String, String> metadata
-            , AuditInfo auditInfo)
-    {
+    /**
+     * COnstructor.
+     * @param table table name
+     * @param columns list of columns
+     * @param owner owner name
+     * @param storageInfo storage info
+     * @param metadata metadata
+     * @param auditInfo audit info
+     */
+    public ConnectorTableDetailMetadata(final SchemaTableName table, final List<ColumnMetadata> columns,
+        final String owner, final StorageInfo storageInfo, final Map<String, String> metadata,
+        final AuditInfo auditInfo) {
         super(table, columns, Maps.newHashMap(), owner, false);
         this.storageInfo = storageInfo;
         this.metadata = metadata;
-        this.auditInfo = auditInfo!=null?auditInfo:new AuditInfo();
+        this.auditInfo = auditInfo != null ? auditInfo : new AuditInfo();
     }
 
     public StorageInfo getStorageInfo() {
         return storageInfo;
     }
 
-    public void setStorageInfo(StorageInfo storageInfo) {
+    public void setStorageInfo(final StorageInfo storageInfo) {
         this.storageInfo = storageInfo;
     }
 
@@ -60,7 +82,7 @@ public class ConnectorTableDetailMetadata extends ConnectorTableMetadata {
         return metadata;
     }
 
-    public void setMetadata(Map<String, String> metadata) {
+    public void setMetadata(final Map<String, String> metadata) {
         this.metadata = metadata;
     }
 
@@ -68,7 +90,7 @@ public class ConnectorTableDetailMetadata extends ConnectorTableMetadata {
         return auditInfo;
     }
 
-    public void setAuditInfo(AuditInfo auditInfo) {
+    public void setAuditInfo(final AuditInfo auditInfo) {
         this.auditInfo = auditInfo;
     }
 }

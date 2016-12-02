@@ -40,8 +40,8 @@ dependencies {
 }
 
 test {
-    systemProperty 'metacat.plugin.config.location', 'src/test/resources/etc/catalog'
-    systemProperty 'metacat.usermetadata.config.location', 'src/test/resources/usermetadata.properties'
+    systemProperty 'metacat.plugin.config.location', 'build/resources/test/etc/catalog'
+    systemProperty 'metacat.usermetadata.config.location', 'build/resources/test/usermetadata.properties'
     testLogging {
         exceptionFormat = 'full'
     }

@@ -21,10 +21,10 @@ import javax.persistence.OneToMany;
 import java.util.List;
 
 /**
- * Created by amajumdar on 12/23/14.
+ * Base Table.
  */
 @MappedSuperclass
-public abstract class BaseTable extends IdEntity{
+public abstract class BaseTable extends IdEntity {
     private String name;
     private List<Partition> partitions;
 
@@ -33,16 +33,16 @@ public abstract class BaseTable extends IdEntity{
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
-    @OneToMany(cascade= CascadeType.ALL, fetch= FetchType.LAZY, mappedBy = "table")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "table")
     public List<Partition> getPartitions() {
         return partitions;
     }
 
-    public void setPartitions(List<Partition> partitions) {
+    public void setPartitions(final List<Partition> partitions) {
         this.partitions = partitions;
     }
 }

@@ -14,16 +14,24 @@
 package com.facebook.presto.spi;
 
 /**
- * Created by amajumdar on 3/16/15.
+ * Sort info.
  */
 public class Sort {
     private String sortBy;
     private SortOrder order;
 
+    /**
+     * Default constructor.
+     */
     public Sort() {
     }
 
-    public Sort(String sortBy, SortOrder order) {
+    /**
+     * Constructor.
+     * @param sortBy sort by
+     * @param order order of the list
+     */
+    public Sort(final String sortBy, final SortOrder order) {
         this.sortBy = sortBy;
         this.order = order;
     }
@@ -32,19 +40,23 @@ public class Sort {
         return sortBy;
     }
 
-    public void setSortBy(String sortBy) {
+    public void setSortBy(final String sortBy) {
         this.sortBy = sortBy;
     }
 
     public SortOrder getOrder() {
-        return order==null?SortOrder.ASC:order;
+        return order == null ? SortOrder.ASC : order;
     }
 
-    public void setOrder(SortOrder order) {
+    public void setOrder(final SortOrder order) {
         this.order = order;
     }
 
-    public boolean hasSort(){
+    /**
+     * True if sortBy is specified.
+     * @return true if sortBy is specified
+     */
+    public boolean hasSort() {
         return sortBy != null;
     }
 }

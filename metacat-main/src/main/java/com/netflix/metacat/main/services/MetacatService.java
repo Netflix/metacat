@@ -19,7 +19,8 @@ import com.netflix.metacat.common.dto.BaseDto;
 import javax.annotation.Nonnull;
 
 /**
- * Created by amajumdar on 3/29/16.
+ * Base service interface for all entities like catalog, database, table, view and partition.
+ * @param <T>
  */
 public interface MetacatService<T extends BaseDto> {
     /**
@@ -27,32 +28,46 @@ public interface MetacatService<T extends BaseDto> {
      * @param name qualified name of the object
      * @param dto object metadata
      */
-    void create(@Nonnull QualifiedName name, @Nonnull T dto);
+    void create(
+        @Nonnull
+            QualifiedName name,
+        @Nonnull
+            T dto);
 
     /**
-     * Updates the object
+     * Updates the object.
      * @param name qualified name of the object
      * @param dto object dto
      */
-    void update(@Nonnull QualifiedName name, @Nonnull T dto);
+    void update(
+        @Nonnull
+            QualifiedName name,
+        @Nonnull
+            T dto);
 
     /**
      * Deletes the object. Returns the metadata of the object deleted.
      * @param name qualified name of the object to be deleted
      */
-    void delete(@Nonnull QualifiedName name);
+    void delete(
+        @Nonnull
+            QualifiedName name);
 
     /**
-     * Returns the object with the given name
+     * Returns the object with the given name.
      * @param name qualified name of the object
      * @return Returns the object with the given name
      */
-    T get(@Nonnull QualifiedName name);
+    T get(
+        @Nonnull
+            QualifiedName name);
 
     /**
-     * Returns true, if the object exists
+     * Returns true, if the object exists.
      * @param name qualified name of the object
      * @return boolean
      */
-    boolean exists(@Nonnull QualifiedName name);
+    boolean exists(
+        @Nonnull
+            QualifiedName name);
 }

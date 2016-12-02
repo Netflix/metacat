@@ -17,41 +17,40 @@ import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.block.Block;
 import com.facebook.presto.spi.block.BlockBuilder;
 import com.facebook.presto.spi.type.AbstractVariableWidthType;
+import com.facebook.presto.spi.type.TypeSignature;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;
 
-import static com.facebook.presto.spi.type.TypeSignature.parseTypeSignature;
-
 /**
- * Created by amajumdar on 4/7/16.
+ * String type.
  */
-public final class StringType extends AbstractVariableWidthType
-{
+public final class StringType extends AbstractVariableWidthType {
+    /** Default string type. */
     public static final StringType STRING = new StringType();
+    /** String representation. */
     public static final String TYPE = "string";
 
+    /**
+     * Default creator.
+     */
     @JsonCreator
-    public StringType()
-    {
-        super(parseTypeSignature(TYPE), Slice.class);
+    public StringType() {
+        super(TypeSignature.parseTypeSignature(TYPE), Slice.class);
     }
 
     @Override
-    public boolean isComparable()
-    {
+    public boolean isComparable() {
         return true;
     }
 
     @Override
-    public boolean isOrderable()
-    {
+    public boolean isOrderable() {
         return true;
     }
 
     @Override
-    public Object getObjectValue(ConnectorSession session, Block block, int position)
-    {
+    public Object getObjectValue(final ConnectorSession session, final Block block, final int position) {
         if (block.isNull(position)) {
             return null;
         }
@@ -60,10 +59,10 @@ public final class StringType extends AbstractVariableWidthType
     }
 
     @Override
-    public boolean equalTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition)
-    {
-        int leftLength = leftBlock.getLength(leftPosition);
-        int rightLength = rightBlock.getLength(rightPosition);
+    public boolean equalTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final int leftLength = leftBlock.getLength(leftPosition);
+        final int rightLength = rightBlock.getLength(rightPosition);
         if (leftLength != rightLength) {
             return false;
         }
@@ -71,51 +70,49 @@ public final class StringType extends AbstractVariableWidthType
     }
 
     @Override
-    public int hash(Block block, int position)
-    {
+    public int hash(final Block block, final int position) {
         return block.hash(position, 0, block.getLength(position));
     }
 
     @Override
-    public int compareTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition)
-    {
-        int leftLength = leftBlock.getLength(leftPosition);
-        int rightLength = rightBlock.getLength(rightPosition);
+    public int compareTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final int leftLength = leftBlock.getLength(leftPosition);
+        final int rightLength = rightBlock.getLength(rightPosition);
         return leftBlock.compareTo(leftPosition, 0, leftLength, rightBlock, rightPosition, 0, rightLength);
     }
 
     @Override
-    public void appendTo(Block block, int position, BlockBuilder blockBuilder)
-    {
+    public void appendTo(final Block block, final int position, final BlockBuilder blockBuilder) {
         if (block.isNull(position)) {
             blockBuilder.appendNull();
-        }
-        else {
+        } else {
             block.writeBytesTo(position, 0, block.getLength(position), blockBuilder);
             blockBuilder.closeEntry();
         }
     }
 
     @Override
-    public Slice getSlice(Block block, int position)
-    {
+    public Slice getSlice(final Block block, final int position) {
         return block.getSlice(position, 0, block.getLength(position));
     }
 
-    public void writeString(BlockBuilder blockBuilder, String value)
-    {
+    /**
+     * Writes string.
+     * @param blockBuilder builder
+     * @param value value
+     */
+    public void writeString(final BlockBuilder blockBuilder, final String value) {
         writeSlice(blockBuilder, Slices.utf8Slice(value));
     }
 
     @Override
-    public void writeSlice(BlockBuilder blockBuilder, Slice value)
-    {
+    public void writeSlice(final BlockBuilder blockBuilder, final Slice value) {
         writeSlice(blockBuilder, value, 0, value.length());
     }
 
     @Override
-    public void writeSlice(BlockBuilder blockBuilder, Slice value, int offset, int length)
-    {
+    public void writeSlice(final BlockBuilder blockBuilder, final Slice value, final int offset, final int length) {
         blockBuilder.writeBytes(value, offset, length).closeEntry();
     }
 }

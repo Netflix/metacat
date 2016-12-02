@@ -23,17 +23,26 @@ import io.airlift.bootstrap.LifeCycleManager;
 import javax.inject.Inject;
 
 /**
- * Created by amajumdar on 9/30/15.
+ * Postgres JDBC connector.
  */
-public class PostgreSqlJdbcConnector extends JdbcConnector{
+public class PostgreSqlJdbcConnector extends JdbcConnector {
+    /**
+     * Constructor.
+     * @param lifeCycleManager manager
+     * @param jdbcMetadata jdbc metadata
+     * @param jdbcSplitManager split manager
+     * @param jdbcRecordSetProvider provider
+     * @param jdbcHandleResolver resolver
+     * @param jdbcRecordSinkProvider provider
+     */
     @Inject
-    public PostgreSqlJdbcConnector(LifeCycleManager lifeCycleManager,
-            PostgreSqlJdbcMetadata jdbcMetadata,
-            JdbcSplitManager jdbcSplitManager,
-            JdbcRecordSetProvider jdbcRecordSetProvider,
-            JdbcHandleResolver jdbcHandleResolver,
-            JdbcRecordSinkProvider jdbcRecordSinkProvider) {
+    public PostgreSqlJdbcConnector(final LifeCycleManager lifeCycleManager,
+        final PostgreSqlJdbcMetadata jdbcMetadata,
+        final JdbcSplitManager jdbcSplitManager,
+        final JdbcRecordSetProvider jdbcRecordSetProvider,
+        final JdbcHandleResolver jdbcHandleResolver,
+        final JdbcRecordSinkProvider jdbcRecordSinkProvider) {
         super(lifeCycleManager, jdbcMetadata, jdbcSplitManager, jdbcRecordSetProvider, jdbcHandleResolver,
-                jdbcRecordSinkProvider);
+            jdbcRecordSinkProvider);
     }
 }

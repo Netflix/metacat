@@ -22,16 +22,16 @@ import javax.persistence.UniqueConstraint;
 import java.util.List;
 
 /**
- * Created by amajumdar on 12/19/14.
+ * Source.
  */
 @Entity
-@javax.persistence.Table(name="source",
-        uniqueConstraints= @UniqueConstraint(name="source_u1",columnNames = "name"))
-public class Source extends IdEntity{
+@javax.persistence.Table(name = "source",
+    uniqueConstraints = @UniqueConstraint(name = "source_u1", columnNames = "name"))
+public class Source extends IdEntity {
     private String name;
     private String type;
     private String thriftUri;
-    private boolean disabled = false;
+    private boolean disabled;
     private List<Database> databases;
 
     @Column(name = "name", nullable = false)
@@ -39,7 +39,7 @@ public class Source extends IdEntity{
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
@@ -48,7 +48,7 @@ public class Source extends IdEntity{
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(final String type) {
         this.type = type;
     }
 
@@ -57,7 +57,7 @@ public class Source extends IdEntity{
         return thriftUri;
     }
 
-    public void setThriftUri(String thriftUri) {
+    public void setThriftUri(final String thriftUri) {
         this.thriftUri = thriftUri;
     }
 
@@ -66,16 +66,16 @@ public class Source extends IdEntity{
         return disabled;
     }
 
-    public void setDisabled(boolean disabled) {
+    public void setDisabled(final boolean disabled) {
         this.disabled = disabled;
     }
 
-    @OneToMany(cascade= CascadeType.ALL, fetch= FetchType.LAZY, mappedBy = "source")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "source")
     public List<Database> getDatabases() {
         return databases;
     }
 
-    public void setDatabases(List<Database> databases) {
+    public void setDatabases(final List<Database> databases) {
         this.databases = databases;
     }
 }

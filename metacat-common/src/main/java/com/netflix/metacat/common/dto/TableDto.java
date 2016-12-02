@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 import com.wordnik.swagger.annotations.ApiModel;
 import com.wordnik.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -28,10 +30,14 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
+/**
+ * Table DTO.
+ */
 @ApiModel("Table metadata")
 @SuppressWarnings("unused")
+@Data
+@EqualsAndHashCode(callSuper = false)
 public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionMetadata {
     private static final long serialVersionUID = 5922768252406041451L;
     @ApiModelProperty(value = "Contains information about table changes")
@@ -47,47 +53,17 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
     private List<FieldDto> fields;
     @ApiModelProperty(value = "Any extra metadata properties of the database table")
     private Map<String, String> metadata;
+    @ApiModelProperty(value = "the name of this entity", required = true)
+    @JsonProperty
     private QualifiedName name;
     @ApiModelProperty(value = "serialization/deserialization info about the table")
     private StorageDto serde;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof TableDto)) return false;
-        TableDto tableDto = (TableDto) o;
-        return Objects.equals(audit, tableDto.audit) &&
-                Objects.equals(dataMetadata, tableDto.dataMetadata) &&
-                Objects.equals(definitionMetadata, tableDto.definitionMetadata) &&
-                Objects.equals(fields, tableDto.fields) &&
-                Objects.equals(metadata, tableDto.metadata) &&
-                Objects.equals(name, tableDto.name) &&
-                Objects.equals(serde, tableDto.serde);
-    }
-
-    public AuditDto getAudit() {
-        return audit;
-    }
-
-    public void setAudit(AuditDto audit) {
-        this.audit = audit;
-    }
-
-    @Override
-    public ObjectNode getDataMetadata() {
-        return dataMetadata;
-    }
-
-    @Override
-    public void setDataMetadata(ObjectNode dataMetadata) {
-        this.dataMetadata = dataMetadata;
-    }
 
     @Nonnull
     @Override
     @JsonIgnore
     public String getDataUri() {
-        String uri = serde != null ? serde.getUri() : null;
+        final String uri = serde != null ? serde.getUri() : null;
         if (uri == null || uri.isEmpty()) {
             throw new IllegalStateException("This instance does not have external data");
         }
@@ -95,49 +71,18 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
         return uri;
     }
 
-    @Override
-    public ObjectNode getDefinitionMetadata() {
-        return definitionMetadata;
-    }
-
-    @Override
-    public void setDefinitionMetadata(ObjectNode definitionMetadata) {
-        this.definitionMetadata = definitionMetadata;
-    }
-
-    public List<FieldDto> getFields() {
-        return fields;
-    }
-
-    public void setFields(List<FieldDto> fields) {
-        this.fields = fields;
-    }
-
-    public Map<String, String> getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(Map<String, String> metadata) {
-        this.metadata = metadata;
-    }
-
-    @ApiModelProperty(value = "the name of this entity", required = true)
-    @JsonProperty
-    public QualifiedName getName() {
-        return name;
-    }
-
-    public void setName(QualifiedName name) {
-        this.name = name;
-    }
-
     @JsonIgnore
     public QualifiedName getDefinitionName() {
         return name;
     }
 
+    /**
+     * Returns the list of partition keys.
+     * @return list of partition keys
+     */
     @ApiModelProperty(value = "List of partition key names", required = false)
     @JsonProperty
+    @SuppressWarnings("checkstyle:methodname")
     public List<String> getPartition_keys() {
         if (fields == null) {
             return null;
@@ -145,7 +90,7 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
             return Collections.emptyList();
         }
 
-        List<String> keys = new LinkedList<>();
+        final List<String> keys = new LinkedList<>();
         for (FieldDto field : fields) {
             if (field.isPartition_key()) {
                 keys.add(field.getName());
@@ -154,21 +99,12 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
         return keys;
     }
 
-    @SuppressWarnings("EmptyMethod")
-    public void setPartition_keys(List<String> ignored) {
-    }
-
-    public StorageDto getSerde() {
-        return serde;
-    }
-
-    public void setSerde(StorageDto serde) {
-        this.serde = serde;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(audit, dataMetadata, definitionMetadata, fields, metadata, name, serde);
+    /**
+     * Sets the partition keys.
+     * @param ignored list of partition keys
+     */
+    @SuppressWarnings({"EmptyMethod", "checkstyle:methodname"})
+    public void setPartition_keys(final List<String> ignored) {
     }
 
     @Override
@@ -177,17 +113,21 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
         return serde != null && serde.getUri() != null && !serde.getUri().isEmpty();
     }
 
+    /**
+     * Sets the data external property.
+     * @param ignored is data external
+     */
     @SuppressWarnings("EmptyMethod")
-    public void setDataExternal(boolean ignored) {
+    public void setDataExternal(final boolean ignored) {
     }
 
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         dataMetadata = deserializeObjectNode(in);
         definitionMetadata = deserializeObjectNode(in);
     }
 
-    private void writeObject(ObjectOutputStream out) throws IOException {
+    private void writeObject(final ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         serializeObjectNode(out, dataMetadata);
         serializeObjectNode(out, definitionMetadata);

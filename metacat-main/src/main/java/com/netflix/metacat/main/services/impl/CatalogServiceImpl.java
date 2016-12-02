@@ -32,32 +32,37 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Catalog service implementation.
+ */
 public class CatalogServiceImpl implements CatalogService {
     @Inject
-    MetacatConnectorManager metacatConnectorManager;
+    private MetacatConnectorManager metacatConnectorManager;
     @Inject
-    MetadataManager metadataManager;
+    private MetadataManager metadataManager;
     @Inject
-    SessionProvider sessionProvider;
+    private SessionProvider sessionProvider;
     @Inject
-    UserMetadataService userMetadataService;
+    private UserMetadataService userMetadataService;
 
     @Nonnull
     @Override
-    public CatalogDto get(@Nonnull QualifiedName name) {
-        Session session = sessionProvider.getSession(name);
+    public CatalogDto get(
+        @Nonnull
+        final QualifiedName name) {
+        final Session session = sessionProvider.getSession(name);
 
-        MetacatCatalogConfig config = metacatConnectorManager.getCatalogConfig(name);
+        final MetacatCatalogConfig config = metacatConnectorManager.getCatalogConfig(name);
 
-        CatalogDto result = new CatalogDto();
+        final CatalogDto result = new CatalogDto();
         result.setName(name);
         result.setType(config.getType());
         result.setDatabases(metadataManager.listSchemaNames(session, name.getCatalogName())
-                        .stream()
-                        .filter(s -> config.getSchemaBlacklist().isEmpty() || !config.getSchemaBlacklist().contains(s))
-                        .filter(s -> config.getSchemaWhitelist().isEmpty() || config.getSchemaWhitelist().contains(s))
-                        .sorted(String.CASE_INSENSITIVE_ORDER)
-                        .collect(Collectors.toList())
+            .stream()
+            .filter(s -> config.getSchemaBlacklist().isEmpty() || !config.getSchemaBlacklist().contains(s))
+            .filter(s -> config.getSchemaWhitelist().isEmpty() || config.getSchemaWhitelist().contains(s))
+            .sorted(String.CASE_INSENSITIVE_ORDER)
+            .collect(Collectors.toList())
         );
 
         userMetadataService.populateMetadata(result);
@@ -68,19 +73,23 @@ public class CatalogServiceImpl implements CatalogService {
     @Nonnull
     @Override
     public List<CatalogMappingDto> getCatalogNames() {
-        Map<String, MetacatCatalogConfig> catalogs = metacatConnectorManager.getCatalogs();
+        final Map<String, MetacatCatalogConfig> catalogs = metacatConnectorManager.getCatalogs();
         if (catalogs.isEmpty()) {
             throw new MetacatNotFoundException("Unable to locate any catalogs");
         }
 
         return catalogs.entrySet().stream()
-                .map(entry -> new CatalogMappingDto(entry.getKey(), entry.getValue().getType()))
-                .collect(Collectors.toList());
+            .map(entry -> new CatalogMappingDto(entry.getKey(), entry.getValue().getType()))
+            .collect(Collectors.toList());
     }
 
     @Override
-    public void update(@Nonnull QualifiedName name, @Nonnull CreateCatalogDto createCatalogDto) {
-        Session session = sessionProvider.getSession(name);
+    public void update(
+        @Nonnull
+        final QualifiedName name,
+        @Nonnull
+        final CreateCatalogDto createCatalogDto) {
+        final Session session = sessionProvider.getSession(name);
         userMetadataService.saveMetadata(session.getUser(), createCatalogDto, true);
     }
 }

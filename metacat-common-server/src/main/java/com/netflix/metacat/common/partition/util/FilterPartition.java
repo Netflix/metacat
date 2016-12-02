@@ -13,30 +13,49 @@
 
 package com.netflix.metacat.common.partition.util;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.partition.parser.ParseException;
 import com.netflix.metacat.common.partition.parser.PartitionParser;
 import com.netflix.metacat.common.partition.parser.TokenMgrError;
 import com.netflix.metacat.common.partition.visitor.PartitionParserEval;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Map;
 
+/**
+ * Partition filter utility.
+ */
+@Slf4j
 public class FilterPartition {
-    private static final Logger log = LoggerFactory.getLogger(FilterPartition.class);
+    private PartitionParser parser;
+    private Map<String, String> context = Maps.newLinkedHashMap();
 
-    PartitionParser parser;
-    Map<String, String> context = Maps.newLinkedHashMap();
-
-    public boolean evaluatePartitionExpression(String partitionExpression, String name, String path) throws
-            IOException {
+    /**
+     * Evaluates the given expression.
+     * @param partitionExpression expression
+     * @param name name
+     * @param path partition uri path
+     * @return true if the expression evaluates to true
+     * @throws IOException exception
+     */
+    public boolean evaluatePartitionExpression(final String partitionExpression, final String name, final String path)
+        throws IOException {
         return evaluatePartitionExpression(partitionExpression, name, path, false, null);
     }
-    public boolean evaluatePartitionExpression(String partitionExpression, String name, String path, boolean batchid, Map<String, String> values)  {
+
+    /**
+     * Evaluates the given expression.
+     * @param partitionExpression expression
+     * @param name name
+     * @param path partition uri path
+     * @param batchid batch id
+     * @param values map of values
+     * @return true if the expression evaluates to true
+     */
+    public boolean evaluatePartitionExpression(final String partitionExpression, final String name, final String path,
+        final boolean batchid, final Map<String, String> values) {
         if (partitionExpression != null) {
             try {
                 if (parser == null) {
@@ -49,19 +68,19 @@ public class FilterPartition {
                     PartitionUtil.getPartitionKeyValues(path, context);
                 }
                 PartitionUtil.getPartitionKeyValues(name, context);
-                if( values != null){
+                if (values != null) {
                     context.putAll(values);
                 }
-                if(context.size() > 0) {
+                if (context.size() > 0) {
                     return (Boolean) parser.filter().jjtAccept(new PartitionParserEval(context), null);
                 } else {
                     return false;
                 }
-            } catch(ParseException | TokenMgrError e){
+            } catch (ParseException | TokenMgrError e) {
                 throw new IllegalArgumentException(String.format("Invalid expression: %s", partitionExpression), e);
-            } catch(IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
                 throw e;
-            } catch(Throwable t) {
+            } catch (Throwable t) {
                 log.warn("Caught unexpected exception during evaluatePartitionExpression,", t);
                 return false;
             }

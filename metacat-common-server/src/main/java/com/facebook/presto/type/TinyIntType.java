@@ -17,19 +17,20 @@ import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.block.Block;
 import com.facebook.presto.spi.block.BlockBuilder;
 import com.facebook.presto.spi.type.AbstractFixedWidthType;
-
-import static com.facebook.presto.spi.type.TypeSignature.parseTypeSignature;
-import static io.airlift.slice.SizeOf.SIZE_OF_BYTE;
+import com.facebook.presto.spi.type.TypeSignature;
+import io.airlift.slice.SizeOf;
 
 /**
- * Created by amajumdar on 6/15/15.
+ * Tiny integer type.
  */
 public final class TinyIntType extends AbstractFixedWidthType {
+    /** Default tiny int type. */
     public static final TinyIntType TINY_INT = new TinyIntType();
+    /** String representation. */
     public static final String TYPE = "tinyint";
 
     private TinyIntType() {
-        super(parseTypeSignature(TYPE), int.class, SIZE_OF_BYTE);
+        super(TypeSignature.parseTypeSignature(TYPE), int.class, SizeOf.SIZE_OF_BYTE);
     }
 
     @Override
@@ -43,7 +44,7 @@ public final class TinyIntType extends AbstractFixedWidthType {
     }
 
     @Override
-    public Object getObjectValue(ConnectorSession session, Block block, int position) {
+    public Object getObjectValue(final ConnectorSession session, final Block block, final int position) {
         if (block.isNull(position)) {
             return null;
         }
@@ -52,27 +53,29 @@ public final class TinyIntType extends AbstractFixedWidthType {
     }
 
     @Override
-    public boolean equalTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition) {
-        byte leftValue = leftBlock.getByte(leftPosition, 0);
-        byte rightValue = rightBlock.getByte(rightPosition, 0);
+    public boolean equalTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final byte leftValue = leftBlock.getByte(leftPosition, 0);
+        final byte rightValue = rightBlock.getByte(rightPosition, 0);
         return leftValue == rightValue;
     }
 
     @Override
-    public int hash(Block block, int position) {
+    public int hash(final Block block, final int position) {
         return block.getByte(position, 0);
     }
 
     @Override
     @SuppressWarnings("SuspiciousNameCombination")
-    public int compareTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition) {
-        byte leftValue = leftBlock.getByte(leftPosition, 0);
-        byte rightValue = rightBlock.getByte(rightPosition, 0);
+    public int compareTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final byte leftValue = leftBlock.getByte(leftPosition, 0);
+        final byte rightValue = rightBlock.getByte(rightPosition, 0);
         return Byte.compare(leftValue, rightValue);
     }
 
     @Override
-    public void appendTo(Block block, int position, BlockBuilder blockBuilder) {
+    public void appendTo(final Block block, final int position, final BlockBuilder blockBuilder) {
         if (block.isNull(position)) {
             blockBuilder.appendNull();
         } else {
@@ -81,12 +84,12 @@ public final class TinyIntType extends AbstractFixedWidthType {
     }
 
     @Override
-    public long getLong(Block block, int position) {
+    public long getLong(final Block block, final int position) {
         return block.getByte(position, 0);
     }
 
     @Override
-    public void writeLong(BlockBuilder blockBuilder, long value) {
+    public void writeLong(final BlockBuilder blockBuilder, final long value) {
         blockBuilder.writeByte((byte) value).closeEntry();
     }
 }

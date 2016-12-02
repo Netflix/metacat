@@ -25,14 +25,24 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Pre view rename event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class MetacatRenameMViewPreEvent extends MetacatEvent {
 
+    /**
+     * Constructor.
+     * @param name name
+     * @param requestContext context
+     */
     public MetacatRenameMViewPreEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext requestContext
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext
     ) {
         super(name, requestContext);
     }

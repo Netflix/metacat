@@ -20,49 +20,57 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by amajumdar on 2/2/15.
+ * Extension of ConnectorSplitManager providing more helpful methods.
  */
-public interface ConnectorSplitDetailManager extends ConnectorSplitManager{
+public interface ConnectorSplitDetailManager extends ConnectorSplitManager {
     /**
      * Gets the Partitions based on a filter expression for the specified table.
      * @param table table handle
      * @param filterExpression JSP based filter expression string
-     * @param partitionNames filter the list that matches the given partition names. If null or empty, it will return all.
+     * @param partitionNames filter the list that matches the given partition names.
+     *                       If null or empty, it will return all.
+     * @param sort sort by and order
+     * @param pageable pagination info
+     * @param includePartitionDetails tru if partition details need to be included
      * @return filtered list of partitions
      */
-    ConnectorPartitionResult getPartitions(ConnectorTableHandle table, String filterExpression, List<String> partitionNames, Sort sort, Pageable pageable, boolean includePartitionDetails);
+    ConnectorPartitionResult getPartitions(ConnectorTableHandle table, String filterExpression,
+        List<String> partitionNames, Sort sort, Pageable pageable, boolean includePartitionDetails);
 
     /**
-     * Add/Update/delete partitions for a table
+     * Add/Update/delete partitions for a table.
      * @param table table handle
      * @param partitions list of partitions
      * @param partitionIdsForDeletes list of partition ids/names for deletes
+     * @param checkIfExists check if partition already exists
+     * @param alterIfExists if exists, alter the partition instead of dropping and recreating
      * @return added/updated list of partition names
      */
-    SavePartitionResult savePartitions(ConnectorTableHandle table, List<ConnectorPartition> partitions, List<String> partitionIdsForDeletes,
-            boolean checkIfExists, boolean alterIfExists);
+    SavePartitionResult savePartitions(ConnectorTableHandle table, List<ConnectorPartition> partitions,
+        List<String> partitionIdsForDeletes,
+        boolean checkIfExists, boolean alterIfExists);
 
     /**
-     * Delete partitions for a table
+     * Delete partitions for a table.
      * @param table table handle
      * @param partitionIds list of partition names
      */
     void deletePartitions(ConnectorTableHandle table, List<String> partitionIds);
 
     /**
-     * Number of partitions for the given table
+     * Number of partitions for the given table.
      * @param connectorHandle table handle
      * @return Number of partitions
      */
     Integer getPartitionCount(ConnectorTableHandle connectorHandle);
 
     /**
-     * Returns all the partition names referring to the given <code>uris</code>
+     * Returns all the partition names referring to the given <code>uris</code>.
      * @param uris locations
      * @param prefixSearch if tru, we look for tables whose location starts with the given <code>uri</code>
      * @return list of partition names
      */
-    default Map<String, List<SchemaTablePartitionName>> getPartitionNames(List<String> uris, boolean prefixSearch){
+    default Map<String, List<SchemaTablePartitionName>> getPartitionNames(List<String> uris, boolean prefixSearch) {
         return Maps.newHashMap();
     }
 
@@ -70,10 +78,14 @@ public interface ConnectorSplitDetailManager extends ConnectorSplitManager{
      * Gets the partition names/keys based on a filter expression for the specified table.
      * @param table table handle
      * @param filterExpression JSP based filter expression string
-     * @param partitionNames filter the list that matches the given partition names. If null or empty, it will return all.
+     * @param partitionNames filter the list that matches the given partition names.
+     *                       If null or empty, it will return all.
+     * @param sort sort by and order
+     * @param pageable pagination info
      * @return filtered list of partition names
      */
-    default List<String> getPartitionKeys(ConnectorTableHandle table, String filterExpression, List<String> partitionNames, Sort sort, Pageable pageable){
+    default List<String> getPartitionKeys(ConnectorTableHandle table, String filterExpression,
+        List<String> partitionNames, Sort sort, Pageable pageable) {
         return Lists.newArrayList();
     }
 
@@ -81,10 +93,14 @@ public interface ConnectorSplitDetailManager extends ConnectorSplitManager{
      * Gets the partition uris based on a filter expression for the specified table.
      * @param table table handle
      * @param filterExpression JSP based filter expression string
-     * @param partitionNames filter the list that matches the given partition names. If null or empty, it will return all.
+     * @param partitionNames filter the list that matches the given partition names.
+     *                       If null or empty, it will return all.
+     * @param sort sort by and order
+     * @param pageable pagination info
      * @return filtered list of partition uris
      */
-    default List<String> getPartitionUris(ConnectorTableHandle table, String filterExpression, List<String> partitionNames, Sort sort, Pageable pageable){
+    default List<String> getPartitionUris(ConnectorTableHandle table, String filterExpression,
+        List<String> partitionNames, Sort sort, Pageable pageable) {
         return Lists.newArrayList();
     }
 }

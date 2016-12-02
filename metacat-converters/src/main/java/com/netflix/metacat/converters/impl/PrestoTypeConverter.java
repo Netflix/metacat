@@ -16,30 +16,29 @@ package com.netflix.metacat.converters.impl;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
 import com.facebook.presto.spi.type.TypeSignature;
+import com.google.common.base.Preconditions;
 import com.netflix.metacat.converters.TypeConverter;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * Created by amajumdar on 4/28/15.
+ * Presto converter.
  */
 public class PrestoTypeConverter implements TypeConverter {
     @Override
-    public Type toType(String type, TypeManager typeManager) {
-        TypeSignature signature = typeSignatureFromString(type);
-        return checkNotNull(typeFromTypeSignature(signature, typeManager), "Invalid type %s", type);
+    public Type toType(final String type, final TypeManager typeManager) {
+        final TypeSignature signature = typeSignatureFromString(type);
+        return Preconditions.checkNotNull(typeFromTypeSignature(signature, typeManager), "Invalid type %s", type);
     }
 
     @Override
-    public String fromType(Type type) {
+    public String fromType(final Type type) {
         return type.getDisplayName();
     }
 
-    Type typeFromTypeSignature(TypeSignature typeSignature, TypeManager typeManager) {
+    Type typeFromTypeSignature(final TypeSignature typeSignature, final TypeManager typeManager) {
         return typeManager.getType(typeSignature);
     }
 
-    TypeSignature typeSignatureFromString(String s) {
+    TypeSignature typeSignatureFromString(final String s) {
         return TypeSignature.parseTypeSignature(s);
     }
 }

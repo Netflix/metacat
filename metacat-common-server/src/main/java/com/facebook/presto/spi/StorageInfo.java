@@ -13,11 +13,14 @@
 
 package com.facebook.presto.spi;
 
+import lombok.Data;
+
 import java.util.Map;
 
 /**
- * Created by amajumdar on 3/3/15.
+ * Storage info.
  */
+@Data
 public class StorageInfo {
     /* Location of the data */
     private String uri;
@@ -31,64 +34,29 @@ public class StorageInfo {
     private Map<String, String> parameters;
     private Map<String, String> serdeInfoParameters;
 
+    /**
+     * Default constructor.
+     */
     public StorageInfo() {
     }
 
-    public StorageInfo(String uri, String inputFormat, String outputFormat, String serializationLib,
-            Map<String, String> parameters, Map<String, String> serdeInfoParameters) {
+    /**
+     * Constructor.
+     * @param uri uri
+     * @param inputFormat input format
+     * @param outputFormat output format
+     * @param serializationLib serialization lib
+     * @param parameters paramters
+     * @param serdeInfoParameters serde info parameters
+     */
+    public StorageInfo(final String uri, final String inputFormat, final String outputFormat,
+        final String serializationLib,
+        final Map<String, String> parameters, final Map<String, String> serdeInfoParameters) {
         this.uri = uri;
         this.inputFormat = inputFormat;
         this.outputFormat = outputFormat;
         this.serializationLib = serializationLib;
         this.parameters = parameters;
         this.serdeInfoParameters = serdeInfoParameters;
-    }
-
-    public String getInputFormat() {
-        return inputFormat;
-    }
-
-    public void setInputFormat(String inputFormat) {
-        this.inputFormat = inputFormat;
-    }
-
-    public String getOutputFormat() {
-        return outputFormat;
-    }
-
-    public void setOutputFormat(String outputFormat) {
-        this.outputFormat = outputFormat;
-    }
-
-    public String getSerializationLib() {
-        return serializationLib;
-    }
-
-    public void setSerializationLib(String serializationLib) {
-        this.serializationLib = serializationLib;
-    }
-
-    public Map<String, String> getParameters() {
-        return parameters;
-    }
-
-    public void setParameters(Map<String, String> parameters) {
-        this.parameters = parameters;
-    }
-
-    public Map<String, String> getSerdeInfoParameters() {
-        return serdeInfoParameters;
-    }
-
-    public void setSerdeInfoParameters(Map<String, String> serdeInfoParameters) {
-        this.serdeInfoParameters = serdeInfoParameters;
-    }
-
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
     }
 }

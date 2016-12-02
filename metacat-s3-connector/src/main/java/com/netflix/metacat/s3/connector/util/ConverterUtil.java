@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Created by amajumdar on 2/4/15.
+ * S3 Converter util.
  */
 public class ConverterUtil {
     @Inject
@@ -52,14 +52,20 @@ public class ConverterUtil {
     private TypeManager typeManager;
     @Inject
     private PigTypeConverter pigTypeConverter;
-    public StorageInfo toStorageInfo(Table table){
+
+    /**
+     * Converts from s3 table info to presto storage info.
+     * @param table table info
+     * @return table info
+     */
+    public StorageInfo toStorageInfo(final Table table) {
         StorageInfo result = null;
-        Location location = table.getLocation();
-        if( location != null) {
+        final Location location = table.getLocation();
+        if (location != null) {
             result = new StorageInfo();
-            result.setUri( location.getUri());
-            Info info = location.getInfo();
-            if( info != null){
+            result.setUri(location.getUri());
+            final Info info = location.getInfo();
+            if (info != null) {
                 result.setInputFormat(info.getInputFormat());
                 result.setOutputFormat(info.getOutputFormat());
                 result.setSerializationLib(info.getSerializationLib());
@@ -69,39 +75,50 @@ public class ConverterUtil {
         return result;
     }
 
-    public String getOwner(Table table){
+    /**
+     * Gets the owner for the given table.
+     * @param table table info
+     * @return owner name
+     */
+    public String getOwner(final Table table) {
         String result = null;
-        Location location = table.getLocation();
-        if( location != null){
-            Info info = location.getInfo();
-            if(info != null){
+        final Location location = table.getLocation();
+        if (location != null) {
+            final Info info = location.getInfo();
+            if (info != null) {
                 result = info.getOwner();
             }
         }
         return result;
     }
 
-    public Location fromStorageInfo(StorageInfo storageInfo, String owner){
-        Location result = new Location();
-        if( storageInfo != null) {
-            result.setUri( storageInfo.getUri());
-            Info info = new Info();
+    /**
+     * Converts from storage info to s3 location.
+     * @param storageInfo storage info
+     * @param owner owner
+     * @return location
+     */
+    public Location fromStorageInfo(final StorageInfo storageInfo, final String owner) {
+        final Location result = new Location();
+        if (storageInfo != null) {
+            result.setUri(storageInfo.getUri());
+            final Info info = new Info();
             info.setLocation(result);
             info.setOwner(owner);
-            info.setInputFormat( storageInfo.getInputFormat());
-            info.setOutputFormat( storageInfo.getOutputFormat());
-            info.setSerializationLib( storageInfo.getSerializationLib());
-            Map<String, String> parameters = Maps.newHashMap();
-            if( storageInfo.getParameters() != null){
+            info.setInputFormat(storageInfo.getInputFormat());
+            info.setOutputFormat(storageInfo.getOutputFormat());
+            info.setSerializationLib(storageInfo.getSerializationLib());
+            final Map<String, String> parameters = Maps.newHashMap();
+            if (storageInfo.getParameters() != null) {
                 parameters.putAll(storageInfo.getParameters());
             }
-            if( storageInfo.getSerdeInfoParameters() != null){
+            if (storageInfo.getSerdeInfoParameters() != null) {
                 parameters.putAll(storageInfo.getSerdeInfoParameters());
             }
-            info.setParameters( parameters);
+            info.setParameters(parameters);
             result.setInfo(info);
-        } else if ( owner != null){
-            Info info = new Info();
+        } else if (owner != null) {
+            final Info info = new Info();
             info.setLocation(result);
             info.setOwner(owner);
             result.setInfo(info);
@@ -109,31 +126,42 @@ public class ConverterUtil {
         return result;
     }
 
-    public  List<Field> toFields(ConnectorTableMetadata tableMetadata, Schema schema) {
-        ImmutableList.Builder<Field> columns = ImmutableList.builder();
+    /**
+     * Creates list of fields from table info.
+     * @param tableMetadata table info
+     * @param schema schema
+     * @return list of fields
+     */
+    public List<Field> toFields(final ConnectorTableMetadata tableMetadata, final Schema schema) {
+        final ImmutableList.Builder<Field> columns = ImmutableList.builder();
         int index = 0;
-        for( ColumnMetadata column: tableMetadata.getColumns()){
-            Field field = toField( column);
+        for (ColumnMetadata column : tableMetadata.getColumns()) {
+            final Field field = toField(column);
             field.setPos(index++);
             field.setSchema(schema);
-            columns.add( field);
+            columns.add(field);
         }
         return columns.build();
     }
 
-    public Field toField(ColumnMetadata column) {
-        Field result = new Field();
-        result.setName( column.getName());
-        result.setPartitionKey( column.isPartitionKey());
+    /**
+     * Converts from column metadata to field.
+     * @param column column
+     * @return field
+     */
+    public Field toField(final ColumnMetadata column) {
+        final Field result = new Field();
+        result.setName(column.getName());
+        result.setPartitionKey(column.isPartitionKey());
         result.setComment(column.getComment());
-        result.setSourceType( column.getType().getDisplayName());
-        result.setType(toTypeString( column.getType()));
+        result.setSourceType(column.getType().getDisplayName());
+        result.setType(toTypeString(column.getType()));
         return result;
     }
 
-    private String toTypeString(Type type) {
+    private String toTypeString(final Type type) {
         String result = null;
-        if (config.isUsePigTypes()){
+        if (config.isUsePigTypes()) {
             result = pigTypeConverter.fromType(type);
         } else {
             result = type.getDisplayName();
@@ -141,82 +169,122 @@ public class ConverterUtil {
         return result;
     }
 
-    public Type toType(String type) {
+    /**
+     * Converts from type string to presto type.
+     * @param type type
+     * @return Type
+     */
+    public Type toType(final String type) {
         Type result = null;
         if (config.isUsePigTypes()) {
             //Hack for now. We need to correct the type format in Franklin
+            String typeString = type;
             if ("map".equals(type)) {
-                type = "map[]";
+                typeString = "map[]";
             }
-            result = pigTypeConverter.toType(type, typeManager);
+            result = pigTypeConverter.toType(typeString, typeManager);
         } else {
             result = typeManager.getType(TypeSignature.parseTypeSignature(type));
         }
         return result;
     }
 
-    public AuditInfo toAuditInfo(Table table) {
-        AuditInfo result = new AuditInfo();
-        Location location = table.getLocation();
-        if( location != null){
-            Info info = location.getInfo();
-            if( info != null) {
+    /**
+     * Creates audit info from s3 table info.
+     * @param table table info
+     * @return audit info
+     */
+    public AuditInfo toAuditInfo(final Table table) {
+        final AuditInfo result = new AuditInfo();
+        final Location location = table.getLocation();
+        if (location != null) {
+            final Info info = location.getInfo();
+            if (info != null) {
                 result.setCreatedBy(info.getOwner());
                 result.setLastUpdatedBy(info.getOwner());
             }
         }
-        result.setCreatedDate(table.getCreatedDate()==null?null:table.getCreatedDate().getTime()/1000);
-        result.setLastUpdatedDate(table.getLastUpdatedDate()==null?null:table.getLastUpdatedDate().getTime()/1000);
+        result.setCreatedDate(table.getCreatedDate() == null ? null : table.getCreatedDate().getTime() / 1000);
+        result.setLastUpdatedDate(
+            table.getLastUpdatedDate() == null ? null : table.getLastUpdatedDate().getTime() / 1000);
         return result;
     }
 
-    public ColumnMetadata toColumnMetadata(Field field) {
-        return new ColumnDetailMetadata(field.getName(), toType( field.getType()), field.isPartitionKey(), field.getComment(), false, field.getType());
+    /**
+     * Create column.
+     * @param field field
+     * @return column
+     */
+    public ColumnMetadata toColumnMetadata(final Field field) {
+        return new ColumnDetailMetadata(field.getName(), toType(field.getType()), field.isPartitionKey(),
+            field.getComment(), false, field.getType());
     }
 
-    public List<ColumnMetadata> toColumnMetadatas(Table table) {
+    /**
+     * Create columns from the given table.
+     * @param table table info
+     * @return list of columns
+     */
+    public List<ColumnMetadata> toColumnMetadatas(final Table table) {
         List<ColumnMetadata> result = Lists.newArrayList();
-        Location location = table.getLocation();
-        if( location != null){
-            Schema schema = location.getSchema();
-            if( schema != null){
-                result = schema.getFields().stream().sorted(Comparator.comparing(Field::getPos)).map(this::toColumnMetadata).collect(Collectors.toList());
+        final Location location = table.getLocation();
+        if (location != null) {
+            final Schema schema = location.getSchema();
+            if (schema != null) {
+                result = schema.getFields().stream().sorted(Comparator.comparing(Field::getPos))
+                    .map(this::toColumnMetadata).collect(Collectors.toList());
             }
         }
         return result;
     }
 
-    public Location toLocation(ConnectorTableMetadata tableMetadata) {
+    /**
+     * Creates location.
+     * @param tableMetadata table info
+     * @return location
+     */
+    public Location toLocation(final ConnectorTableMetadata tableMetadata) {
         Location location = null;
-        if( tableMetadata instanceof ConnectorTableDetailMetadata){
-            ConnectorTableDetailMetadata tableDetailMetadata = (ConnectorTableDetailMetadata) tableMetadata;
+        if (tableMetadata instanceof ConnectorTableDetailMetadata) {
+            final ConnectorTableDetailMetadata tableDetailMetadata = (ConnectorTableDetailMetadata) tableMetadata;
             location = fromStorageInfo(tableDetailMetadata.getStorageInfo(), tableDetailMetadata.getOwner());
         } else {
             location = new Location();
-            Info info = new Info();
+            final Info info = new Info();
             info.setLocation(location);
-            info.setOwner( tableMetadata.getOwner());
+            info.setOwner(tableMetadata.getOwner());
             location.setInfo(info);
         }
-        Schema schema = new Schema();
+        final Schema schema = new Schema();
         schema.setLocation(location);
         schema.setFields(toFields(tableMetadata, schema));
         location.setSchema(schema);
         return location;
     }
 
-    public Partition toPartition(Table table, ConnectorPartition partition) {
-        Partition result = new Partition();
+    /**
+     * Creates s3 partition.
+     * @param table table
+     * @param partition presto partition info
+     * @return partition
+     */
+    public Partition toPartition(final Table table, final ConnectorPartition partition) {
+        final Partition result = new Partition();
         result.setTable(table);
         result.setName(partition.getPartitionId());
         result.setUri(getUri(partition));
         return result;
     }
 
-    public String getUri(ConnectorPartition partition) {
+    /**
+     * Gets the partition uri.
+     * @param partition partition
+     * @return uri
+     */
+    public String getUri(final ConnectorPartition partition) {
         String result = null;
-        if( partition instanceof  ConnectorPartitionDetail) {
-            ConnectorPartitionDetail partitionDetail = (ConnectorPartitionDetail) partition;
+        if (partition instanceof ConnectorPartitionDetail) {
+            final ConnectorPartitionDetail partitionDetail = (ConnectorPartitionDetail) partition;
             if (partitionDetail.getStorageInfo() != null) {
                 result = partitionDetail.getStorageInfo().getUri();
             }
@@ -224,13 +292,17 @@ public class ConverterUtil {
         return result;
     }
 
-
-    public List<String> partitionKeys(Table table){
+    /**
+     * Gets the partition keys for the given table.
+     * @param table table info
+     * @return list of keys
+     */
+    public List<String> partitionKeys(final Table table) {
         List<String> result = Lists.newArrayList();
-        if( table.getLocation() != null){
-            Schema schema = table.getLocation().getSchema();
-            if( schema != null){
-                List<Field> fields = schema.getFields();
+        if (table.getLocation() != null) {
+            final Schema schema = table.getLocation().getSchema();
+            if (schema != null) {
+                final List<Field> fields = schema.getFields();
                 result = fields.stream().filter(Field::isPartitionKey).map(Field::getName).collect(Collectors.toList());
             }
         }

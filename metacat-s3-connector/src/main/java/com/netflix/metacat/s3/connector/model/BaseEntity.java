@@ -29,7 +29,7 @@ import java.util.Date;
 @MappedSuperclass
 public class BaseEntity {
 
-    /** The date of creation */
+    /** The date of creation. */
     protected Date createdDate;
 
     /** The last updated date. */
@@ -41,7 +41,7 @@ public class BaseEntity {
      * @return
      * The date and time of the creation
      */
-    @Column(name="date_created", insertable = true, updatable = false, nullable = false)
+    @Column(name = "date_created", insertable = true, updatable = false, nullable = false)
     public Date getCreatedDate() {
         return createdDate;
     }
@@ -52,11 +52,11 @@ public class BaseEntity {
      * @param createdDate
      * The date and time of the creation
      */
-    public void setCreatedDate(Date createdDate) {
+    public void setCreatedDate(final Date createdDate) {
         this.createdDate = createdDate;
     }
 
-    public void setCreatedDate(Timestamp createdDate) {
+    public void setCreatedDate(final Timestamp createdDate) {
         this.createdDate = createdDate;
     }
 
@@ -77,14 +77,17 @@ public class BaseEntity {
      * @param lastUpdatedDate
      * The date and time of the last update
      */
-    public void setLastUpdatedDate(Date lastUpdatedDate) {
+    public void setLastUpdatedDate(final Date lastUpdatedDate) {
         this.lastUpdatedDate = lastUpdatedDate;
     }
 
-    public void setLastUpdatedDate(Timestamp lastUpdatedDate) {
+    public void setLastUpdatedDate(final Timestamp lastUpdatedDate) {
         this.lastUpdatedDate = lastUpdatedDate;
     }
 
+    /**
+     * Insert.
+     */
     @PrePersist
     public void onInsert() {
         setCreatedDate(Calendar.getInstance().getTime());
@@ -95,8 +98,10 @@ public class BaseEntity {
     void onUpdate() {
         setLastUpdatedDate(Instant.now().toDate());
     }
+
     /**
      * Validate the entity for valid values.
      */
-    public void validate() {}
+    public void validate() {
+    }
 }

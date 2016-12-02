@@ -14,14 +14,21 @@
 package com.netflix.metacat.common.exception;
 
 /**
- * Created by amajumdar on 3/30/15.
+ * Metacat not supported exception.
  */
 public class MetacatNotSupportedException extends MetacatException {
+    /**
+     * Constructor.
+     */
     public MetacatNotSupportedException() {
         this(null);
     }
 
-    public MetacatNotSupportedException(String message) {
+    /**
+     * Constructor.
+     * @param message exception message
+     */
+    public MetacatNotSupportedException(final String message) {
         super(message, 501, null);
     }
 }

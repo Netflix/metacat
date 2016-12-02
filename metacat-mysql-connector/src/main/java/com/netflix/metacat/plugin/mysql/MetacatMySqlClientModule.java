@@ -19,16 +19,18 @@ import com.facebook.presto.plugin.mysql.MySqlClientModule;
 import com.facebook.presto.plugin.mysql.MySqlConfig;
 import com.google.inject.Binder;
 import com.google.inject.Scopes;
+import io.airlift.configuration.ConfigBinder;
 
-import static io.airlift.configuration.ConfigBinder.configBinder;
-
+/**
+ * Mysql client module.
+ */
 public class MetacatMySqlClientModule extends MySqlClientModule {
     @Override
-    public void configure(Binder binder) {
+    public void configure(final Binder binder) {
         binder.bind(JdbcClient.class).to(MetacatMySqlClient.class).in(Scopes.SINGLETON);
         binder.bind(MySqlJdbcConnector.class).in(Scopes.SINGLETON);
         binder.bind(MySqlJdbcMetadata.class).in(Scopes.SINGLETON);
-        configBinder(binder).bindConfig(BaseJdbcConfig.class);
-        configBinder(binder).bindConfig(MySqlConfig.class);
+        ConfigBinder.configBinder(binder).bindConfig(BaseJdbcConfig.class);
+        ConfigBinder.configBinder(binder).bindConfig(MySqlConfig.class);
     }
 }

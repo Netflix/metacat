@@ -26,6 +26,9 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Post table delete event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -33,10 +36,19 @@ public class MetacatDeleteTablePostEvent extends MetacatEvent {
 
     private final TableDto table;
 
+    /**
+     * Constructor.
+     * @param name name
+     * @param requestContext context
+     * @param table table info
+     */
     public MetacatDeleteTablePostEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext requestContext,
-            @NotNull final TableDto table
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext,
+        @NotNull
+        final TableDto table
     ) {
         super(name, requestContext);
         this.table = table;

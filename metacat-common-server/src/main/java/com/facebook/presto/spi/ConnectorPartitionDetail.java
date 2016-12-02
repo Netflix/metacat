@@ -16,10 +16,9 @@ package com.facebook.presto.spi;
 import java.util.Map;
 
 /**
- * Created by amajumdar on 2/2/15.
+ * Extension of ConnectorPartition.
  */
-public interface ConnectorPartitionDetail extends ConnectorPartition
-{
+public interface ConnectorPartitionDetail extends ConnectorPartition {
     /**
      * Gets any extra properties of a partition that is relevant to a particular catalog.
      * @return extra properties other than the partition key
@@ -27,7 +26,8 @@ public interface ConnectorPartitionDetail extends ConnectorPartition
     Map<String, String> getMetadata();
 
     /**
-     * Gets the storage related information about the partition. This applies mostly in the case of unstructured data stored as files.
+     * Gets the storage related information about the partition. This applies mostly in the case of unstructured
+     * data stored as files.
      * @return storage information related properties
      */
     StorageInfo getStorageInfo();

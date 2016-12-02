@@ -13,6 +13,15 @@
 
 package com.netflix.metacat.thrift;
 
+/**
+ * Thrift service factory.
+ */
 public interface CatalogThriftServiceFactory {
+    /**
+     * Create service.
+     * @param catalogName catalog name
+     * @param portNumber port
+     * @return service
+     */
     CatalogThriftService create(String catalogName, int portNumber);
 }

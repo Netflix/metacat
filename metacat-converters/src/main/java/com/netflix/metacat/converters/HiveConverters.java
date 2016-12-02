@@ -23,18 +23,61 @@ import org.apache.hadoop.hive.metastore.api.Table;
 
 import java.util.List;
 
+/**
+ * Hive converter interface.
+ */
 public interface HiveConverters {
+    /**
+     * Converts from hive table to metacat table info.
+     * @param name name
+     * @param table table
+     * @return table info
+     */
     TableDto hiveToMetacatTable(QualifiedName name, Table table);
 
+    /**
+     * Converts from metacat database info to hive database info.
+     * @param databaseDto database
+     * @return database
+     */
     Database metacatToHiveDatabase(DatabaseDto databaseDto);
 
+    /**
+     * Converts from metacat table info to hive table info.
+     * @param dto table
+     * @return table
+     */
     Table metacatToHiveTable(TableDto dto);
 
+    /**
+     * Converts from hive partition info to metacat partition info.
+     * @param tableDto table
+     * @param partition partition
+     * @return partition info
+     */
     PartitionDto hiveToMetacatPartition(TableDto tableDto, Partition partition);
 
+    /**
+     * Gets the partition values from the partition name.
+     * @param tableDto table
+     * @param partName partition name
+     * @return partition info
+     */
     List<String> getPartValsFromName(TableDto tableDto, String partName);
 
+    /**
+     * Gets the partition name from partition values.
+     * @param tableDto table
+     * @param partVals partition values
+     * @return partition name
+     */
     String getNameFromPartVals(TableDto tableDto, List<String> partVals);
 
+    /**
+     * Converts from metacat partition info to hive partition info.
+     * @param tableDto table
+     * @param partitionDto partition
+     * @return partition info
+     */
     Partition metacatToHivePartition(PartitionDto partitionDto, TableDto tableDto);
 }

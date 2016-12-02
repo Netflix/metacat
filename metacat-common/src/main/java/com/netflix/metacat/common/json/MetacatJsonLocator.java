@@ -29,7 +29,11 @@ import java.io.ObjectOutputStream;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * MetacaJson implementation.
+ */
 public enum MetacatJsonLocator implements MetacatJson {
+    /** default metacat JSON instance. */
     INSTANCE;
 
     private final ObjectMapper objectMapper;
@@ -37,25 +41,27 @@ public enum MetacatJsonLocator implements MetacatJson {
 
     MetacatJsonLocator() {
         objectMapper = new ObjectMapper()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .setSerializationInclusion(JsonInclude.Include.ALWAYS);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .setSerializationInclusion(JsonInclude.Include.ALWAYS);
 
         prettyObjectMapper = objectMapper.copy().configure(SerializationFeature.INDENT_OUTPUT, true);
     }
 
     @Override
-    public <T> T convertValue(Object fromValue, Class<T> toValueType) throws IllegalArgumentException {
+    public <T> T convertValue(final Object fromValue, final Class<T> toValueType) throws IllegalArgumentException {
         return objectMapper.convertValue(fromValue, toValueType);
     }
 
     @Override
     @Nullable
-    public ObjectNode deserializeObjectNode(@Nonnull ObjectInputStream inputStream) throws IOException {
-        boolean exists = inputStream.readBoolean();
+    public ObjectNode deserializeObjectNode(
+        @Nonnull
+            final ObjectInputStream inputStream) throws IOException {
+        final boolean exists = inputStream.readBoolean();
 
         ObjectNode json = null;
         if (exists) {
-            String s = inputStream.readUTF();
+            final String s = inputStream.readUTF();
             json = (ObjectNode) objectMapper.readTree(s);
         }
 
@@ -78,7 +84,11 @@ public enum MetacatJsonLocator implements MetacatJson {
     }
 
     @Override
-    public void mergeIntoPrimary(@Nonnull ObjectNode primary, @Nonnull ObjectNode additional) {
+    public void mergeIntoPrimary(
+        @Nonnull
+        final ObjectNode primary,
+        @Nonnull
+        final ObjectNode additional) {
         try {
             recursiveMerge(primary, additional);
         } catch (MetacatJsonException e) {
@@ -87,8 +97,8 @@ public enum MetacatJsonLocator implements MetacatJson {
     }
 
     @Override
-    public ObjectNode parseJsonObject(String s) {
-        JsonNode node;
+    public ObjectNode parseJsonObject(final String s) {
+        final JsonNode node;
         try {
             node = objectMapper.readTree(s);
         } catch (IOException e) {
@@ -105,7 +115,7 @@ public enum MetacatJsonLocator implements MetacatJson {
     }
 
     @Override
-    public <T> T parseJsonValue(String s, Class<T> clazz) {
+    public <T> T parseJsonValue(final String s, final Class<T> clazz) {
         try {
             return objectMapper.readValue(s, clazz);
         } catch (IOException e) {
@@ -114,7 +124,7 @@ public enum MetacatJsonLocator implements MetacatJson {
     }
 
     @Override
-    public <T> T parseJsonValue(byte[] s, Class<T> clazz) {
+    public <T> T parseJsonValue(final byte[] s, final Class<T> clazz) {
         try {
             return objectMapper.readValue(s, clazz);
         } catch (IOException e) {
@@ -122,42 +132,42 @@ public enum MetacatJsonLocator implements MetacatJson {
         }
     }
 
-    private void recursiveMerge(JsonNode primary, JsonNode additional) {
+    private void recursiveMerge(final JsonNode primary, final JsonNode additional) {
         if (!primary.isObject()) {
             throw new MetacatJsonException("This should not be reachable");
         }
 
-        ObjectNode node = (ObjectNode) primary;
+        final ObjectNode node = (ObjectNode) primary;
 
-        Iterator<Map.Entry<String, JsonNode>> fields = additional.fields();
+        final Iterator<Map.Entry<String, JsonNode>> fields = additional.fields();
         while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> entry = fields.next();
-            String name = entry.getKey();
-            JsonNode value = entry.getValue();
+            final Map.Entry<String, JsonNode> entry = fields.next();
+            final String name = entry.getKey();
+            final JsonNode value = entry.getValue();
 
             // Easiest case, if the primary node doesn't have the current field set the field on the primary
             if (!node.has(name)) {
                 node.set(name, value);
-            }
-            // If the primary has the field but the incoming value is not an object set the field on the primary
-            else if (!value.isObject()) {
+            } else if (!value.isObject()) {
+                // If the primary has the field but the incoming value is not an object set the field on the primary
                 node.set(name, value);
-            }
-            // If the primary is currently not an object, just overwrite it with the incoming value
-            else if (!node.get(name).isObject()) {
+            } else if (!node.get(name).isObject()) {
+                // If the primary is currently not an object, just overwrite it with the incoming value
                 node.set(name, value);
-            }
-            // Otherwise recursively merge the new fields from the incoming object into the primary object
-            else {
+            } else { // Otherwise recursively merge the new fields from the incoming object into the primary object
                 recursiveMerge(node.get(name), value);
             }
         }
     }
 
     @Override
-    public void serializeObjectNode(@Nonnull ObjectOutputStream outputStream, @Nullable ObjectNode json)
-            throws IOException {
-        boolean exists = json != null;
+    public void serializeObjectNode(
+        @Nonnull
+        final ObjectOutputStream outputStream,
+        @Nullable
+        final ObjectNode json)
+        throws IOException {
+        final boolean exists = json != null;
         outputStream.writeBoolean(exists);
         if (exists) {
             outputStream.writeUTF(json.toString());
@@ -165,7 +175,7 @@ public enum MetacatJsonLocator implements MetacatJson {
     }
 
     @Override
-    public byte[] toJsonAsBytes(Object o) {
+    public byte[] toJsonAsBytes(final Object o) {
         try {
             return objectMapper.writeValueAsBytes(o);
         } catch (JsonProcessingException e) {
@@ -174,12 +184,12 @@ public enum MetacatJsonLocator implements MetacatJson {
     }
 
     @Override
-    public ObjectNode toJsonObject(Object o) {
+    public ObjectNode toJsonObject(final Object o) {
         return objectMapper.valueToTree(o);
     }
 
     @Override
-    public String toJsonString(Object o) {
+    public String toJsonString(final Object o) {
         try {
             return objectMapper.writeValueAsString(o);
         } catch (JsonProcessingException e) {

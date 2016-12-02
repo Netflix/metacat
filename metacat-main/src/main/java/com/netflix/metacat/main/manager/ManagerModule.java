@@ -28,21 +28,19 @@ import com.google.common.collect.Maps;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.multibindings.Multibinder;
 import com.netflix.metacat.main.connector.MetacatConnectorManager;
 import com.netflix.metacat.main.presto.connector.ConnectorManager;
 import com.netflix.metacat.main.presto.metadata.HandleResolver;
 import com.netflix.metacat.main.presto.metadata.MetadataManager;
 import com.netflix.metacat.main.presto.split.SplitManager;
 import io.airlift.configuration.ConfigurationFactory;
-
-import static com.google.inject.multibindings.MapBinder.newMapBinder;
-import static com.google.inject.multibindings.Multibinder.newSetBinder;
-import static io.airlift.configuration.ConfigurationModule.bindConfig;
-import static io.airlift.json.JsonBinder.jsonBinder;
-import static io.airlift.json.JsonCodecBinder.jsonCodecBinder;
+import io.airlift.configuration.ConfigurationModule;
+import io.airlift.json.JsonBinder;
+import io.airlift.json.JsonCodecBinder;
 
 /**
- * Created by amajumdar on 1/14/15.
+ * Guice module.
  */
 public class ManagerModule extends AbstractModule {
     @Override
@@ -54,33 +52,33 @@ public class ManagerModule extends AbstractModule {
         binder().bind(SplitManager.class).in(Scopes.SINGLETON);
 
         // data stream provider
-        newSetBinder(binder(), ConnectorPageSourceProvider.class);
+        Multibinder.newSetBinder(binder(), ConnectorPageSourceProvider.class);
 
         // record sink provider
-        newSetBinder(binder(), ConnectorRecordSinkProvider.class);
+        Multibinder.newSetBinder(binder(), ConnectorRecordSinkProvider.class);
         // metadata
         binder().bind(MetadataManager.class).in(Scopes.SINGLETON);
 
         // type
         binder().bind(TypeRegistry.class).in(Scopes.SINGLETON);
         binder().bind(TypeManager.class).to(TypeRegistry.class).in(Scopes.SINGLETON);
-        jsonBinder(binder()).addDeserializerBinding(Type.class).to(TypeDeserializer.class);
-        newSetBinder(binder(), Type.class);
+        JsonBinder.jsonBinder(binder()).addDeserializerBinding(Type.class).to(TypeDeserializer.class);
+        Multibinder.newSetBinder(binder(), Type.class);
 
         // handle resolver
         binder().bind(HandleResolver.class).in(Scopes.SINGLETON);
-        MapBinder<String, ConnectorHandleResolver> connectorHandleResolverBinder = newMapBinder(binder(), String.class,
-                ConnectorHandleResolver.class);
+        final MapBinder<String, ConnectorHandleResolver> connectorHandleResolverBinder =
+            MapBinder.newMapBinder(binder(), String.class, ConnectorHandleResolver.class);
         connectorHandleResolverBinder.addBinding("remote").to(RemoteSplitHandleResolver.class).in(Scopes.SINGLETON);
 
         // connector
         binder().bind(ConnectorManager.class).to(MetacatConnectorManager.class).in(Scopes.SINGLETON);
-        newMapBinder(binder(), String.class, ConnectorFactory.class);
+        MapBinder.newMapBinder(binder(), String.class, ConnectorFactory.class);
 
         // json codec
-        jsonCodecBinder(binder()).bindJsonCodec(ViewDefinition.class);
+        JsonCodecBinder.jsonCodecBinder(binder()).bindJsonCodec(ViewDefinition.class);
 
         //
-        bindConfig(binder()).to(CatalogManagerConfig.class);
+        ConfigurationModule.bindConfig(binder()).to(CatalogManagerConfig.class);
     }
 }

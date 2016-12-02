@@ -17,12 +17,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by amajumdar on 5/28/15.
+ * Partition save response.
  */
-public class PartitionsSaveResponseDto extends BaseDto{
-    List<String> added;
-    List<String> updated;
+public class PartitionsSaveResponseDto extends BaseDto {
+    /** List of added partition names. */
+    private List<String> added;
+    /** List of updated partition names. */
+    private List<String> updated;
 
+    /**
+     * Default constructor.
+     */
     public PartitionsSaveResponseDto() {
         added = new ArrayList<>();
         updated = new ArrayList<>();
@@ -32,8 +37,12 @@ public class PartitionsSaveResponseDto extends BaseDto{
         return added;
     }
 
-    public void setAdded(List<String> added) {
-        if( added != null) {
+    /**
+     * Sets list of added partition names.
+     * @param added list of added partition names
+     */
+    public void setAdded(final List<String> added) {
+        if (added != null) {
             this.added = added;
         }
     }
@@ -42,8 +51,12 @@ public class PartitionsSaveResponseDto extends BaseDto{
         return updated;
     }
 
-    public void setUpdated(List<String> updated) {
-        if( updated != null) {
+    /**
+     * Sets list of updated partition names.
+     * @param updated list of updated partition names
+     */
+    public void setUpdated(final List<String> updated) {
+        if (updated != null) {
             this.updated = updated;
         }
     }

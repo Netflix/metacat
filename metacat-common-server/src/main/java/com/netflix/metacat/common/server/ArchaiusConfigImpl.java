@@ -25,6 +25,9 @@ import com.netflix.metacat.common.QualifiedName;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Fast property configurations.
+ */
 public class ArchaiusConfigImpl implements Config {
     private final DynamicStringProperty defaultTypeConverter;
     private final DynamicBooleanProperty isElasticSearchEnabled;
@@ -61,88 +64,98 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicBooleanProperty canCascadeViewsMetadataOnTableDelete;
     private final DynamicIntProperty userMetadataMaxInClauseItems;
 
+    /**
+     * Default constructor.
+     */
     public ArchaiusConfigImpl() {
         this(DynamicPropertyFactory.getInstance());
     }
 
-    public ArchaiusConfigImpl(DynamicPropertyFactory factory) {
+    /**
+     * Constructor.
+     * @param factory property factory
+     */
+    public ArchaiusConfigImpl(final DynamicPropertyFactory factory) {
         this.defaultTypeConverter = factory
-                .getStringProperty("metacat.type.converter", "com.netflix.metacat.converters.impl.PrestoTypeConverter");
+            .getStringProperty("metacat.type.converter", "com.netflix.metacat.converters.impl.PrestoTypeConverter");
         this.isElasticSearchEnabled = factory.getBooleanProperty("metacat.elacticsearch.enabled", true);
         this.elasticSearchIndexName = factory.getStringProperty("metacat.elacticsearch.index.name", "metacat");
         this.elasticSearchClusterName = factory.getStringProperty("metacat.elacticsearch.cluster.name", null);
         this.elasticSearchClusterNodes = factory.getStringProperty("metacat.elacticsearch.cluster.nodes", null);
         this.elasticSearchClusterPort = factory.getIntProperty("metacat.elacticsearch.cluster.port", 7102);
         this.elasticSearchRefreshIncludeCatalogs = factory
-                .getStringProperty("metacat.elacticsearch.refresh.include.catalogs", null);
+            .getStringProperty("metacat.elacticsearch.refresh.include.catalogs", null);
         this.elasticSearchRefreshPartitionsIncludeCatalogs = factory
-                .getStringProperty("metacat.elacticsearch.refresh.partitions.include.catalogs",
-                        "prodhive,testhive,s3,aegisthus");
+            .getStringProperty("metacat.elacticsearch.refresh.partitions.include.catalogs",
+                "prodhive,testhive,s3,aegisthus");
         this.elasticSearchScrollFetchSize = factory.getIntProperty("metacat.elacticsearch.scroll.fetch.size", 500);
         this.elasticSearchScrollTimeout = factory.getIntProperty("metacat.elacticsearch.scroll.timeout.ms", 60000);
         this.elasticSearchThresholdUnmarkedDatabasesDelete = factory
-                .getIntProperty("metacat.elacticsearch.refresh.threshold.unmarked.databases.delete", 100);
+            .getIntProperty("metacat.elacticsearch.refresh.threshold.unmarked.databases.delete", 100);
         this.elasticSearchThresholdUnmarkedTablesDelete = factory
-                .getIntProperty("metacat.elacticsearch.refresh.threshold.unmarked.tables.delete", 1000);
+            .getIntProperty("metacat.elacticsearch.refresh.threshold.unmarked.tables.delete", 1000);
         this.epochInSeconds = factory.getBooleanProperty("metacat.type.epoch_in_seconds", true);
         this.eventBusExecutorThreadCount = factory.getIntProperty("metacat.event.bus.executor.thread.count", 10);
         this.eventBusThreadCount = factory.getIntProperty("metacat.event.thread.count", 10);
         this.hivePartitionWhitelistPattern = factory
-                .getStringProperty("metacat.hive.metastore.partition.name.whitelist.pattern", "");
+            .getStringProperty("metacat.hive.metastore.partition.name.whitelist.pattern", "");
         this.lookupServiceUserAdmin = factory.getStringProperty("metacat.lookup_service.user_admin", "admin");
         this.metacatVersion = factory.getStringProperty("netflix.appinfo.version", "1.0.0");
         this.pluginConfigLocation = factory.getStringProperty("metacat.plugin.config.location", null);
         this.tagServiceUserAdmin = factory.getStringProperty("metacat.tag_service.user_admin", "admin");
         this.thriftServerMaxWorkerThreads = factory.getIntProperty("metacat.thrift.server_max_worker_threads", 200);
-        this.thriftServerSocketClientTimeoutInSeconds = factory.getIntProperty("metacat.thrift.server_socket_client_timeout_in_seconds", 60);
+        this.thriftServerSocketClientTimeoutInSeconds = factory
+            .getIntProperty("metacat.thrift.server_socket_client_timeout_in_seconds", 60);
         this.usePigTypes = factory.getBooleanProperty("metacat.franklin.connector.use.pig.type", true);
         this.serviceMaxNumberOfThreads = factory.getIntProperty("metacat.service.max.number.threads", 50);
         this.tableNamesToThrowErrorWhenNoFilterOnListPartitions = factory.getStringProperty(
-                "metacat.service.tables.error.list.partitions.no.filter",
-                null, this::setQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions);
+            "metacat.service.tables.error.list.partitions.no.filter",
+            null, this::setQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions);
         setQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions();
         this.elasticSearchRefreshExcludeQualifiedNames = factory
-                .getStringProperty("metacat.elacticsearch.refresh.exclude.qualified.names", null,
-                        this::setQualifiedNamesToElasticSearchRefreshExcludeQualifiedNames);
+            .getStringProperty("metacat.elacticsearch.refresh.exclude.qualified.names", null,
+                this::setQualifiedNamesToElasticSearchRefreshExcludeQualifiedNames);
         setQualifiedNamesToElasticSearchRefreshExcludeQualifiedNames();
         this.elasticSearchRefreshIncludeDatabases = factory
-                .getStringProperty("metacat.elacticsearch.refresh.include.databases", null,
-                        this::setQualifiedNamesToElasticSearchRefreshIncludeDatabases);
+            .getStringProperty("metacat.elacticsearch.refresh.include.databases", null,
+                this::setQualifiedNamesToElasticSearchRefreshIncludeDatabases);
         setQualifiedNamesToElasticSearchRefreshIncludeDatabases();
-        this.dataMetadataDeleteMarkerLifetimeInDays = factory.getIntProperty("metacat.data.metadata.delete.marker.lifetime.days", 15);
+        this.dataMetadataDeleteMarkerLifetimeInDays = factory
+            .getIntProperty("metacat.data.metadata.delete.marker.lifetime.days", 15);
         this.canSoftDeleteDataMetadata = factory.getBooleanProperty("metacat.user.metadata.soft_delete", true);
-        this.canCascadeViewsMetadataOnTableDelete = factory.getBooleanProperty("metacat.table.delete.cascade.views.metadata", true);
+        this.canCascadeViewsMetadataOnTableDelete = factory
+            .getBooleanProperty("metacat.table.delete.cascade.views.metadata", true);
         this.userMetadataMaxInClauseItems = factory.getIntProperty("metacat.user.metadata.max_in_clause_items", 2500);
     }
 
     private void setQualifiedNamesToElasticSearchRefreshExcludeQualifiedNames() {
-        String qNames = elasticSearchRefreshExcludeQualifiedNames.get();
-        if(!Strings.isNullOrEmpty(qNames)){
+        final String qNames = elasticSearchRefreshExcludeQualifiedNames.get();
+        if (!Strings.isNullOrEmpty(qNames)) {
             qualifiedNamesElasticSearchRefreshExclude = Splitter.on(',').omitEmptyStrings()
-                    .splitToList(qNames).stream()
-                    .map(QualifiedName::fromString).collect(Collectors.toList());
+                .splitToList(qNames).stream()
+                .map(QualifiedName::fromString).collect(Collectors.toList());
         } else {
             qualifiedNamesElasticSearchRefreshExclude = Lists.newArrayList();
         }
     }
 
     private void setQualifiedNamesToElasticSearchRefreshIncludeDatabases() {
-        String databaseNames = elasticSearchRefreshIncludeDatabases.get();
-        if(!Strings.isNullOrEmpty(databaseNames)){
+        final String databaseNames = elasticSearchRefreshIncludeDatabases.get();
+        if (!Strings.isNullOrEmpty(databaseNames)) {
             qualifiedNamesElasticSearchRefreshIncludeDatabases = Splitter.on(',').omitEmptyStrings()
-                    .splitToList(databaseNames).stream()
-                    .map(QualifiedName::fromString).collect(Collectors.toList());
+                .splitToList(databaseNames).stream()
+                .map(QualifiedName::fromString).collect(Collectors.toList());
         } else {
             qualifiedNamesElasticSearchRefreshIncludeDatabases = Lists.newArrayList();
         }
     }
 
     private void setQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions() {
-        String tableNames = tableNamesToThrowErrorWhenNoFilterOnListPartitions.get();
-        if(!Strings.isNullOrEmpty(tableNames)){
+        final String tableNames = tableNamesToThrowErrorWhenNoFilterOnListPartitions.get();
+        if (!Strings.isNullOrEmpty(tableNames)) {
             qualifiedNamesToThrowErrorWhenNoFilterOnListPartitions = Splitter.on(',').omitEmptyStrings()
-                    .splitToList(tableNames).stream()
-                    .map(QualifiedName::fromString).collect(Collectors.toList());
+                .splitToList(tableNames).stream()
+                .map(QualifiedName::fromString).collect(Collectors.toList());
         } else {
             qualifiedNamesToThrowErrorWhenNoFilterOnListPartitions = Lists.newArrayList();
         }

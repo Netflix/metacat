@@ -26,6 +26,9 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Pre event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -33,10 +36,19 @@ public class MetacatDeleteMViewPartitionPreEvent extends MetacatEvent {
 
     private final PartitionsSaveRequestDto saveRequest;
 
+    /**
+     * Constructor.
+     * @param name name
+     * @param metacatRequestContext context
+     * @param saveRequest request
+     */
     public MetacatDeleteMViewPartitionPreEvent(
-            @NotNull QualifiedName name,
-            @NotNull MetacatRequestContext metacatRequestContext,
-            @NotNull PartitionsSaveRequestDto saveRequest
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext metacatRequestContext,
+        @NotNull
+        final PartitionsSaveRequestDto saveRequest
     ) {
         super(name, metacatRequestContext);
         this.saveRequest = saveRequest;

@@ -25,13 +25,23 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Post database update event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class MetacatUpdateDatabasePostEvent extends MetacatEvent {
+    /**
+     * Constructor.
+     * @param name name
+     * @param requestContext context
+     */
     public MetacatUpdateDatabasePostEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext requestContext
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext
     ) {
         super(name, requestContext);
     }

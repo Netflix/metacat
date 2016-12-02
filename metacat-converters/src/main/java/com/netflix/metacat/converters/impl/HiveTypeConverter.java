@@ -13,19 +13,32 @@
 
 package com.netflix.metacat.converters.impl;
 
+import com.facebook.presto.hive.util.Types;
 import com.facebook.presto.spi.PrestoException;
+import com.facebook.presto.spi.StandardErrorCode;
+import com.facebook.presto.spi.type.BigintType;
+import com.facebook.presto.spi.type.BooleanType;
 import com.facebook.presto.spi.type.DateType;
+import com.facebook.presto.spi.type.DoubleType;
 import com.facebook.presto.spi.type.StandardTypes;
+import com.facebook.presto.spi.type.TimestampType;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
 import com.facebook.presto.spi.type.TypeSignature;
+import com.facebook.presto.spi.type.VarbinaryType;
 import com.facebook.presto.type.CharType;
 import com.facebook.presto.type.DecimalType;
+import com.facebook.presto.type.FloatType;
+import com.facebook.presto.type.IntType;
 import com.facebook.presto.type.MapType;
 import com.facebook.presto.type.RowType;
+import com.facebook.presto.type.SmallIntType;
+import com.facebook.presto.type.StringType;
+import com.facebook.presto.type.TinyIntType;
 import com.facebook.presto.type.VarcharType;
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.converters.TypeConverter;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -44,103 +57,91 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.facebook.presto.hive.util.Types.checkType;
-import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
-import static com.facebook.presto.spi.type.BigintType.BIGINT;
-import static com.facebook.presto.spi.type.BooleanType.BOOLEAN;
-import static com.facebook.presto.spi.type.DateType.DATE;
-import static com.facebook.presto.spi.type.DoubleType.DOUBLE;
-import static com.facebook.presto.spi.type.TimestampType.TIMESTAMP;
-import static com.facebook.presto.spi.type.VarbinaryType.VARBINARY;
-import static com.facebook.presto.type.FloatType.FLOAT;
-import static com.facebook.presto.type.IntType.INT;
-import static com.facebook.presto.type.SmallIntType.SMALL_INT;
-import static com.facebook.presto.type.StringType.STRING;
-import static com.facebook.presto.type.TinyIntType.TINY_INT;
-import static org.apache.hadoop.hive.serde.serdeConstants.BIGINT_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.BINARY_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.BOOLEAN_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.DATE_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.DOUBLE_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.FLOAT_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.INT_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.SMALLINT_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.STRING_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.TIMESTAMP_TYPE_NAME;
-import static org.apache.hadoop.hive.serde.serdeConstants.TINYINT_TYPE_NAME;
-
+/**
+ * Hive type converter.
+ */
 public class HiveTypeConverter implements TypeConverter {
-    private static Type getPrimitiveType(ObjectInspector fieldInspector) {
-        PrimitiveObjectInspector.PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) fieldInspector).getPrimitiveCategory();
+    private static Type getPrimitiveType(final ObjectInspector fieldInspector) {
+        final PrimitiveObjectInspector.PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) fieldInspector)
+            .getPrimitiveCategory();
         switch (primitiveCategory) {
         case BOOLEAN:
-            return BOOLEAN;
+            return BooleanType.BOOLEAN;
         case BYTE:
-            return TINY_INT;
+            return TinyIntType.TINY_INT;
         case SHORT:
-            return SMALL_INT;
+            return SmallIntType.SMALL_INT;
         case INT:
-            return INT;
+            return IntType.INT;
         case LONG:
-            return BIGINT;
+            return BigintType.BIGINT;
         case FLOAT:
-            return FLOAT;
+            return FloatType.FLOAT;
         case DOUBLE:
-            return DOUBLE;
+            return DoubleType.DOUBLE;
         case DECIMAL:
-            DecimalTypeInfo decimalTypeInfo = (DecimalTypeInfo)((PrimitiveObjectInspector) fieldInspector).getTypeInfo();
+            final DecimalTypeInfo decimalTypeInfo = (DecimalTypeInfo) ((PrimitiveObjectInspector) fieldInspector)
+                .getTypeInfo();
             return DecimalType.createDecimalType(decimalTypeInfo.precision(), decimalTypeInfo.getScale());
         case CHAR:
-            int cLength = ((CharTypeInfo)((PrimitiveObjectInspector) fieldInspector).getTypeInfo()).getLength();
+            final int cLength = ((CharTypeInfo) ((PrimitiveObjectInspector) fieldInspector).getTypeInfo()).getLength();
             return CharType.createCharType(cLength);
         case STRING:
-            return STRING;
+            return StringType.STRING;
         case VARCHAR:
-            int vLength = ((VarcharTypeInfo)((PrimitiveObjectInspector) fieldInspector).getTypeInfo()).getLength();
+            final int vLength = ((VarcharTypeInfo) ((PrimitiveObjectInspector) fieldInspector)
+                .getTypeInfo()).getLength();
             return VarcharType.createVarcharType(vLength);
         case DATE:
-            return DATE;
+            return DateType.DATE;
         case TIMESTAMP:
-            return TIMESTAMP;
+            return TimestampType.TIMESTAMP;
         case BINARY:
         case VOID:
-            return VARBINARY;
+            return VarbinaryType.VARBINARY;
         default:
             return null;
         }
     }
 
-    public Type getType(ObjectInspector fieldInspector, TypeManager typeManager) {
+    /**
+     * Returns the presto type.
+     *
+     * @param fieldInspector inspector
+     * @param typeManager type manager
+     * @return type
+     */
+    public Type getType(final ObjectInspector fieldInspector, final TypeManager typeManager) {
         switch (fieldInspector.getCategory()) {
         case PRIMITIVE:
             return getPrimitiveType(fieldInspector);
         case MAP:
-            MapObjectInspector mapObjectInspector = checkType(fieldInspector, MapObjectInspector.class,
-                    "fieldInspector");
-            Type keyType = getType(mapObjectInspector.getMapKeyObjectInspector(), typeManager);
-            Type valueType = getType(mapObjectInspector.getMapValueObjectInspector(), typeManager);
+            final MapObjectInspector mapObjectInspector = Types.checkType(fieldInspector, MapObjectInspector.class,
+                "fieldInspector");
+            final Type keyType = getType(mapObjectInspector.getMapKeyObjectInspector(), typeManager);
+            final Type valueType = getType(mapObjectInspector.getMapValueObjectInspector(), typeManager);
             if (keyType == null || valueType == null) {
                 return null;
             }
             return typeManager.getParameterizedType(StandardTypes.MAP,
-                    ImmutableList.of(keyType.getTypeSignature(), valueType.getTypeSignature()), ImmutableList.of());
+                ImmutableList.of(keyType.getTypeSignature(), valueType.getTypeSignature()), ImmutableList.of());
         case LIST:
-            ListObjectInspector listObjectInspector = checkType(fieldInspector, ListObjectInspector.class,
-                    "fieldInspector");
-            Type elementType = getType(listObjectInspector.getListElementObjectInspector(), typeManager);
+            final ListObjectInspector listObjectInspector = Types.checkType(fieldInspector, ListObjectInspector.class,
+                "fieldInspector");
+            final Type elementType = getType(listObjectInspector.getListElementObjectInspector(), typeManager);
             if (elementType == null) {
                 return null;
             }
             return typeManager.getParameterizedType(StandardTypes.ARRAY,
-                    ImmutableList.of(elementType.getTypeSignature()), ImmutableList.of());
+                ImmutableList.of(elementType.getTypeSignature()), ImmutableList.of());
         case STRUCT:
-            StructObjectInspector structObjectInspector = checkType(fieldInspector, StructObjectInspector.class,
-                    "fieldInspector");
-            List<TypeSignature> fieldTypes = new ArrayList<>();
-            List<Object> fieldNames = new ArrayList<>();
+            final StructObjectInspector structObjectInspector =
+                Types.checkType(fieldInspector, StructObjectInspector.class, "fieldInspector");
+            final List<TypeSignature> fieldTypes = new ArrayList<>();
+            final List<Object> fieldNames = new ArrayList<>();
             for (StructField field : structObjectInspector.getAllStructFieldRefs()) {
                 fieldNames.add(field.getFieldName());
-                Type fieldType = getType(field.getFieldObjectInspector(), typeManager);
+                final Type fieldType = getType(field.getFieldObjectInspector(), typeManager);
                 if (fieldType == null) {
                     return null;
                 }
@@ -153,54 +154,55 @@ public class HiveTypeConverter implements TypeConverter {
     }
 
     @Override
-    public String fromType(Type type) {
-        if (BOOLEAN.equals(type)) {
-            return BOOLEAN_TYPE_NAME;
-        } else if (TINY_INT.equals(type)) {
-            return TINYINT_TYPE_NAME;
-        } else if (SMALL_INT.equals(type)) {
-            return SMALLINT_TYPE_NAME;
-        } else if (INT.equals(type)) {
-            return INT_TYPE_NAME;
-        } else if (BIGINT.equals(type)) {
-            return BIGINT_TYPE_NAME;
-        } else if (FLOAT.equals(type)) {
-            return FLOAT_TYPE_NAME;
-        } else if (DOUBLE.equals(type)) {
-            return DOUBLE_TYPE_NAME;
+    public String fromType(final Type type) {
+        if (BooleanType.BOOLEAN.equals(type)) {
+            return serdeConstants.BOOLEAN_TYPE_NAME;
+        } else if (TinyIntType.TINY_INT.equals(type)) {
+            return serdeConstants.TINYINT_TYPE_NAME;
+        } else if (SmallIntType.SMALL_INT.equals(type)) {
+            return serdeConstants.SMALLINT_TYPE_NAME;
+        } else if (IntType.INT.equals(type)) {
+            return serdeConstants.INT_TYPE_NAME;
+        } else if (BigintType.BIGINT.equals(type)) {
+            return serdeConstants.BIGINT_TYPE_NAME;
+        } else if (FloatType.FLOAT.equals(type)) {
+            return serdeConstants.FLOAT_TYPE_NAME;
+        } else if (DoubleType.DOUBLE.equals(type)) {
+            return serdeConstants.DOUBLE_TYPE_NAME;
         } else if (type instanceof DecimalType) {
             return type.getDisplayName();
         } else if (type instanceof CharType) {
             return type.getDisplayName();
-        } else if (STRING.equals(type)) {
-            return STRING_TYPE_NAME;
+        } else if (StringType.STRING.equals(type)) {
+            return serdeConstants.STRING_TYPE_NAME;
         } else if (type instanceof VarcharType) {
             return type.getDisplayName();
-        } else if (VARBINARY.equals(type)) {
-            return BINARY_TYPE_NAME;
+        } else if (VarbinaryType.VARBINARY.equals(type)) {
+            return serdeConstants.BINARY_TYPE_NAME;
         } else if (DateType.DATE.equals(type)) {
-            return DATE_TYPE_NAME;
-        } else if (TIMESTAMP.equals(type)) {
-            return TIMESTAMP_TYPE_NAME;
+            return serdeConstants.DATE_TYPE_NAME;
+        } else if (TimestampType.TIMESTAMP.equals(type)) {
+            return serdeConstants.TIMESTAMP_TYPE_NAME;
         } else if (type.getTypeSignature().getBase().equals(StandardTypes.MAP)) {
-            MapType mapType = (MapType) type;
+            final MapType mapType = (MapType) type;
             return "map<" + fromType(mapType.getKeyType()) + "," + fromType(mapType.getValueType()) + ">";
         } else if (type.getTypeSignature().getBase().equals(StandardTypes.ARRAY)) {
-            String typeString = type.getTypeParameters().stream().map(this::fromType).collect(Collectors.joining(","));
+            final String typeString = type.getTypeParameters().stream().map(this::fromType)
+                .collect(Collectors.joining(","));
             return "array<" + typeString + ">";
         } else if (type.getTypeSignature().getBase().equals(StandardTypes.ROW)) {
-            RowType rowType = (RowType) type;
-            String typeString = rowType.getFields()
-                    .stream()
-                    .map(this::rowFieldToString)
-                    .collect(Collectors.joining(","));
+            final RowType rowType = (RowType) type;
+            final String typeString = rowType.getFields()
+                .stream()
+                .map(this::rowFieldToString)
+                .collect(Collectors.joining(","));
             return "struct<" + typeString + ">";
         } else {
-            throw new PrestoException(NOT_SUPPORTED, "unsupported type: " + type);
+            throw new PrestoException(StandardErrorCode.NOT_SUPPORTED, "unsupported type: " + type);
         }
     }
 
-    private String rowFieldToString(RowType.RowField rowField) {
+    private String rowFieldToString(final RowType.RowField rowField) {
         String prefix = "";
         if (rowField.getName().isPresent()) {
             prefix = rowField.getName().get() + ":";
@@ -210,19 +212,17 @@ public class HiveTypeConverter implements TypeConverter {
     }
 
     @Override
-    public Type toType(String type, TypeManager typeManager) {
+    public Type toType(final String type, final TypeManager typeManager) {
         // Hack to fix presto "varchar" type coming in with no length which is required by Hive.
-        if ("varchar".equals(type)) {
-            type = STRING_TYPE_NAME;
-        }
-        TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(type);
+        final TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(
+            "varchar".equals(type) ? serdeConstants.STRING_TYPE_NAME : type);
         ObjectInspector oi = TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(typeInfo);
         // The standard struct object inspector forces field names to lower case, however in Metacat we need to preserve
         // the original case of the struct fields so we wrap it with our wrapper to force the fieldNames to keep
         // their original case
         if (typeInfo.getCategory().equals(ObjectInspector.Category.STRUCT)) {
-            StructTypeInfo structTypeInfo = (StructTypeInfo) typeInfo;
-            StandardStructObjectInspector objectInspector = (StandardStructObjectInspector) oi;
+            final StructTypeInfo structTypeInfo = (StructTypeInfo) typeInfo;
+            final StandardStructObjectInspector objectInspector = (StandardStructObjectInspector) oi;
             oi = new SameCaseStandardStructObjectInspector(structTypeInfo.getAllStructFieldNames(), objectInspector);
         }
         return getType(oi, typeManager);
@@ -233,8 +233,8 @@ public class HiveTypeConverter implements TypeConverter {
         private final List<String> realFieldNames;
         private final StandardStructObjectInspector structObjectInspector;
 
-        public SameCaseStandardStructObjectInspector(List<String> realFieldNames,
-                StandardStructObjectInspector structObjectInspector) {
+        public SameCaseStandardStructObjectInspector(final List<String> realFieldNames,
+            final StandardStructObjectInspector structObjectInspector) {
             this.realFieldNames = realFieldNames;
             this.structObjectInspector = structObjectInspector;
         }
@@ -242,16 +242,17 @@ public class HiveTypeConverter implements TypeConverter {
         @Override
         public List<? extends StructField> getAllStructFieldRefs() {
             return structObjectInspector.getAllStructFieldRefs()
-                    .stream()
-                    .map(structField -> (MyField) structField)
-                    .map(field -> new SameCaseMyField(field.getFieldID(), realFieldNames.get(field.getFieldID()),
-                            field.getFieldObjectInspector(), field.getFieldComment()))
-                    .collect(Collectors.toList());
+                .stream()
+                .map(structField -> (MyField) structField)
+                .map(field -> new SameCaseMyField(field.getFieldID(), realFieldNames.get(field.getFieldID()),
+                    field.getFieldObjectInspector(), field.getFieldComment()))
+                .collect(Collectors.toList());
         }
 
         protected static class SameCaseMyField extends MyField {
-            public SameCaseMyField(int fieldID, String fieldName, ObjectInspector fieldObjectInspector,
-                    String fieldComment) {
+            public SameCaseMyField(final int fieldID, final String fieldName,
+                final ObjectInspector fieldObjectInspector,
+                final String fieldComment) {
                 super(fieldID, fieldName, fieldObjectInspector, fieldComment);
                 // Since super lower cases fieldName, this is to restore the original case
                 this.fieldName = fieldName;

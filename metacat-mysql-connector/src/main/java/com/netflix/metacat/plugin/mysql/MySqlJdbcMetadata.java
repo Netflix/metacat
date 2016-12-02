@@ -19,6 +19,7 @@ import com.facebook.presto.plugin.jdbc.JdbcConnectorId;
 import com.facebook.presto.plugin.jdbc.JdbcMetadata;
 import com.facebook.presto.plugin.jdbc.JdbcMetadataConfig;
 import com.facebook.presto.plugin.jdbc.JdbcTableHandle;
+import com.facebook.presto.plugin.jdbc.Types;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorSession;
@@ -30,27 +31,31 @@ import com.google.common.collect.ImmutableMap;
 import javax.inject.Inject;
 import java.util.Map;
 
-import static com.facebook.presto.plugin.jdbc.Types.checkType;
-
 /**
- * Created by amajumdar on 9/30/15.
+ * Connector metadata.
  */
-public class MySqlJdbcMetadata extends JdbcMetadata{
+public class MySqlJdbcMetadata extends JdbcMetadata {
     private final MetacatMySqlClient jdbcClient;
+
+    /**
+     * Constructor.
+     * @param connectorId connector id
+     * @param jdbcClient jdbc client
+     * @param config config
+     */
     @Inject
-    public MySqlJdbcMetadata(JdbcConnectorId connectorId,
-            JdbcClient jdbcClient,
-            JdbcMetadataConfig config) {
+    public MySqlJdbcMetadata(final JdbcConnectorId connectorId,
+        final JdbcClient jdbcClient,
+        final JdbcMetadataConfig config) {
         super(connectorId, jdbcClient, config);
         this.jdbcClient = (MetacatMySqlClient) jdbcClient;
     }
 
     @Override
-    public ConnectorTableMetadata getTableMetadata(ConnectorSession session, ConnectorTableHandle table)
-    {
-        JdbcTableHandle handle = checkType(table, JdbcTableHandle.class, "tableHandle");
+    public ConnectorTableMetadata getTableMetadata(final ConnectorSession session, final ConnectorTableHandle table) {
+        final JdbcTableHandle handle = Types.checkType(table, JdbcTableHandle.class, "tableHandle");
 
-        ImmutableList.Builder<ColumnMetadata> columnMetadata = ImmutableList.builder();
+        final ImmutableList.Builder<ColumnMetadata> columnMetadata = ImmutableList.builder();
         for (ColumnDetailHandle column : jdbcClient.getColumnsWithDetails(handle)) {
             columnMetadata.add(column.getColumnMetadata());
         }
@@ -58,11 +63,11 @@ public class MySqlJdbcMetadata extends JdbcMetadata{
     }
 
     @Override
-    public Map<String, ColumnHandle> getColumnHandles(ConnectorSession session, ConnectorTableHandle tableHandle)
-    {
-        JdbcTableHandle jdbcTableHandle = checkType(tableHandle, JdbcTableHandle.class, "tableHandle");
+    public Map<String, ColumnHandle> getColumnHandles(final ConnectorSession session,
+        final ConnectorTableHandle tableHandle) {
+        final JdbcTableHandle jdbcTableHandle = Types.checkType(tableHandle, JdbcTableHandle.class, "tableHandle");
 
-        ImmutableMap.Builder<String, ColumnHandle> columnHandles = ImmutableMap.builder();
+        final ImmutableMap.Builder<String, ColumnHandle> columnHandles = ImmutableMap.builder();
         for (ColumnDetailHandle column : jdbcClient.getColumnsWithDetails(jdbcTableHandle)) {
             columnHandles.put(column.getColumnMetadata().getName(), column);
         }
@@ -70,9 +75,9 @@ public class MySqlJdbcMetadata extends JdbcMetadata{
     }
 
     @Override
-    public ColumnMetadata getColumnMetadata(ConnectorSession session, ConnectorTableHandle tableHandle, ColumnHandle columnHandle)
-    {
-        checkType(tableHandle, JdbcTableHandle.class, "tableHandle");
-        return checkType(columnHandle, ColumnDetailHandle.class, "columnHandle").getColumnMetadata();
+    public ColumnMetadata getColumnMetadata(final ConnectorSession session, final ConnectorTableHandle tableHandle,
+        final ColumnHandle columnHandle) {
+        Types.checkType(tableHandle, JdbcTableHandle.class, "tableHandle");
+        return Types.checkType(columnHandle, ColumnDetailHandle.class, "columnHandle").getColumnMetadata();
     }
 }

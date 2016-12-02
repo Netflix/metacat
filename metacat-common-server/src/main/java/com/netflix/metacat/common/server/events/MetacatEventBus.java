@@ -26,35 +26,58 @@ import com.netflix.metacat.common.server.Config;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+/**
+ * Event bus.
+ */
 public class MetacatEventBus {
     private final AsyncEventBus asyncEventBus;
     private final EventBus syncEventBus;
 
+    /**
+     * Constructor.
+     * @param config config
+     */
     @Inject
-    public MetacatEventBus(Config config) {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("metacat-event-pool-%d").build();
-        int threadCount = config.getEventBusThreadCount();
+    public MetacatEventBus(final Config config) {
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("metacat-event-pool-%d").build();
+        final int threadCount = config.getEventBusThreadCount();
         this.asyncEventBus = new AsyncEventBus(
-                "metacat-async-event-bus",
-                Executors.newFixedThreadPool(threadCount, threadFactory)
+            "metacat-async-event-bus",
+            Executors.newFixedThreadPool(threadCount, threadFactory)
         );
         this.syncEventBus = new EventBus("metacat-sync-event-bus");
     }
 
-    public void postAsync(Object event) {
+    /**
+     * Post event asynchronously.
+     * @param event event
+     */
+    public void postAsync(final Object event) {
         this.asyncEventBus.post(event);
     }
 
-    public void postSync(Object event) {
+    /**
+     * Post event synchronously.
+     * @param event event
+     */
+    public void postSync(final Object event) {
         this.syncEventBus.post(event);
     }
 
-    public void register(Object object) {
+    /**
+     * Registers an object.
+     * @param object object
+     */
+    public void register(final Object object) {
         asyncEventBus.register(object);
         syncEventBus.register(object);
     }
 
-    public void unregister(Object object) {
+    /**
+     * De-registers an object.
+     * @param object object
+     */
+    public void unregister(final Object object) {
         asyncEventBus.unregister(object);
         syncEventBus.unregister(object);
     }

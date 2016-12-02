@@ -17,30 +17,48 @@ import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.StandardErrorCode;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 
 import java.util.List;
 
-import static com.google.common.base.Strings.nullToEmpty;
-
 /**
- * Created by amajumdar on 4/30/15.
+ * Exception when partition already exists.
  */
 public class PartitionAlreadyExistsException extends PrestoException {
     private static final Joiner COMMA_JOINER = Joiner.on(',');
 
-    public PartitionAlreadyExistsException(SchemaTableName tableName, String partitionId) {
+    /**
+     * Constructor.
+     * @param tableName table name
+     * @param partitionId partition name
+     */
+    public PartitionAlreadyExistsException(final SchemaTableName tableName, final String partitionId) {
         this(tableName, partitionId, null);
     }
 
-    public PartitionAlreadyExistsException(SchemaTableName tableName, String partitionId, Throwable cause) {
+    /**
+     * Constructor.
+     * @param tableName table name
+     * @param partitionId partition name
+     * @param cause error cause
+     */
+    public PartitionAlreadyExistsException(final SchemaTableName tableName, final String partitionId,
+        final Throwable cause) {
         super(StandardErrorCode.ALREADY_EXISTS,
-                String.format("Partition '%s' already exists for table '%s'", nullToEmpty(partitionId), tableName),
-                cause);
+            String.format("Partition '%s' already exists for table '%s'", Strings.nullToEmpty(partitionId), tableName),
+            cause);
     }
 
-    public PartitionAlreadyExistsException(SchemaTableName tableName, List<String> partitionIds, Throwable cause) {
+    /**
+     * Constructor.
+     * @param tableName table name
+     * @param partitionIds partition names
+     * @param cause error cause
+     */
+    public PartitionAlreadyExistsException(final SchemaTableName tableName, final List<String> partitionIds,
+        final Throwable cause) {
         super(StandardErrorCode.ALREADY_EXISTS,
-                String.format("One or more of the partitions '%s' already exists for table '%s'",
-                        COMMA_JOINER.join(partitionIds), tableName), cause);
+            String.format("One or more of the partitions '%s' already exists for table '%s'",
+                COMMA_JOINER.join(partitionIds), tableName), cause);
     }
 }

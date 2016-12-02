@@ -34,6 +34,7 @@ import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
 import java.util.List;
 
 /**
+ * Generic Service helper.
  * @author amajumdar
  */
 public class MetacatServiceHelper {
@@ -42,12 +43,19 @@ public class MetacatServiceHelper {
     private final PartitionService partitionService;
     private final MetacatEventBus eventBus;
 
+    /**
+     * Constructor.
+     * @param databaseService database service
+     * @param tableService table service
+     * @param partitionService partition service
+     * @param eventBus event bus
+     */
     @Inject
     public MetacatServiceHelper(
-            DatabaseService databaseService,
-            TableService tableService,
-            PartitionService partitionService,
-            MetacatEventBus eventBus
+        final DatabaseService databaseService,
+        final TableService tableService,
+        final PartitionService partitionService,
+        final MetacatEventBus eventBus
     ) {
         this.databaseService = databaseService;
         this.tableService = tableService;
@@ -55,8 +63,13 @@ public class MetacatServiceHelper {
         this.eventBus = eventBus;
     }
 
-    public MetacatService getService(QualifiedName name) {
-        MetacatService result;
+    /**
+     * Get the relevant service for the given qualified name.
+     * @param name name
+     * @return service
+     */
+    public MetacatService getService(final QualifiedName name) {
+        MetacatService result = null;
         if (name.isPartitionDefinition()) {
             result = partitionService;
         } else if (name.isTableDefinition()) {
@@ -69,15 +82,24 @@ public class MetacatServiceHelper {
         return result;
     }
 
-    public void postPreUpdateEvent(QualifiedName name, MetacatRequestContext metacatRequestContext, BaseDto dto) {
+    /**
+     * Calls the right method of the event bus for the given qualified name.
+     * @param name name
+     * @param metacatRequestContext context
+     * @param dto dto
+     */
+    public void postPreUpdateEvent(final QualifiedName name, final MetacatRequestContext metacatRequestContext,
+        final BaseDto dto) {
         if (name.isPartitionDefinition()) {
-            PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
+            final PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
             if (dto != null) {
                 partitionsSaveRequestDto.setPartitions(ImmutableList.of((PartitionDto) dto));
             }
-            eventBus.postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
+            eventBus
+                .postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
         } else if (name.isTableDefinition()) {
-            eventBus.postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, (TableDto) dto, (TableDto) dto));
+            eventBus
+                .postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, (TableDto) dto, (TableDto) dto));
         } else if (name.isDatabaseDefinition()) {
             eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext));
         } else {
@@ -85,33 +107,40 @@ public class MetacatServiceHelper {
         }
     }
 
+    /**
+     * Calls the right method of the event bus for the given qualified name.
+     * @param name name
+     * @param metacatRequestContext context
+     * @param oldDTo dto
+     * @param currentDto dto
+     */
     public void postPostUpdateEvent(
-            final QualifiedName name,
-            final MetacatRequestContext metacatRequestContext,
-            final BaseDto oldDTo,
-            final BaseDto currentDto
+        final QualifiedName name,
+        final MetacatRequestContext metacatRequestContext,
+        final BaseDto oldDTo,
+        final BaseDto currentDto
     ) {
         if (name.isPartitionDefinition()) {
-            List<PartitionDto> dtos = Lists.newArrayList();
+            final List<PartitionDto> dtos = Lists.newArrayList();
             if (currentDto != null) {
                 dtos.add((PartitionDto) currentDto);
             }
             // This request neither added nor updated partitions
-            PartitionsSaveResponseDto partitionsSaveResponseDto = new PartitionsSaveResponseDto();
+            final PartitionsSaveResponseDto partitionsSaveResponseDto = new PartitionsSaveResponseDto();
             eventBus.postAsync(
-                    new MetacatSaveTablePartitionPostEvent(
-                            name,
-                            metacatRequestContext,
-                            dtos,
-                            partitionsSaveResponseDto
-                    )
-            );
-        } else if (name.isTableDefinition()) {
-            MetacatUpdateTablePostEvent event = new MetacatUpdateTablePostEvent(
+                new MetacatSaveTablePartitionPostEvent(
                     name,
                     metacatRequestContext,
-                    (TableDto) oldDTo,
-                    (TableDto) currentDto
+                    dtos,
+                    partitionsSaveResponseDto
+                )
+            );
+        } else if (name.isTableDefinition()) {
+            final MetacatUpdateTablePostEvent event = new MetacatUpdateTablePostEvent(
+                name,
+                metacatRequestContext,
+                (TableDto) oldDTo,
+                (TableDto) currentDto
             );
             eventBus.postAsync(event);
         } else if (name.isDatabaseDefinition()) {

@@ -17,13 +17,13 @@ import com.facebook.presto.spi.ConnectorFactory;
 import com.facebook.presto.spi.Plugin;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.type.TypeRegistry;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.netflix.metacat.main.presto.connector.ConnectorManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -31,14 +31,12 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * Created by amajumdar on 1/14/15.
+ * Plugin Manager.
  */
 @Singleton
+@Slf4j
 public class PluginManager {
-    private static final Logger log = LoggerFactory.getLogger(PluginManager.class);
     private final ConnectorManager connectorManager;
     private final Injector injector;
     private final Map<String, String> optionalConfig;
@@ -46,25 +44,39 @@ public class PluginManager {
     private final AtomicBoolean pluginsLoading = new AtomicBoolean();
     private final TypeRegistry typeRegistry;
 
+    /**
+     * Constructor.
+     * @param injector injector
+     * @param connectorManager manager
+     * @param typeRegistry registry
+     */
     @Inject
-    public PluginManager(Injector injector,
-            ConnectorManager connectorManager,
-            TypeRegistry typeRegistry) {
-        checkNotNull(injector, "injector is null");
+    public PluginManager(final Injector injector,
+        final ConnectorManager connectorManager,
+        final TypeRegistry typeRegistry) {
+        Preconditions.checkNotNull(injector, "injector is null");
 
         this.injector = injector;
 
         optionalConfig = Maps.newConcurrentMap();
 
-        this.connectorManager = checkNotNull(connectorManager, "connectorManager is null");
-        this.typeRegistry = checkNotNull(typeRegistry, "typeRegistry is null");
+        this.connectorManager = Preconditions.checkNotNull(connectorManager, "connectorManager is null");
+        this.typeRegistry = Preconditions.checkNotNull(typeRegistry, "typeRegistry is null");
     }
 
+    /**
+     * Returns true if plugins are loaded.
+     * @return true if plugins are loaded.
+     */
     public boolean arePluginsLoaded() {
         return pluginsLoaded.get();
     }
 
-    public void installPlugin(Plugin plugin) {
+    /**
+     * Installs the plugins.
+     * @param plugin service plugin
+     */
+    public void installPlugin(final Plugin plugin) {
         injector.injectMembers(plugin);
 
         plugin.setOptionalConfig(optionalConfig);
@@ -80,14 +92,18 @@ public class PluginManager {
         }
     }
 
+    /**
+     * Loads the plugins.
+     * @throws Exception error
+     */
     public void loadPlugins()
-            throws Exception {
+        throws Exception {
         if (!pluginsLoading.compareAndSet(false, true)) {
             return;
         }
 
-        ServiceLoader<Plugin> serviceLoader = ServiceLoader.load(Plugin.class, this.getClass().getClassLoader());
-        List<Plugin> plugins = ImmutableList.copyOf(serviceLoader);
+        final ServiceLoader<Plugin> serviceLoader = ServiceLoader.load(Plugin.class, this.getClass().getClassLoader());
+        final List<Plugin> plugins = ImmutableList.copyOf(serviceLoader);
 
         if (plugins.isEmpty()) {
             log.warn("No service providers of type {}", Plugin.class.getName());

@@ -22,36 +22,46 @@ import org.apache.tomcat.jdbc.pool.PooledConnection;
 import java.util.Map;
 
 /**
- * Created by amajumdar on 5/16/16.
+ * Pool stats interceptor.
+ * @author amajumdar
  */
 public class PoolStatsInterceptor extends JdbcInterceptor {
+    /** Metric name. */
     public static final String PROP_METRIC_NAME = "name";
     private String metricNameTotal;
     private String metricNameActive;
     private String metricNameIdle;
+
+    /**
+     * Constructor.
+     */
     public PoolStatsInterceptor() {
         super();
     }
 
     @Override
-    public void reset(ConnectionPool parent, PooledConnection con) {
-        publishMetric( parent);
+    public void reset(final ConnectionPool parent, final PooledConnection con) {
+        publishMetric(parent);
     }
 
     @Override
-    public void disconnected(ConnectionPool parent, PooledConnection con, boolean finalizing) {
-        publishMetric( parent);
+    public void disconnected(final ConnectionPool parent, final PooledConnection con, final boolean finalizing) {
+        publishMetric(parent);
     }
 
-    private void publishMetric( ConnectionPool parent){
-        if( parent != null && metricNameTotal != null) {
+    private void publishMetric(final ConnectionPool parent) {
+        if (parent != null && metricNameTotal != null) {
             DynamicGauge.set(metricNameTotal, parent.getSize());
             DynamicGauge.set(metricNameActive, parent.getActive());
             DynamicGauge.set(metricNameIdle, parent.getIdle());
         }
     }
 
-    public void setMetricName(String metricName) {
+    /**
+     * Sets the metric.
+     * @param metricName metric name
+     */
+    public void setMetricName(final String metricName) {
         this.metricNameTotal = "dse.metacat.gauge." + metricName + ".connections.total";
         this.metricNameActive = "dse.metacat.gauge." + metricName + ".connections.active";
         this.metricNameIdle = "dse.metacat.gauge." + metricName + ".connections.idle";
@@ -59,11 +69,11 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
     }
 
     @Override
-    public void setProperties(Map<String, PoolProperties.InterceptorProperty> properties) {
+    public void setProperties(final Map<String, PoolProperties.InterceptorProperty> properties) {
         super.setProperties(properties);
-        PoolProperties.InterceptorProperty nameProperty = properties.get(PROP_METRIC_NAME);
+        final PoolProperties.InterceptorProperty nameProperty = properties.get(PROP_METRIC_NAME);
         if (nameProperty != null) {
-            setMetricName( nameProperty.getValue());
+            setMetricName(nameProperty.getValue());
         }
     }
 }

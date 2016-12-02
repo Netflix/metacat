@@ -26,8 +26,7 @@ import com.netflix.servo.monitor.Monitor;
 import com.netflix.servo.monitor.MonitorConfig;
 import com.netflix.servo.monitor.Monitors;
 import com.netflix.servo.tag.TagList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -36,11 +35,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Utility class that dynamically creates gauges based on an arbitrary (name, tagList), or {@link com.netflix.servo.monitor.MonitorConfig}
- * Gauges are automatically expired after 15 minutes of inactivity.
+ * Utility class that dynamically creates gauges based on an arbitrary (name, tagList),
+ * or {@link com.netflix.servo.monitor.MonitorConfig}. Gauges are automatically expired after 15 minutes of inactivity.
  */
+@Slf4j
 public final class DynamicGauge implements CompositeMonitor<Long> {
-    private static final Logger log = LoggerFactory.getLogger(DynamicGauge.class);
     private static final String DEFAULT_EXPIRATION = "15";
     private static final String DEFAULT_EXPIRATION_UNIT = "MINUTES";
     private static final String CLASS_NAME = DynamicGauge.class.getCanonicalName();
@@ -62,13 +61,15 @@ public final class DynamicGauge implements CompositeMonitor<Long> {
         final TimeUnit expirationUnitValue = TimeUnit.valueOf(expirationUnit);
 
         gauges = CacheBuilder.newBuilder()
-                .expireAfterAccess(expirationValue, expirationUnitValue)
-                .build(new CacheLoader<MonitorConfig, DoubleGauge>() {
-                    @Override
-                    public DoubleGauge load(@Nonnull final MonitorConfig config) throws Exception {
-                        return new DoubleGauge(config);
-                    }
-                });
+            .expireAfterAccess(expirationValue, expirationUnitValue)
+            .build(new CacheLoader<MonitorConfig, DoubleGauge>() {
+                @Override
+                public DoubleGauge load(
+                    @Nonnull
+                    final MonitorConfig config) throws Exception {
+                    return new DoubleGauge(config);
+                }
+            });
         cacheMonitor = Monitors.newCacheMonitor(CACHE_MONITOR_ID, gauges);
         DefaultMonitorRegistry.getInstance().register(this);
     }
@@ -79,26 +80,31 @@ public final class DynamicGauge implements CompositeMonitor<Long> {
      * @param config The monitoring config
      * @param value  The amount added to the current value
      */
-    public static void set(MonitorConfig config, double value) {
+    public static void set(final MonitorConfig config, final double value) {
         INSTANCE.get(config).set(value);
     }
 
     /**
      * Increment a gauge specified by a name.
+     * @param name name
+     * @param value value
      */
-    public static void set(String name, double value) {
+    public static void set(final String name, final double value) {
         set(MonitorConfig.builder(name).build(), value);
     }
 
     /**
      * Set the gauge for a given name, tagList by a given value.
+     * @param name name
+     * @param list tag list
+     * @param value value
      */
-    public static void set(String name, TagList list, double value) {
+    public static void set(final String name, final TagList list, final double value) {
         final MonitorConfig config = MonitorConfig.builder(name).withTags(list).build();
         set(config, value);
     }
 
-    private DoubleGauge get(MonitorConfig config) {
+    private DoubleGauge get(final MonitorConfig config) {
         try {
             return gauges.get(config);
         } catch (ExecutionException e) {
@@ -125,7 +131,7 @@ public final class DynamicGauge implements CompositeMonitor<Long> {
     }
 
     @Override
-    public Long getValue(int pollerIndex) {
+    public Long getValue(final int pollerIndex) {
         return getValue();
     }
 
@@ -142,12 +148,12 @@ public final class DynamicGauge implements CompositeMonitor<Long> {
      */
     @Override
     public String toString() {
-        ConcurrentMap<?, ?> map = gauges.asMap();
+        final ConcurrentMap<?, ?> map = gauges.asMap();
         return MoreObjects.toStringHelper(this)
-                .add("baseConfig", BASE_CONFIG)
-                .add("totalGauges", map.size())
-                .add("gauges", map)
-                .toString();
+            .add("baseConfig", BASE_CONFIG)
+            .add("totalGauges", map.size())
+            .add("gauges", map)
+            .toString();
     }
 }
 

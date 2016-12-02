@@ -48,90 +48,105 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 
-import static java.lang.String.format;
-
 /**
- * Created by amajumdar on 4/27/15.
+ * Pig type converter.
  */
-public class PigTypeConverter implements TypeConverter{
-    private static final Logger log = LoggerFactory.getLogger(PigTypeConverter.class);
+public class PigTypeConverter implements TypeConverter {
+    private static final Logger LOG = LoggerFactory.getLogger(PigTypeConverter.class);
     private static final String NAME_ARRAY_ELEMENT = "array_element";
-    public Type toType(String pigType, TypeManager typeManager){
+
+    /**
+     * Converts to presto type.
+     * @param pigType pig type
+     * @param typeManager type manager
+     * @return presto type
+     */
+    public Type toType(final String pigType, final TypeManager typeManager) {
         try {
-            LogicalSchema schema = Utils.parseSchema(pigType);
-            LogicalSchema.LogicalFieldSchema field = schema.getField(0);
-            return toPrestoType( field);
+            final LogicalSchema schema = Utils.parseSchema(pigType);
+            final LogicalSchema.LogicalFieldSchema field = schema.getField(0);
+            return toPrestoType(field);
         } catch (Exception e) {
-            log.warn("Pig Parsing failed for signature {}", pigType, e);
-            throw new IllegalArgumentException(format("Bad type signature: '%s'", pigType));
+            LOG.warn("Pig Parsing failed for signature {}", pigType, e);
+            throw new IllegalArgumentException(String.format("Bad type signature: '%s'", pigType));
         }
     }
 
-    public String fromType(Type prestoType){
-        Schema schema = new Schema(Util.translateFieldSchema(fromPrestoTypeToPigSchema(null, prestoType)));
-        StringBuilder result = new StringBuilder();
+    /**
+     * Convert to pig type.
+     * @param prestoType prsto type
+     * @return pig type
+     */
+    public String fromType(final Type prestoType) {
+        final Schema schema = new Schema(Util.translateFieldSchema(fromPrestoTypeToPigSchema(null, prestoType)));
+        final StringBuilder result = new StringBuilder();
         try {
-            Schema.stringifySchema( result, schema, DataType.GENERIC_WRITABLECOMPARABLE, Integer.MIN_VALUE);
+            Schema.stringifySchema(result, schema, DataType.GENERIC_WRITABLECOMPARABLE, Integer.MIN_VALUE);
         } catch (FrontendException e) {
-            throw new IllegalArgumentException(format("Bad presto type: '%s'", prestoType));
+            throw new IllegalArgumentException(String.format("Bad presto type: '%s'", prestoType));
         }
         return result.toString();
     }
 
-    private LogicalSchema.LogicalFieldSchema fromPrestoTypeToPigSchema(String alias, Type prestoType){
-        if( VarbinaryType.VARBINARY.equals(prestoType)){
+    private LogicalSchema.LogicalFieldSchema fromPrestoTypeToPigSchema(final String alias, final Type prestoType) {
+        if (VarbinaryType.VARBINARY.equals(prestoType)) {
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.BYTEARRAY);
-        } else if ( BooleanType.BOOLEAN.equals( prestoType)) {
+        } else if (BooleanType.BOOLEAN.equals(prestoType)) {
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.BOOLEAN);
-        } else if( IntType.INT.equals(prestoType) || SmallIntType.SMALL_INT.equals(prestoType) || TinyIntType.TINY_INT.equals(prestoType)){
+        } else if (IntType.INT.equals(prestoType) || SmallIntType.SMALL_INT.equals(prestoType) || TinyIntType.TINY_INT
+            .equals(prestoType)) {
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.INTEGER);
-        } else if( BigintType.BIGINT.equals(prestoType)){
+        } else if (BigintType.BIGINT.equals(prestoType)) {
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.LONG);
-        } else if( FloatType.FLOAT.equals(prestoType)){
+        } else if (FloatType.FLOAT.equals(prestoType)) {
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.FLOAT);
-        } else if( DoubleType.DOUBLE.equals(prestoType) || prestoType instanceof DecimalType){
+        } else if (DoubleType.DOUBLE.equals(prestoType) || prestoType instanceof DecimalType) {
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.DOUBLE);
-        } else if( TimestampType.TIMESTAMP.equals(prestoType) || DateType.DATE.equals(prestoType)){
+        } else if (TimestampType.TIMESTAMP.equals(prestoType) || DateType.DATE.equals(prestoType)) {
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.DATETIME);
-        } else if( prestoType instanceof VarcharType || prestoType instanceof CharType || StringType.STRING.equals(prestoType) | prestoType instanceof com.facebook.presto.type.VarcharType){
+        } else if (prestoType instanceof VarcharType || prestoType instanceof CharType
+            || StringType.STRING.equals(prestoType) || prestoType instanceof com.facebook.presto.type.VarcharType) {
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.CHARARRAY);
-        } else if( UnknownType.UNKNOWN.equals(prestoType)){
+        } else if (UnknownType.UNKNOWN.equals(prestoType)) {
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.UNKNOWN);
-        } else if( prestoType instanceof MapType){
-            MapType mapType = (MapType) prestoType;
+        } else if (prestoType instanceof MapType) {
+            final MapType mapType = (MapType) prestoType;
             LogicalSchema schema = null;
             //
             // map<unknown type> in Presto is map[] in PIG
             //
-            if( mapType.getValueType() != null && !UnknownType.UNKNOWN.equals(mapType.getValueType())){
+            if (mapType.getValueType() != null && !UnknownType.UNKNOWN.equals(mapType.getValueType())) {
                 schema = new LogicalSchema();
                 schema.addField(fromPrestoTypeToPigSchema(null, mapType.getValueType()));
             }
             return new LogicalSchema.LogicalFieldSchema(alias, schema, DataType.MAP);
-        } else if( prestoType instanceof ArrayType){
-            ArrayType arrayType = (ArrayType) prestoType;
-            LogicalSchema schema = new LogicalSchema();
+        } else if (prestoType instanceof ArrayType) {
+            final ArrayType arrayType = (ArrayType) prestoType;
+            final LogicalSchema schema = new LogicalSchema();
             Type elementType = arrayType.getElementType();
-            if( elementType != null){
-                if( !(elementType instanceof RowType)){
-                    elementType = new RowType(Lists.newArrayList(elementType), Optional.of(ImmutableList.of(NAME_ARRAY_ELEMENT)));
+            if (elementType != null) {
+                if (!(elementType instanceof RowType)) {
+                    elementType = new RowType(Lists.newArrayList(elementType),
+                        Optional.of(ImmutableList.of(NAME_ARRAY_ELEMENT)));
                 }
                 schema.addField(fromPrestoTypeToPigSchema(null, elementType));
             }
             return new LogicalSchema.LogicalFieldSchema(alias, schema, DataType.BAG);
 
-        } else if( prestoType instanceof RowType){
-            RowType rowType = (RowType) prestoType;
-            LogicalSchema schema = new LogicalSchema();
+        } else if (prestoType instanceof RowType) {
+            final RowType rowType = (RowType) prestoType;
+            final LogicalSchema schema = new LogicalSchema();
             rowType.getFields().stream().forEach(
-                    rowField -> schema.addField(fromPrestoTypeToPigSchema(rowField.getName().isPresent()?rowField.getName().get():null, rowField.getType())));
+                rowField -> schema.addField(
+                    fromPrestoTypeToPigSchema(rowField.getName().isPresent() ? rowField.getName().get() : null,
+                        rowField.getType())));
             return new LogicalSchema.LogicalFieldSchema(alias, schema, DataType.TUPLE);
         }
-        throw new IllegalArgumentException(format("Bad presto type: '%s'", prestoType));
+        throw new IllegalArgumentException(String.format("Bad presto type: '%s'", prestoType));
     }
 
-    private Type toPrestoType(LogicalSchema.LogicalFieldSchema field){
-        switch(field.type){
+    private Type toPrestoType(final LogicalSchema.LogicalFieldSchema field) {
+        switch (field.type) {
         case DataType.BOOLEAN:
             return BooleanType.BOOLEAN;
         case DataType.BYTE:
@@ -157,30 +172,31 @@ public class PigTypeConverter implements TypeConverter{
         case DataType.BAG:
             return toPrestoArrayType(field);
         case DataType.TUPLE:
-            return toPrestoRowType( field);
+            return toPrestoRowType(field);
         case DataType.UNKNOWN:
             return UnknownType.UNKNOWN;
+        default:
         }
-        throw new IllegalArgumentException(format("Bad type signature: '%s'", field.toString()));
+        throw new IllegalArgumentException(String.format("Bad type signature: '%s'", field.toString()));
     }
 
-    private Type toPrestoRowType(LogicalSchema.LogicalFieldSchema field) {
-        List<Type> fieldTypes = Lists.newArrayList();
-        List<String> fieldNames = Lists.newArrayList();
+    private Type toPrestoRowType(final LogicalSchema.LogicalFieldSchema field) {
+        final List<Type> fieldTypes = Lists.newArrayList();
+        final List<String> fieldNames = Lists.newArrayList();
         field.schema.getFields().stream().forEach(logicalFieldSchema -> {
-            fieldTypes.add(toPrestoType( logicalFieldSchema));
+            fieldTypes.add(toPrestoType(logicalFieldSchema));
             fieldNames.add(logicalFieldSchema.alias);
         });
         return new RowType(fieldTypes, Optional.of(fieldNames));
     }
 
-    private Type toPrestoArrayType(LogicalSchema.LogicalFieldSchema field) {
-        LogicalSchema.LogicalFieldSchema subField = field.schema.getField(0);
+    private Type toPrestoArrayType(final LogicalSchema.LogicalFieldSchema field) {
+        final LogicalSchema.LogicalFieldSchema subField = field.schema.getField(0);
         Type elementType = null;
-        if( subField.type == DataType.TUPLE
-                && subField.schema.getFields() != null
-                && !subField.schema.getFields().isEmpty()
-                && NAME_ARRAY_ELEMENT.equals(subField.schema.getFields().get(0).alias)){
+        if (subField.type == DataType.TUPLE
+            && subField.schema.getFields() != null
+            && !subField.schema.getFields().isEmpty()
+            && NAME_ARRAY_ELEMENT.equals(subField.schema.getFields().get(0).alias)) {
             elementType = toPrestoType(subField.schema.getFields().get(0));
         } else {
             elementType = toPrestoType(subField);
@@ -188,12 +204,12 @@ public class PigTypeConverter implements TypeConverter{
         return new ArrayType(elementType);
     }
 
-    private Type toPrestoMapType(LogicalSchema.LogicalFieldSchema field) {
-        Type key = StringType.STRING;
+    private Type toPrestoMapType(final LogicalSchema.LogicalFieldSchema field) {
+        final Type key = StringType.STRING;
         Type value = UnknownType.UNKNOWN;
-        if( field.schema != null){
-            List<LogicalSchema.LogicalFieldSchema> fields = field.schema.getFields();
-            if(fields.size() > 0){
+        if (field.schema != null) {
+            final List<LogicalSchema.LogicalFieldSchema> fields = field.schema.getFields();
+            if (fields.size() > 0) {
                 value = toPrestoType(fields.get(0));
             }
         }

@@ -17,19 +17,20 @@ import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.block.Block;
 import com.facebook.presto.spi.block.BlockBuilder;
 import com.facebook.presto.spi.type.AbstractFixedWidthType;
-
-import static com.facebook.presto.spi.type.TypeSignature.parseTypeSignature;
-import static io.airlift.slice.SizeOf.SIZE_OF_SHORT;
+import com.facebook.presto.spi.type.TypeSignature;
+import io.airlift.slice.SizeOf;
 
 /**
- * Created by amajumdar on 6/15/15.
+ * Small integer type.
  */
 public final class SmallIntType extends AbstractFixedWidthType {
+    /** Default small int type. */
     public static final SmallIntType SMALL_INT = new SmallIntType();
+    /** String representation. */
     public static final String TYPE = "smallint";
 
     private SmallIntType() {
-        super(parseTypeSignature(TYPE), int.class, SIZE_OF_SHORT);
+        super(TypeSignature.parseTypeSignature(TYPE), int.class, SizeOf.SIZE_OF_SHORT);
     }
 
     @Override
@@ -43,7 +44,7 @@ public final class SmallIntType extends AbstractFixedWidthType {
     }
 
     @Override
-    public Object getObjectValue(ConnectorSession session, Block block, int position) {
+    public Object getObjectValue(final ConnectorSession session, final Block block, final int position) {
         if (block.isNull(position)) {
             return null;
         }
@@ -52,27 +53,29 @@ public final class SmallIntType extends AbstractFixedWidthType {
     }
 
     @Override
-    public boolean equalTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition) {
-        short leftValue = leftBlock.getShort(leftPosition, 0);
-        short rightValue = rightBlock.getShort(rightPosition, 0);
+    public boolean equalTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final short leftValue = leftBlock.getShort(leftPosition, 0);
+        final short rightValue = rightBlock.getShort(rightPosition, 0);
         return leftValue == rightValue;
     }
 
     @Override
-    public int hash(Block block, int position) {
+    public int hash(final Block block, final int position) {
         return block.getShort(position, 0);
     }
 
     @Override
     @SuppressWarnings("SuspiciousNameCombination")
-    public int compareTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition) {
-        short leftValue = leftBlock.getShort(leftPosition, 0);
-        short rightValue = rightBlock.getShort(rightPosition, 0);
+    public int compareTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final short leftValue = leftBlock.getShort(leftPosition, 0);
+        final short rightValue = rightBlock.getShort(rightPosition, 0);
         return Short.compare(leftValue, rightValue);
     }
 
     @Override
-    public void appendTo(Block block, int position, BlockBuilder blockBuilder) {
+    public void appendTo(final Block block, final int position, final BlockBuilder blockBuilder) {
         if (block.isNull(position)) {
             blockBuilder.appendNull();
         } else {
@@ -81,12 +84,12 @@ public final class SmallIntType extends AbstractFixedWidthType {
     }
 
     @Override
-    public long getLong(Block block, int position) {
+    public long getLong(final Block block, final int position) {
         return block.getShort(position, 0);
     }
 
     @Override
-    public void writeLong(BlockBuilder blockBuilder, long value) {
-        blockBuilder.writeShort((short)value).closeEntry();
+    public void writeLong(final BlockBuilder blockBuilder, final long value) {
+        blockBuilder.writeShort((short) value).closeEntry();
     }
 }

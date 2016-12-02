@@ -13,10 +13,6 @@
 
 package com.netflix.metacat.s3.connector.dao;
 
-/**
- * Created by amajumdar on 10/10/15.
- */
-
 import com.facebook.presto.spi.Pageable;
 import com.facebook.presto.spi.Sort;
 import com.netflix.metacat.s3.connector.model.Partition;
@@ -24,13 +20,24 @@ import com.netflix.metacat.s3.connector.model.Partition;
 import java.util.List;
 
 /**
- * Created by amajumdar on 1/2/15.
+ * Partition DAO.
  */
 public interface PartitionDao extends BaseDao<Partition> {
-    List<Partition> getPartitions( Long tableId, List<String> partitionIds, Iterable<String> partitionParts, String dateCreatedSqlCriteria, Sort sort, Pageable pageable);
+    /**
+     * Get the list of partitions.
+     * @param tableId table id
+     * @param partitionIds partition names
+     * @param partitionParts parts
+     * @param dateCreatedSqlCriteria criteria
+     * @param sort sort
+     * @param pageable pageable
+     * @return list of partitions
+     */
+    List<Partition> getPartitions(Long tableId, List<String> partitionIds, Iterable<String> partitionParts,
+        String dateCreatedSqlCriteria, Sort sort, Pageable pageable);
 
     /**
-     * Deletes the partitions for the given table and list of partition ids
+     * Deletes the partitions for the given table and list of partition ids.
      * @param sourceName catalog/source name
      * @param databaseName schema/database name
      * @param tableName table name

@@ -10,6 +10,9 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+ext {
+    excludePattern = "**/com/netflix/metacat/common/partition/parser/**"
+}
 
 dependencies {
     compile project(':metacat-common')
@@ -21,4 +24,12 @@ dependencies {
     compile 'com.netflix.servo:servo-core:0.8.3'
     compile "io.airlift:configuration:${airlift_version}"
     compile "org.slf4j:slf4j-api:${slf4j_version}"
+}
+
+tasks.withType(Checkstyle) {
+    exclude excludePattern
+}
+
+tasks.withType(Pmd) {
+    exclude excludePattern
 }

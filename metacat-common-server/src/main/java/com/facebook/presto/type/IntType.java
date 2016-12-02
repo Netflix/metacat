@@ -17,19 +17,20 @@ import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.block.Block;
 import com.facebook.presto.spi.block.BlockBuilder;
 import com.facebook.presto.spi.type.AbstractFixedWidthType;
-
-import static com.facebook.presto.spi.type.TypeSignature.parseTypeSignature;
-import static io.airlift.slice.SizeOf.SIZE_OF_INT;
+import com.facebook.presto.spi.type.TypeSignature;
+import io.airlift.slice.SizeOf;
 
 /**
- * Created by amajumdar on 6/15/15.
+ * Integer type.
  */
 public final class IntType extends AbstractFixedWidthType {
+    /** Default Integer type. */
     public static final IntType INT = new IntType();
+    /** String representation. */
     public static final String TYPE = "int";
 
     private IntType() {
-        super(parseTypeSignature(TYPE), int.class, SIZE_OF_INT);
+        super(TypeSignature.parseTypeSignature(TYPE), int.class, SizeOf.SIZE_OF_INT);
     }
 
     @Override
@@ -43,7 +44,7 @@ public final class IntType extends AbstractFixedWidthType {
     }
 
     @Override
-    public Object getObjectValue(ConnectorSession session, Block block, int position) {
+    public Object getObjectValue(final ConnectorSession session, final Block block, final int position) {
         if (block.isNull(position)) {
             return null;
         }
@@ -52,27 +53,29 @@ public final class IntType extends AbstractFixedWidthType {
     }
 
     @Override
-    public boolean equalTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition) {
-        int leftValue = leftBlock.getInt(leftPosition, 0);
-        int rightValue = rightBlock.getInt(rightPosition, 0);
+    public boolean equalTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final int leftValue = leftBlock.getInt(leftPosition, 0);
+        final int rightValue = rightBlock.getInt(rightPosition, 0);
         return leftValue == rightValue;
     }
 
     @Override
-    public int hash(Block block, int position) {
+    public int hash(final Block block, final int position) {
         return block.getInt(position, 0);
     }
 
     @Override
     @SuppressWarnings("SuspiciousNameCombination")
-    public int compareTo(Block leftBlock, int leftPosition, Block rightBlock, int rightPosition) {
-        int leftValue = leftBlock.getInt(leftPosition, 0);
-        int rightValue = rightBlock.getInt(rightPosition, 0);
+    public int compareTo(final Block leftBlock, final int leftPosition, final Block rightBlock,
+        final int rightPosition) {
+        final int leftValue = leftBlock.getInt(leftPosition, 0);
+        final int rightValue = rightBlock.getInt(rightPosition, 0);
         return Integer.compare(leftValue, rightValue);
     }
 
     @Override
-    public void appendTo(Block block, int position, BlockBuilder blockBuilder) {
+    public void appendTo(final Block block, final int position, final BlockBuilder blockBuilder) {
         if (block.isNull(position)) {
             blockBuilder.appendNull();
         } else {
@@ -81,12 +84,12 @@ public final class IntType extends AbstractFixedWidthType {
     }
 
     @Override
-    public long getLong(Block block, int position) {
+    public long getLong(final Block block, final int position) {
         return block.getInt(position, 0);
     }
 
     @Override
-    public void writeLong(BlockBuilder blockBuilder, long value) {
-        blockBuilder.writeInt((int)value).closeEntry();
+    public void writeLong(final BlockBuilder blockBuilder, final long value) {
+        blockBuilder.writeInt((int) value).closeEntry();
     }
 }

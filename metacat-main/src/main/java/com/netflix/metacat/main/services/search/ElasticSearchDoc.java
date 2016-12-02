@@ -25,6 +25,7 @@ import org.elasticsearch.action.get.GetResponse;
 import java.util.Map;
 
 /**
+ * Document that gets stored in elastic search.
  * @author amajumdar
  */
 @Getter
@@ -35,14 +36,30 @@ public class ElasticSearchDoc {
     private boolean deleted;
     private String refreshMarker;
 
-    public ElasticSearchDoc(String id, Object dto, String user, boolean deleted) {
+    /**
+     * Constructor.
+     * @param id doc id
+     * @param dto dto
+     * @param user user name
+     * @param deleted is it marked deleted
+     */
+    public ElasticSearchDoc(final String id, final Object dto, final String user, final boolean deleted) {
         this.id = id;
         this.dto = dto;
         this.user = user;
         this.deleted = deleted;
     }
 
-    public ElasticSearchDoc(String id, Object dto, String user, boolean deleted, String refreshMarker) {
+    /**
+     * Constructor.
+     * @param id doc id
+     * @param dto dto
+     * @param user user name
+     * @param deleted is it marked deleted
+     * @param refreshMarker marker
+     */
+    public ElasticSearchDoc(final String id, final Object dto, final String user, final boolean deleted,
+        final String refreshMarker) {
         this.id = id;
         this.dto = dto;
         this.user = user;
@@ -50,20 +67,25 @@ public class ElasticSearchDoc {
         this.refreshMarker = refreshMarker;
     }
 
-    private static Class getClass(String type) {
+    private static Class getClass(final String type) {
         return Type.valueOf(type).getClazz();
     }
 
-    public static ElasticSearchDoc parse(GetResponse response) {
+    /**
+     * Parse the elastic search response.
+     * @param response response
+     * @return document
+     */
+    public static ElasticSearchDoc parse(final GetResponse response) {
         ElasticSearchDoc result = null;
         if (response.isExists()) {
-            Map<String, Object> responseMap = response.getSourceAsMap();
-            String user = (String) responseMap.get(Field.USER);
-            boolean deleted = (boolean) responseMap.get(Field.DELETED);
+            final Map<String, Object> responseMap = response.getSourceAsMap();
+            final String user = (String) responseMap.get(Field.USER);
+            final boolean deleted = (boolean) responseMap.get(Field.DELETED);
             @SuppressWarnings("unchecked")
-            Object dto = MetacatJsonLocator.INSTANCE.parseJsonValue(
-                    response.getSourceAsBytes(),
-                    getClass(response.getType())
+            final Object dto = MetacatJsonLocator.INSTANCE.parseJsonValue(
+                response.getSourceAsBytes(),
+                getClass(response.getType())
             );
             result = new ElasticSearchDoc(response.getId(), dto, user, deleted);
         }
@@ -71,7 +93,7 @@ public class ElasticSearchDoc {
     }
 
     private ObjectNode toJsonObject() {
-        ObjectNode oMetadata = MetacatJsonLocator.INSTANCE.toJsonObject(dto);
+        final ObjectNode oMetadata = MetacatJsonLocator.INSTANCE.toJsonObject(dto);
         //True if this entity has been deleted
         oMetadata.put(Field.DELETED, deleted);
         //True if this entity has been deleted
@@ -83,20 +105,20 @@ public class ElasticSearchDoc {
     }
 
     String toJsonString() {
-        String result = MetacatJsonLocator.INSTANCE.toJsonString(toJsonObject());
+        final String result = MetacatJsonLocator.INSTANCE.toJsonString(toJsonObject());
         return result.replace("{}", "null");
     }
 
+    /** Document types. */
     public enum Type {
-        catalog(CatalogDto.class),
-        database(DatabaseDto.class),
-        table(TableDto.class),
-        mview(TableDto.class),
-        partition(PartitionDto.class);
+        /** Document types. */
+        catalog(CatalogDto.class), database(DatabaseDto.class), table(TableDto.class),
+        /** Document types. */
+        mview(TableDto.class), partition(PartitionDto.class);
 
         private Class clazz;
 
-        Type(Class clazz) {
+        Type(final Class clazz) {
             this.clazz = clazz;
         }
 
@@ -105,9 +127,10 @@ public class ElasticSearchDoc {
         }
     }
 
-    protected interface Field {
-        String USER = "user_";
-        String DELETED = "deleted_";
-        String REFRESH_MARKER = "refreshMarker_";
+    /** Document context attributes. */
+    protected static class Field {
+        public static final String USER = "user_";
+        public static final String DELETED = "deleted_";
+        public static final String REFRESH_MARKER = "refreshMarker_";
     }
 }

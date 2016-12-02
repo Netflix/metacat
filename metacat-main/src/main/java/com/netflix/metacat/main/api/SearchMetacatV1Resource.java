@@ -20,20 +20,24 @@ import com.netflix.metacat.main.services.search.ElasticSearchUtil;
 import javax.inject.Inject;
 import java.util.List;
 
-import static com.netflix.metacat.main.api.RequestWrapper.requestWrapper;
-
 /**
- * Created by amajumdar on 12/17/15.
+ * Search API.
  */
 public class SearchMetacatV1Resource implements SearchMetacatV1 {
-    ElasticSearchUtil elasticSearchUtil;
+    private ElasticSearchUtil elasticSearchUtil;
 
+    /**
+     * Constructor.
+     * @param elasticSearchUtil search util
+     */
     @Inject
-    public SearchMetacatV1Resource(ElasticSearchUtil elasticSearchUtil) {
+    public SearchMetacatV1Resource(final ElasticSearchUtil elasticSearchUtil) {
         this.elasticSearchUtil = elasticSearchUtil;
     }
+
     @Override
-    public List<TableDto> searchTables(String searchString) {
-        return requestWrapper("SearchMetacatV1Resource.searchTables", () -> elasticSearchUtil.simpleSearch(searchString));
+    public List<TableDto> searchTables(final String searchString) {
+        return RequestWrapper.requestWrapper("SearchMetacatV1Resource.searchTables",
+            () -> elasticSearchUtil.simpleSearch(searchString));
     }
 }

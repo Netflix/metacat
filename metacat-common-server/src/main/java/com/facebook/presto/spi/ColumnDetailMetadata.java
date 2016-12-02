@@ -14,9 +14,10 @@
 package com.facebook.presto.spi;
 
 import com.facebook.presto.spi.type.Type;
+import com.google.common.base.Objects;
 
 /**
- * Created by amajumdar on 9/28/15.
+ * Extended ColumnMetadata class to add more details.
  */
 public class ColumnDetailMetadata extends ColumnMetadata {
     private final String sourceType;
@@ -26,18 +27,49 @@ public class ColumnDetailMetadata extends ColumnMetadata {
     private final Boolean isSortKey;
     private final Boolean isIndexKey;
 
-    public ColumnDetailMetadata(String name, Type type, boolean partitionKey, String sourceType) {
-        this(name , type, partitionKey, null, false, sourceType, null, null, null, null, null);
+    /**
+     * Constructor.
+     * @param name name
+     * @param type type
+     * @param partitionKey is it a partition key
+     * @param sourceType source type
+     */
+    public ColumnDetailMetadata(final String name, final Type type, final boolean partitionKey,
+        final String sourceType) {
+        this(name, type, partitionKey, null, false, sourceType, null, null, null, null, null);
     }
 
-    public ColumnDetailMetadata(String name, Type type, boolean partitionKey, String comment, boolean hidden
-            , String sourceType) {
-        this(name , type, partitionKey, comment, hidden, sourceType, null, null, null, null, null);
+    /**
+     * Constructor.
+     * @param name name
+     * @param type type
+     * @param partitionKey is it a partition key
+     * @param comment comment
+     * @param hidden hidden
+     * @param sourceType source type
+     */
+    public ColumnDetailMetadata(final String name, final Type type, final boolean partitionKey, final String comment,
+        final boolean hidden, final String sourceType) {
+        this(name, type, partitionKey, comment, hidden, sourceType, null, null, null, null, null);
     }
 
-    public ColumnDetailMetadata(String name, Type type, boolean partitionKey, String comment, boolean hidden
-            , String sourceType, Integer size, Boolean isNullable
-            , String defaultValue, Boolean isSortKey, Boolean isIndexKey) {
+    /**
+     * Constructor.
+     * @param name name
+     * @param type type
+     * @param partitionKey is it a partition key
+     * @param comment comment
+     * @param hidden hidden
+     * @param sourceType source type
+     * @param size size
+     * @param isNullable is it nullable
+     * @param defaultValue default value
+     * @param isSortKey is it an sort column
+     * @param isIndexKey is it an index column
+     */
+    public ColumnDetailMetadata(final String name, final Type type, final boolean partitionKey, final String comment,
+        final boolean hidden, final String sourceType, final Integer size, final Boolean isNullable,
+        final String defaultValue, final Boolean isSortKey, final Boolean isIndexKey) {
         super(name, type, partitionKey, comment, hidden);
         this.sourceType = sourceType;
         this.size = size;
@@ -69,5 +101,30 @@ public class ColumnDetailMetadata extends ColumnMetadata {
 
     public Boolean getIsIndexKey() {
         return isIndexKey;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final ColumnDetailMetadata that = (ColumnDetailMetadata) o;
+        return Objects.equal(sourceType, that.sourceType)
+            && Objects.equal(size, that.size)
+            && Objects.equal(isNullable, that.isNullable)
+            && Objects.equal(defaultValue, that.defaultValue)
+            && Objects.equal(isSortKey, that.isSortKey)
+            && Objects.equal(isIndexKey, that.isIndexKey);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(super.hashCode(), sourceType, size, isNullable, defaultValue, isSortKey, isIndexKey);
     }
 }

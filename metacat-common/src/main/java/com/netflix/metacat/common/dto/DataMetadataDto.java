@@ -17,6 +17,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.wordnik.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -24,9 +26,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 /**
- * Created by amajumdar on 5/28/15.
+ * Data metadata DTO.
  */
-public class DataMetadataDto extends BaseDto implements HasDataMetadata{
+@Data
+@EqualsAndHashCode(callSuper = false)
+public class DataMetadataDto extends BaseDto implements HasDataMetadata {
     private static final long serialVersionUID = -874750260731085106L;
     private String uri;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
@@ -34,24 +38,9 @@ public class DataMetadataDto extends BaseDto implements HasDataMetadata{
     @JsonProperty
     private transient ObjectNode dataMetadata;
 
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
-
-    public ObjectNode getDataMetadata() {
-        return dataMetadata;
-    }
-
-    public void setDataMetadata(ObjectNode dataMetadata) {
-        this.dataMetadata = dataMetadata;
-    }
-
     /**
-     * @return The uri that points to the location of the external data
+     * Returns uri.
+     * @return The uri that points to the location of the external data.
      * @throws IllegalStateException if this instance does not have external data
      */
     @Nonnull
@@ -62,6 +51,7 @@ public class DataMetadataDto extends BaseDto implements HasDataMetadata{
     }
 
     /**
+     * Returns true if this particular instance points to external data.
      * @return true if this particular instance points to external data
      */
     @Override
@@ -69,16 +59,20 @@ public class DataMetadataDto extends BaseDto implements HasDataMetadata{
         return false;
     }
 
+    /**
+     * Sets the data external property.
+     * @param ignored is data external
+     */
     @SuppressWarnings("EmptyMethod")
-    public void setDataExternal(boolean ignored) {
+    public void setDataExternal(final boolean ignored) {
     }
 
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         dataMetadata = deserializeObjectNode(in);
     }
 
-    private void writeObject(ObjectOutputStream out) throws IOException {
+    private void writeObject(final ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         serializeObjectNode(out, dataMetadata);
     }

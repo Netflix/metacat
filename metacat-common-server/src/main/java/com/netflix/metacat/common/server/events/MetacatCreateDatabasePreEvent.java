@@ -25,14 +25,23 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Pre create database event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class MetacatCreateDatabasePreEvent extends MetacatEvent {
-
+    /**
+     * Constructor.
+     * @param name name
+     * @param requestContext context
+     */
     public MetacatCreateDatabasePreEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext requestContext
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext
     ) {
         super(name, requestContext);
     }

@@ -22,71 +22,96 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
 
-public interface TableService extends MetacatService<TableDto>{
+/**
+ * Table service.
+ */
+public interface TableService extends MetacatService<TableDto> {
     /**
      * Deletes the table. Returns the table metadata of the table deleted.
      * @param name qualified name of the table to be deleted
      * @param isMView true if this table is created for a mview
      * @return Returns the deleted table
      */
-    TableDto deleteAndReturn(@Nonnull QualifiedName name, boolean isMView);
+    TableDto deleteAndReturn(
+        @Nonnull
+            QualifiedName name, boolean isMView);
 
     /**
-     * Returns the table with the given name
+     * Returns the table with the given name.
      * @param name qualified name of the table
      * @param includeUserMetadata if true, the table will include the user metadata
      * @return Returns the table with the given name
      */
-    Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeUserMetadata);
+    Optional<TableDto> get(
+        @Nonnull
+            QualifiedName name, boolean includeUserMetadata);
 
     /**
-     * Returns the table with the given name
+     * Returns the table with the given name.
      * @param name qualified name of the table
      * @param includeInfo if true, the table will include the main table metadata
      * @param includeDefinitionMetadata if true, the table will include the user definition metadata
      * @param includeDataMetadata if true, the table will include the user data metadata
      * @return Returns the table with the given name
      */
-    Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeInfo, boolean includeDefinitionMetadata, boolean includeDataMetadata);
+    Optional<TableDto> get(
+        @Nonnull
+            QualifiedName name, boolean includeInfo, boolean includeDefinitionMetadata, boolean includeDataMetadata);
 
     /**
-     * Returns the table handle
+     * Returns the table handle.
      * @param name qualified name of the table
      * @return Returns the table handle with the given name
      */
-    Optional<TableHandle> getTableHandle(@Nonnull QualifiedName name);
+    Optional<TableHandle> getTableHandle(
+        @Nonnull
+            QualifiedName name);
 
     /**
-     * Rename the table from <code>oldName</code> to <code>newName</code>
+     * Rename the table from <code>oldName</code> to <code>newName</code>.
      * @param oldName old qualified name of the existing table
      * @param newName new qualified name of the table
      * @param isMView true, if the object is a view
      */
-    void rename(@Nonnull QualifiedName oldName, @Nonnull QualifiedName newName, boolean isMView);
+    void rename(
+        @Nonnull
+            QualifiedName oldName,
+        @Nonnull
+            QualifiedName newName, boolean isMView);
 
     /**
-     * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>
+     * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>.
      * @param name qualified name of the source table
      * @param targetName qualified name of the target table
      * @return Returns the copied table
      */
-    TableDto copy(@Nonnull QualifiedName name, @Nonnull QualifiedName targetName);
+    TableDto copy(
+        @Nonnull
+            QualifiedName name,
+        @Nonnull
+            QualifiedName targetName);
 
     /**
-     * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>
+     * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>.
      * @param tableDto source table
      * @param targetName qualified name of the target table
      * @return Returns the copied table
      */
-    TableDto copy(@Nonnull TableDto tableDto, @Nonnull QualifiedName targetName);
+    TableDto copy(
+        @Nonnull
+            TableDto tableDto,
+        @Nonnull
+            QualifiedName targetName);
 
     /**
-     * Saves the user metadata for the given table
+     * Saves the user metadata for the given table.
      * @param name qualified name of the table
      * @param definitionMetadata user definition metadata json
      * @param dataMetadata user data metadata json
      */
-    void saveMetadata(@Nonnull QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
+    void saveMetadata(
+        @Nonnull
+            QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
 
     /**
      * Returns a list of qualified names of tables that refers to the given <code>uri</code>. If prefixSearch is true,

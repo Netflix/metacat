@@ -21,31 +21,31 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.Version;
 
 /**
- * Created by amajumdar on 12/21/14.
+ * IdEntity.
  */
 @MappedSuperclass
-public class IdEntity extends BaseEntity{
+public class IdEntity extends BaseEntity {
     private Long id;
     private Long version;
 
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
-    @Column(name="id", unique = true, nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false)
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(final Long id) {
         this.id = id;
     }
 
     @Version
-    @Column(name="version", nullable = false)
+    @Column(name = "version", nullable = false)
     public Long getVersion() {
         return version;
     }
 
-    public void setVersion(Long version) {
+    public void setVersion(final Long version) {
         this.version = version;
     }
 }

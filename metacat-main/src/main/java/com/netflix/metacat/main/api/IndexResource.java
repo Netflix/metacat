@@ -17,8 +17,15 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+/**
+ * Default resource.
+ */
 @Path("/")
 public class IndexResource {
+    /**
+     * Index API.
+     * @return ok.
+     */
     @GET
     public Response index() {
         return Response.ok().build();

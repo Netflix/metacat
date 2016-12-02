@@ -25,27 +25,32 @@ import javax.persistence.criteria.Root;
 import java.util.List;
 
 /**
- * Created by amajumdar on 1/2/15.
+ * Id Entity DAO.
+ * @param <T>
  */
 public abstract class IdEntityDaoImpl<T extends IdEntity> extends BaseDaoImpl<T> implements
-        BaseDao<T> {
+    BaseDao<T> {
 
-    protected IdEntityDaoImpl(Provider<EntityManager> em) {
+    /**
+     * Constructor.
+     * @param em entity manager
+     */
+    protected IdEntityDaoImpl(final Provider<EntityManager> em) {
         super(em);
     }
 
     @Override
-    public List<T> get(Iterable<Long> ids) {
-        EntityManager entityManager = em.get();
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<T> criteriaQuery = cb.createQuery(getEntityClass());
-        Root<T> root = criteriaQuery.from(getEntityClass());
+    public List<T> get(final Iterable<Long> ids) {
+        final EntityManager entityManager = em.get();
+        final CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        final CriteriaQuery<T> criteriaQuery = cb.createQuery(getEntityClass());
+        final Root<T> root = criteriaQuery.from(getEntityClass());
         criteriaQuery.where(root.get("id").in(Lists.newArrayList(ids)));
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 
     @Override
-    protected boolean isNew(T entity) {
-        return entity.getId()==null;
+    protected boolean isNew(final T entity) {
+        return entity.getId() == null;
     }
 }

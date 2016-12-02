@@ -27,11 +27,13 @@
 package com.netflix.metacat.main.presto.metadata;
 
 import com.facebook.presto.metadata.CatalogManagerConfig;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.netflix.metacat.main.presto.connector.ConnectorManager;
-import io.airlift.log.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -42,38 +44,50 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Maps.fromProperties;
-
-public class CatalogManager
-{
-    private static final Logger log = Logger.get(CatalogManager.class);
+/**
+ * Catalog manager.
+ */
+@Slf4j
+public class CatalogManager {
     private final ConnectorManager connectorManager;
     private final File catalogConfigurationDir;
     private final AtomicBoolean catalogsLoading = new AtomicBoolean();
     private final AtomicBoolean catalogsLoaded = new AtomicBoolean();
 
+    /**
+     * Constructor.
+     * @param connectorManager manager
+     * @param config config
+     */
     @Inject
-    public CatalogManager(ConnectorManager connectorManager, CatalogManagerConfig config)
-    {
+    public CatalogManager(final ConnectorManager connectorManager, final CatalogManagerConfig config) {
         this(connectorManager, config.getCatalogConfigurationDir());
     }
 
-    public CatalogManager(ConnectorManager connectorManager, File catalogConfigurationDir)
-    {
+    /**
+     * Constructor.
+     * @param connectorManager manager
+     * @param catalogConfigurationDir config directory
+     */
+    public CatalogManager(final ConnectorManager connectorManager, final File catalogConfigurationDir) {
         this.connectorManager = connectorManager;
         this.catalogConfigurationDir = catalogConfigurationDir;
     }
 
-    public boolean areCatalogsLoaded()
-    {
+    /**
+     * Returns true if all catalogs are loaded.
+     * @return true if all catalogs are loaded
+     */
+    public boolean areCatalogsLoaded() {
         return catalogsLoaded.get();
     }
 
+    /**
+     * Loads catalogs.
+     * @throws Exception error
+     */
     public void loadCatalogs()
-            throws Exception
-    {
+        throws Exception {
         if (!catalogsLoading.compareAndSet(false, true)) {
             return;
         }
@@ -87,25 +101,24 @@ public class CatalogManager
         catalogsLoaded.set(true);
     }
 
-    private void loadCatalog(File file)
-            throws Exception
-    {
+    private void loadCatalog(final File file)
+        throws Exception {
         log.info("-- Loading catalog %s --", file);
-        Map<String, String> properties = new HashMap<>(loadProperties(file));
+        final Map<String, String> properties = new HashMap<>(loadProperties(file));
 
-        String connectorName = properties.remove("connector.name");
-        checkState(connectorName != null, "Catalog configuration %s does not contain conector.name", file.getAbsoluteFile());
+        final String connectorName = properties.remove("connector.name");
+        Preconditions.checkState(connectorName != null, "Catalog configuration %s does not contain conector.name",
+            file.getAbsoluteFile());
 
-        String catalogName = Files.getNameWithoutExtension(file.getName());
+        final String catalogName = Files.getNameWithoutExtension(file.getName());
 
         connectorManager.createConnection(catalogName, connectorName, ImmutableMap.copyOf(properties));
         log.info("-- Added catalog %s using connector %s --", catalogName, connectorName);
     }
 
-    private static List<File> listFiles(File installedPluginsDir)
-    {
+    private static List<File> listFiles(final File installedPluginsDir) {
         if (installedPluginsDir != null && installedPluginsDir.isDirectory()) {
-            File[] files = installedPluginsDir.listFiles();
+            final File[] files = installedPluginsDir.listFiles();
             if (files != null) {
                 return ImmutableList.copyOf(files);
             }
@@ -113,15 +126,14 @@ public class CatalogManager
         return ImmutableList.of();
     }
 
-    private static Map<String, String> loadProperties(File file)
-            throws Exception
-    {
-        checkNotNull(file, "file is null");
+    private static Map<String, String> loadProperties(final File file)
+        throws Exception {
+        Preconditions.checkNotNull(file, "file is null");
 
-        Properties properties = new Properties();
+        final Properties properties = new Properties();
         try (FileInputStream in = new FileInputStream(file)) {
             properties.load(in);
         }
-        return fromProperties(properties);
+        return Maps.fromProperties(properties);
     }
 }

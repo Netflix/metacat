@@ -24,13 +24,16 @@ import com.netflix.metacat.main.init.MetacatServletModule;
 import com.netflix.metacat.usermetadata.mysql.MysqlUserMetadataModule;
 import com.squarespace.jersey2.guice.JerseyGuiceServletContextListener;
 import com.wordnik.swagger.jaxrs.config.BeanConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.servlet.ServletContextEvent;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Servlet listener.
+ */
+@Slf4j
 public class MetacatContextListener extends JerseyGuiceServletContextListener {
     static {
         // Initialize configuration
@@ -44,15 +47,13 @@ public class MetacatContextListener extends JerseyGuiceServletContextListener {
         LoggingConfiguration.getInstance().configure();
     }
 
-    private static final Logger log = LoggerFactory.getLogger(MetacatContextListener.class);
-
     @Override
-    public void contextDestroyed(ServletContextEvent sce) {
+    public void contextDestroyed(final ServletContextEvent sce) {
         log.info("Start contextDestroyed");
         super.contextDestroyed(sce);
         // Stop logging
         LoggingConfiguration.getInstance().stop();
-        MetacatInitializationService service = getInjector().getInstance(MetacatInitializationService.class);
+        final MetacatInitializationService service = getInjector().getInstance(MetacatInitializationService.class);
         try {
             service.stop();
         } catch (Throwable t) {
@@ -63,12 +64,12 @@ public class MetacatContextListener extends JerseyGuiceServletContextListener {
     }
 
     @Override
-    public void contextInitialized(ServletContextEvent sce) {
+    public void contextInitialized(final ServletContextEvent sce) {
         log.info("Start contextInitialized");
         super.contextInitialized(sce);
 
-        Config config = getInjector().getInstance(Config.class);
-        MetacatInitializationService service = getInjector().getInstance(MetacatInitializationService.class);
+        final Config config = getInjector().getInstance(Config.class);
+        final MetacatInitializationService service = getInjector().getInstance(MetacatInitializationService.class);
         try {
             service.start();
         } catch (Throwable t) {
@@ -76,7 +77,7 @@ public class MetacatContextListener extends JerseyGuiceServletContextListener {
             throw Throwables.propagate(t);
         }
         // Configure and Initialize swagger using
-        BeanConfig beanConfig = new BeanConfig();
+        final BeanConfig beanConfig = new BeanConfig();
         beanConfig.setVersion(config.getMetacatVersion());
         beanConfig.setBasePath("/");
         beanConfig.setResourcePackage("com.netflix.metacat");
@@ -88,8 +89,8 @@ public class MetacatContextListener extends JerseyGuiceServletContextListener {
     @Override
     protected List<? extends Module> modules() {
         return ImmutableList.of(
-                new MetacatServletModule(),
-                new MysqlUserMetadataModule()
+            new MetacatServletModule(),
+            new MysqlUserMetadataModule()
         );
     }
 }

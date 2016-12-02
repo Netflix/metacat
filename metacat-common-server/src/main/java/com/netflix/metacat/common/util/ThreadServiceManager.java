@@ -19,8 +19,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.netflix.metacat.common.server.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -30,45 +29,55 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created by amajumdar on 4/4/16.
+ * Thread service manager.
+ * @author amajumdar
  */
+@Slf4j
 public class ThreadServiceManager {
-    private static final Logger log = LoggerFactory.getLogger(ThreadServiceManager.class);
-    private ListeningExecutorService executor = null;
+    private ListeningExecutorService executor;
     @Inject
-    Config config;
+    private Config config;
 
+    /**
+     * Starts the manager.
+     */
     @PostConstruct
     public void start() {
-        ExecutorService executorService = newFixedThreadPool( config.getServiceMaxNumberOfThreads(), "metacat-service-pool-%d",  1000);
-        executor = MoreExecutors.listeningDecorator(executorService) ;
+        final ExecutorService executorService = newFixedThreadPool(config.getServiceMaxNumberOfThreads(),
+            "metacat-service-pool-%d", 1000);
+        executor = MoreExecutors.listeningDecorator(executorService);
     }
 
-    private ExecutorService newFixedThreadPool(int nThreads, String threadFactoryName, int queueSize) {
+    @SuppressWarnings("checkstyle:hiddenfield")
+    private ExecutorService newFixedThreadPool(final int nThreads, final String threadFactoryName,
+        final int queueSize) {
         return new ThreadPoolExecutor(nThreads, nThreads,
-                0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(queueSize),
-                new ThreadFactoryBuilder()
-                        .setNameFormat(threadFactoryName)
-                        .build(),
-                (r, executor) -> {
-                    // this will block if the queue is full
-                    try {
-                        executor.getQueue().put(r);
-                    } catch (InterruptedException e) {
-                        throw Throwables.propagate(e);
+            0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(queueSize),
+            new ThreadFactoryBuilder()
+                .setNameFormat(threadFactoryName)
+                .build(),
+            (r, executor) -> {
+                // this will block if the queue is full
+                try {
+                    executor.getQueue().put(r);
+                } catch (InterruptedException e) {
+                    throw Throwables.propagate(e);
 
-                    }
-                });
+                }
+            });
     }
 
-    public ListeningExecutorService getExecutor(){
+    public ListeningExecutorService getExecutor() {
         return executor;
     }
 
+    /**
+     * Stops this manager.
+     */
     @PreDestroy
-    public void stop(){
-        if(executor != null){
+    public void stop() {
+        if (executor != null) {
             // Make the executor accept no new threads and finish all existing
             // threads in the queue
             executor.shutdown();

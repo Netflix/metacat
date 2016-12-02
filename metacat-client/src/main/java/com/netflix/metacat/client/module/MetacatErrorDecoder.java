@@ -28,42 +28,44 @@ import feign.Util;
 
 import java.io.IOException;
 
-import static javax.ws.rs.core.Response.Status;
-
 /**
- * Module that provides a error decoder, used to parse errors
+ * Module that provides a error decoder, used to parse errors.
+ * @author amajumdar
  */
 public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
-    private static final MetacatJson metacatJson = MetacatJsonLocator.INSTANCE;
-        @Override
-        public Exception decode(String methodKey, Response response){
-            try {
-                String message = "";
-                if (response.body() != null){
-                    message = Util.toString(response.body().asReader());
-                    try {
-                        ObjectNode body = metacatJson.parseJsonObject(message);
-                        message = body.path("error").asText();
-                    } catch (MetacatJsonException ignored) {}
+    private static final MetacatJson METACAT_JSON = MetacatJsonLocator.INSTANCE;
+
+    @Override
+    public Exception decode(final String methodKey, final Response response) {
+        try {
+            String message = "";
+            if (response.body() != null) {
+                message = Util.toString(response.body().asReader());
+                try {
+                    final ObjectNode body = METACAT_JSON.parseJsonObject(message);
+                    message = body.path("error").asText();
+                } catch (MetacatJsonException ignored) {
+
                 }
-                switch (response.status()) {
-                    case 501: //NOT IMPLEMENTED
-                    case 415: //UNSUPPORTED_MEDIA_TYPE
-                        return new MetacatNotSupportedException(message);
-                    case 400: //BAD_REQUEST
-                        return new MetacatBadRequestException(message);
-                    case 404: //NOT_FOUND
-                        return new MetacatNotFoundException(message);
-                    case 409: //CONFLICT
-                        return new MetacatAlreadyExistsException(message);
-                    case 500: //INTERNAL_SERVER_ERROR
-                    case 503: //SERVICE_UNAVAILABLE
-                        return new RetryableException(message, null);
-                    default:
-                        return new MetacatException(message, Status.INTERNAL_SERVER_ERROR, null);
-                }
-            } catch (IOException e) {
-                return super.decode(methodKey, response);
             }
+            switch (response.status()) {
+            case 501: //NOT IMPLEMENTED
+            case 415: //UNSUPPORTED_MEDIA_TYPE
+                return new MetacatNotSupportedException(message);
+            case 400: //BAD_REQUEST
+                return new MetacatBadRequestException(message);
+            case 404: //NOT_FOUND
+                return new MetacatNotFoundException(message);
+            case 409: //CONFLICT
+                return new MetacatAlreadyExistsException(message);
+            case 500: //INTERNAL_SERVER_ERROR
+            case 503: //SERVICE_UNAVAILABLE
+                return new RetryableException(message, null);
+            default:
+                return new MetacatException(message, javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR, null);
+            }
+        } catch (IOException e) {
+            return super.decode(methodKey, response);
         }
+    }
 }

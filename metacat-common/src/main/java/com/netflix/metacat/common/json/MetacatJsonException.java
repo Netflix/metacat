@@ -13,24 +13,43 @@
 
 package com.netflix.metacat.common.json;
 
+/**
+ * Metacat JSON utility related exception.
+ */
 public class MetacatJsonException extends RuntimeException {
-    public MetacatJsonException(String s) {
+    /**
+     * Contructor.
+     * @param s exception message
+     */
+    public MetacatJsonException(final String s) {
         super(s);
     }
 
-    protected MetacatJsonException(String message, Throwable cause, boolean enableSuppression,
-            boolean writableStackTrace) {
+    protected MetacatJsonException(final String message, final Throwable cause, final boolean enableSuppression,
+        final boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public MetacatJsonException(Throwable cause) {
+    /**
+     * Constructor.
+     * @param cause exception cause
+     */
+    public MetacatJsonException(final Throwable cause) {
         super(cause);
     }
 
-    public MetacatJsonException(String message, Throwable cause) {
+    /**
+     * Constructor.
+     * @param message exception message
+     * @param cause exception cause
+     */
+    public MetacatJsonException(final String message, final Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Default constructor.
+     */
     public MetacatJsonException() {
         super();
     }

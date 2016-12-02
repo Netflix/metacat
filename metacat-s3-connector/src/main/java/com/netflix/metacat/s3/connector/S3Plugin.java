@@ -17,6 +17,9 @@ import com.facebook.presto.spi.ConnectorFactory;
 import com.facebook.presto.spi.Plugin;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
+import com.facebook.presto.type.FloatType;
+import com.facebook.presto.type.IntType;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -24,49 +27,39 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 
-import static com.facebook.presto.type.FloatType.FLOAT;
-import static com.facebook.presto.type.IntType.INT;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * Created by amajumdar on 10/9/15.
+ * S3 plugin.
  */
-public class S3Plugin implements Plugin
-{
+public class S3Plugin implements Plugin {
     private TypeManager typeManager;
     private Map<String, String> optionalConfig = ImmutableMap.of();
 
     @Override
-    public synchronized void setOptionalConfig(Map<String, String> optionalConfig)
-    {
-        this.optionalConfig = ImmutableMap.copyOf(checkNotNull(optionalConfig, "optionalConfig is null"));
+    public synchronized void setOptionalConfig(final Map<String, String> optionalConfig) {
+        this.optionalConfig = ImmutableMap.copyOf(Preconditions.checkNotNull(optionalConfig, "optionalConfig is null"));
     }
 
     @Inject
-    public synchronized void setTypeManager(TypeManager typeManager)
-    {
+    public synchronized void setTypeManager(final TypeManager typeManager) {
         this.typeManager = typeManager;
     }
 
-    public synchronized Map<String, String> getOptionalConfig()
-    {
+    public synchronized Map<String, String> getOptionalConfig() {
         return optionalConfig;
     }
 
     @Override
-    public synchronized <T> List<T> getServices(Class<T> type)
-    {
+    public synchronized <T> List<T> getServices(final Class<T> type) {
         if (type == ConnectorFactory.class) {
             return ImmutableList.of(type.cast(
-                    new S3ConnectorFactory(typeManager, getOptionalConfig(), getClassLoader())));
-        } else if (type == Type.class){
-            return ImmutableList.of(type.cast(FLOAT), type.cast(INT));
+                new S3ConnectorFactory(typeManager, getOptionalConfig(), getClassLoader())));
+        } else if (type == Type.class) {
+            return ImmutableList.of(type.cast(FloatType.FLOAT), type.cast(IntType.INT));
         }
         return ImmutableList.of();
     }
 
-    private static ClassLoader getClassLoader()
-    {
+    private static ClassLoader getClassLoader() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         if (classLoader == null) {
             classLoader = S3Plugin.class.getClassLoader();

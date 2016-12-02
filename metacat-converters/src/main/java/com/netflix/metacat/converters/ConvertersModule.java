@@ -25,6 +25,9 @@ import org.mapstruct.factory.Mappers;
 
 import javax.inject.Provider;
 
+/**
+ * Guice module.
+ */
 public class ConvertersModule extends AbstractModule {
     @Override
     protected void configure() {
@@ -38,14 +41,23 @@ public class ConvertersModule extends AbstractModule {
         binder().requestStaticInjection(DateConverters.class);
     }
 
+    /**
+     * Hive converter provider.
+     * @return HiveConverters
+     */
     @Provides
     public HiveConverters hiveConverters() {
         return Mappers.getMapper(MapStructHiveConverters.class);
     }
 
+    /**
+     * Presto converter provider.
+     * @param typeConverterProvider provider
+     * @return PrestoConverters
+     */
     @Provides
-    public PrestoConverters prestoConverters(Provider<TypeConverter> typeConverterProvider) {
-        MapStructPrestoConverters converters = Mappers.getMapper(MapStructPrestoConverters.class);
+    public PrestoConverters prestoConverters(final Provider<TypeConverter> typeConverterProvider) {
+        final MapStructPrestoConverters converters = Mappers.getMapper(MapStructPrestoConverters.class);
         converters.setTypeConverter(typeConverterProvider);
         return converters;
     }

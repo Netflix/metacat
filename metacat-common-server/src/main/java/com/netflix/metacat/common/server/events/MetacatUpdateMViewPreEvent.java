@@ -26,6 +26,9 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Pre view update event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -33,10 +36,19 @@ public class MetacatUpdateMViewPreEvent extends MetacatEvent {
 
     private final TableDto table;
 
+    /**
+     * Constructor.
+     * @param name name
+     * @param requestContext context
+     * @param table table info
+     */
     public MetacatUpdateMViewPreEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext requestContext,
-            @NotNull final TableDto table
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext,
+        @NotNull
+        final TableDto table
     ) {
         super(name, requestContext);
         this.table = table;

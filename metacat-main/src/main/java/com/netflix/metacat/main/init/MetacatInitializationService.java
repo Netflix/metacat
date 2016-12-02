@@ -14,6 +14,7 @@
 package com.netflix.metacat.main.init;
 
 import com.facebook.presto.metadata.CatalogManagerConfig;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
@@ -28,41 +29,54 @@ import com.netflix.metacat.main.presto.metadata.CatalogManager;
 import com.netflix.metacat.main.services.search.MetacatEventHandlers;
 import io.airlift.configuration.ConfigurationFactory;
 import io.airlift.configuration.ConfigurationProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.Client;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
+/**
+ * Metacat initialization service.
+ */
+@Slf4j
 public class MetacatInitializationService {
-    private static final Logger log = LoggerFactory.getLogger(MetacatInitializationService.class);
     private final Config config;
     private final Injector injector;
 
+    /**
+     * Constructor.
+     * @param injector injector
+     * @param config config
+     */
     @Inject
-    public MetacatInitializationService(Injector injector, Config config) {
+    public MetacatInitializationService(final Injector injector, final Config config) {
         this.config = config;
         this.injector = injector;
     }
 
+    /**
+     * Returns the config factory.
+     * @return config factory
+     */
     public ConfigurationFactory getConfigurationFactory() {
-        String pluginConfigDir = config.getPluginConfigLocation();
-        checkArgument(!Strings.isNullOrEmpty(pluginConfigDir),
-                "Missing required property metacat.plugin.config.location");
+        final String pluginConfigDir = config.getPluginConfigLocation();
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(pluginConfigDir),
+            "Missing required property metacat.plugin.config.location");
         log.info("Loading catalogs from directory '{}'", pluginConfigDir);
 
-        Map<String, String> properties = ImmutableMap.of("plugin.config-dir", pluginConfigDir);
+        final Map<String, String> properties = ImmutableMap.of("plugin.config-dir", pluginConfigDir);
         return new ConfigurationFactory(properties);
     }
 
+    /**
+     * Metacat service initialization.
+     * @throws Exception error
+     */
     public void start() throws Exception {
-        ConfigurationFactory configurationFactory = getConfigurationFactory();
-        ProviderInstanceBinding<?> providerInstanceBinding = (ProviderInstanceBinding<?>) injector
-                .getBinding(CatalogManagerConfig.class);
-        Provider<?> provider = providerInstanceBinding.getProviderInstance();
+        final ConfigurationFactory configurationFactory = getConfigurationFactory();
+        final ProviderInstanceBinding<?> providerInstanceBinding = (ProviderInstanceBinding<?>) injector
+            .getBinding(CatalogManagerConfig.class);
+        final Provider<?> provider = providerInstanceBinding.getProviderInstance();
         ((ConfigurationProvider) provider).setConfigurationFactory(configurationFactory);
         injector.getInstance(PluginManager.class).loadPlugins();
         injector.getInstance(CatalogManager.class).loadCatalogs();
@@ -71,24 +85,28 @@ public class MetacatInitializationService {
         // Initialize the default thread pool for use in the service
         injector.getInstance(ThreadServiceManager.class).start();
         // Start the thrift services
-        MetacatThriftService thriftService = injector.getInstance(MetacatThriftService.class);
+        final MetacatThriftService thriftService = injector.getInstance(MetacatThriftService.class);
         thriftService.start();
 
         // Initialize elastic search client
-        Client client = injector.getInstance(Client.class);
+        final Client client = injector.getInstance(Client.class);
         if (client != null) {
-            MetacatEventBus eventBus = injector.getInstance(MetacatEventBus.class);
+            final MetacatEventBus eventBus = injector.getInstance(MetacatEventBus.class);
             // Only register the elastic search event handlers if the client is registered
-            MetacatEventHandlers handlers = injector.getInstance(MetacatEventHandlers.class);
+            final MetacatEventHandlers handlers = injector.getInstance(MetacatEventHandlers.class);
             eventBus.register(handlers);
         }
     }
 
+    /**
+     * Metcat service shutdown.
+     * @throws Exception error
+     */
     public void stop() throws Exception {
         injector.getInstance(UserMetadataService.class).stop();
         injector.getInstance(ThreadServiceManager.class).stop();
         // Start the thrift services
-        MetacatThriftService thriftService = injector.getInstance(MetacatThriftService.class);
+        final MetacatThriftService thriftService = injector.getInstance(MetacatThriftService.class);
         thriftService.stop();
     }
 }

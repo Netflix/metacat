@@ -20,20 +20,19 @@ import com.facebook.presto.spi.ConnectorSchemaMetadata;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaNotFoundException;
 import com.facebook.presto.spi.StandardErrorCode;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
-import com.netflix.metacat.converters.PrestoConverters;
 import com.netflix.metacat.main.connector.MetacatConnectorManager;
 import com.netflix.metacat.main.presto.metadata.MetadataManager;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.SessionProvider;
 import com.netflix.metacat.main.spi.MetacatCatalogConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -43,55 +42,55 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
+/**
+ * Database service implementation.
+ */
+@Slf4j
 public class DatabaseServiceImpl implements DatabaseService {
-    private static final Logger log = LoggerFactory.getLogger(DatabaseServiceImpl.class);
     @Inject
-    CatalogService catalogService;
+    private CatalogService catalogService;
     @Inject
-    MetacatConnectorManager metacatConnectorManager;
+    private MetacatConnectorManager metacatConnectorManager;
     @Inject
-    MetadataManager metadataManager;
+    private MetadataManager metadataManager;
     @Inject
-    PrestoConverters prestoConverters;
+    private SessionProvider sessionProvider;
     @Inject
-    SessionProvider sessionProvider;
-    @Inject
-    UserMetadataService userMetadataService;
+    private UserMetadataService userMetadataService;
 
     @Override
-    public void create(QualifiedName name, DatabaseDto dto) {
-        Session session = validateAndGetSession(name);
+    public void create(final QualifiedName name, final DatabaseDto dto) {
+        final Session session = validateAndGetSession(name);
         log.info("Creating schema {}", name);
         metadataManager.createSchema(session, new ConnectorSchemaMetadata(name.getDatabaseName()));
-        if( dto != null && dto.getDefinitionMetadata() != null){
+        if (dto != null && dto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for schema {}", name);
-            userMetadataService.saveDefinitionMetadata(name, session.getUser(), Optional.of(dto.getDefinitionMetadata()), true);
+            userMetadataService
+                .saveDefinitionMetadata(name, session.getUser(), Optional.of(dto.getDefinitionMetadata()), true);
         }
     }
 
     @Override
-    public void update(QualifiedName name, DatabaseDto dto) {
-        Session session = validateAndGetSession(name);
+    public void update(final QualifiedName name, final DatabaseDto dto) {
+        final Session session = validateAndGetSession(name);
         log.info("Updating schema {}", name);
         try {
             metadataManager.updateSchema(session, new ConnectorSchemaMetadata(name.getDatabaseName()));
-        } catch(PrestoException e){
-            if (e.getErrorCode() != StandardErrorCode.NOT_SUPPORTED.toErrorCode()){
+        } catch (PrestoException e) {
+            if (e.getErrorCode() != StandardErrorCode.NOT_SUPPORTED.toErrorCode()) {
                 throw e;
             }
         }
-        if( dto != null && dto.getDefinitionMetadata() != null){
+        if (dto != null && dto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for schema {}", name);
-            userMetadataService.saveDefinitionMetadata(name, session.getUser(), Optional.of(dto.getDefinitionMetadata()), true);
+            userMetadataService
+                .saveDefinitionMetadata(name, session.getUser(), Optional.of(dto.getDefinitionMetadata()), true);
         }
     }
 
     @Override
-    public void delete(QualifiedName name) {
-        Session session = validateAndGetSession(name);
+    public void delete(final QualifiedName name) {
+        final Session session = validateAndGetSession(name);
         log.info("Dropping schema {}", name);
         metadataManager.dropSchema(session);
 
@@ -103,17 +102,19 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
-    public DatabaseDto get( @Nonnull QualifiedName name) {
+    public DatabaseDto get(
+        @Nonnull
+        final QualifiedName name) {
         return get(name, true);
     }
 
     @Override
-    public DatabaseDto get(QualifiedName name, boolean includeUserMetadata) {
-        Session session = validateAndGetSession(name);
-        MetacatCatalogConfig config = metacatConnectorManager.getCatalogConfig(name.getCatalogName());
+    public DatabaseDto get(final QualifiedName name, final boolean includeUserMetadata) {
+        final Session session = validateAndGetSession(name);
+        final MetacatCatalogConfig config = metacatConnectorManager.getCatalogConfig(name.getCatalogName());
 
-        QualifiedTablePrefix spec = new QualifiedTablePrefix(name.getCatalogName(), name.getDatabaseName());
-        List<QualifiedTableName> tableNames = metadataManager.listTables(session, spec);
+        final QualifiedTablePrefix spec = new QualifiedTablePrefix(name.getCatalogName(), name.getDatabaseName());
+        final List<QualifiedTableName> tableNames = metadataManager.listTables(session, spec);
         List<QualifiedTableName> viewNames = Collections.emptyList();
         if (config.isIncludeViewsWithTables()) {
             // TODO JdbcMetadata returns ImmutableList.of() for views.  We should change it to fetch views.
@@ -121,26 +122,24 @@ public class DatabaseServiceImpl implements DatabaseService {
         }
 
         // Check to see if schema exists
-        if( tableNames.isEmpty() && viewNames.isEmpty()){
-            if(!exists(name)){
-                throw new SchemaNotFoundException(name.getDatabaseName());
-            }
+        if (tableNames.isEmpty() && viewNames.isEmpty() && !exists(name)) {
+            throw new SchemaNotFoundException(name.getDatabaseName());
         }
 
-        ConnectorSchemaMetadata schema = metadataManager.getSchema(session);
+        final ConnectorSchemaMetadata schema = metadataManager.getSchema(session);
 
-        DatabaseDto dto = new DatabaseDto();
+        final DatabaseDto dto = new DatabaseDto();
         dto.setType(metacatConnectorManager.getCatalogConfig(name).getType());
         dto.setName(name);
         dto.setUri(schema.getUri());
         dto.setMetadata(schema.getMetadata());
         dto.setTables(
-                Stream.concat(tableNames.stream(), viewNames.stream())
-                        .map(QualifiedTableName::getTableName)
-                        .sorted(String.CASE_INSENSITIVE_ORDER)
-                        .collect(Collectors.toList())
+            Stream.concat(tableNames.stream(), viewNames.stream())
+                .map(QualifiedTableName::getTableName)
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .collect(Collectors.toList())
         );
-        if( includeUserMetadata) {
+        if (includeUserMetadata) {
             log.info("Populate user metadata for schema {}", name);
             userMetadataService.populateMetadata(dto);
         }
@@ -149,14 +148,16 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
-    public boolean exists(@Nonnull QualifiedName name) {
-        CatalogDto catalogDto = catalogService.get(QualifiedName.ofCatalog(name.getCatalogName()));
+    public boolean exists(
+        @Nonnull
+        final QualifiedName name) {
+        final CatalogDto catalogDto = catalogService.get(QualifiedName.ofCatalog(name.getCatalogName()));
         return catalogDto.getDatabases().contains(name.getDatabaseName());
     }
 
-    private Session validateAndGetSession(QualifiedName name) {
-        checkNotNull(name, "name cannot be null");
-        checkState(name.isDatabaseDefinition(), "name %s is not for a database", name);
+    private Session validateAndGetSession(final QualifiedName name) {
+        Preconditions.checkNotNull(name, "name cannot be null");
+        Preconditions.checkState(name.isDatabaseDefinition(), "name %s is not for a database", name);
 
         return sessionProvider.getSession(name);
     }

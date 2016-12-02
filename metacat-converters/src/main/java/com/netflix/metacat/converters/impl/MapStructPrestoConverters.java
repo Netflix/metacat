@@ -28,6 +28,7 @@ import com.facebook.presto.spi.StorageInfo;
 import com.facebook.presto.spi.TupleDomain;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.AuditDto;
@@ -47,41 +48,43 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+/**
+ * Presto converter.
+ */
 @Mapper(uses = DateConverters.class,
-        unmappedTargetPolicy = ReportingPolicy.ERROR,
-        componentModel = "default")
+    unmappedTargetPolicy = ReportingPolicy.ERROR,
+    componentModel = "default")
 public abstract class MapStructPrestoConverters implements PrestoConverters {
-    Provider<TypeConverter> typeConverter;
-    public void setTypeConverter(Provider<TypeConverter> typeConverter){
+    private Provider<TypeConverter> typeConverter;
+
+    public void setTypeConverter(final Provider<TypeConverter> typeConverter) {
         this.typeConverter = typeConverter;
     }
 
-    private List<ColumnMetadata> columnsFromTable(TableDto table, TypeManager typeManager) {
+    private List<ColumnMetadata> columnsFromTable(final TableDto table, final TypeManager typeManager) {
         if (table.getFields() == null) {
             return Lists.newArrayList();
         }
 
         return table.getFields().stream()
-                .map(fieldDto -> fromFieldDto(fieldDto, typeManager))
-                .collect(Collectors.toList());
+            .map(fieldDto -> fromFieldDto(fieldDto, typeManager))
+            .collect(Collectors.toList());
     }
 
     @InheritInverseConfiguration
     protected abstract AuditInfo fromAuditDto(AuditDto audit);
 
-    protected ColumnMetadata fromFieldDto(FieldDto fieldDto, TypeManager typeManager) {
+    protected ColumnMetadata fromFieldDto(final FieldDto fieldDto, final TypeManager typeManager) {
         String type = fieldDto.getType();
-        if( type == null){
+        if (type == null) {
             type = fieldDto.getSource_type();
         }
         return new ColumnMetadata(
-                fieldDto.getName(),
-                typeConverter.get().toType(type, typeManager),
-                fieldDto.isPartition_key(),
-                fieldDto.getComment(),
-                false
+            fieldDto.getName(),
+            typeConverter.get().toType(type, typeManager),
+            fieldDto.isPartition_key(),
+            fieldDto.getComment(),
+            false
         );
     }
 
@@ -89,31 +92,31 @@ public abstract class MapStructPrestoConverters implements PrestoConverters {
     protected abstract StorageInfo fromStorageDto(StorageDto serde);
 
     @Override
-    public TableMetadata fromTableDto(QualifiedName name, TableDto table, TypeManager typeManager) {
-        checkNotNull(name, "name is null");
-        checkNotNull(table, "table is null");
-        checkNotNull(typeManager, "typeManager is null");
+    public TableMetadata fromTableDto(final QualifiedName name, final TableDto table, final TypeManager typeManager) {
+        Preconditions.checkNotNull(name, "name is null");
+        Preconditions.checkNotNull(table, "table is null");
+        Preconditions.checkNotNull(typeManager, "typeManager is null");
 
         return new TableMetadata(name.getCatalogName(), fromTableDto(table, typeManager));
     }
 
-    protected ConnectorTableMetadata fromTableDto(TableDto table, TypeManager typeManager) {
+    protected ConnectorTableMetadata fromTableDto(final TableDto table, final TypeManager typeManager) {
         return new ConnectorTableDetailMetadata(
-                toSchemaTableName(table.getName()),
-                columnsFromTable(table, typeManager),
-                table.getSerde()==null?null:table.getSerde().getOwner(),
-                fromStorageDto(table.getSerde()),
-                table.getMetadata(),
-                fromAuditDto(table.getAudit())
+            toSchemaTableName(table.getName()),
+            columnsFromTable(table, typeManager),
+            table.getSerde() == null ? null : table.getSerde().getOwner(),
+            fromStorageDto(table.getSerde()),
+            table.getMetadata(),
+            fromAuditDto(table.getAudit())
         );
     }
 
     @Override
-    public QualifiedTableName getQualifiedTableName(QualifiedName name) {
+    public QualifiedTableName getQualifiedTableName(final QualifiedName name) {
         return new QualifiedTableName(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
     }
 
-    protected AuditDto toAuditDto(ConnectorTableMetadata connectorTableMetadata) {
+    protected AuditDto toAuditDto(final ConnectorTableMetadata connectorTableMetadata) {
         if (connectorTableMetadata != null && connectorTableMetadata instanceof ConnectorTableDetailMetadata) {
             return toAuditDto(((ConnectorTableDetailMetadata) connectorTableMetadata).getAuditInfo());
         }
@@ -121,7 +124,7 @@ public abstract class MapStructPrestoConverters implements PrestoConverters {
         return null;
     }
 
-    protected AuditDto toAuditDto(ConnectorPartition connectorPartition) {
+    protected AuditDto toAuditDto(final ConnectorPartition connectorPartition) {
         if (connectorPartition != null && connectorPartition instanceof ConnectorPartitionDetail) {
             return toAuditDto(((ConnectorPartitionDetail) connectorPartition).getAuditInfo());
         }
@@ -148,14 +151,14 @@ public abstract class MapStructPrestoConverters implements PrestoConverters {
     @Mapping(target = "isIndexKey", ignore = true)
     protected abstract FieldDto toFieldDto(ColumnMetadata column);
 
-    protected List<FieldDto> toFieldDtos(List<ColumnMetadata> columns){
-        List<FieldDto> result = Lists.newArrayList();
-        if( columns != null ){
-            for(int i=0; i < columns.size(); i++){
-                ColumnMetadata column = columns.get(i);
-                FieldDto fieldDto = toFieldDto(column);
-                if( column instanceof ColumnDetailMetadata){
-                    ColumnDetailMetadata columnDetail = (ColumnDetailMetadata) column;
+    protected List<FieldDto> toFieldDtos(final List<ColumnMetadata> columns) {
+        final List<FieldDto> result = Lists.newArrayList();
+        if (columns != null) {
+            for (int i = 0; i < columns.size(); i++) {
+                final ColumnMetadata column = columns.get(i);
+                final FieldDto fieldDto = toFieldDto(column);
+                if (column instanceof ColumnDetailMetadata) {
+                    final ColumnDetailMetadata columnDetail = (ColumnDetailMetadata) column;
                     fieldDto.setSource_type(columnDetail.getSourceType());
                     fieldDto.setIsNullable(columnDetail.getIsNullable());
                     fieldDto.setSize(columnDetail.getSize());
@@ -170,18 +173,18 @@ public abstract class MapStructPrestoConverters implements PrestoConverters {
         return result;
     }
 
-    protected Map<String, String> toMetadata(ConnectorTableMetadata metadata) {
+    protected Map<String, String> toMetadata(final ConnectorTableMetadata metadata) {
         if (metadata != null && metadata instanceof ConnectorTableDetailMetadata) {
-            ConnectorTableDetailMetadata detailMetadata = (ConnectorTableDetailMetadata) metadata;
+            final ConnectorTableDetailMetadata detailMetadata = (ConnectorTableDetailMetadata) metadata;
             return detailMetadata.getMetadata();
         }
 
         return null;
     }
 
-    protected Map<String, String> toMetadata(ConnectorPartition partition) {
+    protected Map<String, String> toMetadata(final ConnectorPartition partition) {
         if (partition != null && partition instanceof ConnectorPartitionDetail) {
-            ConnectorPartitionDetail partitionDetail = (ConnectorPartitionDetail) partition;
+            final ConnectorPartitionDetail partitionDetail = (ConnectorPartitionDetail) partition;
             return partitionDetail.getMetadata();
         }
 
@@ -198,20 +201,25 @@ public abstract class MapStructPrestoConverters implements PrestoConverters {
     @Override
     public abstract PartitionDto toPartitionDto(QualifiedName name, ConnectorPartition partition);
 
-    protected List<String> toPartitionKeys(List<ColumnMetadata> columns) {
+    protected List<String> toPartitionKeys(final List<ColumnMetadata> columns) {
         return columns.stream()
-                .filter(ColumnMetadata::isPartitionKey)
-                .map(ColumnMetadata::getName)
-                .collect(Collectors.toList());
+            .filter(ColumnMetadata::isPartitionKey)
+            .map(ColumnMetadata::getName)
+            .collect(Collectors.toList());
     }
 
     @Override
-    public QualifiedName toQualifiedName(QualifiedTableName qualifiedTableName) {
+    public QualifiedName toQualifiedName(final QualifiedTableName qualifiedTableName) {
         return QualifiedName.ofTable(qualifiedTableName.getCatalogName(), qualifiedTableName.getSchemaName(),
-                qualifiedTableName.getTableName());
+            qualifiedTableName.getTableName());
     }
 
-    public SchemaTableName toSchemaTableName(QualifiedName name) {
+    /**
+     * Schema table name.
+     * @param name qualified name
+     * @return table name
+     */
+    public SchemaTableName toSchemaTableName(final QualifiedName name) {
         return new SchemaTableName(name.getDatabaseName(), name.getTableName());
     }
 
@@ -224,10 +232,10 @@ public abstract class MapStructPrestoConverters implements PrestoConverters {
     @Mapping(target = "uri", source = "uri")
     protected abstract StorageDto toStorageDto(StorageInfo storageInfo);
 
-    protected StorageDto toStorageDto(ConnectorTableMetadata connectorTableMetadata) {
+    protected StorageDto toStorageDto(final ConnectorTableMetadata connectorTableMetadata) {
         if (connectorTableMetadata != null && connectorTableMetadata instanceof ConnectorTableDetailMetadata) {
-            ConnectorTableDetailMetadata detailMetadata = (ConnectorTableDetailMetadata) connectorTableMetadata;
-            StorageDto storageDto = toStorageDto(detailMetadata.getStorageInfo());
+            final ConnectorTableDetailMetadata detailMetadata = (ConnectorTableDetailMetadata) connectorTableMetadata;
+            final StorageDto storageDto = toStorageDto(detailMetadata.getStorageInfo());
             storageDto.setOwner(detailMetadata.getOwner());
             return storageDto;
         }
@@ -235,11 +243,11 @@ public abstract class MapStructPrestoConverters implements PrestoConverters {
         return null;
     }
 
-    protected StorageDto toStorageDto(ConnectorPartition connectorPartition) {
+    protected StorageDto toStorageDto(final ConnectorPartition connectorPartition) {
         if (connectorPartition != null && connectorPartition instanceof ConnectorPartitionDetail) {
-            ConnectorPartitionDetail detailMetadata = (ConnectorPartitionDetail) connectorPartition;
-            StorageDto storageDto = toStorageDto(detailMetadata.getStorageInfo());
-            if(detailMetadata.getAuditInfo() != null) {
+            final ConnectorPartitionDetail detailMetadata = (ConnectorPartitionDetail) connectorPartition;
+            final StorageDto storageDto = toStorageDto(detailMetadata.getStorageInfo());
+            if (detailMetadata.getAuditInfo() != null) {
                 storageDto.setOwner(detailMetadata.getAuditInfo().getCreatedBy());
             }
             return storageDto;
@@ -248,7 +256,7 @@ public abstract class MapStructPrestoConverters implements PrestoConverters {
         return null;
     }
 
-    protected String toString(Type type) {
+    protected String toString(final Type type) {
         return typeConverter.get().fromType(type);
     }
 
@@ -265,7 +273,8 @@ public abstract class MapStructPrestoConverters implements PrestoConverters {
     public abstract TableDto toTableDto(QualifiedName name, String type, TableMetadata ptm);
 
     @Override
-    public ConnectorPartition fromPartitionDto(PartitionDto partitionDto) {
-        return new ConnectorPartitionDetailImpl(partitionDto.getName().getPartitionName(), TupleDomain.none(), fromStorageDto(partitionDto.getSerde()), partitionDto.getMetadata(), fromAuditDto(partitionDto.getAudit()));
+    public ConnectorPartition fromPartitionDto(final PartitionDto partitionDto) {
+        return new ConnectorPartitionDetailImpl(partitionDto.getName().getPartitionName(), TupleDomain.none(),
+            fromStorageDto(partitionDto.getSerde()), partitionDto.getMetadata(), fromAuditDto(partitionDto.getAudit()));
     }
 }

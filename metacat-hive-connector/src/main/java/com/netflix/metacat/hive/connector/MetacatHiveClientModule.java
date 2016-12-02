@@ -29,7 +29,7 @@ import com.netflix.metacat.hive.connector.util.ConverterUtil;
 public class MetacatHiveClientModule implements Module {
 
     @Override
-    public void configure(Binder binder) {
+    public void configure(final Binder binder) {
         binder.bind(HiveMetastore.class).to(BaseMetacatHiveMetastore.class).in(Scopes.SINGLETON);
 
         binder.bind(ConnectorMetadata.class).to(HiveDetailMetadata.class).in(Scopes.SINGLETON);

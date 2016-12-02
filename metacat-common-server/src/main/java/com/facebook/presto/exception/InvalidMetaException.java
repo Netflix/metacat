@@ -18,30 +18,41 @@ import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.StandardErrorCode;
 
 /**
- * Created by amajumdar on 5/11/15.
+ * Exception when the given information about an entity is invalid.
  */
 public class InvalidMetaException extends PrestoException {
     private SchemaTableName tableName;
     private String partitionId;
 
-    public InvalidMetaException(SchemaTableName tableName, Throwable cause) {
-        super(StandardErrorCode.USER_ERROR
-                , String.format("Invalid metadata for %s.", tableName)
-                , cause);
+    /**
+     * Constructor.
+     * @param tableName table name
+     * @param cause error cause
+     */
+    public InvalidMetaException(final SchemaTableName tableName, final Throwable cause) {
+        super(StandardErrorCode.USER_ERROR, String.format("Invalid metadata for %s.", tableName), cause);
         this.tableName = tableName;
     }
 
-    public InvalidMetaException(SchemaTableName tableName, String partitionId, Throwable cause) {
-        super(StandardErrorCode.USER_ERROR
-                , String.format("Invalid metadata for %s for partition %s.", tableName, partitionId)
-                , cause);
+    /**
+     * Constructor.
+     * @param tableName table name
+     * @param partitionId partition name
+     * @param cause error cause
+     */
+    public InvalidMetaException(final SchemaTableName tableName, final String partitionId, final Throwable cause) {
+        super(StandardErrorCode.USER_ERROR,
+            String.format("Invalid metadata for %s for partition %s.", tableName, partitionId), cause);
         this.tableName = tableName;
         this.partitionId = partitionId;
     }
 
-    public InvalidMetaException(String message, Throwable cause) {
-        super(StandardErrorCode.USER_ERROR
-                , message
-                , cause);
+    /**
+     * Constructor.
+     * @param message error message
+     * @param cause error cause
+     */
+    public InvalidMetaException(final String message, final Throwable cause) {
+        super(StandardErrorCode.USER_ERROR, message, cause);
     }
 }

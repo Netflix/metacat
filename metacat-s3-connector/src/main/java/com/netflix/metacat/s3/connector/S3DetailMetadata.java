@@ -17,12 +17,15 @@ import com.facebook.presto.exception.SchemaAlreadyExistsException;
 import com.facebook.presto.hive.HdfsEnvironment;
 import com.facebook.presto.hive.HiveColumnHandle;
 import com.facebook.presto.hive.HiveConnectorId;
+import com.facebook.presto.hive.HiveErrorCode;
 import com.facebook.presto.hive.HiveOutputTableHandle;
 import com.facebook.presto.hive.HiveStorageFormat;
 import com.facebook.presto.hive.HiveTableHandle;
 import com.facebook.presto.hive.HiveTableProperties;
 import com.facebook.presto.hive.HiveType;
+import com.facebook.presto.hive.HiveUtil;
 import com.facebook.presto.hive.TableAlreadyExistsException;
+import com.facebook.presto.hive.util.Types;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorDetailMetadata;
@@ -37,9 +40,12 @@ import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaNotFoundException;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePrefix;
+import com.facebook.presto.spi.StandardErrorCode;
 import com.facebook.presto.spi.TableNotFoundException;
+import com.facebook.presto.spi.type.BigintType;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
+import com.google.common.base.Preconditions;
 import com.google.common.base.StandardSystemProperty;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -69,140 +75,128 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.facebook.presto.hive.HiveColumnHandle.SAMPLE_WEIGHT_COLUMN_NAME;
-import static com.facebook.presto.hive.HiveErrorCode.HIVE_DATABASE_LOCATION_ERROR;
-import static com.facebook.presto.hive.HiveErrorCode.HIVE_FILESYSTEM_ERROR;
-import static com.facebook.presto.hive.HiveErrorCode.HIVE_PATH_ALREADY_EXISTS;
-import static com.facebook.presto.hive.HiveUtil.schemaTableName;
-import static com.facebook.presto.hive.util.Types.checkType;
-import static com.facebook.presto.spi.StandardErrorCode.CONSTRAINT_VIOLATION;
-import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
-import static com.facebook.presto.spi.type.BigintType.BIGINT;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.lang.String.format;
-
 /**
- * Created by amajumdar on 10/9/15.
+ * S3 detail metadata.
  */
 @Transactional
 public class S3DetailMetadata implements ConnectorDetailMetadata {
     @Inject
-    SourceDao sourceDao;
+    private SourceDao sourceDao;
     @Inject
-    DatabaseDao databaseDao;
+    private DatabaseDao databaseDao;
     @Inject
-    TableDao tableDao;
+    private TableDao tableDao;
     @Inject
-    FieldDao fieldDao;
+    private FieldDao fieldDao;
     @Inject
-    HiveConnectorId connectorId;
+    private HiveConnectorId connectorId;
     @Inject
-    ConverterUtil converterUtil;
+    private ConverterUtil converterUtil;
     @Inject
     private TypeManager typeManager;
     @Inject
-    HdfsEnvironment hdfsEnvironment;
+    private HdfsEnvironment hdfsEnvironment;
+
     @Override
-    public void createSchema(ConnectorSession session, ConnectorSchemaMetadata schema) {
-        String schemaName = schema.getSchemaName();
-        checkNotNull(schemaName, "Schema name is null");
-        if( databaseDao.getBySourceDatabaseName(connectorId.toString(), schemaName) != null){
+    public void createSchema(final ConnectorSession session, final ConnectorSchemaMetadata schema) {
+        final String schemaName = schema.getSchemaName();
+        Preconditions.checkNotNull(schemaName, "Schema name is null");
+        if (databaseDao.getBySourceDatabaseName(connectorId.toString(), schemaName) != null) {
             throw new SchemaAlreadyExistsException(schemaName);
         }
-        Database database = new Database();
+        final Database database = new Database();
         database.setName(schemaName);
         database.setSource(sourceDao.getByName(connectorId.toString()));
         databaseDao.save(database);
     }
 
     @Override
-    public void updateSchema(ConnectorSession session, ConnectorSchemaMetadata schema) {
+    public void updateSchema(final ConnectorSession session, final ConnectorSchemaMetadata schema) {
         // no op
     }
 
     @Override
-    public void dropSchema(ConnectorSession session, String schemaName) {
-        checkNotNull(schemaName, "Schema name is null");
-        Database database = databaseDao.getByName(schemaName);
+    public void dropSchema(final ConnectorSession session, final String schemaName) {
+        Preconditions.checkNotNull(schemaName, "Schema name is null");
+        final Database database = databaseDao.getByName(schemaName);
         if (database == null) {
             throw new SchemaNotFoundException(schemaName);
-        } else if(database.getTables() != null && !database.getTables().isEmpty()) {
-            throw new PrestoException(CONSTRAINT_VIOLATION,
-                    "Schema " + schemaName + " is not empty. One or more tables exist.");
+        } else if (database.getTables() != null && !database.getTables().isEmpty()) {
+            throw new PrestoException(StandardErrorCode.CONSTRAINT_VIOLATION,
+                "Schema " + schemaName + " is not empty. One or more tables exist.");
         }
         databaseDao.delete(database);
     }
 
     @Override
-    public ConnectorSchemaMetadata getSchema(ConnectorSession session, String schemaName) {
+    public ConnectorSchemaMetadata getSchema(final ConnectorSession session, final String schemaName) {
         return new ConnectorSchemaMetadata(schemaName);
     }
 
     @Override
-    public ConnectorTableHandle alterTable(ConnectorSession session, ConnectorTableMetadata tableMetadata) {
-        SchemaTableName tableName = tableMetadata.getTable();
-        Table table = tableDao.getBySourceDatabaseTableName( connectorId.toString(), tableName.getSchemaName(), tableName.getTableName());
-        if( table == null){
+    public ConnectorTableHandle alterTable(final ConnectorSession session, final ConnectorTableMetadata tableMetadata) {
+        final SchemaTableName tableName = tableMetadata.getTable();
+        final Table table = tableDao
+            .getBySourceDatabaseTableName(connectorId.toString(), tableName.getSchemaName(), tableName.getTableName());
+        if (table == null) {
             throw new TableNotFoundException(tableName);
         }
         //we can update the fields, the uri, or the full serde
-        Location newLocation = converterUtil.toLocation(tableMetadata);
+        final Location newLocation = converterUtil.toLocation(tableMetadata);
         Location location = table.getLocation();
-        if( location == null){
+        if (location == null) {
             location = new Location();
             location.setTable(table);
             table.setLocation(location);
         }
-        if( newLocation.getUri() != null) {
+        if (newLocation.getUri() != null) {
             location.setUri(newLocation.getUri());
         }
-        Info newInfo = newLocation.getInfo();
-        if( newInfo!= null){
-            Info info = location.getInfo();
-            if( info == null){
+        final Info newInfo = newLocation.getInfo();
+        if (newInfo != null) {
+            final Info info = location.getInfo();
+            if (info == null) {
                 location.setInfo(newInfo);
                 newInfo.setLocation(location);
             } else {
-                if( newInfo.getInputFormat() != null){
+                if (newInfo.getInputFormat() != null) {
                     info.setInputFormat(newInfo.getInputFormat());
                 }
-                if( newInfo.getOutputFormat() != null){
+                if (newInfo.getOutputFormat() != null) {
                     info.setOutputFormat(newInfo.getOutputFormat());
                 }
-                if( newInfo.getOwner() != null){
+                if (newInfo.getOwner() != null) {
                     info.setOwner(newInfo.getOwner());
                 }
-                if( newInfo.getSerializationLib() != null){
+                if (newInfo.getSerializationLib() != null) {
                     info.setSerializationLib(newInfo.getSerializationLib());
                 }
-                if( newInfo.getParameters() != null && !newInfo.getParameters().isEmpty()){
-                    info.setParameters( newInfo.getParameters());
+                if (newInfo.getParameters() != null && !newInfo.getParameters().isEmpty()) {
+                    info.setParameters(newInfo.getParameters());
                 }
             }
         }
-        Schema newSchema = newLocation.getSchema();
-        if( newSchema != null){
-            List<Field> newFields = newSchema.getFields();
-            if( newFields != null && !newFields.isEmpty()){
-                Schema schema = location.getSchema();
-                if( schema == null){
+        final Schema newSchema = newLocation.getSchema();
+        if (newSchema != null) {
+            final List<Field> newFields = newSchema.getFields();
+            if (newFields != null && !newFields.isEmpty()) {
+                final Schema schema = location.getSchema();
+                if (schema == null) {
                     location.setSchema(newSchema);
                     newSchema.setLocation(location);
                 } else {
-                    List<Field> fields = schema.getFields();
-                    if( fields.isEmpty()){
+                    final List<Field> fields = schema.getFields();
+                    if (fields.isEmpty()) {
                         newFields.forEach(field -> {
                             field.setSchema(schema);
                             fields.add(field);
                         });
                     } else {
-                        for(int i=0; i<newFields.size(); i++){
-                            Field newField = newFields.get(i);
+                        for (int i = 0; i < newFields.size(); i++) {
+                            final Field newField = newFields.get(i);
                             newField.setPos(i);
                             newField.setSchema(schema);
-                            if(newField.getType() == null){
+                            if (newField.getType() == null) {
                                 newField.setType(newField.getSourceType());
                             }
                         }
@@ -218,41 +212,44 @@ public class S3DetailMetadata implements ConnectorDetailMetadata {
     }
 
     @Override
-    public List<ConnectorTableMetadata> listTableMetadatas(ConnectorSession session, String schemaName,
-            List<String> tableNames) {
-        List<Table> tables = tableDao.getBySourceDatabaseTableNames(connectorId.toString(), schemaName, tableNames);
+    public List<ConnectorTableMetadata> listTableMetadatas(final ConnectorSession session, final String schemaName,
+        final List<String> tableNames) {
+        final List<Table> tables =
+            tableDao.getBySourceDatabaseTableNames(connectorId.toString(), schemaName, tableNames);
         return tables.stream()
-                .map(table ->
-                                new ConnectorTableDetailMetadata(new SchemaTableName(schemaName, table.getName())
-                                        , converterUtil.toColumnMetadatas(table), converterUtil.getOwner(table)
-                                        , converterUtil.toStorageInfo(table), null, converterUtil.toAuditInfo(table))
-                )
-                .collect(Collectors.toList());
+            .map(table ->
+                new ConnectorTableDetailMetadata(new SchemaTableName(schemaName, table.getName()),
+                    converterUtil.toColumnMetadatas(table), converterUtil.getOwner(table),
+                    converterUtil.toStorageInfo(table), null, converterUtil.toAuditInfo(table))
+            )
+            .collect(Collectors.toList());
     }
 
     @Override
-    public List<String> listSchemaNames(ConnectorSession session) {
-        List<Database> databases = sourceDao.getByName(connectorId.toString(), false).getDatabases();
-        return databases.stream().map(database -> database.getName().toLowerCase(Locale.ENGLISH)).collect(Collectors.toList());
+    public List<String> listSchemaNames(final ConnectorSession session) {
+        final List<Database> databases = sourceDao.getByName(connectorId.toString(), false).getDatabases();
+        return databases.stream().map(database -> database.getName().toLowerCase(Locale.ENGLISH))
+            .collect(Collectors.toList());
     }
 
     @Override
-    public ConnectorTableHandle getTableHandle(ConnectorSession session, SchemaTableName tableName) {
+    public ConnectorTableHandle getTableHandle(final ConnectorSession session, final SchemaTableName tableName) {
         return new HiveTableHandle(connectorId.toString(), tableName.getSchemaName(), tableName.getTableName());
     }
 
     @Override
-    public ConnectorTableMetadata getTableMetadata(ConnectorSession session, ConnectorTableHandle tableHandle) {
-        SchemaTableName schemaTableName = schemaTableName(tableHandle);
+    public ConnectorTableMetadata getTableMetadata(final ConnectorSession session,
+        final ConnectorTableHandle tableHandle) {
+        final SchemaTableName schemaTableName = HiveUtil.schemaTableName(tableHandle);
         return getTableMetadata(schemaTableName);
     }
 
     @Override
-    public List<SchemaTableName> listTables(ConnectorSession session, String schemaNameOrNull) {
-        ImmutableList.Builder<SchemaTableName> tableNames = ImmutableList.builder();
+    public List<SchemaTableName> listTables(final ConnectorSession session, final String schemaNameOrNull) {
+        final ImmutableList.Builder<SchemaTableName> tableNames = ImmutableList.builder();
         for (String schemaName : listSchemas(session, schemaNameOrNull)) {
-            Database database = databaseDao.getBySourceDatabaseName(connectorId.toString(), schemaName);
-            if( database != null ){
+            final Database database = databaseDao.getBySourceDatabaseName(connectorId.toString(), schemaName);
+            if (database != null) {
                 for (Table table : database.getTables()) {
                     tableNames.add(new SchemaTableName(schemaName, table.getName().toLowerCase(Locale.ENGLISH)));
                 }
@@ -261,8 +258,7 @@ public class S3DetailMetadata implements ConnectorDetailMetadata {
         return tableNames.build();
     }
 
-    private List<String> listSchemas(ConnectorSession session, String schemaNameOrNull)
-    {
+    private List<String> listSchemas(final ConnectorSession session, final String schemaNameOrNull) {
         if (schemaNameOrNull == null) {
             return listSchemaNames(session);
         }
@@ -270,56 +266,60 @@ public class S3DetailMetadata implements ConnectorDetailMetadata {
     }
 
     @Override
-    public ColumnHandle getSampleWeightColumnHandle(ConnectorSession session, ConnectorTableHandle tableHandle) {
-        SchemaTableName schemaTableName = schemaTableName(tableHandle);
-        Table table = tableDao.getBySourceDatabaseTableName(connectorId.toString(), schemaTableName.getSchemaName(),
-                schemaTableName.getTableName());
-        if ( table == null) {
+    public ColumnHandle getSampleWeightColumnHandle(final ConnectorSession session,
+        final ConnectorTableHandle tableHandle) {
+        final SchemaTableName schemaTableName = HiveUtil.schemaTableName(tableHandle);
+        final Table table = tableDao.getBySourceDatabaseTableName(connectorId.toString(),
+            schemaTableName.getSchemaName(),
+            schemaTableName.getTableName());
+        if (table == null) {
             throw new TableNotFoundException(schemaTableName);
         }
-        ImmutableMap.Builder<String, ColumnHandle> columnHandles = ImmutableMap.builder();
-        for ( Field field : getFields(table)) {
-            if( SAMPLE_WEIGHT_COLUMN_NAME.equals(field.getName())){
-                String type = field.getType();
-                Type prestoType = converterUtil.toType(type);
-                HiveType hiveType = HiveType.toHiveType(prestoType);
-                return new HiveColumnHandle(connectorId.toString(), field.getName(), field.getPos()
-                        , hiveType, prestoType.getTypeSignature(), field.getPos(), field.isPartitionKey());
+        for (Field field : getFields(table)) {
+            if (HiveColumnHandle.SAMPLE_WEIGHT_COLUMN_NAME.equals(field.getName())) {
+                final String type = field.getType();
+                final Type prestoType = converterUtil.toType(type);
+                final HiveType hiveType = HiveType.toHiveType(prestoType);
+                return new HiveColumnHandle(connectorId.toString(), field.getName(), field.getPos(),
+                    hiveType, prestoType.getTypeSignature(), field.getPos(), field.isPartitionKey());
             }
         }
         return null;
     }
 
     @Override
-    public boolean canCreateSampledTables(ConnectorSession session) {
+    public boolean canCreateSampledTables(final ConnectorSession session) {
         return false;
     }
 
     @Override
-    public Map<String, ColumnHandle> getColumnHandles(ConnectorSession session, ConnectorTableHandle tableHandle) {
-        SchemaTableName schemaTableName = schemaTableName(tableHandle);
-        Table table = tableDao.getBySourceDatabaseTableName(connectorId.toString(), schemaTableName.getSchemaName(),
-                schemaTableName.getTableName());
-        if ( table == null) {
+    public Map<String, ColumnHandle> getColumnHandles(final ConnectorSession session,
+        final ConnectorTableHandle tableHandle) {
+        final SchemaTableName schemaTableName = HiveUtil.schemaTableName(tableHandle);
+        final Table table = tableDao.getBySourceDatabaseTableName(connectorId.toString(),
+            schemaTableName.getSchemaName(),
+            schemaTableName.getTableName());
+        if (table == null) {
             throw new TableNotFoundException(schemaTableName);
         }
-        ImmutableMap.Builder<String, ColumnHandle> columnHandles = ImmutableMap.builder();
-        for ( Field field : getFields(table)) {
-            String type = field.getType();
-            Type prestoType = converterUtil.toType(type);
-            HiveType hiveType = HiveType.toHiveType(prestoType);
-            columnHandles.put(field.getName(), new HiveColumnHandle(connectorId.toString(), field.getName(), field.getPos()
-                , hiveType, prestoType.getTypeSignature(), field.getPos(), field.isPartitionKey()));
+        final ImmutableMap.Builder<String, ColumnHandle> columnHandles = ImmutableMap.builder();
+        for (Field field : getFields(table)) {
+            final String type = field.getType();
+            final Type prestoType = converterUtil.toType(type);
+            final HiveType hiveType = HiveType.toHiveType(prestoType);
+            columnHandles
+                .put(field.getName(), new HiveColumnHandle(connectorId.toString(), field.getName(), field.getPos(),
+                    hiveType, prestoType.getTypeSignature(), field.getPos(), field.isPartitionKey()));
         }
         return columnHandles.build();
     }
 
-    private List<Field> getFields(Table table){
+    private List<Field> getFields(final Table table) {
         List<Field> result = Lists.newArrayList();
-        Location location = table.getLocation();
-        if( location != null){
-            Schema schema = location.getSchema();
-            if( schema != null && schema.getFields() != null){
+        final Location location = table.getLocation();
+        if (location != null) {
+            final Schema schema = location.getSchema();
+            if (schema != null && schema.getFields() != null) {
                 result = schema.getFields();
             }
         }
@@ -327,41 +327,40 @@ public class S3DetailMetadata implements ConnectorDetailMetadata {
     }
 
     @Override
-    public ColumnMetadata getColumnMetadata(ConnectorSession session, ConnectorTableHandle tableHandle,
-            ColumnHandle columnHandle) {
-        checkType(tableHandle, HiveTableHandle.class, "tableHandle");
-        return checkType(columnHandle, HiveColumnHandle.class, "columnHandle").getColumnMetadata(typeManager);
+    public ColumnMetadata getColumnMetadata(final ConnectorSession session, final ConnectorTableHandle tableHandle,
+        final ColumnHandle columnHandle) {
+        Types.checkType(tableHandle, HiveTableHandle.class, "tableHandle");
+        return Types.checkType(columnHandle, HiveColumnHandle.class, "columnHandle").getColumnMetadata(typeManager);
     }
 
     @Override
-    public Map<SchemaTableName, List<ColumnMetadata>> listTableColumns(ConnectorSession session,
-            SchemaTablePrefix prefix) {
-        checkNotNull(prefix, "prefix is null");
-        ImmutableMap.Builder<SchemaTableName, List<ColumnMetadata>> columns = ImmutableMap.builder();
+    public Map<SchemaTableName, List<ColumnMetadata>> listTableColumns(final ConnectorSession session,
+        final SchemaTablePrefix prefix) {
+        Preconditions.checkNotNull(prefix, "prefix is null");
+        final ImmutableMap.Builder<SchemaTableName, List<ColumnMetadata>> columns = ImmutableMap.builder();
         for (SchemaTableName tableName : listTables(session, prefix)) {
             try {
                 columns.put(tableName, getTableMetadata(tableName).getColumns());
-            }
-            catch (TableNotFoundException e) {
+            } catch (TableNotFoundException e) {
                 // table disappeared during listing operation
             }
         }
         return columns.build();
     }
 
-    private ConnectorTableMetadata getTableMetadata(SchemaTableName schemaTableName) {
-        Table table = tableDao.getBySourceDatabaseTableName(connectorId.toString(), schemaTableName.getSchemaName(),
-                schemaTableName.getTableName());
-        if( table == null){
+    private ConnectorTableMetadata getTableMetadata(final SchemaTableName schemaTableName) {
+        final Table table = tableDao.getBySourceDatabaseTableName(connectorId.toString(),
+            schemaTableName.getSchemaName(),
+            schemaTableName.getTableName());
+        if (table == null) {
             throw new TableNotFoundException(schemaTableName);
         }
-        return new ConnectorTableDetailMetadata( new SchemaTableName(schemaTableName.getSchemaName(), table.getName())
-                , converterUtil.toColumnMetadatas(table),converterUtil.getOwner(table)
-                , converterUtil.toStorageInfo(table), null, converterUtil.toAuditInfo(table));
+        return new ConnectorTableDetailMetadata(new SchemaTableName(schemaTableName.getSchemaName(), table.getName()),
+            converterUtil.toColumnMetadatas(table), converterUtil.getOwner(table),
+            converterUtil.toStorageInfo(table), null, converterUtil.toAuditInfo(table));
     }
 
-    private List<SchemaTableName> listTables(ConnectorSession session, SchemaTablePrefix prefix)
-    {
+    private List<SchemaTableName> listTables(final ConnectorSession session, final SchemaTablePrefix prefix) {
         if (prefix.getSchemaName() == null || prefix.getTableName() == null) {
             return listTables(session, prefix.getSchemaName());
         }
@@ -369,23 +368,24 @@ public class S3DetailMetadata implements ConnectorDetailMetadata {
     }
 
     @Override
-    public void createTable(ConnectorSession session, ConnectorTableMetadata tableMetadata) {
-        checkArgument(!Strings.isNullOrEmpty(tableMetadata.getOwner()), "Table owner is null or empty");
+    public void createTable(final ConnectorSession session, final ConnectorTableMetadata tableMetadata) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(tableMetadata.getOwner()), "Table owner is null or empty");
 
-        SchemaTableName schemaTableName = tableMetadata.getTable();
-        if( tableDao.getBySourceDatabaseTableName(connectorId.toString(), schemaTableName.getSchemaName(),
-                schemaTableName.getTableName()) != null){
+        final SchemaTableName schemaTableName = tableMetadata.getTable();
+        if (tableDao.getBySourceDatabaseTableName(connectorId.toString(), schemaTableName.getSchemaName(),
+            schemaTableName.getTableName()) != null) {
             throw new TableAlreadyExistsException(schemaTableName);
         }
-        Database database = databaseDao.getBySourceDatabaseName(connectorId.toString(), schemaTableName.getSchemaName());
+        final Database database = databaseDao
+            .getBySourceDatabaseName(connectorId.toString(), schemaTableName.getSchemaName());
         if (database == null) {
             throw new SchemaNotFoundException(schemaTableName.getSchemaName());
         }
-        Table table = new Table();
+        final Table table = new Table();
         table.setName(schemaTableName.getTableName());
         table.setDatabase(database);
-        Location location = converterUtil.toLocation(tableMetadata);
-        if( location != null) {
+        final Location location = converterUtil.toLocation(tableMetadata);
+        if (location != null) {
             location.setTable(table);
             table.setLocation(location);
         }
@@ -393,26 +393,33 @@ public class S3DetailMetadata implements ConnectorDetailMetadata {
     }
 
     @Override
-    public void dropTable(ConnectorSession session, ConnectorTableHandle tableHandle) {
-        HiveTableHandle hiveTableHandle = (HiveTableHandle) tableHandle;
-        Table table = tableDao.getBySourceDatabaseTableName( connectorId.toString(), hiveTableHandle.getSchemaName(), hiveTableHandle.getTableName());
-        if( table == null){
-            throw new TableNotFoundException(new SchemaTableName(hiveTableHandle.getSchemaName(), hiveTableHandle.getTableName()));
+    public void dropTable(final ConnectorSession session, final ConnectorTableHandle tableHandle) {
+        final HiveTableHandle hiveTableHandle = (HiveTableHandle) tableHandle;
+        final Table table = tableDao.getBySourceDatabaseTableName(connectorId.toString(),
+            hiveTableHandle.getSchemaName(),
+            hiveTableHandle.getTableName());
+        if (table == null) {
+            throw new TableNotFoundException(
+                new SchemaTableName(hiveTableHandle.getSchemaName(), hiveTableHandle.getTableName()));
         }
         tableDao.delete(table);
     }
 
     @Override
-    public void renameTable(ConnectorSession session, ConnectorTableHandle tableHandle, SchemaTableName newTableName) {
-        HiveTableHandle hiveTableHandle = (HiveTableHandle) tableHandle;
-        Table table = tableDao.getBySourceDatabaseTableName(connectorId.toString(), hiveTableHandle.getSchemaName(),
-                hiveTableHandle.getTableName());
-        if( table == null){
-            throw new TableNotFoundException(new SchemaTableName(hiveTableHandle.getSchemaName(), hiveTableHandle.getTableName()));
+    public void renameTable(final ConnectorSession session, final ConnectorTableHandle tableHandle,
+        final SchemaTableName newTableName) {
+        final HiveTableHandle hiveTableHandle = (HiveTableHandle) tableHandle;
+        final Table table = tableDao.getBySourceDatabaseTableName(connectorId.toString(),
+            hiveTableHandle.getSchemaName(),
+            hiveTableHandle.getTableName());
+        if (table == null) {
+            throw new TableNotFoundException(
+                new SchemaTableName(hiveTableHandle.getSchemaName(), hiveTableHandle.getTableName()));
         }
-        Table newTable = tableDao.getBySourceDatabaseTableName(connectorId.toString(), newTableName.getSchemaName(),
-                newTableName.getTableName());
-        if( newTable == null){
+        final Table newTable = tableDao.getBySourceDatabaseTableName(connectorId.toString(),
+            newTableName.getSchemaName(),
+            newTableName.getTableName());
+        if (newTable == null) {
             table.setName(newTableName.getTableName());
             tableDao.save(table);
         } else {
@@ -421,166 +428,167 @@ public class S3DetailMetadata implements ConnectorDetailMetadata {
     }
 
     @Override
-    public ConnectorOutputTableHandle beginCreateTable(ConnectorSession session, ConnectorTableMetadata tableMetadata) {
+    public ConnectorOutputTableHandle beginCreateTable(final ConnectorSession session,
+        final ConnectorTableMetadata tableMetadata) {
 
-        checkArgument(!Strings.isNullOrEmpty(tableMetadata.getOwner()), "Table owner is null or empty");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(tableMetadata.getOwner()), "Table owner is null or empty");
 
-        HiveStorageFormat hiveStorageFormat = HiveTableProperties.getHiveStorageFormat(tableMetadata.getProperties());
-        ImmutableList.Builder<String> columnNames = ImmutableList.builder();
-        ImmutableList.Builder<Type> columnTypes = ImmutableList.builder();
+        final HiveStorageFormat hiveStorageFormat =
+            HiveTableProperties.getHiveStorageFormat(tableMetadata.getProperties());
+        final ImmutableList.Builder<String> columnNames = ImmutableList.builder();
+        final ImmutableList.Builder<Type> columnTypes = ImmutableList.builder();
 
         // get the root directory for the database
-        SchemaTableName schemaTableName = tableMetadata.getTable();
-        String schemaName = schemaTableName.getSchemaName();
-        String tableName = schemaTableName.getTableName();
+        final SchemaTableName schemaTableName = tableMetadata.getTable();
+        final String schemaName = schemaTableName.getSchemaName();
+        final String tableName = schemaTableName.getTableName();
 
         buildColumnInfo(tableMetadata, columnNames, columnTypes);
 
-        Path targetPath = getTargetPath(schemaName, tableName, schemaTableName);
-
+        final Path targetPath = getTargetPath(schemaName, tableName, schemaTableName);
 
         // use a per-user temporary directory to avoid permission problems
         // TODO: this should use Hadoop UserGroupInformation
-        String temporaryPrefix = "/tmp/presto-" + StandardSystemProperty.USER_NAME.value();
+        final String temporaryPrefix = "/tmp/presto-" + StandardSystemProperty.USER_NAME.value();
 
         // create a temporary directory on the same filesystem
-        Path temporaryRoot = new Path(targetPath, temporaryPrefix);
-        Path temporaryPath = new Path(temporaryRoot, UUID.randomUUID().toString());
+        final Path temporaryRoot = new Path(targetPath, temporaryPrefix);
+        final Path temporaryPath = new Path(temporaryRoot, UUID.randomUUID().toString());
         createDirectories(temporaryPath);
 
         return new HiveOutputTableHandle(
-                connectorId.toString(),
-                schemaName,
-                tableName,
-                columnNames.build(),
-                columnTypes.build(),
-                tableMetadata.getOwner(),
-                targetPath.toString(),
-                temporaryPath.toString(),
-                hiveStorageFormat);
+            connectorId.toString(),
+            schemaName,
+            tableName,
+            columnNames.build(),
+            columnTypes.build(),
+            tableMetadata.getOwner(),
+            targetPath.toString(),
+            temporaryPath.toString(),
+            hiveStorageFormat);
     }
 
-    private Path getTargetPath(String schemaName, String tableName, SchemaTableName schemaTableName)
-    {
-        String location = sourceDao.getByName(connectorId.toString()).getThriftUri();
-        if (isNullOrEmpty(location)) {
-            throw new PrestoException(HIVE_DATABASE_LOCATION_ERROR, format("Database '%s' location is not set", schemaName));
+    private Path getTargetPath(final String schemaName, final String tableName, final SchemaTableName schemaTableName) {
+        final String location = sourceDao.getByName(connectorId.toString()).getThriftUri();
+        if (Strings.isNullOrEmpty(location)) {
+            throw new PrestoException(HiveErrorCode.HIVE_DATABASE_LOCATION_ERROR,
+                String.format("Database '%s' location is not set", schemaName));
         }
 
-        Path databasePath = new Path(location);
+        final Path databasePath = new Path(location);
         if (!pathExists(databasePath)) {
-            throw new PrestoException(HIVE_DATABASE_LOCATION_ERROR, format("Database '%s' location does not exist: %s", schemaName, databasePath));
+            throw new PrestoException(HiveErrorCode.HIVE_DATABASE_LOCATION_ERROR,
+                String.format("Database '%s' location does not exist: %s", schemaName, databasePath));
         }
         if (!isDirectory(databasePath)) {
-            throw new PrestoException(HIVE_DATABASE_LOCATION_ERROR, format("Database '%s' location is not a directory: %s", schemaName, databasePath));
+            throw new PrestoException(HiveErrorCode.HIVE_DATABASE_LOCATION_ERROR,
+                String.format("Database '%s' location is not a directory: %s", schemaName, databasePath));
         }
 
         // verify the target directory for the table
-        Path targetPath = new Path(databasePath, tableName);
+        final Path targetPath = new Path(databasePath, tableName);
         if (pathExists(targetPath)) {
-            throw new PrestoException(HIVE_PATH_ALREADY_EXISTS, format("Target directory for table '%s' already exists: %s", schemaTableName, targetPath));
+            throw new PrestoException(HiveErrorCode.HIVE_PATH_ALREADY_EXISTS,
+                String.format("Target directory for table '%s' already exists: %s", schemaTableName, targetPath));
         }
         return targetPath;
     }
 
-    private boolean pathExists(Path path)
-    {
+    private boolean pathExists(final Path path) {
         try {
             return hdfsEnvironment.getFileSystem(path).exists(path);
-        }
-        catch (IOException e) {
-            throw new PrestoException(HIVE_FILESYSTEM_ERROR, "Failed checking path: " + path, e);
+        } catch (IOException e) {
+            throw new PrestoException(HiveErrorCode.HIVE_FILESYSTEM_ERROR, "Failed checking path: " + path, e);
         }
     }
 
-    private boolean isDirectory(Path path)
-    {
+    private boolean isDirectory(final Path path) {
         try {
             return hdfsEnvironment.getFileSystem(path).isDirectory(path);
-        }
-        catch (IOException e) {
-            throw new PrestoException(HIVE_FILESYSTEM_ERROR, "Failed checking path: " + path, e);
+        } catch (IOException e) {
+            throw new PrestoException(HiveErrorCode.HIVE_FILESYSTEM_ERROR, "Failed checking path: " + path, e);
         }
     }
 
-    private void createDirectories(Path path)
-    {
+    private void createDirectories(final Path path) {
         try {
             if (!hdfsEnvironment.getFileSystem(path).mkdirs(path)) {
                 throw new IOException("mkdirs returned false");
             }
-        }
-        catch (IOException e) {
-            throw new PrestoException(HIVE_FILESYSTEM_ERROR, "Failed to create directory: " + path, e);
+        } catch (IOException e) {
+            throw new PrestoException(HiveErrorCode.HIVE_FILESYSTEM_ERROR, "Failed to create directory: " + path, e);
         }
     }
 
-    private static void buildColumnInfo(ConnectorTableMetadata tableMetadata, ImmutableList.Builder<String> names, ImmutableList.Builder<Type> types)
-    {
+    private static void buildColumnInfo(final ConnectorTableMetadata tableMetadata,
+        final ImmutableList.Builder<String> names,
+        final ImmutableList.Builder<Type> types) {
         for (ColumnMetadata column : tableMetadata.getColumns()) {
             names.add(column.getName());
             types.add(column.getType());
         }
 
         if (tableMetadata.isSampled()) {
-            names.add(SAMPLE_WEIGHT_COLUMN_NAME);
-            types.add(BIGINT);
+            names.add(HiveColumnHandle.SAMPLE_WEIGHT_COLUMN_NAME);
+            types.add(BigintType.BIGINT);
         }
     }
 
     @Override
-    public void commitCreateTable(ConnectorSession session, ConnectorOutputTableHandle tableHandle,
-            Collection<Slice> fragments) {
-        HiveOutputTableHandle handle = checkType(tableHandle, HiveOutputTableHandle.class, "tableHandle");
+    public void commitCreateTable(final ConnectorSession session, final ConnectorOutputTableHandle tableHandle,
+        final Collection<Slice> fragments) {
+        final HiveOutputTableHandle handle = Types.checkType(tableHandle, HiveOutputTableHandle.class, "tableHandle");
 
         // verify no one raced us to create the target directory
-        Path targetPath = new Path(handle.getTargetPath());
+        final Path targetPath = new Path(handle.getTargetPath());
 
         // rename if using a temporary directory
         if (handle.hasTemporaryPath()) {
             if (pathExists(targetPath)) {
-                SchemaTableName table = new SchemaTableName(handle.getSchemaName(), handle.getTableName());
-                throw new PrestoException(HIVE_PATH_ALREADY_EXISTS, format("Unable to commit creation of table '%s': target directory already exists: %s", table, targetPath));
+                final SchemaTableName table = new SchemaTableName(handle.getSchemaName(), handle.getTableName());
+                throw new PrestoException(HiveErrorCode.HIVE_PATH_ALREADY_EXISTS,
+                    String.format("Unable to commit creation of table '%s': target directory already exists: %s", table,
+                        targetPath));
             }
             // rename the temporary directory to the target
             rename(new Path(handle.getTemporaryPath()), targetPath);
         }
 
         // create the table in the metastore
-        List<String> types = handle.getColumnTypes().stream()
-                .map(HiveType::toHiveType)
-                .map(HiveType::getHiveTypeName)
-                .collect(Collectors.toList());
+        final List<String> types = handle.getColumnTypes().stream()
+            .map(HiveType::toHiveType)
+            .map(HiveType::getHiveTypeName)
+            .collect(Collectors.toList());
 
         boolean sampled = false;
-        ImmutableList.Builder<Field> columns = ImmutableList.builder();
+        final ImmutableList.Builder<Field> columns = ImmutableList.builder();
         for (int i = 0; i < handle.getColumnNames().size(); i++) {
-            String name = handle.getColumnNames().get(i);
-            String type = types.get(i);
-            Field field = new Field();
+            final String name = handle.getColumnNames().get(i);
+            final String type = types.get(i);
+            final Field field = new Field();
             field.setName(name);
             field.setPos(i);
             field.setType(type);
-            if (name.equals(SAMPLE_WEIGHT_COLUMN_NAME)) {
+            if (name.equals(HiveColumnHandle.SAMPLE_WEIGHT_COLUMN_NAME)) {
                 field.setComment("Presto sample weight column");
                 sampled = true;
             }
             columns.add(field);
         }
 
-        HiveStorageFormat hiveStorageFormat = handle.getHiveStorageFormat();
+        final HiveStorageFormat hiveStorageFormat = handle.getHiveStorageFormat();
 
-        Database database = databaseDao.getBySourceDatabaseName(connectorId.toString(), handle.getSchemaName());
+        final Database database = databaseDao.getBySourceDatabaseName(connectorId.toString(), handle.getSchemaName());
 
-        Table table = new Table();
+        final Table table = new Table();
         table.setName(handle.getTableName());
         table.setDatabase(database);
 
-        Location location = new Location();
+        final Location location = new Location();
         location.setTable(table);
         table.setLocation(location);
         location.setUri(targetPath.toString());
-        Info info = new Info();
+        final Info info = new Info();
         info.setLocation(location);
         info.setInputFormat(hiveStorageFormat.getInputFormat());
         info.setOutputFormat(hiveStorageFormat.getOutputFormat());
@@ -589,7 +597,7 @@ public class S3DetailMetadata implements ConnectorDetailMetadata {
         info.setSerializationLib(hiveStorageFormat.getSerDe());
         location.setInfo(info);
 
-        Schema schema = new Schema();
+        final Schema schema = new Schema();
         schema.setLocation(location);
         schema.setFields(columns.build());
         location.setSchema(schema);
@@ -597,46 +605,47 @@ public class S3DetailMetadata implements ConnectorDetailMetadata {
         tableDao.save(table);
     }
 
-    private void rename(Path source, Path target)
-    {
+    private void rename(final Path source, final Path target) {
         try {
             if (!hdfsEnvironment.getFileSystem(source).rename(source, target)) {
                 throw new IOException("rename returned false");
             }
+        } catch (IOException e) {
+            throw new PrestoException(HiveErrorCode.HIVE_FILESYSTEM_ERROR,
+                String.format("Failed to rename %s to %s", source, target), e);
         }
-        catch (IOException e) {
-            throw new PrestoException(HIVE_FILESYSTEM_ERROR, format("Failed to rename %s to %s", source, target), e);
-        }
     }
 
     @Override
-    public ConnectorInsertTableHandle beginInsert(ConnectorSession session, ConnectorTableHandle tableHandle) {
-        throw new PrestoException(NOT_SUPPORTED, "INSERT not yet supported for S3");
+    public ConnectorInsertTableHandle beginInsert(final ConnectorSession session,
+        final ConnectorTableHandle tableHandle) {
+        throw new PrestoException(StandardErrorCode.NOT_SUPPORTED, "INSERT not yet supported for S3");
     }
 
     @Override
-    public void commitInsert(ConnectorSession session, ConnectorInsertTableHandle insertHandle,
-            Collection<Slice> fragments) {
-        throw new PrestoException(NOT_SUPPORTED, "INSERT not yet supported for S3");
+    public void commitInsert(final ConnectorSession session, final ConnectorInsertTableHandle insertHandle,
+        final Collection<Slice> fragments) {
+        throw new PrestoException(StandardErrorCode.NOT_SUPPORTED, "INSERT not yet supported for S3");
     }
 
     @Override
-    public void createView(ConnectorSession session, SchemaTableName viewName, String viewData, boolean replace) {
-        throw new PrestoException(NOT_SUPPORTED, "Views not yet supported for S3");
+    public void createView(final ConnectorSession session, final SchemaTableName viewName,
+        final String viewData, final boolean replace) {
+        throw new PrestoException(StandardErrorCode.NOT_SUPPORTED, "Views not yet supported for S3");
     }
 
     @Override
-    public void dropView(ConnectorSession session, SchemaTableName viewName) {
-        throw new PrestoException(NOT_SUPPORTED, "Views not yet supported for S3");
+    public void dropView(final ConnectorSession session, final SchemaTableName viewName) {
+        throw new PrestoException(StandardErrorCode.NOT_SUPPORTED, "Views not yet supported for S3");
     }
 
     @Override
-    public List<SchemaTableName> listViews(ConnectorSession session, String schemaNameOrNull) {
-        throw new PrestoException(NOT_SUPPORTED, "Views not yet supported for S3");
+    public List<SchemaTableName> listViews(final ConnectorSession session, final String schemaNameOrNull) {
+        throw new PrestoException(StandardErrorCode.NOT_SUPPORTED, "Views not yet supported for S3");
     }
 
     @Override
-    public Map<SchemaTableName, String> getViews(ConnectorSession session, SchemaTablePrefix prefix) {
-        throw new PrestoException(NOT_SUPPORTED, "Views not yet supported for S3");
+    public Map<SchemaTableName, String> getViews(final ConnectorSession session, final SchemaTablePrefix prefix) {
+        throw new PrestoException(StandardErrorCode.NOT_SUPPORTED, "Views not yet supported for S3");
     }
 }

@@ -21,27 +21,36 @@ import com.netflix.metacat.common.dto.CreateCatalogDto;
 import javax.annotation.Nonnull;
 import java.util.List;
 
+/**
+ * Catalog service.
+ */
 public interface CatalogService {
     /**
+     * Gets the catalog.
      * @param name Qualified name of the catalog
      * @return the information about the given catalog
-     * @throws javax.ws.rs.NotFoundException if the catalog is not found
      */
     @Nonnull
-    CatalogDto get(@Nonnull QualifiedName name);
+    CatalogDto get(
+        @Nonnull
+            QualifiedName name);
 
     /**
+     * List of registered catalogs.
      * @return all of the registered catalogs
-     * @throws javax.ws.rs.NotFoundException if there are no registered catalogs
      */
     @Nonnull
     List<CatalogMappingDto> getCatalogNames();
 
     /**
+     * Updates the catalog.
      * @param name             Qualified name of the catalog
-     * @param createCatalogDto
-     * @throws javax.ws.rs.NotFoundException if the catalog is not found
+     * @param createCatalogDto catalog
      */
     @Nonnull
-    void update(@Nonnull QualifiedName name, @Nonnull CreateCatalogDto createCatalogDto);
+    void update(
+        @Nonnull
+            QualifiedName name,
+        @Nonnull
+            CreateCatalogDto createCatalogDto);
 }

@@ -17,7 +17,6 @@
  */
 package com.netflix.metacat.common.server.events;
 
-import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
@@ -29,6 +28,9 @@ import javax.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Post partition save event.
+ */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -36,21 +38,21 @@ public class MetacatSaveMViewPartitionPostEvent extends MetacatEvent {
 
     private final List<PartitionDto> partitions;
 
+    /**
+     * Constructor.
+     * @param name name
+     * @param requestContext context
+     * @param partitions partitions
+     */
     public MetacatSaveMViewPartitionPostEvent(
-            @NotNull final QualifiedName name,
-            @NotNull final MetacatRequestContext requestContext,
-            @NotNull final List<PartitionDto> partitions
+        @NotNull
+        final QualifiedName name,
+        @NotNull
+        final MetacatRequestContext requestContext,
+        @NotNull
+        final List<PartitionDto> partitions
     ) {
         super(name, requestContext);
-        this.partitions = Lists.newArrayList(partitions);
-    }
-
-    /**
-     * Get an unmodifiable view of the partitions.
-     *
-     * @return A view of the partitions which if an attempt is made to modify will throw an exception
-     */
-    public List<PartitionDto> getPartitions() {
-        return Collections.unmodifiableList(this.partitions);
+        this.partitions = Collections.unmodifiableList(partitions);
     }
 }

@@ -24,15 +24,22 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Singleton;
 
+/**
+ * Noop event handler.
+ */
 @Singleton
 @Slf4j
 public class DeadEventHandler {
 
+    /**
+     * Noop event.
+     * @param event event
+     */
     @Subscribe
     @AllowConcurrentEvents
-    public void logDeadEvent(DeadEvent event) {
-        Object sourceEvent = event.getEvent();
-        Object source = event.getSource();
+    public void logDeadEvent(final DeadEvent event) {
+        final Object sourceEvent = event.getEvent();
+        final Object source = event.getSource();
         log.debug("Unhandled event: {} from source: {}", sourceEvent, source);
     }
 }
