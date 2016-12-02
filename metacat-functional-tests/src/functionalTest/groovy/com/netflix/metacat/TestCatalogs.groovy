@@ -63,20 +63,6 @@ class TestCatalogs {
                     validateFilterExpressionBasedOnPartitionKeyType: false
             ),
             new TestCatalog(
-                    name: 'mysql-55-db',
-                    preExistingDatabases: [
-                            QualifiedName.ofDatabase('mysql-55-db', 'sakila'),
-                            QualifiedName.ofDatabase('mysql-55-db', 'world'),
-                    ],
-                    preExistingTables: [
-                            QualifiedName.ofTable('mysql-55-db', 'sakila', 'city'),
-                            QualifiedName.ofTable('mysql-55-db', 'sakila', 'country'),
-                            QualifiedName.ofTable('mysql-55-db', 'world', 'City'),
-                            QualifiedName.ofTable('mysql-55-db', 'world', 'Country'),
-                    ],
-                    type: 'metacat-mysql',
-            ),
-            new TestCatalog(
                     name: 'mysql-56-db',
                     preExistingDatabases: [
                             QualifiedName.ofDatabase('mysql-56-db', 'sakila'),
@@ -87,20 +73,6 @@ class TestCatalogs {
                             QualifiedName.ofTable('mysql-56-db', 'sakila', 'country'),
                             QualifiedName.ofTable('mysql-56-db', 'world', 'City'),
                             QualifiedName.ofTable('mysql-56-db', 'world', 'Country'),
-                    ],
-                    type: 'metacat-mysql',
-            ),
-            new TestCatalog(
-                    name: 'mysql-57-db',
-                    preExistingDatabases: [
-                            QualifiedName.ofDatabase('mysql-57-db', 'sakila'),
-                            QualifiedName.ofDatabase('mysql-57-db', 'world'),
-                    ],
-                    preExistingTables: [
-                            QualifiedName.ofTable('mysql-57-db', 'sakila', 'city'),
-                            QualifiedName.ofTable('mysql-57-db', 'sakila', 'country'),
-                            QualifiedName.ofTable('mysql-57-db', 'world', 'City'),
-                            QualifiedName.ofTable('mysql-57-db', 'world', 'Country'),
                     ],
                     type: 'metacat-mysql',
             ),

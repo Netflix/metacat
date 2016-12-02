@@ -23,11 +23,6 @@ services:
         links:
             - hive-metastore
             - hive-metastore-db
-            - s3-mysql-db
-            - mysql-57-db
-            - mysql-56-db
-            - mysql-55-db
-            - usermetadata-db
         ports:
             - '8080'
             - '8000'
@@ -55,55 +50,11 @@ services:
         labels:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.war"
-    usermetadata-db:
-        image: mysql:5.5
-        volumes:
-            - ./sql/usermetadata/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
-        environment:
-        environment:
-            - MYSQL_ROOT_PASSWORD=root_password
-            - MYSQL_USER=metacat_user
-            - MYSQL_PASSWORD=metacat_user_password
-            - MYSQL_DATABASE=metacat
-        labels:
-          - "com.netflix.metacat.oss.test"
-    mysql-55-db:
-        image: mysql:5.5
-        volumes:
-            - ./sql/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
-        environment:
-            - MYSQL_ROOT_PASSWORD=root_password
-            - MYSQL_USER=metacat_user
-            - MYSQL_PASSWORD=metacat_user_password
-            - MYSQL_DATABASE=test
-        labels:
-          - "com.netflix.metacat.oss.test"
-    mysql-56-db:
+    hive-metastore-db:
         image: mysql:5.6
         volumes:
             - ./sql/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
         environment:
-            - MYSQL_ROOT_PASSWORD=root_password
-            - MYSQL_USER=metacat_user
-            - MYSQL_PASSWORD=metacat_user_password
-            - MYSQL_DATABASE=test
-        labels:
-          - "com.netflix.metacat.oss.test"
-    mysql-57-db:
-        image: mysql:5.7
-        volumes:
-            - ./sql/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
-        environment:
-            - MYSQL_ROOT_PASSWORD=root_password
-            - MYSQL_USER=metacat_user
-            - MYSQL_PASSWORD=metacat_user_password
-            - MYSQL_DATABASE=test
-        labels:
-          - "com.netflix.metacat.oss.test"
-    s3-mysql-db:
-        image: mysql:5.6
-        volumes:
-            - ./sql/s3-mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
         environment:
             - MYSQL_ROOT_PASSWORD=root_password
             - MYSQL_USER=metacat_user
@@ -123,32 +74,13 @@ services:
         labels:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.hive"
-    hive-metastore-db:
-        image: mysql:5.6
-        environment:
-            - MYSQL_ROOT_PASSWORD=root_password
-            - MYSQL_USER=metacat_user
-            - MYSQL_PASSWORD=metacat_user_password
-            - MYSQL_DATABASE=hive
-        labels:
-          - "com.netflix.metacat.oss.test"
     storage-barrier:
         #image: ddn0/wait:latest
         image: martin/wait:latest
         links:
             - hive-metastore-db
-            - s3-mysql-db
-            - mysql-57-db
-            - mysql-56-db
-            - mysql-55-db
-            - usermetadata-db
         environment:
             - TARGETS=hive-metastore-db:3306
-            - TARGETS=s3-mysql-db:3306
-            - TARGETS=mysql-57-db:3306
-            - TARGETS=mysql-56-db:3306
-            - TARGETS=mysql-55-db:3306
-            - TARGETS=usermetadata-db:3306
         labels:
           - "com.netflix.metacat.oss.test"
     service-barrier:
