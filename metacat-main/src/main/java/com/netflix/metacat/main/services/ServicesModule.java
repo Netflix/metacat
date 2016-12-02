@@ -20,6 +20,7 @@ import com.netflix.metacat.main.services.impl.DatabaseServiceImpl;
 import com.netflix.metacat.main.services.impl.MViewServiceImpl;
 import com.netflix.metacat.main.services.impl.PartitionServiceImpl;
 import com.netflix.metacat.main.services.impl.TableServiceImpl;
+import com.netflix.metacat.main.services.notifications.NotificationsModule;
 import com.netflix.metacat.main.services.search.ElasticSearchClientProvider;
 import com.netflix.metacat.main.services.search.ElasticSearchMetacatRefresh;
 import com.netflix.metacat.main.services.search.ElasticSearchUtil;
@@ -34,6 +35,8 @@ import javax.inject.Singleton;
 public class ServicesModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new NotificationsModule());
+
         binder().bind(CatalogService.class).to(CatalogServiceImpl.class).in(Scopes.SINGLETON);
         binder().bind(DatabaseService.class).to(DatabaseServiceImpl.class).in(Scopes.SINGLETON);
         binder().bind(TableService.class).to(TableServiceImpl.class).in(Scopes.SINGLETON);
