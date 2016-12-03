@@ -23,7 +23,7 @@ import spock.lang.Unroll
 import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Type
 
 /**
- * Created by amajumdar on 8/17/15.
+ * Testing suit for elastic search util
  */
 class ElasticSearchUtilSpec extends BaseEsSpec{
 

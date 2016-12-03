@@ -119,7 +119,6 @@ public class ElasticSearchUtil {
         }
     }
 
-
     /**
      * Permanently delete index documents.
      * @param type index type
@@ -216,7 +215,7 @@ public class ElasticSearchUtil {
                 return null;
             });
         } catch (Exception e) {
-            log.error(String.format("Failed soft deleting metadata of type {} with ids {}", type, ids), e);
+            log.error(String.format("Failed soft deleting metadata of type %s with ids %s", type, ids), e);
             CounterWrapper.incrementCounter("dse.metacat.esBulkDeleteFailure");
             log("ElasticSearchUtil.bulkSoftDelete", type, ids.toString(), null, e.getMessage(), e, true);
         }
@@ -254,7 +253,7 @@ public class ElasticSearchUtil {
                 return null;
             });
         } catch (Exception e) {
-            log.error(String.format("Failed updating metadata of type {} with ids {}", type, ids), e);
+            log.error(String.format("Failed updating metadata of type %s with ids %s", type, ids), e);
             CounterWrapper.incrementCounter("dse.metacat.esBulkUpdateFailure");
             log("ElasticSearchUtil.updates", type, ids.toString(), null, e.getMessage(), e, true);
         }
@@ -284,7 +283,7 @@ public class ElasticSearchUtil {
                 return null;
             });
         } catch (Exception e) {
-            log.error(String.format("Failed saving metadata of index {} type {} with id {}", index, type, id), e);
+            log.error(String.format("Failed saving metadata of index %s type %s with id %s", index, type, id), e);
             CounterWrapper.incrementCounter("dse.metacat.esSaveFailure");
             log("ElasticSearchUtil.save", type, id, null, e.getMessage(), e, true, index);
         }
@@ -333,7 +332,7 @@ public class ElasticSearchUtil {
                         return null;
                     });
                 } catch (Exception e) {
-                    log.error(String.format("Failed saving metadatas of index {} type {}", index, type), e);
+                    log.error(String.format("Failed saving metadatas of index %s type %s", index, type), e);
                     CounterWrapper.incrementCounter("dse.metacat.esBulkSaveFailure");
                     final List<String> docIds = docs.stream().map(ElasticSearchDoc::getId).collect(Collectors.toList());
                     log("ElasticSearchUtil.bulkSave", type, docIds.toString(), null, e.getMessage(), e, true, index);
