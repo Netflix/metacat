@@ -64,6 +64,9 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicBooleanProperty canSoftDeleteDataMetadata;
     private final DynamicBooleanProperty canCascadeViewsMetadataOnTableDelete;
     private final DynamicIntProperty userMetadataMaxInClauseItems;
+    private final DynamicBooleanProperty snsEnabled;
+    private final DynamicStringProperty snsTopicTableArn;
+    private final DynamicStringProperty snsTopicPartitionArn;
 
     /**
      * Default constructor.
@@ -129,6 +132,11 @@ public class ArchaiusConfigImpl implements Config {
         this.canCascadeViewsMetadataOnTableDelete = factory
             .getBooleanProperty("metacat.table.delete.cascade.views.metadata", true);
         this.userMetadataMaxInClauseItems = factory.getIntProperty("metacat.user.metadata.max_in_clause_items", 2500);
+        this.snsEnabled = factory.getBooleanProperty("metacat.notifications.sns.enabled", false);
+        this.snsTopicTableArn
+            = factory.getStringProperty("metacat.notifications.sns.topic.table.arn", null);
+        this.snsTopicPartitionArn
+            = factory.getStringProperty("metacat.notifications.sns.topic.partition.arn", null);
     }
 
     private void setQualifiedNamesToElasticSearchRefreshExcludeQualifiedNames() {
@@ -318,9 +326,36 @@ public class ArchaiusConfigImpl implements Config {
     public int getUserMetadataMaxInClauseItems() {
         return userMetadataMaxInClauseItems.get();
     }
-
+    
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getMergeEsIndex() {
         return elasticSearchMergeIndexName.get();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isSnsNotificationEnabled() {
+        return this.snsEnabled.get();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getSnsTopicTableArn() {
+        return this.snsTopicTableArn.get();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getSnsTopicPartitionArn() {
+        return this.snsTopicPartitionArn.get();
     }
 }

@@ -49,7 +49,8 @@ public final class CounterWrapper {
 
     /**
      * Increments the servo counter.
-     * @param counterName counter name
+     *
+     * @param counterName     counter name
      * @param incrementAmount increment value
      */
     public static void incrementCounter(final String counterName, final long incrementAmount) {
@@ -67,6 +68,7 @@ public final class CounterWrapper {
 
     /**
      * Increments the servo counter by 1.
+     *
      * @param counterName counter name
      */
     public static void incrementCounter(final String counterName) {

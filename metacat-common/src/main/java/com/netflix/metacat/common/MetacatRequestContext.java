@@ -19,6 +19,9 @@ package com.netflix.metacat.common;
 
 import lombok.Data;
 
+import java.util.Date;
+import java.util.UUID;
+
 /**
  * The context of the request to Metacat.
  *
@@ -44,6 +47,9 @@ public class MetacatRequestContext {
      */
     public static final String HEADER_KEY_DATA_TYPE_CONTEXT = "X-Netflix.data.type.context";
 
+    private final String id = UUID.randomUUID().toString();
+    // TODO: Move to Java 8 and use java.time.Instant
+    private final long timestamp = new Date().getTime();
     private final String userName;
     private final String clientAppName;
     private final String clientId;
