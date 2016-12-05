@@ -316,7 +316,8 @@ public class ElasticSearchUtil {
                             .setSource(doc.toJsonString())));
                         if (bulkRequest.numberOfActions() > 0) {
                             final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-                            log.debug("Bulk saving metadata of index{} type {} with size {}.", index, type, docs.size());
+                            log.debug("Bulk saving metadata of index{} type {} with size {}.",
+                                index, type, docs.size());
                             if (bulkResponse.hasFailures()) {
                                 for (BulkItemResponse item : bulkResponse.getItems()) {
                                     if (item.isFailed()) {
