@@ -316,7 +316,7 @@ public class ElasticSearchUtil {
                             .setSource(doc.toJsonString())));
                         if (bulkRequest.numberOfActions() > 0) {
                             final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-                            log.info("Bulk saving metadata of index{} type {} with size {}.", index, type, docs.size());
+                            log.debug("Bulk saving metadata of index{} type {} with size {}.", index, type, docs.size());
                             if (bulkResponse.hasFailures()) {
                                 for (BulkItemResponse item : bulkResponse.getItems()) {
                                     if (item.isFailed()) {
@@ -549,7 +549,7 @@ public class ElasticSearchUtil {
     }
 
     /**
-     * Logs the message in elastic search.
+     * Wrapper for logging the message in elastic search esIndex.
      * @param method method
      * @param type type
      * @param name name
@@ -563,6 +563,17 @@ public class ElasticSearchUtil {
         log(method, type, name, data, logMessage, ex, error, esIndex);
     }
 
+    /**
+     * Log the message in elastic search.
+     * @param method method
+     * @param type type
+     * @param name name
+     * @param data data
+     * @param logMessage message
+     * @param ex exception
+     * @param error is an error
+     * @param index es index
+     */
     void log(final String method, final String type, final String name, final String data,
              final String logMessage, final Exception ex, final boolean error, final String index) {
         try {

@@ -64,7 +64,8 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         softDelete?es.softDelete(Type.table.name(), id, metacatContext):es.delete(Type.table.name(), id)
         def result =  es.get(Type.table.name(),id, esIndex)
         expect:
-        if( softDelete && result.isDeleted()){
+        if( softDelete ){
+            result.isDeleted()
             id==((TableDto)result.getDto()).getName().toString()
         } else {
             result == null
@@ -144,9 +145,11 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         given:
         def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        def result = (TableDto)esMig.get(Type.table.name(),id).getDto()
-        expect:
-        id==result.getName().toString()
+        for (String index : [esIndex, esMergeIndex]) {
+            def result = (TableDto) es.get(Type.table.name(), id, index).getDto()
+            expect:
+            id == result.getName().toString()
+        }
         where:
         catalogName     | databaseName  | tableName     | id
         'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part'

@@ -27,8 +27,10 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Class for migrating the elastic search index to a new one. It overrides the save, update, and softdelete
- * to populate the doc to both the original and new indices
+ * Class for migrating the elastic search metacat index to a new one. During the migration period, metacat
+ * writes and updates the data to both the existing and the new merge index. This class overrides the
+ * save, update, and softdelete methods. For the save op, it saves to bothe indices. for the update and softdelete,
+ * it first executes the normal index ops, then copies to the merge index
  */
 public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
     private final String esMergeIndex;
@@ -37,7 +39,7 @@ public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
     /**
      * Constructor.
      * @param client elastic search client
-     * @param config config
+     * @param config metacat server config
      * @param metacatJson json utility
      */
     @Inject
@@ -54,7 +56,7 @@ public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
     /**
      * Save of a single entity to default index and merge index.
      * @param type index type
-     * @param id id of the entity
+     * @param id doc id
      * @param body source string of the entity
      */
     @Override
@@ -87,7 +89,7 @@ public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
     public void softDelete(final String type, final String id, final MetacatRequestContext metacatContext) {
         //mark the records as soft deleted in the original index
         super.softDelete(type, id, metacatContext);
-        copyDataToMergeIndex(type, Collections.singletonList(id));
+        copyDocToMergeIndex(type, Collections.singletonList(id));
     }
 
     /**
@@ -100,7 +102,7 @@ public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
     protected void softDeleteDoc(final String type, final List<String> ids,
                                  final MetacatRequestContext metacatContext) {
         super.softDeleteDoc(type, ids, metacatContext);
-        copyDataToMergeIndex(type, ids);
+        copyDocToMergeIndex(type, ids);
     }
 
     /**
@@ -115,15 +117,15 @@ public class ElasticSearchMigrationUtil extends ElasticSearchUtil {
     public void updates(final String type, final List<String> ids,
                         final MetacatRequestContext metacatContext, final ObjectNode node) {
         super.updates(type, ids, metacatContext, node);
-        copyDataToMergeIndex(type, ids);
+        copyDocToMergeIndex(type, ids);
     }
 
     /*
-     * Read the documents from source index copy to the merge index
+     * Read the documents from source index then copy to merge index
      * @param type index type
      * @param ids list of doc ids
      */
-    private void copyDataToMergeIndex(final String type, final List<String> ids) {
+    private void copyDocToMergeIndex(final String type, final List<String> ids) {
         final List<ElasticSearchDoc> docs = new ArrayList<>();
         ids.forEach(id-> {
                 final ElasticSearchDoc doc = super.get(type, id);

@@ -25,7 +25,6 @@ import com.netflix.metacat.main.services.search.ElasticSearchClientProvider;
 import com.netflix.metacat.main.services.search.MetacatEventHandlers;
 import com.netflix.metacat.main.services.search.ElasticSearchUtilProvider;
 import com.netflix.metacat.main.services.search.ElasticSearchMetacatRefresh;
-
 import org.elasticsearch.client.Client;
 
 import javax.inject.Singleton;
