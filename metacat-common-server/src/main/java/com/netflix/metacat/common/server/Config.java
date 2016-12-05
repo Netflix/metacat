@@ -157,6 +157,16 @@ public interface Config {
      */
     String getEsIndex();
     /**
+     * Elastic search index.
+     * @return elastic search merge index name that's the new index to migrate to
+     */
+    String getMergeEsIndex();
+    /**
+     * Is in elastic search migration.
+     * @return true if in elastic search migration mode
+     */
+    boolean isIndexMigration();
+    /**
      * Lifetime.
      * @return lifetime
      */

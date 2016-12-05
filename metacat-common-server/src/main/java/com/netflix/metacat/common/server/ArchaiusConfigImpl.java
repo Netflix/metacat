@@ -32,6 +32,8 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicStringProperty defaultTypeConverter;
     private final DynamicBooleanProperty isElasticSearchEnabled;
     private final DynamicStringProperty elasticSearchIndexName;
+    private final DynamicBooleanProperty elasticsearchIndexMigration;
+    private final DynamicStringProperty elasticsearchMergeIndexName;
     private final DynamicStringProperty elasticSearchClusterName;
     private final DynamicStringProperty elasticSearchClusterNodes;
     private final DynamicIntProperty elasticSearchClusterPort;
@@ -80,6 +82,9 @@ public class ArchaiusConfigImpl implements Config {
             .getStringProperty("metacat.type.converter", "com.netflix.metacat.converters.impl.PrestoTypeConverter");
         this.isElasticSearchEnabled = factory.getBooleanProperty("metacat.elacticsearch.enabled", true);
         this.elasticSearchIndexName = factory.getStringProperty("metacat.elacticsearch.index.name", "metacat");
+        this.elasticsearchIndexMigration = factory.getBooleanProperty("metacat.elacticsearch.migration.enabled", false);
+        this.elasticsearchMergeIndexName =
+            factory.getStringProperty("metacat.elacticsearch.mergeindex.name", "metacat");
         this.elasticSearchClusterName = factory.getStringProperty("metacat.elacticsearch.cluster.name", null);
         this.elasticSearchClusterNodes = factory.getStringProperty("metacat.elacticsearch.cluster.nodes", null);
         this.elasticSearchClusterPort = factory.getIntProperty("metacat.elacticsearch.cluster.port", 7102);
@@ -88,8 +93,8 @@ public class ArchaiusConfigImpl implements Config {
         this.elasticSearchRefreshPartitionsIncludeCatalogs = factory
             .getStringProperty("metacat.elacticsearch.refresh.partitions.include.catalogs",
                 "prodhive,testhive,s3,aegisthus");
-        this.elasticSearchScrollFetchSize = factory.getIntProperty("metacat.elacticsearch.scroll.fetch.size", 500);
-        this.elasticSearchScrollTimeout = factory.getIntProperty("metacat.elacticsearch.scroll.timeout.ms", 60000);
+        this.elasticSearchScrollFetchSize = factory.getIntProperty("metacat.elacticsearch.scroll.fetch.size", 50000);
+        this.elasticSearchScrollTimeout = factory.getIntProperty("metacat.elacticsearch.scroll.timeout.ms", 600000);
         this.elasticSearchThresholdUnmarkedDatabasesDelete = factory
             .getIntProperty("metacat.elacticsearch.refresh.threshold.unmarked.databases.delete", 100);
         this.elasticSearchThresholdUnmarkedTablesDelete = factory
@@ -314,5 +319,15 @@ public class ArchaiusConfigImpl implements Config {
     @Override
     public int getUserMetadataMaxInClauseItems() {
         return userMetadataMaxInClauseItems.get();
+    }
+
+    @Override
+    public String getMergeEsIndex() {
+        return elasticsearchMergeIndexName.get();
+    }
+
+    @Override
+    public boolean isIndexMigration() {
+        return elasticsearchIndexMigration.get();
     }
 }
