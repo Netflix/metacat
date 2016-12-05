@@ -23,7 +23,6 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -40,6 +39,8 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.monitoring.TimerWrapper;
 import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
+import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.usermetadata.TagService;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.MetacatContextManager;
@@ -50,7 +51,6 @@ import com.netflix.metacat.main.services.TableService;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.Instant;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
 
 /**
  * This class does a refresh of all the metadata entities from original data sources to elastic search.
+ *
  * @author amajumdar
  */
 @Slf4j
@@ -90,9 +91,29 @@ public class ElasticSearchMetacatRefresh {
     private UserMetadataService userMetadataService;
     @Inject
     private TagService tagService;
+    @Inject
+    private MetacatEventBus eventBus;
     //  Fixed thread pool
     private ListeningExecutorService service;
     private ListeningExecutorService esService;
+
+    private static ExecutorService newFixedThreadPool(final int nThreads, final String threadFactoryName,
+                                                      final int queueSize) {
+        return new ThreadPoolExecutor(nThreads, nThreads,
+            0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(queueSize),
+            new ThreadFactoryBuilder()
+                .setNameFormat(threadFactoryName)
+                .build(),
+            (r, executor) -> {
+                // this will block if the queue is full
+                try {
+                    executor.getQueue().put(r);
+                } catch (InterruptedException e) {
+                    throw Throwables.propagate(e);
+                }
+            });
+    }
 
     /**
      * Does a sweep across all catalogs to refresh the same data in elastic search.
@@ -106,6 +127,7 @@ public class ElasticSearchMetacatRefresh {
 
     /**
      * Does a sweep across given catalogs to refresh the same data in elastic search.
+     *
      * @param catalogNames catalog anmes
      */
     public void processCatalogs(final List<String> catalogNames) {
@@ -116,7 +138,8 @@ public class ElasticSearchMetacatRefresh {
 
     /**
      * Does a sweep across given catalog and databases to refresh the same data in elastic search.
-     * @param catalogName catalog
+     *
+     * @param catalogName   catalog
      * @param databaseNames database names
      */
     public void processDatabases(final String catalogName, final List<String> databaseNames) {
@@ -128,6 +151,7 @@ public class ElasticSearchMetacatRefresh {
 
     /**
      * Does a sweep across all catalogs to refresh the same data in elastic search.
+     *
      * @param names qualified names
      */
     public void processPartitions(final List<QualifiedName> names) {
@@ -152,7 +176,7 @@ public class ElasticSearchMetacatRefresh {
             final List<ListenableFuture<Void>> indexFutures = Lists.newArrayList();
             int offset = 0;
             int count;
-            Sort sort = null;
+            Sort sort;
             if ("s3".equals(tableName.getCatalogName()) || "aegisthus".equals(tableName.getCatalogName())) {
                 sort = new Sort("id", SortOrder.ASC);
             } else {
@@ -179,18 +203,13 @@ public class ElasticSearchMetacatRefresh {
                     .collect(Collectors.toList());
                 return Futures.transform(Futures.successfulAsList(inputFuturesWithoutNulls), Functions.constant(null));
             });
-        return Futures.transformAsync(processPartitionsFuture, new AsyncFunction<Void, Void>() {
-            @Override
-            public ListenableFuture<Void> apply(
-                @Nullable
-                final Void input) throws Exception {
-                elasticSearchUtil.refresh();
-                final List<ListenableFuture<Void>> cleanUpFutures = tables.stream()
-                    .map(s -> service
-                        .submit(() -> partitionsCleanUp(QualifiedName.fromString(s, false), excludeQualifiedNames)))
-                    .collect(Collectors.toList());
-                return Futures.transform(Futures.successfulAsList(cleanUpFutures), Functions.constant(null));
-            }
+        return Futures.transformAsync(processPartitionsFuture, input -> {
+            elasticSearchUtil.refresh();
+            final List<ListenableFuture<Void>> cleanUpFutures = tables.stream()
+                .map(s -> service
+                    .submit(() -> partitionsCleanUp(QualifiedName.fromString(s, false), excludeQualifiedNames)))
+                .collect(Collectors.toList());
+            return Futures.transform(Futures.successfulAsList(cleanUpFutures), Functions.constant(null));
         });
     }
 
@@ -231,27 +250,9 @@ public class ElasticSearchMetacatRefresh {
         return null;
     }
 
-    private static ExecutorService newFixedThreadPool(final int nThreads, final String threadFactoryName,
-        final int queueSize) {
-        return new ThreadPoolExecutor(nThreads, nThreads,
-            0L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(queueSize),
-            new ThreadFactoryBuilder()
-                .setNameFormat(threadFactoryName)
-                .build(),
-            (r, executor) -> {
-                // this will block if the queue is full
-                try {
-                    executor.getQueue().put(r);
-                } catch (InterruptedException e) {
-                    throw Throwables.propagate(e);
-                }
-            });
-    }
-
     @SuppressWarnings("checkstyle:methodname")
     private void _process(final List<QualifiedName> qNames, final Supplier<ListenableFuture<Void>> supplier,
-        final String requestName, final boolean delete, final int queueSize) {
+                          final String requestName, final boolean delete, final int queueSize) {
         if (isElasticSearchMetacatRefreshAlreadyRunning.compareAndSet(false, true)) {
             final TimerWrapper timer = TimerWrapper
                 .createStarted("dse.metacat.timer.ElasticSearchMetacatRefresh." + requestName);
@@ -259,7 +260,7 @@ public class ElasticSearchMetacatRefresh {
                 log.info("Start: Full refresh of metacat index in elastic search. Processing {} ...", qNames);
                 final MetacatRequestContext context =
                     new MetacatRequestContext("admin", "elasticSearchRefresher", null, null,
-                    null);
+                        null);
                 MetacatContextManager.setContext(context);
                 refreshMarker = Instant.now();
                 refreshMarkerText = refreshMarker.toString();
@@ -313,7 +314,7 @@ public class ElasticSearchMetacatRefresh {
     }
 
     private void deleteUnmarkedEntities(final List<QualifiedName> qNames,
-        final List<QualifiedName> excludeQualifiedNames) {
+                                        final List<QualifiedName> excludeQualifiedNames) {
         log.info("Start: Delete unmarked entities");
         //
         // get unmarked qualified names
@@ -340,7 +341,8 @@ public class ElasticSearchMetacatRefresh {
                         }
                     } catch (SchemaNotFoundException ignored) {
                         result = true;
-                    } catch (Exception ignored) { }
+                    } catch (Exception ignored) {
+                    }
                     return result;
                 }).collect(Collectors.toList());
                 log.info("Unmarked databases({}): {}", unmarkedDatabaseNames.size(), unmarkedDatabaseNames);
@@ -377,7 +379,8 @@ public class ElasticSearchMetacatRefresh {
                         if (!dto.isPresent()) {
                             result = true;
                         }
-                    } catch (Exception ignored) { }
+                    } catch (Exception ignored) {
+                    }
                     return result;
                 }).collect(Collectors.toList());
                 log.info("Unmarked tables({}): {}", unmarkedTableNames.size(), unmarkedTableNames);
@@ -387,8 +390,17 @@ public class ElasticSearchMetacatRefresh {
                         dto -> dto.getName().toString()).collect(Collectors.toList());
                     log.info("Deleting tables({}): {}", deleteTableNames.size(), deleteTableNames);
                     userMetadataService.deleteMetadatas("admin", Lists.newArrayList(deleteTableDtos));
-                    elasticSearchUtil.softDelete("table", deleteTableNames, context);
-                    deleteTableDtos.forEach(tableDto -> tagService.delete(tableDto.getName(), false));
+
+                    // Publish event. Elasticsearch event handler will take care of updating the index already
+                    // TODO: Re-evaluate events vs. direct calls for these types of situations like in Genie
+                    deleteTableDtos.forEach(
+                        tableDto -> {
+                            tagService.delete(tableDto.getName(), false);
+                            this.eventBus.postAsync(
+                                new MetacatDeleteTablePostEvent(tableDto.getName(), context, tableDto)
+                            );
+                        }
+                    );
                 }
                 log.info("End: Delete unmarked tables({})", unmarkedTableDtos.size());
             } else {
@@ -459,13 +471,14 @@ public class ElasticSearchMetacatRefresh {
 
     /**
      * Process the list of databases.
-     * @param catalogName catalog name
+     *
+     * @param catalogName   catalog name
      * @param databaseNames database names
      * @return future
      */
     @SuppressWarnings("checkstyle:methodname")
     private ListenableFuture<Void> _processDatabases(final QualifiedName catalogName,
-        final List<QualifiedName> databaseNames) {
+                                                     final List<QualifiedName> databaseNames) {
         ListenableFuture<Void> resultFuture = null;
         log.info("Full refresh of catalog {} for databases({}): {}", catalogName, databaseNames.size(), databaseNames);
         final List<ListenableFuture<DatabaseDto>> getDatabaseFutures = databaseNames.stream()
@@ -507,8 +520,9 @@ public class ElasticSearchMetacatRefresh {
 
     /**
      * Save all databases to index it in elastic search.
+     *
      * @param catalogName catalog name
-     * @param dtos database dtos
+     * @param dtos        database dtos
      * @return future
      */
     private ListenableFuture<Void> indexDatabaseDtos(final QualifiedName catalogName, final List<DatabaseDto> dtos) {
@@ -525,12 +539,13 @@ public class ElasticSearchMetacatRefresh {
 
     /**
      * Process the list of tables in batches.
+     *
      * @param databaseName database name
-     * @param tableNames table names
+     * @param tableNames   table names
      * @return A future containing the tasks
      */
     private ListenableFuture<Void> processTables(final QualifiedName databaseName,
-        final List<QualifiedName> tableNames) {
+                                                 final List<QualifiedName> tableNames) {
         final List<List<QualifiedName>> tableNamesBatches = Lists.partition(tableNames, 500);
         final List<ListenableFuture<Void>> processTablesBatchFutures = tableNamesBatches.stream().map(
             subTableNames -> _processTables(databaseName, subTableNames)).collect(Collectors.toList());
@@ -540,7 +555,7 @@ public class ElasticSearchMetacatRefresh {
 
     @SuppressWarnings("checkstyle:methodname")
     private ListenableFuture<Void> _processTables(final QualifiedName databaseName,
-        final List<QualifiedName> tableNames) {
+                                                  final List<QualifiedName> tableNames) {
         final List<ListenableFuture<Optional<TableDto>>> getTableFutures = tableNames.stream()
             .map(tableName -> service.submit(() -> {
                 Optional<TableDto> result = null;
@@ -549,7 +564,7 @@ public class ElasticSearchMetacatRefresh {
                 } catch (Exception e) {
                     log.error("Failed to retrieve table: {}", tableName);
                     elasticSearchUtil.log("ElasticSearchMetacatRefresh.getTable", ElasticSearchDoc.Type.table.name(),
-                            tableName.toString(), null, e.getMessage(), e, true);
+                        tableName.toString(), null, e.getMessage(), e, true);
                 }
                 return result;
             }))
@@ -561,12 +576,13 @@ public class ElasticSearchMetacatRefresh {
 
     /**
      * Save all tables to index it in elastic search.
+     *
      * @param databaseName database name
-     * @param dtos table dtos
+     * @param dtos         table dtos
      * @return future
      */
     private ListenableFuture<Void> indexTableDtos(final QualifiedName databaseName,
-        final List<Optional<TableDto>> dtos) {
+                                                  final List<Optional<TableDto>> dtos) {
         return esService.submit(() -> {
             final List<ElasticSearchDoc> docs = dtos.stream().filter(dto -> dto != null && dto.isPresent()).map(
                 tableDtoOptional -> {
@@ -582,8 +598,9 @@ public class ElasticSearchMetacatRefresh {
 
     /**
      * Save all tables to index it in elastic search.
+     *
      * @param tableName database name
-     * @param dtos partition dtos
+     * @param dtos      partition dtos
      * @return future
      */
     private ListenableFuture<Void> indexPartitionDtos(final QualifiedName tableName, final List<PartitionDto> dtos) {

@@ -26,6 +26,7 @@ import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.ThreadServiceManager;
 import com.netflix.metacat.main.manager.PluginManager;
 import com.netflix.metacat.main.presto.metadata.CatalogManager;
+import com.netflix.metacat.main.services.notifications.NotificationService;
 import com.netflix.metacat.main.services.search.MetacatEventHandlers;
 import io.airlift.configuration.ConfigurationFactory;
 import io.airlift.configuration.ConfigurationProvider;
@@ -34,6 +35,7 @@ import org.elasticsearch.client.Client;
 
 import javax.inject.Inject;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Metacat initialization service.
@@ -45,17 +47,29 @@ public class MetacatInitializationService {
 
     /**
      * Constructor.
-     * @param injector injector
-     * @param config config
+     *
+     * @param injector             injector
+     * @param config               config
+     * @param eventBus             The event bus to use for internal events
+     * @param notificationServices The notification service implementations to register for receiving events
      */
     @Inject
-    public MetacatInitializationService(final Injector injector, final Config config) {
+    public MetacatInitializationService(
+        final Injector injector,
+        final Config config,
+        final MetacatEventBus eventBus,
+        final Set<NotificationService> notificationServices
+    ) {
         this.config = config;
         this.injector = injector;
+
+        // Register all the services to listen for events
+        notificationServices.forEach(eventBus::register);
     }
 
     /**
      * Returns the config factory.
+     *
      * @return config factory
      */
     public ConfigurationFactory getConfigurationFactory() {
@@ -70,6 +84,7 @@ public class MetacatInitializationService {
 
     /**
      * Metacat service initialization.
+     *
      * @throws Exception error
      */
     public void start() throws Exception {
@@ -100,6 +115,7 @@ public class MetacatInitializationService {
 
     /**
      * Metcat service shutdown.
+     *
      * @throws Exception error
      */
     public void stop() throws Exception {

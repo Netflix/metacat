@@ -176,4 +176,26 @@ public interface Config {
      * @return Max. number of in clause items in user metadata service queries
      */
     int getUserMetadataMaxInClauseItems();
+
+    /**
+     * Whether or not notifications should be published to SNS. If this is enabled the table topic ARN and
+     * partition topic arn must also exist or SNS won't be enabled.
+     *
+     * @return Whether SNS notifications should be enabled
+     */
+    boolean isSnsNotificationEnabled();
+
+    /**
+     * Get the AWS ARN for the SNS topic to publish to for table related notifications.
+     *
+     * @return The table topic ARN or null if no property set
+     */
+    String getSnsTopicTableArn();
+
+    /**
+     * Get the AWS ARN for the SNS topic to publish to for partition related notifications.
+     *
+     * @return The partition topic ARN or null if no property set
+     */
+    String getSnsTopicPartitionArn();
 }
