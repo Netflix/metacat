@@ -162,11 +162,6 @@ public interface Config {
      */
     String getMergeEsIndex();
     /**
-     * Is in elastic search migration.
-     * @return true if in elastic search migration mode
-     */
-    boolean isIndexMigration();
-    /**
      * Lifetime.
      * @return lifetime
      */

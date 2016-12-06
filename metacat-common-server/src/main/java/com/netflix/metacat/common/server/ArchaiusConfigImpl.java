@@ -32,8 +32,7 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicStringProperty defaultTypeConverter;
     private final DynamicBooleanProperty isElasticSearchEnabled;
     private final DynamicStringProperty elasticSearchIndexName;
-    private final DynamicBooleanProperty elasticsearchIndexMigration;
-    private final DynamicStringProperty elasticsearchMergeIndexName;
+    private final DynamicStringProperty elasticSearchMergeIndexName;
     private final DynamicStringProperty elasticSearchClusterName;
     private final DynamicStringProperty elasticSearchClusterNodes;
     private final DynamicIntProperty elasticSearchClusterPort;
@@ -82,8 +81,7 @@ public class ArchaiusConfigImpl implements Config {
             .getStringProperty("metacat.type.converter", "com.netflix.metacat.converters.impl.PrestoTypeConverter");
         this.isElasticSearchEnabled = factory.getBooleanProperty("metacat.elacticsearch.enabled", true);
         this.elasticSearchIndexName = factory.getStringProperty("metacat.elacticsearch.index.name", "metacat");
-        this.elasticsearchIndexMigration = factory.getBooleanProperty("metacat.elacticsearch.migration.enabled", false);
-        this.elasticsearchMergeIndexName =
+        this.elasticSearchMergeIndexName =
             factory.getStringProperty("metacat.elacticsearch.mergeindex.name", "metacat");
         this.elasticSearchClusterName = factory.getStringProperty("metacat.elacticsearch.cluster.name", null);
         this.elasticSearchClusterNodes = factory.getStringProperty("metacat.elacticsearch.cluster.nodes", null);
@@ -323,11 +321,6 @@ public class ArchaiusConfigImpl implements Config {
 
     @Override
     public String getMergeEsIndex() {
-        return elasticsearchMergeIndexName.get();
-    }
-
-    @Override
-    public boolean isIndexMigration() {
-        return elasticsearchIndexMigration.get();
+        return elasticSearchMergeIndexName.get();
     }
 }

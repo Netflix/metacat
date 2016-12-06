@@ -17,8 +17,7 @@ import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.Config
-import com.netflix.metacat.main.services.search.ElasticSearchMigrationUtil
-import com.netflix.metacat.main.services.search.ElasticSearchUtil
+import com.netflix.metacat.main.services.search.ElasticSearchUtilImpl
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
@@ -35,9 +34,11 @@ class BaseEsSpec extends Specification {
     @Shared
     Config config = Mock(Config)
     @Shared
-    ElasticSearchUtil es
+    Config config2 = Mock(Config)
     @Shared
-    ElasticSearchMigrationUtil esMig
+    ElasticSearchUtilImpl es
+    @Shared
+    ElasticSearchUtilImpl esMig
     @Shared
     MetacatJson metacatJson
     @Shared
@@ -71,9 +72,13 @@ class BaseEsSpec extends Specification {
 
         metacatJson = MetacatJsonLocator.INSTANCE
         config.getEsIndex() >> esIndex
-        config.getMergeEsIndex() >> esMergeIndex
-        es = new ElasticSearchUtil(client, config, metacatJson)
-        esMig = new ElasticSearchMigrationUtil(client, config, metacatJson);
+        config.isIndexMigration() >> false
+        es = new ElasticSearchUtilImpl(client, config, metacatJson)
+
+        config2.getEsIndex() >> esIndex
+        config2.getMergeEsIndex() >> esMergeIndex
+        config2.isIndexMigration() >> true
+        esMig = new ElasticSearchUtilImpl(client, config2, metacatJson)
     }
 
     def getFile(String name){
