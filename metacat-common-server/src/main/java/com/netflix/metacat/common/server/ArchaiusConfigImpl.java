@@ -326,7 +326,7 @@ public class ArchaiusConfigImpl implements Config {
     public int getUserMetadataMaxInClauseItems() {
         return userMetadataMaxInClauseItems.get();
     }
-    
+
     /**
      * {@inheritDoc}
      */
