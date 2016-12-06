@@ -177,7 +177,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
         if (ids != null && !ids.isEmpty()) {
             final List<List<String>> partitionedIds = Lists.partition(ids, 100);
             partitionedIds.forEach(subIds -> softDeleteDoc(type, subIds, metacatRequestContext));
-            ensureMigrationByCopy(type, ids);
+            partitionedIds.forEach(subIds -> ensureMigrationByCopy(type, subIds));
         }
     }
 
