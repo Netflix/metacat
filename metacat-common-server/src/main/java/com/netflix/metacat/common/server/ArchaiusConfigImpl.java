@@ -85,7 +85,7 @@ public class ArchaiusConfigImpl implements Config {
         this.isElasticSearchEnabled = factory.getBooleanProperty("metacat.elacticsearch.enabled", true);
         this.elasticSearchIndexName = factory.getStringProperty("metacat.elacticsearch.index.name", "metacat");
         this.elasticSearchMergeIndexName =
-            factory.getStringProperty("metacat.elacticsearch.mergeindex.name", "metacat");
+            factory.getStringProperty("metacat.elacticsearch.mergeindex.name", null);
         this.elasticSearchClusterName = factory.getStringProperty("metacat.elacticsearch.cluster.name", null);
         this.elasticSearchClusterNodes = factory.getStringProperty("metacat.elacticsearch.cluster.nodes", null);
         this.elasticSearchClusterPort = factory.getIntProperty("metacat.elacticsearch.cluster.port", 7102);
