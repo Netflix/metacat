@@ -88,7 +88,7 @@ public class TagV1Resource implements TagV1 {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
         return RequestWrapper.requestWrapper(name, "TagV1Resource.setTableTags", () -> {
-            if (tableService.exists(name)) {
+            if (!tableService.exists(name)) {
                 throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
             }
             final TableDto oldTable = this.tableService
