@@ -45,7 +45,7 @@ public class MySqlLookupService implements LookupService {
         "select id, name, type, created_by createdBy, last_updated_by lastUpdatedBy, date_created dateCreated,"
             + " last_updated lastUpdated from lookup where name=?";
     private static final String SQL_INSERT_LOOKUP =
-        "insert into loookup( name, version, type, created_by, last_updated_by, date_created, last_updated)"
+        "insert into lookup( name, version, type, created_by, last_updated_by, date_created, last_updated)"
             + " values (?,0,?,?,?,now(),now())";
     private static final String SQL_INSERT_LOOKUP_VALUES =
         "insert into lookup_values( lookup_id, values_string) values (?,?)";
