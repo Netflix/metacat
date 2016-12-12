@@ -104,7 +104,7 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         final StorageDto storageDto = toStorageDto(table.getSd(), table.getOwner());
         if (null != table.getTableType()
             && table.getTableType().equals(TableType.MANAGED_TABLE.toString())) {
-            if (storageDto.getParameters() == null) {
+            if (null == storageDto.getParameters()) {
                 storageDto.setParameters(Maps.newHashMap());
             }
             storageDto.getParameters().put(PARAMETER_EXTERNAL, String.valueOf(Boolean.FALSE));
@@ -189,7 +189,7 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         if (null != storageDto
             && null != storageDto.getParameters()
             && String.valueOf(Boolean.FALSE)
-            .equals(storageDto.getParameters().get(MapStructHiveConverters.PARAMETER_EXTERNAL))) {
+                .equals(storageDto.getParameters().get(MapStructHiveConverters.PARAMETER_EXTERNAL))) {
             table.setTableType(TableType.MANAGED_TABLE.toString());
         } else {
             table.setTableType(TableType.EXTERNAL_TABLE.toString());
