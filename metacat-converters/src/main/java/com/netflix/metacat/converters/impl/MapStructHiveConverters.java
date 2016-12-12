@@ -102,11 +102,11 @@ public abstract class MapStructHiveConverters implements HiveConverters {
     public TableDto hiveToMetacatTable(final QualifiedName name, final Table table) {
         final TableDto dto = new TableDto();
         final StorageDto storageDto = toStorageDto(table.getSd(), table.getOwner());
+        if (null == storageDto.getParameters()) {
+            storageDto.setParameters(Maps.newHashMap());
+        }
         if (null != table.getTableType()
             && table.getTableType().equals(TableType.MANAGED_TABLE.toString())) {
-            if (null == storageDto.getParameters()) {
-                storageDto.setParameters(Maps.newHashMap());
-            }
             storageDto.getParameters().put(PARAMETER_EXTERNAL, String.valueOf(Boolean.FALSE));
         } else {
             storageDto.getParameters().put(PARAMETER_EXTERNAL, String.valueOf(Boolean.TRUE));
