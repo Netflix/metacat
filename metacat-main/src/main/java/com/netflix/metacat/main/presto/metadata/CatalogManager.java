@@ -103,7 +103,7 @@ public class CatalogManager {
 
     private void loadCatalog(final File file)
         throws Exception {
-        log.info("-- Loading catalog %s --", file);
+        log.info("-- Loading catalog {} --", file);
         final Map<String, String> properties = new HashMap<>(loadProperties(file));
 
         final String connectorName = properties.remove("connector.name");
@@ -113,7 +113,7 @@ public class CatalogManager {
         final String catalogName = Files.getNameWithoutExtension(file.getName());
 
         connectorManager.createConnection(catalogName, connectorName, ImmutableMap.copyOf(properties));
-        log.info("-- Added catalog %s using connector %s --", catalogName, connectorName);
+        log.info("-- Added catalog {} using connector {} --", catalogName, connectorName);
     }
 
     private static List<File> listFiles(final File installedPluginsDir) {
