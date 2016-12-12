@@ -1,11 +1,11 @@
 package com.netflix.metacat.main.services.search;
 
-import com.facebook.presto.hadoop.shaded.com.google.common.base.Strings;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
@@ -632,7 +632,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      */
     private void copyDocToMergeIndex(final String type, final List<String> ids) {
         final List<ElasticSearchDoc> docs = new ArrayList<>();
-        ids.forEach(id-> {
+        ids.forEach(id -> {
             final ElasticSearchDoc doc = get(type, id);
             if (doc != null) {
                 docs.add(doc);
