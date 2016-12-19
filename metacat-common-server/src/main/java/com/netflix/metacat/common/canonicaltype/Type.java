@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.common.type;
+package com.netflix.metacat.common.canonicaltype;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,17 +20,12 @@ import java.util.List;
  * Canonical type interface.
  */
 public interface Type {
-    /**
-     * Get the base type.
-     * @return Base
-     */
-    Base getBaseType();
 
     /**
      * Returns the signature of this type that should be displayed to end-users.
      * @return signature
      */
-    String getSignature();
+    TypeSignature getTypeSignature();
 
     /**
      * Returns the list of parameters.

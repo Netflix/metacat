@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.common.type;
+package com.netflix.metacat.common.canonicaltype;
 
 /**
  Canonical base type class.
@@ -83,7 +83,6 @@ public enum Base {
     /** map type. */
     MAP("map", false, true);
 
-
     private final String type;
     private boolean isParametricType;
     private boolean isComplexType;
@@ -94,7 +93,7 @@ public enum Base {
     }
 
     /* signature of the type. */
-    public String getType() {
+    public String getBaseTypeDisplayName() {
         return type;
     }
 
