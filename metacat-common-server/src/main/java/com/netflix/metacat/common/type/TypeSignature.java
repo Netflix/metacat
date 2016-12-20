@@ -1,10 +1,10 @@
-package com.netflix.metacat.common.canonicaltype;
+package com.netflix.metacat.common.type;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -14,11 +14,11 @@ import java.util.Collections;
 /**
  * Created by zhenli on 12/15/16.
  */
-@Data
-public final class TypeSignature {
-    @Getter private final String base;
-    @Getter private final List<TypeSignature> parameters;
-    @Getter private final List<Object> literalParameters;
+@EqualsAndHashCode
+public class TypeSignature {
+    @Getter protected final String base;
+    protected final List<TypeSignature> parameters;
+    protected final List<Object> literalParameters;
 
     /**
      * Type signature constructor.
@@ -145,6 +145,19 @@ public final class TypeSignature {
             return Long.parseLong(literal);
         }
     }
+
+    public String getBase() {
+        return this.base;
+    }
+
+    public List<TypeSignature> getParameters() {
+        return parameters;
+    }
+
+    public List<Object> getLiteralParameters() {
+        return literalParameters;
+    }
+
 
     @Override
     @JsonValue

@@ -1,4 +1,4 @@
-package com.netflix.metacat.common.canonicaltype;
+package com.netflix.metacat.common.type;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -58,7 +58,7 @@ public final class DecimalType extends AbstractType implements ParametricType {
     }
 
     @Override
-    public String getName() {
+    public String getParametricTypeName() {
         return Base.DECIMAL.getBaseTypeDisplayName();
     }
 
@@ -68,10 +68,18 @@ public final class DecimalType extends AbstractType implements ParametricType {
             case 0:
                 return DecimalType.createDecimalType();
             case 1:
-                return DecimalType.createDecimalType(Integer.valueOf(String.valueOf(literals.get(0))));
+                try {
+                    return DecimalType.createDecimalType(Integer.valueOf(String.valueOf(literals.get(0))));
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Decimal precision must be a number");
+                }
             case 2:
-                return DecimalType.createDecimalType(Integer.valueOf(String.valueOf(literals.get(0))),
-                    Integer.valueOf(String.valueOf(literals.get(0))));
+                try {
+                    return DecimalType.createDecimalType(Integer.valueOf(String.valueOf(literals.get(0))),
+                        Integer.valueOf(String.valueOf(literals.get(0))));
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Decimal parameters must be a number");
+                }
             default:
                 throw new IllegalArgumentException("Expected 0, 1 or 2 parameters for DECIMAL type constructor.");
         }

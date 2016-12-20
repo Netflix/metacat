@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.common.canonicaltype;
+package com.netflix.metacat.common.type;
 
 /**
  Canonical base type class.
