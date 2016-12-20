@@ -11,9 +11,9 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonicaltype.converters;
+package com.netflix.metacat.canonical.converters;
 import com.google.common.collect.ImmutableList;
-import com.netflix.metacat.common.type.*;
+import com.netflix.metacat.canonical.type.*;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
@@ -22,11 +22,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardStructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
-
+import org.apache.hadoop.hive.serde2.typeinfo.*;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,7 +34,7 @@ import java.util.stream.Collectors;
 public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
 
     @Override
-    public Type dataTypeToCanonicalType(final String type, final TypeRegistry typeRegistry) {
+    public Type dataTypeToCanonicalType(final String type, final TypeManager typeRegistry) {
         // Hack to fix presto "varchar" type coming in with no length which is required by Hive.
         final TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(
             "varchar".equals(type) ? serdeConstants.STRING_TYPE_NAME : type);
@@ -56,21 +53,19 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
     @Override
     public String canonicalTypeToDataType(final Type type) {
         if (TypeMapping.getCanonicalToHiveType().containsKey(type)) {
-            if (BaseType.BOOLEAN.equals(type)) {
-                return serdeConstants.BOOLEAN_TYPE_NAME;
-            } else if (BaseType.TINYINT.equals(type)) {
-                return serdeConstants.TINYINT_TYPE_NAME;
-            }
-
+            return TypeMapping.getCanonicalToHiveType().get(type);
         }
         if (type instanceof DecimalType) {
             return ((DecimalType) type).getDisplayName();
+        }
+        else if (type instanceof CharType) {
+            return ((CharType) type).getDisplayName();
         }
         return null;
     }
 
     private static Type getPrimitiveType(final ObjectInspector fieldInspector) {
-        final PrimitiveObjectInspector.PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) fieldInspector)
+        final PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) fieldInspector)
             .getPrimitiveCategory();
         switch (primitiveCategory) {
             case BOOLEAN:
@@ -98,6 +93,9 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
                 final DecimalTypeInfo decimalTypeInfo = (DecimalTypeInfo) ((PrimitiveObjectInspector) fieldInspector)
                     .getTypeInfo();
                 return DecimalType.createDecimalType(decimalTypeInfo.precision(), decimalTypeInfo.getScale());
+            case CHAR:
+                final int cLength = ((CharTypeInfo) ((PrimitiveObjectInspector) fieldInspector).getTypeInfo()).getLength();
+                return CharType.createCharType(cLength);
         }
         return null;
     }
@@ -109,7 +107,7 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
      * @param typeRegistry type manager
      * @return type
      */
-    public Type getCanonicalType(final ObjectInspector fieldInspector, final TypeRegistry typeRegistry) {
+    public Type getCanonicalType(final ObjectInspector fieldInspector, final TypeManager typeRegistry) {
         switch (fieldInspector.getCategory()) {
             case PRIMITIVE:
                 return getPrimitiveType(fieldInspector);

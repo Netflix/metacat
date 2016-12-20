@@ -1,9 +1,9 @@
-package com.netflix.metacat.canonicaltype.converters;
+package com.netflix.metacat.canonical.converters;
 
 import com.google.common.collect.ImmutableMap;
-import com.netflix.metacat.common.type.Base;
-import com.netflix.metacat.common.type.BaseType;
-import com.netflix.metacat.common.type.Type;
+import com.netflix.metacat.canonical.type.Base;
+import com.netflix.metacat.canonical.type.BaseType;
+import com.netflix.metacat.canonical.type.Type;
 import org.apache.hadoop.hive.serde.serdeConstants;
 
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.netflix.metacat.common.type;
+package com.netflix.metacat.canonical.type;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;

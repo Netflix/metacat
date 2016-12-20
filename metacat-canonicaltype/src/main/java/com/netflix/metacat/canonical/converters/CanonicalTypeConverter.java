@@ -1,7 +1,7 @@
-package com.netflix.metacat.canonicaltype.converters;
+package com.netflix.metacat.canonical.converters;
 
-import com.netflix.metacat.common.type.Type;
-import com.netflix.metacat.common.type.TypeRegistry;
+import com.netflix.metacat.canonical.type.Type;
+import com.netflix.metacat.canonical.type.TypeManager;
 
 /**
  * Created by zhenli on 12/18/16.
@@ -12,7 +12,7 @@ public interface CanonicalTypeConverter {
      * @param type type
      * @return canonical type
      */
-    Type dataTypeToCanonicalType(String type, TypeRegistry typeRegistry);
+    Type dataTypeToCanonicalType(String type, TypeManager typeRegistry);
 
     /**
      * Converts from canonical type.

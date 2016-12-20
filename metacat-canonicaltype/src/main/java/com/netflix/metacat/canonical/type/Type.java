@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.common.type;
+package com.netflix.metacat.canonical.type;
 
 import java.util.Collections;
 import java.util.List;

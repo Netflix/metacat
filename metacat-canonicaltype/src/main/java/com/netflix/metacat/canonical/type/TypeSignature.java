@@ -1,4 +1,4 @@
-package com.netflix.metacat.common.type;
+package com.netflix.metacat.canonical.type;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -15,8 +15,9 @@ import java.util.Collections;
  * Created by zhenli on 12/15/16.
  */
 @EqualsAndHashCode
+@Getter
 public class TypeSignature {
-    @Getter protected final String base;
+    protected final String base;
     protected final List<TypeSignature> parameters;
     protected final List<Object> literalParameters;
 
@@ -145,19 +146,6 @@ public class TypeSignature {
             return Long.parseLong(literal);
         }
     }
-
-    public String getBase() {
-        return this.base;
-    }
-
-    public List<TypeSignature> getParameters() {
-        return parameters;
-    }
-
-    public List<Object> getLiteralParameters() {
-        return literalParameters;
-    }
-
 
     @Override
     @JsonValue

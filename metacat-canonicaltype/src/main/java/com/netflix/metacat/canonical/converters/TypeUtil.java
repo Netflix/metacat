@@ -1,4 +1,4 @@
-package com.netflix.metacat.canonicaltype.converters;
+package com.netflix.metacat.canonical.converters;
 
 import com.google.common.base.Preconditions;
 

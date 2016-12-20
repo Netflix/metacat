@@ -1,4 +1,4 @@
-package com.netflix.metacat.common.type;
+package com.netflix.metacat.canonical.type;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
