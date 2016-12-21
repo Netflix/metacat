@@ -326,38 +326,36 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      * @param type index type
      * @param docs metacat documents
      */
-    void bulkSaveToIndex(final String type, final List<ElasticSearchDoc> docs, final String...indices) {
+    void bulkSaveToIndex(final String type, final List<ElasticSearchDoc> docs, final String index) {
         if (docs != null && !docs.isEmpty()) {
-            for (String index : indices) {
-                try {
-                    RETRY_ES_PUBLISH.call(() -> {
-                        final BulkRequestBuilder bulkRequest = client.prepareBulk();
-                        docs.forEach(doc -> bulkRequest.add(client.prepareIndex(index, type, doc.getId())
-                            .setSource(doc.toJsonString())));
-                        if (bulkRequest.numberOfActions() > 0) {
-                            final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-                            log.debug("Bulk saving metadata of index{} type {} with size {}.",
-                                index, type, docs.size());
-                            if (bulkResponse.hasFailures()) {
-                                for (BulkItemResponse item : bulkResponse.getItems()) {
-                                    if (item.isFailed()) {
-                                        log.error("Failed saving metadata of {} index type {} with id {}. Message: {}",
-                                            index, type, item.getId(), item.getFailureMessage());
-                                        CounterWrapper.incrementCounter("dse.metacat.esSaveFailure");
-                                        log("ElasticSearchUtil.bulkSave", type, item.getId(), null,
-                                            item.getFailureMessage(), null, true, index);
-                                    }
+            try {
+                RETRY_ES_PUBLISH.call(() -> {
+                    final BulkRequestBuilder bulkRequest = client.prepareBulk();
+                    docs.forEach(doc -> bulkRequest.add(client.prepareIndex(index, type, doc.getId())
+                        .setSource(doc.toJsonString())));
+                    if (bulkRequest.numberOfActions() > 0) {
+                        final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                        log.debug("Bulk saving metadata of index{} type {} with size {}.",
+                            index, type, docs.size());
+                        if (bulkResponse.hasFailures()) {
+                            for (BulkItemResponse item : bulkResponse.getItems()) {
+                                if (item.isFailed()) {
+                                    log.error("Failed saving metadata of {} index type {} with id {}. Message: {}",
+                                        index, type, item.getId(), item.getFailureMessage());
+                                    CounterWrapper.incrementCounter("dse.metacat.esSaveFailure");
+                                    log("ElasticSearchUtil.bulkSave", type, item.getId(), null,
+                                        item.getFailureMessage(), null, true, index);
                                 }
                             }
                         }
-                        return null;
-                    });
-                } catch (Exception e) {
-                    log.error(String.format("Failed saving metadatas of index %s type %s", index, type), e);
-                    CounterWrapper.incrementCounter("dse.metacat.esBulkSaveFailure");
-                    final List<String> docIds = docs.stream().map(ElasticSearchDoc::getId).collect(Collectors.toList());
-                    log("ElasticSearchUtil.bulkSave", type, docIds.toString(), null, e.getMessage(), e, true, index);
-                }
+                    }
+                    return null;
+                });
+            } catch (Exception e) {
+                log.error(String.format("Failed saving metadatas of index %s type %s", index, type), e);
+                CounterWrapper.incrementCounter("dse.metacat.esBulkSaveFailure");
+                final List<String> docIds = docs.stream().map(ElasticSearchDoc::getId).collect(Collectors.toList());
+                log("ElasticSearchUtil.bulkSave", type, docIds.toString(), null, e.getMessage(), e, true, index);
             }
         }
     }
