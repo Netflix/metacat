@@ -5,6 +5,7 @@ import com.netflix.metacat.canonical.type.Base;
 import com.netflix.metacat.canonical.type.BaseType;
 import com.netflix.metacat.canonical.type.Type;
 import org.apache.hadoop.hive.serde.serdeConstants;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 
 import java.util.Map;
 
@@ -27,20 +28,25 @@ public class TypeMapping {
         .build();
 
     private static final Map<String, Type> HIVETOCANONICAL = ImmutableMap.<String, Type>builder()
-        .put(Base.BOOLEAN.getBaseTypeDisplayName(), BaseType.BOOLEAN)
-        .put(Base.TINYINT.getBaseTypeDisplayName(), BaseType.TINYINT)
-        .put(Base.SMALLINT.getBaseTypeDisplayName(), BaseType.SMALLINT)
-        .put(Base.INT.getBaseTypeDisplayName(), BaseType.INT)
-        .put(Base.BIGINT.getBaseTypeDisplayName(), BaseType.BIGINT)
-        .put(Base.FLOAT.getBaseTypeDisplayName(), BaseType.FLOAT)
-        .put(Base.DOUBLE.getBaseTypeDisplayName(), BaseType.DOUBLE)
+        .put(PrimitiveCategory.BOOLEAN.name(), BaseType.BOOLEAN)
+        .put(PrimitiveCategory.BYTE.name(), BaseType.TINYINT)
+        .put(PrimitiveCategory.SHORT.name(), BaseType.SMALLINT)
+        .put(PrimitiveCategory.INT.name(), BaseType.INT)
+        .put(PrimitiveCategory.LONG.name(), BaseType.BIGINT)
+        .put(PrimitiveCategory.FLOAT.name(), BaseType.FLOAT)
+        .put(PrimitiveCategory.DOUBLE.name(), BaseType.DOUBLE)
+        .put(PrimitiveCategory.DATE.name(), BaseType.DATE)
+        .put(PrimitiveCategory.TIMESTAMP.name(), BaseType.TIMESTAMP)
+        .put(PrimitiveCategory.BINARY.name(), BaseType.VARBINARY)
+        .put(PrimitiveCategory.VOID.name(), BaseType.VARBINARY)
+        .put(PrimitiveCategory.STRING.name(), BaseType.STRING)
+
 //        .put(Base.DECIMAL, BaseType.DECIMAL)
 //        .put(Base.CHAR, BaseType.CHAR)
 //        .put(Base.VARCHAR, BaseType.VARCHAR)
-        .put(Base.STRING.getBaseTypeDisplayName(), BaseType.STRING)
-        .put("binary", BaseType.VARBINARY)
+
         .put(Base.DATE.getBaseTypeDisplayName(), BaseType.DATE)
-        .put(Base.TIMESTAMP.getBaseTypeDisplayName(), BaseType.TIMESTAMP)
+
         .build();
 
     /**

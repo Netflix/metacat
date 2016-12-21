@@ -31,6 +31,9 @@ public class TypeRegistry implements TypeManager {
         addType(BaseType.BIGINT);
         addType(BaseType.BOOLEAN);
         addType(BaseType.FLOAT);
+        addType(BaseType.DOUBLE);
+        addType(BaseType.DATE);
+        addType(BaseType.VARBINARY);
         addType(BaseType.INT);
         addType(BaseType.SMALLINT);
         addType(BaseType.TINYINT);

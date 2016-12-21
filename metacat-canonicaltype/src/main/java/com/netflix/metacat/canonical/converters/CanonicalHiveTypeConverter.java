@@ -72,28 +72,10 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
     private static Type getPrimitiveType(final ObjectInspector fieldInspector) {
         final PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) fieldInspector)
             .getPrimitiveCategory();
+        if (TypeMapping.getHiveToCanonical().containsKey(primitiveCategory.name())) {
+            return TypeMapping.getHiveToCanonical().get(primitiveCategory.name());
+        }
         switch (primitiveCategory) {
-            case BOOLEAN:
-                return BaseType.BOOLEAN;
-            case BYTE:
-                return BaseType.TINYINT;
-            case SHORT:
-                return BaseType.SMALLINT;
-            case INT:
-                return BaseType.INT;
-            case LONG:
-                return BaseType.BIGINT;
-            case FLOAT:
-                return BaseType.FLOAT;
-            case DOUBLE:
-                return BaseType.DOUBLE;
-            case DATE:
-                return BaseType.DATE;
-            case TIMESTAMP:
-                return BaseType.TIMESTAMP;
-            case BINARY:
-            case VOID://not sure?
-                return BaseType.VARBINARY;
             case DECIMAL:
                 final DecimalTypeInfo decimalTypeInfo = (DecimalTypeInfo) ((PrimitiveObjectInspector) fieldInspector)
                     .getTypeInfo();
