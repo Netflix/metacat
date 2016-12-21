@@ -29,7 +29,14 @@ class CanonicalHiveTypeConverterSpec extends Specification {
 //            'boolean',
 //            'decimal',
 //            'decimal(5,2)',
-            'char(10)'
+            'char(10)',
+            'map<boolean,boolean>',
+//            'map<boolean,string>',
+//            'map<bigint,bigint>',
+//            'map<string,double>',
+//            'map<string,bigint>',
+//            'map<string,string>',
+//            'map<string,struct<field1:array<bigint>>>'
         ]
     }
 

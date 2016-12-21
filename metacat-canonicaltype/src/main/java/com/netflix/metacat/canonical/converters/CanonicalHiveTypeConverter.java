@@ -61,6 +61,11 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
         else if (type instanceof CharType) {
             return ((CharType) type).getDisplayName();
         }
+        else if (type.getTypeSignature().getBase().equals(Base.MAP.getBaseTypeDisplayName())) {
+            final MapType mapType = (MapType) type;
+            return "map<" + canonicalTypeToDataType(mapType.getKeyType())
+                + "," + canonicalTypeToDataType(mapType.getValueType()) + ">";
+        }
         return null;
     }
 
