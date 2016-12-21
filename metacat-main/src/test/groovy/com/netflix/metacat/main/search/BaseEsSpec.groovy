@@ -72,12 +72,10 @@ class BaseEsSpec extends Specification {
 
         metacatJson = MetacatJsonLocator.INSTANCE
         config.getEsIndex() >> esIndex
-        config.isIndexMigration() >> false
         es = new ElasticSearchUtilImpl(client, config, metacatJson)
 
         config2.getEsIndex() >> esIndex
         config2.getMergeEsIndex() >> esMergeIndex
-        config2.isIndexMigration() >> true
         esMig = new ElasticSearchUtilImpl(client, config2, metacatJson)
     }
 
