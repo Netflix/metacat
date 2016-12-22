@@ -49,6 +49,7 @@ public class TypeRegistry implements TypeManager {
         addParametricType(DecimalType.DECIMAL);
         addParametricType(CharType.CHAR);
         addParametricType(MapType.MAP);
+        addParametricType(RowType.ROW);
     }
 
     @Override

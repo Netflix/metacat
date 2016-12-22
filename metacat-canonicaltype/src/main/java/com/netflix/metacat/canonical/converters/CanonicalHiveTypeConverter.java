@@ -57,16 +57,30 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
         }
         if (type instanceof DecimalType) {
             return ((DecimalType) type).getDisplayName();
-        }
-        else if (type instanceof CharType) {
+        } else if (type instanceof CharType) {
             return ((CharType) type).getDisplayName();
-        }
-        else if (type.getTypeSignature().getBase().equals(Base.MAP.getBaseTypeDisplayName())) {
+        } else if (type.getTypeSignature().getBase().equals(Base.MAP.getBaseTypeDisplayName())) {
             final MapType mapType = (MapType) type;
             return "map<" + canonicalTypeToDataType(mapType.getKeyType())
                 + "," + canonicalTypeToDataType(mapType.getValueType()) + ">";
+        } else if (type.getTypeSignature().getBase().equals(Base.ROW.getBaseTypeDisplayName())) {
+            final RowType rowType = (RowType) type;
+            final String typeString = rowType.getFields()
+                .stream()
+                .map(this::rowFieldToString)
+                .collect(Collectors.joining(","));
+            return "struct<" + typeString + ">";
         }
         return null;
+    }
+
+    private String rowFieldToString(final RowType.RowField rowField) {
+        String prefix = "";
+        if (rowField.getName().isPresent()) {
+            prefix = rowField.getName().get() + ":";
+        }
+
+        return prefix + canonicalTypeToDataType(rowField.getType());
     }
 
     private static Type getPrimitiveType(final ObjectInspector fieldInspector) {
@@ -81,10 +95,12 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
                     .getTypeInfo();
                 return DecimalType.createDecimalType(decimalTypeInfo.precision(), decimalTypeInfo.getScale());
             case CHAR:
-                final int cLength = ((CharTypeInfo) ((PrimitiveObjectInspector) fieldInspector).getTypeInfo()).getLength();
+                final int cLength = ((CharTypeInfo) ((PrimitiveObjectInspector)
+                    fieldInspector).getTypeInfo()).getLength();
                 return CharType.createCharType(cLength);
+            default:
+                return null;
         }
-        return null;
     }
 
     /**
@@ -99,7 +115,8 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
             case PRIMITIVE:
                 return getPrimitiveType(fieldInspector);
             case MAP:
-                final MapObjectInspector mapObjectInspector = TypeUtil.checkType(fieldInspector, MapObjectInspector.class,
+                final MapObjectInspector mapObjectInspector =
+                    TypeUtil.checkType(fieldInspector, MapObjectInspector.class,
                     "fieldInspector");
                 final Type keyType = getCanonicalType(mapObjectInspector.getMapKeyObjectInspector(), typeRegistry);
                 final Type valueType = getCanonicalType(mapObjectInspector.getMapValueObjectInspector(), typeRegistry);
@@ -109,9 +126,11 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
                 return typeRegistry.getParameterizedType(Base.MAP.getBaseTypeDisplayName(),
                     ImmutableList.of(keyType.getTypeSignature(), valueType.getTypeSignature()), ImmutableList.of());
             case LIST:
-                final ListObjectInspector listObjectInspector = TypeUtil.checkType(fieldInspector, ListObjectInspector.class,
+                final ListObjectInspector listObjectInspector =
+                    TypeUtil.checkType(fieldInspector, ListObjectInspector.class,
                     "fieldInspector");
-                final Type elementType = getCanonicalType(listObjectInspector.getListElementObjectInspector(), typeRegistry);
+                final Type elementType =
+                    getCanonicalType(listObjectInspector.getListElementObjectInspector(), typeRegistry);
                 if (elementType == null) {
                     return null;
                 }

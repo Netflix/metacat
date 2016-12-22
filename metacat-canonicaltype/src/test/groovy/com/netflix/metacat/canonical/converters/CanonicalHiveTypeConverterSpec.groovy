@@ -24,19 +24,25 @@ class CanonicalHiveTypeConverterSpec extends Specification {
         prestoTypeFromHiveType == prestoType
         where:
         typeString << [
-            'tinyint',
-            'smallint',
-            'boolean',
-            'decimal',
-            'decimal(5,2)',
-           'char(10)',
-            'map<boolean,boolean>',
-            'map<boolean,string>',
-            'map<bigint,bigint>',
-            'map<string,double>',
-            'map<string,bigint>',
-            'map<string,string>',
-//            'map<string,struct<field1:array<bigint>>>'
+//            'tinyint',
+//            'smallint',
+//            'boolean',
+//            'decimal',
+//            'decimal(5,2)',
+//           'char(10)',
+//            'map<boolean,boolean>',
+//            'map<boolean,string>',
+//            'map<bigint,bigint>',
+//            'map<string,double>',
+//            'map<string,bigint>',
+//            'map<string,string>',
+            'struct<field1:bigint,field2:bigint,field3:bigint>',
+            'struct<field1:bigint,field2:string,field3:double>',
+            'struct<field1:bigint,field2:string,field3:string>',
+            'struct<field1:string,field2:bigint,field3:bigint>',
+            'struct<field1:string,field2:string,field3:bigint>',
+            'struct<field1:string,field2:string,field3:string>',
+    //        'map<string,struct<field1:array<bigint>>>'
         ]
     }
 
