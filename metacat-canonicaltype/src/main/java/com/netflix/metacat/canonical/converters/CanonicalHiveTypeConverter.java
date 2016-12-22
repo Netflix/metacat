@@ -69,8 +69,8 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
 
     @Override
     public String canonicalTypeToDataType(final Type type) {
-        if (TypeMapping.getCanonicalToHiveType().containsKey(type)) {
-            return TypeMapping.getCanonicalToHiveType().get(type);
+        if (TypeMapping.getCanonicalToHive().containsKey(type)) {
+            return TypeMapping.getCanonicalToHive().get(type);
         }
         if (type instanceof DecimalType) {
             return ((DecimalType) type).getDisplayName();

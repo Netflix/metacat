@@ -2,6 +2,7 @@ package com.netflix.metacat.canonical.type;
 
 import com.google.common.collect.ImmutableList;
 
+import java.util.Collection;
 import java.util.stream.Collector;
 
 /**
@@ -39,5 +40,12 @@ public final class TypeUtils {
             ImmutableList.Builder::build);
     }
 
-
+    /**
+     * Check if the collection is null or empty.
+     * @param collection
+     * @return
+     */
+    public static boolean isNullOrEmpty( final Collection< ? > collection ) {
+        return collection == null || collection.isEmpty();
+    }
 }

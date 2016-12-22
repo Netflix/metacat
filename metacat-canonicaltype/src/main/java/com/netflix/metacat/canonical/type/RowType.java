@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import lombok.Getter;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +17,7 @@ import com.netflix.metacat.canonical.converters.TypeUtil;
  */
 public class RowType extends AbstractType implements ParametricType {
     /** default type. */
-    public static final RowType ROW = new RowType(Arrays.asList(BaseType.UNKNOWN), Optional.empty());
+    public static final RowType ROW = new RowType(Collections.emptyList(), Optional.empty());
 
     @Getter
     private final List<RowField> fields;

@@ -18,10 +18,10 @@ class CanonicalHiveTypeConverterSpec extends Specification {
     @Unroll
     def 'can convert "#typeString" to a presto type and back'(String typeString) {
         expect:
-        def prestoType = converter.dataTypeToCanonicalType(typeString, typeManager)
-        def hiveType = converter.canonicalTypeToDataType(prestoType)
-        def prestoTypeFromHiveType = converter.dataTypeToCanonicalType(hiveType, typeManager)
-        prestoTypeFromHiveType == prestoType
+        def canonicalType = converter.dataTypeToCanonicalType(typeString, typeManager)
+        def hiveType = converter.canonicalTypeToDataType( canonicalType)
+        def canonicalTypeFromHiveType = converter.dataTypeToCanonicalType(hiveType, typeManager)
+        canonicalTypeFromHiveType ==  canonicalType
         where:
         typeString << [
             'tinyint',

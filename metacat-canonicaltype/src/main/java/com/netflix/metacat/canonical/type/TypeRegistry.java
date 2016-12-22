@@ -24,7 +24,6 @@ public class TypeRegistry implements TypeManager {
     public TypeRegistry() {
         Preconditions.checkNotNull(types, "types is null");
         addType(BaseType.UNKNOWN);
-
         addType(BaseType.BIGINT);
         addType(BaseType.BOOLEAN);
         addType(BaseType.FLOAT);
