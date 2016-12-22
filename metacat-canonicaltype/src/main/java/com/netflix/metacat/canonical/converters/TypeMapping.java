@@ -12,7 +12,9 @@ import java.util.Map;
 /**
  * Created by zhenli on 12/20/16.
  */
-public class TypeMapping {
+
+public final class TypeMapping {
+
     private static final Map<Type, String> CANONICALTOHIVE = ImmutableMap.<Type, String>builder()
         .put(BaseType.TINYINT, serdeConstants.TINYINT_TYPE_NAME)
         .put(BaseType.SMALLINT, serdeConstants.SMALLINT_TYPE_NAME)
@@ -49,8 +51,12 @@ public class TypeMapping {
 
         .build();
 
+    private TypeMapping() {
+    }
+
     /**
      * Get canonical type to hive type mapping.
+     *
      * @return mapping from canonical type to hive type
      */
     public static Map<Type, String> getCanonicalToHiveType() {
@@ -59,6 +65,7 @@ public class TypeMapping {
 
     /**
      * Get hive type from to canonical type mapping.
+     *
      * @return mapping from hive to canonical type
      */
     public static Map<String, Type> getHiveToCanonical() {

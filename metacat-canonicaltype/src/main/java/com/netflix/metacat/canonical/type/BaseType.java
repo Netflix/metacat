@@ -83,15 +83,18 @@ public class BaseType extends AbstractType {
     /**
      * TIMESTAMP_WITH_TIME_ZONE type.
      */
-    public static final Type TIMESTAMP_WITH_TIME_ZONE = createBaseType(Base.TIMESTAMP_WITH_TIME_ZONE.getBaseTypeDisplayName());
+    public static final Type TIMESTAMP_WITH_TIME_ZONE =
+        createBaseType(Base.TIMESTAMP_WITH_TIME_ZONE.getBaseTypeDisplayName());
     /**
      * INTERVAL_YEAR_TO_MONTH type.
      */
-    public static final Type INTERVAL_YEAR_TO_MONTH = createBaseType(Base.INTERVAL_YEAR_TO_MONTH.getBaseTypeDisplayName());
+    public static final Type INTERVAL_YEAR_TO_MONTH =
+        createBaseType(Base.INTERVAL_YEAR_TO_MONTH.getBaseTypeDisplayName());
     /**
      * INTERVAL_DAY_TO_SECOND type.
      */
-    public static final Type INTERVAL_DAY_TO_SECOND = createBaseType(Base.INTERVAL_DAY_TO_SECOND.getBaseTypeDisplayName());
+    public static final Type INTERVAL_DAY_TO_SECOND =
+        createBaseType(Base.INTERVAL_DAY_TO_SECOND.getBaseTypeDisplayName());
 //    /**
 //     * DECIMAL type.
 //     */
@@ -103,10 +106,15 @@ public class BaseType extends AbstractType {
      */
     public static final Type UNKNOWN = createBaseType(Base.UNKNOWN.getBaseTypeDisplayName());
 
-    @Getter protected final List<Type> parameters;
-    @Getter@Setter private String sourceType;
+    @Getter
+    protected final List<Type> parameters;
+    @Getter
+    @Setter
+    private String sourceType;
+
     /**
      * BaseType constructor.
+     *
      * @param signature base type
      */
     public BaseType(final TypeSignature signature) {
@@ -115,7 +123,8 @@ public class BaseType extends AbstractType {
 
     /**
      * BaseType constructor.
-     * @param signature base type
+     *
+     * @param signature  base type
      * @param sourceType sourcetype
      */
     public BaseType(final TypeSignature signature, final String sourceType) {

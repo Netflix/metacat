@@ -12,8 +12,18 @@
  */
 
 package com.netflix.metacat.canonical.converters;
+
 import com.google.common.collect.ImmutableList;
-import com.netflix.metacat.canonical.type.*;
+import com.netflix.metacat.canonical.type.Type;
+import com.netflix.metacat.canonical.type.TypeManager;
+import com.netflix.metacat.canonical.type.CharType;
+import com.netflix.metacat.canonical.type.DecimalType;
+import com.netflix.metacat.canonical.type.VarcharType;
+import com.netflix.metacat.canonical.type.MapType;
+import com.netflix.metacat.canonical.type.RowType;
+import com.netflix.metacat.canonical.type.TypeSignature;
+import com.netflix.metacat.canonical.type.Base;
+
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
@@ -22,8 +32,15 @@ import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardStructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.typeinfo.*;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
+import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
+
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,7 +77,7 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
         } else if (type instanceof CharType) {
             return ((CharType) type).getDisplayName();
         } else if (type instanceof VarcharType) {
-                return ((VarcharType) type).getDisplayName();
+            return ((VarcharType) type).getDisplayName();
         } else if (type.getTypeSignature().getBase().equals(Base.MAP.getBaseTypeDisplayName())) {
             final MapType mapType = (MapType) type;
             return "map<" + canonicalTypeToDataType(mapType.getKeyType())
@@ -116,17 +133,17 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
      * Returns the canonical type.
      *
      * @param fieldInspector inspector
-     * @param typeRegistry type manager
+     * @param typeRegistry   type manager
      * @return type
      */
-    public Type getCanonicalType(final ObjectInspector fieldInspector, final TypeManager typeRegistry) {
+    Type getCanonicalType(final ObjectInspector fieldInspector, final TypeManager typeRegistry) {
         switch (fieldInspector.getCategory()) {
             case PRIMITIVE:
                 return getPrimitiveType(fieldInspector);
             case MAP:
                 final MapObjectInspector mapObjectInspector =
                     TypeUtil.checkType(fieldInspector, MapObjectInspector.class,
-                    "fieldInspector");
+                        "fieldInspector");
                 final Type keyType = getCanonicalType(mapObjectInspector.getMapKeyObjectInspector(), typeRegistry);
                 final Type valueType = getCanonicalType(mapObjectInspector.getMapValueObjectInspector(), typeRegistry);
                 if (keyType == null || valueType == null) {
@@ -137,7 +154,7 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
             case LIST:
                 final ListObjectInspector listObjectInspector =
                     TypeUtil.checkType(fieldInspector, ListObjectInspector.class,
-                    "fieldInspector");
+                        "fieldInspector");
                 final Type elementType =
                     getCanonicalType(listObjectInspector.getListElementObjectInspector(), typeRegistry);
                 if (elementType == null) {

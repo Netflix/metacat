@@ -23,6 +23,7 @@ public class TypeSignature {
 
     /**
      * Type signature constructor.
+     *
      * @param base basetype
      */
     public TypeSignature(final String base) {
@@ -31,10 +32,12 @@ public class TypeSignature {
         this.parameters = Lists.newArrayList();
         this.literalParameters = Lists.newArrayList();
     }
+
     /**
      * Type signature constructor.
-     * @param base base type
-     * @param parameters type parameter
+     *
+     * @param base              base type
+     * @param parameters        type parameter
      * @param literalParameters literal parameter
      */
     public TypeSignature(final String base, final List<TypeSignature> parameters,
@@ -66,6 +69,7 @@ public class TypeSignature {
 
     /**
      * Parse Type Signature.
+     *
      * @param signature signature string
      * @return TypeSignature
      */

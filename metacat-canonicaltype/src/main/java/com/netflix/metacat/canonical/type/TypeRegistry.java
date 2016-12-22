@@ -9,9 +9,6 @@ import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-
 
 /**
  * Type mapping between canonical and connector types.
@@ -92,6 +89,7 @@ public class TypeRegistry implements TypeManager {
 
     /**
      * Verify type class isn't null.
+     *
      * @param type parameter
      */
     public static void verifyTypeClass(final Type type) {
@@ -99,24 +97,25 @@ public class TypeRegistry implements TypeManager {
     }
 
 
-
     /**
      * Add valid type to registry.
+     *
      * @param type type
      */
     public void addType(final Type type) {
         verifyTypeClass(type);
         final Type existingType = types.putIfAbsent(type.getTypeSignature(), type);
-        checkState(existingType == null || existingType.equals(type), "Type %s is already registered", type);
+        Preconditions.checkState(existingType == null || existingType.equals(type), "Type %s is already registered", type);
     }
 
     /**
      * Add complex type to regiestry.
+     *
      * @param parametricType Type
      */
     public void addParametricType(final ParametricType parametricType) {
         final String name = parametricType.getParametricTypeName().toLowerCase(Locale.ENGLISH);
-        checkArgument(!parametricTypes.containsKey(name), "Parametric type already registered: %s", name);
+        Preconditions.checkArgument(!parametricTypes.containsKey(name), "Parametric type already registered: %s", name);
         parametricTypes.putIfAbsent(name, parametricType);
     }
 

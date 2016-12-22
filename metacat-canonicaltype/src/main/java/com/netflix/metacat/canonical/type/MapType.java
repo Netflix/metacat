@@ -2,7 +2,6 @@ package com.netflix.metacat.canonical.type;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +16,9 @@ import java.util.List;
 @Getter
 @Setter
 public class MapType extends AbstractType implements ParametricType {
-    /**default.*/
+    /**
+     * default.
+     */
     public static final MapType MAP = new MapType(BaseType.UNKNOWN, BaseType.UNKNOWN);
 
     private final Type keyType;
@@ -25,24 +26,25 @@ public class MapType extends AbstractType implements ParametricType {
 
     /**
      * Constructor.
-     * @param keyType keytype
+     *
+     * @param keyType   keytype
      * @param valueType valuetype
      */
     public MapType(final Type keyType, final Type valueType) {
-         super(TypeUtils.parameterizedTypeName("map", keyType.getTypeSignature(), valueType.getTypeSignature()));
-         this.keyType = keyType;
-         this.valueType = valueType;
+        super(TypeUtils.parameterizedTypeName("map", keyType.getTypeSignature(), valueType.getTypeSignature()));
+        this.keyType = keyType;
+        this.valueType = valueType;
     }
 
     @Override
     public String getDisplayName() {
-         return "map<" + keyType.getTypeSignature().toString()
+        return "map<" + keyType.getTypeSignature().toString()
             + ", " + valueType.getTypeSignature().toString() + ">";
     }
 
     @Override
     public List<Type> getParameters() {
-         return ImmutableList.of(getKeyType(), getValueType());
+        return ImmutableList.of(getKeyType(), getValueType());
     }
 
     @Override
@@ -51,7 +53,7 @@ public class MapType extends AbstractType implements ParametricType {
     }
 
     @Override
-    public Type createType(List<Type> types, List<Object> literals) {
+    public Type createType(final List<Type> types, final List<Object> literals) {
         Preconditions.checkArgument(types.size() == 2, "Expected two types");
         Preconditions.checkArgument(literals.isEmpty(), "Unexpected literals: %s", literals);
         return new MapType(types.get(0), types.get(1));

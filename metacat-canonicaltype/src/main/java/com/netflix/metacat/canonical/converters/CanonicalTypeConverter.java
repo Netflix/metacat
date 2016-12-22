@@ -10,12 +10,14 @@ public interface CanonicalTypeConverter {
     /**
      * Converts to canonical type.
      * @param type type
+     * @param typeRegistry typeRegistry
      * @return canonical type
      */
     Type dataTypeToCanonicalType(String type, TypeManager typeRegistry);
 
     /**
      * Converts from canonical type.
+     *
      * @param type type
      * @return connector type
      */
