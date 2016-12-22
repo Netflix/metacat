@@ -59,6 +59,8 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
             return ((DecimalType) type).getDisplayName();
         } else if (type instanceof CharType) {
             return ((CharType) type).getDisplayName();
+        } else if (type instanceof VarcharType) {
+                return ((VarcharType) type).getDisplayName();
         } else if (type.getTypeSignature().getBase().equals(Base.MAP.getBaseTypeDisplayName())) {
             final MapType mapType = (MapType) type;
             return "map<" + canonicalTypeToDataType(mapType.getKeyType())
@@ -70,6 +72,10 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
                 .map(this::rowFieldToString)
                 .collect(Collectors.joining(","));
             return "struct<" + typeString + ">";
+        } else if (type.getTypeSignature().getBase().equals(Base.ARRAY.getBaseTypeDisplayName())) {
+            final String typeString = type.getParameters().stream().map(this::canonicalTypeToDataType)
+                .collect(Collectors.joining(","));
+            return "array<" + typeString + ">";
         }
         return null;
     }
@@ -79,7 +85,6 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
         if (rowField.getName().isPresent()) {
             prefix = rowField.getName().get() + ":";
         }
-
         return prefix + canonicalTypeToDataType(rowField.getType());
     }
 
@@ -98,6 +103,10 @@ public class CanonicalHiveTypeConverter implements CanonicalTypeConverter {
                 final int cLength = ((CharTypeInfo) ((PrimitiveObjectInspector)
                     fieldInspector).getTypeInfo()).getLength();
                 return CharType.createCharType(cLength);
+            case VARCHAR:
+                final int vLength = ((VarcharTypeInfo) ((PrimitiveObjectInspector) fieldInspector)
+                    .getTypeInfo()).getLength();
+                return VarcharType.createVarcharType(vLength);
             default:
                 return null;
         }

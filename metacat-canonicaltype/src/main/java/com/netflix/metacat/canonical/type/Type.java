@@ -31,7 +31,7 @@ public interface Type {
      * Returns the list of parameters.
      * @return List of paramenters
      */
-    default List<Object> getParameters() {
+    default List<Type> getParameters() {
         return Collections.emptyList();
     }
 

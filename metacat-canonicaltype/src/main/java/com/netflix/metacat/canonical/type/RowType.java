@@ -64,7 +64,14 @@ public class RowType extends AbstractType implements ParametricType {
         }
         return new RowType(types, Optional.of(builder.build()));
     }
-    
+
+    @Override
+    public List<Type> getParameters() {
+         return fields.stream()
+            .map(RowField::getType)
+            .collect(TypeUtils.toImmutableList());
+    }
+
     /**
      * Row field.
      */

@@ -50,6 +50,7 @@ public class TypeRegistry implements TypeManager {
         addParametricType(CharType.CHAR);
         addParametricType(MapType.MAP);
         addParametricType(RowType.ROW);
+        addParametricType(ArrayType.ARRAY);
     }
 
     @Override

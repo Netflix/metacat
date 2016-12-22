@@ -103,7 +103,7 @@ public class BaseType extends AbstractType {
      */
     public static final Type UNKNOWN = createBaseType(Base.UNKNOWN.getBaseTypeDisplayName());
 
-    @Getter protected final List<Object> parameters;
+    @Getter protected final List<Type> parameters;
     @Getter@Setter private String sourceType;
     /**
      * BaseType constructor.

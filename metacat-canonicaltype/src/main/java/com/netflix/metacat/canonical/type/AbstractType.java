@@ -4,6 +4,10 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * AbstractType.
  */
@@ -36,5 +40,10 @@ public abstract class AbstractType implements Type {
      */
     public String getDisplayName() {
         return signature.toString();
+    }
+
+    @Override
+    public List<Type> getParameters() {
+        return Collections.unmodifiableList(new ArrayList<>());
     }
 }
