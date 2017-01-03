@@ -13,8 +13,8 @@
 
 package com.netflix.metacat.canonical.typeconverters;
 
-import com.netflix.metacat.canonical.type.Type;
-import com.netflix.metacat.canonical.type.TypeManager;
+import com.netflix.metacat.canonical.types.Type;
+import com.netflix.metacat.canonical.types.TypeManager;
 
 /**
  * Created by zhenli on 12/18/16.

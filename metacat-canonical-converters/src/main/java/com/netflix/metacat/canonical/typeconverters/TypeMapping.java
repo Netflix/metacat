@@ -14,9 +14,9 @@
 package com.netflix.metacat.canonical.typeconverters;
 
 import com.google.common.collect.ImmutableMap;
-import com.netflix.metacat.canonical.type.Base;
-import com.netflix.metacat.canonical.type.BaseType;
-import com.netflix.metacat.canonical.type.Type;
+import com.netflix.metacat.canonical.types.Base;
+import com.netflix.metacat.canonical.types.BaseType;
+import com.netflix.metacat.canonical.types.Type;
 import lombok.Getter;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;

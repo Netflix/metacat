@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.typeconverters;
+package com.netflix.metacat.canonical.metacatconverters;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -51,7 +51,7 @@ public class HiveMetacatConverterImpl implements HiveMetacatConverters {
 
     @VisibleForTesting
     Integer dateToEpochSeconds(final Date date) {
-        return  null == date ? null : Math.toIntExact(date.toInstant().getEpochSecond());
+        return null == date ? null : Math.toIntExact(date.toInstant().getEpochSecond());
     }
 
     private Date epochSecondsToDate(final long seconds) {
@@ -59,13 +59,12 @@ public class HiveMetacatConverterImpl implements HiveMetacatConverters {
     }
 
     private FieldDto hiveToMetacatField(final FieldSchema field, final boolean isPartitionKey) {
-        final FieldDto dto = new FieldDto();
-        dto.setName(field.getName());
-        dto.setType(field.getType());
-        dto.setSource_type(field.getType());
-        dto.setComment(field.getComment());
-        dto.setPartition_key(isPartitionKey);
-        return dto;
+        return FieldDto.builder().name(field.getName())
+            .type(field.getType())
+            .source_type(field.getType())
+            .comment(field.getComment())
+            .partition_key(isPartitionKey)
+            .build();
     }
 
     private FieldSchema metacatToHiveField(final FieldDto fieldDto) {
@@ -78,15 +77,6 @@ public class HiveMetacatConverterImpl implements HiveMetacatConverters {
 
     @Override
     public TableDto hiveToMetacatTable(final QualifiedName name, final Table table) {
-        final TableDto dto = new TableDto();
-        dto.setSerde(toStorageDto(table.getSd(), table.getOwner()));
-        dto.setAudit(new AuditDto());
-        dto.setName(name);
-        if (table.isSetCreateTime()) {
-            dto.getAudit().setCreatedDate(epochSecondsToDate(table.getCreateTime()));
-        }
-        dto.setMetadata(table.getParameters());
-
         final List<FieldSchema> nonPartitionColumns = table.getSd().getCols();
         final List<FieldSchema> partitionColumns = table.getPartitionKeys();
         final List<FieldDto> allFields =
@@ -97,123 +87,98 @@ public class HiveMetacatConverterImpl implements HiveMetacatConverters {
         partitionColumns.stream()
             .map(field -> this.hiveToMetacatField(field, true))
             .forEachOrdered(allFields::add);
-        dto.setFields(allFields);
-
+        final TableDto dto = TableDto.builder().serde(toStorageDto(table.getSd(), table.getOwner()))
+            .audit(new AuditDto())
+            .name(name)
+            .metadata(table.getParameters())
+            .fields(allFields)
+            .build();
+        if (table.isSetCreateTime()) {
+            dto.getAudit().setCreatedDate(epochSecondsToDate(table.getCreateTime()));
+        }
         return dto;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Database metacatToHiveDatabase(final DatabaseDto dto) {
-        final Database database = new Database();
-
-        String name = "";
-        String description = "";
         final QualifiedName databaseName = dto.getName();
-        if (databaseName != null) {
-            name = databaseName.getDatabaseName();
-            // Since this is required setting it to the same as the DB name for now
-            description = databaseName.getDatabaseName();
-        }
-        database.setName(name);
-        database.setDescription(description);
-
-        String dbUri = dto.getUri();
-        if (Strings.isNullOrEmpty(dbUri)) {
-            dbUri = "";
-        }
-        database.setLocationUri(dbUri);
-
-        Map<String, String> metadata = dto.getMetadata();
-        if (metadata == null) {
-            metadata = Collections.EMPTY_MAP;
-        }
-        database.setParameters(metadata);
-
-        return database;
+        final String name = (databaseName == null) ? "" : databaseName.getDatabaseName();
+        final String dbUri = Strings.isNullOrEmpty(dto.getUri()) ? "" : dto.getUri();
+        final Map<String, String> metadata = (dto.getMetadata() != null) ? dto.getMetadata() : Collections.EMPTY_MAP;
+        //setting the description as name for now
+        return new Database(name, name, dbUri, metadata);
     }
 
     @Override
     public Table metacatToHiveTable(final TableDto dto) {
-        final Table table = new Table();
-        String tableName = "";
-        String databaseName = "";
-
         final QualifiedName name = dto.getName();
-        if (name != null) {
-            tableName = name.getTableName();
-            databaseName = name.getDatabaseName();
-        }
-        table.setTableName(tableName);
-        table.setDbName(databaseName);
+        final String tableName = (name != null) ? name.getTableName() : "";
+        final String databaseName = (name != null) ? name.getDatabaseName() : "";
 
         final StorageDto storageDto = dto.getSerde();
         String owner = "";
         if (storageDto != null && storageDto.getOwner() != null) {
             owner = storageDto.getOwner();
         }
-        table.setOwner(owner);
 
         final AuditDto auditDto = dto.getAudit();
+        int createTime = 0;
         if (auditDto != null && auditDto.getCreatedDate() != null) {
-            table.setCreateTime(dateToEpochSeconds(auditDto.getCreatedDate()));
+            createTime = dateToEpochSeconds(auditDto.getCreatedDate());
         }
 
-        Map<String, String> params = Collections.emptyMap();
-        if (dto.getMetadata() != null) {
-            params = dto.getMetadata();
-        }
-        table.setParameters(params);
-
-        // TODO get this
-        table.setTableType("EXTERNAL_TABLE");
-
-        table.setSd(fromStorageDto(storageDto));
-        final StorageDescriptor sd = table.getSd();
-
+        final Map<String, String> params = (dto.getMetadata() != null)
+            ? dto.getMetadata() : Collections.emptyMap();
+        final StorageDescriptor sd = fromStorageDto(storageDto);
         final List<FieldDto> fields = dto.getFields();
-        if (fields == null) {
-            table.setPartitionKeys(Collections.emptyList());
-            sd.setCols(Collections.emptyList());
-        } else {
-            final List<FieldSchema> nonPartitionFields = Lists.newArrayListWithCapacity(fields.size());
-            final List<FieldSchema> partitionFields = Lists.newArrayListWithCapacity(fields.size());
+        List<FieldSchema> partitionFields = Collections.emptyList();
+        List<FieldSchema> nonPartitionFields = Collections.emptyList();
+        if (fields != null) {
+            nonPartitionFields = Lists.newArrayListWithCapacity(fields.size());
+            partitionFields = Lists.newArrayListWithCapacity(fields.size());
             for (FieldDto fieldDto : fields) {
-                final FieldSchema f = metacatToHiveField(fieldDto);
-
                 if (fieldDto.isPartition_key()) {
-                    partitionFields.add(f);
+                    partitionFields.add(metacatToHiveField(fieldDto));
                 } else {
-                    nonPartitionFields.add(f);
+                    nonPartitionFields.add(metacatToHiveField(fieldDto));
                 }
             }
-            table.setPartitionKeys(partitionFields);
-            sd.setCols(nonPartitionFields);
         }
+        sd.setCols(nonPartitionFields);
 
-        return table;
+        return new Table(tableName,
+            databaseName,
+            owner,
+            createTime,
+            0,
+            0,
+            sd,
+            partitionFields,
+            params,
+            "",
+            "",
+            "EXTERNAL_TABLE");
     }
 
     private StorageDto toStorageDto(final StorageDescriptor sd, final String owner) {
-        final StorageDto result = new StorageDto();
-        if (sd != null) {
-            result.setOwner(owner);
-            result.setUri(sd.getLocation());
-            result.setInputFormat(sd.getInputFormat());
-            result.setOutputFormat(sd.getOutputFormat());
-            result.setParameters(sd.getParameters());
-            final SerDeInfo serde = sd.getSerdeInfo();
-            if (serde != null) {
-                result.setSerializationLib(serde.getSerializationLib());
-                result.setSerdeInfoParameters(serde.getParameters());
-            }
+        if (sd == null) {
+            return new StorageDto();
+        }
+        final StorageDto result = StorageDto.builder().owner(owner)
+                            .uri(sd.getLocation())
+                            .inputFormat(sd.getInputFormat())
+                            .outputFormat(sd.getOutputFormat())
+                            .parameters(sd.getParameters())
+                            .build();
+        if (sd.getSerdeInfo() != null) {
+            result.setSerializationLib(sd.getSerdeInfo().getSerializationLib());
+            result.setSerdeInfoParameters(sd.getSerdeInfo().getParameters());
         }
         return result;
     }
 
     private StorageDescriptor fromStorageDto(final StorageDto storageDto) {
         // Set all required fields to a non-null value
-        final StorageDescriptor result = new StorageDescriptor();
         String inputFormat = "";
         String location = "";
         String outputFormat = "";
@@ -222,36 +187,37 @@ public class HiveMetacatConverterImpl implements HiveMetacatConverters {
         Map<String, String> sdParams = Collections.EMPTY_MAP;
         Map<String, String> serdeParams = Collections.EMPTY_MAP;
 
-        if (storageDto != null) {
-            if (storageDto.getInputFormat() != null) {
+        if (notNull(storageDto)) {
+            if (notNull(storageDto.getInputFormat())) {
                 inputFormat = storageDto.getInputFormat();
             }
-            if (storageDto.getUri() != null) {
+            if (notNull(storageDto.getUri())) {
                 location = storageDto.getUri();
             }
-            if (storageDto.getOutputFormat() != null) {
+            if (notNull(storageDto.getOutputFormat())) {
                 outputFormat = storageDto.getOutputFormat();
             }
-            if (storageDto.getSerializationLib() != null) {
+            if (notNull(storageDto.getSerializationLib())) {
                 serializationLib = storageDto.getSerializationLib();
             }
-            if (storageDto.getParameters() != null) {
+            if (notNull(storageDto.getParameters())) {
                 sdParams = storageDto.getParameters();
             }
-            if (storageDto.getSerdeInfoParameters() != null) {
+            if (notNull(storageDto.getSerdeInfoParameters())) {
                 serdeParams = storageDto.getSerdeInfoParameters();
             }
         }
-
-        result.setInputFormat(inputFormat);
-        result.setLocation(location);
-        result.setOutputFormat(outputFormat);
-        result.setSerdeInfo(new SerDeInfo(serdeName, serializationLib, serdeParams));
-        result.setCols(Collections.emptyList());
-        result.setBucketCols(Collections.emptyList());
-        result.setSortCols(Collections.emptyList());
-        result.setParameters(sdParams);
-        return result;
+        return new StorageDescriptor(
+                        Collections.emptyList(),
+                        location,
+                        inputFormat,
+                        outputFormat,
+                        false,
+                        0,
+                        new SerDeInfo(serdeName, serializationLib, serdeParams),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        sdParams);
     }
 
     @Override
@@ -387,5 +353,9 @@ public class HiveMetacatConverterImpl implements HiveMetacatConverters {
         }
 
         return result;
+    }
+
+    private boolean notNull(final Object object) {
+        return null != object;
     }
 }

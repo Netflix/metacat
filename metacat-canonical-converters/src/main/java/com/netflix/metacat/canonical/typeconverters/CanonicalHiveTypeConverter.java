@@ -14,15 +14,15 @@
 package com.netflix.metacat.canonical.typeconverters;
 
 import com.google.common.collect.ImmutableList;
-import com.netflix.metacat.canonical.type.Type;
-import com.netflix.metacat.canonical.type.TypeManager;
-import com.netflix.metacat.canonical.type.CharType;
-import com.netflix.metacat.canonical.type.DecimalType;
-import com.netflix.metacat.canonical.type.VarcharType;
-import com.netflix.metacat.canonical.type.MapType;
-import com.netflix.metacat.canonical.type.RowType;
-import com.netflix.metacat.canonical.type.TypeSignature;
-import com.netflix.metacat.canonical.type.Base;
+import com.netflix.metacat.canonical.types.Type;
+import com.netflix.metacat.canonical.types.TypeManager;
+import com.netflix.metacat.canonical.types.CharType;
+import com.netflix.metacat.canonical.types.DecimalType;
+import com.netflix.metacat.canonical.types.VarcharType;
+import com.netflix.metacat.canonical.types.MapType;
+import com.netflix.metacat.canonical.types.RowType;
+import com.netflix.metacat.canonical.types.TypeSignature;
+import com.netflix.metacat.canonical.types.Base;
 
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;

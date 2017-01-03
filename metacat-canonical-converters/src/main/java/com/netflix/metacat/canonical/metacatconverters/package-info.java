@@ -17,8 +17,8 @@
  */
 
 /**
- * Type converter implementation classes.
+ * Metacat converter
  *
  * @author zhenl
  */
-package com.netflix.metacat.canonical.typeconverters;
+package com.netflix.metacat.canonical.metacatconverters;

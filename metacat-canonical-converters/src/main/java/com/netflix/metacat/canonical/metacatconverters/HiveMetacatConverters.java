@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.typeconverters;
+package com.netflix.metacat.canonical.metacatconverters;
 
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
@@ -29,7 +29,8 @@ import java.util.List;
 public interface HiveMetacatConverters {
     /**
      * Converts from hive table to metacat table info.
-     * @param name name
+     *
+     * @param name  name
      * @param table table
      * @return table info
      */
@@ -37,6 +38,7 @@ public interface HiveMetacatConverters {
 
     /**
      * Converts from metacat table info to hive table info.
+     *
      * @param dto table
      * @return table
      */
@@ -44,7 +46,8 @@ public interface HiveMetacatConverters {
 
     /**
      * Converts from hive partition info to metacat partition info.
-     * @param tableDto table
+     *
+     * @param tableDto  table
      * @param partition partition
      * @return partition info
      */
@@ -52,7 +55,8 @@ public interface HiveMetacatConverters {
 
     /**
      * Converts from metacat partition info to hive partition info.
-     * @param tableDto table
+     *
+     * @param tableDto     table
      * @param partitionDto partition
      * @return partition info
      */
@@ -60,6 +64,7 @@ public interface HiveMetacatConverters {
 
     /**
      * Converts from metacat database info to hive database info.
+     *
      * @param databaseDto database
      * @return database
      */
@@ -67,6 +72,7 @@ public interface HiveMetacatConverters {
 
     /**
      * Gets the partition values from the partition name.
+     *
      * @param tableDto table
      * @param partName partition name
      * @return partition info
@@ -75,6 +81,7 @@ public interface HiveMetacatConverters {
 
     /**
      * Gets the partition name from partition values.
+     *
      * @param tableDto table
      * @param partVals partition values
      * @return partition name

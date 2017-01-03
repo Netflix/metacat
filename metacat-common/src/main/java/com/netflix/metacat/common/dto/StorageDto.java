@@ -15,8 +15,10 @@ package com.netflix.metacat.common.dto;
 
 import com.wordnik.swagger.annotations.ApiModel;
 import com.wordnik.swagger.annotations.ApiModelProperty;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.Map;
 
@@ -38,6 +40,8 @@ import java.util.Map;
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)
+@Builder
+@NoArgsConstructor
 public class StorageDto extends BaseDto {
     private static final long serialVersionUID = 4933906340321707232L;
 

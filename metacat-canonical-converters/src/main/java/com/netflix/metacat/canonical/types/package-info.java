@@ -21,4 +21,4 @@
  *
  * @author zhenl
  */
-package com.netflix.metacat.canonical.type;
+package com.netflix.metacat.canonical.types;

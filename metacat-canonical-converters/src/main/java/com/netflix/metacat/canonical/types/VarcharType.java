@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.type;
+package com.netflix.metacat.canonical.types;
 
 import com.google.common.collect.Lists;
 import lombok.Getter;

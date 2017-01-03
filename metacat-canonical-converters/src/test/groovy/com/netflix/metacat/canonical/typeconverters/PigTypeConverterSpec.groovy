@@ -1,7 +1,7 @@
 package com.netflix.metacat.canonical.typeconverters
 
-import com.netflix.metacat.canonical.type.TypeManager
-import com.netflix.metacat.canonical.type.TypeRegistry
+import com.netflix.metacat.canonical.types.TypeManager
+import com.netflix.metacat.canonical.types.TypeRegistry
 import spock.lang.Shared
 import spock.lang.Specification
 
