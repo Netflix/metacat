@@ -335,7 +335,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                         .setSource(doc.toJsonString())));
                     if (bulkRequest.numberOfActions() > 0) {
                         final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-                        log.debug("Bulk saving metadata of index{} type {} with size {}.",
+                        log.info("Bulk saving metadata of index {} type {} with size {}.",
                             index, type, docs.size());
                         if (bulkResponse.hasFailures()) {
                             for (BulkItemResponse item : bulkResponse.getItems()) {
@@ -668,6 +668,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      */
     private void ensureMigrationBySave(final String type, final List<ElasticSearchDoc> docs) {
         if (!Strings.isNullOrEmpty(config.getMergeEsIndex())) {
+            log.info("Bulk save to mergeEsIndex = " + config.getMergeEsIndex());
             bulkSaveToIndex(type, docs, config.getMergeEsIndex());
         }
     }
