@@ -17,7 +17,7 @@
  */
 
 /**
- * Metacat converter
+ * Metacat converter.
  *
  * @author zhenl
  */

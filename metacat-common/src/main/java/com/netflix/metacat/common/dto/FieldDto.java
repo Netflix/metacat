@@ -15,6 +15,7 @@ package com.netflix.metacat.common.dto;
 
 import com.wordnik.swagger.annotations.ApiModel;
 import com.wordnik.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -29,6 +30,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @Builder
+@AllArgsConstructor
 public class FieldDto extends BaseDto {
     private static final long serialVersionUID = 9096928516299407324L;
 
