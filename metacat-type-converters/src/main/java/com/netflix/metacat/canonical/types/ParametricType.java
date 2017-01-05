@@ -11,23 +11,27 @@
  *    limitations under the License.
  */
 
+package com.netflix.metacat.canonical.types;
 
+import java.util.List;
 
-rootProject.name='metacat'
+/**
+ * Created by zhenli on 12/17/16.
+ */
+public interface ParametricType {
+    /**
+     * Get type name.
+     *
+     * @return string
+     */
+    String getParametricTypeName();
 
-include 'metacat-client'
-include 'metacat-common'
-include 'metacat-common-server'
-include 'metacat-functional-tests'
-include 'metacat-hive-connector'
-include 'metacat-main'
-include 'metacat-mysql-connector'
-include 'metacat-postgres-connector'
-include 'metacat-s3-connector'
-include 'metacat-server'
-include 'metacat-thrift'
-include 'metacat-user-metadata-mysql'
-include 'metacat-converters'
-include 'metacat-type-converters'
-include 'metacat-schema-converters'
-
+    /**
+     * Create type.
+     *
+     * @param types types
+     * @param literals literals
+     * @return type
+     */
+    Type createType(List<Type> types, List<Object> literals);
+}
