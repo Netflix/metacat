@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.metacatconverters;
+package com.netflix.metacat.shema.converters;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 /**
  * Class implements hiveMetacatConverter interface.
  */
-public class HiveMetacatConverterImpl implements HiveMetacatConverters {
+public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     private static final Splitter SLASH_SPLITTER = Splitter.on('/');
     private static final Splitter EQUAL_SPLITTER = Splitter.on('=').limit(2);
 
@@ -224,40 +224,35 @@ public class HiveMetacatConverterImpl implements HiveMetacatConverters {
     public PartitionDto hiveToMetacatPartition(final TableDto tableDto, final Partition partition) {
         final QualifiedName tableName = tableDto.getName();
         final QualifiedName partitionName = QualifiedName.ofPartition(tableName.getCatalogName(),
-            tableName.getDatabaseName(),
-            tableName.getTableName(), getNameFromPartVals(tableDto, partition.getValues()));
+                                                    tableName.getDatabaseName(),
+                                                    tableName.getTableName(),
+                                                    getNameFromPartVals(tableDto, partition.getValues()));
+        final String owner = notNull(tableDto.getSerde()) ? tableDto.getSerde().getOwner() : "";
+        final AuditDto auditDto = AuditDto.builder()
+            .createdDate(epochSecondsToDate(partition.getCreateTime()))
+            .lastModifiedDate(epochSecondsToDate(partition.getLastAccessTime())).build();
 
-        final PartitionDto result = new PartitionDto();
-        String owner = "";
-        if (tableDto.getSerde() != null) {
-            owner = tableDto.getSerde().getOwner();
-        }
-        result.setSerde(toStorageDto(partition.getSd(), owner));
-        result.setMetadata(partition.getParameters());
-
-        final AuditDto auditDto = new AuditDto();
-        auditDto.setCreatedDate(epochSecondsToDate(partition.getCreateTime()));
-        auditDto.setLastModifiedDate(epochSecondsToDate(partition.getLastAccessTime()));
-        result.setAudit(auditDto);
-        result.setName(partitionName);
-        return result;
+        return PartitionDto.builder()
+            .name(partitionName)
+            .audit(auditDto)
+            .serde(toStorageDto(partition.getSd(), owner))
+            .metadata(partition.getParameters())
+            .build();
     }
 
     @Override
     public List<String> getPartValsFromName(final TableDto tableDto, final String partName) {
         // Unescape the partition name
-
         LinkedHashMap<String, String> hm = null;
         try {
             hm = Warehouse.makeSpecFromName(partName);
         } catch (MetaException e) {
             throw new IllegalArgumentException("Invalid partition name", e);
         }
-
         final List<String> partVals = Lists.newArrayList();
         for (String key : tableDto.getPartition_keys()) {
             final String val = hm.get(key);
-            if (val == null) {
+            if (null == val) {
                 throw new IllegalArgumentException("Invalid partition name - missing " + key);
             }
             partVals.add(val);
@@ -271,16 +266,14 @@ public class HiveMetacatConverterImpl implements HiveMetacatConverters {
         if (partitionKeys.size() != partVals.size()) {
             throw new IllegalArgumentException("Not the same number of partition columns and partition values");
         }
-
         final StringBuilder builder = new StringBuilder();
         for (int i = 0; i < partitionKeys.size(); i++) {
             if (builder.length() > 0) {
                 builder.append('/');
             }
-
-            builder.append(partitionKeys.get(i));
-            builder.append('=');
-            builder.append(partVals.get(i));
+            builder.append(partitionKeys.get(i))
+                   .append('=')
+                   .append(partVals.get(i));
         }
         return builder.toString();
     }
@@ -288,7 +281,6 @@ public class HiveMetacatConverterImpl implements HiveMetacatConverters {
     @Override
     public Partition metacatToHivePartition(final PartitionDto partitionDto, final TableDto tableDto) {
         final Partition result = new Partition();
-
         final QualifiedName name = partitionDto.getName();
         final List<String> values = Lists.newArrayListWithCapacity(16);
         String databaseName = "";

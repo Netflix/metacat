@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.typeconverters;
+package com.netflix.metacat.type.converters;
 
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.canonical.types.Type;

@@ -18,8 +18,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 import com.wordnik.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -33,6 +36,9 @@ import java.util.Map;
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class PartitionDto extends BaseDto implements HasDataMetadata, HasDefinitionMetadata {
     private static final long serialVersionUID = 783462697901395508L;
     @ApiModelProperty(value = "audit information about the partition")

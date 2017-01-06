@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.netflix.metacat.canonical.typeconverters.TypeUtil;
+import com.netflix.metacat.type.converters.TypeUtil;
 
 /**
  * Created by zhenli on 12/20/16.

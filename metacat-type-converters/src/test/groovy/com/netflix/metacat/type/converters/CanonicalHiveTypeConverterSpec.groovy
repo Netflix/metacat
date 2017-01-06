@@ -1,4 +1,4 @@
-package com.netflix.metacat.canonical.typeconverters
+package com.netflix.metacat.type.converters
 
 import com.netflix.metacat.canonical.types.TypeManager
 import com.netflix.metacat.canonical.types.TypeRegistry
