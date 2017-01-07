@@ -25,7 +25,7 @@ import java.util.Map;
 
 
 /**
- * Created by zhenli on 12/20/16.
+ * Type mapping to convert between canonical and type.
  */
 
 public final class TypeMapping {

@@ -38,7 +38,6 @@ class HiveMetacatConvertersSpec extends Specification {
     def setup() {
         // Stub this to always return true
         config.isEpochInSeconds() >> true
-        DateConverters.setConfig(config)
         converter = new HiveMetacatConvertersImpl()
     }
 

@@ -16,7 +16,7 @@ package com.netflix.metacat.type.converters;
 import com.google.common.base.Preconditions;
 
 /**
- * Created by zhenli on 12/19/16.
+ * Type util class.
  */
 public final class TypeUtil {
     private TypeUtil() {
