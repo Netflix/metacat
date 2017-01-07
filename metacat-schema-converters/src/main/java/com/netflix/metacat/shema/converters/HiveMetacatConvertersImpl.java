@@ -14,6 +14,7 @@
 package com.netflix.metacat.shema.converters;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -165,11 +166,11 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
             return new StorageDto();
         }
         final StorageDto result = StorageDto.builder().owner(owner)
-                            .uri(sd.getLocation())
-                            .inputFormat(sd.getInputFormat())
-                            .outputFormat(sd.getOutputFormat())
-                            .parameters(sd.getParameters())
-                            .build();
+            .uri(sd.getLocation())
+            .inputFormat(sd.getInputFormat())
+            .outputFormat(sd.getOutputFormat())
+            .parameters(sd.getParameters())
+            .build();
         if (sd.getSerdeInfo() != null) {
             result.setSerializationLib(sd.getSerdeInfo().getSerializationLib());
             result.setSerdeInfoParameters(sd.getSerdeInfo().getParameters());
@@ -184,8 +185,8 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
         String outputFormat = "";
         final String serdeName = "";
         String serializationLib = "";
-        Map<String, String> sdParams = Collections.EMPTY_MAP;
-        Map<String, String> serdeParams = Collections.EMPTY_MAP;
+        Map<String, String> sdParams = Collections.emptyMap();
+        Map<String, String> serdeParams = Collections.emptyMap();
 
         if (notNull(storageDto)) {
             if (notNull(storageDto.getInputFormat())) {
@@ -208,25 +209,25 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
             }
         }
         return new StorageDescriptor(
-                        Collections.emptyList(),
-                        location,
-                        inputFormat,
-                        outputFormat,
-                        false,
-                        0,
-                        new SerDeInfo(serdeName, serializationLib, serdeParams),
-                        Collections.emptyList(),
-                        Collections.emptyList(),
-                        sdParams);
+            Collections.emptyList(),
+            location,
+            inputFormat,
+            outputFormat,
+            false,
+            0,
+            new SerDeInfo(serdeName, serializationLib, serdeParams),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            sdParams);
     }
 
     @Override
     public PartitionDto hiveToMetacatPartition(final TableDto tableDto, final Partition partition) {
         final QualifiedName tableName = tableDto.getName();
         final QualifiedName partitionName = QualifiedName.ofPartition(tableName.getCatalogName(),
-                                                    tableName.getDatabaseName(),
-                                                    tableName.getTableName(),
-                                                    getNameFromPartVals(tableDto, partition.getValues()));
+            tableName.getDatabaseName(),
+            tableName.getTableName(),
+            getNameFromPartVals(tableDto, partition.getValues()));
         final String owner = notNull(tableDto.getSerde()) ? tableDto.getSerde().getOwner() : "";
         final AuditDto auditDto = AuditDto.builder()
             .createdDate(epochSecondsToDate(partition.getCreateTime()))
@@ -249,13 +250,11 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
         } catch (MetaException e) {
             throw new IllegalArgumentException("Invalid partition name", e);
         }
+
         final List<String> partVals = Lists.newArrayList();
         for (String key : tableDto.getPartition_keys()) {
-            final String val = hm.get(key);
-            if (null == val) {
-                throw new IllegalArgumentException("Invalid partition name - missing " + key);
-            }
-            partVals.add(val);
+            Preconditions.checkArgument(notNull(hm.get(key)), "Invalid partition name - missing " + key);
+            partVals.add(hm.get(key));
         }
         return partVals;
     }
@@ -272,79 +271,73 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
                 builder.append('/');
             }
             builder.append(partitionKeys.get(i))
-                   .append('=')
-                   .append(partVals.get(i));
+                .append('=')
+                .append(partVals.get(i));
         }
         return builder.toString();
     }
 
     @Override
     public Partition metacatToHivePartition(final PartitionDto partitionDto, final TableDto tableDto) {
-        final Partition result = new Partition();
         final QualifiedName name = partitionDto.getName();
         final List<String> values = Lists.newArrayListWithCapacity(16);
         String databaseName = "";
         String tableName = "";
-        if (name != null) {
-            if (name.getPartitionName() != null) {
+        if (notNull(name)) {
+            if (notNull(name.getPartitionName())) {
                 for (String partialPartName : SLASH_SPLITTER.split(partitionDto.getName().getPartitionName())) {
                     final List<String> nameValues = ImmutableList.copyOf(EQUAL_SPLITTER.split(partialPartName));
-                    if (nameValues.size() != 2) {
-                        throw new IllegalStateException("Unrecognized partition name: " + partitionDto.getName());
-                    }
-                    final String value = nameValues.get(1);
-                    values.add(value);
+                    Preconditions.checkState(nameValues.size() == 2,
+                        "Unrecognized partition name: " + partitionDto.getName());
+                    values.add(nameValues.get(1));
                 }
             }
-
-            if (name.getDatabaseName() != null) {
+            if (notNull(name.getDatabaseName())) {
                 databaseName = name.getDatabaseName();
             }
-
-            if (name.getTableName() != null) {
+            if (notNull(name.getTableName())) {
                 tableName = name.getTableName();
             }
         }
-        result.setValues(values);
-        result.setDbName(databaseName);
-        result.setTableName(tableName);
 
         Map<String, String> metadata = partitionDto.getMetadata();
         if (metadata == null) {
-            metadata = Collections.EMPTY_MAP;
+            metadata = Collections.emptyMap();
         }
-        result.setParameters(metadata);
 
-        result.setSd(fromStorageDto(partitionDto.getSerde()));
-        final StorageDescriptor sd = result.getSd();
-        if (tableDto != null) {
-            if (sd.getSerdeInfo() != null && tableDto.getSerde() != null && Strings.isNullOrEmpty(
-                sd.getSerdeInfo().getSerializationLib())) {
+        final StorageDescriptor sd = fromStorageDto(partitionDto.getSerde());
+        if (notNull(tableDto)) {
+            if (notNull(sd.getSerdeInfo())
+                && notNull(tableDto.getSerde())
+                && Strings.isNullOrEmpty(sd.getSerdeInfo().getSerializationLib())) {
                 sd.getSerdeInfo().setSerializationLib(tableDto.getSerde().getSerializationLib());
             }
-
             final List<FieldDto> fields = tableDto.getFields();
-            if (fields == null) {
-                sd.setCols(Collections.emptyList());
-            } else {
+            if (notNull(fields)) {
                 sd.setCols(fields.stream()
                     .filter(field -> !field.isPartition_key())
                     .map(this::metacatToHiveField)
                     .collect(Collectors.toList()));
+            } else {
+                sd.setCols(Collections.emptyList());
             }
         }
 
         final AuditDto auditDto = partitionDto.getAudit();
-        if (auditDto != null) {
-            if (auditDto.getCreatedDate() != null) {
-                result.setCreateTime(dateToEpochSeconds(auditDto.getCreatedDate()));
-            }
-            if (auditDto.getLastModifiedDate() != null) {
-                result.setLastAccessTime(dateToEpochSeconds(auditDto.getLastModifiedDate()));
-            }
-        }
+        final int createTime = (notNull(auditDto) && notNull(auditDto.getCreatedDate()))
+            ? dateToEpochSeconds(auditDto.getCreatedDate()) : 0;
+        final int lastAccessTime = (notNull(auditDto) && notNull(auditDto.getLastModifiedDate()))
+            ? dateToEpochSeconds(auditDto.getLastModifiedDate()) : 0;
 
-        return result;
+        return new Partition(
+            values,
+            databaseName,
+            tableName,
+            createTime,
+            lastAccessTime,
+            sd,
+            metadata);
+
     }
 
     private boolean notNull(final Object object) {

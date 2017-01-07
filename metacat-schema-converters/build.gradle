@@ -5,7 +5,6 @@ apply plugin: 'groovy'
 dependencies {
     compile project(':metacat-common')
     compile project(':metacat-type-converters')
-    compile project(':metacat-common-server')
     compile("org.apache.hive:hive-metastore:1.2.1")
     compile "com.google.guava:guava:${guava_version}"
     compile "com.google.inject:guice:${guice_version}"
