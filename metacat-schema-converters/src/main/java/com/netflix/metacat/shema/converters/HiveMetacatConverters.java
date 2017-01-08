@@ -24,7 +24,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import java.util.List;
 
 /**
- * Created by zhenli on 12/22/16.
+ * Class to convert hive schema to metacat DTO and vice versa.
  */
 public interface HiveMetacatConverters {
     /**

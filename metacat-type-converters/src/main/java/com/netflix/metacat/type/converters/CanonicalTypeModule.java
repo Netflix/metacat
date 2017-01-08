@@ -16,7 +16,7 @@ package com.netflix.metacat.type.converters;
 import com.google.inject.AbstractModule;
 
 /**
- * CanonicalTypeModule.
+ * Canonical Type Module.
  */
 public class CanonicalTypeModule extends AbstractModule {
     @Override

@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.types;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -25,7 +25,7 @@ import java.util.Optional;
 import com.netflix.metacat.type.converters.TypeUtil;
 
 /**
- * Created by zhenli on 12/20/16.
+ * Row type.
  */
 public class RowType extends AbstractType implements ParametricType {
     /** default type. */

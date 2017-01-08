@@ -11,27 +11,35 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.types;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by zhenli on 12/17/16.
+ * Canonical type interface.
  */
-public interface ParametricType {
-    /**
-     * Get type name.
-     *
-     * @return string
-     */
-    String getParametricTypeName();
+public interface Type {
 
     /**
-     * Create type.
-     *
-     * @param types types
-     * @param literals literals
-     * @return type
+     * Returns the signature of this type that should be displayed to end-users.
+     * @return signature
      */
-    Type createType(List<Type> types, List<Object> literals);
+    TypeSignature getTypeSignature();
+
+    /**
+     * Returns the list of parameters.
+     * @return List of paramenters
+     */
+    default List<Type> getParameters() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Returns the raw type.
+     * @return Source type
+     */
+    default String getSourceType() {
+        return null;
+    }
 }

@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.types;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

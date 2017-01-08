@@ -17,8 +17,8 @@
  */
 
 /**
- * Common server classes.
+ * Canonical type classes.
  *
  * @author zhenl
  */
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.types;

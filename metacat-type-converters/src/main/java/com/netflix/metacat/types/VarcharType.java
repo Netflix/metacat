@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.types;
 
 import com.google.common.collect.Lists;
 import lombok.Getter;
@@ -19,7 +19,7 @@ import lombok.Getter;
 import java.util.Collections;
 
 /**
- * Created by zhenli on 12/21/16.
+ * Varchar type.
  */
 public final class VarcharType extends AbstractType {
     /**

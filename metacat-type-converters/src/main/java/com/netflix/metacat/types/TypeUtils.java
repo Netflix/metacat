@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.types;
 
 import com.google.common.collect.ImmutableList;
 
@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.stream.Collector;
 
 /**
- * Created by zhenli on 12/21/16.
+ * Type util class.
  */
 public final class TypeUtils {
     private TypeUtils() {

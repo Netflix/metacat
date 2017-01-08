@@ -14,15 +14,14 @@
 package com.netflix.metacat.type.converters;
 
 import com.google.common.collect.ImmutableMap;
-import com.netflix.metacat.canonical.types.Base;
-import com.netflix.metacat.canonical.types.BaseType;
-import com.netflix.metacat.canonical.types.Type;
+import com.netflix.metacat.types.Base;
+import com.netflix.metacat.types.BaseType;
+import com.netflix.metacat.types.Type;
 import lombok.Getter;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.pig.data.DataType;
 import java.util.Map;
-
 
 /**
  * Type mapping to convert between canonical and type.

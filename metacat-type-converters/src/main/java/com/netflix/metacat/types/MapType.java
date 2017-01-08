@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.types;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -22,7 +22,7 @@ import lombok.Setter;
 import java.util.List;
 
 /**
- * Created by zhenli on 12/20/16.
+ * Map type class.
  */
 
 @EqualsAndHashCode(callSuper = true)

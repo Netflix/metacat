@@ -13,11 +13,11 @@
 
 package com.netflix.metacat.type.converters;
 
-import com.netflix.metacat.canonical.types.Type;
-import com.netflix.metacat.canonical.types.TypeManager;
+import com.netflix.metacat.types.Type;
+import com.netflix.metacat.types.TypeManager;
 
 /**
- * Created by zhenli on 12/18/16.
+ * Canonical type converter class.
  */
 public interface CanonicalTypeConverter {
     /**

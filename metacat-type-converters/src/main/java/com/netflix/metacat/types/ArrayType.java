@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.types;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -21,7 +21,7 @@ import java.util.List;
 
 
 /**
- * Created by zhenli on 12/21/16.
+ * Array type class.
  */
 public class ArrayType extends AbstractType implements ParametricType {
     /** default.*/

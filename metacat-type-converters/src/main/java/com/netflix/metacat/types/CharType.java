@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.types;
 
 import com.google.common.collect.Lists;
 import lombok.EqualsAndHashCode;
@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * CharType.
+ * Char type class.
  */
 @EqualsAndHashCode(callSuper = true)
 public class CharType extends AbstractType implements ParametricType {

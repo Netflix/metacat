@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.types;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Collections;
 
 /**
- * Created by zhenli on 12/15/16.
+ * Type signature class.
  */
 @EqualsAndHashCode
 @Getter

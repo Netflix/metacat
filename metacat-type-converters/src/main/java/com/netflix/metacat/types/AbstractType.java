@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.types;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * AbstractType.
+ * Abstract type class.
  */
 @EqualsAndHashCode
 public abstract class AbstractType implements Type {

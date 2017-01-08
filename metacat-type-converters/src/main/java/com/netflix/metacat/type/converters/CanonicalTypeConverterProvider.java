@@ -22,7 +22,7 @@ import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.util.MetacatContextManager;
 
 /**
- * CanonicalTypeConverterProvider module.
+ * Canonical Type Converter Provider class.
  */
 public class CanonicalTypeConverterProvider implements Provider<CanonicalTypeConverter> {
     private final Config config;

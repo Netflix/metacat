@@ -1,11 +1,8 @@
 package com.netflix.metacat.shema.converters
 
-import com.netflix.metacat.canonical.types.TypeManager
-import com.netflix.metacat.canonical.types.VarcharType
+import com.netflix.metacat.types.TypeManager
+import com.netflix.metacat.types.VarcharType
 import com.netflix.metacat.type.converters.CanonicalHiveTypeConverter
-import org.apache.hadoop.hive.metastore.api.Database
-import spock.lang.Specification
-
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.AuditDto
 import com.netflix.metacat.common.dto.DatabaseDto

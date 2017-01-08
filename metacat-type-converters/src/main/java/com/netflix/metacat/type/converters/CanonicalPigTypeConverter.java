@@ -16,16 +16,16 @@ package com.netflix.metacat.type.converters;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
-import com.netflix.metacat.canonical.types.ArrayType;
-import com.netflix.metacat.canonical.types.BaseType;
-import com.netflix.metacat.canonical.types.CharType;
-import com.netflix.metacat.canonical.types.DecimalType;
-import com.netflix.metacat.canonical.types.MapType;
-import com.netflix.metacat.canonical.types.RowType;
-import com.netflix.metacat.canonical.types.Type;
-import com.netflix.metacat.canonical.types.TypeManager;
-import com.netflix.metacat.canonical.types.TypeUtils;
-import com.netflix.metacat.canonical.types.VarcharType;
+import com.netflix.metacat.types.ArrayType;
+import com.netflix.metacat.types.BaseType;
+import com.netflix.metacat.types.CharType;
+import com.netflix.metacat.types.DecimalType;
+import com.netflix.metacat.types.MapType;
+import com.netflix.metacat.types.RowType;
+import com.netflix.metacat.types.Type;
+import com.netflix.metacat.types.TypeManager;
+import com.netflix.metacat.types.TypeUtils;
+import com.netflix.metacat.types.VarcharType;
 import org.apache.pig.data.DataType;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Created by zhenli on 12/22/16.
+ * Class to convert pig to canonical type and vice versa.
  */
 public class CanonicalPigTypeConverter implements CanonicalTypeConverter {
     private static final String NAME_ARRAY_ELEMENT = "array_element";
