@@ -19,7 +19,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
-
 /**
  * Defines a set of valid tuples according to the constraints on each of its constituent columns.
  * @param <T> domain

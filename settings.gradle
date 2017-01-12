@@ -29,5 +29,4 @@ include 'metacat-thrift'
 include 'metacat-user-metadata-mysql'
 include 'metacat-converters'
 include 'metacat-type-converters'
-include 'metacat-schema-converters'
 

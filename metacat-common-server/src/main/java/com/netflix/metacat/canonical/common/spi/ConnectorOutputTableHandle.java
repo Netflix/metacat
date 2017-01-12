@@ -13,5 +13,8 @@
 
 package com.netflix.metacat.canonical.common.spi;
 
+/**
+ * ConnectorOutputTableHandle.
+ */
 public interface ConnectorOutputTableHandle {
 }

@@ -65,7 +65,8 @@ public class HiveTypeConverter implements CanonicalTypeConverter {
         if (typeInfo.getCategory().equals(ObjectInspector.Category.STRUCT)) {
             final StructTypeInfo structTypeInfo = (StructTypeInfo) typeInfo;
             final StandardStructObjectInspector objectInspector = (StandardStructObjectInspector) oi;
-            oi = new HiveTypeConverter.SameCaseStandardStructObjectInspector(structTypeInfo.getAllStructFieldNames(), objectInspector);
+            oi = new HiveTypeConverter.SameCaseStandardStructObjectInspector(
+                structTypeInfo.getAllStructFieldNames(), objectInspector);
         }
         return getCanonicalType(oi, typeRegistry);
     }
@@ -200,7 +201,8 @@ public class HiveTypeConverter implements CanonicalTypeConverter {
             return structObjectInspector.getAllStructFieldRefs()
                 .stream()
                 .map(structField -> (MyField) structField)
-                .map(field -> new HiveTypeConverter.SameCaseStandardStructObjectInspector.SameCaseMyField(field.getFieldID(),
+                .map(field -> new HiveTypeConverter.
+                    SameCaseStandardStructObjectInspector.SameCaseMyField(field.getFieldID(),
                     realFieldNames.get(field.getFieldID()),
                     field.getFieldObjectInspector(), field.getFieldComment()))
                 .collect(Collectors.toList());

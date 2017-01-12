@@ -14,8 +14,12 @@
 package com.netflix.metacat.canonical.common.exception;
 
 /**
- * Error code supplier
+ * Error code supplier.
  */
 public interface ErrorCodeSupplier {
+    /**
+     * to Error code.
+     * @return error code
+     */
     ErrorCode toErrorCode();
 }

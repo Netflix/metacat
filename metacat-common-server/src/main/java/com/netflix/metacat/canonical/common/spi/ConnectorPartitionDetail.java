@@ -39,6 +39,7 @@ public interface ConnectorPartitionDetail {
     AuditInfo getAuditInfo();
     /**
      * Get the unique id of this partition within the scope of the table.
+     * @return string
      */
     String getPartitionId();
 

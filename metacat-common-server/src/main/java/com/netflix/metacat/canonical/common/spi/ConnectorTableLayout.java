@@ -25,12 +25,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-@RequiredArgsConstructor
-@Getter
-@EqualsAndHashCode
 /**
  * connector table layout.
  */
+@RequiredArgsConstructor
+@Getter
+@EqualsAndHashCode
 public class ConnectorTableLayout {
     @NonNull
     private final ConnectorTableLayoutHandle handle;
