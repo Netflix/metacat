@@ -11,14 +11,22 @@
  *    limitations under the License.
  */
 
-dependencies {
-    compile project(':metacat-common-server')
-    compile project(':metacat-converters')
-    compile project(':metacat-type-converters')
-    compile "com.google.guava:guava:${guava_version}"
-    compile "com.google.inject:guice:${guice_version}"
-    compile "com.google.inject.extensions:guice-persist:${guice_version}"
-    compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
-    compile "com.google.inject.extensions:guice-servlet:${guice_version}"
-    compile "com.facebook.presto:presto-spi:${presto_version}"
+package com.netflix.metacat.canonical.common.spi.util;
+
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Save partition result.
+ */
+@Data
+@NoArgsConstructor
+public class SavePartitionResult {
+    @NonNull private List<String> added = new ArrayList<>();
+    @NonNull private List<String> updated = new ArrayList<>();
 }

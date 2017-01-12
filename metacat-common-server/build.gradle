@@ -16,6 +16,7 @@ ext {
 
 dependencies {
     compile project(':metacat-common')
+    compile project(':metacat-type-converters')
     compile "com.facebook.presto:presto-spi:${presto_version}"
     compile 'org.apache.tomcat:tomcat-jdbc:8.0.22'
     compile "com.google.guava:guava:${guava_version}"

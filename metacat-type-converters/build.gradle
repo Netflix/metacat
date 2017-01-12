@@ -3,7 +3,7 @@ apply plugin: 'java'
 apply plugin: 'groovy'
 
 dependencies {
-    compile project(':metacat-common-server')
+    compile project(':metacat-common')
     compile("org.apache.hive:hive-metastore:1.2.1")
     compile "org.apache.hadoop:hadoop-core:1.2.1"
     compile "com.google.guava:guava:${guava_version}"

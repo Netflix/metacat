@@ -11,14 +11,27 @@
  *    limitations under the License.
  */
 
-dependencies {
-    compile project(':metacat-common-server')
-    compile project(':metacat-converters')
-    compile project(':metacat-type-converters')
-    compile "com.google.guava:guava:${guava_version}"
-    compile "com.google.inject:guice:${guice_version}"
-    compile "com.google.inject.extensions:guice-persist:${guice_version}"
-    compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
-    compile "com.google.inject.extensions:guice-servlet:${guice_version}"
-    compile "com.facebook.presto:presto-spi:${presto_version}"
+package com.netflix.metacat.canonical.types;
+
+import java.util.List;
+
+/**
+ * Parametic type.
+ */
+public interface ParametricType {
+    /**
+     * Get type name.
+     *
+     * @return string
+     */
+    String getParametricTypeName();
+
+    /**
+     * Create type.
+     *
+     * @param types types
+     * @param literals literals
+     * @return type
+     */
+    Type createType(List<Type> types, List<Object> literals);
 }

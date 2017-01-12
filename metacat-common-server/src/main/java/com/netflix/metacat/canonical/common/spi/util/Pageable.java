@@ -11,14 +11,24 @@
  *    limitations under the License.
  */
 
-dependencies {
-    compile project(':metacat-common-server')
-    compile project(':metacat-converters')
-    compile project(':metacat-type-converters')
-    compile "com.google.guava:guava:${guava_version}"
-    compile "com.google.inject:guice:${guice_version}"
-    compile "com.google.inject.extensions:guice-persist:${guice_version}"
-    compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
-    compile "com.google.inject.extensions:guice-servlet:${guice_version}"
-    compile "com.facebook.presto:presto-spi:${presto_version}"
+package com.netflix.metacat.canonical.common.spi.util;
+
+import lombok.Data;
+
+/**
+ * Represents the pagination information.
+ * @author amajumdar
+ */
+@Data
+public class Pageable {
+    private Integer limit;
+    private Integer offset;
+
+    public Integer getOffset() {
+        return offset == null ? Integer.valueOf(0) : offset;
+    }
+
+    public boolean isPageable() {
+        return limit != null;
+    }
 }
