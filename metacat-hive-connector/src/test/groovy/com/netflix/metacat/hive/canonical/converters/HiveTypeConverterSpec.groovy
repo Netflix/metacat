@@ -11,21 +11,20 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.hive.canonical.converters;
+package com.netflix.metacat.hive.canonical.converters
 
-import com.netflix.metacat.canonical.type.converters.CanonicalHiveTypeConverter;
-import com.netflix.metacat.canonical.types.TypeManager;
-import com.netflix.metacat.canonical.types.TypeRegistry;
-import spock.lang.Shared;
-import spock.lang.Specification;
-import spock.lang.Unroll;
+import com.netflix.metacat.canonical.types.TypeManager
+import com.netflix.metacat.canonical.types.TypeRegistry
+import spock.lang.Shared
+import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Unit test for hive and canonical type converter.
  */
 class HiveTypeConverterSpec extends Specification {
     @Shared
-    CanonicalHiveTypeConverter converter = new CanonicalHiveTypeConverter()
+    HiveTypeConverter converter = new HiveTypeConverter()
     @Shared
     TypeManager typeManager = new TypeRegistry()
 

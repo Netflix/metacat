@@ -2,26 +2,18 @@ package com.netflix.metacat.hive.canonical.converters
 
 import com.netflix.metacat.canonical.types.TypeManager
 import com.netflix.metacat.canonical.types.VarcharType
-import com.netflix.metacat.canonical.type.converters.CanonicalHiveTypeConverter
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.dto.AuditDto
-import com.netflix.metacat.common.dto.DatabaseDto
-import com.netflix.metacat.common.dto.FieldDto
-import com.netflix.metacat.common.dto.PartitionDto
-import com.netflix.metacat.common.dto.StorageDto
-import com.netflix.metacat.common.dto.TableDto
+import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.server.Config
-import org.apache.hadoop.hive.metastore.api.FieldSchema
-import org.apache.hadoop.hive.metastore.api.Partition
-import org.apache.hadoop.hive.metastore.api.SerDeInfo
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor
-import org.apache.hadoop.hive.metastore.api.Table
+import org.apache.hadoop.hive.metastore.api.*
 import org.joda.time.Instant
 import spock.lang.Specification
 
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.util.Date
+
 /**
  * Unit test class for HiveMetacatConverter.
  */
@@ -30,7 +22,7 @@ class HiveMetacatConvertersSpec extends Specification {
     Config config = Mock(Config)
     TypeManager typeManager = Mock(TypeManager)
     HiveMetacatConverters converter
-    CanonicalHiveTypeConverter hiveTypeConverter = Mock(CanonicalHiveTypeConverter)
+    HiveTypeConverter hiveTypeConverter = Mock(HiveTypeConverter)
 
     def setup() {
         // Stub this to always return true

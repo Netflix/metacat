@@ -16,7 +16,6 @@ package com.netflix.metacat.hive.canonical.converters;
 
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.canonical.type.converters.CanonicalTypeConverter;
-import com.netflix.metacat.canonical.type.converters.TypeMapping;
 import com.netflix.metacat.canonical.type.converters.TypeUtil;
 import com.netflix.metacat.canonical.types.Base;
 import com.netflix.metacat.canonical.types.CharType;
@@ -73,8 +72,8 @@ public class HiveTypeConverter implements CanonicalTypeConverter {
 
     @Override
     public String canonicalTypeToDataType(final Type type) {
-        if (TypeMapping.getCANONICAL_TO_HIVE().containsKey(type)) {
-            return TypeMapping.getCANONICAL_TO_HIVE().get(type);
+        if (HiveTypeMapping.getCANONICAL_TO_HIVE().containsKey(type)) {
+            return HiveTypeMapping.getCANONICAL_TO_HIVE().get(type);
         }
         if (type instanceof DecimalType) {
             return ((DecimalType) type).getDisplayName();
@@ -112,8 +111,8 @@ public class HiveTypeConverter implements CanonicalTypeConverter {
     private static Type getPrimitiveType(final ObjectInspector fieldInspector) {
         final PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) fieldInspector)
             .getPrimitiveCategory();
-        if (TypeMapping.getHIVE_TO_CANONICAL().containsKey(primitiveCategory.name())) {
-            return TypeMapping.getHIVE_TO_CANONICAL().get(primitiveCategory.name());
+        if (HiveTypeMapping.getHIVE_TO_CANONICAL().containsKey(primitiveCategory.name())) {
+            return HiveTypeMapping.getHIVE_TO_CANONICAL().get(primitiveCategory.name());
         }
         switch (primitiveCategory) {
             case DECIMAL:

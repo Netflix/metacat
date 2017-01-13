@@ -1,21 +1,22 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *  Copyright 2016 Netflix, Inc.
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
  */
 
-package com.netflix.metacat.canonical.type.converters;
+package com.netflix.metacat.pig.canonical.converters;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
+import com.netflix.metacat.canonical.type.converters.CanonicalTypeConverter;
 import com.netflix.metacat.canonical.types.ArrayType;
 import com.netflix.metacat.canonical.types.BaseType;
 import com.netflix.metacat.canonical.types.CharType;
@@ -39,7 +40,7 @@ import java.util.Optional;
 /**
  * Class to convert pig to canonical type and vice versa.
  */
-public class CanonicalPigTypeConverter implements CanonicalTypeConverter {
+public class PigTypeConverter implements CanonicalTypeConverter {
     private static final String NAME_ARRAY_ELEMENT = "array_element";
 
     @Override
@@ -67,9 +68,9 @@ public class CanonicalPigTypeConverter implements CanonicalTypeConverter {
 
     private LogicalSchema.LogicalFieldSchema fromCanonicalTypeToPigSchema(final String alias,
                                                                           final Type canonicalType) {
-        if (TypeMapping.getCANONICAL_TO_PIG().containsKey(canonicalType)) {
+        if (PigTypeMapping.getCANONICAL_TO_PIG().containsKey(canonicalType)) {
             return new LogicalSchema.LogicalFieldSchema(alias,
-                null, TypeMapping.getCANONICAL_TO_PIG().get(canonicalType));
+                null, PigTypeMapping.getCANONICAL_TO_PIG().get(canonicalType));
         } else if (canonicalType instanceof DecimalType) {
             return new LogicalSchema.LogicalFieldSchema(alias, null, DataType.DOUBLE);
         } else if (canonicalType instanceof VarcharType || canonicalType instanceof CharType) {
@@ -109,8 +110,8 @@ public class CanonicalPigTypeConverter implements CanonicalTypeConverter {
     }
 
     private Type toCanonicalType(final LogicalSchema.LogicalFieldSchema field) {
-        if (TypeMapping.getPIG_TO_CANONICAL().containsKey(field.type)) {
-            return TypeMapping.getPIG_TO_CANONICAL().get(field.type);
+        if (PigTypeMapping.getPIG_TO_CANONICAL().containsKey(field.type)) {
+            return PigTypeMapping.getPIG_TO_CANONICAL().get(field.type);
         }
         switch (field.type) {
             case DataType.MAP:
