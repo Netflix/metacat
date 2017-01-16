@@ -68,6 +68,10 @@ public class MetacatException
         return errorCode;
     }
 
+    /**
+     * {@inheritdoc}.
+     *
+     */
     @Override
     public String getMessage() {
         String message = super.getMessage();

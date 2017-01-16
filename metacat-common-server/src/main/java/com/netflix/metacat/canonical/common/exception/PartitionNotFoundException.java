@@ -15,10 +15,12 @@ package com.netflix.metacat.canonical.common.exception;
 
 
 import com.netflix.metacat.canonical.common.spi.SchemaTableName;
+import lombok.Getter;
 
 /**
  * Exception when partition is not found.
  */
+@Getter
 public class PartitionNotFoundException extends NotFoundException {
     private final SchemaTableName tableName;
     private final String partitionId;
@@ -60,13 +62,5 @@ public class PartitionNotFoundException extends NotFoundException {
         super(message, cause);
         this.tableName = tableName;
         this.partitionId = partitionId;
-    }
-
-    public SchemaTableName getTableName() {
-        return tableName;
-    }
-
-    public String getPartitionId() {
-        return partitionId;
     }
 }

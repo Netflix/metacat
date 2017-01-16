@@ -38,6 +38,9 @@ public final class DecimalType extends AbstractFixedWidthType {
         super(new TypeSignature(
             TYPE, Lists.newArrayList(),
             Lists.newArrayList((long) precision, (long) scale)), BigDecimal.class, SizeOf.SIZE_OF_DOUBLE);
+        if (precision < 0) {
+            throw new IllegalArgumentException("Invalid decimal precision " + precision);
+        }
         this.precision = precision;
         this.scale = scale;
     }

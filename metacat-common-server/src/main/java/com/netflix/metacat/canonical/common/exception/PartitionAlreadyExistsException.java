@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.canonical.common.exception;
 
-
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.netflix.metacat.canonical.common.spi.SchemaTableName;

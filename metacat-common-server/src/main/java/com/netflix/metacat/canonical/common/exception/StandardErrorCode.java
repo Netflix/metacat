@@ -22,22 +22,12 @@ public enum StandardErrorCode
      * User error.
      */
     USER_ERROR(0x0000_0000),
-//    SYNTAX_ERROR(0x0000_0001),
-//    ABANDONED_QUERY(0x0000_0002),
-//    USER_CANCELED(0x0000_0003),
-//    PERMISSION_DENIED(0x0000_0004),
 
     /**
      * Not found.
      */
     NOT_FOUND(0x0000_0005),
 
-//    FUNCTION_NOT_FOUND(0x0000_0006),
-//    INVALID_FUNCTION_ARGUMENT(0x0000_0007),
-//    DIVISION_BY_ZERO(0x0000_0008),
-//    INVALID_CAST_ARGUMENT(0x0000_0009),
-//    OPERATOR_NOT_FOUND(0x0000_000A),
-//    INVALID_VIEW(0x0000_000B),
     /**
      * already exists.
       */
@@ -46,35 +36,17 @@ public enum StandardErrorCode
      * not supported.
       */
     NOT_SUPPORTED(0x0000_000D),
-//    INVALID_SESSION_PROPERTY(0x0000_000E),
-//    INVALID_WINDOW_FRAME(0x0000_000F),
-//    CONSTRAINT_VIOLATION(0x0000_0010),
-//    TRANSACTION_CONFLICT(0x0000_0011),
-//
+
     /**
      * internal error.
       */
+
     INTERNAL_ERROR(0x0001_0000),
-//    TOO_MANY_REQUESTS_FAILED(0x0001_0001),
-//    PAGE_TOO_LARGE(0x0001_0002),
-//    PAGE_TRANSPORT_ERROR(0x0001_0003),
-//    PAGE_TRANSPORT_TIMEOUT(0x0001_0004),
-//    NO_NODES_AVAILABLE(0x0001_0005),
-//    REMOTE_TASK_ERROR(0x0001_0006),
-//    COMPILER_ERROR(0x0001_0007),
-//    WORKER_RESTARTED(0x0001_0008),
-//    SERVER_SHUTTING_DOWN(0x0001_0009),
-//
     /**
      * insufficient resources.
       */
     INSUFFICIENT_RESOURCES(0x0002_0000),
-//    EXCEEDED_MEMORY_LIMIT(0x0002_0001),
-//    QUERY_QUEUE_FULL(0x0002_0002),
-//    EXCEEDED_TIME_LIMIT(0x0002_0003),
-//    CLUSTER_OUT_OF_MEMORY(0x0002_0004),
-//
-//    // Connectors can use error codes starting at EXTERNAL
+
     /**
      * external error.
      */
@@ -86,6 +58,10 @@ public enum StandardErrorCode
         errorCode = new ErrorCode(code, name());
     }
 
+    /**
+     * {@inheritdoc}.
+     *
+     */
     @Override
     public ErrorCode toErrorCode() {
         return errorCode;
