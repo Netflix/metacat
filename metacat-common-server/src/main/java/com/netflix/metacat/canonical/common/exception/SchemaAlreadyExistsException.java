@@ -16,6 +16,7 @@ package com.netflix.metacat.canonical.common.exception;
 
 /**
  * Exception when schema already exists.
+ * @author zhenl
  */
 public class SchemaAlreadyExistsException extends MetacatException {
     private final String schemaName;

@@ -23,6 +23,7 @@ import java.util.List;
 
 /**
  * Abstract type class.
+ * @author zhenl
  */
 @EqualsAndHashCode
 public abstract class AbstractType implements Type {

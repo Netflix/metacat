@@ -22,6 +22,7 @@ import java.util.function.Function;
  * class of local property.
  *
  * @param <E>
+ * @author zhenl
  */
 public interface LocalProperty<E> {
     /**

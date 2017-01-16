@@ -21,6 +21,7 @@ import java.util.Map;
 
 /**
  * Storage info.
+ * @author zhenl
  */
 @Data
 @NoArgsConstructor

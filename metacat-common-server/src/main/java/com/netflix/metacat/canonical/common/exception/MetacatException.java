@@ -15,6 +15,7 @@ package com.netflix.metacat.canonical.common.exception;
 
 /**
  * Metacat exception class.
+ * @author zhenl
  */
 public class MetacatException
     extends RuntimeException {

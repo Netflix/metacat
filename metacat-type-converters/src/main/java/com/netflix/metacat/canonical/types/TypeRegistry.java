@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * Type mapping between canonical and connector types.
+ * @author zhenl
  */
 public class TypeRegistry implements TypeManager {
 

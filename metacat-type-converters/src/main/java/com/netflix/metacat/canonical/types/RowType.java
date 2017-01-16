@@ -24,6 +24,7 @@ import java.util.Optional;
 
 /**
  * Row type.
+ * @author zhenl
  */
 public class RowType extends AbstractType implements ParametricType {
     /** default type. */

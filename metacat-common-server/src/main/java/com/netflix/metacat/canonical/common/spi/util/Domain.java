@@ -12,12 +12,7 @@ import java.util.Objects;
 
 /**
  * Defines the possible values of a single variable in terms of its valid scalar ranges and nullability.
- * <p>
- * For example:
- * Domain.none() => no scalar values allowed, NULL not allowed
- * Domain.all() => all scalar values allowed, NULL allowed
- * Domain.onlyNull() => no scalar values allowed, NULL allowed
- * Domain.notNull() => all scalar values allowed, NULL not allowed
+ * @author zhenl
  */
 @ToString
 @EqualsAndHashCode

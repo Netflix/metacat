@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 
 /**
  * Class implements hiveMetacatConverter interface.
+ * @author zhenl
  */
 public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     private static final Splitter SLASH_SPLITTER = Splitter.on('/');

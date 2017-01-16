@@ -30,6 +30,7 @@ import java.util.List;
 
 /**
  * Class to convert hive schema to metacat DTO and vice versa.
+ * @author zhenl
  */
 public interface HiveMetacatConverters {
     /**

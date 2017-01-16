@@ -18,6 +18,7 @@ import lombok.Getter;
 
 /**
  * Schema table partition name.
+ * @author zhenl
  */
 @Getter
 @AllArgsConstructor

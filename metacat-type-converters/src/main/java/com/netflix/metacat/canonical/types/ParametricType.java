@@ -17,6 +17,7 @@ import java.util.List;
 
 /**
  * Parametic type.
+ * @author zhenl
  */
 public interface ParametricType {
     /**

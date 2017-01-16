@@ -22,6 +22,7 @@ import java.util.List;
 
 /**
  * Array type class.
+ * @author zhenl
  */
 public class ArrayType extends AbstractType implements ParametricType {
     /**

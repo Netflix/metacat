@@ -17,6 +17,7 @@ import com.netflix.metacat.canonical.common.spi.util.TupleDomain;
 
 /**
  * connector partition.
+ * @author zhenl
  */
 public interface ConnectorPartition {
     /**

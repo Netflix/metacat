@@ -21,6 +21,7 @@ import java.util.Objects;
 
 /**
  * Serializable Native Value class.
+ * @author zhenl
  */
 @JsonSerialize(using = SerializableNativeValue.Serializer.class)
 @JsonDeserialize(using = SerializableNativeValue.Deserializer.class)

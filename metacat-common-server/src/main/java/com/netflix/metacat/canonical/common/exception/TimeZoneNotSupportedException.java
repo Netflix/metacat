@@ -16,7 +16,8 @@ package com.netflix.metacat.canonical.common.exception;
 import lombok.Getter;
 
 /**
- * Time zone not supported calss.
+ * Time zone not supported class.
+ * @author zhenl
  */
 public class TimeZoneNotSupportedException
     extends RuntimeException {

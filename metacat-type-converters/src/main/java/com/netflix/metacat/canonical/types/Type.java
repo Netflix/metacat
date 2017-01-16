@@ -18,6 +18,7 @@ import java.util.List;
 
 /**
  * Canonical type interface.
+ * @author zhenl
  */
 public interface Type {
 

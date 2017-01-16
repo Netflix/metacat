@@ -23,6 +23,7 @@ import java.util.Map;
 /**
  * This class contains any extra metadata about the table. This was created initially for the serde info that exists in
  * hive.
+ * @author zhenl
  */
 @Getter
 @Setter

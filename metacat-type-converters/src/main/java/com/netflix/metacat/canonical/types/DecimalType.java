@@ -22,6 +22,7 @@ import java.util.List;
 
 /**
  * Decimal type class.
+ * @author zhenl
  */
 @EqualsAndHashCode(callSuper = true)
 public final class DecimalType extends AbstractType implements ParametricType {

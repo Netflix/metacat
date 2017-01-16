@@ -20,6 +20,7 @@ import java.util.Collections;
 
 /**
  * Varchar type.
+ * @author zhenl
  */
 public final class VarcharType extends AbstractType {
     /**

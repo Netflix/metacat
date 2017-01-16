@@ -17,6 +17,7 @@ import java.util.List;
 
 /**
  * Type manager interface.
+ * @author zhenl
  */
 public interface TypeManager {
     /**

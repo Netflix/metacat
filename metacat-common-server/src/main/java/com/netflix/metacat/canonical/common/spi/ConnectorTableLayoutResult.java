@@ -19,7 +19,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 /**
- * connector table layout result .
+ * connector table layout result.
+ * @author zhenl
  */
 @RequiredArgsConstructor
 @Getter

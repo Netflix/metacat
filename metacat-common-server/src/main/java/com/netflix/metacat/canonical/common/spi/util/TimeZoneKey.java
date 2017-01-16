@@ -35,6 +35,7 @@ import java.util.TreeMap;
 
 /**
  * Time zone key.
+ * @author zhenl
  */
 @EqualsAndHashCode
 @ToString

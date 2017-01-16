@@ -21,6 +21,7 @@ import java.util.List;
 
 /**
  * Exception when partition already exists.
+ * @author zhenl
  */
 public class PartitionAlreadyExistsException extends MetacatException {
     private static final Joiner COMMA_JOINER = Joiner.on(',');

@@ -23,6 +23,7 @@ import java.util.List;
 
 /**
  * Save partition result.
+ * @author zhenl
  */
 @Data
 @NoArgsConstructor

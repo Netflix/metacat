@@ -15,6 +15,7 @@ package com.netflix.metacat.canonical.common.exception;
 
 /**
  * Abstruct not found error exception class.
+ * @author zhenl
  */
 public abstract class NotFoundException
     extends MetacatException {

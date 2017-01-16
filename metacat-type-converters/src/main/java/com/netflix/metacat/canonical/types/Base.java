@@ -14,7 +14,8 @@
 package com.netflix.metacat.canonical.types;
 
 /**
- Canonical base type class.
+ * Canonical base type class.
+ * @author zhenl
  */
 public enum Base {
 

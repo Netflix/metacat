@@ -18,6 +18,7 @@ import java.util.TimeZone;
 
 /**
  * time zone index.
+ * @author zhenl
  */
 public final class TimeZoneIndex {
     private static final TimeZone[] TIME_ZONES;

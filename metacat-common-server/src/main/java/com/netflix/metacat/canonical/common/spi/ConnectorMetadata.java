@@ -18,6 +18,7 @@ import java.util.Map;
 
 /**
  * connector meta data.
+ * @author zhenl
  */
 @SuppressWarnings("checkstyle:javadocmethod")
 public interface ConnectorMetadata {

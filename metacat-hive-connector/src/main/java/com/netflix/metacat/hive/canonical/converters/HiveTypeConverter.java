@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 
 /**
  * Class to convert hive to canonical type and vice versa.
+ * @author zhenl
  */
 public class HiveTypeConverter implements TypeConverter {
 

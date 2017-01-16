@@ -24,6 +24,7 @@ import java.util.Map;
 
 /**
  * connector table metadata.
+ * @author zhenl
  */
 @Getter
 @ToString

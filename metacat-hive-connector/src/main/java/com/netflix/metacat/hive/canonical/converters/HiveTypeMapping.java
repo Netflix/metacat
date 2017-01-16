@@ -25,6 +25,7 @@ import java.util.Map;
 
 /**
  * Hive type mapping.
+ * @author zhenl
  */
 public class HiveTypeMapping {
 

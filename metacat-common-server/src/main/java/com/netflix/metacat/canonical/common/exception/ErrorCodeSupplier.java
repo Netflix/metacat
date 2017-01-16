@@ -15,6 +15,7 @@ package com.netflix.metacat.canonical.common.exception;
 
 /**
  * Error code supplier.
+ * @author zhenl
  */
 public interface ErrorCodeSupplier {
     /**

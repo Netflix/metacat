@@ -21,6 +21,7 @@ import java.util.Locale;
 
 /**
  * connector session.
+ * @author zhenl
  */
 @SuppressWarnings("checkstyle:javadocmethod")
 public interface ConnectorSession {

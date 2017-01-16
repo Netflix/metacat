@@ -21,6 +21,7 @@ import java.util.Map;
 
 /**
  * Connector schema metadata.
+ * @author zhenl
  */
 @Data
 @AllArgsConstructor

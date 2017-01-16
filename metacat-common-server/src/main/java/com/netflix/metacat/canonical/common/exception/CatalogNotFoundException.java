@@ -15,6 +15,7 @@ package com.netflix.metacat.canonical.common.exception;
 
 /**
  * Exception when a catalog is not found.
+ * @author zhenl
  */
 public class CatalogNotFoundException extends NotFoundException {
     private final String catalogName;

@@ -15,6 +15,7 @@ package com.netflix.metacat.canonical.common.spi.util;
 
 /**
  * Sort order.
+ * @author zhenl
  */
 public enum SortOrder {
     /** Ascending order, Descending order. */

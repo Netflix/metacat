@@ -24,6 +24,7 @@ import java.util.Objects;
 
 /**
  * A Range of values across the continuous space defined by the types of the Markers.
+ * @author zhenl
  */
 @EqualsAndHashCode
 @ToString

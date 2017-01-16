@@ -27,6 +27,7 @@ import java.util.Set;
 
 /**
  * connector table layout.
+ * @author zhenl
  */
 @RequiredArgsConstructor
 @Getter

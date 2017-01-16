@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Audit info.
+ * @author zhenl
  */
 @Data
 @NoArgsConstructor

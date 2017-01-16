@@ -17,6 +17,7 @@ import com.netflix.metacat.canonical.common.spi.SchemaTableName;
 
 /**
  * Exception when the given information about an entity is invalid.
+ * @author zhenl
  */
 public class InvalidMetaException extends MetacatException {
     private SchemaTableName tableName;

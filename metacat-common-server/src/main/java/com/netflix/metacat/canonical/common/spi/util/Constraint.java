@@ -24,6 +24,7 @@ import java.util.function.Predicate;
  * Constraint class.
  *
  * @param <T>
+ * @author zhenl
  */
 @Getter
 @AllArgsConstructor

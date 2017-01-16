@@ -25,6 +25,7 @@ import java.util.Locale;
 
 /**
  * schemaTableName class.
+ * @author zhenl
  */
 @Getter
 @EqualsAndHashCode

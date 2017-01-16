@@ -23,6 +23,7 @@ import java.util.Map;
 
 /**
  * Extension of ConnectorSplitManager providing more helpful methods.
+ * @author zhenl
  */
 public interface ConnectorSplitDetailManager {
     /**

@@ -15,6 +15,7 @@ package com.netflix.metacat.canonical.types;
 
 /**
  * Canonical type converter class.
+ * @author zhenl
  */
 public interface TypeConverter {
     /**

@@ -21,6 +21,7 @@ import java.util.List;
 
 /**
  * Char type class.
+ * @author zhenl
  */
 @EqualsAndHashCode(callSuper = true)
 public class CharType extends AbstractType implements ParametricType {

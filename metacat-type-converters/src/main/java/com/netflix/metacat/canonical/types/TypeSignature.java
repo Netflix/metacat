@@ -26,6 +26,7 @@ import java.util.Collections;
 
 /**
  * Type signature class.
+ * @author zhenl
  */
 @EqualsAndHashCode
 @Getter

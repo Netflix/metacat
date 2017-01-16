@@ -20,6 +20,7 @@ import java.util.List;
 
 /**
  * Extension of ConnectorMetadata.
+ * @author zhenl
  */
 public interface ConnectorDetailMetadata extends ConnectorMetadata {
     /**

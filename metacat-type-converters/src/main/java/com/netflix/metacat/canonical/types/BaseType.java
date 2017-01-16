@@ -21,6 +21,7 @@ import java.util.List;
 
 /**
  * Base class implements the type interface.
+ * @author zhenl
  */
 @EqualsAndHashCode(callSuper = true)
 public class BaseType extends AbstractType {

@@ -17,6 +17,7 @@ import java.util.Map;
 
 /**
  * Extension of ConnectorPartition.
+ * @author zhenl
  */
 public interface ConnectorPartitionDetail {
     /**

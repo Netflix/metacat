@@ -17,6 +17,7 @@ import lombok.Data;
 
 /**
  * Represents the pagination information.
+ * @author zhenl
  */
 @Data
 public class Pageable {

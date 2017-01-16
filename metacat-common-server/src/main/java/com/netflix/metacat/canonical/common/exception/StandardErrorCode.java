@@ -15,6 +15,7 @@ package com.netflix.metacat.canonical.common.exception;
 
 /**
  * Error code.
+ * @author zhenl
  */
 public enum StandardErrorCode
     implements ErrorCodeSupplier {

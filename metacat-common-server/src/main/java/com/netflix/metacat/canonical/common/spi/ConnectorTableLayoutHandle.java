@@ -15,6 +15,7 @@ package com.netflix.metacat.canonical.common.spi;
 
 /**
  * ConnectorTableLayoutHandle.
+ * @author zhenl
  */
 public interface ConnectorTableLayoutHandle {
 }

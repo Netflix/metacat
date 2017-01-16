@@ -22,6 +22,7 @@ import java.util.Objects;
 
 /**
  * Error code class.
+ * @author zhenl
  */
 @Getter
 @ToString

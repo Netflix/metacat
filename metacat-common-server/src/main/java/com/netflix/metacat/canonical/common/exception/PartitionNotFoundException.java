@@ -19,6 +19,7 @@ import lombok.Getter;
 
 /**
  * Exception when partition is not found.
+ * @author zhenl
  */
 @Getter
 public class PartitionNotFoundException extends NotFoundException {

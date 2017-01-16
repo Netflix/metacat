@@ -23,6 +23,7 @@ import java.util.List;
 
 /**
  * Map type class.
+ * @author zhenl
  */
 
 @EqualsAndHashCode(callSuper = true)

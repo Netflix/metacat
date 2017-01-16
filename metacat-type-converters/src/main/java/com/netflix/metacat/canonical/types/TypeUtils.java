@@ -21,6 +21,7 @@ import java.util.stream.Collector;
 
 /**
  * Type util class.
+ * @author zhenl
  */
 public final class TypeUtils {
     private TypeUtils() {

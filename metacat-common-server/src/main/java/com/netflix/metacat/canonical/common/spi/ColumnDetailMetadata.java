@@ -19,6 +19,7 @@ import lombok.Getter;
 
 /**
  * Extended ColumnMetadata class to add more details.
+ * @author zhenl
  */
 @Getter
 @EqualsAndHashCode(callSuper = true)

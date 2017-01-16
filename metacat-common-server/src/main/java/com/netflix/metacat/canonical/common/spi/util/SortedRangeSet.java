@@ -22,9 +22,8 @@ import java.util.TreeMap;
 
 /**
  * A set containing zero or more Ranges of the same type over a continuous space of possible values.
- * Ranges are coalesced into the most compact representation of non-overlapping Ranges. This structure
- * allows iteration across these compacted Ranges in increasing order, as well as other common
- * set-related operation.
+ * Ranges are coalesced into the most compact representation of non-overlapping Ranges.
+ * @author zhenl
  */
 @RequiredArgsConstructor
 @EqualsAndHashCode

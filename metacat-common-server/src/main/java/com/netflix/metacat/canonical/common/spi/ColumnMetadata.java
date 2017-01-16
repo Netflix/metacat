@@ -25,6 +25,7 @@ import java.util.Locale;
 
 /**
  * ColumnMetadata class.
+ * @author zhenl
  */
 @Getter
 @EqualsAndHashCode

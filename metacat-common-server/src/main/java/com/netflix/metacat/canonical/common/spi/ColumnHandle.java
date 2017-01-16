@@ -15,6 +15,7 @@ package com.netflix.metacat.canonical.common.spi;
 
 /**
  * ColumnHandle.
+ * @author zhenl
  */
 public interface ColumnHandle {
 }

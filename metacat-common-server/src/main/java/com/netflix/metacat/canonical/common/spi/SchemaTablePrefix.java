@@ -22,6 +22,7 @@ import lombok.ToString;
 
 /**
  * schema table prefix.
+ * @author zhenl
  */
 @ToString
 @EqualsAndHashCode

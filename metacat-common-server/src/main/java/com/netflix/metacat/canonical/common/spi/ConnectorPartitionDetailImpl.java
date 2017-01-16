@@ -21,6 +21,7 @@ import java.util.Map;
 
 /**
  * Connector partition detail.
+ * @author zhenl
  */
 @Data
 public class ConnectorPartitionDetailImpl implements ConnectorPartitionDetail {
