@@ -13,12 +13,15 @@
 
 package com.netflix.metacat.canonical.common.spi;
 
-import com.google.common.base.Objects;
 import com.netflix.metacat.canonical.types.Type;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 /**
  * Extended ColumnMetadata class to add more details.
  */
+@Getter
+@EqualsAndHashCode(callSuper = true)
 public class ColumnDetailMetadata extends ColumnMetadata {
     private final String sourceType;
     private final Integer size;
@@ -78,54 +81,5 @@ public class ColumnDetailMetadata extends ColumnMetadata {
         this.defaultValue = defaultValue;
         this.isSortKey = isSortKey;
         this.isIndexKey = isIndexKey;
-    }
-
-    public String getSourceType() {
-        return sourceType;
-    }
-
-    public Boolean getIsNullable() {
-        return isNullable;
-    }
-
-    public Integer getSize() {
-        return size;
-    }
-
-    public String getDefaultValue() {
-        return defaultValue;
-    }
-
-    public Boolean getIsSortKey() {
-        return isSortKey;
-    }
-
-    public Boolean getIsIndexKey() {
-        return isIndexKey;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        if (!super.equals(o)) {
-            return false;
-        }
-        final ColumnDetailMetadata that = (ColumnDetailMetadata) o;
-        return Objects.equal(sourceType, that.sourceType)
-            && Objects.equal(size, that.size)
-            && Objects.equal(isNullable, that.isNullable)
-            && Objects.equal(defaultValue, that.defaultValue)
-            && Objects.equal(isSortKey, that.isSortKey)
-            && Objects.equal(isIndexKey, that.isIndexKey);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(super.hashCode(), sourceType, size, isNullable, defaultValue, isSortKey, isIndexKey);
     }
 }

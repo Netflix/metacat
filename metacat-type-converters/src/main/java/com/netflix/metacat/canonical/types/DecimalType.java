@@ -25,14 +25,22 @@ import java.util.List;
  */
 @EqualsAndHashCode(callSuper = true)
 public final class DecimalType extends AbstractType implements ParametricType {
-    /** Default decimal type.*/
+    /**
+     * Default decimal type.
+     */
     public static final DecimalType DECIMAL = createDecimalType();
-    /**If scale is not specified, it defaults to 0 (no fractional digits).*/
+    /**
+     * If scale is not specified, it defaults to 0 (no fractional digits).
+     */
     private static final int DEFAULT_SCALE = 0;
-    /** If no precision is specified, it defaults to 10.*/
+    /**
+     * If no precision is specified, it defaults to 10.
+     */
     private static final int DEFAULT_PRECISION = 10;
-    @Getter private final int precision;
-    @Getter private final int scale;
+    @Getter
+    private final int precision;
+    @Getter
+    private final int scale;
 
     private DecimalType(final int precision, final int scale) {
         super(new TypeSignature(Base.DECIMAL.getBaseTypeDisplayName(), Lists.newArrayList(),
@@ -45,8 +53,9 @@ public final class DecimalType extends AbstractType implements ParametricType {
 
     /**
      * Constructor.
+     *
      * @param precision precision
-     * @param scale scale
+     * @param scale     scale
      * @return DecimalType
      */
     public static DecimalType createDecimalType(final int precision, final int scale) {
@@ -55,6 +64,7 @@ public final class DecimalType extends AbstractType implements ParametricType {
 
     /**
      * Constructor.
+     *
      * @param precision precision
      * @return DecimalType
      */
@@ -64,17 +74,24 @@ public final class DecimalType extends AbstractType implements ParametricType {
 
     /**
      * Constructor.
+     *
      * @return DecimalType
      */
     public static DecimalType createDecimalType() {
         return createDecimalType(DEFAULT_PRECISION, DEFAULT_SCALE);
     }
 
+    /**
+     * {@inheritdoc}.
+     */
     @Override
     public String getParametricTypeName() {
         return Base.DECIMAL.getBaseTypeDisplayName();
     }
 
+    /**
+     * {@inheritdoc}.
+     */
     @Override
     public Type createType(final List<Type> types, final List<Object> literals) {
         switch (literals.size()) {

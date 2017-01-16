@@ -13,14 +13,8 @@
 
 package com.netflix.metacat.canonical.common.spi;
 
-import com.netflix.metacat.canonical.common.exception.MetacatException;
-import com.netflix.metacat.canonical.common.exception.StandardErrorCode;
-import com.netflix.metacat.canonical.common.spi.util.Constraint;
-
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * connector meta data.
@@ -36,24 +30,6 @@ public interface ConnectorMetadata {
      * Returns a table handle for the specified table name, or null if the connector does not contain the table.
      */
     ConnectorTableHandle getTableHandle(ConnectorSession session, SchemaTableName tableName);
-
-    /**
-     * Return a list of table layouts that satisfy the given constraint.
-     * <p>
-     * For each layout, connectors must return an "unenforced constraint"
-     * representing the part of the constraint summary that isn't guaranteed by the layout.
-     */
-    default List<ConnectorTableLayoutResult> getTableLayouts(
-        ConnectorSession session,
-        ConnectorTableHandle table,
-        Constraint<ColumnHandle> constraint,
-        Optional<Set<ColumnHandle>> desiredColumns) {
-        throw new UnsupportedOperationException("not yet implemented");
-    }
-
-    default ConnectorTableLayout getTableLayout(ConnectorSession session, ConnectorTableLayoutHandle handle) {
-        throw new UnsupportedOperationException("not yet implemented");
-    }
 
     /**
      * Return the metadata for the specified table handle.
@@ -115,19 +91,6 @@ public interface ConnectorMetadata {
      * Rename the specified table.
      */
     void renameTable(ConnectorSession session, ConnectorTableHandle tableHandle, SchemaTableName newTableName);
-
-    /**
-     * Rename the specified column.
-     */
-    default void renameColumn(ConnectorSession session, ConnectorTableHandle tableHandle,
-                              ColumnHandle source, String target) {
-        throw new MetacatException(StandardErrorCode.NOT_SUPPORTED, "This connector does not support renaming columns");
-    }
-
-    /**
-     * Begin the atomic creation of a table with data.
-     */
-    ConnectorOutputTableHandle beginCreateTable(ConnectorSession session, ConnectorTableMetadata tableMetadata);
 
     /**
      * Create the specified view. The data for the view is opaque to the connector.

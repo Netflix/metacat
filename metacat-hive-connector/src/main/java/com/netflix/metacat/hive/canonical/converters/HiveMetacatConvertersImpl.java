@@ -81,6 +81,10 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
         return result;
     }
 
+    /**
+     * {@inheritdoc}.
+     *
+     */
     @Override
     public TableDto hiveToMetacatTable(final QualifiedName name, final Table table) {
         final List<FieldSchema> nonPartitionColumns = table.getSd().getCols();
@@ -105,6 +109,10 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
         return dto;
     }
 
+    /**
+     * {@inheritdoc}.
+     *
+     */
     @Override
     public Database metacatToHiveDatabase(final DatabaseDto dto) {
         final QualifiedName databaseName = dto.getName();
@@ -115,6 +123,10 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
         return new Database(name, name, dbUri, metadata);
     }
 
+    /**
+     * {@inheritdoc}.
+     *
+     */
     @Override
     public Table metacatToHiveTable(final TableDto dto) {
         final QualifiedName name = dto.getName();
@@ -246,6 +258,10 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
             .build();
     }
 
+    /**
+     * {@inheritdoc}.
+     *
+     */
     @Override
     public List<String> getPartValsFromName(final TableDto tableDto, final String partName) {
         // Unescape the partition name
@@ -264,6 +280,10 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
         return partVals;
     }
 
+    /**
+     * {@inheritdoc}.
+     *
+     */
     @Override
     public String getNameFromPartVals(final TableDto tableDto, final List<String> partVals) {
         final List<String> partitionKeys = tableDto.getPartition_keys();
@@ -282,6 +302,10 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
         return builder.toString();
     }
 
+    /**
+     * {@inheritdoc}.
+     *
+     */
     @Override
     public Partition metacatToHivePartition(final PartitionDto partitionDto, final TableDto tableDto) {
         final QualifiedName name = partitionDto.getName();

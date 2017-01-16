@@ -7,15 +7,9 @@ dependencies {
     compile("com.facebook.presto:presto-hive:${presto_version}") {
         exclude group: 'org.apache.thrift'
     }
-//    compile("org.apache.hive:hive-metastore:1.2.1"){
-//        exclude group: 'org.apache.thrift'
-//    }
     compile("com.facebook.presto:presto-hive-hadoop2:${presto_version}") {
         exclude group: 'org.apache.thrift'
     }
-//    compile("org.apache.hadoop:hadoop-core:1.2.1"){
-//        exclude group: 'org.apache.thrift'
-//    }
     compile "com.google.guava:guava:${guava_version}"
     compile "com.google.inject:guice:${guice_version}"
     compile 'com.netflix.archaius:archaius-core:0.6.5'

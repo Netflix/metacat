@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import lombok.ToString;
 
 import java.util.ArrayList;
@@ -15,7 +16,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -57,8 +57,8 @@ public final class TupleDomain<T> {
      * @param <T>
      * @return
      */
-    public static <T> TupleDomain<T> withColumnDomains(final Map<T, Domain> domains) {
-        return new TupleDomain<>(Objects.requireNonNull(domains, "domains is null"));
+    public static <T> TupleDomain<T> withColumnDomains(@NonNull final Map<T, Domain> domains) {
+        return new TupleDomain<>(domains);
     }
 
     public static <T> TupleDomain<T> none() {
@@ -379,10 +379,10 @@ public final class TupleDomain<T> {
 
         @JsonCreator
         public ColumnDomain(
-            @JsonProperty("columnHandle") final C columnHandle,
-            @JsonProperty("domain") final Domain domain) {
-            this.columnHandle = Objects.requireNonNull(columnHandle, "columnHandle is null");
-            this.domain = Objects.requireNonNull(domain, "domain is null");
+            @JsonProperty("columnHandle") @NonNull final C columnHandle,
+            @JsonProperty("domain") @NonNull final Domain domain) {
+            this.columnHandle = columnHandle;
+            this.domain = domain;
         }
 
         @JsonProperty

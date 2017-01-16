@@ -16,7 +16,7 @@ package com.netflix.metacat.pig.canonical.converters;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
-import com.netflix.metacat.canonical.type.converters.CanonicalTypeConverter;
+import com.netflix.metacat.canonical.types.TypeConverter;
 import com.netflix.metacat.canonical.types.ArrayType;
 import com.netflix.metacat.canonical.types.BaseType;
 import com.netflix.metacat.canonical.types.CharType;
@@ -40,9 +40,12 @@ import java.util.Optional;
 /**
  * Class to convert pig to canonical type and vice versa.
  */
-public class PigTypeConverter implements CanonicalTypeConverter {
+public class PigTypeConverter implements TypeConverter {
     private static final String NAME_ARRAY_ELEMENT = "array_element";
 
+    /**
+     * {@inheritdoc}.
+     */
     @Override
     public Type dataTypeToCanonicalType(final String pigType, final TypeManager typeRegistry) {
         try {
@@ -54,6 +57,9 @@ public class PigTypeConverter implements CanonicalTypeConverter {
         }
     }
 
+    /**
+     * {@inheritdoc}.
+     */
     @Override
     public String canonicalTypeToDataType(final Type type) {
         final Schema schema = new Schema(Util.translateFieldSchema(fromCanonicalTypeToPigSchema(null, type)));

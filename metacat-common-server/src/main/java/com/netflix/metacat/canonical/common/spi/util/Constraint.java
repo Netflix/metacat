@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.canonical.common.spi.util;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;

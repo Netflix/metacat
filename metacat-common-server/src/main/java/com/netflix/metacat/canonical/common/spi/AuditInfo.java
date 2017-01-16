@@ -13,36 +13,19 @@
 
 package com.netflix.metacat.canonical.common.spi;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Audit info.
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class AuditInfo {
     private String createdBy;
     private String lastUpdatedBy;
     private Long createdDate;
     private Long lastUpdatedDate;
-
-    /**
-     * Default constructor.
-     */
-    public AuditInfo() {
-    }
-
-    /**
-     * Constructor.
-     * @param createdBy creator name
-     * @param lastUpdatedBy name who updated
-     * @param createdDate creator time in epoch
-     * @param lastUpdatedDate updated time in epoch
-     */
-    public AuditInfo(final String createdBy, final String lastUpdatedBy, final Long createdDate,
-                     final Long lastUpdatedDate) {
-        this.createdBy = createdBy;
-        this.lastUpdatedBy = lastUpdatedBy;
-        this.createdDate = createdDate;
-        this.lastUpdatedDate = lastUpdatedDate;
-    }
 }

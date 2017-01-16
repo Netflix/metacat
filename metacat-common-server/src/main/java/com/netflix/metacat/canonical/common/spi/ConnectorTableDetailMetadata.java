@@ -13,8 +13,9 @@
 
 package com.netflix.metacat.canonical.common.spi;
 
-
 import com.google.common.collect.Maps;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.Map;
@@ -22,46 +23,51 @@ import java.util.Map;
 /**
  * This class contains any extra metadata about the table. This was created initially for the serde info that exists in
  * hive.
- *
- * Created by amajumdar on 1/15/15.
  */
+@Getter
+@Setter
 public class ConnectorTableDetailMetadata extends ConnectorTableMetadata {
     private StorageInfo storageInfo;
     private Map<String, String> metadata;
     private AuditInfo auditInfo;
 
     /**
-     * COnstructor.
-     * @param table table name
-     * @param columns list of columns
-     * @param metadata metadata
-     */
-    public ConnectorTableDetailMetadata(final SchemaTableName table,
-                                        final List<ColumnMetadata> columns, final Map<String, String> metadata) {
-        this(table, columns, null, null, metadata, null);
-    }
-
-    /**
-     * COnstructor.
-     * @param table table name
-     * @param columns list of columns
-     * @param storageInfo storage info
+     * Constructor.
+     *
+     * @param table    table name
+     * @param columns  list of columns
      * @param metadata metadata
      */
     public ConnectorTableDetailMetadata(final SchemaTableName table,
                                         final List<ColumnMetadata> columns,
-                                        final StorageInfo storageInfo, final Map<String, String> metadata) {
+                                        final Map<String, String> metadata) {
+        this(table, columns, null, null, metadata, null);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param table       table name
+     * @param columns     list of columns
+     * @param storageInfo storage info
+     * @param metadata    metadata
+     */
+    public ConnectorTableDetailMetadata(final SchemaTableName table,
+                                        final List<ColumnMetadata> columns,
+                                        final StorageInfo storageInfo,
+                                        final Map<String, String> metadata) {
         this(table, columns, null, storageInfo, metadata, null);
     }
 
     /**
-     * COnstructor.
-     * @param table table name
-     * @param columns list of columns
-     * @param owner owner name
+     * Constructor.
+     *
+     * @param table       table name
+     * @param columns     list of columns
+     * @param owner       owner name
      * @param storageInfo storage info
-     * @param metadata metadata
-     * @param auditInfo audit info
+     * @param metadata    metadata
+     * @param auditInfo   audit info
      */
     public ConnectorTableDetailMetadata(final SchemaTableName table, final List<ColumnMetadata> columns,
                                         final String owner,
@@ -71,29 +77,5 @@ public class ConnectorTableDetailMetadata extends ConnectorTableMetadata {
         this.storageInfo = storageInfo;
         this.metadata = metadata;
         this.auditInfo = auditInfo != null ? auditInfo : new AuditInfo();
-    }
-
-    public StorageInfo getStorageInfo() {
-        return storageInfo;
-    }
-
-    public void setStorageInfo(final StorageInfo storageInfo) {
-        this.storageInfo = storageInfo;
-    }
-
-    public Map<String, String> getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(final Map<String, String> metadata) {
-        this.metadata = metadata;
-    }
-
-    public AuditInfo getAuditInfo() {
-        return auditInfo;
-    }
-
-    public void setAuditInfo(final AuditInfo auditInfo) {
-        this.auditInfo = auditInfo;
     }
 }

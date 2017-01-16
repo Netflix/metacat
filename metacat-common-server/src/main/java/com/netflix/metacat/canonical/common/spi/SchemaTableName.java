@@ -39,8 +39,8 @@ public class SchemaTableName {
      * @param tableName  tableName
      */
     public SchemaTableName(final String schemaName, final String tableName) {
-        Preconditions.checkState(!Strings.isNullOrEmpty(schemaName), "schemaName");
-        Preconditions.checkState(!Strings.isNullOrEmpty(tableName), "tableName");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaName), "schemaName");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName), "tableName");
         this.schemaName = schemaName.toLowerCase(Locale.ENGLISH);
         this.tableName = tableName.toLowerCase(Locale.ENGLISH);
     }
@@ -53,11 +53,9 @@ public class SchemaTableName {
      */
     @JsonCreator
     public static SchemaTableName valueOf(final String schemaTableName) {
-        Preconditions.checkState(!Strings.isNullOrEmpty(schemaTableName), "schemaTableName");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaTableName), "schemaTableName");
         final String[] parts = schemaTableName.split("\\.");
-        if (parts.length != 2) {
-            throw new IllegalArgumentException("Invalid schemaTableName " + schemaTableName);
-        }
+        Preconditions.checkArgument(parts.length == 2, "Invalid schemaTableName " + schemaTableName);
         return new SchemaTableName(parts[0], parts[1]);
     }
 

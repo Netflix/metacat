@@ -14,53 +14,57 @@
 package com.netflix.metacat.canonical.common.spi;
 
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.ToString;
 
 /**
- * shema table prefix.
+ * schema table prefix.
  */
 @ToString
 @EqualsAndHashCode
+@NoArgsConstructor(force = true)
 @Getter
-@SuppressWarnings("checkstyle:javadocmethod")
 public class SchemaTablePrefix {
     /* nullable */
     private final String schemaName;
     /* nullable */
     private final String tableName;
 
-    public SchemaTablePrefix() {
-        this.schemaName = null;
-        this.tableName = null;
-    }
-
-    public SchemaTablePrefix(final String schemaName) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaName), "schemaName is empty");
+    /**
+     * Constructor.
+     * @param schemaName schemaName
+     */
+    public SchemaTablePrefix(@NonNull final String schemaName) {
         this.schemaName = schemaName;
         this.tableName = null;
     }
 
-    public SchemaTablePrefix(final String schemaName, final String tableName) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaName), "schemaName is empty");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName), "tableName is empty");
+    /**
+     * Constructor.
+     * @param schemaName schemaName
+     * @param tableName tableName
+     */
+    public SchemaTablePrefix(@NonNull final String schemaName, @NonNull final String tableName) {
         this.schemaName = schemaName;
         this.tableName = tableName;
     }
 
+    /**
+     * Constructor.
+     * @param schemaTableName schemaTableName
+     * @return boolean
+     */
     public boolean matches(final SchemaTableName schemaTableName) {
         // null schema name matches everything
         if (schemaName == null) {
             return true;
         }
-
         if (!schemaName.equals(schemaTableName.getSchemaName())) {
             return false;
         }
-
         return tableName == null || tableName.equals(schemaTableName.getTableName());
     }
 

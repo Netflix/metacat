@@ -32,9 +32,10 @@ public class ConnectorPartitionDetailImpl implements ConnectorPartitionDetail {
 
     /**
      * Constructor.
+     *
      * @param partitionId partition name
      * @param tupleDomain tuple
-     * @param metadata metadata
+     * @param metadata    metadata
      */
     public ConnectorPartitionDetailImpl(final String partitionId,
                                         final TupleDomain<ColumnHandle> tupleDomain,
@@ -44,10 +45,11 @@ public class ConnectorPartitionDetailImpl implements ConnectorPartitionDetail {
 
     /**
      * Constructor.
+     *
      * @param partitionId partition name
      * @param tupleDomain tuple
      * @param storageInfo storage info
-     * @param metadata metadata
+     * @param metadata    metadata
      */
     public ConnectorPartitionDetailImpl(final String partitionId,
                                         final TupleDomain<ColumnHandle> tupleDomain,
@@ -58,11 +60,12 @@ public class ConnectorPartitionDetailImpl implements ConnectorPartitionDetail {
 
     /**
      * Constructor.
+     *
      * @param partitionId partition name
      * @param tupleDomain tuple
      * @param storageInfo storage info
-     * @param metadata metadata
-     * @param auditInfo audit info
+     * @param metadata    metadata
+     * @param auditInfo   audit info
      */
     public ConnectorPartitionDetailImpl(final String partitionId,
                                         final TupleDomain<ColumnHandle> tupleDomain,

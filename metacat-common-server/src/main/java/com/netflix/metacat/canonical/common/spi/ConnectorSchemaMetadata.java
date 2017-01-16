@@ -14,6 +14,7 @@
 package com.netflix.metacat.canonical.common.spi;
 
 import com.google.common.collect.Maps;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.Map;
  * Connector schema metadata.
  */
 @Data
+@AllArgsConstructor
 public class ConnectorSchemaMetadata {
     private String schemaName;
     private String uri;
@@ -44,18 +46,5 @@ public class ConnectorSchemaMetadata {
      */
     public ConnectorSchemaMetadata(final String schemaName, final String uri) {
         this(schemaName, uri, Maps.newHashMap());
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param schemaName schema name
-     * @param uri        uri
-     * @param metadata   metadata
-     */
-    public ConnectorSchemaMetadata(final String schemaName, final String uri, final Map<String, String> metadata) {
-        this.schemaName = schemaName;
-        this.uri = uri;
-        this.metadata = metadata;
     }
 }

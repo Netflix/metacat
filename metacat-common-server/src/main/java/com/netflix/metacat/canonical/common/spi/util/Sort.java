@@ -13,45 +13,24 @@
 
 package com.netflix.metacat.canonical.common.spi.util;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
  * Sort info.
  */
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
 public class Sort {
-    private String sortBy;
+    @Getter private String sortBy;
     private SortOrder order;
-
-    /**
-     * Default constructor.
-     */
-    public Sort() {
-    }
-
-    /**
-     * Constructor.
-     * @param sortBy sort by
-     * @param order order of the list
-     */
-    public Sort(final String sortBy, final SortOrder order) {
-        this.sortBy = sortBy;
-        this.order = order;
-    }
-
-    public String getSortBy() {
-        return sortBy;
-    }
-
-    public void setSortBy(final String sortBy) {
-        this.sortBy = sortBy;
-    }
 
     public SortOrder getOrder() {
         return order == null ? SortOrder.ASC : order;
     }
-
-    public void setOrder(final SortOrder order) {
-        this.order = order;
-    }
-
     /**
      * True if sortBy is specified.
      * @return true if sortBy is specified

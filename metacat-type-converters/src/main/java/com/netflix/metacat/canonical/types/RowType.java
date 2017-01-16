@@ -22,8 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.netflix.metacat.canonical.type.converters.TypeUtil;
-
 /**
  * Row type.
  */
@@ -56,11 +54,19 @@ public class RowType extends AbstractType implements ParametricType {
         fields = builder.build();
     }
 
+    /**
+     * {@inheritdoc}.
+     *
+     */
     @Override
     public String getParametricTypeName() {
         return Base.ROW.getBaseTypeDisplayName();
     }
 
+    /**
+     * {@inheritdoc}.
+     *
+     */
     @Override
     public RowType createType(final List<Type> types, final List<Object> literals) {
         Preconditions.checkArgument(!types.isEmpty(), "types is empty");
@@ -73,11 +79,15 @@ public class RowType extends AbstractType implements ParametricType {
 
         final ImmutableList.Builder<String> builder = ImmutableList.builder();
         for (Object literal : literals) {
-            builder.add(TypeUtil.checkType(literal, String.class, "literal"));
+            builder.add(TypeUtils.checkType(literal, String.class, "literal"));
         }
         return new RowType(types, Optional.of(builder.build()));
     }
 
+    /**
+     * {@inheritdoc}.
+     *
+     */
     @Override
     public List<Type> getParameters() {
          return fields.stream()

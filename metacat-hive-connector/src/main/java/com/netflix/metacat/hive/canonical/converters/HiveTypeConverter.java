@@ -13,10 +13,8 @@
 
 package com.netflix.metacat.hive.canonical.converters;
 
-
 import com.google.common.collect.ImmutableList;
-import com.netflix.metacat.canonical.type.converters.CanonicalTypeConverter;
-import com.netflix.metacat.canonical.type.converters.TypeUtil;
+import com.netflix.metacat.canonical.types.TypeConverter;
 import com.netflix.metacat.canonical.types.Base;
 import com.netflix.metacat.canonical.types.CharType;
 import com.netflix.metacat.canonical.types.DecimalType;
@@ -25,6 +23,7 @@ import com.netflix.metacat.canonical.types.RowType;
 import com.netflix.metacat.canonical.types.Type;
 import com.netflix.metacat.canonical.types.TypeManager;
 import com.netflix.metacat.canonical.types.TypeSignature;
+import com.netflix.metacat.canonical.types.TypeUtils;
 import com.netflix.metacat.canonical.types.VarcharType;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
@@ -50,7 +49,7 @@ import java.util.stream.Collectors;
 /**
  * Class to convert hive to canonical type and vice versa.
  */
-public class HiveTypeConverter implements CanonicalTypeConverter {
+public class HiveTypeConverter implements TypeConverter {
 
     @Override
     public Type dataTypeToCanonicalType(final String type, final TypeManager typeRegistry) {
@@ -145,7 +144,7 @@ public class HiveTypeConverter implements CanonicalTypeConverter {
                 return getPrimitiveType(fieldInspector);
             case MAP:
                 final MapObjectInspector mapObjectInspector =
-                    TypeUtil.checkType(fieldInspector, MapObjectInspector.class,
+                    TypeUtils.checkType(fieldInspector, MapObjectInspector.class,
                         "fieldInspector");
                 final Type keyType = getCanonicalType(mapObjectInspector.getMapKeyObjectInspector(), typeRegistry);
                 final Type valueType = getCanonicalType(mapObjectInspector.getMapValueObjectInspector(), typeRegistry);
@@ -156,7 +155,7 @@ public class HiveTypeConverter implements CanonicalTypeConverter {
                     ImmutableList.of(keyType.getTypeSignature(), valueType.getTypeSignature()), ImmutableList.of());
             case LIST:
                 final ListObjectInspector listObjectInspector =
-                    TypeUtil.checkType(fieldInspector, ListObjectInspector.class,
+                    TypeUtils.checkType(fieldInspector, ListObjectInspector.class,
                         "fieldInspector");
                 final Type elementType =
                     getCanonicalType(listObjectInspector.getListElementObjectInspector(), typeRegistry);
@@ -167,7 +166,7 @@ public class HiveTypeConverter implements CanonicalTypeConverter {
                     ImmutableList.of(elementType.getTypeSignature()), ImmutableList.of());
             case STRUCT:
                 final StructObjectInspector structObjectInspector =
-                    TypeUtil.checkType(fieldInspector, StructObjectInspector.class, "fieldInspector");
+                    TypeUtils.checkType(fieldInspector, StructObjectInspector.class, "fieldInspector");
                 final List<TypeSignature> fieldTypes = new ArrayList<>();
                 final List<Object> fieldNames = new ArrayList<>();
                 for (StructField field : structObjectInspector.getAllStructFieldRefs()) {

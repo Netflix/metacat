@@ -1,6 +1,5 @@
 package com.netflix.metacat.canonical.common.spi.util;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -46,7 +45,7 @@ public final class Domain {
     /**
      * create domain.
      *
-     * @param ranges      ranges
+     * @param ranges  ranges
      * @param nullAllowed null allowed flag
      * @return domain
      */

@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.canonical.types;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
@@ -61,5 +62,24 @@ public final class TypeUtils {
      */
     public static boolean isNullOrEmpty(final Collection<?> collection) {
         return collection == null || collection.isEmpty();
+    }
+
+    /**
+     * CheckType.
+     * @param value value
+     * @param target type
+     * @param name name
+     * @param <A> A
+     * @param <B> B
+     * @return B
+     */
+    public static <A, B extends A> B checkType(final A value, final Class<B> target, final String name) {
+        Preconditions.checkNotNull(value, "%s is null", name);
+        Preconditions.checkArgument(target.isInstance(value),
+            "%s must be of type %s, not %s",
+            name,
+            target.getName(),
+            value.getClass().getName());
+        return target.cast(value);
     }
 }

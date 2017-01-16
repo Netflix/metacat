@@ -13,11 +13,9 @@
 
 package com.netflix.metacat.canonical.common.spi;
 
-/**
- * Created by zhenl on 1/10/17.
- */
-
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Map;
 
@@ -25,6 +23,8 @@ import java.util.Map;
  * Storage info.
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class StorageInfo {
     /* Location of the data */
     private String uri;
@@ -37,30 +37,4 @@ public class StorageInfo {
     /* Serialization parameters */
     private Map<String, String> parameters;
     private Map<String, String> serdeInfoParameters;
-
-    /**
-     * Default constructor.
-     */
-    public StorageInfo() {
-    }
-
-    /**
-     * Constructor.
-     * @param uri uri
-     * @param inputFormat input format
-     * @param outputFormat output format
-     * @param serializationLib serialization lib
-     * @param parameters paramters
-     * @param serdeInfoParameters serde info parameters
-     */
-    public StorageInfo(final String uri, final String inputFormat, final String outputFormat,
-                       final String serializationLib,
-                       final Map<String, String> parameters, final Map<String, String> serdeInfoParameters) {
-        this.uri = uri;
-        this.inputFormat = inputFormat;
-        this.outputFormat = outputFormat;
-        this.serializationLib = serializationLib;
-        this.parameters = parameters;
-        this.serdeInfoParameters = serdeInfoParameters;
-    }
 }

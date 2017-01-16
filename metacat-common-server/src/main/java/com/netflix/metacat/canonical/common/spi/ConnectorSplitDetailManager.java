@@ -16,7 +16,6 @@ package com.netflix.metacat.canonical.common.spi;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.canonical.common.spi.util.Pageable;
-import com.netflix.metacat.canonical.common.spi.util.SavePartitionResult;
 import com.netflix.metacat.canonical.common.spi.util.Sort;
 
 import java.util.List;

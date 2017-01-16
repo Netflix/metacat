@@ -14,21 +14,24 @@
 package com.netflix.metacat.canonical.common.spi;
 
 import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 /**
  * connector table metadata.
  */
 @Getter
 @ToString
-@SuppressWarnings("checkstyle:javadocmethod")
+@RequiredArgsConstructor
 public class ConnectorTableMetadata {
+    @NonNull
     private final SchemaTableName table;
+    @NonNull
     private final List<ColumnMetadata> columns;
     private final Map<String, Object> properties;
     /* nullable */
@@ -37,39 +40,40 @@ public class ConnectorTableMetadata {
 
     /**
      * ConnectorTableMetadata.
-     * @param table
-     * @param columns
+     *
+     * @param table   table
+     * @param columns columns
      */
-    public ConnectorTableMetadata(final SchemaTableName table, final List<ColumnMetadata> columns) {
+    public ConnectorTableMetadata(final SchemaTableName table,
+                                  final List<ColumnMetadata> columns) {
         this(table, columns, Collections.emptyMap(), null);
     }
 
+    /**
+     * ConnectorTableMetadata.
+     *
+     * @param table      table
+     * @param columns    columns
+     * @param properties properities
+     */
     public ConnectorTableMetadata(final SchemaTableName table,
-                                  final List<ColumnMetadata> columns, final Map<String, Object> properties) {
+                                  final List<ColumnMetadata> columns,
+                                  final Map<String, Object> properties) {
         this(table, columns, properties, null);
     }
 
-    public ConnectorTableMetadata(final SchemaTableName table, final List<ColumnMetadata> columns,
-                                  final Map<String, Object> properties, final String owner) {
-        this(table, columns, properties, owner, false);
-    }
-
+    /**
+     * ConnectorTableMetadata.
+     *
+     * @param table      table
+     * @param columns    columns
+     * @param properties properities
+     * @param owner      owner
+     */
     public ConnectorTableMetadata(final SchemaTableName table,
                                   final List<ColumnMetadata> columns,
                                   final Map<String, Object> properties,
-                                  final String owner,
-                                  final boolean sampled) {
-        if (table == null) {
-            throw new NullPointerException("table is null or empty");
-        }
-        if (columns == null) {
-            throw new NullPointerException("columns is null");
-        }
-
-        this.table = table;
-        this.columns = Collections.unmodifiableList(new ArrayList<>(columns));
-        this.properties = Collections.unmodifiableMap(new LinkedHashMap<>(properties));
-        this.owner = owner;
-        this.sampled = sampled;
+                                  final String owner) {
+        this(table, columns, properties, owner, false);
     }
 }

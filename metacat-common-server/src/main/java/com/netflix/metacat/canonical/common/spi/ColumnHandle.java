@@ -14,7 +14,7 @@
 package com.netflix.metacat.canonical.common.spi;
 
 /**
- * Created by zhenl on 1/10/17.
+ * ColumnHandle.
  */
 public interface ColumnHandle {
 }

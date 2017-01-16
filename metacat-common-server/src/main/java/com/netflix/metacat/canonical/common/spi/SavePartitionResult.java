@@ -13,15 +13,20 @@
 
 package com.netflix.metacat.canonical.common.spi;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Schema table partition name.
+ * Save partition result.
  */
-@Getter
-@AllArgsConstructor
-public class SchemaTablePartitionName {
-    private SchemaTableName tableName;
-    private String partitionId;
+@Data
+@NoArgsConstructor
+public class SavePartitionResult {
+    @NonNull private List<String> added = new ArrayList<>();
+    @NonNull private List<String> updated = new ArrayList<>();
 }

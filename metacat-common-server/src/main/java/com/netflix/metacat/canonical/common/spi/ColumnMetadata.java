@@ -13,21 +13,26 @@
 
 package com.netflix.metacat.canonical.common.spi;
 
-/**
- * Created by zhenl on 1/10/17.
- */
-
-import java.util.Objects;
-
+import com.facebook.presto.hadoop.shaded.com.google.common.base.Strings;
+import com.google.common.base.Preconditions;
 import com.netflix.metacat.canonical.types.Type;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.ToString;
 
 import java.util.Locale;
 
 /**
  * ColumnMetadata class.
  */
+@Getter
+@EqualsAndHashCode
+@ToString
 public class ColumnMetadata {
+    @NonNull
     private final String name;
+    @NonNull
     private final Type type;
     private final boolean partitionKey;
     private final String comment;
@@ -53,76 +58,13 @@ public class ColumnMetadata {
      * @param comment      comment
      * @param hidden       hidden
      */
-    public ColumnMetadata(final String name, final Type type,
+    public ColumnMetadata(final String name, @NonNull final Type type,
                           final boolean partitionKey, final String comment, final boolean hidden) {
-        if (name == null || name.isEmpty()) {
-            throw new NullPointerException("name is null or empty");
-        }
-        if (type == null) {
-            throw new NullPointerException("type is null");
-        }
-
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "name is null or empty");
         this.name = name.toLowerCase(Locale.ENGLISH);
         this.type = type;
         this.partitionKey = partitionKey;
         this.comment = comment;
         this.hidden = hidden;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public Type getType() {
-        return type;
-    }
-
-    public boolean isPartitionKey() {
-        return partitionKey;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public boolean isHidden() {
-        return hidden;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("ColumnMetadata{");
-        sb.append("name='").append(name).append('\'');
-        sb.append(", type=").append(type);
-        sb.append(", partitionKey=").append(partitionKey);
-        if (comment != null) {
-            sb.append(", comment='").append(comment).append('\'');
-        }
-        if (hidden) {
-            sb.append(", hidden");
-        }
-        sb.append('}');
-        return sb.toString();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, type, partitionKey, comment, hidden);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        final ColumnMetadata other = (ColumnMetadata) obj;
-        return Objects.equals(this.name, other.name)
-            && Objects.equals(this.type, other.type)
-            && Objects.equals(this.partitionKey, other.partitionKey)
-            && Objects.equals(this.comment, other.comment)
-            && Objects.equals(this.hidden, other.hidden);
     }
 }
