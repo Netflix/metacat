@@ -19,8 +19,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 import com.wordnik.swagger.annotations.ApiModel;
 import com.wordnik.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -38,6 +41,9 @@ import java.util.Map;
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionMetadata {
     private static final long serialVersionUID = 5922768252406041451L;
     @ApiModelProperty(value = "Contains information about table changes")

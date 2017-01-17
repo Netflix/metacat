@@ -1,0 +1,19 @@
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+
+dependencies {
+    compile project(':metacat-common')
+    compile("com.facebook.presto:presto-hive:${presto_version}") {
+        exclude group: 'org.apache.thrift'
+    }
+    compile("com.facebook.presto:presto-hive-hadoop2:${presto_version}") {
+        exclude group: 'org.apache.thrift'
+    }
+    compile "com.google.guava:guava:${guava_version}"
+    compile "com.google.inject:guice:${guice_version}"
+    compile 'com.netflix.archaius:archaius-core:0.6.5'
+    compile 'com.netflix.servo:servo-core:0.8.3'
+    compile 'org.apache.pig:pig:0.14.0'
+    compile "org.slf4j:slf4j-api:${slf4j_version}"
+}
