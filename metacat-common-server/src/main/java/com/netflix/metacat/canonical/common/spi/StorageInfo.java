@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 import java.util.Map;
 
 /**
- * Storage info.
+ * Storage info class.
  * @author zhenl
  */
 @Data
