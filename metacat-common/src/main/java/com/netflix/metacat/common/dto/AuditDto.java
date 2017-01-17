@@ -14,8 +14,11 @@
 package com.netflix.metacat.common.dto;
 
 import com.wordnik.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
@@ -26,6 +29,9 @@ import java.util.Date;
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class AuditDto extends BaseDto {
     private static final long serialVersionUID = 9221109874202093789L;
 
