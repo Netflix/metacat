@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
+import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.TableDto;
 
@@ -35,61 +36,54 @@ public interface MViewService extends MetacatService<TableDto> {
      * @param name name of the origin table
      * @return view
      */
-    TableDto create(
-        @Nonnull
-            QualifiedName name);
+    TableDto create(@Nonnull QualifiedName name);
+
+    /**
+     * Create the view and returns the newly created view.
+     * @param name name of the origin table
+     * @param snapshot To snapshot a list of partitions of the table to this view.
+     * @param filter Filter expression string to use
+     * @return view
+     */
+    TableDto createAndSnapshotPartitions(@Nonnull QualifiedName name, boolean snapshot, String filter);
 
     /**
      * Deletes the view and returns the deleted view.
      * @param name name of the view to be deleted
      * @return deleted view
      */
-    TableDto deleteAndReturn(
-        @Nonnull
-            QualifiedName name);
+    TableDto deleteAndReturn(@Nonnull QualifiedName name);
 
     /**
      * Get the view for the given name.
      * @param name name
      * @return view
      */
-    Optional<TableDto> getOpt(
-        @Nonnull
-            QualifiedName name);
+    Optional<TableDto> getOpt(@Nonnull QualifiedName name);
 
     /**
      * Copy partitions from the given table name.
      * @param name table name
      * @param filter filter
      */
-    void snapshotPartitions(
-        @Nonnull
-            QualifiedName name, String filter);
+    void snapshotPartitions(@Nonnull QualifiedName name, String filter);
 
     /**
      * Saves the list of partitions to the given view.
      * @param name name
-     * @param partitionDtos partitions
-     * @param partitionIdsForDeletes partitions to be removed
+     * @param partitionsSaveRequestDto request dto containing the partitions to be added and deleted
      * @param merge if true, this method merges
-     * @param checkIfExists if true, this method checks if any of the partitions exists for the given table
-     * @param alterIfExists if true, the method alters the partition instead of dropping and adding the partition
      * @return no. of partitions added and updated.
      */
-    PartitionsSaveResponseDto savePartitions(
-        @Nonnull
-            QualifiedName name, List<PartitionDto> partitionDtos,
-        List<String> partitionIdsForDeletes, boolean merge,
-        boolean checkIfExists, boolean alterIfExists);
+    PartitionsSaveResponseDto savePartitions(@Nonnull QualifiedName name,
+        PartitionsSaveRequestDto partitionsSaveRequestDto, boolean merge);
 
     /**
      * Deletes the list of partitions with the given ids <code>partitionIds</code>.
      * @param name view name
      * @param partitionIds partition names
      */
-    void deletePartitions(
-        @Nonnull
-            QualifiedName name, List<String> partitionIds);
+    void deletePartitions(@Nonnull QualifiedName name, List<String> partitionIds);
 
     /**
      * Returns the list of partitions.
@@ -102,9 +96,7 @@ public interface MViewService extends MetacatService<TableDto> {
      * @param includePartitionDetails if true, includes parameter details
      * @return list of partitions
      */
-    List<PartitionDto> listPartitions(
-        @Nonnull
-            QualifiedName name, String filter, List<String> partitionNames,
+    List<PartitionDto> listPartitions(@Nonnull QualifiedName name, String filter, List<String> partitionNames,
         Sort sort, Pageable pageable,
         boolean includeUserMetadata, boolean includePartitionDetails);
 
@@ -117,7 +109,7 @@ public interface MViewService extends MetacatService<TableDto> {
      * @param pageable pagination info
      * @return list of partition names
      */
-    List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
+    List<String> getPartitionKeys(@Nonnull QualifiedName name, String filter, List<String> partitionNames, Sort sort,
         Pageable pageable);
 
     /**
@@ -129,7 +121,7 @@ public interface MViewService extends MetacatService<TableDto> {
      * @param pageable pagination info
      * @return list of partition uris
      */
-    List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
+    List<String> getPartitionUris(@Nonnull QualifiedName name, String filter, List<String> partitionNames, Sort sort,
         Pageable pageable);
 
     /**
@@ -137,18 +129,14 @@ public interface MViewService extends MetacatService<TableDto> {
      * @param name view name
      * @return no. of partitions
      */
-    Integer partitionCount(
-        @Nonnull
-            QualifiedName name);
+    Integer partitionCount(@Nonnull QualifiedName name);
 
     /**
      * Returns the list of view names for the given name.
      * @param qualifiedName name
      * @return list of view names
      */
-    List<NameDateDto> list(
-        @Nonnull
-            QualifiedName qualifiedName);
+    List<NameDateDto> list(@Nonnull QualifiedName qualifiedName);
 
     /**
      * Save metadata for the view.
@@ -156,14 +144,12 @@ public interface MViewService extends MetacatService<TableDto> {
      * @param definitionMetadata definition metadata
      * @param dataMetadata data metadata
      */
-    void saveMetadata(
-        @Nonnull
-            QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
+    void saveMetadata(@Nonnull QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
 
     /**
      * Rename view.
      * @param name view name
      * @param newViewName new view name
      */
-    void rename(QualifiedName name, QualifiedName newViewName);
+    void rename(@Nonnull QualifiedName name, @Nonnull QualifiedName newViewName);
 }

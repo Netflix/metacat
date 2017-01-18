@@ -30,15 +30,23 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.HasMetadata;
 import com.netflix.metacat.common.dto.PartitionDto;
+import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.monitoring.DynamicGauge;
 import com.netflix.metacat.common.monitoring.LogConstants;
 import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPreEvent;
+import com.netflix.metacat.common.server.events.MetacatEventBus;
+import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
+import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.common.util.ThreadServiceManager;
 import com.netflix.metacat.converters.PrestoConverters;
 import com.netflix.metacat.main.presto.split.SplitManager;
@@ -65,22 +73,44 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class PartitionServiceImpl implements PartitionService {
+    private final CatalogService catalogService;
+    private final PrestoConverters prestoConverters;
+    private final SplitManager splitManager;
+    private final TableService tableService;
+    private final UserMetadataService userMetadataService;
+    private final SessionProvider sessionProvider;
+    private final ThreadServiceManager threadServiceManager;
+    private final Config config;
+    private final MetacatEventBus eventBus;
+
+    /**
+     * Constructor.
+     * @param catalogService catalog service
+     * @param prestoConverters presto converters
+     * @param splitManager split manager
+     * @param tableService table service
+     * @param userMetadataService user metadata service
+     * @param sessionProvider session provider
+     * @param threadServiceManager thread manager
+     * @param config configurations
+     * @param eventBus Internal event bus
+     */
     @Inject
-    private CatalogService catalogService;
-    @Inject
-    private PrestoConverters prestoConverters;
-    @Inject
-    private SplitManager splitManager;
-    @Inject
-    private TableService tableService;
-    @Inject
-    private UserMetadataService userMetadataService;
-    @Inject
-    private SessionProvider sessionProvider;
-    @Inject
-    private ThreadServiceManager threadServiceManager;
-    @Inject
-    private Config config;
+    public PartitionServiceImpl(final CatalogService catalogService,
+        final PrestoConverters prestoConverters, final SplitManager splitManager,
+        final TableService tableService, final UserMetadataService userMetadataService,
+        final SessionProvider sessionProvider, final ThreadServiceManager threadServiceManager,
+        final Config config, final MetacatEventBus eventBus) {
+        this.catalogService = catalogService;
+        this.prestoConverters = prestoConverters;
+        this.splitManager = splitManager;
+        this.tableService = tableService;
+        this.userMetadataService = userMetadataService;
+        this.sessionProvider = sessionProvider;
+        this.threadServiceManager = threadServiceManager;
+        this.config = config;
+        this.eventBus = eventBus;
+    }
 
     private ConnectorPartitionResult getPartitionResult(final QualifiedName name, final String filter,
         final List<String> partitionNames,
@@ -163,13 +193,17 @@ public class PartitionServiceImpl implements PartitionService {
     }
 
     @Override
-    public PartitionsSaveResponseDto save(final QualifiedName name, final List<PartitionDto> partitionDtos,
-        final List<String> partitionIdsForDeletes, final boolean checkIfExists, final boolean alterIfExists) {
+    public PartitionsSaveResponseDto save(@Nonnull final QualifiedName name, final PartitionsSaveRequestDto dto) {
         final PartitionsSaveResponseDto result = new PartitionsSaveResponseDto();
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final List<PartitionDto> partitionDtos = dto.getPartitions();
         // If no partitions are passed, then return
         if (partitionDtos == null || partitionDtos.isEmpty()) {
             return result;
         }
+        final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
+        final boolean checkIfExists = dto.getCheckIfExists() == null || dto.getCheckIfExists();
+        final boolean alterIfExists = dto.getAlterIfExists() != null && dto.getAlterIfExists();
         final TagList tags = BasicTagList.of("catalog", name.getCatalogName(),
             "database", name.getDatabaseName(), "table",
             name.getTableName());
@@ -182,6 +216,7 @@ public class PartitionServiceImpl implements PartitionService {
             .collect(Collectors.toList());
         List<HasMetadata> deletePartitions = Lists.newArrayList();
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
+            eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, dto));
             DynamicGauge.set(LogConstants.GaugeDeletePartitions.toString(), tags, partitionIdsForDeletes.size());
             final ConnectorPartitionResult deletePartitionResult = splitManager
                 .getPartitions(tableHandle, null, partitionIdsForDeletes, null, null, false);
@@ -192,6 +227,8 @@ public class PartitionServiceImpl implements PartitionService {
         //
         // Save all the new and updated partitions
         //
+        eventBus
+            .postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, dto));
         log.info("Saving partitions({}) for {}", partitions.size(), name);
         final SavePartitionResult savePartitionResult = splitManager
             .savePartitions(tableHandle, partitions, partitionIdsForDeletes,
@@ -205,7 +242,12 @@ public class PartitionServiceImpl implements PartitionService {
             deleteMetadatas(session.getUser(), deletePartitions);
         }
         userMetadataService.saveMetadatas(session.getUser(), partitionDtos, true);
-
+        eventBus.postAsync(
+            new MetacatSaveTablePartitionPostEvent(name, metacatRequestContext, partitionDtos, result));
+        if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
+            eventBus.postAsync(
+                new MetacatDeleteTablePartitionPostEvent(name, metacatRequestContext, partitionIdsForDeletes));
+        }
         result.setUpdated(savePartitionResult.getUpdated());
         result.setAdded(savePartitionResult.getAdded());
 
@@ -214,6 +256,7 @@ public class PartitionServiceImpl implements PartitionService {
 
     @Override
     public void delete(final QualifiedName name, final List<String> partitionIds) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final TagList tags = BasicTagList
             .of("catalog", name.getCatalogName(), "database", name.getDatabaseName(), "table", name.getTableName());
         DynamicGauge.set(LogConstants.GaugeDeletePartitions.toString(), tags, partitionIds.size());
@@ -222,6 +265,9 @@ public class PartitionServiceImpl implements PartitionService {
             throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
         }
         if (!partitionIds.isEmpty()) {
+            final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
+            dto.setPartitionIdsForDeletes(partitionIds);
+            eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, dto));
             final Session session = sessionProvider.getSession(name);
             final ConnectorPartitionResult partitionResult = splitManager
                 .getPartitions(tableHandle.get(), null, partitionIds, null, null, false);
@@ -233,6 +279,7 @@ public class PartitionServiceImpl implements PartitionService {
             // delete metadata
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIds, name);
             deleteMetadatas(session.getUser(), partitions);
+            eventBus.postAsync(new MetacatDeleteTablePartitionPostEvent(name, metacatRequestContext, partitionIds));
         }
     }
 
@@ -303,36 +350,36 @@ public class PartitionServiceImpl implements PartitionService {
     }
 
     @Override
-    public void create(
-        @Nonnull
-        final QualifiedName name,
-        @Nonnull
-        final PartitionDto dto) {
-        save(name, Lists.newArrayList(dto), null, false, false);
+    public PartitionDto create(@Nonnull final QualifiedName name, @Nonnull final PartitionDto partitionDto) {
+        final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
+        dto.setCheckIfExists(false);
+        dto.setPartitions(Lists.newArrayList(partitionDto));
+        save(name, dto);
+        return partitionDto;
     }
 
     @Override
-    public void update(
-        @Nonnull
-        final QualifiedName name,
-        @Nonnull
-        final PartitionDto dto) {
-        save(name, Lists.newArrayList(dto), null, true, false);
+    public void update(@Nonnull final QualifiedName name, @Nonnull final PartitionDto partitionDto) {
+        final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
+        dto.setPartitions(Lists.newArrayList(partitionDto));
+        save(name, dto);
     }
 
     @Override
-    public void delete(
-        @Nonnull
-        final QualifiedName name) {
+    public PartitionDto updateAndReturn(@Nonnull final QualifiedName name, @Nonnull final PartitionDto dto) {
+        update(name, dto);
+        return dto;
+    }
+
+    @Override
+    public void delete(@Nonnull final QualifiedName name) {
         final QualifiedName tableName = QualifiedName
             .ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
         delete(tableName, Lists.newArrayList(name.getPartitionName()));
     }
 
     @Override
-    public PartitionDto get(
-        @Nonnull
-        final QualifiedName name) {
+    public PartitionDto get(@Nonnull final QualifiedName name) {
         PartitionDto result = null;
         final QualifiedName tableName = QualifiedName
             .ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
@@ -345,9 +392,7 @@ public class PartitionServiceImpl implements PartitionService {
     }
 
     @Override
-    public boolean exists(
-        @Nonnull
-        final QualifiedName name) {
+    public boolean exists(@Nonnull final QualifiedName name) {
         return get(name) != null;
     }
 

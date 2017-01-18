@@ -32,9 +32,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param isMView true if this table is created for a mview
      * @return Returns the deleted table
      */
-    TableDto deleteAndReturn(
-        @Nonnull
-            QualifiedName name, boolean isMView);
+    TableDto deleteAndReturn(@Nonnull QualifiedName name, boolean isMView);
 
     /**
      * Returns the table with the given name.
@@ -42,9 +40,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param includeUserMetadata if true, the table will include the user metadata
      * @return Returns the table with the given name
      */
-    Optional<TableDto> get(
-        @Nonnull
-            QualifiedName name, boolean includeUserMetadata);
+    Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeUserMetadata);
 
     /**
      * Returns the table with the given name.
@@ -54,18 +50,15 @@ public interface TableService extends MetacatService<TableDto> {
      * @param includeDataMetadata if true, the table will include the user data metadata
      * @return Returns the table with the given name
      */
-    Optional<TableDto> get(
-        @Nonnull
-            QualifiedName name, boolean includeInfo, boolean includeDefinitionMetadata, boolean includeDataMetadata);
+    Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeInfo,
+        boolean includeDefinitionMetadata, boolean includeDataMetadata);
 
     /**
      * Returns the table handle.
      * @param name qualified name of the table
      * @return Returns the table handle with the given name
      */
-    Optional<TableHandle> getTableHandle(
-        @Nonnull
-            QualifiedName name);
+    Optional<TableHandle> getTableHandle(@Nonnull QualifiedName name);
 
     /**
      * Rename the table from <code>oldName</code> to <code>newName</code>.
@@ -73,11 +66,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param newName new qualified name of the table
      * @param isMView true, if the object is a view
      */
-    void rename(
-        @Nonnull
-            QualifiedName oldName,
-        @Nonnull
-            QualifiedName newName, boolean isMView);
+    void rename(@Nonnull QualifiedName oldName, @Nonnull QualifiedName newName, boolean isMView);
 
     /**
      * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>.
@@ -85,11 +74,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param targetName qualified name of the target table
      * @return Returns the copied table
      */
-    TableDto copy(
-        @Nonnull
-            QualifiedName name,
-        @Nonnull
-            QualifiedName targetName);
+    TableDto copy(@Nonnull QualifiedName name, @Nonnull QualifiedName targetName);
 
     /**
      * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>.
@@ -97,11 +82,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param targetName qualified name of the target table
      * @return Returns the copied table
      */
-    TableDto copy(
-        @Nonnull
-            TableDto tableDto,
-        @Nonnull
-            QualifiedName targetName);
+    TableDto copy(@Nonnull TableDto tableDto, @Nonnull QualifiedName targetName);
 
     /**
      * Saves the user metadata for the given table.
@@ -109,9 +90,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param definitionMetadata user definition metadata json
      * @param dataMetadata user data metadata json
      */
-    void saveMetadata(
-        @Nonnull
-            QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
+    void saveMetadata(@Nonnull QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
 
     /**
      * Returns a list of qualified names of tables that refers to the given <code>uri</code>. If prefixSearch is true,
