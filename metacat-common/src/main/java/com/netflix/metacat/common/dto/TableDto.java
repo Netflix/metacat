@@ -40,7 +40,7 @@ import java.util.Map;
 @ApiModel("Table metadata")
 @SuppressWarnings("unused")
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
