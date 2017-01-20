@@ -32,6 +32,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
@@ -39,15 +40,24 @@ import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
+import com.netflix.metacat.common.server.events.MetacatCreateTablePreEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteTablePreEvent;
+import com.netflix.metacat.common.server.events.MetacatEventBus;
+import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
+import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
+import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
+import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
 import com.netflix.metacat.common.usermetadata.TagService;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.common.util.ThreadServiceManager;
 import com.netflix.metacat.converters.PrestoConverters;
 import com.netflix.metacat.main.connector.MetacatConnectorManager;
 import com.netflix.metacat.main.presto.metadata.MetadataManager;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.MViewService;
-import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.SessionProvider;
 import com.netflix.metacat.main.services.TableService;
 import lombok.extern.slf4j.Slf4j;
@@ -66,41 +76,62 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TableServiceImpl implements TableService {
     private static final String NAME_TAGS = "tags";
+    private final MetacatConnectorManager metacatConnectorManager;
+    private final MetadataManager metadataManager;
+    private final PrestoConverters prestoConverters;
+    private final SessionProvider sessionProvider;
+    private final DatabaseService databaseService;
+    private final TagService tagService;
+    private final MViewService mViewService;
+    private final UserMetadataService userMetadataService;
+    private final ThreadServiceManager threadServiceManager;
+    private final Config config;
+    private final MetacatEventBus eventBus;
+
+    /**
+     * Constructor.
+     * @param metacatConnectorManager connector manager
+     * @param metadataManager metadata manager
+     * @param prestoConverters presto converter
+     * @param sessionProvider session provider
+     * @param databaseService database service
+     * @param tagService tag service
+     * @param mViewService view service
+     * @param userMetadataService user metadata service
+     * @param threadServiceManager thread service
+     * @param config configurations
+     * @param eventBus Internal event bus
+     */
     @Inject
-    private MetacatConnectorManager metacatConnectorManager;
-    @Inject
-    private MetadataManager metadataManager;
-    @Inject
-    private PrestoConverters prestoConverters;
-    @Inject
-    private SessionProvider sessionProvider;
-    @Inject
-    private UserMetadataService userMetadataService;
-    @Inject
-    private DatabaseService databaseService;
-    @Inject
-    private TagService tagService;
-    @Inject
-    private MViewService mViewService;
-    @Inject
-    private PartitionService partitionService;
-    @Inject
-    private ThreadServiceManager threadServiceManager;
-    @Inject
-    private Config config;
+    public TableServiceImpl(final MetacatConnectorManager metacatConnectorManager,
+        final MetadataManager metadataManager, final PrestoConverters prestoConverters,
+        final SessionProvider sessionProvider, final DatabaseService databaseService,
+        final TagService tagService, final MViewService mViewService,
+        final UserMetadataService userMetadataService, final ThreadServiceManager threadServiceManager,
+        final Config config, final MetacatEventBus eventBus) {
+        this.metacatConnectorManager = metacatConnectorManager;
+        this.metadataManager = metadataManager;
+        this.prestoConverters = prestoConverters;
+        this.sessionProvider = sessionProvider;
+        this.databaseService = databaseService;
+        this.tagService = tagService;
+        this.mViewService = mViewService;
+        this.userMetadataService = userMetadataService;
+        this.threadServiceManager = threadServiceManager;
+        this.config = config;
+        this.eventBus = eventBus;
+    }
 
     @Override
-    public void create(
-        @Nonnull
-        final QualifiedName name,
-        @Nonnull
-        final TableDto tableDto) {
+    public TableDto create(@Nonnull final QualifiedName name, @Nonnull final TableDto tableDto) {
         final Session session = validateAndGetSession(name);
         //
         // Set the owner,if null, with the session user name.
         //
         setOwnerIfNull(tableDto, session.getUser());
         log.info("Creating table {}", name);
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        eventBus.postSync(new MetacatCreateTablePreEvent(name, metacatRequestContext, tableDto));
         metadataManager.createTable(
             session,
             name.getCatalogName(),
@@ -112,6 +143,9 @@ public class TableServiceImpl implements TableService {
             userMetadataService.saveMetadata(session.getUser(), tableDto, false);
             tag(name, tableDto.getDefinitionMetadata());
         }
+        final TableDto dto = get(name, true).orElseThrow(() -> new IllegalStateException("Should exist"));
+        eventBus.postAsync(new MetacatCreateTablePostEvent(name, metacatRequestContext, dto));
+        return dto;
     }
 
     private void setOwnerIfNull(final TableDto tableDto, final String user) {
@@ -142,9 +176,9 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public TableDto deleteAndReturn(
-        @Nonnull
-        final QualifiedName name, final boolean isMView) {
+    public TableDto deleteAndReturn(@Nonnull final QualifiedName name, final boolean isMView) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        eventBus.postSync(new MetacatDeleteTablePreEvent(name, metacatRequestContext));
         final Session session = validateAndGetSession(name);
         final QualifiedTableName tableName = prestoConverters.getQualifiedTableName(name);
 
@@ -188,21 +222,18 @@ public class TableServiceImpl implements TableService {
                 }
             });
         }
+        eventBus.postAsync(new MetacatDeleteTablePostEvent(name, metacatRequestContext, tableDto));
         return tableDto;
     }
 
     @Override
-    public Optional<TableDto> get(
-        @Nonnull
-        final QualifiedName name, final boolean includeUserMetadata) {
+    public Optional<TableDto> get(@Nonnull final QualifiedName name, final boolean includeUserMetadata) {
         return get(name, true, includeUserMetadata, includeUserMetadata);
     }
 
     @Override
-    public Optional<TableDto> get(
-        @Nonnull
-        final QualifiedName name, final boolean includeInfo, final boolean includeDefinitionMetadata,
-        final boolean includeDataMetadata) {
+    public Optional<TableDto> get(@Nonnull final QualifiedName name, final boolean includeInfo,
+        final boolean includeDefinitionMetadata, final boolean includeDataMetadata) {
         final Session session = validateAndGetSession(name);
         final TableDto table;
         Optional<TableMetadata> tableMetadata = Optional.empty();
@@ -254,9 +285,7 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public Optional<TableHandle> getTableHandle(
-        @Nonnull
-        final QualifiedName name) {
+    public Optional<TableHandle> getTableHandle(@Nonnull final QualifiedName name) {
         final Session session = validateAndGetSession(name);
 
         final QualifiedTableName qualifiedTableName = prestoConverters.getQualifiedTableName(name);
@@ -283,11 +312,8 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public void rename(
-        @Nonnull
-        final QualifiedName oldName,
-        @Nonnull
-        final QualifiedName newName, final boolean isMView) {
+    public void rename(@Nonnull final QualifiedName oldName, @Nonnull final QualifiedName newName,
+        final boolean isMView) {
         final Session session = validateAndGetSession(oldName);
 
         final QualifiedTableName oldPrestoName = prestoConverters.getQualifiedTableName(oldName);
@@ -296,6 +322,9 @@ public class TableServiceImpl implements TableService {
         final Optional<TableHandle> tableHandle = metadataManager.getTableHandle(session, oldPrestoName);
         if (tableHandle.isPresent()) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
+            final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+            final TableDto oldTable = get(oldName, true).orElseThrow(IllegalStateException::new);
+            eventBus.postSync(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, newName));
             try {
                 log.info("Renaming {} {} to {}", isMView ? "view" : "table", oldName, newName);
                 metadataManager.renameTable(session, tableHandle.get(), newPrestoName);
@@ -320,17 +349,24 @@ public class TableServiceImpl implements TableService {
             }
             userMetadataService.renameDefinitionMetadataKey(oldName, newName);
             tagService.rename(oldName, newName.getTableName());
+
+            final TableDto dto = get(newName, true).orElseThrow(() -> new IllegalStateException("should exist"));
+            eventBus.postAsync(new MetacatRenameTablePostEvent(oldName, metacatRequestContext, oldTable, dto));
         }
     }
 
     @Override
-    public void update(
-        @Nonnull
-        final QualifiedName name,
-        @Nonnull
-        final TableDto tableDto) {
-        final Session session = validateAndGetSession(name);
+    public void update(@Nonnull final QualifiedName name, @Nonnull final TableDto tableDto) {
+        updateAndReturn(name, tableDto);
+    }
 
+    @Override
+    public TableDto updateAndReturn(@Nonnull final QualifiedName name, @Nonnull final TableDto tableDto) {
+        final Session session = validateAndGetSession(name);
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final TableDto oldTable = get(name, true)
+            .orElseThrow(() -> new IllegalStateException("expect existing table to be present"));
+        eventBus.postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, oldTable, tableDto));
         //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
         try {
             log.info("Updating table {}", name);
@@ -347,29 +383,24 @@ public class TableServiceImpl implements TableService {
             log.info("Saving user metadata for table {}", name);
             userMetadataService.saveMetadata(session.getUser(), tableDto, true);
         }
+        final TableDto updatedDto = get(name, true).orElseThrow(() -> new IllegalStateException("should exist"));
+        eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, oldTable, updatedDto));
+        return updatedDto;
     }
 
     @Override
-    public void delete(
-        @Nonnull
-        final QualifiedName name) {
+    public void delete(@Nonnull final QualifiedName name) {
         deleteAndReturn(name, false);
     }
 
     @Override
-    public TableDto get(
-        @Nonnull
-        final QualifiedName name) {
+    public TableDto get(@Nonnull final QualifiedName name) {
         final Optional<TableDto> dto = get(name, true);
         return dto.orElse(null);
     }
 
     @Override
-    public TableDto copy(
-        @Nonnull
-        final QualifiedName sourceName,
-        @Nonnull
-        final QualifiedName targetName) {
+    public TableDto copy(@Nonnull final QualifiedName sourceName, @Nonnull final QualifiedName targetName) {
         // Source should be same
         if (!sourceName.getCatalogName().equals(targetName.getCatalogName())) {
             throw new MetacatNotSupportedException("Cannot copy a table from a different source");
@@ -390,11 +421,7 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public TableDto copy(
-        @Nonnull
-        final TableDto tableDto,
-        @Nonnull
-        final QualifiedName targetName) {
+    public TableDto copy(@Nonnull final TableDto tableDto, @Nonnull final QualifiedName targetName) {
         if (!databaseService.exists(targetName)) {
             databaseService.create(targetName, new DatabaseDto());
         }
@@ -418,9 +445,8 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public void saveMetadata(
-        @Nonnull
-        final QualifiedName name, final ObjectNode definitionMetadata, final ObjectNode dataMetadata) {
+    public void saveMetadata(@Nonnull final QualifiedName name, final ObjectNode definitionMetadata,
+        final ObjectNode dataMetadata) {
         final Session session = validateAndGetSession(name);
         final Optional<TableDto> tableDtoOptional = get(name, false);
         if (tableDtoOptional.isPresent()) {
@@ -438,7 +464,7 @@ public class TableServiceImpl implements TableService {
         final List<QualifiedName> result = Lists.newArrayList();
         final Map<String, String> catalogNames = metadataManager.getCatalogNames();
 
-        catalogNames.values().stream().forEach(catalogName -> {
+        catalogNames.values().forEach(catalogName -> {
             final Session session = sessionProvider.getSession(QualifiedName.ofCatalog(catalogName));
             final List<SchemaTableName> schemaTableNames = metadataManager.getTableNames(session, uri, prefixSearch);
             final List<QualifiedName> qualifiedNames = schemaTableNames.stream().map(
@@ -451,9 +477,7 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public boolean exists(
-        @Nonnull
-        final QualifiedName name) {
+    public boolean exists(@Nonnull final QualifiedName name) {
         return get(name, true, false, false).isPresent();
     }
 

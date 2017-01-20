@@ -26,14 +26,28 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
+import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
+import com.netflix.metacat.common.server.events.MetacatCreateMViewPostEvent;
+import com.netflix.metacat.common.server.events.MetacatCreateMViewPreEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteMViewPartitionPostEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteMViewPartitionPreEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteMViewPostEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteMViewPreEvent;
+import com.netflix.metacat.common.server.events.MetacatEventBus;
+import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPostEvent;
+import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPreEvent;
+import com.netflix.metacat.common.server.events.MetacatUpdateMViewPostEvent;
+import com.netflix.metacat.common.server.events.MetacatUpdateMViewPreEvent;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.converters.PrestoConverters;
 import com.netflix.metacat.main.presto.metadata.MetadataManager;
 import com.netflix.metacat.main.services.MViewService;
@@ -58,30 +72,60 @@ public class MViewServiceImpl implements MViewService {
     /** Hive database name where views are stored. */
     public static final String VIEW_DB_NAME = "franklinviews";
     private static final List<String> SUPPORTED_SOURCES = Lists.newArrayList("hive", "s3", "aegisthus");
+    private final MetadataManager metadataManager;
+    private final SessionProvider sessionProvider;
+    private final TableService tableService;
+    private final PartitionService partitionService;
+    private final PrestoConverters prestoConverters;
+    private final UserMetadataService userMetadataService;
+    private final MetacatEventBus eventBus;
+
+    /**
+     * Constructor.
+     * @param metadataManager Metadata manager
+     * @param sessionProvider session provider
+     * @param tableService table service
+     * @param partitionService partition service
+     * @param prestoConverters presto converters
+     * @param userMetadataService user metadata service
+     * @param eventBus Internal event bus
+     */
     @Inject
-    private MetadataManager metadataManager;
-    @Inject
-    private SessionProvider sessionProvider;
-    @Inject
-    private TableService tableService;
-    @Inject
-    private PartitionService partitionService;
-    @Inject
-    private PrestoConverters prestoConverters;
-    @Inject
-    private UserMetadataService userMetadataService;
+    public MViewServiceImpl(final MetadataManager metadataManager,
+        final SessionProvider sessionProvider, final TableService tableService,
+        final PartitionService partitionService, final PrestoConverters prestoConverters,
+        final UserMetadataService userMetadataService, final MetacatEventBus eventBus) {
+        this.metadataManager = metadataManager;
+        this.sessionProvider = sessionProvider;
+        this.tableService = tableService;
+        this.partitionService = partitionService;
+        this.prestoConverters = prestoConverters;
+        this.userMetadataService = userMetadataService;
+        this.eventBus = eventBus;
+    }
 
     /**
      * Creates the materialized view using the schema of the give table
      * Assumes that the "franklinviews" database name already exists in the given catalog.
      */
     @Override
-    public TableDto create(
-        @Nonnull
-        final QualifiedName name) {
+    public TableDto create(@Nonnull final QualifiedName name) {
+        return createAndSnapshotPartitions(name, false, null);
+    }
+
+    /**
+     * Creates the materialized view using the schema of the give table
+     * Assumes that the "franklinviews" database name already exists in the given catalog.
+     */
+    @Override
+    public TableDto createAndSnapshotPartitions(@Nonnull final QualifiedName name,
+        final boolean snapshot,
+        final String filter) {
         TableDto result = null;
         // Get the table
         log.info("Get the table {}", name);
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        eventBus.postSync(new MetacatCreateMViewPreEvent(name, metacatRequestContext, snapshot, filter));
         final Optional<TableDto> oTable = tableService.get(name, false);
         if (oTable.isPresent()) {
             final TableDto table = oTable.get();
@@ -101,6 +145,10 @@ public class MViewServiceImpl implements MViewService {
             } else {
                 result = oViewTable.get();
             }
+            if (snapshot) {
+                snapshotPartitions(name, filter);
+            }
+            eventBus.postAsync(new MetacatCreateMViewPostEvent(name, metacatRequestContext, result, snapshot, filter));
         } else {
             throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
         }
@@ -108,59 +156,56 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public void create(
-        @Nonnull
-        final QualifiedName name,
-        @Nonnull
-        final TableDto dto) {
+    public TableDto create(@Nonnull final QualifiedName name, @Nonnull final TableDto dto) {
         // Ignore the dto passed
-        create(name);
+        return create(name);
     }
 
     @Override
-    public TableDto deleteAndReturn(
-        @Nonnull
-        final QualifiedName name) {
+    public TableDto deleteAndReturn(@Nonnull final QualifiedName name) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        eventBus.postSync(new MetacatDeleteMViewPreEvent(name, metacatRequestContext));
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         log.info("Deleting view {}.", viewQName);
-        return tableService.deleteAndReturn(viewQName, true);
+        final TableDto deletedDto = tableService.deleteAndReturn(viewQName, true);
+        eventBus.postAsync(new MetacatDeleteMViewPostEvent(name, metacatRequestContext, deletedDto));
+        return deletedDto;
     }
 
     @Override
-    public void delete(
-        @Nonnull
-        final QualifiedName name) {
+    public void delete(@Nonnull final QualifiedName name) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         tableService.deleteAndReturn(viewQName, true);
     }
 
     @Override
-    public void update(
-        @Nonnull
-        final QualifiedName name,
-        @Nonnull
-        final TableDto tableDto) {
+    public void update(@Nonnull final QualifiedName name, @Nonnull final TableDto tableDto) {
+        updateAndReturn(name, tableDto);
+    }
+
+    @Override
+    public TableDto updateAndReturn(@Nonnull final QualifiedName name, @Nonnull final TableDto tableDto) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        eventBus.postSync(new MetacatUpdateMViewPreEvent(name, metacatRequestContext, tableDto));
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         log.info("Updating view {}.", viewQName);
         tableService.update(viewQName, tableDto);
+        final TableDto updatedDto = getOpt(name).orElseThrow(() -> new IllegalStateException("should exist"));
+        eventBus.postAsync(new MetacatUpdateMViewPostEvent(name, metacatRequestContext, updatedDto));
+        return updatedDto;
     }
-
     @Override
-    public TableDto get(
-        @Nonnull
-        final QualifiedName name) {
+    public TableDto get(@Nonnull final QualifiedName name) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return tableService.get(viewQName);
     }
 
     @Override
-    public Optional<TableDto> getOpt(
-        @Nonnull
-        final QualifiedName name) {
+    public Optional<TableDto> getOpt(@Nonnull final QualifiedName name) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         final Optional<TableDto> result = tableService.get(viewQName, false);
@@ -182,23 +227,22 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public void snapshotPartitions(
-        @Nonnull
-        final QualifiedName name, final String filter) {
+    public void snapshotPartitions(@Nonnull final QualifiedName name, final String filter) {
         final List<PartitionDto> partitionDtos =
             partitionService.list(name, filter, null, null, null, false, false, true);
         if (partitionDtos != null && !partitionDtos.isEmpty()) {
             log.info("Snapshot partitions({}) for view {}.", partitionDtos.size(), name);
-            savePartitions(name, partitionDtos, null, false, true, false);
+            final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
+            dto.setPartitions(partitionDtos);
+            savePartitions(name, dto, false);
         }
     }
 
     @Override
-    public PartitionsSaveResponseDto savePartitions(
-        @Nonnull
-        final QualifiedName name, final List<PartitionDto> partitionDtos,
-        final List<String> partitionIdsForDeletes, final boolean merge,
-        final boolean checkIfExists, final boolean alterIfExists) {
+    public PartitionsSaveResponseDto savePartitions(@Nonnull final QualifiedName name,
+        final PartitionsSaveRequestDto dto, final boolean merge) {
+        PartitionsSaveResponseDto result = null;
+        final List<PartitionDto> partitionDtos = dto.getPartitions();
         if (partitionDtos == null || partitionDtos.isEmpty()) {
             return new PartitionsSaveResponseDto();
         }
@@ -208,6 +252,12 @@ public class MViewServiceImpl implements MViewService {
             partitionDto.setName(QualifiedName
                 .ofPartition(viewQName.getCatalogName(), viewQName.getDatabaseName(), viewQName.getTableName(),
                     partitionDto.getName().getPartitionName())));
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        eventBus.postSync(new MetacatSaveMViewPartitionPreEvent(name, metacatRequestContext, dto));
+        final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
+        if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
+            eventBus.postSync(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, dto));
+        }
         if (merge) {
             final List<String> partitionNames = partitionDtos.stream().map(
                 partitionDto -> partitionDto.getName().getPartitionName()).collect(Collectors.toList());
@@ -222,12 +272,17 @@ public class MViewServiceImpl implements MViewService {
                     final PartitionDto existingPartition = existingPartitionsMap.get(partitionName);
                     return mergePartition(partitionDto, existingPartition);
                 }).collect(Collectors.toList());
-            return partitionService
-                .save(viewQName, mergedPartitions, partitionIdsForDeletes, checkIfExists, alterIfExists);
+            dto.setPartitions(mergedPartitions);
+            result =  partitionService.save(viewQName, dto);
         } else {
-            return partitionService
-                .save(viewQName, partitionDtos, partitionIdsForDeletes, checkIfExists, alterIfExists);
+            result = partitionService.save(viewQName, dto);
         }
+        eventBus.postAsync(new MetacatSaveMViewPartitionPostEvent(name, metacatRequestContext, dto.getPartitions()));
+        if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
+            eventBus.postAsync(
+                new MetacatDeleteMViewPartitionPostEvent(name, metacatRequestContext, partitionIdsForDeletes));
+        }
+        return result;
     }
 
     private PartitionDto mergePartition(final PartitionDto partitionDto, final PartitionDto existingPartition) {
@@ -257,18 +312,20 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public void deletePartitions(
-        @Nonnull
-        final QualifiedName name, final List<String> partitionIds) {
+    public void deletePartitions(@Nonnull final QualifiedName name, final List<String> partitionIds) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
+        dto.setPartitionIdsForDeletes(partitionIds);
+        eventBus.postSync(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, dto));
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         partitionService.delete(viewQName, partitionIds);
+        eventBus.postAsync(new MetacatDeleteMViewPartitionPostEvent(name, metacatRequestContext, partitionIds));
     }
 
     @Override
-    public List<PartitionDto> listPartitions(
-        @Nonnull
-        final QualifiedName name, final String filter, final List<String> partitionNames, final Sort sort,
+    public List<PartitionDto> listPartitions(@Nonnull final QualifiedName name, final String filter,
+        final List<String> partitionNames, final Sort sort,
         final Pageable pageable, final boolean includeUserMetadata, final boolean includePartitionDetails) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
@@ -294,16 +351,14 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public Integer partitionCount(final QualifiedName name) {
+    public Integer partitionCount(@Nonnull final QualifiedName name) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return partitionService.count(viewQName);
     }
 
     @Override
-    public List<NameDateDto> list(
-        @Nonnull
-        final QualifiedName name) {
+    public List<NameDateDto> list(@Nonnull final QualifiedName name) {
         final QualifiedName viewDbName = QualifiedName.ofDatabase(name.getCatalogName(), VIEW_DB_NAME);
         final QualifiedTablePrefix viewDbNamePrefix = new QualifiedTablePrefix(name.getCatalogName(), VIEW_DB_NAME);
         // Get the session
@@ -340,9 +395,8 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public void saveMetadata(
-        @Nonnull
-        final QualifiedName name, final ObjectNode definitionMetadata, final ObjectNode dataMetadata) {
+    public void saveMetadata(@Nonnull final QualifiedName name, final ObjectNode definitionMetadata,
+        final ObjectNode dataMetadata) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         tableService.saveMetadata(viewQName, definitionMetadata, dataMetadata);
@@ -358,9 +412,7 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public boolean exists(
-        @Nonnull
-        final QualifiedName name) {
+    public boolean exists(@Nonnull final QualifiedName name) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return tableService.exists(viewQName);
