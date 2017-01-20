@@ -14,17 +14,17 @@
 package com.netflix.metacat.hive.canonical.converters;
 
 import com.google.common.collect.ImmutableList;
-import com.netflix.metacat.canonical.types.TypeConverter;
-import com.netflix.metacat.canonical.types.Base;
-import com.netflix.metacat.canonical.types.CharType;
-import com.netflix.metacat.canonical.types.DecimalType;
-import com.netflix.metacat.canonical.types.MapType;
-import com.netflix.metacat.canonical.types.RowType;
-import com.netflix.metacat.canonical.types.Type;
-import com.netflix.metacat.canonical.types.TypeManager;
-import com.netflix.metacat.canonical.types.TypeSignature;
-import com.netflix.metacat.canonical.types.TypeUtils;
-import com.netflix.metacat.canonical.types.VarcharType;
+import com.netflix.metacat.common.type.TypeConverter;
+import com.netflix.metacat.common.type.Base;
+import com.netflix.metacat.common.type.CharType;
+import com.netflix.metacat.common.type.DecimalType;
+import com.netflix.metacat.common.type.MapType;
+import com.netflix.metacat.common.type.RowType;
+import com.netflix.metacat.common.type.Type;
+import com.netflix.metacat.common.type.TypeManager;
+import com.netflix.metacat.common.type.TypeSignature;
+import com.netflix.metacat.common.type.TypeUtils;
+import com.netflix.metacat.common.type.VarcharType;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
@@ -102,8 +102,8 @@ public class HiveTypeConverter implements TypeConverter {
 
     private String rowFieldToString(final RowType.RowField rowField) {
         String prefix = "";
-        if (rowField.getName().isPresent()) {
-            prefix = rowField.getName().get() + ":";
+        if (rowField.getName() != null) {
+            prefix = rowField.getName() + ":";
         }
         return prefix + canonicalTypeToDataType(rowField.getType());
     }

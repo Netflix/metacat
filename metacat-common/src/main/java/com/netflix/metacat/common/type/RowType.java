@@ -11,16 +11,17 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.common.type;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import lombok.Getter;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Row type.
@@ -28,7 +29,7 @@ import java.util.Optional;
  */
 public class RowType extends AbstractType implements ParametricType {
     /** default type. */
-    public static final RowType ROW = new RowType(Collections.emptyList(), Optional.empty());
+    public static final RowType ROW = new RowType(Collections.<Type>emptyList(), Collections.<String>emptyList());
 
     @Getter
     private final List<RowField> fields;
@@ -37,20 +38,21 @@ public class RowType extends AbstractType implements ParametricType {
      * @param fieldTypes fieldTypes
      * @param fieldNames fieldNames
      */
-    public RowType(final List<Type> fieldTypes, final Optional<List<String>> fieldNames) {
+    public RowType(final List<Type> fieldTypes, final List<String> fieldNames) {
         super(new TypeSignature(
                 "row",
-                Lists.transform(fieldTypes, Type::getTypeSignature),
-                 fieldNames.orElse(ImmutableList.of()).stream()
-                        .map(Object.class::cast)
-                        .collect(TypeUtils.toImmutableList())
+                Lists.transform(fieldTypes, new Function<Type, TypeSignature>() {
+                    public TypeSignature apply(@Nullable final Type input) {
+                        return input == null ? null : input.getTypeSignature();
+                    }
+                }),
+                 fieldNames == null ? Lists.newArrayList() : Lists.<Object>newArrayList(fieldNames)
             )
         );
 
         final ImmutableList.Builder<RowField> builder = ImmutableList.builder();
         for (int i = 0; i < fieldTypes.size(); i++) {
-            final int index = i;
-            builder.add(new RowField(fieldTypes.get(i), fieldNames.map((names) -> names.get(index))));
+            builder.add(new RowField(fieldTypes.get(i), fieldNames.get(i)));
         }
         fields = builder.build();
     }
@@ -73,7 +75,7 @@ public class RowType extends AbstractType implements ParametricType {
         Preconditions.checkArgument(!types.isEmpty(), "types is empty");
 
         if (literals.isEmpty()) {
-            return new RowType(types, Optional.empty());
+            return new RowType(types, Lists.<String>newArrayList());
         }
 
         Preconditions.checkArgument(types.size() == literals.size(), "types and literals must be matched in size");
@@ -82,7 +84,7 @@ public class RowType extends AbstractType implements ParametricType {
         for (Object literal : literals) {
             builder.add(TypeUtils.checkType(literal, String.class, "literal"));
         }
-        return new RowType(types, Optional.of(builder.build()));
+        return new RowType(types, builder.build());
     }
 
     /**
@@ -91,9 +93,11 @@ public class RowType extends AbstractType implements ParametricType {
      */
     @Override
     public List<Type> getParameters() {
-         return fields.stream()
-            .map(RowField::getType)
-            .collect(TypeUtils.toImmutableList());
+        final ImmutableList.Builder<Type> result = ImmutableList.builder();
+        for (RowField field: fields) {
+            result.add(field.getType());
+        }
+        return result.build();
     }
 
     /**
@@ -101,13 +105,13 @@ public class RowType extends AbstractType implements ParametricType {
      */
     public static class RowField {
         @Getter private final Type type;
-        @Getter private final Optional<String> name;
+        @Getter private final String name;
 
         /** constructor.
          * @param type type
          * @param name name
          */
-        public RowField(final Type type, final Optional<String> name) {
+        public RowField(final Type type, final String name) {
             this.type = Preconditions.checkNotNull(type, "type is null");
             this.name = Preconditions.checkNotNull(name, "name is null");
         }
