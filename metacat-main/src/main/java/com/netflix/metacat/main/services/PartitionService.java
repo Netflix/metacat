@@ -17,8 +17,10 @@ import com.facebook.presto.spi.Pageable;
 import com.facebook.presto.spi.Sort;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
+import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 
@@ -53,15 +55,10 @@ public interface PartitionService extends MetacatService<PartitionDto> {
      * Saves the list of partitions to the given table <code>name</code>. By default, if a partition exists, it drops
      * the partition before adding it. If <code>alterIfExists</code> is true, then it will alter the partition.
      * @param name table name
-     * @param partitionDtos list of partition info
-     * @param partitionIdsForDeletes list of partition names to be deleted
-     * @param checkIfExists if true, this method checks if any of the partitions exists for the given table
-     * @param alterIfExists if true, the method alters the partition instead of dropping and adding the partition
+     * @param partitionsSaveRequestDto request dto containing the partitions to be added and deleted
      * @return no. of partitions added and updated.
      */
-    PartitionsSaveResponseDto save(QualifiedName name, List<PartitionDto> partitionDtos,
-        List<String> partitionIdsForDeletes,
-        boolean checkIfExists, boolean alterIfExists);
+    PartitionsSaveResponseDto save(@Nonnull QualifiedName name, PartitionsSaveRequestDto partitionsSaveRequestDto);
 
     /**
      * Deletes the partitions with the given <code>partitionIds</code> for the given table name.

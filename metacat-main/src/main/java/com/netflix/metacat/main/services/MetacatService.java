@@ -27,47 +27,43 @@ public interface MetacatService<T extends BaseDto> {
      * Creates the object.
      * @param name qualified name of the object
      * @param dto object metadata
+     * @return created object
      */
-    void create(
-        @Nonnull
-            QualifiedName name,
-        @Nonnull
-            T dto);
+    T create(@Nonnull QualifiedName name, @Nonnull T dto);
 
     /**
      * Updates the object.
      * @param name qualified name of the object
      * @param dto object dto
      */
-    void update(
-        @Nonnull
-            QualifiedName name,
-        @Nonnull
-            T dto);
+    void update(@Nonnull QualifiedName name, @Nonnull T dto);
+
+
+    /**
+     * Updates the object and return the updated object.
+     * @param name qualified name of the object
+     * @param dto dto
+     * @return updated object
+     */
+    T updateAndReturn(@Nonnull QualifiedName name, @Nonnull T dto);
 
     /**
      * Deletes the object. Returns the metadata of the object deleted.
      * @param name qualified name of the object to be deleted
      */
-    void delete(
-        @Nonnull
-            QualifiedName name);
+    void delete(@Nonnull QualifiedName name);
 
     /**
      * Returns the object with the given name.
      * @param name qualified name of the object
      * @return Returns the object with the given name
      */
-    T get(
-        @Nonnull
-            QualifiedName name);
+    T get(@Nonnull QualifiedName name);
 
     /**
      * Returns true, if the object exists.
      * @param name qualified name of the object
      * @return boolean
      */
-    boolean exists(
-        @Nonnull
-            QualifiedName name);
+    boolean exists(@Nonnull QualifiedName name);
 }
