@@ -16,7 +16,6 @@ package com.netflix.metacat.main.api;
 import com.facebook.presto.spi.Pageable;
 import com.facebook.presto.spi.Sort;
 import com.google.common.base.Preconditions;
-import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.PartitionV1;
@@ -26,16 +25,7 @@ import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.dto.TableDto;
-import com.netflix.metacat.common.server.events.MetacatDeleteMViewPartitionPostEvent;
-import com.netflix.metacat.common.server.events.MetacatDeleteMViewPartitionPreEvent;
-import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
-import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPreEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
-import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPostEvent;
-import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPreEvent;
-import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
-import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
-import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.PartitionService;
 
@@ -47,7 +37,6 @@ import java.util.List;
  */
 public class PartitionV1Resource implements PartitionV1 {
     private final MViewService mViewService;
-    private final MetacatEventBus eventBus;
     private final MetacatV1 v1;
     private final PartitionService partitionService;
 
@@ -64,7 +53,6 @@ public class PartitionV1Resource implements PartitionV1 {
         final MetacatV1 v1,
         final MViewService mViewService,
         final PartitionService partitionService) {
-        this.eventBus = eventBus;
         this.v1 = v1;
         this.mViewService = mViewService;
         this.partitionService = partitionService;
@@ -73,30 +61,13 @@ public class PartitionV1Resource implements PartitionV1 {
     @Override
     public void deletePartitions(final String catalogName, final String databaseName, final String tableName,
         final List<String> partitionIds) {
-        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
         RequestWrapper.requestWrapper(name, "deleteTablePartition", () -> {
             if (partitionIds == null || partitionIds.isEmpty()) {
                 throw new IllegalArgumentException("partitionIds are required");
             }
-
-            final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
-            dto.setPartitionIdsForDeletes(partitionIds);
-            eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, dto));
-
             partitionService.delete(name, partitionIds);
-
-            // This metadata is actually for the table, if it is present update that
-            if (dto.getDefinitionMetadata() != null
-                || dto.getDataMetadata() != null) {
-                final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, false, false, false);
-                tableDto.setDefinitionMetadata(dto.getDefinitionMetadata());
-                tableDto.setDataMetadata(dto.getDataMetadata());
-                v1.updateTable(catalogName, databaseName, tableName, tableDto);
-            }
-
-            eventBus.postAsync(new MetacatDeleteTablePartitionPostEvent(name, metacatRequestContext, partitionIds));
             return null;
         });
     }
@@ -108,30 +79,13 @@ public class PartitionV1Resource implements PartitionV1 {
         final String tableName,
         final String viewName,
         final List<String> partitionIds) {
-        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
         RequestWrapper.requestWrapper(name, "deleteMViewPartition", () -> {
             if (partitionIds == null || partitionIds.isEmpty()) {
                 throw new IllegalArgumentException("partitionIds are required");
             }
-
-            final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
-            dto.setPartitionIdsForDeletes(partitionIds);
-            eventBus.postSync(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, dto));
-
             mViewService.deletePartitions(name, partitionIds);
-
-            // This metadata is actually for the view, if it is present update that
-            if (dto.getDefinitionMetadata() != null
-                || dto.getDataMetadata() != null) {
-                final TableDto tableDto = v1.getMView(catalogName, databaseName, tableName, viewName);
-                tableDto.setDefinitionMetadata(dto.getDefinitionMetadata());
-                tableDto.setDataMetadata(dto.getDataMetadata());
-                v1.updateMView(catalogName, databaseName, tableName, viewName, tableDto);
-            }
-
-            eventBus.postAsync(new MetacatDeleteMViewPartitionPostEvent(name, metacatRequestContext, partitionIds));
             return null;
         });
     }
@@ -590,30 +544,13 @@ public class PartitionV1Resource implements PartitionV1 {
         final String databaseName,
         final String tableName,
         final PartitionsSaveRequestDto partitionsSaveRequestDto) {
-        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final QualifiedName name = QualifiedName.ofTable(catalogName, databaseName, tableName);
         return RequestWrapper.requestWrapper(name, "saveTablePartition", () -> {
             Preconditions.checkArgument(partitionsSaveRequestDto != null
                     && partitionsSaveRequestDto.getPartitions() != null
                     && !partitionsSaveRequestDto.getPartitions().isEmpty(),
                 "Partitions must be present");
-
-            eventBus
-                .postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
-
-            final List<PartitionDto> partitionsToSave = partitionsSaveRequestDto.getPartitions();
-            final boolean checkIfExists = partitionsSaveRequestDto.getCheckIfExists() == null
-                || partitionsSaveRequestDto.getCheckIfExists();
-            final boolean alterIfExists = partitionsSaveRequestDto.getAlterIfExists() != null
-                && partitionsSaveRequestDto.getAlterIfExists();
-            final List<String> partitionIdsForDeletes = partitionsSaveRequestDto.getPartitionIdsForDeletes();
-            if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
-                eventBus.postSync(
-                    new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
-            }
-
-            final PartitionsSaveResponseDto result =
-                partitionService.save(name, partitionsToSave, partitionIdsForDeletes, checkIfExists, alterIfExists);
+            final PartitionsSaveResponseDto result = partitionService.save(name, partitionsSaveRequestDto);
 
             // This metadata is actually for the table, if it is present update that
             if (partitionsSaveRequestDto.getDefinitionMetadata() != null
@@ -622,13 +559,6 @@ public class PartitionV1Resource implements PartitionV1 {
                 dto.setDefinitionMetadata(partitionsSaveRequestDto.getDefinitionMetadata());
                 dto.setDataMetadata(partitionsSaveRequestDto.getDataMetadata());
                 v1.updateTable(catalogName, databaseName, tableName, dto);
-            }
-
-            eventBus.postAsync(
-                new MetacatSaveTablePartitionPostEvent(name, metacatRequestContext, partitionsToSave, result));
-            if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
-                eventBus.postAsync(
-                    new MetacatDeleteTablePartitionPostEvent(name, metacatRequestContext, partitionIdsForDeletes));
             }
             return result;
         });
@@ -641,7 +571,6 @@ public class PartitionV1Resource implements PartitionV1 {
         final String tableName,
         final String viewName,
         final PartitionsSaveRequestDto partitionsSaveRequestDto) {
-        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
         return RequestWrapper.requestWrapper(name, "saveMViewPartition", () -> {
@@ -650,24 +579,7 @@ public class PartitionV1Resource implements PartitionV1 {
                     && !partitionsSaveRequestDto.getPartitions().isEmpty(),
                 "Partitions must be present");
 
-            eventBus
-                .postSync(new MetacatSaveMViewPartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
-
-            final List<PartitionDto> partitionsToSave = partitionsSaveRequestDto.getPartitions();
-            final boolean checkIfExists = partitionsSaveRequestDto.getCheckIfExists() == null
-                || partitionsSaveRequestDto.getCheckIfExists();
-            final boolean alterIfExists = partitionsSaveRequestDto.getAlterIfExists() != null
-                && partitionsSaveRequestDto.getAlterIfExists();
-            final List<String> partitionIdsForDeletes = partitionsSaveRequestDto.getPartitionIdsForDeletes();
-            if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
-                eventBus.postSync(
-                    new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
-            }
-
-            final PartitionsSaveResponseDto result = mViewService
-                .savePartitions(name, partitionsToSave, partitionIdsForDeletes, true,
-                    checkIfExists, alterIfExists);
-
+            final PartitionsSaveResponseDto result = mViewService.savePartitions(name, partitionsSaveRequestDto, true);
             // This metadata is actually for the view, if it is present update that
             if (partitionsSaveRequestDto.getDefinitionMetadata() != null
                 || partitionsSaveRequestDto.getDataMetadata() != null) {
@@ -675,12 +587,6 @@ public class PartitionV1Resource implements PartitionV1 {
                 dto.setDefinitionMetadata(partitionsSaveRequestDto.getDefinitionMetadata());
                 dto.setDataMetadata(partitionsSaveRequestDto.getDataMetadata());
                 v1.updateMView(catalogName, databaseName, tableName, viewName, dto);
-            }
-
-            eventBus.postAsync(new MetacatSaveMViewPartitionPostEvent(name, metacatRequestContext, partitionsToSave));
-            if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
-                eventBus.postAsync(
-                    new MetacatDeleteMViewPartitionPostEvent(name, metacatRequestContext, partitionIdsForDeletes));
             }
             return result;
         });
