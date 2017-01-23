@@ -35,7 +35,7 @@ import java.util.Map;
  */
 @SuppressWarnings("unused")
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
