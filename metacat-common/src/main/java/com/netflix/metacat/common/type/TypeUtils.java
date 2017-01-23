@@ -11,13 +11,12 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.common.type;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
-import java.util.stream.Collector;
 
 /**
  * Type util class.
@@ -36,23 +35,6 @@ public final class TypeUtils {
      */
     public static TypeSignature parameterizedTypeName(final String base, final TypeSignature... argumentNames) {
         return new TypeSignature(base, ImmutableList.copyOf(argumentNames), ImmutableList.of());
-    }
-
-    /**
-     * collector util.
-     *
-     * @param <T> t
-     * @return type.
-     */
-    public static <T> Collector<T, ?, ImmutableList<T>> toImmutableList() {
-        return Collector.<T, ImmutableList.Builder<T>, ImmutableList<T>>of(
-            ImmutableList.Builder::new,
-            ImmutableList.Builder::add,
-            (left, right) -> {
-                left.addAll(right.build());
-                return left;
-            },
-            ImmutableList.Builder::build);
     }
 
     /**

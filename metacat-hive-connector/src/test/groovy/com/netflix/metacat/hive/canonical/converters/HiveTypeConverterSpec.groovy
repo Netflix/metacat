@@ -13,8 +13,8 @@
 
 package com.netflix.metacat.hive.canonical.converters
 
-import com.netflix.metacat.canonical.types.TypeManager
-import com.netflix.metacat.canonical.types.TypeRegistry
+import com.netflix.metacat.common.type.TypeManager
+import com.netflix.metacat.common.type.TypeRegistry
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll

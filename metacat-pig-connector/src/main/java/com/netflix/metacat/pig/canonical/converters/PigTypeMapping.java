@@ -14,8 +14,8 @@
 package com.netflix.metacat.pig.canonical.converters;
 
 import com.google.common.collect.ImmutableMap;
-import com.netflix.metacat.canonical.types.BaseType;
-import com.netflix.metacat.canonical.types.Type;
+import com.netflix.metacat.common.type.BaseType;
+import com.netflix.metacat.common.type.Type;
 import lombok.Getter;
 import org.apache.pig.data.DataType;
 

@@ -11,12 +11,12 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.common.type;
 
 import com.google.common.collect.Lists;
 import lombok.Getter;
 
-import java.util.Collections;
+import java.util.ArrayList;
 
 /**
  * Varchar type.
@@ -34,8 +34,8 @@ public final class VarcharType extends AbstractType {
     private VarcharType(final int length) {
         super(
             new TypeSignature(
-                Base.VARCHAR.getBaseTypeDisplayName(), Lists.newArrayList(),
-                Collections.singletonList((long) length)));
+                Base.VARCHAR.getBaseTypeDisplayName(), new ArrayList<TypeSignature>(),
+                Lists.<Object>newArrayList((long) length)));
 
         if (length < 0) {
             throw new IllegalArgumentException("Invalid VARCHAR length " + length);

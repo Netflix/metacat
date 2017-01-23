@@ -13,9 +13,9 @@
 
 package com.netflix.metacat.canonical.common.spi;
 
-import com.facebook.presto.hadoop.shaded.com.google.common.base.Strings;
 import com.google.common.base.Preconditions;
-import com.netflix.metacat.canonical.types.Type;
+import com.google.common.base.Strings;
+import com.netflix.metacat.common.type.Type;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;

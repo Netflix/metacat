@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.common.type;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -58,6 +58,6 @@ public abstract class AbstractType implements Type {
 
     @Override
     public List<Type> getParameters() {
-        return Collections.unmodifiableList(new ArrayList<>());
+        return Collections.unmodifiableList(new ArrayList<Type>());
     }
 }
