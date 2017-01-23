@@ -13,7 +13,7 @@
 
 package com.netflix.metacat.canonical.common.spi;
 
-import com.netflix.metacat.canonical.types.Type;
+import com.netflix.metacat.common.type.Type;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
