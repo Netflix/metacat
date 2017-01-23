@@ -1,7 +1,7 @@
 package com.netflix.metacat.hive.canonical.converters
 
-import com.netflix.metacat.canonical.types.TypeManager
-import com.netflix.metacat.canonical.types.VarcharType
+import com.netflix.metacat.common.type.TypeManager
+import com.netflix.metacat.common.type.VarcharType
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.server.Config

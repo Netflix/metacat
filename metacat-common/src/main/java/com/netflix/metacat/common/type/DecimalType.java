@@ -11,13 +11,14 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.common.type;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,8 +45,9 @@ public final class DecimalType extends AbstractType implements ParametricType {
     private final int scale;
 
     private DecimalType(final int precision, final int scale) {
-        super(new TypeSignature(Base.DECIMAL.getBaseTypeDisplayName(), Lists.newArrayList(),
-            Lists.newArrayList((long) precision, (long) scale)));
+        super(new TypeSignature(Base.DECIMAL.getBaseTypeDisplayName(),
+            new ArrayList<TypeSignature>(),
+            Lists.<Object>newArrayList((long) precision, (long) scale)));
         Preconditions.checkArgument(precision >= 0, "Invalid decimal precision " + precision);
         Preconditions.checkArgument(scale >= 0 && scale <= precision, "Invalid decimal scale " + scale);
         this.precision = precision;

@@ -11,9 +11,8 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.common.type;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,15 +31,11 @@ public interface Type {
      * Returns the list of parameters.
      * @return List of paramenters
      */
-    default List<Type> getParameters() {
-        return Collections.emptyList();
-    }
+    List<Type> getParameters();
 
     /**
      * Returns the raw type.
      * @return Source type
      */
-    default String getSourceType() {
-        return null;
-    }
+    String getSourceType();
 }

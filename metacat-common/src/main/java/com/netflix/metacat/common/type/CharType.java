@@ -11,11 +11,11 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.types;
+package com.netflix.metacat.common.type;
 
-import com.google.common.collect.Lists;
 import lombok.EqualsAndHashCode;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,8 +37,9 @@ public class CharType extends AbstractType implements ParametricType {
     public CharType(final int length) {
         super(
             new TypeSignature(
-                Base.CHAR.getBaseTypeDisplayName(), Lists.newArrayList(),
-                Collections.singletonList((long) length)));
+                Base.CHAR.getBaseTypeDisplayName(),
+                new ArrayList<TypeSignature>(),
+                Collections.<Object>singletonList((long) length)));
 
         if (length < 0) {
             throw new IllegalArgumentException("Invalid VARCHAR length " + length);

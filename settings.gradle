@@ -28,6 +28,5 @@ include 'metacat-server'
 include 'metacat-thrift'
 include 'metacat-user-metadata-mysql'
 include 'metacat-converters'
-include 'metacat-type-converters'
 include 'metacat-pig-connector'
 

@@ -16,17 +16,17 @@ package com.netflix.metacat.pig.canonical.converters;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
-import com.netflix.metacat.canonical.types.TypeConverter;
-import com.netflix.metacat.canonical.types.ArrayType;
-import com.netflix.metacat.canonical.types.BaseType;
-import com.netflix.metacat.canonical.types.CharType;
-import com.netflix.metacat.canonical.types.DecimalType;
-import com.netflix.metacat.canonical.types.MapType;
-import com.netflix.metacat.canonical.types.RowType;
-import com.netflix.metacat.canonical.types.Type;
-import com.netflix.metacat.canonical.types.TypeManager;
-import com.netflix.metacat.canonical.types.TypeUtils;
-import com.netflix.metacat.canonical.types.VarcharType;
+import com.netflix.metacat.common.type.TypeConverter;
+import com.netflix.metacat.common.type.ArrayType;
+import com.netflix.metacat.common.type.BaseType;
+import com.netflix.metacat.common.type.CharType;
+import com.netflix.metacat.common.type.DecimalType;
+import com.netflix.metacat.common.type.MapType;
+import com.netflix.metacat.common.type.RowType;
+import com.netflix.metacat.common.type.Type;
+import com.netflix.metacat.common.type.TypeManager;
+import com.netflix.metacat.common.type.TypeUtils;
+import com.netflix.metacat.common.type.VarcharType;
 import org.apache.pig.data.DataType;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
@@ -35,7 +35,6 @@ import org.apache.pig.newplan.logical.Util;
 import org.apache.pig.newplan.logical.relational.LogicalSchema;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Class to convert pig to canonical type and vice versa.
@@ -97,7 +96,7 @@ public class PigTypeConverter implements TypeConverter {
             if (elementType != null) {
                 if (!(elementType instanceof RowType)) {
                     elementType = new RowType(Lists.newArrayList(elementType),
-                        Optional.of(ImmutableList.of(NAME_ARRAY_ELEMENT)));
+                        ImmutableList.of(NAME_ARRAY_ELEMENT));
                 }
                 schema.addField(fromCanonicalTypeToPigSchema(alias, elementType));
             }
@@ -107,7 +106,7 @@ public class PigTypeConverter implements TypeConverter {
             final LogicalSchema schema = new LogicalSchema();
             for (RowType.RowField rowField : ((RowType) canonicalType).getFields()) {
                 schema.addField(fromCanonicalTypeToPigSchema(
-                    rowField.getName().isPresent() ? rowField.getName().get() : alias,
+                    rowField.getName() != null ? rowField.getName() : alias,
                     rowField.getType()));
             }
             return new LogicalSchema.LogicalFieldSchema(alias, schema, DataType.TUPLE);
@@ -138,7 +137,7 @@ public class PigTypeConverter implements TypeConverter {
             fieldTypes.add(toCanonicalType(logicalFieldSchema));
             fieldNames.add(logicalFieldSchema.alias);
         }
-        return new RowType(fieldTypes, Optional.of(fieldNames));
+        return new RowType(fieldTypes, fieldNames);
     }
 
     private Type toCanonicalArrayType(final LogicalSchema.LogicalFieldSchema field) {
