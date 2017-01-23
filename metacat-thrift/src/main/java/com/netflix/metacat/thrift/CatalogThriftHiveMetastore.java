@@ -653,10 +653,14 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     @Override
     public List<String> get_databases(final String hivePattern) throws TException {
         return requestWrapper("get_databases", new Object[] {hivePattern }, () -> {
-            // Unsure about the pattern format.  I couldn't find any tests.  Assuming it is regex.
-            final Pattern pattern = PATTERNS.getUnchecked("(?i)" + hivePattern);
-            final List<String> databaseNames = v1.getCatalog(catalogName).getDatabases();
-            return databaseNames.stream().filter(name -> pattern.matcher(name).matches()).collect(Collectors.toList());
+            List<String> result = v1.getCatalog(catalogName).getDatabases();
+            if (hivePattern != null) {
+                // Unsure about the pattern format.  I couldn't find any tests.  Assuming it is regex.
+                final Pattern pattern = PATTERNS.getUnchecked("(?i)" + hivePattern.replaceAll("\\*", ".*"));
+                result = result.stream().filter(name -> pattern.matcher(name).matches())
+                    .collect(Collectors.toList());
+            }
+            return result;
         });
     }
 
@@ -1065,10 +1069,12 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     @Override
     public List<String> get_tables(final String dbName, final String hivePattern) throws TException {
         return requestWrapper("get_tables", new Object[] {dbName, hivePattern }, () -> {
-            // Unsure about the pattern format.  I couldn't find any tests.  Assuming it is regex.
-            final Pattern pattern = PATTERNS.getUnchecked("(?i)" + hivePattern);
-            final List<String> tableNames = v1.getDatabase(catalogName, dbName, false).getTables();
-            return tableNames.stream().filter(name -> pattern.matcher(name).matches()).collect(Collectors.toList());
+            List<String> result = v1.getDatabase(catalogName, dbName, false).getTables();
+            if (hivePattern != null) {
+                final Pattern pattern = PATTERNS.getUnchecked("(?i)" + hivePattern.replaceAll("\\*", ".*"));
+                result = result.stream().filter(name -> pattern.matcher(name).matches()).collect(Collectors.toList());
+            }
+            return result;
         });
     }
 
