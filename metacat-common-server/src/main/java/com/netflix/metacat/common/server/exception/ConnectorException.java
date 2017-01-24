@@ -11,76 +11,42 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.common.exception;
+package com.netflix.metacat.common.server.exception;
 
 /**
- * Metacat exception class.
+ * Connector exception class.
  * @author zhenl
  */
-public class MetacatException
+public class ConnectorException
     extends RuntimeException {
-    private final ErrorCode errorCode;
 
     /**
      * Constructor.
-     * @param errorCode error code
-     * @param message message
-     */
-    public MetacatException(final ErrorCodeSupplier errorCode, final String message) {
-        this(errorCode, message, null);
-    }
-
-    /**
-     * Constructor.
-     * @param errorCode error code
-     * @param throwable throwable
-     */
-    public MetacatException(final ErrorCodeSupplier errorCode, final Throwable throwable) {
-        this(errorCode, null, throwable);
-    }
-
-    /**
-     * Constructor.
-     * @param errorCodeSupplier error code supplier
      * @param message message
      * @param cause cause
      */
-    public MetacatException(final ErrorCodeSupplier errorCodeSupplier, final String message, final Throwable cause) {
+    public ConnectorException(final String message, final Throwable cause) {
         super(message, cause);
-        this.errorCode = errorCodeSupplier.toErrorCode();
     }
 
     /**
      * Constructor.
-     * @param errorCodeSupplier error code supplier
      * @param message message
      * @param cause cause
      * @param enableSuppression eable suppression
      * @param writableStackTrace stacktrace
      */
-    public MetacatException(final ErrorCodeSupplier errorCodeSupplier, final String message,
+    public ConnectorException(final String message,
                             final Throwable cause, final boolean enableSuppression,
                             final boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
-        this.errorCode = errorCodeSupplier.toErrorCode();
     }
 
-    public ErrorCode getErrorCode() {
-        return errorCode;
-    }
-
-    /**
-     * {@inheritdoc}.
-     *
-     */
     @Override
     public String getMessage() {
         String message = super.getMessage();
         if (message == null && getCause() != null) {
             message = getCause().getMessage();
-        }
-        if (message == null) {
-            message = errorCode.getName();
         }
         return message;
     }

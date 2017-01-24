@@ -15,4 +15,4 @@
  * Exception package for Metacat.
  * @author zhenl
  */
-package com.netflix.metacat.canonical.common.exception;
+package com.netflix.metacat.common.server.exception;

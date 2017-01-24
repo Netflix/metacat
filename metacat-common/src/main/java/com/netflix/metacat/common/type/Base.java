@@ -34,7 +34,7 @@ public enum Base {
     DOUBLE("double", false, false),
     /** decimal type user definable precision and scale. */
     DECIMAL("decimal", true, false),
-    /** char fixed-length <= 255. */
+    /** char fixed-length less than and equal to 255. */
     CHAR("char", true, false),
     /** varchar created with a length specifier (between 1 and 65355). */
     VARCHAR("varchar", true, false),

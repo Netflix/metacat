@@ -11,16 +11,16 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.common.exception;
+package com.netflix.metacat.common.server.exception;
 
-import com.netflix.metacat.canonical.common.spi.SchemaTableName;
+import com.netflix.metacat.common.QualifiedName;
 
 /**
  * Exception when the given information about an entity is invalid.
  * @author zhenl
  */
-public class InvalidMetaException extends MetacatException {
-    private SchemaTableName tableName;
+public class InvalidMetaException extends ConnectorException {
+    private QualifiedName tableName;
     private String partitionId;
 
     /**
@@ -28,8 +28,8 @@ public class InvalidMetaException extends MetacatException {
      * @param tableName table name
      * @param cause error cause
      */
-    public InvalidMetaException(final SchemaTableName tableName, final Throwable cause) {
-        super(StandardErrorCode.USER_ERROR, String.format("Invalid metadata for %s.", tableName), cause);
+    public InvalidMetaException(final QualifiedName tableName, final Throwable cause) {
+        super(String.format("Invalid metadata for %s.", tableName), cause);
         this.tableName = tableName;
     }
 
@@ -39,8 +39,8 @@ public class InvalidMetaException extends MetacatException {
      * @param partitionId partition name
      * @param cause error cause
      */
-    public InvalidMetaException(final SchemaTableName tableName, final String partitionId, final Throwable cause) {
-        super(StandardErrorCode.USER_ERROR,
+    public InvalidMetaException(final QualifiedName tableName, final String partitionId, final Throwable cause) {
+        super(
             String.format("Invalid metadata for %s for partition %s.", tableName, partitionId), cause);
         this.tableName = tableName;
         this.partitionId = partitionId;
@@ -52,6 +52,6 @@ public class InvalidMetaException extends MetacatException {
      * @param cause error cause
      */
     public InvalidMetaException(final String message, final Throwable cause) {
-        super(StandardErrorCode.USER_ERROR, message, cause);
+        super(message, cause);
     }
 }

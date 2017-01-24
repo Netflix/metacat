@@ -30,6 +30,10 @@ import java.util.Objects;
  * @author amajumdar
  */
 public final class QualifiedName implements Serializable {
+    /**
+     * Type of the connector resource.
+     */
+    public enum Type { CATALOG, DATABASE, TABLE, PARTITION, MVIEW }
     private final String catalogName;
     private final String databaseName;
     private final String partitionName;
@@ -38,18 +42,13 @@ public final class QualifiedName implements Serializable {
 
     private String qualifiedName;
     private Map<String, String> qualifiedNameMap;
+    private Type type;
 
-    private QualifiedName(
-        @Nonnull
-            final String catalogName,
-        @Nullable
-            final String databaseName,
-        @Nullable
-            final String tableName,
-        @Nullable
-            final String partitionName,
-        @Nullable
-            final String viewName
+    private QualifiedName(@Nonnull final String catalogName,
+        @Nullable final String databaseName,
+        @Nullable final String tableName,
+        @Nullable final String partitionName,
+        @Nullable final String viewName
     ) {
         this.catalogName = standardizeRequired("catalogName", catalogName);
         this.databaseName = standardizeOptional(databaseName, true);
@@ -61,6 +60,18 @@ public final class QualifiedName implements Serializable {
             throw new IllegalStateException("databaseName is not present but tableName or partitionName are present");
         } else if (this.tableName.isEmpty() && !this.partitionName.isEmpty()) {
             throw new IllegalStateException("tableName is not present but partitionName is present");
+        }
+
+        if (!this.viewName.isEmpty()) {
+            type = Type.MVIEW;
+        } else if (!this.partitionName.isEmpty()) {
+            type = Type.PARTITION;
+        } else if (!this.tableName.isEmpty()) {
+            type = Type.TABLE;
+        } else if (!this.databaseName.isEmpty()) {
+            type = Type.DATABASE;
+        } else {
+            type = Type.CATALOG;
         }
     }
 
@@ -111,9 +122,7 @@ public final class QualifiedName implements Serializable {
      * @param s name
      * @return qualified name
      */
-    public static QualifiedName fromString(
-        @Nonnull
-            final String s) {
+    public static QualifiedName fromString(@Nonnull final String s) {
         return fromString(s, false);
     }
 
@@ -123,9 +132,7 @@ public final class QualifiedName implements Serializable {
      * @param isView true if it represents a view
      * @return qualified name
      */
-    public static QualifiedName fromString(
-        @Nonnull
-            final String s, final boolean isView) {
+    public static QualifiedName fromString(@Nonnull final String s, final boolean isView) {
         //noinspection ConstantConditions
         final String name = s == null ? "" : s.trim();
         if (name.isEmpty()) {
@@ -157,8 +164,7 @@ public final class QualifiedName implements Serializable {
      * @return qualified name
      */
     public static QualifiedName ofCatalog(
-        @Nonnull
-            final String catalogName) {
+        @Nonnull final String catalogName) {
         return new QualifiedName(catalogName, null, null, null, null);
     }
 
@@ -169,10 +175,8 @@ public final class QualifiedName implements Serializable {
      * @return qualified name
      */
     public static QualifiedName ofDatabase(
-        @Nonnull
-            final String catalogName,
-        @Nonnull
-            final String databaseName) {
+        @Nonnull final String catalogName,
+        @Nonnull final String databaseName) {
         return new QualifiedName(catalogName, databaseName, null, null, null);
     }
 
@@ -185,14 +189,10 @@ public final class QualifiedName implements Serializable {
      * @return qualified name
      */
     public static QualifiedName ofView(
-        @Nonnull
-            final String catalogName,
-        @Nonnull
-            final String databaseName,
-        @Nonnull
-            final String tableName,
-        @Nonnull
-            final String viewName) {
+        @Nonnull final String catalogName,
+        @Nonnull final String databaseName,
+        @Nonnull final String tableName,
+        @Nonnull final String viewName) {
         return new QualifiedName(catalogName, databaseName, tableName, null, viewName);
     }
 
@@ -203,10 +203,8 @@ public final class QualifiedName implements Serializable {
      * @return qualified name
      */
     public static QualifiedName ofPartition(
-        @Nonnull
-            final QualifiedName tableName,
-        @Nonnull
-            final PartitionDto partitionDto) {
+        @Nonnull final QualifiedName tableName,
+        @Nonnull final PartitionDto partitionDto) {
         return ofPartition(
             tableName.catalogName,
             tableName.databaseName,
@@ -224,14 +222,10 @@ public final class QualifiedName implements Serializable {
      * @return qualified name
      */
     public static QualifiedName ofPartition(
-        @Nonnull
-            final String catalogName,
-        @Nonnull
-            final String databaseName,
-        @Nonnull
-            final String tableName,
-        @Nonnull
-            final String partitionName) {
+        @Nonnull final String catalogName,
+        @Nonnull final String databaseName,
+        @Nonnull final String tableName,
+        @Nonnull final String partitionName) {
         return new QualifiedName(catalogName, databaseName, tableName, partitionName, null);
     }
 
@@ -243,12 +237,9 @@ public final class QualifiedName implements Serializable {
      * @return qualified name
      */
     public static QualifiedName ofTable(
-        @Nonnull
-            final String catalogName,
-        @Nonnull
-            final String databaseName,
-        @Nonnull
-            final String tableName) {
+        @Nonnull final String catalogName,
+        @Nonnull final String databaseName,
+        @Nonnull final String tableName) {
         return new QualifiedName(catalogName, databaseName, tableName, null, null);
     }
 
@@ -451,5 +442,9 @@ public final class QualifiedName implements Serializable {
 
     public String getViewName() {
         return viewName;
+    }
+
+    public Type getType() {
+        return type;
     }
 }
