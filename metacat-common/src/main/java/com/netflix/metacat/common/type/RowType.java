@@ -57,19 +57,11 @@ public class RowType extends AbstractType implements ParametricType {
         fields = builder.build();
     }
 
-    /**
-     * {@inheritdoc}.
-     *
-     */
     @Override
     public String getParametricTypeName() {
         return Base.ROW.getBaseTypeDisplayName();
     }
 
-    /**
-     * {@inheritdoc}.
-     *
-     */
     @Override
     public RowType createType(final List<Type> types, final List<Object> literals) {
         Preconditions.checkArgument(!types.isEmpty(), "types is empty");
@@ -87,10 +79,6 @@ public class RowType extends AbstractType implements ParametricType {
         return new RowType(types, builder.build());
     }
 
-    /**
-     * {@inheritdoc}.
-     *
-     */
     @Override
     public List<Type> getParameters() {
         final ImmutableList.Builder<Type> result = ImmutableList.builder();

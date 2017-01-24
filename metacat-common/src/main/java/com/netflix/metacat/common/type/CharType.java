@@ -47,19 +47,11 @@ public class CharType extends AbstractType implements ParametricType {
         this.length = length;
     }
 
-    /**
-     * {@inheritdoc}.
-     *
-     */
     @Override
     public String getParametricTypeName() {
         return Base.CHAR.getBaseTypeDisplayName();
     }
 
-    /**
-     * {@inheritdoc}.
-     *
-     */
     @Override
     public Type createType(final List<Type> types, final List<Object> literals) {
         if (literals.isEmpty()) {

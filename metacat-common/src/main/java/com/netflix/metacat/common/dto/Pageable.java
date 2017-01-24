@@ -11,30 +11,40 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.common.exception;
+package com.netflix.metacat.common.dto;
+
+import lombok.Data;
 
 /**
- * Exception when a catalog is not found.
- * @author zhenl
+ * Represents the pagination information.
+ * @author amajumdar
  */
-public class CatalogNotFoundException extends NotFoundException {
-    private final String catalogName;
+@Data
+public class Pageable {
+    private Integer limit;
+    private Integer offset;
 
     /**
-     * Constructor.
-     * @param catalogName catalog name
+     * Default constructor.
      */
-    public CatalogNotFoundException(final String catalogName) {
-        this(catalogName, null);
+    public Pageable() {
     }
 
     /**
      * Constructor.
-     * @param catalogName catalog name
-     * @param cause error cause
+     * @param limit size of the list
+     * @param offset offset of the list
      */
-    public CatalogNotFoundException(final String catalogName, final Throwable cause) {
-        super(String.format("Catalog %s not found.", catalogName), cause);
-        this.catalogName = catalogName;
+    public Pageable(final Integer limit, final Integer offset) {
+        this.limit = limit;
+        this.offset = offset;
+    }
+
+    public Integer getOffset() {
+        return offset == null ? Integer.valueOf(0) : offset;
+    }
+
+    public boolean isPageable() {
+        return limit != null;
     }
 }

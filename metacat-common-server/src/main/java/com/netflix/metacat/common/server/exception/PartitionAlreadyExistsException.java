@@ -11,11 +11,11 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.common.exception;
+package com.netflix.metacat.common.server.exception;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
-import com.netflix.metacat.canonical.common.spi.SchemaTableName;
+import com.google.common.collect.Lists;
+import com.netflix.metacat.common.QualifiedName;
 
 import java.util.List;
 
@@ -23,44 +23,42 @@ import java.util.List;
  * Exception when partition already exists.
  * @author zhenl
  */
-public class PartitionAlreadyExistsException extends MetacatException {
+public class PartitionAlreadyExistsException extends AlreadyExistsException {
     private static final Joiner COMMA_JOINER = Joiner.on(',');
 
     /**
      * Constructor.
      *
      * @param tableName   table name
-     * @param partitionId partition name
+     * @param partitionName partition name
      */
-    public PartitionAlreadyExistsException(final SchemaTableName tableName, final String partitionId) {
-        this(tableName, partitionId, null);
+    public PartitionAlreadyExistsException(final QualifiedName tableName, final String partitionName) {
+        this(tableName, partitionName, null);
     }
 
     /**
      * Constructor.
      *
      * @param tableName   table name
-     * @param partitionId partition name
+     * @param partitionName partition name
      * @param cause       error cause
      */
-    public PartitionAlreadyExistsException(final SchemaTableName tableName, final String partitionId,
+    public PartitionAlreadyExistsException(final QualifiedName tableName, final String partitionName,
                                            final Throwable cause) {
-        super(StandardErrorCode.ALREADY_EXISTS,
-            String.format("Partition '%s' already exists for table '%s'", Strings.nullToEmpty(partitionId), tableName),
-            cause);
+        this(tableName, Lists.newArrayList(partitionName), cause);
     }
 
     /**
      * Constructor.
      *
      * @param tableName    table name
-     * @param partitionIds partition names
+     * @param partitionNames partition names
      * @param cause        error cause
      */
-    public PartitionAlreadyExistsException(final SchemaTableName tableName, final List<String> partitionIds,
+    public PartitionAlreadyExistsException(final QualifiedName tableName, final List<String> partitionNames,
                                            final Throwable cause) {
-        super(StandardErrorCode.ALREADY_EXISTS,
+        super(tableName,
             String.format("One or more of the partitions '%s' already exists for table '%s'",
-                COMMA_JOINER.join(partitionIds), tableName), cause);
+                COMMA_JOINER.join(partitionNames), tableName), cause, false, false);
     }
 }

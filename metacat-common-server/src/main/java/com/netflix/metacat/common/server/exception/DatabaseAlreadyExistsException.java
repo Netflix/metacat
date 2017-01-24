@@ -11,35 +11,32 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.common.spi.util;
+package com.netflix.metacat.common.server.exception;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NonNull;
-
-import java.util.Map;
-import java.util.function.Predicate;
+import com.netflix.metacat.common.QualifiedName;
 
 /**
- * Constraint class.
- *
- * @param <T>
+ * Exception when schema already exists.
  * @author zhenl
  */
-@Getter
-@AllArgsConstructor
-public class Constraint<T> {
-    @NonNull private final TupleDomain<T> summary;
-    @NonNull private final Predicate<Map<T, ?>> predicate;
+public class DatabaseAlreadyExistsException extends AlreadyExistsException {
 
     /**
-     * check constraint alwaysTrue.
+     * Constructor.
      *
-     * @param <V> v
-     * @return constraint.
+     * @param databaseName schema name
      */
-    public static <V> Constraint<V> alwaysTrue() {
-        return new Constraint<>(TupleDomain.<V>all(), bindings -> true);
+    public DatabaseAlreadyExistsException(final QualifiedName databaseName) {
+        this(databaseName, null);
     }
 
+    /**
+     * Constructor.
+     *
+     * @param databaseName schema name
+     * @param cause      error cause
+     */
+    public DatabaseAlreadyExistsException(final QualifiedName databaseName, final Throwable cause) {
+        super(databaseName, cause);
+    }
 }

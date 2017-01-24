@@ -43,7 +43,7 @@ public class PigTypeConverter implements TypeConverter {
     private static final String NAME_ARRAY_ELEMENT = "array_element";
 
     /**
-     * {@inheritdoc}.
+     * {@inheritDoc}.
      */
     @Override
     public Type dataTypeToCanonicalType(final String pigType, final TypeManager typeRegistry) {
@@ -57,7 +57,7 @@ public class PigTypeConverter implements TypeConverter {
     }
 
     /**
-     * {@inheritdoc}.
+     * {@inheritDoc}.
      */
     @Override
     public String canonicalTypeToDataType(final Type type) {

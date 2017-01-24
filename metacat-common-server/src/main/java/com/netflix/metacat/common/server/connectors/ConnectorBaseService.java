@@ -17,11 +17,11 @@
  */
 package com.netflix.metacat.common.server.connectors;
 
-import com.netflix.metacat.canonical.common.spi.util.Pageable;
-import com.netflix.metacat.canonical.common.spi.util.Sort;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.BaseDto;
+import com.netflix.metacat.common.dto.Pageable;
+import com.netflix.metacat.common.dto.Sort;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
