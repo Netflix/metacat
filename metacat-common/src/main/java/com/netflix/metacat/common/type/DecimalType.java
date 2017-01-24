@@ -84,17 +84,11 @@ public final class DecimalType extends AbstractType implements ParametricType {
         return createDecimalType(DEFAULT_PRECISION, DEFAULT_SCALE);
     }
 
-    /**
-     * {@inheritdoc}.
-     */
     @Override
     public String getParametricTypeName() {
         return Base.DECIMAL.getBaseTypeDisplayName();
     }
 
-    /**
-     * {@inheritdoc}.
-     */
     @Override
     public Type createType(final List<Type> types, final List<Object> literals) {
         switch (literals.size()) {

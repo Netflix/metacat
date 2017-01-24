@@ -83,7 +83,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritdoc}.
+     * {@inheritDoc}.
      *
      */
     @Override
@@ -111,7 +111,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritdoc}.
+     * {@inheritDoc}.
      *
      */
     @Override
@@ -125,7 +125,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritdoc}.
+     * {@inheritDoc}.
      *
      */
     @Override
@@ -260,7 +260,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritdoc}.
+     * {@inheritDoc}.
      *
      */
     @Override
@@ -282,7 +282,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritdoc}.
+     * {@inheritDoc}.
      *
      */
     @Override
@@ -304,7 +304,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritdoc}.
+     * {@inheritDoc}.
      *
      */
     @Override

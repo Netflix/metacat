@@ -11,16 +11,32 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.common.exception;
+package com.netflix.metacat.common.server.exception;
+
+import com.netflix.metacat.common.QualifiedName;
 
 /**
- * Error code supplier.
+ * Exception when schema already exists.
  * @author zhenl
  */
-public interface ErrorCodeSupplier {
+public class TableAlreadyExistsException extends AlreadyExistsException {
+
     /**
-     * to Error code.
-     * @return error code
+     * Constructor.
+     *
+     * @param tableName table name
      */
-    ErrorCode toErrorCode();
+    public TableAlreadyExistsException(final QualifiedName tableName) {
+        this(tableName, null);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param tableName table name
+     * @param cause      error cause
+     */
+    public TableAlreadyExistsException(final QualifiedName tableName, final Throwable cause) {
+        super(tableName, cause);
+    }
 }

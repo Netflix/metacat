@@ -62,9 +62,6 @@ public class TypeRegistry implements TypeManager {
         addParametricType(ArrayType.ARRAY);
     }
 
-    /**
-     * {@inheritdoc}.
-     */
     @Override
     public Type getType(final TypeSignature signature) {
         final Type type = types.get(signature);
@@ -74,9 +71,6 @@ public class TypeRegistry implements TypeManager {
         return type;
     }
 
-    /**
-     * {@inheritdoc}.
-     */
     @Override
     public Type getParameterizedType(final String baseTypeName,
                                      final List<TypeSignature> typeParameters,
@@ -139,10 +133,6 @@ public class TypeRegistry implements TypeManager {
         parametricTypes.putIfAbsent(name, parametricType);
     }
 
-    /**
-     * {@inheritdoc}.
-     *
-     */
     @Override
     public List<Type> getTypes() {
         return null;

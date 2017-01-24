@@ -19,14 +19,14 @@ package com.netflix.metacat.common.server.connectors;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.netflix.metacat.canonical.common.spi.util.Pageable;
-import com.netflix.metacat.canonical.common.spi.util.Sort;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
+import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
+import com.netflix.metacat.common.dto.Sort;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

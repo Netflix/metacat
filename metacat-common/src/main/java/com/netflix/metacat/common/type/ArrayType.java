@@ -42,17 +42,11 @@ public class ArrayType extends AbstractType implements ParametricType {
         this.elementType = Preconditions.checkNotNull(elementType, "elementType is null");
     }
 
-    /**
-     * {@inheritdoc}.
-     */
     @Override
     public String getParametricTypeName() {
         return Base.ARRAY.getBaseTypeDisplayName();
     }
 
-    /**
-     * {@inheritdoc}.
-     */
     @Override
     public Type createType(final List<Type> types, final List<Object> literals) {
         Preconditions.checkArgument(types.size() == 1, "Expected only one type, got %s", types);
@@ -60,9 +54,6 @@ public class ArrayType extends AbstractType implements ParametricType {
         return new ArrayType(types.get(0));
     }
 
-    /**
-     * {@inheritdoc}.
-     */
     @Override
     public List<Type> getParameters() {
         return ImmutableList.of(getElementType());

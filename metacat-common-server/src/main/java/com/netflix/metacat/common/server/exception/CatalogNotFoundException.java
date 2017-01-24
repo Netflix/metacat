@@ -11,24 +11,30 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.canonical.common.spi.util;
+package com.netflix.metacat.common.server.exception;
 
-import lombok.Data;
+import com.netflix.metacat.common.QualifiedName;
 
 /**
- * Represents the pagination information.
+ * Exception when a catalog is not found.
  * @author zhenl
  */
-@Data
-public class Pageable {
-    private Integer limit;
-    private Integer offset;
+public class CatalogNotFoundException extends NotFoundException {
 
-    public Integer getOffset() {
-        return offset == null ? Integer.valueOf(0) : offset;
+    /**
+     * Constructor.
+     * @param catalogName catalog name
+     */
+    public CatalogNotFoundException(final String catalogName) {
+        this(catalogName, null);
     }
 
-    public boolean isPageable() {
-        return limit != null;
+    /**
+     * Constructor.
+     * @param catalogName catalog name
+     * @param cause error cause
+     */
+    public CatalogNotFoundException(final String catalogName, final Throwable cause) {
+        super(QualifiedName.ofCatalog(catalogName), cause);
     }
 }
