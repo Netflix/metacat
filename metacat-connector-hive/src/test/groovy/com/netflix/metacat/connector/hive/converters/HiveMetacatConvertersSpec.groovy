@@ -1,10 +1,26 @@
-package com.netflix.metacat.hive.canonical.converters
+/*
+ *  Copyright 2016 Netflix, Inc.
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ */
+
+package com.netflix.metacat.connector.hive.converters
 
 import com.netflix.metacat.common.type.TypeManager
 import com.netflix.metacat.common.type.VarcharType
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.server.Config
+import com.netflix.metacat.hive.connector.converters.HiveMetacatConverters
+import com.netflix.metacat.hive.connector.converters.HiveMetacatConvertersImpl
+import com.netflix.metacat.hive.connector.converters.HiveTypeConverter
 import org.apache.hadoop.hive.metastore.api.*
 import org.joda.time.Instant
 import spock.lang.Specification
