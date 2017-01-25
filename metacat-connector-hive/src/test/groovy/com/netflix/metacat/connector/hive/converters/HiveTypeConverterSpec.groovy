@@ -11,10 +11,11 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.hive.canonical.converters
+package com.netflix.metacat.connector.hive.converters
 
 import com.netflix.metacat.common.type.TypeManager
 import com.netflix.metacat.common.type.TypeRegistry
+import com.netflix.metacat.hive.connector.converters.HiveTypeConverter
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
