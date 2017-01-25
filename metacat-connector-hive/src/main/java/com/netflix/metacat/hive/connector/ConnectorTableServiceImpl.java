@@ -72,7 +72,6 @@ public class ConnectorTableServiceImpl implements ConnectorTableService {
      *
      * @param requestContext The request context
      * @param name           The qualified name of the resource to get
-     * @throws TableNotFoundException table not found exception
      * @return table dto
      */
     public TableDto get(@Nonnull final MetacatRequestContext requestContext, @Nonnull final QualifiedName name) {
