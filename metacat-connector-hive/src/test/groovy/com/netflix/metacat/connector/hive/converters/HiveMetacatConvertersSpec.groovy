@@ -18,9 +18,6 @@ import com.netflix.metacat.common.type.VarcharType
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.server.Config
-import com.netflix.metacat.hive.connector.converters.HiveMetacatConverters
-import com.netflix.metacat.hive.connector.converters.HiveMetacatConvertersImpl
-import com.netflix.metacat.hive.connector.converters.HiveTypeConverter
 import org.apache.hadoop.hive.metastore.api.*
 import org.joda.time.Instant
 import spock.lang.Specification

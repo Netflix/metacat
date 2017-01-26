@@ -17,7 +17,7 @@ package com.netflix.metacat.common.type;
  * Canonical base type class.
  * @author zhenl
  */
-public enum Base {
+public enum TypeEnum {
 
     /** Numeric Types.
      * small int 2-byte signed integer from -32,768 to 32,767.*/
@@ -87,7 +87,7 @@ public enum Base {
     private final String type;
     private boolean isParametricType;
 
-    Base(final String type, final boolean isParametricType) {
+    TypeEnum(final String type, final boolean isParametricType) {
         this.type = type;
         this.isParametricType = isParametricType;
     }
@@ -105,11 +105,11 @@ public enum Base {
     /**
      * Return name of the base type.
      * @param name name
-     * @return Base type
+     * @return TypeEnum type
      */
-    public Base fromName(final String name) {
+    public TypeEnum fromName(final String name) {
         try {
-            return Base.valueOf(name);
+            return TypeEnum.valueOf(name);
         } catch (Exception e) {
             return UNKNOWN;
         }

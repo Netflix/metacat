@@ -46,7 +46,7 @@ public class PigTypeConverter implements TypeConverter {
      * {@inheritDoc}.
      */
     @Override
-    public Type dataTypeToCanonicalType(final String pigType, final TypeManager typeRegistry) {
+    public Type toMetacatType(final String pigType, final TypeManager typeRegistry) {
         try {
             final LogicalSchema schema = Utils.parseSchema(pigType);
             final LogicalSchema.LogicalFieldSchema field = schema.getField(0);
@@ -60,7 +60,7 @@ public class PigTypeConverter implements TypeConverter {
      * {@inheritDoc}.
      */
     @Override
-    public String canonicalTypeToDataType(final Type type) {
+    public String fromMetacatType(final Type type) {
         final Schema schema = new Schema(Util.translateFieldSchema(fromCanonicalTypeToPigSchema(null, type)));
         final StringBuilder result = new StringBuilder();
         try {

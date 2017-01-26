@@ -11,10 +11,10 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.hive.connector.converters;
+package com.netflix.metacat.connector.hive.converters;
 
 import com.google.common.collect.ImmutableMap;
-import com.netflix.metacat.common.type.Base;
+import com.netflix.metacat.common.type.TypeEnum;
 import com.netflix.metacat.common.type.BaseType;
 import com.netflix.metacat.common.type.Type;
 import lombok.Getter;
@@ -58,7 +58,7 @@ public class HiveTypeMapping {
         .put(PrimitiveObjectInspector.PrimitiveCategory.BINARY.name(), BaseType.VARBINARY)
         .put(PrimitiveObjectInspector.PrimitiveCategory.VOID.name(), BaseType.VARBINARY)
         .put(PrimitiveObjectInspector.PrimitiveCategory.STRING.name(), BaseType.STRING)
-        .put(Base.DATE.getBaseTypeDisplayName(), BaseType.DATE)
+        .put(TypeEnum.DATE.getBaseTypeDisplayName(), BaseType.DATE)
         .build();
 
 

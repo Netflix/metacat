@@ -1,9 +1,12 @@
 /*
- *  Copyright 2016 Netflix, Inc.
+ *  Copyright 2017 Netflix, Inc.
+ *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
  *     You may obtain a copy of the License at
+ *
  *         http://www.apache.org/licenses/LICENSE-2.0
+ *
  *     Unless required by applicable law or agreed to in writing, software
  *     distributed under the License is distributed on an "AS IS" BASIS,
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -11,9 +14,8 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.hive.connector;
+package com.netflix.metacat.connector.hive;
 
-import com.google.inject.Inject;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
@@ -22,12 +24,13 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.exception.TableAlreadyExistsException;
 import com.netflix.metacat.common.server.exception.TableNotFoundException;
-import com.netflix.metacat.hive.connector.converters.HiveMetacatConverters;
+import com.netflix.metacat.connector.hive.converters.HiveMetacatConverters;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import java.util.List;
 
 /**
@@ -35,10 +38,9 @@ import java.util.List;
  *
  * @author zhenl
  */
-public class ConnectorTableServiceImpl implements ConnectorTableService {
-
-    private MetacatHiveClient metacatHiveClient;
-    private HiveMetacatConverters hiveMetacatConverters;
+public class HiveConnectorTableService implements ConnectorTableService {
+    private final MetacatHiveClient metacatHiveClient;
+    private final HiveMetacatConverters hiveMetacatConverters;
 
     /**
      * Constructor.
@@ -47,14 +49,14 @@ public class ConnectorTableServiceImpl implements ConnectorTableService {
      * @param hiveMetacatConverters converter
      */
     @Inject
-    public ConnectorTableServiceImpl(final MetacatHiveClient metacatHiveClient,
-                                     final HiveMetacatConverters hiveMetacatConverters) {
+    public HiveConnectorTableService(@Nonnull final MetacatHiveClient metacatHiveClient,
+                                     @Nonnull final HiveMetacatConverters hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
     }
 
     /**
-     * {@inheritdoc}.
+     * {@inheritDoc}.
      */
     @Override
     public List<QualifiedName> listNames(
@@ -95,7 +97,7 @@ public class ConnectorTableServiceImpl implements ConnectorTableService {
         try {
             metacatHiveClient.createTable(hiveMetacatConverters.metacatToHiveTable(tableDto));
         } catch (TException exception) {
-            throw new TableAlreadyExistsException(tableDto.getName());
+            throw new TableAlreadyExistsException(tableDto.getName(), exception);
         }
     }
 
@@ -109,7 +111,7 @@ public class ConnectorTableServiceImpl implements ConnectorTableService {
         try {
             metacatHiveClient.dropTable(name.getDatabaseName(), name.getTableName());
         } catch (TException exception) {
-            throw new TableNotFoundException(name);
+            throw new TableNotFoundException(name, exception);
         }
     }
 
@@ -120,21 +122,12 @@ public class ConnectorTableServiceImpl implements ConnectorTableService {
      * @param tableDto       The resource metadata
      */
     public void update(@Nonnull final MetacatRequestContext requestContext, @Nonnull final TableDto tableDto) {
-        throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
-    }
-
-    /**
-     * Rename the specified resource.
-     *
-     * @param requestContext The metacat request context
-     * @param oldName        The current resource name
-     * @param newName        The new resource name
-     */
-    public void rename(
-        @Nonnull final MetacatRequestContext requestContext,
-        @Nonnull final QualifiedName oldName,
-        @Nonnull final QualifiedName newName
-    ) {
-        throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
+        try {
+            metacatHiveClient.alterTable(tableDto.getName().getDatabaseName(),
+                tableDto.getName().getTableName(),
+                hiveMetacatConverters.metacatToHiveTable(tableDto));
+        } catch (TException exception) {
+            throw new TableNotFoundException(tableDto.getName(), exception);
+        }
     }
 }
