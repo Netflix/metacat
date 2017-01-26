@@ -29,10 +29,10 @@ class PigTypeConverterSpec extends Specification {
 
     def 'Test convert "#typeString" to a canonical type and back'(String typeString) {
         expect:
-        def canonicalType = converter.dataTypeToCanonicalType(typeString, typeManager)
-        def pigType = converter.canonicalTypeToDataType(canonicalType)
-        def canonicalTypeFromPigType = converter.dataTypeToCanonicalType(pigType, typeManager)
-        canonicalTypeFromPigType == canonicalType
+        def metacatType = converter.toMetacatType(typeString, typeManager)
+        def pigType = converter.fromMetacatType(metacatType)
+        def metacatType2 = converter.toMetacatType(pigType, typeManager)
+        metacatType2 == metacatType
         where:
         typeString << [
             "(a1:chararray,a2:chararray)",

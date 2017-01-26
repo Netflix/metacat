@@ -25,7 +25,7 @@ public interface ConnectorTypeConverter {
      * Converts to metacat type.
      * @param type type
      * @param typeRegistry typeRegistry
-     * @return canonical type
+     * @return metacat type
      */
     Type toMetacatType(String type, TypeManager typeRegistry);
 

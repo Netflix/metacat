@@ -16,7 +16,7 @@
  *
  */
 
-package com.netflix.metacat.hive.connector.converters;
+package com.netflix.metacat.connector.hive.converters;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 
 /**
  * Class implements hiveMetacatConverter interface.
+ *
  * @author zhenl
  */
 public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
@@ -83,8 +84,17 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritdoc}.
-     *
+     * {@inheritDoc}.
+     */
+    @Override
+    public DatabaseDto hiveToMetacatDatabase(final QualifiedName name, final Database database) {
+        final DatabaseDto databaseDto = new DatabaseDto();
+        databaseDto.setName(name);
+        return databaseDto;
+    }
+
+    /**
+     * {@inheritDoc}.
      */
     @Override
     public TableDto hiveToMetacatTable(final QualifiedName name, final Table table) {
@@ -110,9 +120,9 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
         return dto;
     }
 
+
     /**
-     * {@inheritdoc}.
-     *
+     * {@inheritDoc}.
      */
     @Override
     public Database metacatToHiveDatabase(final DatabaseDto dto) {
@@ -125,8 +135,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritdoc}.
-     *
+     * {@inheritDoc}.
      */
     @Override
     public Table metacatToHiveTable(final TableDto dto) {
@@ -260,8 +269,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritdoc}.
-     *
+     * {@inheritDoc}.
      */
     @Override
     public List<String> getPartValsFromName(final TableDto tableDto, final String partName) {
@@ -282,8 +290,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritdoc}.
-     *
+     * {@inheritDoc}.
      */
     @Override
     public String getNameFromPartVals(final TableDto tableDto, final List<String> partVals) {
@@ -304,8 +311,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritdoc}.
-     *
+     * {@inheritDoc}.
      */
     @Override
     public Partition metacatToHivePartition(final PartitionDto partitionDto, final TableDto tableDto) {

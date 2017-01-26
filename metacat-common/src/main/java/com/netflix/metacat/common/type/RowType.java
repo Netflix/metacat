@@ -59,7 +59,7 @@ public class RowType extends AbstractType implements ParametricType {
 
     @Override
     public String getParametricTypeName() {
-        return Base.ROW.getBaseTypeDisplayName();
+        return TypeEnum.ROW.getBaseTypeDisplayName();
     }
 
     @Override

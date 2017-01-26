@@ -12,6 +12,7 @@
  */
 
 /**
- * Created by zhenl on 1/23/17.
+ * hive connector converters.
+ * @author zhenl.
  */
-package com.netflix.metacat.hive.connector;
+package com.netflix.metacat.connector.hive.converters;

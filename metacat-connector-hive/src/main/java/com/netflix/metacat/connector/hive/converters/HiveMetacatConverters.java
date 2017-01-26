@@ -16,7 +16,7 @@
  *
  */
 
-package com.netflix.metacat.hive.connector.converters;
+package com.netflix.metacat.connector.hive.converters;
 
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
@@ -41,6 +41,15 @@ public interface HiveMetacatConverters {
      * @return table info
      */
     TableDto hiveToMetacatTable(QualifiedName name, Table table);
+
+    /**
+     * Converts from hive database to metacat database info.
+     *
+     * @param name  name
+     * @param database database
+     * @return database info
+     */
+    DatabaseDto hiveToMetacatDatabase(QualifiedName name, Database database);
 
     /**
      * Converts from metacat table info to hive table info.
