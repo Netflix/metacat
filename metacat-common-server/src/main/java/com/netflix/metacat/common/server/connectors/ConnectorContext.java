@@ -15,10 +15,21 @@
  *     limitations under the License.
  *
  */
+package com.netflix.metacat.common.server.connectors;
+
+import lombok.Data;
+
+import java.util.Date;
+import java.util.UUID;
 
 /**
- * Extended presto package for Metacat. Includes extended SPI and exception classes.
+ * The context of the request to Metacat.
  *
  * @author amajumdar
+ * @author tgianos
  */
-package com.facebook.presto;
+@Data
+public class ConnectorContext {
+    private final long timestamp;
+    private final String userName;
+}

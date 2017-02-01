@@ -11,26 +11,29 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.common.type;
+package com.netflix.metacat.common.server.connectors;
+
+import com.netflix.metacat.common.type.Type;
+import com.netflix.metacat.common.type.TypeManager;
 
 /**
  * Canonical type converter class.
  * @author zhenl
  */
-public interface TypeConverter {
+public interface ConnectorTypeConverter {
     /**
-     * Converts to canonical type.
+     * Converts to metacat type.
      * @param type type
      * @param typeRegistry typeRegistry
      * @return canonical type
      */
-    Type dataTypeToCanonicalType(String type, TypeManager typeRegistry);
+    Type toMetacatType(String type, TypeManager typeRegistry);
 
     /**
-     * Converts from canonical type.
+     * Converts from metacat type.
      *
      * @param type type
      * @return connector type
      */
-    String canonicalTypeToDataType(Type type);
+    String fromMetacatType(Type type);
 }
