@@ -16,15 +16,18 @@
 
 package com.netflix.metacat.connector.hive;
 
+import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.exception.TableAlreadyExistsException;
 import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.connector.hive.converters.HiveMetacatConverters;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 
@@ -53,20 +56,6 @@ public class HiveConnectorTableService implements ConnectorTableService {
                                      @Nonnull final HiveMetacatConverters hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
-    }
-
-    /**
-     * {@inheritDoc}.
-     */
-    @Override
-    public List<QualifiedName> listNames(
-        @Nonnull final MetacatRequestContext requestContext,
-        @Nonnull final QualifiedName name,
-        @Nullable final QualifiedName prefix,
-        @Nullable final Sort sort,
-        @Nullable final Pageable pageable
-    ) {
-        throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
     /**
@@ -128,6 +117,33 @@ public class HiveConnectorTableService implements ConnectorTableService {
                 hiveMetacatConverters.metacatToHiveTable(tableDto));
         } catch (TException exception) {
             throw new TableNotFoundException(tableDto.getName(), exception);
+        }
+    }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public List<QualifiedName> listNames(
+        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final QualifiedName name,
+        @Nullable final QualifiedName prefix,
+        @Nullable final Sort sort,
+        @Nullable final Pageable pageable
+    ) {
+        try {
+            List<QualifiedName> qualifiedNames = Lists.newArrayList();
+            for (String tableName : metacatHiveClient.getAllTables(name.getDatabaseName())) {
+                qualifiedNames.add(QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName));
+            }
+            if (null != pageable && pageable.isPageable()) {
+                final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), qualifiedNames.size());
+                qualifiedNames = (pageable.getOffset() > limit) ? Lists.newArrayList()
+                    : qualifiedNames.subList(pageable.getOffset(), limit);
+            }
+            return  qualifiedNames;
+        } catch (MetaException exception) {
+            throw new DatabaseNotFoundException(name, exception);
         }
     }
 }

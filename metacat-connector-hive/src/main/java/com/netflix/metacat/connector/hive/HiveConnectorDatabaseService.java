@@ -115,8 +115,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     ) {
         try {
             List<QualifiedName> qualifiedNames = Lists.newArrayList();
-            for (String tableName : metacatHiveClient.getAllTables(name.getDatabaseName())) {
-                qualifiedNames.add(QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName));
+            for (String databaseName : metacatHiveClient.getAllDatabases()) {
+                qualifiedNames.add(QualifiedName.ofDatabase(name.getCatalogName(), databaseName));
             }
             if (null != pageable && pageable.isPageable()) {
                 final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), qualifiedNames.size());
