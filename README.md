@@ -39,6 +39,7 @@ Once the build is completed, the metacat WAR file is generated under metacat-ser
 
 * metacat.plugin.config.location: Path to the directory containing the catalog configuration. Please look at catalog [samples](https://github.com/Netflix/metacat/tree/master/metacat-functional-tests/metacat-test-cluster/etc-metacat/catalog) used by demo.
 * metacat.usermetadata.config.location: Path to the configuration file conatining the connection properties to store user metadata. Please look at this [sample](https://github.com/Netflix/metacat/blob/master/metacat-functional-tests/metacat-test-cluster/etc-metacat/usermetadata.properties).
+
 ### Using Jetty
 ```
 ./gradlew -Dmetacat.plugin.config.location=./metacat-functional-tests/metacat-test-cluster/etc-metacat/catalog -Dmetacat.usermetadata.config.location=./metacat-functional-tests/metacat-test-cluster/etc-metacat/usermetadata.properties jettyRunWar
