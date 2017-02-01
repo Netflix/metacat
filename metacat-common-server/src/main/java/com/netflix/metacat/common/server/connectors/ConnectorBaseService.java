@@ -17,11 +17,10 @@
  */
 package com.netflix.metacat.common.server.connectors;
 
-import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.BaseDto;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.model.BaseInfo;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -34,7 +33,7 @@ import java.util.List;
  * @author tgianos
  * @since 0.1.51
  */
-public interface ConnectorBaseService<T extends BaseDto> {
+public interface ConnectorBaseService<T extends BaseInfo> {
     /**
      * Standard error message for all default implementations.
      */
@@ -43,41 +42,52 @@ public interface ConnectorBaseService<T extends BaseDto> {
     /**
      * Create a resource.
      *
-     * @param requestContext The request context
+     * @param context The request context
      * @param resource       The resource metadata
      */
-    default void create(@Nonnull final MetacatRequestContext requestContext, @Nonnull final T resource) {
+    default void create(@Nonnull final ConnectorContext context, @Nonnull final T resource) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Update a resource with the given metadata.
      *
-     * @param requestContext The request context
+     * @param context The request context
      * @param resource       resource metadata
      */
-    default void update(@Nonnull final MetacatRequestContext requestContext, @Nonnull final T resource) {
+    default void update(@Nonnull final ConnectorContext context, @Nonnull final T resource) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Delete a database with the given qualified name.
      *
-     * @param requestContext The request context
+     * @param context The request context
      * @param name           The qualified name of the resource to delete
      */
-    default void delete(@Nonnull final MetacatRequestContext requestContext, @Nonnull final QualifiedName name) {
+    default void delete(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Return a resource with the given name.
      *
-     * @param requestContext The request context
+     * @param context The request context
      * @param name           The qualified name of the resource to get
      * @return The resource metadata.
      */
-    default T get(@Nonnull final MetacatRequestContext requestContext, @Nonnull final QualifiedName name) {
+    default T get(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+        throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
+    }
+
+    /**
+     * Return true, if the resource exists.
+     *
+     * @param context The request context
+     * @param name           The qualified name of the resource to get
+     * @return Return true, if the resource exists.
+     */
+    default boolean exists(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -85,7 +95,7 @@ public interface ConnectorBaseService<T extends BaseDto> {
      * Get a list of all the resources under the given resource identified by <code>name</code>. Optionally sort by
      * <code>sort</code> and add pagination via <code>pageable</code>.
      *
-     * @param requestContext The request context
+     * @param context The request context
      * @param name           The name of the resource under which to list resources of type <code>T</code>
      * @param prefix         The optional prefix to apply to filter resources for listing
      * @param sort           Optional sorting parameters
@@ -93,7 +103,7 @@ public interface ConnectorBaseService<T extends BaseDto> {
      * @return A list of type <code>T</code> resources in the desired order if required
      */
     default List<T> list(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,
@@ -105,7 +115,7 @@ public interface ConnectorBaseService<T extends BaseDto> {
     /**
      * Returns a list of qualified names of resources under the resource identified by <code>name</code>.
      *
-     * @param requestContext The request context
+     * @param context The request context
      * @param name           The name of the resource under which to list resources of type <code>T</code>
      * @param prefix         The optional prefix to apply to filter resources for listing
      * @param sort           Optional sorting parameters
@@ -113,7 +123,7 @@ public interface ConnectorBaseService<T extends BaseDto> {
      * @return A list of Qualified Names of resources in the desired order if required
      */
     default List<QualifiedName> listNames(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,
@@ -125,12 +135,12 @@ public interface ConnectorBaseService<T extends BaseDto> {
     /**
      * Rename the specified resource.
      *
-     * @param requestContext The metacat request context
+     * @param context The metacat request context
      * @param oldName        The current resource name
      * @param newName        The new resource name
      */
     default void rename(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName oldName,
         @Nonnull final QualifiedName newName
     ) {

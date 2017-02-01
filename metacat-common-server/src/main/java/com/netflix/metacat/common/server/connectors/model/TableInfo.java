@@ -11,12 +11,25 @@
  *    limitations under the License.
  */
 
-package com.facebook.presto.spi;
+package com.netflix.metacat.common.server.connectors.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
- * Sort order.
+ * Table Info.
  */
-public enum SortOrder {
-    /** Ascending order, Descending order. */
-    ASC, DESC
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class TableInfo extends BaseInfo {
+    private List<FieldInfo> fields;
+    private StorageInfo serde;
 }

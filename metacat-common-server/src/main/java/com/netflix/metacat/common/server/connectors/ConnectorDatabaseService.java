@@ -17,7 +17,11 @@
  */
 package com.netflix.metacat.common.server.connectors;
 
-import com.netflix.metacat.common.dto.DatabaseDto;
+import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
+
+import javax.annotation.Nonnull;
+import java.util.List;
 
 /**
  * Interfaces for manipulating database information for this connector.
@@ -25,5 +29,18 @@ import com.netflix.metacat.common.dto.DatabaseDto;
  * @author tgianos
  * @since 0.1.51
  */
-public interface ConnectorDatabaseService extends ConnectorBaseService<DatabaseDto> {
+public interface ConnectorDatabaseService extends ConnectorBaseService<DatabaseInfo> {
+    /**
+     * Returns a list of view names for database identified by <code>name</code>.
+     *
+     * @param context The request context
+     * @param databaseName   The name of the database under which to list resources of type <code>T</code>
+     * @return A list of view qualified names
+     */
+    default List<QualifiedName> listViewNames(
+        @Nonnull final ConnectorContext context,
+        @Nonnull final QualifiedName databaseName
+    ) {
+        throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
+    }
 }
