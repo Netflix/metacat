@@ -11,51 +11,30 @@
  *    limitations under the License.
  */
 
-package com.facebook.presto.spi;
+package com.netflix.metacat.common.server.connectors.model;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Save partition result.
+ * Partition save response.
  */
-public class SavePartitionResult {
+@Data
+@EqualsAndHashCode(callSuper = false)
+public class PartitionsSaveResponse {
+    /** List of added partition names. */
     private List<String> added;
+    /** List of updated partition names. */
     private List<String> updated;
 
     /**
      * Default constructor.
      */
-    public SavePartitionResult() {
+    public PartitionsSaveResponse() {
         added = new ArrayList<>();
         updated = new ArrayList<>();
-    }
-
-    public List<String> getAdded() {
-        return added;
-    }
-
-    /**
-     * Sets the list of partition names added.
-     * @param added list of added partition names
-     */
-    public void setAdded(final List<String> added) {
-        if (added != null) {
-            this.added = added;
-        }
-    }
-
-    public List<String> getUpdated() {
-        return updated;
-    }
-
-    /**
-     * Sets the list of partition names updated.
-     * @param updated list of updated partition names
-     */
-    public void setUpdated(final List<String> updated) {
-        if (updated != null) {
-            this.updated = updated;
-        }
     }
 }

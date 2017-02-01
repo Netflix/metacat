@@ -19,17 +19,13 @@ package com.netflix.metacat.common.server.connectors;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
-import com.netflix.metacat.common.dto.Pageable;
-import com.netflix.metacat.common.dto.PartitionDto;
-import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
-import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
-import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
+import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
+import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
+import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -39,23 +35,19 @@ import java.util.Map;
  * @author tgianos
  * @since 0.1.51
  */
-public interface ConnectorPartitionService extends ConnectorBaseService<PartitionDto> {
+public interface ConnectorPartitionService extends ConnectorBaseService<PartitionInfo> {
     /**
      * Gets the Partitions based on a filter expression for the specified table.
      *
-     * @param requestContext    The Metacat request context
+     * @param context    The Metacat request context
      * @param table             table handle to get partition for
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
-     * @param sort              sort by and order
-     * @param pageable          pagination info
      * @return filtered list of partitions
      */
-    default List<PartitionDto> getPartitions(
-        @Nonnull final MetacatRequestContext requestContext,
+    default List<PartitionInfo> getPartitions(
+        @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName table,
-        @Nonnull final GetPartitionsRequestDto partitionsRequest,
-        @Nullable final Sort sort,
-        @Nullable final Pageable pageable
+        @Nonnull final PartitionListRequest partitionsRequest
     ) {
         throw new UnsupportedOperationException("Not implemented for this connector");
     }
@@ -63,15 +55,15 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
     /**
      * Add/Update/delete partitions for a table.
      *
-     * @param requestContext        The Metacat request context
+     * @param context        The Metacat request context
      * @param table                 table handle to get partition for
      * @param partitionsSaveRequest Partitions to save, alter or delete
      * @return added/updated list of partition names
      */
-    default PartitionsSaveResponseDto savePartitions(
-        @Nonnull final MetacatRequestContext requestContext,
+    default PartitionsSaveResponse savePartitions(
+        @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName table,
-        @Nonnull final PartitionsSaveRequestDto partitionsSaveRequest
+        @Nonnull final PartitionsSaveRequest partitionsSaveRequest
     ) {
         throw new UnsupportedOperationException("Not implemented for this connector");
     }
@@ -79,12 +71,14 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
     /**
      * Delete partitions for a table.
      *
-     * @param requestContext The Metacat request context
-     * @param partitions     list of partition to delete
+     * @param context The Metacat request context
+     * @param tableName      table name
+     * @param partitionNames list of partition names
      */
     default void deletePartitions(
-        @Nonnull final MetacatRequestContext requestContext,
-        @Nonnull final List<QualifiedName> partitions
+        @Nonnull final ConnectorContext context,
+        @Nonnull final QualifiedName tableName,
+        @Nonnull final List<String> partitionNames
     ) {
         throw new UnsupportedOperationException("Not implemented for this connector");
     }
@@ -92,12 +86,12 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
     /**
      * Number of partitions for the given table.
      *
-     * @param requestContext The Metacat request context
+     * @param context The Metacat request context
      * @param table          table handle
      * @return Number of partitions
      */
     default int getPartitionCount(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName table
     ) {
         throw new UnsupportedOperationException("Not implemented for this connector");
@@ -106,13 +100,13 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
     /**
      * Returns all the partition names referring to the given <code>uris</code>.
      *
-     * @param requestContext The Metacat request context
+     * @param context The Metacat request context
      * @param uris           locations
      * @param prefixSearch   if true, we look for tables whose location starts with the given <code>uri</code>
      * @return map of uri to list of partition names
      */
     default Map<String, List<QualifiedName>> getPartitionNames(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext context,
         @Nonnull final List<String> uris,
         final boolean prefixSearch
     ) {
@@ -122,19 +116,15 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
     /**
      * Gets the partition names/keys based on a filter expression for the specified table.
      *
-     * @param requestContext    The Metacat request context
+     * @param context    The Metacat request context
      * @param table             table handle to get partition for
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
-     * @param sort              sort by and order
-     * @param pageable          pagination info
      * @return filtered list of partition names
      */
     default List<String> getPartitionKeys(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName table,
-        @Nonnull final GetPartitionsRequestDto partitionsRequest,
-        @Nullable final Sort sort,
-        @Nullable final Pageable pageable
+        @Nonnull final PartitionListRequest partitionsRequest
     ) {
         return Lists.newArrayList();
     }
@@ -142,19 +132,15 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
     /**
      * Gets the partition uris based on a filter expression for the specified table.
      *
-     * @param requestContext    The Metacat request context
+     * @param context    The Metacat request context
      * @param table             table handle to get partition for
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
-     * @param sort              sort by and order
-     * @param pageable          pagination info
      * @return filtered list of partition uris
      */
     default List<String> getPartitionUris(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName table,
-        @Nonnull final GetPartitionsRequestDto partitionsRequest,
-        @Nullable final Sort sort,
-        @Nullable final Pageable pageable
+        @Nonnull final PartitionListRequest partitionsRequest
     ) {
         return Lists.newArrayList();
     }
