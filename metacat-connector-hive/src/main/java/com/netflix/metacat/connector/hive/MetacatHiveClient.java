@@ -54,21 +54,10 @@ public class MetacatHiveClient {
     /**
      * Create a metastore client instance.
      *
-     * @param conf hiveConf
      * @return hivemetastore client
      * @throws MetaException metaexception
      */
-    public HiveMetaStoreClient createMetastoreClient(final HiveConf conf) throws MetaException {
-        return new HiveMetaStoreClient(conf);
-    }
-
-    /**
-     * Create a metastore client instance.
-     *
-     * @return hivemetastore client
-     * @throws MetaException metaexception
-     */
-    public HiveMetaStoreClient createMetastoreClient() throws MetaException {
+    HiveMetaStoreClient createMetastoreClient() throws MetaException {
         return new HiveMetaStoreClient(hiveConf);
     }
 
@@ -77,7 +66,7 @@ public class MetacatHiveClient {
      *
      * @return database list
      */
-    List<String> getAllDatabases() throws MetaException {
+    public List<String> getAllDatabases() throws MetaException {
         return createMetastoreClient().getAllDatabases();
     }
 
@@ -88,7 +77,7 @@ public class MetacatHiveClient {
      * @return table names
      * @throws MetaException
      */
-    List<String> getAllTables(@Nonnull final String databaseName) throws MetaException {
+    public List<String> getAllTables(@Nonnull final String databaseName) throws MetaException {
         return createMetastoreClient().getAllTables(databaseName);
     }
 
