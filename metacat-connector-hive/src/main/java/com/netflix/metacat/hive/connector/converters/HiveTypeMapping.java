@@ -11,7 +11,7 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.hive.canonical.converters;
+package com.netflix.metacat.hive.connector.converters;
 
 import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.type.Base;

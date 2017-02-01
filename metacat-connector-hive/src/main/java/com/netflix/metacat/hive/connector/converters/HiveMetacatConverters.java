@@ -16,7 +16,7 @@
  *
  */
 
-package com.netflix.metacat.hive.canonical.converters;
+package com.netflix.metacat.hive.connector.converters;
 
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;

@@ -16,7 +16,7 @@
  *
  */
 
-package com.netflix.metacat.hive.canonical.converters;
+package com.netflix.metacat.hive.connector.converters;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -83,7 +83,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritDoc}.
+     * {@inheritdoc}.
      *
      */
     @Override
@@ -111,7 +111,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritDoc}.
+     * {@inheritdoc}.
      *
      */
     @Override
@@ -125,7 +125,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritDoc}.
+     * {@inheritdoc}.
      *
      */
     @Override
@@ -260,7 +260,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritDoc}.
+     * {@inheritdoc}.
      *
      */
     @Override
@@ -282,7 +282,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritDoc}.
+     * {@inheritdoc}.
      *
      */
     @Override
@@ -304,7 +304,7 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     }
 
     /**
-     * {@inheritDoc}.
+     * {@inheritdoc}.
      *
      */
     @Override
