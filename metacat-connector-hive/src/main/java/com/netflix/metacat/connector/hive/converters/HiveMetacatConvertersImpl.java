@@ -41,11 +41,11 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 /**
@@ -379,4 +379,5 @@ public class HiveMetacatConvertersImpl implements HiveMetacatConverters {
     private boolean notNull(final Object object) {
         return null != object;
     }
+
 }

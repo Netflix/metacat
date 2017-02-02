@@ -13,13 +13,19 @@
 
 package com.netflix.metacat.common.server.connectors.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 /**
  * Database information.
  */
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class DatabaseInfo extends BaseInfo {
     /* location of the database */

@@ -102,4 +102,6 @@ public interface HiveMetacatConverters {
      * @return partition name
      */
     String getNameFromPartVals(TableDto tableDto, List<String> partVals);
+
+
 }

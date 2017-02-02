@@ -17,16 +17,16 @@
 package com.netflix.metacat.connector.hive;
 
 import com.google.common.collect.Lists;
-import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.exception.TableAlreadyExistsException;
 import com.netflix.metacat.common.server.exception.TableNotFoundException;
-import com.netflix.metacat.connector.hive.converters.HiveMetacatConverters;
+import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class HiveConnectorTableService implements ConnectorTableService {
     private final MetacatHiveClient metacatHiveClient;
-    private final HiveMetacatConverters hiveMetacatConverters;
+    private final HiveConnectorInfoConverter hiveMetacatConverters;
 
     /**
      * Constructor.
@@ -53,7 +53,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
      */
     @Inject
     public HiveConnectorTableService(@Nonnull final MetacatHiveClient metacatHiveClient,
-                                     @Nonnull final HiveMetacatConverters hiveMetacatConverters) {
+                                     @Nonnull final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
     }
@@ -65,10 +65,11 @@ public class HiveConnectorTableService implements ConnectorTableService {
      * @param name           The qualified name of the resource to get
      * @return table dto
      */
-    public TableDto get(@Nonnull final MetacatRequestContext requestContext, @Nonnull final QualifiedName name) {
+    @Override
+    public TableInfo get(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
         try {
             final Table table = metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName());
-            return hiveMetacatConverters.hiveToMetacatTable(name, table);
+            return hiveMetacatConverters.toTableInfo(name, table);
         } catch (TException exception) {
             throw new TableNotFoundException(name);
         }
@@ -78,15 +79,15 @@ public class HiveConnectorTableService implements ConnectorTableService {
      * Create a table.
      *
      * @param requestContext The request context
-     * @param tableDto       The resource metadata
+     * @param tableInfo       The resource metadata
      * @throws TableAlreadyExistsException already exist exception
      */
     @Override
-    public void create(@Nonnull final MetacatRequestContext requestContext, @Nonnull final TableDto tableDto) {
+    public void create(@Nonnull final ConnectorContext requestContext, @Nonnull final TableInfo tableInfo) {
         try {
-            metacatHiveClient.createTable(hiveMetacatConverters.metacatToHiveTable(tableDto));
+            metacatHiveClient.createTable(hiveMetacatConverters.fromTableInfo(tableInfo));
         } catch (TException exception) {
-            throw new TableAlreadyExistsException(tableDto.getName(), exception);
+            throw new TableAlreadyExistsException(tableInfo.getName(), exception);
         }
     }
 
@@ -96,7 +97,8 @@ public class HiveConnectorTableService implements ConnectorTableService {
      * @param requestContext The request context
      * @param name           The qualified name of the resource to delete
      */
-    public void delete(@Nonnull final MetacatRequestContext requestContext, @Nonnull final QualifiedName name) {
+    @Override
+    public void delete(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
         try {
             metacatHiveClient.dropTable(name.getDatabaseName(), name.getTableName());
         } catch (TException exception) {
@@ -108,15 +110,16 @@ public class HiveConnectorTableService implements ConnectorTableService {
      * Update a resource with the given metadata.
      *
      * @param requestContext The request context
-     * @param tableDto       The resource metadata
+     * @param tableInfo       The resource metadata
      */
-    public void update(@Nonnull final MetacatRequestContext requestContext, @Nonnull final TableDto tableDto) {
+    @Override
+    public void update(@Nonnull final ConnectorContext requestContext, @Nonnull final TableInfo tableInfo) {
         try {
-            metacatHiveClient.alterTable(tableDto.getName().getDatabaseName(),
-                tableDto.getName().getTableName(),
-                hiveMetacatConverters.metacatToHiveTable(tableDto));
+            metacatHiveClient.alterTable(tableInfo.getName().getDatabaseName(),
+                tableInfo.getName().getTableName(),
+                hiveMetacatConverters.fromTableInfo(tableInfo));
         } catch (TException exception) {
-            throw new TableNotFoundException(tableDto.getName(), exception);
+            throw new TableNotFoundException(tableInfo.getName(), exception);
         }
     }
 
@@ -125,7 +128,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
      */
     @Override
     public List<QualifiedName> listNames(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext requestContext,
         @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,

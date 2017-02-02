@@ -16,22 +16,22 @@
 
 package com.netflix.metacat.connector.hive;
 
-
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
 import com.netflix.metacat.common.dto.Pageable;
-import com.netflix.metacat.common.dto.PartitionDto;
-import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
-import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
+import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
+import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
+import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
+import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.exception.TableNotFoundException;
-import com.netflix.metacat.connector.hive.converters.HiveMetacatConverters;
+import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -54,9 +54,7 @@ import java.util.Map;
  */
 public class HiveConnectorPartitionService implements ConnectorPartitionService {
     private final MetacatHiveClient metacatHiveClient;
-
-
-    private final HiveMetacatConverters hiveMetacatConverters;
+    private final HiveConnectorInfoConverter hiveMetacatConverters;
 
     /**
      * Constructor.
@@ -66,7 +64,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
      */
     @Inject
     public HiveConnectorPartitionService(@Nonnull final MetacatHiveClient metacatHiveClient,
-                                         @Nonnull final HiveMetacatConverters hiveMetacatConverters) {
+                                         @Nonnull final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
     }
@@ -77,28 +75,26 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
      * @param requestContext    The Metacat request context
      * @param name              name
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
-     * @param sort              sort by and order
-     * @param pageable          pagination info
      * @return filtered list of partitions
      */
-    public List<PartitionDto> getPartitions(
-        @Nonnull final MetacatRequestContext requestContext,
+    @Override
+    public List<PartitionInfo> getPartitions(
+        @Nonnull final ConnectorContext requestContext,
         @Nonnull final QualifiedName name,
-        @Nonnull final GetPartitionsRequestDto partitionsRequest,
-        @Nullable final Sort sort,
-        @Nullable final Pageable pageable
+        @Nonnull final PartitionListRequest partitionsRequest
     ) {
         try {
             final List<Partition> partitions = getPartitions(name,
-                partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(), sort, pageable);
+                partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
+                partitionsRequest.getSort(), partitionsRequest.getPageable());
             final Table table = metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName());
 
-            final TableDto tableDto = hiveMetacatConverters.hiveToMetacatTable(name, table);
-            final List<PartitionDto> partitionDtos = new ArrayList<>();
+            final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(name, table);
+            final List<PartitionInfo> partitionInfos = new ArrayList<>();
             for (Partition partition : partitions) {
-                partitionDtos.add(hiveMetacatConverters.hiveToMetacatPartition(tableDto, partition));
+                partitionInfos.add(hiveMetacatConverters.toPartitionInfo(tableInfo, partition));
             }
-            return partitionDtos;
+            return partitionInfos;
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + name, e);
         } catch (TException e) {
@@ -113,8 +109,9 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
      * @param tableName      table handle
      * @return Number of partitions
      */
+    @Override
     public int getPartitionCount(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext requestContext,
         @Nonnull final QualifiedName tableName
     ) {
         try {
@@ -132,27 +129,25 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
      * @param requestContext    The Metacat request context
      * @param tableName         table handle to get partition for
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
-     * @param sort              sort by and order
-     * @param pageable          pagination info
      * @return filtered list of partition names
      */
+    @Override
     public List<String> getPartitionKeys(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext requestContext,
         @Nonnull final QualifiedName tableName,
-        @Nonnull final GetPartitionsRequestDto partitionsRequest,
-        @Nullable final Sort sort,
-        @Nullable final Pageable pageable
+        @Nonnull final PartitionListRequest partitionsRequest
     ) {
 
         final String filterExpression = partitionsRequest.getFilter();
         final List<String> partitionIds = partitionsRequest.getPartitionNames();
         List<String> names = Lists.newArrayList();
-
+        final Pageable pageable = partitionsRequest.getPageable();
         try {
             if (filterExpression != null || (partitionIds != null && !partitionIds.isEmpty())) {
                 final Table table = metacatHiveClient.getTableByName(tableName.getDatabaseName(),
                     tableName.getTableName());
-                for (Partition partition : getPartitions(tableName, filterExpression, partitionIds, sort, pageable)) {
+                for (Partition partition : getPartitions(tableName, filterExpression,
+                    partitionIds, partitionsRequest.getSort(), pageable)) {
                     names.add(getNameOfPartition(table, partition));
                 }
             } else {
@@ -218,20 +213,17 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
      * @param requestContext    The Metacat request context
      * @param table             table handle to get partition for
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
-     * @param sort              sort by and order
-     * @param pageable          pagination info
      * @return filtered list of partition uris
      */
+    @Override
     public List<String> getPartitionUris(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext requestContext,
         @Nonnull final QualifiedName table,
-        @Nonnull final GetPartitionsRequestDto partitionsRequest,
-        @Nullable final Sort sort,
-        @Nullable final Pageable pageable
+        @Nonnull final PartitionListRequest partitionsRequest
     ) {
         final List<String> uris = Lists.newArrayList();
         for (Partition partition : getPartitions(table, partitionsRequest.getFilter(),
-            partitionsRequest.getPartitionNames(), sort, pageable)) {
+            partitionsRequest.getPartitionNames(), partitionsRequest.getSort(), partitionsRequest.getPageable())) {
             uris.add(partition.getSd().getLocation());
         }
         return uris;
@@ -245,28 +237,29 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
      * @param partitionsSaveRequest Partitions to save, alter or delete
      * @return added/updated list of partition names
      */
-    public PartitionsSaveResponseDto savePartitions(
-        @Nonnull final MetacatRequestContext requestContext,
+    @Override
+    public PartitionsSaveResponse savePartitions(
+        @Nonnull final ConnectorContext requestContext,
         @Nonnull final QualifiedName tableName,
-        @Nonnull final PartitionsSaveRequestDto partitionsSaveRequest
+        @Nonnull final PartitionsSaveRequest partitionsSaveRequest
     ) {
 
         try {
             final Table table = metacatHiveClient.getTableByName(tableName.getDatabaseName(), tableName.getTableName());
-            final List<PartitionDto> partitionDtos = partitionsSaveRequest.getPartitions();
+            final List<PartitionInfo> partitionInfos = partitionsSaveRequest.getPartitions();
             final List<Partition> partitions = Lists.newArrayList();
-            final PartitionsSaveResponseDto partitionsSaveResponseDto = new PartitionsSaveResponseDto();
-            final TableDto tableDto = hiveMetacatConverters.hiveToMetacatTable(tableName, table);
-            for (PartitionDto partitionDto : partitionDtos) {
-                partitions.add(hiveMetacatConverters.metacatToHivePartition(partitionDto, tableDto));
+            final PartitionsSaveResponse partitionsSaveResponse = new PartitionsSaveResponse();
+            final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(tableName, table);
+            for (PartitionInfo partitionInfo : partitionInfos) {
+                partitions.add(hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo));
             }
             metacatHiveClient.savePartitions(partitions);
             final List<String> partitionNames = Lists.newArrayList();
             for (Partition partition : partitions) {
                 partitionNames.add(getNameOfPartition(table, partition));
             }
-            partitionsSaveResponseDto.setAdded(partitionNames);
-            return partitionsSaveResponseDto;
+            partitionsSaveResponse.setAdded(partitionNames);
+            return partitionsSaveResponse;
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (TException e) {

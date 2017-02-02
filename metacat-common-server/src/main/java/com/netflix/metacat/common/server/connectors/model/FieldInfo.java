@@ -13,10 +13,8 @@
 
 package com.netflix.metacat.common.server.connectors.model;
 
-import com.netflix.metacat.common.dto.BaseDto;
 import com.netflix.metacat.common.type.Type;
 import com.wordnik.swagger.annotations.ApiModel;
-import com.wordnik.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

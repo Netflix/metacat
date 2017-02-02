@@ -13,27 +13,11 @@
 
 package com.netflix.metacat.common.server.connectors.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.AuditDto;
-import com.netflix.metacat.common.dto.BaseDto;
-import com.netflix.metacat.common.dto.HasDataMetadata;
-import com.netflix.metacat.common.dto.HasDefinitionMetadata;
-import com.netflix.metacat.common.dto.StorageDto;
-import com.wordnik.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import javax.annotation.Nonnull;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.Map;
 
 /**
  * Partition DTO.

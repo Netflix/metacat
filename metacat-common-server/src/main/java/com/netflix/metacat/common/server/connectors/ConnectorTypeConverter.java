@@ -14,7 +14,6 @@
 package com.netflix.metacat.common.server.connectors;
 
 import com.netflix.metacat.common.type.Type;
-import com.netflix.metacat.common.type.TypeManager;
 
 /**
  * Canonical type converter class.
@@ -24,10 +23,9 @@ public interface ConnectorTypeConverter {
     /**
      * Converts to metacat type.
      * @param type type
-     * @param typeRegistry typeRegistry
      * @return metacat type
      */
-    Type toMetacatType(String type, TypeManager typeRegistry);
+    Type toMetacatType(String type);
 
     /**
      * Converts from metacat type.

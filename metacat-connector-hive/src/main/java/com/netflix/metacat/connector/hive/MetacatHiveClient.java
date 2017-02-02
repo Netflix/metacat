@@ -65,6 +65,7 @@ public class MetacatHiveClient {
      * List all databases.
      *
      * @return database list
+     * @throws MetaException metaexception
      */
     public List<String> getAllDatabases() throws MetaException {
         return createMetastoreClient().getAllDatabases();
@@ -73,9 +74,9 @@ public class MetacatHiveClient {
     /**
      * Get all tables.
      *
-     * @param databaseName
-     * @return table names
-     * @throws MetaException
+     * @param databaseName databasename
+     * @return tableNames
+     * @throws MetaException metaexception
      */
     public List<String> getAllTables(@Nonnull final String databaseName) throws MetaException {
         return createMetastoreClient().getAllTables(databaseName);
