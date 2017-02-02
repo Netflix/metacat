@@ -18,15 +18,15 @@ package com.netflix.metacat.connector.hive;
 
 
 import com.google.common.collect.Lists;
-import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
+import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
-import com.netflix.metacat.connector.hive.converters.HiveMetacatConverters;
+import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.thrift.TException;
@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     private final MetacatHiveClient metacatHiveClient;
-    private final HiveMetacatConverters hiveMetacatConverters;
+    private final HiveConnectorInfoConverter hiveMetacatConverters;
 
     /**
      * Constructor.
@@ -53,7 +53,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Inject
     public HiveConnectorDatabaseService(@Nonnull final MetacatHiveClient metacatHiveClient,
-                                        @Nonnull final HiveMetacatConverters hiveMetacatConverters) {
+                                        @Nonnull final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
     }
@@ -62,13 +62,14 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * Create a resource.
      *
      * @param requestContext The request context
-     * @param databaseDto    The resource metadata
+     * @param databaseInfo    The resource metadata
      */
-    public void create(@Nonnull final MetacatRequestContext requestContext, @Nonnull final DatabaseDto databaseDto) {
+    @Override
+    public void create(@Nonnull final ConnectorContext requestContext, @Nonnull final DatabaseInfo databaseInfo) {
         try {
-            this.metacatHiveClient.createDatabase(hiveMetacatConverters.metacatToHiveDatabase(databaseDto));
+            this.metacatHiveClient.createDatabase(hiveMetacatConverters.fromDatabaseInfo(databaseInfo));
         } catch (TException exception) {
-            throw new DatabaseAlreadyExistsException(databaseDto.getName(), exception);
+            throw new DatabaseAlreadyExistsException(databaseInfo.getName(), exception);
         }
     }
 
@@ -78,7 +79,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * @param requestContext The request context
      * @param name           The qualified name of the resource to delete
      */
-    public void delete(@Nonnull final MetacatRequestContext requestContext, @Nonnull final QualifiedName name) {
+    @Override
+    public void delete(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
         try {
             this.metacatHiveClient.dropDatabase(name.getDatabaseName());
         } catch (TException exception) {
@@ -93,10 +95,11 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * @param name           The qualified name of the resource to get
      * @return The resource metadata.
      */
-    public DatabaseDto get(@Nonnull final MetacatRequestContext requestContext, @Nonnull final QualifiedName name) {
+    @Override
+    public DatabaseInfo get(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
         try {
             final Database database = this.metacatHiveClient.getDatabase(name.getDatabaseName());
-            return hiveMetacatConverters.hiveToMetacatDatabase(name, database);
+            return hiveMetacatConverters.toDatabaseInfo(name, database);
         } catch (TException exception) {
             throw new DatabaseNotFoundException(name, exception);
         }
@@ -107,7 +110,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Override
     public List<QualifiedName> listNames(
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final ConnectorContext requestContext,
         @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,

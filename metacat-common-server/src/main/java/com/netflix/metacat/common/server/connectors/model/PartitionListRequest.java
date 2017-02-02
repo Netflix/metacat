@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.common.server.connectors.model;
 
-import com.netflix.metacat.common.dto.BaseDto;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import lombok.Data;

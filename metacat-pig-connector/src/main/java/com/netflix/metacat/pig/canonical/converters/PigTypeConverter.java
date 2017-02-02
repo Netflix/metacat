@@ -15,8 +15,7 @@ package com.netflix.metacat.pig.canonical.converters;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-
-import com.netflix.metacat.common.type.TypeConverter;
+import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.type.ArrayType;
 import com.netflix.metacat.common.type.BaseType;
 import com.netflix.metacat.common.type.CharType;
@@ -24,7 +23,6 @@ import com.netflix.metacat.common.type.DecimalType;
 import com.netflix.metacat.common.type.MapType;
 import com.netflix.metacat.common.type.RowType;
 import com.netflix.metacat.common.type.Type;
-import com.netflix.metacat.common.type.TypeManager;
 import com.netflix.metacat.common.type.TypeUtils;
 import com.netflix.metacat.common.type.VarcharType;
 import org.apache.pig.data.DataType;
@@ -39,14 +37,14 @@ import java.util.List;
 /**
  * Class to convert pig to canonical type and vice versa.
  */
-public class PigTypeConverter implements TypeConverter {
+public class PigTypeConverter implements ConnectorTypeConverter {
     private static final String NAME_ARRAY_ELEMENT = "array_element";
 
     /**
      * {@inheritDoc}.
      */
     @Override
-    public Type toMetacatType(final String pigType, final TypeManager typeRegistry) {
+    public Type toMetacatType(final String pigType) {
         try {
             final LogicalSchema schema = Utils.parseSchema(pigType);
             final LogicalSchema.LogicalFieldSchema field = schema.getField(0);
