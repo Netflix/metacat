@@ -45,6 +45,7 @@ Once the build is completed, the metacat WAR file is generated under `metacat-se
 ./gradlew -Dmetacat.plugin.config.location=./metacat-functional-tests/metacat-test-cluster/etc-metacat/catalog -Dmetacat.usermetadata.config.location=./metacat-functional-tests/metacat-test-cluster/etc-metacat/usermetadata.properties jettyRunWar
 ```
 REST API can be accessed @ [http://localhost:8080/mds/v1/catalog](http://localhost:8080/mds/v1/catalog)
+
 Swagger API documentation can be accessed @ [http://localhost:8080/docs/api/index.html](http://localhost:8080/docs/api/index.html)
 
 ### Using Docker
@@ -57,8 +58,9 @@ To start a docker demo, run the command below. This will start a container runni
 * `metacatPorts` - Prints out what exposed ports are mapped to the internal container ports.
 Look for the mapped port (`MAPPED_PORT`) to port 8080.
 
-REST API can be accessed @ [http://localhost:<MAPPED_PORT>/mds/v1/catalog](http://localhost:<MAPPED_PORT>/mds/v1/catalog)
-Swagger API documentation can be accessed @ [http://localhost:<MAPPED_PORT>/docs/api/index.html](http://localhost:<MAPPED_PORT>/docs/api/index.html)
+REST API can be accessed @ `http://localhost:<MAPPED_PORT>/mds/v1/catalog`
+
+Swagger API documentation can be accessed @ `http://localhost:<MAPPED_PORT>/docs/api/index.html`
 
 To stop the docker demo:
 ```
