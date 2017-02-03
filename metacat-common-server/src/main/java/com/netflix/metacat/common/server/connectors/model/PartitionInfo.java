@@ -13,11 +13,14 @@
 
 package com.netflix.metacat.common.server.connectors.model;
 
+import com.netflix.metacat.common.QualifiedName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+
+import java.util.Map;
 
 /**
  * Partition DTO.
@@ -25,9 +28,15 @@ import lombok.NoArgsConstructor;
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PartitionInfo extends BaseInfo {
+public final class PartitionInfo extends BaseInfo {
     private StorageInfo serde;
+
+    @Builder
+    private PartitionInfo(final QualifiedName name, final AuditInfo auditInfo,
+                         final Map<String, String> metadata, final StorageInfo serde) {
+        super(name, auditInfo, metadata);
+        this.serde = serde;
+    }
 }
