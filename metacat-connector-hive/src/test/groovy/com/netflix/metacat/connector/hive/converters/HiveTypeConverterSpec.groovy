@@ -28,7 +28,7 @@ class HiveTypeConverterSpec extends Specification {
     def 'can convert "#typeString" to a presto type and back'(String typeString) {
         expect:
         def metacatType = converter.toMetacatType(typeString)
-        def hiveType = converter.fromMetacatType( metacatType)
+        def hiveType = converter.fromMetacatType(metacatType)
         def metacatTypeFromHiveType = converter.toMetacatType(hiveType)
         metacatTypeFromHiveType ==  metacatType
         where:

@@ -31,7 +31,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
-public class FieldInfo {
+public final class FieldInfo {
     private String comment;
     private String name;
     private boolean partitionKey;

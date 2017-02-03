@@ -56,7 +56,7 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
     public Type toMetacatType(final String type) {
         // Hack to fix presto "varchar" type coming in with no length which is required by Hive.
         final TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(
-            "varchar".equals(type) ? serdeConstants.STRING_TYPE_NAME : type);
+            "varchar".equals(type.toLowerCase()) ? serdeConstants.STRING_TYPE_NAME : type);
         ObjectInspector oi = TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(typeInfo);
         // The standard struct object inspector forces field names to lower case, however in Metacat we need to preserve
         // the original case of the struct fields so we wrap it with our wrapper to force the fieldNames to keep

@@ -13,21 +13,30 @@
 
 package com.netflix.metacat.common.server.connectors.model;
 
+import com.netflix.metacat.common.QualifiedName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 /**
  * Database information.
  */
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class DatabaseInfo extends BaseInfo {
+public final class DatabaseInfo extends BaseInfo {
     /* location of the database */
     private String uri;
+
+    @Builder
+    private DatabaseInfo(final QualifiedName name, final AuditInfo auditInfo,
+                         final Map<String, String> metadata, final String uri) {
+        super(name, auditInfo, metadata);
+        this.uri = uri;
+    }
 }
