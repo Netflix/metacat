@@ -332,13 +332,16 @@ public class TableServiceImpl implements TableService {
         final Session session = validateAndGetSession(name);
 
         //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
-        try {
-            log.info("Updating table {}", name);
-            metadataManager
-                .alterTable(session, prestoConverters.fromTableDto(name, tableDto, metadataManager.getTypeManager()));
-        } catch (PrestoException e) {
-            if (!StandardErrorCode.NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())) {
-                throw e;
+        if (isTableInfoProvided(tableDto)) {
+            try {
+                log.info("Updating table {}", name);
+                metadataManager
+                    .alterTable(session,
+                        prestoConverters.fromTableDto(name, tableDto, metadataManager.getTypeManager()));
+            } catch (PrestoException e) {
+                if (!StandardErrorCode.NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())) {
+                    throw e;
+                }
             }
         }
 
@@ -347,6 +350,17 @@ public class TableServiceImpl implements TableService {
             log.info("Saving user metadata for table {}", name);
             userMetadataService.saveMetadata(session.getUser(), tableDto, true);
         }
+    }
+
+    private boolean isTableInfoProvided(final TableDto tableDto) {
+        boolean result = false;
+        if ((tableDto.getFields() != null && !tableDto.getFields().isEmpty())
+            || tableDto.getSerde() != null
+            || (tableDto.getMetadata() != null && !tableDto.getMetadata().isEmpty())
+            || tableDto.getAudit() != null) {
+            result = true;
+        }
+        return result;
     }
 
     @Override
