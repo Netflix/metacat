@@ -161,22 +161,24 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             if (!Strings.isNullOrEmpty(filter)) {
                 partitionList = metacatHiveClient.listPartitionsByFilter(tableName.getDatabaseName(),
                     tableName.getTableName(), filter);
-                final List<Partition> filteredPartitionList = Lists.newArrayList();
-                partitionList.forEach(partition -> {
-                    final String partitionName = getNameOfPartition(table, partition);
-                    if (partitionIds == null || partitionIds.contains(partitionName)) {
-                        filteredPartitionList.add(partition);
-                    }
-                });
-                partitions = partitionList;
-
-            } else if (partitionIds != null && !partitionIds.isEmpty()) {
-                partitions = metacatHiveClient.listPartitions(tableName.getDatabaseName(),
-                    tableName.getTableName(), partitionIds);
             } else {
-                partitions = metacatHiveClient.listAllPartitions(tableName.getDatabaseName(), tableName.getTableName());
+                if (partitionIds != null) {
+                    partitionList = metacatHiveClient.listPartitions(tableName.getDatabaseName(),
+                        tableName.getTableName(), partitionIds);
+                }
+                if (partitionList == null || partitionList.isEmpty()) {
+                    partitionList = metacatHiveClient.listAllPartitions(tableName.getDatabaseName(),
+                        tableName.getTableName());
+                }
             }
-
+            final List<Partition> filteredPartitionList = Lists.newArrayList();
+            partitionList.forEach(partition -> {
+                final String partitionName = getNameOfPartition(table, partition);
+                if (partitionIds == null || partitionIds.contains(partitionName)) {
+                    filteredPartitionList.add(partition);
+                }
+            });
+            partitions = filteredPartitionList;
             if (null != pageable && pageable.isPageable()) {
                 final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), partitions.size());
                 partitions = (pageable.getOffset() > limit) ? Lists.newArrayList()
