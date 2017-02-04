@@ -59,10 +59,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     }
 
     /**
-     * Create a resource.
-     *
-     * @param requestContext The request context
-     * @param databaseInfo    The resource metadata
+     * {@inheritDoc}.
      */
     @Override
     public void create(@Nonnull final ConnectorContext requestContext, @Nonnull final DatabaseInfo databaseInfo) {
@@ -74,10 +71,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     }
 
     /**
-     * Delete a database with the given qualified name.
-     *
-     * @param requestContext The request context
-     * @param name           The qualified name of the resource to delete
+     * {@inheritDoc}.
      */
     @Override
     public void delete(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
@@ -89,11 +83,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     }
 
     /**
-     * Return a resource with the given name.
-     *
-     * @param requestContext The request context
-     * @param name           The qualified name of the resource to get
-     * @return The resource metadata.
+     * {@inheritDoc}.
      */
     @Override
     public DatabaseInfo get(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
@@ -103,6 +93,19 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         } catch (TException exception) {
             throw new DatabaseNotFoundException(name, exception);
         }
+    }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public boolean exists(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
+        try {
+            final Database database = this.metacatHiveClient.getDatabase(name.getDatabaseName());
+            return database != null;
+        } catch (TException exception) {
+        }
+        return false;
     }
 
     /**
@@ -126,10 +129,41 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
                 qualifiedNames = (pageable.getOffset() > limit) ? Lists.newArrayList()
                     : qualifiedNames.subList(pageable.getOffset(), limit);
             }
-            return  qualifiedNames;
+            return qualifiedNames;
         } catch (MetaException exception) {
             throw new DatabaseNotFoundException(name, exception);
         }
     }
 
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public List<DatabaseInfo> list(
+        @Nonnull final ConnectorContext requestContext,
+        @Nonnull final QualifiedName name,
+        @Nullable final QualifiedName prefix,
+        @Nullable final Sort sort,
+        @Nullable final Pageable pageable
+    ) {
+
+        try {
+            List<DatabaseInfo> databaseInfos = Lists.newArrayList();
+            for (String databaseName : metacatHiveClient.getAllDatabases()) {
+                final QualifiedName qualifiedName = QualifiedName.ofDatabase(name.getCatalogName(), databaseName);
+                if (!qualifiedName.toString().startsWith(prefix.toString())) {
+                    continue;
+                }
+                databaseInfos.add(DatabaseInfo.builder().name(qualifiedName).build());
+            }
+            if (null != pageable && pageable.isPageable()) {
+                final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), databaseInfos.size());
+                databaseInfos = (pageable.getOffset() > limit) ? Lists.newArrayList()
+                    : databaseInfos.subList(pageable.getOffset(), limit);
+            }
+            return databaseInfos;
+        } catch (MetaException exception) {
+            throw new DatabaseNotFoundException(name, exception);
+        }
+    }
 }
