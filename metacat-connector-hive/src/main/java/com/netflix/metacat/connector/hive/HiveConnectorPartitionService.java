@@ -18,7 +18,6 @@ package com.netflix.metacat.connector.hive;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
@@ -43,9 +42,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * HiveConnectorPartitionService.
@@ -70,12 +67,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     }
 
     /**
-     * Gets the Partitions based on a filter expression for the specified table.
-     *
-     * @param requestContext    The Metacat request context
-     * @param name              name
-     * @param partitionsRequest The metadata for what kind of partitions to get from the table
-     * @return filtered list of partitions
+     * {@inheritDoc}.
      */
     @Override
     public List<PartitionInfo> getPartitions(
@@ -103,11 +95,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     }
 
     /**
-     * Number of partitions for the given table.
-     *
-     * @param requestContext The Metacat request context
-     * @param tableName      table handle
-     * @return Number of partitions
+     * {@inheritDoc}.
      */
     @Override
     public int getPartitionCount(
@@ -124,12 +112,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     }
 
     /**
-     * Gets the partition names/keys based on a filter expression for the specified table.
-     *
-     * @param requestContext    The Metacat request context
-     * @param tableName         table handle to get partition for
-     * @param partitionsRequest The metadata for what kind of partitions to get from the table
-     * @return filtered list of partition names
+     * {@inheritDoc}.
      */
     @Override
     public List<String> getPartitionKeys(
@@ -208,12 +191,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     }
 
     /**
-     * Gets the partition uris based on a filter expression for the specified table.
-     *
-     * @param requestContext    The Metacat request context
-     * @param table             table handle to get partition for
-     * @param partitionsRequest The metadata for what kind of partitions to get from the table
-     * @return filtered list of partition uris
+     * {@inheritDoc}.
      */
     @Override
     public List<String> getPartitionUris(
@@ -230,12 +208,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     }
 
     /**
-     * Add/Update/delete partitions for a table.
-     *
-     * @param requestContext        The Metacat request context
-     * @param tableName             table handle to get partition for
-     * @param partitionsSaveRequest Partitions to save, alter or delete
-     * @return added/updated list of partition names
+     * {@inheritDoc}.
      */
     @Override
     public PartitionsSaveResponse savePartitions(
@@ -268,41 +241,22 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     }
 
     /**
-     * Delete partitions for a table.
-     *
-     * @param requestContext The Metacat request context
-     * @param partitions     list of partition to delete
+     * {@inheritDoc}.
      */
+    @Override
     public void deletePartitions(
-        @Nonnull final MetacatRequestContext requestContext,
-        @Nonnull final List<QualifiedName> partitions
+        @Nonnull final ConnectorContext requestContext,
+        @Nonnull final QualifiedName tableName,
+        @Nonnull final List<String> partitionNames
     ) {
-        final Map<String, Map<String, List<String>>> partsMap = new HashMap<>();
-        String catalogName = "";
-        for (final QualifiedName qualifiedName : partitions) {
-            final String databaseName = qualifiedName.getDatabaseName();
-            catalogName = qualifiedName.getCatalogName();
-            if (!partsMap.containsKey(databaseName)) {
-                partsMap.put(databaseName, new HashMap<>());
-            }
-            final String tableName = qualifiedName.getTableName();
-            if (!partsMap.get(databaseName).containsKey(tableName)) {
-                partsMap.get(databaseName).put(tableName, new ArrayList<>());
-            }
-            partsMap.get(databaseName).get(tableName).add(qualifiedName.getPartitionName());
-        }
-        for (Map.Entry<String, Map<String, List<String>>> database : partsMap.entrySet()) {
-            for (Map.Entry<String, List<String>> tableEntry : database.getValue().entrySet()) {
-                try {
-                    metacatHiveClient.dropPartition(database.getKey(), tableEntry.getKey(), tableEntry.getValue());
-                } catch (MetaException | InvalidObjectException e) {
-                    throw new InvalidMetaException("One or more partitions are invalid.", e);
-                } catch (TException e) {
-                    //not sure which qualified name to use here
-                    throw new TableNotFoundException(
-                        QualifiedName.ofTable(catalogName, database.getKey(), tableEntry.getKey()), e);
-                }
-            }
+
+        try {
+            metacatHiveClient.dropPartition(tableName.getDatabaseName(), tableName.getTableName(), partitionNames);
+        } catch (MetaException | InvalidObjectException e) {
+            throw new InvalidMetaException("One or more partitions are invalid.", e);
+        } catch (TException e) {
+            //not sure which qualified name to use here
+            throw new TableNotFoundException(tableName, e);
         }
 
     }
@@ -321,4 +275,5 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             throw new InvalidMetaException("One or more partition names are invalid.", e);
         }
     }
+
 }

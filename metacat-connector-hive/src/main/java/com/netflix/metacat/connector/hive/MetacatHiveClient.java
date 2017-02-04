@@ -83,6 +83,16 @@ public class MetacatHiveClient {
     }
 
     /**
+     * tableExists.
+     * @param databaseName database
+     * @param tableName tableName
+     * @return boolean table exists
+     * @throws TException NotfoundException
+     */
+    public boolean tableExists(@Nonnull final String databaseName, @NonNull final String tableName) throws TException {
+        return createMetastoreClient().tableExists(databaseName, tableName);
+    }
+    /**
      * Returns the table.
      *
      * @param databaseName databaseName
