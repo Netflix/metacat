@@ -196,4 +196,21 @@ public class HiveConnectorTableService implements ConnectorTableService {
             throw new DatabaseNotFoundException(name, exception);
         }
     }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public void rename(
+        @Nonnull final ConnectorContext context,
+        @Nonnull final QualifiedName oldName,
+        @Nonnull final QualifiedName newName
+    ) {
+        try {
+            metacatHiveClient.rename(oldName.getDatabaseName(), oldName.getTableName(),
+                newName.getDatabaseName(), newName.getTableName());
+        } catch (TException exception) {
+            throw new DatabaseNotFoundException(oldName, exception);
+        }
+    }
 }

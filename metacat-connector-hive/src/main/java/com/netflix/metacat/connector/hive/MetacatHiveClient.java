@@ -84,14 +84,17 @@ public class MetacatHiveClient {
 
     /**
      * tableExists.
+     *
      * @param databaseName database
-     * @param tableName tableName
+     * @param tableName    tableName
      * @return boolean table exists
      * @throws TException NotfoundException
      */
     public boolean tableExists(@Nonnull final String databaseName, @NonNull final String tableName) throws TException {
         return createMetastoreClient().tableExists(databaseName, tableName);
     }
+
+
     /**
      * Returns the table.
      *
@@ -123,6 +126,28 @@ public class MetacatHiveClient {
      */
     void dropTable(@Nonnull final String databaseName, @NonNull final String tableName) throws TException {
         createMetastoreClient().dropTable(databaseName, tableName);
+    }
+
+    /**
+     * Rename table.
+     *
+     * @param databaseName    database
+     * @param oldName         tablename
+     * @param newdatabadeName newdatabase
+     * @param newName         newName
+     * @throws TException NotfoundException
+     */
+    public void rename(@Nonnull final String databaseName,
+                       @NonNull final String oldName,
+                       @Nonnull final String newdatabadeName,
+                       @Nonnull final String newName) throws TException {
+        final HiveMetaStoreClient hiveMetaStoreClient = createMetastoreClient();
+        final Table table = hiveMetaStoreClient.getTable(databaseName, oldName);
+        hiveMetaStoreClient.dropTable(databaseName, oldName);
+        table.setDbName(newdatabadeName);
+        table.setTableName(newName);
+        hiveMetaStoreClient.createTable(table);
+
     }
 
     /**
