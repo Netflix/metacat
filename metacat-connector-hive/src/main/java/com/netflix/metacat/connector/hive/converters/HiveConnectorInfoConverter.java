@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 
 /**
  * Hive connector info converter.
+ * @author zhenl
  */
 public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Database, Table, Partition> {
     private static final Splitter SLASH_SPLITTER = Splitter.on('/');
@@ -58,7 +59,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * Converts to DatabaseDto.
      *
      * @param database connector database
-     * @return Metacat database dto
+     * @return Metacat database Info
      */
     @Override
     public DatabaseInfo toDatabaseInfo(final QualifiedName qualifiedName, final Database database) {
@@ -68,7 +69,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     /**
      * Converts from DatabaseDto to the connector database.
      *
-     * @param databaseInfo Metacat database dto
+     * @param databaseInfo Metacat database Info
      * @return connector database
      */
     @Override
@@ -85,7 +86,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * Converts to TableDto.
      *
      * @param table connector table
-     * @return Metacat table dto
+     * @return Metacat table Info
      */
     @Override
     public TableInfo toTableInfo(final QualifiedName name, final Table table) {
@@ -110,7 +111,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     /**
      * Converts from TableDto to the connector table.
      *
-     * @param tableInfo Metacat table dto
+     * @param tableInfo Metacat table Info
      * @return connector table
      */
     @Override
@@ -164,7 +165,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * Converts to PartitionDto.
      *
      * @param partition connector partition
-     * @return Metacat partition dto
+     * @return Metacat partition Info
      */
     @Override
     public PartitionInfo toPartitionInfo(final TableInfo tableInfo, final Partition partition) {
@@ -191,7 +192,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     /**
      * Converts from PartitionDto to the connector partition.
      *
-     * @param partition Metacat partition dto
+     * @param partition Metacat partition Info
      * @return connector partition
      */
     @Override
