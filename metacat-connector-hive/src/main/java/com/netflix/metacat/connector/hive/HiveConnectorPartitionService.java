@@ -80,7 +80,6 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                 partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
                 partitionsRequest.getSort(), partitionsRequest.getPageable());
             final Table table = metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName());
-
             final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(name, table);
             final List<PartitionInfo> partitionInfos = new ArrayList<>();
             for (Partition partition : partitions) {
@@ -120,7 +119,6 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
         @Nonnull final QualifiedName tableName,
         @Nonnull final PartitionListRequest partitionsRequest
     ) {
-
         final String filterExpression = partitionsRequest.getFilter();
         final List<String> partitionIds = partitionsRequest.getPartitionNames();
         List<String> names = Lists.newArrayList();
@@ -223,7 +221,6 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             final Table table = metacatHiveClient.getTableByName(tableName.getDatabaseName(), tableName.getTableName());
             final List<PartitionInfo> partitionInfos = partitionsSaveRequest.getPartitions();
             final List<Partition> partitions = Lists.newArrayList();
-            final PartitionsSaveResponse partitionsSaveResponse = new PartitionsSaveResponse();
             final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(tableName, table);
             for (PartitionInfo partitionInfo : partitionInfos) {
                 partitions.add(hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo));
@@ -233,8 +230,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             for (Partition partition : partitions) {
                 partitionNames.add(getNameOfPartition(table, partition));
             }
-            partitionsSaveResponse.setAdded(partitionNames);
-            return partitionsSaveResponse;
+            return PartitionsSaveResponse.builder().added(partitionNames).build();
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (TException e) {
