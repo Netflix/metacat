@@ -37,18 +37,18 @@ public interface ConnectorSplitDetailManager extends ConnectorSplitManager {
     ConnectorPartitionResult getPartitions(ConnectorTableHandle table, String filterExpression,
         List<String> partitionNames, Sort sort, Pageable pageable, boolean includePartitionDetails);
 
-    /**
-     * Add/Update/delete partitions for a table.
-     * @param table table handle
-     * @param partitions list of partitions
-     * @param partitionIdsForDeletes list of partition ids/names for deletes
-     * @param checkIfExists check if partition already exists
-     * @param alterIfExists if exists, alter the partition instead of dropping and recreating
-     * @return added/updated list of partition names
-     */
-    SavePartitionResult savePartitions(ConnectorTableHandle table, List<ConnectorPartition> partitions,
-        List<String> partitionIdsForDeletes,
-        boolean checkIfExists, boolean alterIfExists);
+//    /**
+//     * Add/Update/delete partitions for a table.
+//     * @param table table handle
+//     * @param partitions list of partitions
+//     * @param partitionIdsForDeletes list of partition ids/names for deletes
+//     * @param checkIfExists check if partition already exists
+//     * @param alterIfExists if exists, alter the partition instead of dropping and recreating
+//     * @return added/updated list of partition names
+//     */
+//    SavePartitionResult savePartitions(ConnectorTableHandle table, List<ConnectorPartition> partitions,
+//        List<String> partitionIdsForDeletes,
+//        boolean checkIfExists, boolean alterIfExists);
 
     /**
      * Delete partitions for a table.
