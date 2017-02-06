@@ -26,7 +26,6 @@ import java.util.Map;
  * Database information.
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public final class DatabaseInfo extends BaseInfo {

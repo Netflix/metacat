@@ -16,13 +16,12 @@
 
 package hive
 
-import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService
 import com.netflix.metacat.connector.hive.MetacatHiveClient
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
-import com.netflix.metacat.connector.hive.converters.HiveMetacatConvertersImpl
+
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll

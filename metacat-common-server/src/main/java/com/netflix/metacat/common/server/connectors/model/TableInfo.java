@@ -29,7 +29,6 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-@AllArgsConstructor
 public final class TableInfo extends BaseInfo {
     private List<FieldInfo> fields;
     private StorageInfo serde;
