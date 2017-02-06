@@ -34,29 +34,29 @@ import lombok.NoArgsConstructor;
 public class FieldDto extends BaseDto {
     private static final long serialVersionUID = 9096928516299407324L;
 
-    @ApiModelProperty(value = "Comment of the field/column", required = false)
+    @ApiModelProperty(value = "Comment of the field/column")
     private String comment;
     @ApiModelProperty(value = "Name of the field/column", required = true)
     private String name;
-    @ApiModelProperty(value = "Is it a partition Key. If true, it is a partition key.", required = false)
+    @ApiModelProperty(value = "Is it a partition Key. If true, it is a partition key.")
     @SuppressWarnings("checkstyle:membername")
     private boolean partition_key;
     @ApiModelProperty(value = "Position of the field/column", required = true)
     private Integer pos;
-    @ApiModelProperty(value = "Source type of the field/column", required = false)
+    @ApiModelProperty(value = "Source type of the field/column")
     @SuppressWarnings("checkstyle:membername")
     private String source_type;
     @ApiModelProperty(value = "Type of the field/column", required = true)
     private String type;
-    @ApiModelProperty(value = "Can the field/column be null", required = false)
+    @ApiModelProperty(value = "Can the field/column be null")
     private Boolean isNullable;
-    @ApiModelProperty(value = "Size of the field/column", required = false)
+    @ApiModelProperty(value = "Size of the field/column")
     private Integer size;
-    @ApiModelProperty(value = "Default value of the column", required = false)
+    @ApiModelProperty(value = "Default value of the column")
     private String defaultValue;
-    @ApiModelProperty(value = "Is the column a sorted key", required = false)
+    @ApiModelProperty(value = "Is the column a sorted key")
     private Boolean isSortKey;
-    @ApiModelProperty(value = "Is the column an index key", required = false)
+    @ApiModelProperty(value = "Is the column an index key")
     private Boolean isIndexKey;
 
     @SuppressWarnings("checkstyle:methodname")

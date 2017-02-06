@@ -1,0 +1,4 @@
+
+dependencies {
+    compile project(":metacat-common-server")
+}

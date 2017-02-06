@@ -51,10 +51,9 @@ public class DatabaseDto extends BaseDto implements HasDefinitionMetadata {
     private List<String> tables;
     @ApiModelProperty(value = "Connector type of this catalog", required = true)
     private String type;
-    @ApiModelProperty(value = "Any extra metadata properties of the database", required = false)
+    @ApiModelProperty(value = "Any extra metadata properties of the database")
     private Map<String, String> metadata;
-    @ApiModelProperty(value = "URI of the database. Only applies to certain data sources like hive, S3",
-        required = false)
+    @ApiModelProperty(value = "URI of the database. Only applies to certain data sources like hive, S3")
     private String uri;
 
     @JsonIgnore
