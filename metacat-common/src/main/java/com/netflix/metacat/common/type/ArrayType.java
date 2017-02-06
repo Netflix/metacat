@@ -44,7 +44,7 @@ public class ArrayType extends AbstractType implements ParametricType {
 
     @Override
     public String getParametricTypeName() {
-        return Base.ARRAY.getBaseTypeDisplayName();
+        return TypeEnum.ARRAY.getBaseTypeDisplayName();
     }
 
     @Override

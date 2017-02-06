@@ -24,9 +24,12 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * Type mapping between canonical and connector types.
+ *
  * @author zhenl
  */
-public class TypeRegistry implements TypeManager {
+public final class TypeRegistry implements TypeManager {
+    //initailzed during class loading
+    private static final TypeRegistry INSTANCE = new TypeRegistry();
 
     private final ConcurrentMap<TypeSignature, Type> types = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, ParametricType> parametricTypes = new ConcurrentHashMap<>();
@@ -34,7 +37,7 @@ public class TypeRegistry implements TypeManager {
     /**
      * Constructor.
      */
-    public TypeRegistry() {
+    private TypeRegistry() {
         Preconditions.checkNotNull(types, "types is null");
         addType(BaseType.UNKNOWN);
         addType(BaseType.BIGINT);
@@ -61,6 +64,11 @@ public class TypeRegistry implements TypeManager {
         addParametricType(RowType.ROW);
         addParametricType(ArrayType.ARRAY);
     }
+
+    public static TypeRegistry getTypeRegistry() {
+        return INSTANCE;
+    }
+
 
     @Override
     public Type getType(final TypeSignature signature) {

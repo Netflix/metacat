@@ -11,24 +11,12 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.common.server.connectors.model;
-
-import com.netflix.metacat.common.dto.Pageable;
-import com.netflix.metacat.common.dto.Sort;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
-import java.util.List;
-
-/**
- * Partition get request.
- */
-@Data
-@EqualsAndHashCode(callSuper = false)
-public class PartitionListRequest {
-    private String filter;
-    private List<String> partitionNames;
-    private Boolean includePartitionDetails = false;
-    private Pageable pageable;
-    private Sort sort;
+dependencies {
+    compile project(':metacat-common-server')
+    compile "org.apache.hive:hive-metastore:${hivemetastore_version}"
+    compile "org.apache.hadoop:hadoop-core:${hadoopcore_version}"
+    compile "com.google.guava:guava:${guava_version}"
+    compile "com.google.inject:guice:${guice_version}"
+    compile "com.google.inject.extensions:guice-persist:${guice_version}"
+    compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
 }

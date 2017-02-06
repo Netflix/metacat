@@ -24,15 +24,13 @@ import spock.lang.Specification
 class PigTypeConverterSpec extends Specification {
     @Shared
     PigTypeConverter converter = new PigTypeConverter()
-    @Shared
-    TypeManager typeManager = new TypeRegistry()
 
     def 'Test convert "#typeString" to a canonical type and back'(String typeString) {
         expect:
-        def canonicalType = converter.dataTypeToCanonicalType(typeString, typeManager)
-        def pigType = converter.canonicalTypeToDataType(canonicalType)
-        def canonicalTypeFromPigType = converter.dataTypeToCanonicalType(pigType, typeManager)
-        canonicalTypeFromPigType == canonicalType
+        def metacatType = converter.toMetacatType(typeString)
+        def pigType = converter.fromMetacatType(metacatType)
+        def metacatType2 = converter.toMetacatType(pigType)
+        metacatType2 == metacatType
         where:
         typeString << [
             "(a1:chararray,a2:chararray)",

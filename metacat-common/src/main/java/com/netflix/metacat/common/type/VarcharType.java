@@ -34,7 +34,7 @@ public final class VarcharType extends AbstractType {
     private VarcharType(final int length) {
         super(
             new TypeSignature(
-                Base.VARCHAR.getBaseTypeDisplayName(), new ArrayList<TypeSignature>(),
+                TypeEnum.VARCHAR.getBaseTypeDisplayName(), new ArrayList<TypeSignature>(),
                 Lists.<Object>newArrayList((long) length)));
 
         if (length < 0) {

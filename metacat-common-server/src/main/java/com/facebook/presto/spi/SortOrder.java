@@ -11,24 +11,12 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.common.server.connectors.model;
-
-import com.netflix.metacat.common.dto.Pageable;
-import com.netflix.metacat.common.dto.Sort;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
-import java.util.List;
+package com.facebook.presto.spi;
 
 /**
- * Partition get request.
+ * Sort order.
  */
-@Data
-@EqualsAndHashCode(callSuper = false)
-public class PartitionListRequest {
-    private String filter;
-    private List<String> partitionNames;
-    private Boolean includePartitionDetails = false;
-    private Pageable pageable;
-    private Sort sort;
+public enum SortOrder {
+    /** Ascending order, Descending order. */
+    ASC, DESC
 }

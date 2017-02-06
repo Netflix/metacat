@@ -1,33 +1,60 @@
-package com.netflix.metacat.hive.canonical.converters
+/*
+ *  Copyright 2017 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ */
 
-import com.netflix.metacat.common.type.TypeManager
-import com.netflix.metacat.common.type.VarcharType
+package com.netflix.metacat.connector.hive.converters
+
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.dto.*
+import com.netflix.metacat.common.dto.AuditDto
+import com.netflix.metacat.common.dto.DatabaseDto
+import com.netflix.metacat.common.dto.FieldDto
+import com.netflix.metacat.common.dto.PartitionDto
+import com.netflix.metacat.common.dto.StorageDto
+import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.Config
-import org.apache.hadoop.hive.metastore.api.*
+import com.netflix.metacat.common.server.connectors.model.AuditInfo
+import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
+import com.netflix.metacat.common.server.connectors.model.FieldInfo
+import com.netflix.metacat.common.server.connectors.model.PartitionInfo
+import com.netflix.metacat.common.server.connectors.model.StorageInfo
+import com.netflix.metacat.common.server.connectors.model.TableInfo
+import com.netflix.metacat.common.type.VarcharType
+import org.apache.hadoop.hive.metastore.api.FieldSchema
+import org.apache.hadoop.hive.metastore.api.Partition
+import org.apache.hadoop.hive.metastore.api.SerDeInfo
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor
+import org.apache.hadoop.hive.metastore.api.Table
 import org.joda.time.Instant
 import spock.lang.Specification
 
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
-import java.util.Date
 
 /**
- * Unit test class for HiveMetacatConverter.
+ * Unit test for hive connector info convertor.
  */
-class HiveMetacatConvertersSpec extends Specification {
+class HiveConnectorInfoConvertorSpec extends Specification{
     private static final ZoneOffset PACIFIC = LocalDateTime.now().atZone(ZoneId.of('America/Los_Angeles')).offset
     Config config = Mock(Config)
-    TypeManager typeManager = Mock(TypeManager)
-    HiveMetacatConverters converter
-    HiveTypeConverter hiveTypeConverter = Mock(HiveTypeConverter)
+    HiveConnectorInfoConverter converter
 
     def setup() {
         // Stub this to always return true
         config.isEpochInSeconds() >> true
-        converter = new HiveMetacatConvertersImpl()
+        converter = new HiveConnectorInfoConverter()
     }
 
     def 'test date to epoch seconds'() {
@@ -54,12 +81,12 @@ class HiveMetacatConvertersSpec extends Specification {
         input = Date.from(LocalDateTime.of(9999, 2, 25, 14, 47, 27).toInstant(PACIFIC))
     }
 
-    def 'test metacatToHiveDatabase sets all required fields to non-null values'() {
+    def 'test fromDatabaseInfo sets all required fields to non-null values'() {
         given:
-        def dto = new DatabaseDto()
+        def dbInfo = new DatabaseInfo()
 
         when:
-        def db = converter.metacatToHiveDatabase(dto)
+        def db = converter.fromDatabaseInfo(dbInfo)
 
         then:
         db
@@ -69,16 +96,16 @@ class HiveMetacatConvertersSpec extends Specification {
         db.parameters != null
     }
 
-    def 'test metacatToHiveDatabase'() {
+    def 'test fromDatabaseInfo'() {
         given:
-        def dto = new DatabaseDto(
+        def dbInfo = new DatabaseInfo(
             name: QualifiedName.ofDatabase('catalog', databaseName),
             uri: dbUri,
             metadata: metadata
         )
 
         when:
-        def db = converter.metacatToHiveDatabase(dto)
+        def db = converter.fromDatabaseInfo(dbInfo)
 
         then:
         db
@@ -93,12 +120,12 @@ class HiveMetacatConvertersSpec extends Specification {
         metadata = [k1: 'v1', k2: 'v2']
     }
 
-    def 'test metacatToHiveTable sets all required fields to non-null values'() {
+    def 'test fromTableInfo sets all required fields to non-null values'() {
         given:
-        TableDto dto = new TableDto()
+        TableInfo tableInfo = new TableInfo()
 
         when:
-        def table = converter.metacatToHiveTable(dto)
+        def table = converter.fromTableInfo(tableInfo)
 
         then:
         table
@@ -122,9 +149,9 @@ class HiveMetacatConvertersSpec extends Specification {
         table.tableType != null
     }
 
-    def 'test metacatToHiveTable'() {
+    def 'test fromTableInfo'() {
         when:
-        def table = converter.metacatToHiveTable(dto)
+        def table = converter.fromTableInfo(tableInfo)
 
         then:
         table.dbName == databaseName
@@ -165,13 +192,13 @@ class HiveMetacatConvertersSpec extends Specification {
         storageParams = ['sk1': 'sv1']
         serdeInfoParams = ['sik1': 'siv1']
         fields = (0..9).collect {
-            new FieldDto(name: "field_$it", partition_key: it < 2, comment: "comment_$it", type: 'VARCHAR')
+            new FieldInfo(name: "field_$it", partitionKey: it < 2, comment: "comment_$it", type: VarcharType.VARCHAR)
         }
         tableParams = ['tk1': 'tv1']
-        dto = new TableDto(
+        tableInfo = new TableInfo(
             name: QualifiedName.ofTable('catalog', databaseName, tableName),
-            audit: new AuditDto(createdDate: createDate),
-            serde: new StorageDto(
+            audit: new AuditInfo(createdDate: createDate),
+            serde: new StorageInfo(
                 owner: owner,
                 uri: location,
                 inputFormat: inputFormat,
@@ -185,31 +212,30 @@ class HiveMetacatConvertersSpec extends Specification {
         )
     }
 
-    def 'test hiveToMetacatTable'() {
+    def 'test toTableInfo'() {
         when:
-        def dto = converter.hiveToMetacatTable(name, table)
+        def tableInfo = converter.toTableInfo(name, table)
 
         then:
-        hiveTypeConverter.toType('VARCHAR', typeManager) >> VarcharType.VARCHAR
-        dto.name == name
-        dto.name.databaseName == databaseName
-        dto.name.tableName == tableName
-        dto.audit.createdDate == Instant.parse('2016-02-25T14:47:27').toDate()
-        dto.serde.owner == owner
-        dto.serde.uri == location
-        dto.serde.inputFormat == inputFormat
-        dto.serde.outputFormat == outputFormat
-        dto.serde.serializationLib == serializationLib
-        dto.serde.serdeInfoParameters == serdeInfoParams
-        dto.serde.parameters == sdParams
-        dto.fields.size() == columns.size() + partitonKeys.size()
-        dto.fields.each {
+        tableInfo.name == name
+        tableInfo.name.databaseName == databaseName
+        tableInfo.name.tableName == tableName
+        tableInfo.audit.createdDate == Instant.parse('2016-02-25T14:47:27').toDate()
+        tableInfo.serde.owner == owner
+        tableInfo.serde.uri == location
+        tableInfo.serde.inputFormat == inputFormat
+        tableInfo.serde.outputFormat == outputFormat
+        tableInfo.serde.serializationLib == serializationLib
+        tableInfo.serde.serdeInfoParameters == serdeInfoParams
+        tableInfo.serde.parameters == sdParams
+        tableInfo.fields.size() == columns.size() + partitonKeys.size()
+        tableInfo.fields.each {
             it.name.startsWith('field_')
             it.comment.startsWith('comment_')
-            it.type == 'VARCHAR'
+            it.type == VarcharType.VARCHAR
         }
-        dto.fields.findAll { it.partition_key }.size() == 2
-        dto.metadata == tableParams
+        tableInfo.fields.findAll { it.partitionKey }.size() == 2
+        tableInfo.metadata == tableParams
 
         where:
         databaseName = 'database'
@@ -248,13 +274,13 @@ class HiveMetacatConvertersSpec extends Specification {
         )
     }
 
-    def 'test metacatToHivePartition sets all required fields to non-null values'() {
+    def 'test fromPartitionInfo sets all required fields to non-null values'() {
         given:
-        TableDto tableDto = new TableDto()
-        PartitionDto dto = new PartitionDto()
+        TableInfo tableInfo = new TableInfo()
+        PartitionInfo partitionInfo = new PartitionInfo()
 
         when:
-        def partition = converter.metacatToHivePartition(dto, tableDto)
+        def partition = converter.fromPartitionInfo(tableInfo, partitionInfo)
 
         then:
         partition
@@ -278,7 +304,7 @@ class HiveMetacatConvertersSpec extends Specification {
 
     def 'test metacatToHivePartition'() {
         when:
-        def partition = converter.metacatToHivePartition(dto, tableDto)
+        def partition = converter.fromPartitionInfo(tableInfo,partitionInfo)
 
         then:
         partition.values == ['CAPS', 'lower', '3']
@@ -314,13 +340,13 @@ class HiveMetacatConvertersSpec extends Specification {
         sdParams = ['sdk1': 'sdv1']
         serdeInfoParams = ['sipk1': 'sipv1']
         fields = (0..9).collect {
-            new FieldDto(name: "field_$it", partition_key: it < 2, comment: "comment_$it", type: 'VARCHAR')
+            new FieldInfo(name: "field_$it", partitionKey: it < 2, comment: "comment_$it", type: VarcharType.VARCHAR)
         }
         partitionParams = ['tk1': 'tv1']
-        dto = new PartitionDto(
+        partitionInfo = new PartitionInfo(
             name: QualifiedName.ofPartition('catalog', databaseName, tableName, partitionName),
-            audit: new AuditDto(createdDate: createDate, lastModifiedDate: createDate),
-            serde: new StorageDto(
+            audit: new AuditInfo(createdDate: createDate, lastModifiedDate: createDate),
+            serde: new StorageInfo(
                 owner: owner,
                 uri: location,
                 inputFormat: inputFormat,
@@ -331,73 +357,73 @@ class HiveMetacatConvertersSpec extends Specification {
             ),
             metadata: partitionParams,
         )
-        tableDto = new TableDto(
+        tableInfo = new TableInfo(
             fields: fields
         )
     }
 
-    def 'test metacatToHivePartition can handle a partition name with multiple equals'() {
+    def 'test fromPartitionInfo can handle a partition name with multiple equals'() {
         when:
-        def partition = converter.metacatToHivePartition(dto, tableDto)
+        def partition = converter.fromPartitionInfo(tableInfo,partitionInfo)
 
         then:
         partition.values == ['weird=true', '', 'monk']
 
         where:
-        dto = new PartitionDto(
+        partitionInfo = new PartitionInfo(
             name: QualifiedName.ofPartition('c', 'd', 't', 'this=weird=true/bob=/someone=monk')
         )
-        tableDto = new TableDto()
+        tableInfo = new TableInfo()
     }
 
-    def 'test metacatToHivePartition throws an error on invalid partition name'() {
+    def 'test fromPartitionInfo throws an error on invalid partition name'() {
         when:
-        converter.metacatToHivePartition(dto, tableDto)
+        converter.fromPartitionInfo(tableInfo,partitionInfo)
 
         then:
         thrown(IllegalStateException)
 
         where:
-        dto = new PartitionDto(
+        partitionInfo = new PartitionInfo(
             name: QualifiedName.ofPartition('c', 'd', 't', 'fail')
         )
-        tableDto = new TableDto()
+        tableInfo = new TableInfo()
     }
 
-    def 'test metacatToHivePartition copies serialization lib from the table if there is not one on the partition'() {
+    def 'test fromPartitionInfo copies serialization lib from the table if there is not one on the partition'() {
         when:
-        def partition = converter.metacatToHivePartition(dto, tableDto)
+        def partition = converter.fromPartitionInfo(tableInfo,partitionInfo)
 
         then:
         partition.sd.serdeInfo.serializationLib == serializationLib
 
         where:
         serializationLib = 'serializationLib'
-        dto = new PartitionDto()
-        tableDto = new TableDto(
-            serde: new StorageDto(
+        partitionInfo = new PartitionInfo()
+        tableInfo = new TableInfo(
+            serde: new StorageInfo(
                 serializationLib: serializationLib
             )
         )
     }
 
-    def 'test hiveToMetacatPartition'() {
+    def 'test toPartitionInfo'() {
         when:
-        def dto = converter.hiveToMetacatPartition(tableDto, partition)
+        def partitionInfo = converter.toPartitionInfo(tableInfo,partition)
 
         then:
-        dto.name == QualifiedName.ofPartition('catalog', databaseName, tableName, 'key1=CAPS/key2=lower/key3=3')
-        dto.name.databaseName == databaseName
-        dto.name.tableName == tableName
-        dto.audit.createdDate == Instant.parse('2016-02-25T14:47:27').toDate()
-        dto.serde.owner == owner
-        dto.serde.uri == location
-        dto.serde.inputFormat == inputFormat
-        dto.serde.outputFormat == outputFormat
-        dto.serde.serializationLib == serializationLib
-        dto.serde.serdeInfoParameters == serdeParams
-        dto.serde.parameters == sdParams
-        dto.metadata == partitionParams
+        partitionInfo.name == QualifiedName.ofPartition('catalog', databaseName, tableName, 'key1=CAPS/key2=lower/key3=3')
+        partitionInfo.name.databaseName == databaseName
+        partitionInfo.name.tableName == tableName
+        partitionInfo.audit.createdDate == Instant.parse('2016-02-25T14:47:27').toDate()
+        partitionInfo.serde.owner == owner
+        partitionInfo.serde.uri == location
+        partitionInfo.serde.inputFormat == inputFormat
+        partitionInfo.serde.outputFormat == outputFormat
+        partitionInfo.serde.serializationLib == serializationLib
+        partitionInfo.serde.serdeInfoParameters == serdeParams
+        partitionInfo.serde.parameters == sdParams
+        partitionInfo.metadata == partitionParams
 
         where:
         databaseName = 'database'
@@ -430,37 +456,37 @@ class HiveMetacatConvertersSpec extends Specification {
             ),
             parameters: partitionParams,
         )
-        tableDto = new TableDto(
+        tableInfo = new TableInfo(
             name: QualifiedName.ofTable('catalog', databaseName, tableName),
             fields: [
-                new FieldDto(name: 'key1', partition_key: true, comment: 'comment_1', type: 'VARCHAR'),
-                new FieldDto(name: 'key2', partition_key: true, comment: 'comment_2', type: 'VARCHAR'),
-                new FieldDto(name: 'key3', partition_key: true, comment: 'comment_3', type: 'VARCHAR'),
-                new FieldDto(name: 'col1', partition_key: false, comment: 'comment_1', type: 'VARCHAR'),
+                new FieldInfo(name: 'key1', partitionKey: true, comment: 'comment_1', type: VarcharType.VARCHAR),
+                new FieldInfo(name: 'key2', partitionKey: true, comment: 'comment_2', type: VarcharType.VARCHAR),
+                new FieldInfo(name: 'key3', partitionKey: true, comment: 'comment_3', type: VarcharType.VARCHAR),
+                new FieldInfo(name: 'col1', partitionKey: false, comment: 'comment_1', type: VarcharType.VARCHAR),
             ],
-            serde: new StorageDto(
+            serde: new StorageInfo(
                 owner: owner
             ),
         )
     }
 
-    def 'test hiveToMetacatPartition fails if wrong number of partition values'() {
+    def 'test toPartitionInfo fails if wrong number of partition values'() {
         given:
         def partition = new Partition(
             values: partitionValues
         )
-        def tableDto = new TableDto(
+        def tableInfo = new TableInfo(
             name: QualifiedName.ofTable('c', 'd', 't'),
             fields: [
-                new FieldDto(name: 'key1', partition_key: true, comment: 'comment_1', type: 'VARCHAR'),
-                new FieldDto(name: 'key2', partition_key: true, comment: 'comment_2', type: 'VARCHAR'),
-                new FieldDto(name: 'key3', partition_key: true, comment: 'comment_3', type: 'VARCHAR'),
-                new FieldDto(name: 'col1', partition_key: false, comment: 'comment_1', type: 'VARCHAR'),
+                new FieldInfo(name: 'key1', partitionKey: true, comment: 'comment_1', type: VarcharType.VARCHAR),
+                new FieldInfo(name: 'key2', partitionKey: true, comment: 'comment_2', type: VarcharType.VARCHAR),
+                new FieldInfo(name: 'key3', partitionKey: true, comment: 'comment_3', type: VarcharType.VARCHAR),
+                new FieldInfo(name: 'col1', partitionKey: false, comment: 'comment_1', type: VarcharType.VARCHAR),
             ]
         )
 
         when:
-        converter.hiveToMetacatPartition(tableDto, partition)
+        converter.toPartitionInfo(tableInfo, partition)
 
         then:
         thrown(IllegalArgumentException)
