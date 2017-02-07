@@ -67,7 +67,7 @@ class SNSNotificationServiceImplSpec extends Specification {
         .retryIfExceptionOfType(ThrottledException.class)
         .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.NANOSECONDS, 30, TimeUnit.NANOSECONDS))
         .withStopStrategy(StopStrategies.stopAfterAttempt(3))
-        .build();
+        .build()
     def service = new SNSNotificationServiceImpl(this.client, this.tableArn, this.partitionArn, this.mapper, this.retry)
 
     def "Will Notify On Partition Creation"() {

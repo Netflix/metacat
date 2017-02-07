@@ -15,29 +15,15 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.common.server.connectors.model;
+package com.netflix.metacat.connector.jdbc.services;
 
-import com.netflix.metacat.common.QualifiedName;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.util.Map;
+import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 
 /**
- * Base class for catalog resources.
- * @author amajumdar
+ * Generic JDBC implementation of the ConnectorPartitionService.
+ *
+ * @author tgianos
+ * @since 0.1.52
  */
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public abstract class BaseInfo {
-    /* Name of the resource */
-    private QualifiedName name;
-    /* Audit information of the resource */
-    private AuditInfo audit;
-    /* Metadata properties of the resource */
-    private Map<String, String> metadata;
+public class JdbcConnectorPartitionService implements ConnectorPartitionService {
 }

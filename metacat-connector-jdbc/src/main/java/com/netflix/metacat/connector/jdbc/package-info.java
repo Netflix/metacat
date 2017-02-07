@@ -15,29 +15,14 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.common.server.connectors.model;
-
-import com.netflix.metacat.common.QualifiedName;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.util.Map;
+/**
+ * @author tgianos
+ */
 
 /**
- * Base class for catalog resources.
- * @author amajumdar
+ * Classes related to getting metadata from a generic JDBC connection.
+ *
+ * @author tgianos
+ * @sincde 0.1.52
  */
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public abstract class BaseInfo {
-    /* Name of the resource */
-    private QualifiedName name;
-    /* Audit information of the resource */
-    private AuditInfo audit;
-    /* Metadata properties of the resource */
-    private Map<String, String> metadata;
-}
+package com.netflix.metacat.connector.jdbc;

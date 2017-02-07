@@ -14,7 +14,6 @@
 package com.netflix.metacat.common.server.connectors.model;
 
 import com.netflix.metacat.common.QualifiedName;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,11 +25,11 @@ import java.util.Map;
 /**
  * Table Info.
  */
+@SuppressWarnings("checkstyle:finalclass")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-@AllArgsConstructor
-public final class TableInfo extends BaseInfo {
+public class TableInfo extends BaseInfo {
     private List<FieldInfo> fields;
     private StorageInfo serde;
 

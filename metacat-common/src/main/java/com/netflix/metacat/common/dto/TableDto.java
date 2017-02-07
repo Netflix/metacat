@@ -40,7 +40,7 @@ import java.util.Map;
 @ApiModel("Table metadata")
 @SuppressWarnings("unused")
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -86,7 +86,7 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
      * Returns the list of partition keys.
      * @return list of partition keys
      */
-    @ApiModelProperty(value = "List of partition key names", required = false)
+    @ApiModelProperty(value = "List of partition key names")
     @JsonProperty
     @SuppressWarnings("checkstyle:methodname")
     public List<String> getPartition_keys() {
