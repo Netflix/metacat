@@ -11,17 +11,17 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.hive.canonical.converters;
+package com.netflix.metacat.connector.hive.converters;
 
 import com.google.common.collect.ImmutableList;
-import com.netflix.metacat.common.type.TypeConverter;
-import com.netflix.metacat.common.type.Base;
+import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.type.CharType;
 import com.netflix.metacat.common.type.DecimalType;
 import com.netflix.metacat.common.type.MapType;
 import com.netflix.metacat.common.type.RowType;
 import com.netflix.metacat.common.type.Type;
-import com.netflix.metacat.common.type.TypeManager;
+import com.netflix.metacat.common.type.TypeEnum;
+import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.common.type.TypeSignature;
 import com.netflix.metacat.common.type.TypeUtils;
 import com.netflix.metacat.common.type.VarcharType;
@@ -30,17 +30,16 @@ import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardStructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
-import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
-
-import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
+import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
+import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,15 +47,16 @@ import java.util.stream.Collectors;
 
 /**
  * Class to convert hive to canonical type and vice versa.
+ *
  * @author zhenl
  */
-public class HiveTypeConverter implements TypeConverter {
+public class HiveTypeConverter implements ConnectorTypeConverter {
 
     @Override
-    public Type dataTypeToCanonicalType(final String type, final TypeManager typeRegistry) {
+    public Type toMetacatType(final String type) {
         // Hack to fix presto "varchar" type coming in with no length which is required by Hive.
         final TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(
-            "varchar".equals(type) ? serdeConstants.STRING_TYPE_NAME : type);
+            "varchar".equals(type.toLowerCase()) ? serdeConstants.STRING_TYPE_NAME : type);
         ObjectInspector oi = TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(typeInfo);
         // The standard struct object inspector forces field names to lower case, however in Metacat we need to preserve
         // the original case of the struct fields so we wrap it with our wrapper to force the fieldNames to keep
@@ -67,11 +67,11 @@ public class HiveTypeConverter implements TypeConverter {
             oi = new HiveTypeConverter.SameCaseStandardStructObjectInspector(
                 structTypeInfo.getAllStructFieldNames(), objectInspector);
         }
-        return getCanonicalType(oi, typeRegistry);
+        return getCanonicalType(oi);
     }
 
     @Override
-    public String canonicalTypeToDataType(final Type type) {
+    public String fromMetacatType(final Type type) {
         if (HiveTypeMapping.getCANONICAL_TO_HIVE().containsKey(type)) {
             return HiveTypeMapping.getCANONICAL_TO_HIVE().get(type);
         }
@@ -81,19 +81,19 @@ public class HiveTypeConverter implements TypeConverter {
             return ((CharType) type).getDisplayName();
         } else if (type instanceof VarcharType) {
             return ((VarcharType) type).getDisplayName();
-        } else if (type.getTypeSignature().getBase().equals(Base.MAP.getBaseTypeDisplayName())) {
+        } else if (type.getTypeSignature().getBase().equals(TypeEnum.MAP.getBaseTypeDisplayName())) {
             final MapType mapType = (MapType) type;
-            return "map<" + canonicalTypeToDataType(mapType.getKeyType())
-                + "," + canonicalTypeToDataType(mapType.getValueType()) + ">";
-        } else if (type.getTypeSignature().getBase().equals(Base.ROW.getBaseTypeDisplayName())) {
+            return "map<" + fromMetacatType(mapType.getKeyType())
+                + "," + fromMetacatType(mapType.getValueType()) + ">";
+        } else if (type.getTypeSignature().getBase().equals(TypeEnum.ROW.getBaseTypeDisplayName())) {
             final RowType rowType = (RowType) type;
             final String typeString = rowType.getFields()
                 .stream()
                 .map(this::rowFieldToString)
                 .collect(Collectors.joining(","));
             return "struct<" + typeString + ">";
-        } else if (type.getTypeSignature().getBase().equals(Base.ARRAY.getBaseTypeDisplayName())) {
-            final String typeString = type.getParameters().stream().map(this::canonicalTypeToDataType)
+        } else if (type.getTypeSignature().getBase().equals(TypeEnum.ARRAY.getBaseTypeDisplayName())) {
+            final String typeString = type.getParameters().stream().map(this::fromMetacatType)
                 .collect(Collectors.joining(","));
             return "array<" + typeString + ">";
         }
@@ -105,7 +105,7 @@ public class HiveTypeConverter implements TypeConverter {
         if (rowField.getName() != null) {
             prefix = rowField.getName() + ":";
         }
-        return prefix + canonicalTypeToDataType(rowField.getType());
+        return prefix + fromMetacatType(rowField.getType());
     }
 
     private static Type getPrimitiveType(final ObjectInspector fieldInspector) {
@@ -136,10 +136,9 @@ public class HiveTypeConverter implements TypeConverter {
      * Returns the canonical type.
      *
      * @param fieldInspector inspector
-     * @param typeRegistry   type manager
      * @return type
      */
-    Type getCanonicalType(final ObjectInspector fieldInspector, final TypeManager typeRegistry) {
+    Type getCanonicalType(final ObjectInspector fieldInspector) {
         switch (fieldInspector.getCategory()) {
             case PRIMITIVE:
                 return getPrimitiveType(fieldInspector);
@@ -147,23 +146,23 @@ public class HiveTypeConverter implements TypeConverter {
                 final MapObjectInspector mapObjectInspector =
                     TypeUtils.checkType(fieldInspector, MapObjectInspector.class,
                         "fieldInspector");
-                final Type keyType = getCanonicalType(mapObjectInspector.getMapKeyObjectInspector(), typeRegistry);
-                final Type valueType = getCanonicalType(mapObjectInspector.getMapValueObjectInspector(), typeRegistry);
+                final Type keyType = getCanonicalType(mapObjectInspector.getMapKeyObjectInspector());
+                final Type valueType = getCanonicalType(mapObjectInspector.getMapValueObjectInspector());
                 if (keyType == null || valueType == null) {
                     return null;
                 }
-                return typeRegistry.getParameterizedType(Base.MAP.getBaseTypeDisplayName(),
+                return TypeRegistry.getTypeRegistry().getParameterizedType(TypeEnum.MAP.getBaseTypeDisplayName(),
                     ImmutableList.of(keyType.getTypeSignature(), valueType.getTypeSignature()), ImmutableList.of());
             case LIST:
                 final ListObjectInspector listObjectInspector =
                     TypeUtils.checkType(fieldInspector, ListObjectInspector.class,
                         "fieldInspector");
                 final Type elementType =
-                    getCanonicalType(listObjectInspector.getListElementObjectInspector(), typeRegistry);
+                    getCanonicalType(listObjectInspector.getListElementObjectInspector());
                 if (elementType == null) {
                     return null;
                 }
-                return typeRegistry.getParameterizedType(Base.ARRAY.getBaseTypeDisplayName(),
+                return TypeRegistry.getTypeRegistry().getParameterizedType(TypeEnum.ARRAY.getBaseTypeDisplayName(),
                     ImmutableList.of(elementType.getTypeSignature()), ImmutableList.of());
             case STRUCT:
                 final StructObjectInspector structObjectInspector =
@@ -172,13 +171,14 @@ public class HiveTypeConverter implements TypeConverter {
                 final List<Object> fieldNames = new ArrayList<>();
                 for (StructField field : structObjectInspector.getAllStructFieldRefs()) {
                     fieldNames.add(field.getFieldName());
-                    final Type fieldType = getCanonicalType(field.getFieldObjectInspector(), typeRegistry);
+                    final Type fieldType = getCanonicalType(field.getFieldObjectInspector());
                     if (fieldType == null) {
                         return null;
                     }
                     fieldTypes.add(fieldType.getTypeSignature());
                 }
-                return typeRegistry.getParameterizedType(Base.ROW.getBaseTypeDisplayName(), fieldTypes, fieldNames);
+                return TypeRegistry.getTypeRegistry()
+                    .getParameterizedType(TypeEnum.ROW.getBaseTypeDisplayName(), fieldTypes, fieldNames);
             default:
                 throw new IllegalArgumentException("Unsupported hive type " + fieldInspector.getTypeName());
         }

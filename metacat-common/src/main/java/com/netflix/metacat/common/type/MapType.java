@@ -63,7 +63,7 @@ public class MapType extends AbstractType implements ParametricType {
 
     @Override
     public String getParametricTypeName() {
-        return Base.MAP.getBaseTypeDisplayName();
+        return TypeEnum.MAP.getBaseTypeDisplayName();
     }
 
     @Override
