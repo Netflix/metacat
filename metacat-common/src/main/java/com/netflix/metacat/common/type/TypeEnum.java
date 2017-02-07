@@ -37,7 +37,7 @@ public enum TypeEnum {
     DOUBLE("double", false),
     /** decimal type user definable precision and scale. */
     DECIMAL("decimal", true),
-    /** char fixed-length <= 255. */
+    /** char fixed length less than or equals to 255. */
     CHAR("char", true),
     /** varchar created with a length specifier (between 1 and 65355). */
     VARCHAR("varchar", true),
