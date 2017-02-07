@@ -230,7 +230,9 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             for (Partition partition : partitions) {
                 partitionNames.add(getNameOfPartition(table, partition));
             }
-            return PartitionsSaveResponse.builder().added(partitionNames).build();
+            final PartitionsSaveResponse partitionsSaveResponse = new PartitionsSaveResponse();
+            partitionsSaveResponse.setAdded(partitionNames);
+            return partitionsSaveResponse;
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (TException e) {

@@ -14,7 +14,6 @@
 package com.netflix.metacat.common.server.connectors.model;
 
 import com.netflix.metacat.common.QualifiedName;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
