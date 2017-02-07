@@ -45,7 +45,7 @@ public final class DecimalType extends AbstractType implements ParametricType {
     private final int scale;
 
     private DecimalType(final int precision, final int scale) {
-        super(new TypeSignature(Base.DECIMAL.getBaseTypeDisplayName(),
+        super(new TypeSignature(TypeEnum.DECIMAL.getBaseTypeDisplayName(),
             new ArrayList<TypeSignature>(),
             Lists.<Object>newArrayList((long) precision, (long) scale)));
         Preconditions.checkArgument(precision >= 0, "Invalid decimal precision " + precision);
@@ -86,7 +86,7 @@ public final class DecimalType extends AbstractType implements ParametricType {
 
     @Override
     public String getParametricTypeName() {
-        return Base.DECIMAL.getBaseTypeDisplayName();
+        return TypeEnum.DECIMAL.getBaseTypeDisplayName();
     }
 
     @Override

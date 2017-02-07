@@ -45,7 +45,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
 
     def "Can create a database"() {
         def databaseName = UUID.randomUUID().toString()
-        def database = new DatabaseInfo.Builder(QualifiedName.ofDatabase(UUID.randomUUID().toString(), databaseName))
+        def database = DatabaseInfo.builder().name(QualifiedName.ofDatabase(UUID.randomUUID().toString(), databaseName))
             .build()
 
         when:
@@ -59,7 +59,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
 
     def "Can't create a database on SQL exception"() {
         def databaseName = UUID.randomUUID().toString()
-        def database = new DatabaseInfo.Builder(QualifiedName.ofDatabase(UUID.randomUUID().toString(), databaseName))
+        def database = DatabaseInfo.builder().name(QualifiedName.ofDatabase(UUID.randomUUID().toString(), databaseName))
             .build()
 
         when:

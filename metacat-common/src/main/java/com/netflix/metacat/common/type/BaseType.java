@@ -20,7 +20,7 @@ import lombok.Setter;
 import java.util.List;
 
 /**
- * Base class implements the type interface.
+ * TypeEnum class implements the type interface.
  * @author zhenl
  */
 @EqualsAndHashCode(callSuper = true)
@@ -28,84 +28,85 @@ public class BaseType extends AbstractType {
     /**
      * BOOLEAN type.
      */
-    public static final Type BOOLEAN = createBaseType(Base.BOOLEAN.getBaseTypeDisplayName());
+    public static final Type BOOLEAN = createBaseType(TypeEnum.BOOLEAN.getBaseTypeDisplayName());
     /**
      * TINYINT type.
      */
-    public static final Type TINYINT = createBaseType(Base.TINYINT.getBaseTypeDisplayName());
+    public static final Type TINYINT = createBaseType(TypeEnum.TINYINT.getBaseTypeDisplayName());
     /**
      * SMALLINT type.
      */
-    public static final Type SMALLINT = createBaseType(Base.SMALLINT.getBaseTypeDisplayName());
+    public static final Type SMALLINT = createBaseType(TypeEnum.SMALLINT.getBaseTypeDisplayName());
     /**
      * INT type.
      */
-    public static final Type INT = createBaseType(Base.INT.getBaseTypeDisplayName());
+    public static final Type INT = createBaseType(TypeEnum.INT.getBaseTypeDisplayName());
     /**
      * BIGINT type.
      */
-    public static final Type BIGINT = createBaseType(Base.BIGINT.getBaseTypeDisplayName());
+    public static final Type BIGINT = createBaseType(TypeEnum.BIGINT.getBaseTypeDisplayName());
     /**
      * FLOAT type.
      */
-    public static final Type FLOAT = createBaseType(Base.FLOAT.getBaseTypeDisplayName());
+    public static final Type FLOAT = createBaseType(TypeEnum.FLOAT.getBaseTypeDisplayName());
     /**
      * DOUBLE type.
      */
-    public static final Type DOUBLE = createBaseType(Base.DOUBLE.getBaseTypeDisplayName());
+    public static final Type DOUBLE = createBaseType(TypeEnum.DOUBLE.getBaseTypeDisplayName());
     /**
      * STRING type.
      */
-    public static final Type STRING = createBaseType(Base.STRING.getBaseTypeDisplayName());
+    public static final Type STRING = createBaseType(TypeEnum.STRING.getBaseTypeDisplayName());
     /**
      * JSON type.
      */
-    public static final Type JSON = createBaseType(Base.JSON.getBaseTypeDisplayName());
+    public static final Type JSON = createBaseType(TypeEnum.JSON.getBaseTypeDisplayName());
     /**
      * VARBINARY type.
      */
-    public static final Type VARBINARY = createBaseType(Base.VARBINARY.getBaseTypeDisplayName());
+    public static final Type VARBINARY = createBaseType(TypeEnum.VARBINARY.getBaseTypeDisplayName());
     /**
      * DATE type.
      */
-    public static final Type DATE = createBaseType(Base.DATE.getBaseTypeDisplayName());
+    public static final Type DATE = createBaseType(TypeEnum.DATE.getBaseTypeDisplayName());
     /**
      * TIME type.
      */
-    public static final Type TIME = createBaseType(Base.TIME.getBaseTypeDisplayName());
+    public static final Type TIME = createBaseType(TypeEnum.TIME.getBaseTypeDisplayName());
     /**
      * TIME_WITH_TIME_ZONE type.
      */
-    public static final Type TIME_WITH_TIME_ZONE = createBaseType(Base.TIME_WITH_TIME_ZONE.getBaseTypeDisplayName());
+    public static final Type TIME_WITH_TIME_ZONE =
+        createBaseType(TypeEnum.TIME_WITH_TIME_ZONE.getBaseTypeDisplayName());
     /**
      * TIMESTAMP type.
      */
-    public static final Type TIMESTAMP = createBaseType(Base.TIMESTAMP.getBaseTypeDisplayName());
+    public static final Type TIMESTAMP = createBaseType(TypeEnum.TIMESTAMP.getBaseTypeDisplayName());
     /**
      * TIMESTAMP_WITH_TIME_ZONE type.
      */
     public static final Type TIMESTAMP_WITH_TIME_ZONE =
-        createBaseType(Base.TIMESTAMP_WITH_TIME_ZONE.getBaseTypeDisplayName());
+        createBaseType(TypeEnum.TIMESTAMP_WITH_TIME_ZONE.getBaseTypeDisplayName());
     /**
      * INTERVAL_YEAR_TO_MONTH type.
      */
     public static final Type INTERVAL_YEAR_TO_MONTH =
-        createBaseType(Base.INTERVAL_YEAR_TO_MONTH.getBaseTypeDisplayName());
+        createBaseType(TypeEnum.INTERVAL_YEAR_TO_MONTH.getBaseTypeDisplayName());
     /**
      * INTERVAL_DAY_TO_SECOND type.
      */
     public static final Type INTERVAL_DAY_TO_SECOND =
-        createBaseType(Base.INTERVAL_DAY_TO_SECOND.getBaseTypeDisplayName());
+        createBaseType(TypeEnum.INTERVAL_DAY_TO_SECOND.getBaseTypeDisplayName());
 //    /**
 //     * DECIMAL type.
 //     */
-//    public static final Type DECIMAL = new BaseType(Base.DECIMAL);
+//    public static final Type DECIMAL = new BaseType(TypeEnum.DECIMAL);
 
 
     /**
      * UNKNOWN.
      */
-    public static final Type UNKNOWN = createBaseType(Base.UNKNOWN.getBaseTypeDisplayName());
+    public static final Type UNKNOWN = createBaseType(TypeEnum.UNKNOWN.getBaseTypeDisplayName());
 
     @Getter
     protected final List<Type> parameters;

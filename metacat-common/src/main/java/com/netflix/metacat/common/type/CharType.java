@@ -37,7 +37,7 @@ public class CharType extends AbstractType implements ParametricType {
     public CharType(final int length) {
         super(
             new TypeSignature(
-                Base.CHAR.getBaseTypeDisplayName(),
+                TypeEnum.CHAR.getBaseTypeDisplayName(),
                 new ArrayList<TypeSignature>(),
                 Collections.<Object>singletonList((long) length)));
 
@@ -49,7 +49,7 @@ public class CharType extends AbstractType implements ParametricType {
 
     @Override
     public String getParametricTypeName() {
-        return Base.CHAR.getBaseTypeDisplayName();
+        return TypeEnum.CHAR.getBaseTypeDisplayName();
     }
 
     @Override

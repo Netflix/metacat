@@ -11,10 +11,8 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.hive.canonical.converters
+package com.netflix.metacat.connector.hive.converters
 
-import com.netflix.metacat.common.type.TypeManager
-import com.netflix.metacat.common.type.TypeRegistry
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -25,16 +23,14 @@ import spock.lang.Unroll
 class HiveTypeConverterSpec extends Specification {
     @Shared
     HiveTypeConverter converter = new HiveTypeConverter()
-    @Shared
-    TypeManager typeManager = new TypeRegistry()
 
     @Unroll
     def 'can convert "#typeString" to a presto type and back'(String typeString) {
         expect:
-        def canonicalType = converter.dataTypeToCanonicalType(typeString, typeManager)
-        def hiveType = converter.canonicalTypeToDataType( canonicalType)
-        def canonicalTypeFromHiveType = converter.dataTypeToCanonicalType(hiveType, typeManager)
-        canonicalTypeFromHiveType ==  canonicalType
+        def metacatType = converter.toMetacatType(typeString)
+        def hiveType = converter.fromMetacatType(metacatType)
+        def metacatTypeFromHiveType = converter.toMetacatType(hiveType)
+        metacatTypeFromHiveType ==  metacatType
         where:
         typeString << [
         'tinyint',

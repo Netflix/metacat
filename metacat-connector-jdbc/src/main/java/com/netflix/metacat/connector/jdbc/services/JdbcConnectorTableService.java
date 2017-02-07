@@ -105,20 +105,20 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             final ResultSet columns
                 = metaData.getColumns(connection.getCatalog(), database, name.getTableName(), escapeString);
             while (columns.next()) {
-                final FieldInfo.Builder builder = new FieldInfo.Builder(
-                    columns.getString("COLUMN_NAME"),
-                    columns.getString("TYPE_NAME"),
-                    this.toMetacatType(columns.getInt("DATA_TYPE"))
-                );
-                builder.withComment(columns.getString("REMARKS"));
-                builder.withPos(columns.getInt("ORDINAL_POSITION"));
-                builder.withNullable(columns.getString("IS_NULLABLE").equals("YES"));
-                builder.withSize(columns.getInt("COLUMN_SIZE"));
-                builder.withDefaultValue(columns.getString("COLUMN_DEF"));
-                fields.add(builder.build());
+                final FieldInfo fieldInfo = FieldInfo.builder()
+                    .name(columns.getString("COLUMN_NAME"))
+                    .sourceType(columns.getString("TYPE_NAME"))
+                    .type(this.toMetacatType(columns.getInt("DATA_TYPE")))
+                    .comment(columns.getString("REMARKS"))
+                    .pos(columns.getInt("ORDINAL_POSITION"))
+                    .isNullable(columns.getString("IS_NULLABLE").equals("YES"))
+                    .size(columns.getInt("COLUMN_SIZE"))
+                    .defaultValue(columns.getString("COLUMN_DEF"))
+                    .build();
+                fields.add(fieldInfo);
             }
             log.debug("Finished getting table metadata for qualified name {} for request {}", name, context);
-            return new TableInfo.Builder(name, fields.build()).build();
+            return TableInfo.builder().name(name).fields(fields.build()).build();
         } catch (final SQLException se) {
             throw Throwables.propagate(se);
         }

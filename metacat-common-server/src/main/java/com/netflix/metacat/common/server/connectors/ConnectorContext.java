@@ -19,9 +19,6 @@ package com.netflix.metacat.common.server.connectors;
 
 import lombok.Data;
 
-import java.util.Date;
-import java.util.UUID;
-
 /**
  * The context of the request to Metacat.
  *

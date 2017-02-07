@@ -30,4 +30,5 @@ include 'metacat-thrift'
 include 'metacat-user-metadata-mysql'
 include 'metacat-converters'
 include 'metacat-pig-connector'
+include 'metacat-connector-hive'
 

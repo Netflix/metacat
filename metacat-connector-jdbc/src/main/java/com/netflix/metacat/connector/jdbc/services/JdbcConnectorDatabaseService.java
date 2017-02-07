@@ -128,7 +128,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
 //            throw Throwables.propagate(se);
 //        }
 
-        return new DatabaseInfo.Builder(name).build();
+        return DatabaseInfo.builder().name(name).build();
     }
 
     /**
