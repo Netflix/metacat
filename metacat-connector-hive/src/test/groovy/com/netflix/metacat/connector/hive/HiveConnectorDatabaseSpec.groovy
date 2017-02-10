@@ -18,16 +18,13 @@ package com.netflix.metacat.connector.hive
 
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
+import com.netflix.metacat.common.server.MetacatDataInfoProvider
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
 import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException
 import com.netflix.metacat.common.server.exception.DatabaseNotFoundException
-import com.netflix.metacat.common.server.MetacatDataInfoProvider
-
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.Database
-import org.apache.thrift.TEnum
 import org.apache.thrift.TException
 import spock.lang.Shared
 import spock.lang.Specification
@@ -40,7 +37,7 @@ import spock.lang.Unroll
 class HiveConnectorDatabaseSpec extends Specification{
     @Shared
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient);
-     @Shared
+    @Shared
     HiveConnectorDatabaseService hiveConnectorDatabaseService = new HiveConnectorDatabaseService( this.metacatHiveClient, new HiveConnectorInfoConverter() )
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(1, null);
@@ -69,7 +66,7 @@ class HiveConnectorDatabaseSpec extends Specification{
     }
 
     @Unroll
-    def "Test for getalldatabases"(){
+    def "Test for listNames database"(){
         when:
         def dbs = hiveConnectorDatabaseService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","testdb"), null, null, null )
         then:
@@ -104,15 +101,6 @@ class HiveConnectorDatabaseSpec extends Specification{
     }
 
     @Unroll
-    def "Test for listNames database" (){
-        when:
-        def dbs = hiveConnectorDatabaseService.listNames( connectorContext, QualifiedName.ofDatabase("testhive", ""), QualifiedName.ofDatabase("testhive", "test"), null, null)
-        then:
-        def expected = MetacatDataInfoProvider.getAllTestDatabaseName()
-        dbs == expected
-    }
-
-    @Unroll
     def "Test for listNames database with page" (){
         given:
         def dbs = hiveConnectorDatabaseService.listNames(
@@ -125,6 +113,7 @@ class HiveConnectorDatabaseSpec extends Specification{
         pageable          | result
         new Pageable(2,1) |[QualifiedName.ofDatabase("testhive", "test2")]
         new Pageable(1,0) |[QualifiedName.ofDatabase("testhive", "test1")]
+        new Pageable(0,0) |[]
     }
 
 }

@@ -325,7 +325,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
             sdParams);
     }
 
-    private Date epochSecondsToDate(final long seconds) {
+    static Date epochSecondsToDate(final long seconds) {
         return Date.from(Instant.ofEpochSecond(seconds));
     }
 

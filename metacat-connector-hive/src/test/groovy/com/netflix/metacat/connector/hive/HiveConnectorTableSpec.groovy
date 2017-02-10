@@ -16,15 +16,25 @@
 
 package com.netflix.metacat.connector.hive
 
+import com.netflix.metacat.common.QualifiedName
+import com.netflix.metacat.common.dto.Pageable
+import com.netflix.metacat.common.server.MetacatDataInfoProvider
 import com.netflix.metacat.common.server.connectors.ConnectorContext
-import com.netflix.metacat.connector.hive.HiveConnectorTableService
-import com.netflix.metacat.connector.hive.MetacatHiveClient
+import com.netflix.metacat.common.server.connectors.model.TableInfo
+import com.netflix.metacat.common.server.exception.TableAlreadyExistsException
+import com.netflix.metacat.common.server.exception.TableNotFoundException
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
+import org.apache.hadoop.hive.metastore.api.FieldSchema
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor
+import org.apache.hadoop.hive.metastore.api.Table
+import org.apache.thrift.TException
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
- * Created by zhenl on 1/30/17.
+ * Unit test for HiveConnectorTableSpec.
+ * @author zhenl
  */
 class HiveConnectorTableSpec extends Specification {
     @Shared
@@ -33,6 +43,137 @@ class HiveConnectorTableSpec extends Specification {
     HiveConnectorTableService hiveConnectorTableService = new HiveConnectorTableService(metacatHiveClient, new HiveConnectorInfoConverter() )
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(1, null);
+    @Shared
+    HiveConnectorInfoConverter hiveConnectorInfoConverter = new HiveConnectorInfoConverter()
 
+    def setupSpec() {
+        metacatHiveClient.createTable(hiveConnectorInfoConverter.fromTableInfo(
+            TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testtable1")).build())) >> { throw new TException()}
+        metacatHiveClient.createTable(hiveConnectorInfoConverter.fromTableInfo(
+            TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testingtable")).build())) >> {}
+        metacatHiveClient.getAllTables("test1") >> MetacatDataInfoProvider.getTables()
+        metacatHiveClient.getTableByName("test1", "testtable3") >> { throw new TException()}
+        metacatHiveClient.rename("test1", "testtable1", "test2", "testtable2") >> {}
+        metacatHiveClient.dropTable("test1", "testtable1") >> {}
+        metacatHiveClient.dropTable("test1", "testtable3") >> {throw new TException()}
+        metacatHiveClient.getTableByName("test1", "testtable1") >> { getTable("testtable1")}
+    }
+
+    static getTable(String tableName){
+        Table table = new Table()
+        table.tableName = tableName
+        table.owner = "test"
+        table.partitionKeys = new ArrayList<>()
+        table.sd = new StorageDescriptor()
+        table.sd.setLocation("s3://test/uri")
+        table.sd.cols = new ArrayList<>()
+        table.sd.cols.add(new FieldSchema("coldate", "date", ""))
+        table.parameters = Collections.emptyMap()
+        return table
+    }
+
+    static getPartitionTable(String tableName){
+        Table table = new Table()
+        table.tableName = tableName
+        table.owner = "test"
+        table.partitionKeys = new ArrayList<>()
+        table.sd = new StorageDescriptor()
+        table.sd.setLocation("s3://test/uri")
+        table.sd.cols = new ArrayList<>()
+        FieldSchema hour = new FieldSchema("hour", "string", "")
+        FieldSchema date = new FieldSchema("dateint", "string", "")
+        table.sd.cols.add(new FieldSchema("coldstring", "string", ""))
+        table.addToPartitionKeys(date)
+        table.addToPartitionKeys(hour)
+        table.parameters = Collections.emptyMap()
+        return table
+    }
+
+    @Unroll
+    def "Test for create database" (){
+        when:
+        hiveConnectorTableService.create( connectorContext, TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testingtable")).build())
+        then:
+        noExceptionThrown()
+    }
+
+    @Unroll
+    def "Test for create database throw exception" (){
+        when:
+        hiveConnectorTableService.create( connectorContext, TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testtable1")).build())
+        then:
+        thrown TableAlreadyExistsException
+    }
+
+    @Unroll
+    def "Test for get table" (){
+        when:
+        def name = QualifiedName.ofTable("testhive", "test1", "testtable1")
+        def tableInfo = hiveConnectorTableService.get( connectorContext, name)
+        def expected = MetacatDataInfoProvider.getTableInfo("testtable1")
+
+        then:
+            tableInfo == expected
+    }
+
+    @Unroll
+    def "Test for get table with exception" (){
+        when:
+        hiveConnectorTableService.get( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable3"))
+        then:
+        thrown TableNotFoundException
+    }
+
+    @Unroll
+    def "Test for delete table" (){
+        when:
+        def name = QualifiedName.ofTable("testhive", "test1", "testtable1")
+        hiveConnectorTableService.delete( connectorContext, name)
+        then:
+        noExceptionThrown()
+    }
+
+    @Unroll
+    def "Test for delete table throw exception" (){
+        when:
+        def name = QualifiedName.ofTable("testhive", "test1", "testtable3")
+        hiveConnectorTableService.delete( connectorContext, name)
+        then:
+        thrown TableNotFoundException
+    }
+
+    @Unroll
+    def "Test for listNames tables"(){
+        when:
+        def tables = hiveConnectorTableService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","test1"), null, null, null )
+        then:
+        tables == MetacatDataInfoProvider.getAllTableNames()
+    }
+
+    @Unroll
+    def "Test for listNames tables with page"(){
+        given:
+        def tbls = hiveConnectorTableService.listNames(
+            connectorContext, QualifiedName.ofDatabase("testhive", "test1"), QualifiedName.ofTable("testhive", "test1", "test"), null, pageable)
+
+        expect:
+        tbls == result
+
+        where:
+        pageable          | result
+        new Pageable(2,1) |[QualifiedName.ofTable("testhive", "test1", "testtable2"),QualifiedName.ofTable("testhive", "test1", "devtable2")]
+        new Pageable(1,0) |[QualifiedName.ofTable("testhive", "test1", "testtable1")]
+        new Pageable(0,0) |[]
+    }
+
+    @Unroll
+    def "Test for rename tables"() {
+        when:
+        hiveConnectorTableService.rename(
+            connectorContext, QualifiedName.ofTable("testhive", "test1","testtable1"),
+            QualifiedName.ofTable("testhive", "test1", "testtable2"))
+        then:
+        noExceptionThrown()
+    }
 
 }

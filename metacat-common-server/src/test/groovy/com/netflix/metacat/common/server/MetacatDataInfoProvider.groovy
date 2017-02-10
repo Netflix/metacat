@@ -16,12 +16,22 @@
 
 package com.netflix.metacat.common.server
 
+import com.facebook.presto.type.CharType
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.TableDto
+import com.netflix.metacat.common.server.connectors.model.AuditInfo
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
+import com.netflix.metacat.common.server.connectors.model.FieldInfo
+import com.netflix.metacat.common.server.connectors.model.PartitionInfo
+import com.netflix.metacat.common.server.connectors.model.StorageInfo
+import com.netflix.metacat.common.server.connectors.model.TableInfo
+import com.netflix.metacat.common.type.BaseType
+import com.netflix.metacat.common.type.VarcharType
+import com.sun.xml.internal.fastinfoset.util.CharArray
 
 /**
- * Created by zhenl on 2/8/17.
+ * MetacatDataInfoProvider.
+ * @author zhenl
  */
 class MetacatDataInfoProvider {
 
@@ -31,6 +41,14 @@ class MetacatDataInfoProvider {
     private static databaseInfos = [DatabaseInfo.builder().name(QualifiedName.ofDatabase("testhive", "test1")).build(),
                                     DatabaseInfo.builder().name(QualifiedName.ofDatabase("testhive", "test2")).build(),
                                     DatabaseInfo.builder().name(QualifiedName.ofDatabase("testhive", "dev1")).build()]
+
+    private static testtableInfos = [TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testtable1")).build(),
+                                     TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testtable2")).build()]
+
+    private static tableInfos = [TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testtable1")).build(),
+                                 TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testtable2")).build(),
+                                 TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "devtable2")).build(),
+                                 TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "devtable3")).build()]
 
     private static databaseNames = [
         QualifiedName.ofDatabase("testhive", "test1"),
@@ -44,15 +62,82 @@ class MetacatDataInfoProvider {
         QualifiedName.ofDatabase("testhive", "test2"),
     ]
 
+    private static tableNames = [
+        QualifiedName.ofTable("testhive", "test1", "testtable1"),
+        QualifiedName.ofTable("testhive", "test1", "testtable2"),
+        QualifiedName.ofTable("testhive", "test1", "devtable2"),
+        QualifiedName.ofTable("testhive", "test1", "devtable3")
+    ]
+
+    private static tableNameStrings = [
+        "testtable1",
+        "testtable2",
+        "devtable2",
+        "devtable3"
+    ]
+
+    private static tables = [
+        "testtable1" ,
+        "testtable2",
+        "devtable2",
+        "devtable3"
+    ]
+    private static fields = [
+        "fielddate": FieldInfo.builder().name("coldate").type(BaseType.DATE).sourceType("date").comment("").build(),
+        "fieldint" :  FieldInfo.builder().name("colint").type(BaseType.DATE).sourceType("int").comment("").build(),
+        "fieldstring" :  FieldInfo.builder().name("colstring").type(VarcharType.VARCHAR).sourceType("string").comment("").build(),
+        "fieldboolean" :  FieldInfo.builder().name("colboolean").type(BaseType.BOOLEAN).sourceType("boolean").comment("").build(),
+        "fielddateint": FieldInfo.builder().name("dateint").type(VarcharType.VARCHAR).sourceType("string").comment("").partitionKey(true).build(),
+        "fieldhour": FieldInfo.builder().name("hour").type(BaseType.INT).sourceType("string").comment("").partitionKey(true).build()
+    ]
+    private static tableInfoMap = [
+        //nonpartitiontable
+        "testtable1" : TableInfo.builder()
+            .name(QualifiedName.ofTable("testhive", "test1", "testtable1"))
+            .fields([ fields.fielddate] )
+            .serde( StorageInfo.builder().owner("test").uri("s3://test/uri").build())
+            .metadata ( Collections.emptyMap())
+            .auditInfo( AuditInfo.builder().build())
+            .build(),
+        //partitiontable
+        "testtable2" : TableInfo.builder()
+            .name(QualifiedName.ofTable("testhive", "test1", "testtable2"))
+            .fields([ fields.fielddateint, fields.fieldhour, fields.fieldstring] )
+            .serde( StorageInfo.builder().owner("test").uri("s3://test/uri").build())
+            .metadata ( Collections.emptyMap())
+            .auditInfo( AuditInfo.builder().build())
+            .build()
+    ]
+
+    private static partitionInfoMap = [
+        "date=20170101/hour=1" : PartitionInfo.builder()
+            .name(QualifiedName.ofPartition("testhive", "test1", "testtable2", "date=20170101/hour=1"))
+            .auditInfo( AuditInfo.builder().build())
+            .metadata(Collections.emptyMap())
+            .build()
+    ]
+
     def static List<DatabaseInfo> getAllTestDatabaseInfo(){
         return testdatabaseInfos;
     }
 
-    def static List<DatabaseInfo> getAllDatabaseNames(){
+    def static List<QualifiedName> getAllDatabaseNames(){
         return databaseNames;
     }
 
-    def static List<DatabaseInfo> getAllTestDatabaseName(){
+    def static List<QualifiedName> getAllTestDatabaseName(){
         return testdatabaseNames;
     }
+
+    def static List<QualifiedName> getAllTableNames(){
+        return tableNames;
+    }
+    def static List<String> getTables(){
+        return tableNameStrings;
+    }
+
+    def static TableInfo getTableInfo(String tableName) {
+        return tableInfoMap.get(tableName)
+    }
+
 }

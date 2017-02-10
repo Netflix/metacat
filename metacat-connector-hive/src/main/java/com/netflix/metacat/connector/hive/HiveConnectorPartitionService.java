@@ -72,24 +72,24 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     @Override
     public List<PartitionInfo> getPartitions(
         @Nonnull final ConnectorContext requestContext,
-        @Nonnull final QualifiedName name,
+        @Nonnull final QualifiedName tableName,
         @Nonnull final PartitionListRequest partitionsRequest
     ) {
         try {
-            final List<Partition> partitions = getPartitions(name,
+            final List<Partition> partitions = getPartitions(tableName,
                 partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
                 partitionsRequest.getSort(), partitionsRequest.getPageable());
-            final Table table = metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName());
-            final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(name, table);
+            final Table table = metacatHiveClient.getTableByName(tableName.getDatabaseName(), tableName.getTableName());
+            final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(tableName, table);
             final List<PartitionInfo> partitionInfos = new ArrayList<>();
             for (Partition partition : partitions) {
                 partitionInfos.add(hiveMetacatConverters.toPartitionInfo(tableInfo, partition));
             }
             return partitionInfos;
         } catch (MetaException | InvalidObjectException e) {
-            throw new InvalidMetaException("Invalid metadata for " + name, e);
+            throw new InvalidMetaException("Invalid metadata for " + tableName, e);
         } catch (TException e) {
-            throw new TableNotFoundException(name, e);
+            throw new TableNotFoundException(tableName, e);
         }
     }
 
