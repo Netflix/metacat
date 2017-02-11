@@ -21,6 +21,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.AuditInfo
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest
+import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest
 import com.netflix.metacat.common.server.connectors.model.StorageInfo
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import org.apache.hadoop.hive.metastore.api.FieldSchema
@@ -49,6 +50,9 @@ class HiveConnectorPartitionSpec extends Specification{
         metacatHiveClient.getTableByName("test1", "testtable1") >> { HiveConnectorTableSpec.getPartitionTable("testtable1")}
         metacatHiveClient.getTableByName("test1", "testtable2") >> { HiveConnectorTableSpec.getPartitionTable("testtable2")}
         metacatHiveClient.listAllPartitions("test1", "testtable2") >> { getPartition("test1", "testtable2")}
+        metacatHiveClient.getPartitionNames("test1", "testtable2") >> {return [ "dateint=20170101/hour=1", "dateint=20170101/hour=2","dateint=20170101/hour=3"] }
+        metacatHiveClient.getPartitionCount("test1", "testtable2") >> {return 3}
+        metacatHiveClient.savePartitions(_) >> {}
     }
 
     static getPartition(String databaseName, String tableName){
@@ -79,7 +83,7 @@ class HiveConnectorPartitionSpec extends Specification{
         }
 
     @Unroll
-    def "Test for get partition" (){
+    def "Test for get partitions with prefix" (){
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
         partitionListRequest.partitionNames = [
@@ -103,4 +107,71 @@ class HiveConnectorPartitionSpec extends Specification{
         partionInfos == expected
     }
 
+    @Unroll
+    def "Test for getNameOfPartitions" (){
+        when:
+        PartitionListRequest partitionListRequest = new PartitionListRequest();
+        def partitionNames = hiveConnectorPartitionService.getPartitionKeys( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        def expected = [ "dateint=20170101/hour=1", "dateint=20170101/hour=2","dateint=20170101/hour=3" ]
+        then:
+        partitionNames == expected
+    }
+
+    @Unroll
+    def "Test for getNameOfPartitions with partitionIds" (){
+        when:
+        PartitionListRequest partitionListRequest = new PartitionListRequest();
+        partitionListRequest.partitionNames = [
+            "dateint=20170101/hour=1", "dateint=20170101/hour=2"
+        ]
+        def partitionNames = hiveConnectorPartitionService.getPartitionKeys( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        def expected = [ "dateint=20170101/hour=1", "dateint=20170101/hour=2" ]
+        then:
+        partitionNames == expected
+    }
+
+    @Unroll
+    def "Test for getPartitionUris" (){
+        when:
+        PartitionListRequest partitionListRequest = new PartitionListRequest();
+        partitionListRequest.partitionNames = [
+            "dateint=20170101/hour=1", "dateint=20170101/hour=2"
+        ]
+        def partitionUris = hiveConnectorPartitionService.getPartitionUris( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        def expected = [ "s3://test/location", "s3://test/location" ]
+        then:
+        partitionUris == expected
+    }
+
+    @Unroll
+    def "Test for getPartitionKeys" (){
+        when:
+        PartitionListRequest partitionListRequest = new PartitionListRequest();
+        partitionListRequest.partitionNames = [
+            "dateint=20170101/hour=1", "dateint=20170101/hour=2"
+        ]
+        def partitionKeys = hiveConnectorPartitionService.getPartitionKeys( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        def expected = [ "dateint=20170101/hour=1", "dateint=20170101/hour=2" ]
+        then:
+        partitionKeys == expected
+    }
+
+    @Unroll
+    def "Test for getPartitionCount" (){
+        when:
+        def count = hiveConnectorPartitionService.getPartitionCount( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"))
+        then:
+        count == 3
+    }
+
+    @Unroll
+    def "Test for savePartition" (){
+        when:
+        def saverequest = new PartitionsSaveRequest()
+        saverequest.partitions = [ PartitionInfo.builder().name(QualifiedName.ofPartition("testhive", "test1", "testtable2", "dateint=20170101/hour=3")).build() ]
+        def saveresponse = hiveConnectorPartitionService.savePartitions( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"),saverequest)
+        then:
+        noExceptionThrown()
+
+    }
 }
