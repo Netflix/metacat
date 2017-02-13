@@ -10,14 +10,15 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 dependencies {
     compile project(':metacat-common-server')
-    compile project(':metacat-converters')
     compile "com.google.guava:guava:${guava_version}"
     compile "com.google.inject:guice:${guice_version}"
     compile "com.google.inject.extensions:guice-persist:${guice_version}"
     compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
     compile "com.google.inject.extensions:guice-servlet:${guice_version}"
-    compile 'org.apache.thrift:libthrift:0.9.0'
+    compile "org.apache.hive:hive-metastore:${hive_version}"
+    compile "org.apache.hadoop:hadoop-core:${hadoopcore_version}"
+    testCompile 'de.danielbechler:java-object-diff:0.91.1'
 }
+

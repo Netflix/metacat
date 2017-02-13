@@ -13,14 +13,14 @@
 
 package com.netflix.metacat.main.services;
 
-import com.facebook.presto.spi.Pageable;
-import com.facebook.presto.spi.Sort;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
+import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.TableDto;
 
 import javax.annotation.Nonnull;

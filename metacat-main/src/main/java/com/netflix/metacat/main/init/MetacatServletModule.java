@@ -20,7 +20,6 @@ import com.netflix.metacat.common.api.PartitionV1;
 import com.netflix.metacat.common.api.SearchMetacatV1;
 import com.netflix.metacat.common.api.TagV1;
 import com.netflix.metacat.common.server.CommonModule;
-import com.netflix.metacat.converters.ConvertersModule;
 import com.netflix.metacat.main.api.MetacatV1Resource;
 import com.netflix.metacat.main.api.MetadataV1Resource;
 import com.netflix.metacat.main.api.PartitionV1Resource;
@@ -37,7 +36,6 @@ public class MetacatServletModule extends ServletModule {
     @Override
     protected void configureServlets() {
         install(new CommonModule());
-        install(new ConvertersModule());
         install(new ThriftModule());
         install(new ManagerModule());
         install(new ServicesModule());

@@ -1,0 +1,11 @@
+apply plugin: 'java'
+apply plugin: 'groovy'
+
+dependencies {
+    compile project(':metacat-common-server')
+    compile "com.google.guava:guava:${guava_version}"
+    compile "com.google.inject:guice:${guice_version}"
+    compile 'org.apache.pig:pig:0.14.0'
+    compile "org.apache.hadoop:hadoop-core:${hadoopcore_version}"
+    compile "org.slf4j:slf4j-api:${slf4j_version}"
+}

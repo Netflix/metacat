@@ -14,7 +14,7 @@
 package com.netflix.metacat.main.init;
 
 import com.google.inject.Inject;
-import com.netflix.metacat.main.connector.MetacatConnectorManager;
+import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.thrift.CatalogThriftService;
 import com.netflix.metacat.thrift.CatalogThriftServiceFactory;
 
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * Metacat thrift service.
  */
 public class MetacatThriftService {
-    private final MetacatConnectorManager connectorManager;
+    private final ConnectorManager connectorManager;
     private final CatalogThriftServiceFactory thriftServiceFactory;
 
     /**
@@ -34,7 +34,7 @@ public class MetacatThriftService {
      * @param m connecter manager
      */
     @Inject
-    public MetacatThriftService(final CatalogThriftServiceFactory c, final MetacatConnectorManager m) {
+    public MetacatThriftService(final CatalogThriftServiceFactory c, final ConnectorManager m) {
         this.thriftServiceFactory = c;
         this.connectorManager = m;
     }

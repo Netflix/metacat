@@ -16,8 +16,6 @@ package com.netflix.metacat.thrift;
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.PartitionV1;
 import com.netflix.metacat.common.server.Config;
-import com.netflix.metacat.converters.HiveConverters;
-import com.netflix.metacat.converters.TypeConverterProvider;
 import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.server.TServerEventHandler;
@@ -30,24 +28,21 @@ public class CatalogThriftService extends AbstractThriftServer {
     private final HiveConverters hiveConverters;
     private final MetacatV1 metacatV1;
     private final PartitionV1 partitionV1;
-    private final TypeConverterProvider typeConverterProvider;
 
     /**
      * Constructor.
      * @param config config
-     * @param typeConverterProvider coverter
      * @param hiveConverters hive converter
      * @param metacatV1 Metacat V1 resource
      * @param partitionV1 Partition V1 resource
      * @param catalogName catalog name
      * @param portNumber port
      */
-    public CatalogThriftService(final Config config, final TypeConverterProvider typeConverterProvider,
+    public CatalogThriftService(final Config config,
         final HiveConverters hiveConverters, final MetacatV1 metacatV1, final PartitionV1 partitionV1,
         final String catalogName, final int portNumber) {
         super(config, portNumber, "thrift-pool-" + catalogName + "-" + portNumber + "-%d");
         this.hiveConverters = hiveConverters;
-        this.typeConverterProvider = typeConverterProvider;
         this.metacatV1 = metacatV1;
         this.partitionV1 = partitionV1;
         this.catalogName = catalogName;
@@ -56,8 +51,7 @@ public class CatalogThriftService extends AbstractThriftServer {
     @Override
     public TProcessor getProcessor() {
         return new ThriftHiveMetastore.Processor<>(
-            new CatalogThriftHiveMetastore(config, typeConverterProvider, hiveConverters, metacatV1, partitionV1,
-                catalogName));
+            new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName));
     }
 
     @Override

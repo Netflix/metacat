@@ -13,21 +13,8 @@
 
 package com.netflix.metacat.main.services.impl;
 
-import com.facebook.presto.Session;
-import com.facebook.presto.metadata.QualifiedTableName;
-import com.facebook.presto.metadata.TableHandle;
-import com.facebook.presto.metadata.TableMetadata;
-import com.facebook.presto.spi.ConnectorTableDetailMetadata;
-import com.facebook.presto.spi.ConnectorTableMetadata;
-import com.facebook.presto.spi.NotFoundException;
-import com.facebook.presto.spi.PrestoException;
-import com.facebook.presto.spi.SchemaTableName;
-import com.facebook.presto.spi.StandardErrorCode;
-import com.facebook.presto.spi.StorageInfo;
-import com.facebook.presto.spi.TableNotFoundException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -40,6 +27,9 @@ import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
@@ -49,21 +39,21 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
+import com.netflix.metacat.common.server.exception.NotFoundException;
+import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.common.usermetadata.TagService;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.common.util.ThreadServiceManager;
-import com.netflix.metacat.converters.PrestoConverters;
-import com.netflix.metacat.main.connector.MetacatConnectorManager;
-import com.netflix.metacat.main.presto.metadata.MetadataManager;
+import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.MViewService;
-import com.netflix.metacat.main.services.SessionProvider;
 import com.netflix.metacat.main.services.TableService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -76,10 +66,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TableServiceImpl implements TableService {
     private static final String NAME_TAGS = "tags";
-    private final MetacatConnectorManager metacatConnectorManager;
-    private final MetadataManager metadataManager;
-    private final PrestoConverters prestoConverters;
-    private final SessionProvider sessionProvider;
+    private final ConnectorManager connectorManager;
     private final DatabaseService databaseService;
     private final TagService tagService;
     private final MViewService mViewService;
@@ -87,13 +74,11 @@ public class TableServiceImpl implements TableService {
     private final ThreadServiceManager threadServiceManager;
     private final Config config;
     private final MetacatEventBus eventBus;
+    private final ConverterUtil converterUtil;
 
     /**
      * Constructor.
-     * @param metacatConnectorManager connector manager
-     * @param metadataManager metadata manager
-     * @param prestoConverters presto converter
-     * @param sessionProvider session provider
+     * @param connectorManager connector manager
      * @param databaseService database service
      * @param tagService tag service
      * @param mViewService view service
@@ -101,18 +86,15 @@ public class TableServiceImpl implements TableService {
      * @param threadServiceManager thread service
      * @param config configurations
      * @param eventBus Internal event bus
+     * @param converterUtil utility to convert to/from Dto to connector resources
      */
     @Inject
-    public TableServiceImpl(final MetacatConnectorManager metacatConnectorManager,
-        final MetadataManager metadataManager, final PrestoConverters prestoConverters,
-        final SessionProvider sessionProvider, final DatabaseService databaseService,
+    public TableServiceImpl(final ConnectorManager connectorManager,
+        final DatabaseService databaseService,
         final TagService tagService, final MViewService mViewService,
         final UserMetadataService userMetadataService, final ThreadServiceManager threadServiceManager,
-        final Config config, final MetacatEventBus eventBus) {
-        this.metacatConnectorManager = metacatConnectorManager;
-        this.metadataManager = metadataManager;
-        this.prestoConverters = prestoConverters;
-        this.sessionProvider = sessionProvider;
+        final Config config, final MetacatEventBus eventBus, final ConverterUtil converterUtil) {
+        this.connectorManager = connectorManager;
         this.databaseService = databaseService;
         this.tagService = tagService;
         this.mViewService = mViewService;
@@ -120,27 +102,26 @@ public class TableServiceImpl implements TableService {
         this.threadServiceManager = threadServiceManager;
         this.config = config;
         this.eventBus = eventBus;
+        this.converterUtil = converterUtil;
     }
 
     @Override
     public TableDto create(@Nonnull final QualifiedName name, @Nonnull final TableDto tableDto) {
-        final Session session = validateAndGetSession(name);
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        validate(name);
         //
         // Set the owner,if null, with the session user name.
         //
-        setOwnerIfNull(tableDto, session.getUser());
+        setOwnerIfNull(tableDto, metacatRequestContext.getUserName());
         log.info("Creating table {}", name);
-        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.postSync(new MetacatCreateTablePreEvent(name, metacatRequestContext, tableDto));
-        metadataManager.createTable(
-            session,
-            name.getCatalogName(),
-            prestoConverters.fromTableDto(name, tableDto, metadataManager.getTypeManager())
-        );
+        final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
+        final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+        service.create(connectorContext, converterUtil.fromTableDto(tableDto));
 
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for table {}", name);
-            userMetadataService.saveMetadata(session.getUser(), tableDto, false);
+            userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, false);
             tag(name, tableDto.getDefinitionMetadata());
         }
         final TableDto dto = get(name, true).orElseThrow(() -> new IllegalStateException("Should exist"));
@@ -179,14 +160,13 @@ public class TableServiceImpl implements TableService {
     public TableDto deleteAndReturn(@Nonnull final QualifiedName name, final boolean isMView) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.postSync(new MetacatDeleteTablePreEvent(name, metacatRequestContext));
-        final Session session = validateAndGetSession(name);
-        final QualifiedTableName tableName = prestoConverters.getQualifiedTableName(name);
-
-        final Optional<TableHandle> tableHandle = metadataManager.getTableHandle(session, tableName);
+        validate(name);
+        final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
         final Optional<TableDto> oTable = get(name, true);
         if (oTable.isPresent()) {
             log.info("Drop table {}", name);
-            metadataManager.dropTable(session, tableHandle.get());
+            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+            service.delete(connectorContext, name);
         }
 
         final TableDto tableDto = oTable.orElseGet(() -> {
@@ -198,7 +178,7 @@ public class TableServiceImpl implements TableService {
 
         // Delete the metadata.  Type doesn't matter since we discard the result
         log.info("Deleting user metadata for table {}", name);
-        userMetadataService.deleteMetadatas(session.getUser(), Lists.newArrayList(tableDto));
+        userMetadataService.deleteMetadatas(metacatRequestContext.getUserName(), Lists.newArrayList(tableDto));
         log.info("Deleting tags for table {}", name);
         tagService.delete(name, false);
         if (config.canCascadeViewsMetadataOnTableDelete() && !isMView) {
@@ -234,20 +214,17 @@ public class TableServiceImpl implements TableService {
     @Override
     public Optional<TableDto> get(@Nonnull final QualifiedName name, final boolean includeInfo,
         final boolean includeDefinitionMetadata, final boolean includeDataMetadata) {
-        final Session session = validateAndGetSession(name);
+        validate(name);
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+        final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
         final TableDto table;
-        Optional<TableMetadata> tableMetadata = Optional.empty();
         if (includeInfo) {
             try {
-                tableMetadata = Optional.ofNullable(getTableMetadata(name, session));
+                table = converterUtil.toTableDto(service.get(connectorContext, name));
             } catch (NotFoundException ignored) {
                 return Optional.empty();
             }
-            if (!tableMetadata.isPresent()) {
-                return Optional.empty();
-            }
-            final String type = metacatConnectorManager.getCatalogConfig(name).getType();
-            table = prestoConverters.toTableDto(name, type, tableMetadata.get());
         } else {
             table = new TableDto();
             table.setName(name);
@@ -261,22 +238,17 @@ public class TableServiceImpl implements TableService {
         }
 
         if (includeDataMetadata) {
-            if (!tableMetadata.isPresent()) {
-                tableMetadata = Optional.ofNullable(getTableMetadata(name, session));
+            TableDto dto = table;
+            if (!includeInfo) {
+                try {
+                    dto = converterUtil.toTableDto(service.get(connectorContext, name));
+                } catch (NotFoundException ignored) { }
             }
-            if (tableMetadata.isPresent()) {
-                final ConnectorTableMetadata connectorTableMetadata = tableMetadata.get().getMetadata();
-                if (connectorTableMetadata instanceof ConnectorTableDetailMetadata) {
-                    final ConnectorTableDetailMetadata detailMetadata =
-                        (ConnectorTableDetailMetadata) connectorTableMetadata;
-                    final StorageInfo storageInfo = detailMetadata.getStorageInfo();
-                    if (storageInfo != null) {
-                        final Optional<ObjectNode> dataMetadata =
-                            userMetadataService.getDataMetadata(storageInfo.getUri());
-                        if (dataMetadata.isPresent()) {
-                            table.setDataMetadata(dataMetadata.get());
-                        }
-                    }
+            if (dto != null && dto.getSerde() != null) {
+                final Optional<ObjectNode> dataMetadata =
+                    userMetadataService.getDataMetadata(dto.getSerde().getUri());
+                if (dataMetadata.isPresent()) {
+                    table.setDataMetadata(dataMetadata.get());
                 }
             }
         }
@@ -285,53 +257,22 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public Optional<TableHandle> getTableHandle(@Nonnull final QualifiedName name) {
-        final Session session = validateAndGetSession(name);
-
-        final QualifiedTableName qualifiedTableName = prestoConverters.getQualifiedTableName(name);
-        return metadataManager.getTableHandle(session, qualifiedTableName);
-    }
-
-    private TableMetadata getTableMetadata(final QualifiedName name, final Optional<TableHandle> tableHandle) {
-        if (!tableHandle.isPresent()) {
-            return null;
-        }
-        final Session session = validateAndGetSession(name);
-        final TableMetadata result = metadataManager.getTableMetadata(session, tableHandle.get());
-        Preconditions.
-            checkState(name.getDatabaseName().equals(result.getTable().getSchemaName()), "Unexpected database");
-        Preconditions.checkState(name.getTableName().equals(result.getTable().getTableName()), "Unexpected table");
-
-        return result;
-    }
-
-    private TableMetadata getTableMetadata(final QualifiedName name, final Session session) {
-        final QualifiedTableName qualifiedTableName = prestoConverters.getQualifiedTableName(name);
-        final Optional<TableHandle> tableHandle = metadataManager.getTableHandle(session, qualifiedTableName);
-        return getTableMetadata(name, tableHandle);
-    }
-
-    @Override
     public void rename(@Nonnull final QualifiedName oldName, @Nonnull final QualifiedName newName,
         final boolean isMView) {
-        final Session session = validateAndGetSession(oldName);
+        validate(oldName);
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final ConnectorTableService service = connectorManager.getTableService(oldName.getCatalogName());
 
-        final QualifiedTableName oldPrestoName = prestoConverters.getQualifiedTableName(oldName);
-        final QualifiedTableName newPrestoName = prestoConverters.getQualifiedTableName(newName);
-
-        final Optional<TableHandle> tableHandle = metadataManager.getTableHandle(session, oldPrestoName);
-        if (tableHandle.isPresent()) {
+        final TableDto oldTable = get(oldName, true).orElseThrow(() -> new TableNotFoundException(oldName));
+        if (oldTable != null) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
-            final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-            final TableDto oldTable = get(oldName, true).orElseThrow(IllegalStateException::new);
             eventBus.postSync(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, newName));
             try {
                 log.info("Renaming {} {} to {}", isMView ? "view" : "table", oldName, newName);
-                metadataManager.renameTable(session, tableHandle.get(), newPrestoName);
+                final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+                service.rename(connectorContext, oldName, newName);
 
                 if (!isMView) {
-                    final String prefix = String.format("%s_%s_", oldName.getDatabaseName(),
-                        MoreObjects.firstNonNull(oldName.getTableName(), ""));
                     final List<NameDateDto> views = mViewService.list(oldName);
                     if (views != null && !views.isEmpty()) {
                         views.forEach(view -> {
@@ -342,11 +283,7 @@ public class TableServiceImpl implements TableService {
                         });
                     }
                 }
-            } catch (PrestoException e) {
-                if (!StandardErrorCode.NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())) {
-                    throw e;
-                }
-            }
+            } catch (UnsupportedOperationException ignored) { }
             userMetadataService.renameDefinitionMetadataKey(oldName, newName);
             tagService.rename(oldName, newName.getTableName());
 
@@ -362,26 +299,22 @@ public class TableServiceImpl implements TableService {
 
     @Override
     public TableDto updateAndReturn(@Nonnull final QualifiedName name, @Nonnull final TableDto tableDto) {
-        final Session session = validateAndGetSession(name);
+        validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final TableDto oldTable = get(name, true)
-            .orElseThrow(() -> new IllegalStateException("expect existing table to be present"));
+        final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
+        final TableDto oldTable = get(name, true).orElseThrow(() -> new TableNotFoundException(name));
         eventBus.postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, oldTable, tableDto));
         //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
         try {
             log.info("Updating table {}", name);
-            metadataManager
-                .alterTable(session, prestoConverters.fromTableDto(name, tableDto, metadataManager.getTypeManager()));
-        } catch (PrestoException e) {
-            if (!StandardErrorCode.NOT_SUPPORTED.toErrorCode().equals(e.getErrorCode())) {
-                throw e;
-            }
-        }
+            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+            service.update(connectorContext, converterUtil.fromTableDto(tableDto));
+        } catch (UnsupportedOperationException ignored) { }
 
         // Merge in metadata if the user sent any
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for table {}", name);
-            userMetadataService.saveMetadata(session.getUser(), tableDto, true);
+            userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
         }
         final TableDto updatedDto = get(name, true).orElseThrow(() -> new IllegalStateException("should exist"));
         eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, oldTable, updatedDto));
@@ -408,22 +341,24 @@ public class TableServiceImpl implements TableService {
         // Error out when source table does not exists
         final Optional<TableDto> oTable = get(sourceName, false);
         if (!oTable.isPresent()) {
-            throw new TableNotFoundException(
-                new SchemaTableName(sourceName.getDatabaseName(), sourceName.getTableName()));
+            throw new TableNotFoundException(sourceName);
         }
         // Error out when target table already exists
         final Optional<TableDto> oTargetTable = get(targetName, false);
         if (oTargetTable.isPresent()) {
-            throw new TableNotFoundException(
-                new SchemaTableName(targetName.getDatabaseName(), targetName.getTableName()));
+            throw new TableNotFoundException(targetName);
         }
         return copy(oTable.get(), targetName);
     }
 
     @Override
     public TableDto copy(@Nonnull final TableDto tableDto, @Nonnull final QualifiedName targetName) {
-        if (!databaseService.exists(targetName)) {
-            databaseService.create(targetName, new DatabaseDto());
+        final QualifiedName databaseName =
+            QualifiedName.ofDatabase(targetName.getCatalogName(), targetName.getDatabaseName());
+        if (!databaseService.exists(databaseName)) {
+            final DatabaseDto databaseDto = new DatabaseDto();
+            databaseDto.setName(databaseName);
+            databaseService.create(databaseName, databaseDto);
         }
         final TableDto targetTableDto = new TableDto();
         targetTableDto.setName(targetName);
@@ -447,14 +382,15 @@ public class TableServiceImpl implements TableService {
     @Override
     public void saveMetadata(@Nonnull final QualifiedName name, final ObjectNode definitionMetadata,
         final ObjectNode dataMetadata) {
-        final Session session = validateAndGetSession(name);
+        validate(name);
         final Optional<TableDto> tableDtoOptional = get(name, false);
         if (tableDtoOptional.isPresent()) {
+            final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
             final TableDto tableDto = tableDtoOptional.get();
             tableDto.setDefinitionMetadata(definitionMetadata);
             tableDto.setDataMetadata(dataMetadata);
             log.info("Saving user metadata for table {}", name);
-            userMetadataService.saveMetadata(session.getUser(), tableDto, true);
+            userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
             tag(name, tableDto.getDefinitionMetadata());
         }
     }
@@ -462,14 +398,14 @@ public class TableServiceImpl implements TableService {
     @Override
     public List<QualifiedName> getQualifiedNames(final String uri, final boolean prefixSearch) {
         final List<QualifiedName> result = Lists.newArrayList();
-        final Map<String, String> catalogNames = metadataManager.getCatalogNames();
 
-        catalogNames.values().forEach(catalogName -> {
-            final Session session = sessionProvider.getSession(QualifiedName.ofCatalog(catalogName));
-            final List<SchemaTableName> schemaTableNames = metadataManager.getTableNames(session, uri, prefixSearch);
-            final List<QualifiedName> qualifiedNames = schemaTableNames.stream().map(
-                schemaTableName -> QualifiedName
-                    .ofTable(catalogName, schemaTableName.getSchemaName(), schemaTableName.getTableName()))
+        connectorManager.getCatalogs().keySet().forEach(catalogName -> {
+            final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+            final ConnectorTableService service = connectorManager.getTableService(catalogName);
+            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+            final Map<String, List<QualifiedName>> names =
+                service.getTableNames(connectorContext, Lists.newArrayList(uri), prefixSearch);
+            final List<QualifiedName> qualifiedNames = names.values().stream().flatMap(Collection::stream)
                 .collect(Collectors.toList());
             result.addAll(qualifiedNames);
         });
@@ -478,13 +414,14 @@ public class TableServiceImpl implements TableService {
 
     @Override
     public boolean exists(@Nonnull final QualifiedName name) {
-        return get(name, true, false, false).isPresent();
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
+        final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+        return service.exists(connectorContext, name);
     }
 
-    private Session validateAndGetSession(final QualifiedName name) {
+    private void validate(final QualifiedName name) {
         Preconditions.checkNotNull(name, "name cannot be null");
         Preconditions.checkArgument(name.isTableDefinition(), "Definition {} does not refer to a table", name);
-
-        return sessionProvider.getSession(name);
     }
 }

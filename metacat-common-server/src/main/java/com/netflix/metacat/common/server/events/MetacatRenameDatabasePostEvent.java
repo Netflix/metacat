@@ -23,7 +23,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 /**
  * Post database rename event.
@@ -39,10 +39,8 @@ public class MetacatRenameDatabasePostEvent extends MetacatEvent {
      * @param requestContext context
      */
     public MetacatRenameDatabasePostEvent(
-        @NotNull
-        final QualifiedName name,
-        @NotNull
-        final MetacatRequestContext requestContext) {
+        @Nonnull final QualifiedName name,
+        @Nonnull final MetacatRequestContext requestContext) {
         super(name, requestContext);
     }
 }

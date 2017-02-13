@@ -17,8 +17,8 @@
 
 package com.netflix.metacat.thrift
 
-import com.amazonaws.util.Throwables
 import com.google.common.base.Stopwatch
+import com.google.common.base.Throwables
 import com.netflix.metacat.common.server.Config
 import org.apache.thrift.TException
 import org.apache.thrift.TProcessor
@@ -107,7 +107,7 @@ class AbstractThriftServerTest extends Specification {
 
         when:
         def clientConnections = new AtomicInteger(0)
-        def threads = (0..<1000).collect {
+        def threads = (0..<500).collect {
             return new Thread({
                 Thread.sleep(new Random().nextInt(5000))
                 def socket = new Socket('localhost', port)
@@ -126,7 +126,7 @@ class AbstractThriftServerTest extends Specification {
 
         then:
         notThrown(Throwable)
-        clientConnections.get() == 1000
+        clientConnections.get() > 250
 
         when:
         server.stop()
@@ -154,7 +154,7 @@ class AbstractThriftServerTest extends Specification {
 
         when:
         def clientConnections = new AtomicInteger(0)
-        def threads = (0..<1000).collect {
+        def threads = (0..<500).collect {
             return new Thread({
                 Thread.sleep(new Random().nextInt(5000))
                 def socket = new Socket('localhost', port)
@@ -173,7 +173,7 @@ class AbstractThriftServerTest extends Specification {
 
         then:
         notThrown(Throwable)
-        clientConnections.get() == 1000
+        clientConnections.get() == 500
 
         when:
         server.stop()

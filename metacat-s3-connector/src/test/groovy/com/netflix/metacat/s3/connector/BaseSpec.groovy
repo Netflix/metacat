@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.s3.connector
+package com.netflix.metacat.connector.s3
 
 import com.google.inject.Inject
 import com.google.inject.persist.PersistService

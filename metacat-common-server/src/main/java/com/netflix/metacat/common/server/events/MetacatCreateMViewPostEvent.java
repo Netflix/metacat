@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 /**
  * Post create metacat view event.
@@ -46,12 +46,9 @@ public class MetacatCreateMViewPostEvent extends MetacatEvent {
      * @param filter filter
      */
     public MetacatCreateMViewPostEvent(
-        @NotNull
-        final QualifiedName name,
-        @NotNull
-        final MetacatRequestContext requestContext,
-        @NotNull
-        final TableDto table,
+        @Nonnull final QualifiedName name,
+        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final TableDto table,
         final Boolean snapshot,
         final String filter
     ) {

@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 /**
  * Post delete database event.
@@ -43,12 +43,9 @@ public class MetacatDeleteDatabasePostEvent extends MetacatEvent {
      * @param database database info
      */
     public MetacatDeleteDatabasePostEvent(
-        @NotNull
-        final QualifiedName name,
-        @NotNull
-        final MetacatRequestContext requestContext,
-        @NotNull
-        final DatabaseDto database
+        @Nonnull final QualifiedName name,
+        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final DatabaseDto database
     ) {
         super(name, requestContext);
         this.database = database;

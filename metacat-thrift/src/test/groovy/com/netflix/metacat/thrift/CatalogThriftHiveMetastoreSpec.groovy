@@ -13,7 +13,7 @@
 
 package com.netflix.metacat.thrift
 
-import com.facebook.presto.hive.$internal.com.facebook.fb303.fb_status
+import com.facebook.fb303.fb_status;
 import com.google.common.collect.ImmutableMap
 import com.google.common.collect.Lists
 import com.google.common.collect.Maps
@@ -28,8 +28,7 @@ import com.netflix.metacat.common.dto.PartitionDto
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.Config
 import com.netflix.metacat.common.util.MetacatContextManager
-import com.netflix.metacat.converters.HiveConverters
-import com.netflix.metacat.converters.TypeConverterProvider
+import com.netflix.metacat.common.server.converter.TypeConverterProvider
 import org.apache.hadoop.hive.metastore.api.AddPartitionsRequest
 import org.apache.hadoop.hive.metastore.api.Database
 import org.apache.hadoop.hive.metastore.api.EnvironmentContext
@@ -48,20 +47,14 @@ import spock.lang.Unroll
 
 @Unroll
 class CatalogThriftHiveMetastoreSpec extends Specification {
-    TypeConverterProvider typeConverterProvider = {
-        def mock = Mock(TypeConverterProvider)
-        mock.defaultConverterType >> MetacatRequestContext.DataTypeContext.pig
-
-        return mock
-    }()
     Config config = Mock(Config)
     HiveConverters hiveConverters = Mock(HiveConverters)
     MetacatV1 metacatV1 = Mock(MetacatV1)
     PartitionV1 partitionV1 = Mock(PartitionV1)
     String catalogName = 'testCatalogName'
     CatalogThriftEventHandler.CatalogServerRequestContext catalogServerContext = Mock(CatalogThriftEventHandler.CatalogServerRequestContext)
-    CatalogThriftHiveMetastore ms = new CatalogThriftHiveMetastore(
-            config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName)
+    CatalogThriftHiveMetastore ms =
+        new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName)
 
     def setup() {
         MetacatContextManager.context = catalogServerContext
@@ -946,8 +939,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         given:
         def cols = [new FieldSchema(name: 'c1'), new FieldSchema(name: 'c2')]
         def partitionKeys = [new FieldSchema(name: 'pk1'), new FieldSchema(name: 'pk2')]
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             Table get_table(String _dbname, String _tbl_name) throws MetaException {
                 return new Table(
@@ -975,8 +967,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         given:
         def cols = [new FieldSchema(name: 'c1'), new FieldSchema(name: 'c2')]
         def partitionKeys = [new FieldSchema(name: 'pk1'), new FieldSchema(name: 'pk2')]
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             Table get_table(String _dbname, String _tbl_name) throws MetaException {
                 return new Table(
@@ -1074,8 +1065,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_partition no matches'() {
         given:
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -1099,8 +1089,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_partition too many matches'() {
         given:
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -1125,8 +1114,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_partition'() {
         given:
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -1211,8 +1199,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_partition_names_ps'() {
         given:
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             String partition_values_to_partition_filter(String dbname, String tbl_name, List<String> partitionValues)
                     throws MetaException {
@@ -1313,8 +1300,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_partitions_ps'() {
         given:
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -1340,8 +1326,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_partitions_ps_with_auth'() {
         given:
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -1383,8 +1368,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_partitions_with_auth'() {
         given:
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -1447,8 +1431,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         given:
         def cols = [new FieldSchema(name: 'c1'), new FieldSchema(name: 'c2')]
         def partitionKeys = [new FieldSchema(name: 'pk1'), new FieldSchema(name: 'pk2')]
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             Table get_table(String _dbname, String _tbl_name) throws MetaException {
                 return new Table(
@@ -1476,8 +1459,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         given:
         def cols = [new FieldSchema(name: 'c1'), new FieldSchema(name: 'c2')]
         def partitionKeys = [new FieldSchema(name: 'pk1'), new FieldSchema(name: 'pk2')]
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             Table get_table(String _dbname, String _tbl_name) throws MetaException {
                 return new Table(
@@ -1759,8 +1741,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test partition_values_to_partition_filter all strings'() {
         given:
-        ms = new CatalogThriftHiveMetastore(
-                config, typeConverterProvider, hiveConverters, metacatV1, partitionV1, catalogName) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> partitionValues)
                     throws MetaException {

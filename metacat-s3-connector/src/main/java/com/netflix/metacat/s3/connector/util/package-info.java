@@ -21,4 +21,4 @@
  *
  * @author amajumdar
  */
-package com.netflix.metacat.s3.connector.util;
+package com.netflix.metacat.connector.s3.util;

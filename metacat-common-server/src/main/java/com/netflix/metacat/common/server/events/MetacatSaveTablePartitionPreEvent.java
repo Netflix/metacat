@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 /**
  * Pre table partition save event.
@@ -43,12 +43,9 @@ public class MetacatSaveTablePartitionPreEvent extends MetacatEvent {
      * @param saveRequest request
      */
     public MetacatSaveTablePartitionPreEvent(
-        @NotNull
-        final QualifiedName name,
-        @NotNull
-        final MetacatRequestContext requestContext,
-        @NotNull
-        final PartitionsSaveRequestDto saveRequest
+        @Nonnull final QualifiedName name,
+        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final PartitionsSaveRequestDto saveRequest
     ) {
         super(name, requestContext);
         this.saveRequest = saveRequest;

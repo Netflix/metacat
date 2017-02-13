@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 /**
  * Post delete view event.
@@ -43,11 +43,11 @@ public class MetacatDeleteMViewPostEvent extends MetacatEvent {
      * @param table table info
      */
     public MetacatDeleteMViewPostEvent(
-        @NotNull
+        @Nonnull
         final QualifiedName name,
-        @NotNull
+        @Nonnull
         final MetacatRequestContext requestContext,
-        @NotNull
+        @Nonnull
         final TableDto table
     ) {
         super(name, requestContext);

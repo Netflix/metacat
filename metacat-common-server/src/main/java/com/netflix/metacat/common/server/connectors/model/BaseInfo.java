@@ -15,9 +15,8 @@ package com.netflix.metacat.common.server.connectors.model;
 
 import com.netflix.metacat.common.QualifiedName;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.Map;
 
@@ -25,10 +24,9 @@ import java.util.Map;
  * Base class for catalog resources.
  * @author amajumdar
  */
-@Getter
-@Setter
-@AllArgsConstructor
+@Data
 @NoArgsConstructor
+@AllArgsConstructor
 public abstract class BaseInfo {
     /* Name of the resource */
     private QualifiedName name;

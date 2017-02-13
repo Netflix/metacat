@@ -16,7 +16,6 @@ package com.netflix.metacat.server.jersey;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.util.MetacatContextManager;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.EnumUtils;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -41,10 +40,8 @@ public class MetacatRestFilter implements ContainerRequestFilter, ContainerRespo
         final String clientAppName = requestContext.getHeaderString(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME);
         final String clientHost = requestContext.getHeaderString("X-Forwarded-For");
         final String jobId = requestContext.getHeaderString(MetacatRequestContext.HEADER_KEY_JOB_ID);
-        final MetacatRequestContext.DataTypeContext dataTypeContext = EnumUtils.getEnum(
-            MetacatRequestContext.DataTypeContext.class,
-            requestContext.getHeaderString(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT)
-        );
+        final String dataTypeContext =
+            requestContext.getHeaderString(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT);
         final MetacatRequestContext context = new MetacatRequestContext(userName, clientAppName, clientHost, jobId,
             dataTypeContext);
         MetacatContextManager.setContext(context);

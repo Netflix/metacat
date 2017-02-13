@@ -13,13 +13,6 @@
 
 package com.netflix.metacat.main.api;
 
-import com.facebook.presto.exception.InvalidMetaException;
-import com.facebook.presto.exception.PartitionAlreadyExistsException;
-import com.facebook.presto.exception.SchemaAlreadyExistsException;
-import com.facebook.presto.hive.TableAlreadyExistsException;
-import com.facebook.presto.spi.NotFoundException;
-import com.facebook.presto.spi.PrestoException;
-import com.facebook.presto.spi.StandardErrorCode;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
@@ -28,6 +21,12 @@ import com.netflix.metacat.common.exception.MetacatException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.exception.MetacatUserMetadataException;
+import com.netflix.metacat.common.server.exception.ConnectorException;
+import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException;
+import com.netflix.metacat.common.server.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.exception.NotFoundException;
+import com.netflix.metacat.common.server.exception.PartitionAlreadyExistsException;
+import com.netflix.metacat.common.server.exception.TableAlreadyExistsException;
 import com.netflix.metacat.common.usermetadata.UserMetadataServiceException;
 import com.netflix.servo.monitor.DynamicCounter;
 import com.netflix.servo.monitor.DynamicTimer;
@@ -84,7 +83,7 @@ public final class RequestWrapper {
         } catch (UnsupportedOperationException e) {
             log.error(e.getMessage(), e);
             throw new MetacatNotSupportedException("Catalog does not support the operation");
-        } catch (SchemaAlreadyExistsException | TableAlreadyExistsException | PartitionAlreadyExistsException e) {
+        } catch (DatabaseAlreadyExistsException | TableAlreadyExistsException | PartitionAlreadyExistsException e) {
             log.error(e.getMessage(), e);
             throw new MetacatAlreadyExistsException(e.getMessage());
         } catch (NotFoundException | MetacatNotFoundException e) {
@@ -95,16 +94,12 @@ public final class RequestWrapper {
             log.error(e.getMessage(), e);
             throw new MetacatBadRequestException(
                 String.format("%s.%s", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage()));
-        } catch (PrestoException e) {
+        } catch (ConnectorException e) {
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
-            if (e.getErrorCode() == StandardErrorCode.NOT_SUPPORTED.toErrorCode()) {
-                throw new MetacatNotSupportedException("Catalog does not support the operation");
-            } else {
-                DynamicCounter.increment("dse.metacat.counter.failure.requests", tags);
-                throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
-            }
+            DynamicCounter.increment("dse.metacat.counter.failure.requests", tags);
+            throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } catch (UserMetadataServiceException e) {
             final String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);

@@ -31,6 +31,13 @@ public final class DatabaseInfo extends BaseInfo {
     /* location of the database */
     private String uri;
 
+    /**
+     * Constructor.
+     * @param name name of the database
+     * @param auditInfo audit information of the database
+     * @param metadata metadata of the database.
+     * @param uri location of the database
+     */
     @Builder
     private DatabaseInfo(final QualifiedName name, final AuditInfo auditInfo,
                          final Map<String, String> metadata, final String uri) {

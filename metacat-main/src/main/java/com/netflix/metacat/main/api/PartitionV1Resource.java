@@ -13,16 +13,16 @@
 
 package com.netflix.metacat.main.api;
 
-import com.facebook.presto.spi.Pageable;
-import com.facebook.presto.spi.Sort;
 import com.google.common.base.Preconditions;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.PartitionV1;
 import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
+import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
+import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
@@ -124,22 +124,16 @@ public class PartitionV1Resource implements PartitionV1 {
         final Boolean includeUserMetadata) {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return RequestWrapper.requestWrapper(name, "getPartitions", () -> {
-            com.facebook.presto.spi.SortOrder order = null;
-            if (sortOrder != null) {
-                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
-            }
-            return partitionService.list(
-                name,
-                filter,
-                null,
-                new Sort(sortBy, order),
-                new Pageable(limit, offset),
-                includeUserMetadata,
-                includeUserMetadata,
-                false
-            );
-        });
+        return RequestWrapper.requestWrapper(name, "getPartitions", () -> partitionService.list(
+            name,
+            filter,
+            null,
+            new Sort(sortBy, sortOrder),
+            new Pageable(limit, offset),
+            includeUserMetadata,
+            includeUserMetadata,
+            false
+        ));
     }
 
     private List<PartitionDto> getPartitions(
@@ -156,22 +150,16 @@ public class PartitionV1Resource implements PartitionV1 {
         final Boolean includePartitionDetails) {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return RequestWrapper.requestWrapper(name, "getPartitions", () -> {
-            com.facebook.presto.spi.SortOrder order = null;
-            if (sortOrder != null) {
-                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
-            }
-            return partitionService.list(
-                name,
-                filter,
-                partitionNames,
-                new Sort(sortBy, order),
-                new Pageable(limit, offset),
-                includeUserMetadata,
-                includeUserMetadata,
-                includePartitionDetails
-            );
-        });
+        return RequestWrapper.requestWrapper(name, "getPartitions", () -> partitionService.list(
+            name,
+            filter,
+            partitionNames,
+            new Sort(sortBy, sortOrder),
+            new Pageable(limit, offset),
+            includeUserMetadata,
+            includeUserMetadata,
+            includePartitionDetails
+        ));
     }
 
     @Override
@@ -188,21 +176,15 @@ public class PartitionV1Resource implements PartitionV1 {
         final Boolean includeUserMetadata) {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return RequestWrapper.requestWrapper(name, "getPartitions", () -> {
-            com.facebook.presto.spi.SortOrder order = null;
-            if (sortOrder != null) {
-                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
-            }
-            return mViewService.listPartitions(
-                name,
-                filter,
-                null,
-                new Sort(sortBy, order),
-                new Pageable(limit, offset),
-                includeUserMetadata,
-                false
-            );
-        });
+        return RequestWrapper.requestWrapper(name, "getPartitions", () -> mViewService.listPartitions(
+            name,
+            filter,
+            null,
+            new Sort(sortBy, sortOrder),
+            new Pageable(limit, offset),
+            includeUserMetadata,
+            false
+        ));
     }
 
     private List<PartitionDto> getPartitions(
@@ -220,21 +202,15 @@ public class PartitionV1Resource implements PartitionV1 {
         final Boolean includePartitionDetails) {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return RequestWrapper.requestWrapper(name, "getPartitions", () -> {
-            com.facebook.presto.spi.SortOrder order = null;
-            if (sortOrder != null) {
-                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
-            }
-            return mViewService.listPartitions(
-                name,
-                filter,
-                partitionNames,
-                new Sort(sortBy, order),
-                new Pageable(limit, offset),
-                includeUserMetadata,
-                includePartitionDetails
-            );
-        });
+        return RequestWrapper.requestWrapper(name, "getPartitions", () -> mViewService.listPartitions(
+            name,
+            filter,
+            partitionNames,
+            new Sort(sortBy, sortOrder),
+            new Pageable(limit, offset),
+            includeUserMetadata,
+            includePartitionDetails
+        ));
     }
 
     @Override
@@ -270,19 +246,13 @@ public class PartitionV1Resource implements PartitionV1 {
         final Integer limit) {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return RequestWrapper.requestWrapper(name, "getPartitionKeys", () -> {
-            com.facebook.presto.spi.SortOrder order = null;
-            if (sortOrder != null) {
-                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
-            }
-            return partitionService.getPartitionKeys(
-                name,
-                filter,
-                partitionNames,
-                new Sort(sortBy, order),
-                new Pageable(limit, offset)
-            );
-        });
+        return RequestWrapper.requestWrapper(name, "getPartitionKeys", () -> partitionService.getPartitionKeys(
+            name,
+            filter,
+            partitionNames,
+            new Sort(sortBy, sortOrder),
+            new Pageable(limit, offset)
+        ));
     }
 
     @SuppressWarnings("checkstyle:methodname")
@@ -298,19 +268,13 @@ public class PartitionV1Resource implements PartitionV1 {
         final Integer limit) {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return RequestWrapper.requestWrapper(name, "getMViewPartitionUris", () -> {
-            com.facebook.presto.spi.SortOrder order = null;
-            if (sortOrder != null) {
-                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
-            }
-            return partitionService.getPartitionUris(
-                name,
-                filter,
-                partitionNames,
-                new Sort(sortBy, order),
-                new Pageable(limit, offset)
-            );
-        });
+        return RequestWrapper.requestWrapper(name, "getMViewPartitionUris", () -> partitionService.getPartitionUris(
+            name,
+            filter,
+            partitionNames,
+            new Sort(sortBy, sortOrder),
+            new Pageable(limit, offset)
+        ));
     }
 
     @SuppressWarnings("checkstyle:methodname")
@@ -327,19 +291,13 @@ public class PartitionV1Resource implements PartitionV1 {
         final Integer limit) {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return RequestWrapper.requestWrapper(name, "getMViewPartitionKeys", () -> {
-            com.facebook.presto.spi.SortOrder order = null;
-            if (sortOrder != null) {
-                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
-            }
-            return mViewService.getPartitionKeys(
-                name,
-                filter,
-                partitionNames,
-                new Sort(sortBy, order),
-                new Pageable(limit, offset)
-            );
-        });
+        return RequestWrapper.requestWrapper(name, "getMViewPartitionKeys", () -> mViewService.getPartitionKeys(
+            name,
+            filter,
+            partitionNames,
+            new Sort(sortBy, sortOrder),
+            new Pageable(limit, offset)
+        ));
     }
 
     @SuppressWarnings("checkstyle:methodname")
@@ -356,19 +314,13 @@ public class PartitionV1Resource implements PartitionV1 {
         final Integer limit) {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return RequestWrapper.requestWrapper(name, "getMViewPartitionUris", () -> {
-            com.facebook.presto.spi.SortOrder order = null;
-            if (sortOrder != null) {
-                order = com.facebook.presto.spi.SortOrder.valueOf(sortOrder.name());
-            }
-            return mViewService.getPartitionUris(
-                name,
-                filter,
-                partitionNames,
-                new Sort(sortBy, order),
-                new Pageable(limit, offset)
-            );
-        });
+        return RequestWrapper.requestWrapper(name, "getMViewPartitionUris", () -> mViewService.getPartitionUris(
+            name,
+            filter,
+            partitionNames,
+            new Sort(sortBy, sortOrder),
+            new Pageable(limit, offset)
+        ));
     }
 
     @Override

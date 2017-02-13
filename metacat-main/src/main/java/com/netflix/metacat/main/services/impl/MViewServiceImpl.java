@@ -13,28 +13,22 @@
 
 package com.netflix.metacat.main.services.impl;
 
-import com.facebook.presto.Session;
-import com.facebook.presto.metadata.QualifiedTableName;
-import com.facebook.presto.metadata.QualifiedTablePrefix;
-import com.facebook.presto.spi.NotFoundException;
-import com.facebook.presto.spi.Pageable;
-import com.facebook.presto.spi.SchemaTableName;
-import com.facebook.presto.spi.Sort;
-import com.facebook.presto.spi.TableNotFoundException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
+import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
-import com.netflix.metacat.common.exception.MetacatNotSupportedException;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatCreateMViewPostEvent;
 import com.netflix.metacat.common.server.events.MetacatCreateMViewPreEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteMViewPartitionPostEvent;
@@ -46,13 +40,13 @@ import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPreEvent;
+import com.netflix.metacat.common.server.exception.NotFoundException;
+import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.MetacatContextManager;
-import com.netflix.metacat.converters.PrestoConverters;
-import com.netflix.metacat.main.presto.metadata.MetadataManager;
+import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.PartitionService;
-import com.netflix.metacat.main.services.SessionProvider;
 import com.netflix.metacat.main.services.TableService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,36 +66,34 @@ public class MViewServiceImpl implements MViewService {
     /** Hive database name where views are stored. */
     public static final String VIEW_DB_NAME = "franklinviews";
     private static final List<String> SUPPORTED_SOURCES = Lists.newArrayList("hive", "s3", "aegisthus");
-    private final MetadataManager metadataManager;
-    private final SessionProvider sessionProvider;
+    private final ConnectorManager connectorManager;
     private final TableService tableService;
     private final PartitionService partitionService;
-    private final PrestoConverters prestoConverters;
     private final UserMetadataService userMetadataService;
     private final MetacatEventBus eventBus;
+    private final ConverterUtil converterUtil;
 
     /**
      * Constructor.
-     * @param metadataManager Metadata manager
-     * @param sessionProvider session provider
+     * @param connectorManager connector manager
      * @param tableService table service
      * @param partitionService partition service
-     * @param prestoConverters presto converters
      * @param userMetadataService user metadata service
      * @param eventBus Internal event bus
+     * @param converterUtil utility to convert to/from Dto to connector resources
      */
     @Inject
-    public MViewServiceImpl(final MetadataManager metadataManager,
-        final SessionProvider sessionProvider, final TableService tableService,
-        final PartitionService partitionService, final PrestoConverters prestoConverters,
-        final UserMetadataService userMetadataService, final MetacatEventBus eventBus) {
-        this.metadataManager = metadataManager;
-        this.sessionProvider = sessionProvider;
+    public MViewServiceImpl(final ConnectorManager connectorManager,
+        final TableService tableService,
+        final PartitionService partitionService,
+        final UserMetadataService userMetadataService, final MetacatEventBus eventBus,
+        final ConverterUtil converterUtil) {
+        this.connectorManager = connectorManager;
         this.tableService = tableService;
         this.partitionService = partitionService;
-        this.prestoConverters = prestoConverters;
         this.userMetadataService = userMetadataService;
         this.eventBus = eventBus;
+        this.converterUtil = converterUtil;
     }
 
     /**
@@ -150,7 +142,7 @@ public class MViewServiceImpl implements MViewService {
             }
             eventBus.postAsync(new MetacatCreateMViewPostEvent(name, metacatRequestContext, result, snapshot, filter));
         } else {
-            throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
+            throw new TableNotFoundException(name);
         }
         return result;
     }
@@ -335,7 +327,7 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public List<String> getPartitionKeys(final QualifiedName name, final String filter,
+    public List<String> getPartitionKeys(@Nonnull final QualifiedName name, final String filter,
         final List<String> partitionNames, final Sort sort, final Pageable pageable) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
@@ -343,7 +335,7 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public List<String> getPartitionUris(final QualifiedName name, final String filter,
+    public List<String> getPartitionUris(@Nonnull final QualifiedName name, final String filter,
         final List<String> partitionNames, final Sort sort, final Pageable pageable) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
@@ -359,19 +351,19 @@ public class MViewServiceImpl implements MViewService {
 
     @Override
     public List<NameDateDto> list(@Nonnull final QualifiedName name) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final QualifiedName viewDbName = QualifiedName.ofDatabase(name.getCatalogName(), VIEW_DB_NAME);
-        final QualifiedTablePrefix viewDbNamePrefix = new QualifiedTablePrefix(name.getCatalogName(), VIEW_DB_NAME);
-        // Get the session
-        final Session session = sessionProvider.getSession(viewDbName);
-        List<QualifiedTableName> tableNames = Lists.newArrayList();
+        final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
+
+        List<QualifiedName> tableNames = Lists.newArrayList();
         try {
-            tableNames = metadataManager.listTables(session, viewDbNamePrefix);
+            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+            tableNames = service.listNames(connectorContext, viewDbName, null, null, null);
         } catch (Exception ignored) {
             // ignore. Return an empty list if database 'franklinviews' does not exist
         }
         if (!name.isDatabaseDefinition() && name.isCatalogDefinition()) {
             return tableNames.stream()
-                .map(prestoConverters::toQualifiedName)
                 .map(viewName -> {
                     final NameDateDto dto = new NameDateDto();
                     dto.setName(viewName);
@@ -403,7 +395,7 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public void rename(final QualifiedName name, final QualifiedName newViewName) {
+    public void rename(@Nonnull  final QualifiedName name, @Nonnull final QualifiedName newViewName) {
         final QualifiedName oldViewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         final QualifiedName newViewQName = QualifiedName
@@ -416,22 +408,6 @@ public class MViewServiceImpl implements MViewService {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return tableService.exists(viewQName);
-    }
-
-    /**
-     * Validate the qualified name.
-     * Validate if the catalog is one of the catalogs that support views.
-     * Assumes that the "franklinviews" database name already exists in the given catalog.
-     */
-    private Session validateAndGetSession(final QualifiedName name) {
-        Preconditions.checkNotNull(name, "name cannot be null");
-        Preconditions.checkState(name.isViewDefinition(), "name %s is not for a view", name);
-
-        if (!Iterables.contains(SUPPORTED_SOURCES, name.getCatalogName())) {
-            throw new MetacatNotSupportedException(
-                String.format("This catalog (%s) doesn't support views", name.getCatalogName()));
-        }
-        return sessionProvider.getSession(name);
     }
 
     /**

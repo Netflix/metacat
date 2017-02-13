@@ -13,8 +13,6 @@
 
 package com.netflix.metacat.main.api;
 
-import com.facebook.presto.spi.SchemaTableName;
-import com.facebook.presto.spi.TableNotFoundException;
 import com.google.common.base.Preconditions;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
@@ -27,6 +25,7 @@ import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
+import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.MViewService;
@@ -192,7 +191,7 @@ public class MetacatV1Resource implements MetacatV1 {
         return RequestWrapper.requestWrapper(name, "getTable", () -> {
             final Optional<TableDto> table = tableService
                 .get(name, includeInfo, includeDefinitionMetadata, includeDataMetadata);
-            return table.orElseThrow(() -> new TableNotFoundException(new SchemaTableName(databaseName, tableName)));
+            return table.orElseThrow(() -> new TableNotFoundException(name));
         });
     }
 

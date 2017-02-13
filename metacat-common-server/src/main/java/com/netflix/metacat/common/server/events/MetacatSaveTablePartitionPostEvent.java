@@ -25,7 +25,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 
@@ -48,14 +48,10 @@ public class MetacatSaveTablePartitionPostEvent extends MetacatEvent {
      * @param partitionsSaveResponse resposne
      */
     public MetacatSaveTablePartitionPostEvent(
-        @NotNull
-        final QualifiedName name,
-        @NotNull
-        final MetacatRequestContext metacatRequestContext,
-        @NotNull
-        final List<PartitionDto> partitions,
-        @NotNull
-        final PartitionsSaveResponseDto partitionsSaveResponse
+        @Nonnull final QualifiedName name,
+        @Nonnull final MetacatRequestContext metacatRequestContext,
+        @Nonnull final List<PartitionDto> partitions,
+        @Nonnull final PartitionsSaveResponseDto partitionsSaveResponse
     ) {
         super(name, metacatRequestContext);
         this.partitions = Collections.unmodifiableList(partitions);

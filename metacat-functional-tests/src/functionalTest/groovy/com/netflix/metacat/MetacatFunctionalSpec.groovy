@@ -39,6 +39,7 @@ import com.netflix.metacat.common.json.MetacatJsonLocator
 import feign.Logger
 import feign.RetryableException
 import org.apache.hadoop.hive.metastore.Warehouse
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Stepwise
 import spock.lang.Unroll
@@ -175,6 +176,7 @@ class MetacatFunctionalSpec extends Specification {
         metadataMessage = metadata == null ? 'without metadata' : 'with metadata'
     }
 
+    @Ignore
     def 'createDatabase: not support for #catalog.name of type #catalog.type'() {
         given:
         def dto = new DatabaseCreateRequestDto()
@@ -292,6 +294,7 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getAllDatabases(TestCatalogs.getCanCreateDatabase(TestCatalogs.ALL))
     }
 
+    @Ignore
     def 'getDatabase: has tables for preexisting database #name'() {
         given:
         def sakilaTables = ['actor', 'address', 'city']
@@ -342,6 +345,7 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.ALL)
     }
 
+    @Ignore
     def 'createTable: should fail for #catalog where it is not supported'() {
         given:
         def databaseName = (catalog.preExistingDatabases + catalog.createdDatabases).first().databaseName
@@ -368,6 +372,7 @@ class MetacatFunctionalSpec extends Specification {
         where:
         catalog << TestCatalogs.getCanNotCreateTable(TestCatalogs.ALL)
     }
+
 
     def 'createTable: should fail for nonexistent catalog zz_#catalog.name'() {
         given:
@@ -407,7 +412,7 @@ class MetacatFunctionalSpec extends Specification {
         then:
         def e = thrown(MetacatNotFoundException)
         def rc = e.cause ? Throwables.getRootCause(e) : null
-        def expectedMessage = 'Schema missing_database not found'
+        def expectedMessage = "DATABASE '" + catalog.name + "/" + databaseName + "' not found"
         e.message.contains(expectedMessage) || rc?.message?.contains(expectedMessage)
 
         where:
@@ -1064,6 +1069,7 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getCreatedTables(TestCatalogs.getCanDeleteTable(TestCatalogs.ALL))
     }
 
+    @Ignore
     def 'deleteTable: #name fails'() {
         when:
         def database = api.getDatabase(name.catalogName, name.databaseName, false)
@@ -1088,6 +1094,7 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getAllTables(TestCatalogs.getCanNotDeleteTable(TestCatalogs.ALL))
     }
 
+    @Ignore
     def 'deleteDatabase: #name fails for databases where delete is not allowed'() {
         when:
         def catalog = api.getCatalog(name.catalogName)
