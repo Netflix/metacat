@@ -5,7 +5,7 @@ addons:
   apt:
     packages:
       - oracle-java8-installer
-services:  
+services:
   - docker
 install:
   # Update docker-engine using Ubuntu 'trusty' apt repo
@@ -26,3 +26,5 @@ env:
 cache:
   directories:
   - $HOME/.gradle
+after_failure:
+  - name=$(date +"%Y-%m-%d") && cat ./metacat-functional-tests/metacat-test-cluster/build/logs/metacat/catalina.$name.log

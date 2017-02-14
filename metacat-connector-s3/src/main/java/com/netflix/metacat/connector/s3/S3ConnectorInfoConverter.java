@@ -165,6 +165,11 @@ public class S3ConnectorInfoConverter implements ConnectorInfoConverter<Database
         final Partition result = new Partition();
         result.setName(partitionInfo.getName().getPartitionName());
         result.setUri(partitionInfo.getSerde().getUri());
+        final AuditInfo auditInfo = partitionInfo.getAudit();
+        if (auditInfo != null) {
+            result.setCreatedDate(auditInfo.getCreatedDate());
+            result.setLastUpdatedDate(auditInfo.getLastModifiedDate());
+        }
         return result;
     }
 
@@ -375,10 +380,8 @@ public class S3ConnectorInfoConverter implements ConnectorInfoConverter<Database
      * @return partition
      */
     public Partition toPartition(final Table table, final PartitionInfo partitionInfo) {
-        final Partition result = new Partition();
+        final Partition result = fromPartitionInfo(partitionInfo);
         result.setTable(table);
-        result.setName(partitionInfo.getName().getPartitionName());
-        result.setUri(getUri(partitionInfo));
         return result;
     }
 
