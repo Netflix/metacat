@@ -18,6 +18,7 @@
 package com.netflix.metacat.connector.s3;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.inject.persist.Transactional;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
@@ -31,6 +32,7 @@ import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
 import com.netflix.metacat.connector.s3.dao.DatabaseDao;
 import com.netflix.metacat.connector.s3.dao.SourceDao;
 import com.netflix.metacat.connector.s3.model.Database;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -44,6 +46,7 @@ import java.util.stream.Collectors;
  * @author amajumdar
  */
 @Transactional
+@Slf4j
 public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     private final SourceDao sourceDao;
     private final DatabaseDao databaseDao;
@@ -69,20 +72,23 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     @Override
     public List<QualifiedName> listViewNames(@Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName databaseName) {
-        return null;
+        return Lists.newArrayList();
     }
 
     @Override
     public void create(@Nonnull final ConnectorContext context, @Nonnull final DatabaseInfo databaseInfo) {
         final String databaseName = databaseInfo.getName().getDatabaseName();
-        Preconditions.checkNotNull(databaseName, "Schema name is null");
+        log.debug("Start: Create database {}", databaseInfo.getName());
+        Preconditions.checkNotNull(databaseName, "Database name is null");
         if (databaseDao.getBySourceDatabaseName(catalogName, databaseName) != null) {
+            log.warn("Database {} already exists", databaseName);
             throw new DatabaseAlreadyExistsException(databaseInfo.getName());
         }
         final Database database = new Database();
         database.setName(databaseName);
         database.setSource(sourceDao.getByName(catalogName));
         databaseDao.save(database);
+        log.debug("End: Create database {}", databaseInfo.getName());
     }
 
     @Override
@@ -92,8 +98,9 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
 
     @Override
     public void delete(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+        log.debug("Start: Delete database {}", name);
         final String databaseName = name.getDatabaseName();
-        Preconditions.checkNotNull(databaseName, "Schema name is null");
+        Preconditions.checkNotNull(databaseName, "Database name is null");
         final Database database = databaseDao.getByName(databaseName);
         if (database == null) {
             throw new DatabaseNotFoundException(name);
@@ -101,13 +108,15 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
             throw new ConnectorException("Database " + databaseName + " is not empty. One or more tables exist.", null);
         }
         databaseDao.delete(database);
+        log.debug("End: Delete database {}", name);
     }
 
     @Override
     public DatabaseInfo get(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
         final String databaseName = name.getDatabaseName();
-        Preconditions.checkNotNull(databaseName, "Schema name is null");
+        Preconditions.checkNotNull(databaseName, "Database name is null");
         final Database database = databaseDao.getBySourceDatabaseName(catalogName, name.getDatabaseName());
+        log.debug("Get database {}", name);
         return infoConverter.toDatabaseInfo(QualifiedName.ofCatalog(catalogName), database);
     }
 
@@ -119,6 +128,7 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     @Override
     public List<DatabaseInfo> list(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix, @Nullable final Sort sort, @Nullable final Pageable pageable) {
+        log.debug("List databases for catalog {} and database with prefix {}", name, prefix);
         return databaseDao.searchBySourceDatabaseName(catalogName, prefix == null ? "" : prefix.getTableName(),
             sort, pageable).stream().map(d -> infoConverter.toDatabaseInfo(name, d)).collect(
             Collectors.toList());
@@ -127,6 +137,7 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     @Override
     public List<QualifiedName> listNames(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix, @Nullable final Sort sort, @Nullable final Pageable pageable) {
+        log.debug("List database names for catalog {} and database with prefix {}", name, prefix);
         return databaseDao.searchBySourceDatabaseName(catalogName, prefix == null ? "" : prefix.getTableName(),
             sort, pageable).stream().map(d -> QualifiedName.ofDatabase(catalogName, d.getName())).collect(
             Collectors.toList());
@@ -135,8 +146,9 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     @Override
     public void rename(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName oldName,
         @Nonnull final QualifiedName newName) {
+        log.debug("Start: Rename database {} with {}", oldName, newName);
         final String newDatabaseName = newName.getDatabaseName();
-        Preconditions.checkNotNull(newDatabaseName, "Schema name is null");
+        Preconditions.checkNotNull(newDatabaseName, "Database name is null");
         final Database oldDatabase = databaseDao.getBySourceDatabaseName(catalogName, oldName.getDatabaseName());
         if (oldDatabase == null) {
             throw new DatabaseNotFoundException(oldName);
@@ -146,5 +158,6 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
         }
         oldDatabase.setName(newDatabaseName);
         databaseDao.save(oldDatabase);
+        log.debug("End: Rename database {} with {}", oldName, newName);
     }
 }

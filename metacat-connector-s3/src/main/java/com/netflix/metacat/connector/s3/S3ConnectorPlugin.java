@@ -20,6 +20,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
@@ -38,7 +39,8 @@ public class S3ConnectorPlugin implements ConnectorPlugin {
     }
 
     @Override
-    public ConnectorFactory create(final String connectorName, final Map<String, String> configuration) {
+    public ConnectorFactory create(@Nonnull final String connectorName,
+        @Nonnull final Map<String, String> configuration) {
         return new S3ConnectorFactory(connectorName, configuration, (S3ConnectorInfoConverter) getInfoConverter());
     }
 

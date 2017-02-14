@@ -43,6 +43,7 @@ import com.netflix.metacat.connector.s3.dao.PartitionDao;
 import com.netflix.metacat.connector.s3.dao.TableDao;
 import com.netflix.metacat.connector.s3.model.Partition;
 import com.netflix.metacat.connector.s3.model.Table;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -60,6 +61,7 @@ import java.util.stream.Collectors;
  * @author amajumdar
  */
 @Transactional
+@Slf4j
 public class S3ConnectorPartitionService implements ConnectorPartitionService {
     private static final String FIELD_DATE_CREATED = "dateCreated";
     private static final String FIELD_BATCHID = "batchid";
@@ -87,6 +89,7 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
     @Override
     public void create(@Nonnull final ConnectorContext context, @Nonnull final PartitionInfo partitionInfo) {
         final QualifiedName name = partitionInfo.getName();
+        log.debug("Start: Create partition {}", name);
         final QualifiedName tableName = QualifiedName.ofTable(catalogName, name.getDatabaseName(),
             name.getTableName());
         // Table
@@ -97,6 +100,7 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
             throw new PartitionAlreadyExistsException(tableName, name.getPartitionName());
         }
         partitionDao.save(infoConverter.toPartition(table, partitionInfo));
+        log.debug("End: Create partition {}", name);
     }
 
     private Table getTable(final QualifiedName tableName) {
@@ -111,6 +115,7 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
     @Override
     public List<PartitionInfo> getPartitions(@Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName tableName, @Nonnull final PartitionListRequest partitionsRequest) {
+        log.debug("Get partitions for table {}", tableName);
         return _getPartitions(tableName, partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
             partitionsRequest.getSort(), partitionsRequest.getPageable(), true);
     }
@@ -118,6 +123,7 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
     @Override
     public void update(@Nonnull final ConnectorContext context, @Nonnull final PartitionInfo partitionInfo) {
         final QualifiedName name = partitionInfo.getName();
+        log.debug("Start: Update partition {}", name);
         final QualifiedName tableName = QualifiedName.ofTable(catalogName, name.getDatabaseName(),
             name.getTableName());
         // Table
@@ -128,17 +134,21 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
             throw new PartitionNotFoundException(tableName, name.getPartitionName());
         }
         partitionDao.save(infoConverter.fromPartitionInfo(partitionInfo));
+        log.debug("End: Update partition {}", name);
     }
 
     @Override
     public void delete(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+        log.debug("Start: Delete partition {}", name);
         partitionDao.deleteByNames(catalogName, name.getDatabaseName(), name.getTableName(),
             Lists.newArrayList(name.getPartitionName()));
+        log.debug("End: Delete partition {}", name);
     }
 
     @Override
     public PartitionsSaveResponse savePartitions(@Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName tableName, @Nonnull final PartitionsSaveRequest partitionsSaveRequest) {
+        log.debug("Start: Save partitions for table {}", tableName);
         // Table
         final Table table = getTable(tableName);
 
@@ -183,6 +193,7 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
                 partitionIdsForDeletes);
         }
         partitionDao.save(s3Partitions);
+        log.debug("End: Save partitions for table {}", tableName);
         return PartitionsSaveResponse.builder().added(addedPartitionIds).updated(existingPartitionIds).build();
     }
 
@@ -201,13 +212,16 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
         if (partitions.isEmpty()) {
             throw new PartitionNotFoundException(tableName, name.getPartitionName());
         }
+        log.debug("Get partition for table {}", tableName);
         return infoConverter.toPartitionInfo(tableName, table, partitions.get(0));
     }
 
     @Override
     public void deletePartitions(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName tableName,
         @Nonnull final List<String> partitionNames) {
+        log.debug("Start: Delete partitions {} for table {}", partitionNames, tableName);
         partitionDao.deleteByNames(catalogName, tableName.getDatabaseName(), tableName.getTableName(), partitionNames);
+        log.debug("End: Delete partitions {} for table {}", partitionNames, tableName);
     }
 
     @Override
@@ -230,6 +244,7 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
     @Override
     public List<PartitionInfo> list(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix, @Nullable final Sort sort, @Nullable final Pageable pageable) {
+        log.debug("Get partitions for table {} with name prefix {}", name, prefix);
         return _getPartitions(name, null, null, sort, pageable, true).stream()
             .filter(p -> p.getName().getPartitionName().startsWith(prefix.getPartitionName()))
             .collect(Collectors.toList());
@@ -247,6 +262,7 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
     @Override
     public List<String> getPartitionKeys(@Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName tableName, @Nonnull final PartitionListRequest partitionsRequest) {
+        log.debug("Get partition keys for table {}", tableName);
         return _getPartitions(tableName, partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
             partitionsRequest.getSort(), partitionsRequest.getPageable(), true).stream()
             .map(p -> p.getName().getPartitionName()).collect(Collectors.toList());
@@ -255,6 +271,7 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
     @Override
     public List<QualifiedName> listNames(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix, @Nullable final Sort sort, @Nullable final Pageable pageable) {
+        log.debug("Get partition names for table {} with prefix {}", name, prefix);
         return _getPartitions(name, null, null, sort, pageable, true).stream().map(BaseInfo::getName)
             .filter(partitionName -> partitionName.getPartitionName().startsWith(prefix.getPartitionName()))
             .collect(Collectors.toList());
@@ -263,6 +280,7 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
     @Override
     public List<String> getPartitionUris(@Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName tableName, @Nonnull final PartitionListRequest partitionsRequest) {
+        log.debug("Get partition uris for table {}", tableName);
         return _getPartitions(tableName, partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
             partitionsRequest.getSort(), partitionsRequest.getPageable(), true).stream()
             .filter(p -> p.getSerde() != null && p.getSerde().getUri() != null)

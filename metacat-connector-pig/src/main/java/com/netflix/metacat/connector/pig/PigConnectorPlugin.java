@@ -19,11 +19,11 @@
 package com.netflix.metacat.connector.pig;
 
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
-import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
@@ -40,17 +40,13 @@ public class PigConnectorPlugin implements ConnectorPlugin {
     }
 
     @Override
-    public ConnectorFactory create(final String connectorName, final Map<String, String> configuration) {
+    public ConnectorFactory create(@Nonnull final String connectorName,
+        @Nonnull final Map<String, String> configuration) {
         return null;
     }
 
     @Override
     public ConnectorTypeConverter getTypeConverter() {
         return PIG_TYPE_CONVERTER;
-    }
-
-    @Override
-    public ConnectorInfoConverter getInfoConverter() {
-        return null;
     }
 }
