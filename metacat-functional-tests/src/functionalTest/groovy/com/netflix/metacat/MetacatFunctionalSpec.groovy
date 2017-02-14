@@ -39,6 +39,7 @@ import com.netflix.metacat.common.json.MetacatJsonLocator
 import feign.Logger
 import feign.RetryableException
 import org.apache.hadoop.hive.metastore.Warehouse
+import org.joda.time.Instant
 import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Stepwise
@@ -621,7 +622,7 @@ class MetacatFunctionalSpec extends Specification {
         given:
         def name = args.name as QualifiedName
         def escapedName = args.escapedName as QualifiedName
-        def now = new Date(System.currentTimeSeconds() * 1000L as Long)
+        def now = Instant.now().toDate()
         def dataUri = "file:/tmp/${name.catalogName}/${name.databaseName}/${name.tableName}/${escapedName.partitionName}".toString()
         def definitionMetadata = metacatJson.emptyObjectNode().put('part_def_field', Long.MAX_VALUE)
         def dataMetadata = metacatJson.emptyObjectNode().put('part_data_field', Integer.MIN_VALUE)

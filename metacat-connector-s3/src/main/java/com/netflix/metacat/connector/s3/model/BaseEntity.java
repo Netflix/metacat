@@ -20,7 +20,6 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -90,13 +89,19 @@ public class BaseEntity {
      */
     @PrePersist
     public void onInsert() {
-        setCreatedDate(Calendar.getInstance().getTime());
-        setLastUpdatedDate(Instant.now().toDate());
+        if (createdDate == null) {
+            setCreatedDate(Instant.now().toDate());
+        }
+        if (lastUpdatedDate == null) {
+            setLastUpdatedDate(Instant.now().toDate());
+        }
     }
 
     @PreUpdate
     void onUpdate() {
-        setLastUpdatedDate(Instant.now().toDate());
+        if (lastUpdatedDate == null) {
+            setLastUpdatedDate(Instant.now().toDate());
+        }
     }
 
     /**
