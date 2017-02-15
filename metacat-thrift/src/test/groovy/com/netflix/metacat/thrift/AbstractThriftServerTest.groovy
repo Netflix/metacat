@@ -96,7 +96,7 @@ class AbstractThriftServerTest extends Specification {
         given:
         int port = randomPort
         config.thriftServerMaxWorkerThreads >> 1
-        config.thriftServerSocketClientTimeoutInSeconds >> 5
+        config.thriftServerSocketClientTimeoutInSeconds >> 1
         def server = new TestThriftServer(config, port, { TProtocol tProtocol, TProtocol out -> false })
 
         when:
@@ -107,9 +107,9 @@ class AbstractThriftServerTest extends Specification {
 
         when:
         def clientConnections = new AtomicInteger(0)
-        def threads = (0..<500).collect {
+        def threads = (0..<100).collect {
             return new Thread({
-                Thread.sleep(new Random().nextInt(5000))
+                Thread.sleep(new Random().nextInt(500))
                 def socket = new Socket('localhost', port)
                 socket.withStreams { input, output ->
                     int count = clientConnections.incrementAndGet()
@@ -126,7 +126,7 @@ class AbstractThriftServerTest extends Specification {
 
         then:
         notThrown(Throwable)
-        clientConnections.get() > 250
+        clientConnections.get() > 50
 
         when:
         server.stop()
@@ -139,7 +139,7 @@ class AbstractThriftServerTest extends Specification {
         given:
         int port = randomPort
         config.thriftServerMaxWorkerThreads >> 50
-        config.thriftServerSocketClientTimeoutInSeconds >> 5
+        config.thriftServerSocketClientTimeoutInSeconds >> 1
         Class exceptionType = exceptionTypeClass
         def server = new TestThriftServer(config, port, { TProtocol tProtocol, TProtocol out ->
             def e = exceptionType.newInstance()
@@ -154,9 +154,9 @@ class AbstractThriftServerTest extends Specification {
 
         when:
         def clientConnections = new AtomicInteger(0)
-        def threads = (0..<500).collect {
+        def threads = (0..<100).collect {
             return new Thread({
-                Thread.sleep(new Random().nextInt(5000))
+                Thread.sleep(new Random().nextInt(500))
                 def socket = new Socket('localhost', port)
                 socket.withStreams { input, output ->
                     int count = clientConnections.incrementAndGet()
@@ -173,7 +173,7 @@ class AbstractThriftServerTest extends Specification {
 
         then:
         notThrown(Throwable)
-        clientConnections.get() == 500
+        clientConnections.get() == 100
 
         when:
         server.stop()
@@ -217,7 +217,7 @@ class AbstractThriftServerTest extends Specification {
         when:
         def socket = new Socket('localhost', port)
         socket.withStreams { input, output ->
-            Thread.sleep(3 * 1000)
+            Thread.sleep(1500)
         }
 
         then:
