@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.s3.connector;
+package com.netflix.metacat.connector.s3;
 
 import com.facebook.presto.hive.NoAccessControl;
 import com.facebook.presto.spi.ConnectorMetadata;
@@ -20,17 +20,17 @@ import com.facebook.presto.spi.security.ConnectorAccessControl;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import com.netflix.metacat.s3.connector.dao.DatabaseDao;
-import com.netflix.metacat.s3.connector.dao.FieldDao;
-import com.netflix.metacat.s3.connector.dao.PartitionDao;
-import com.netflix.metacat.s3.connector.dao.SourceDao;
-import com.netflix.metacat.s3.connector.dao.TableDao;
-import com.netflix.metacat.s3.connector.dao.impl.DatabaseDaoImpl;
-import com.netflix.metacat.s3.connector.dao.impl.FieldDaoImpl;
-import com.netflix.metacat.s3.connector.dao.impl.PartitionDaoImpl;
-import com.netflix.metacat.s3.connector.dao.impl.SourceDaoImpl;
-import com.netflix.metacat.s3.connector.dao.impl.TableDaoImpl;
-import com.netflix.metacat.s3.connector.util.ConverterUtil;
+import com.netflix.metacat.connector.s3.dao.DatabaseDao;
+import com.netflix.metacat.connector.s3.dao.FieldDao;
+import com.netflix.metacat.connector.s3.dao.PartitionDao;
+import com.netflix.metacat.connector.s3.dao.SourceDao;
+import com.netflix.metacat.connector.s3.dao.TableDao;
+import com.netflix.metacat.connector.s3.dao.impl.DatabaseDaoImpl;
+import com.netflix.metacat.connector.s3.dao.impl.FieldDaoImpl;
+import com.netflix.metacat.connector.s3.dao.impl.PartitionDaoImpl;
+import com.netflix.metacat.connector.s3.dao.impl.SourceDaoImpl;
+import com.netflix.metacat.connector.s3.dao.impl.TableDaoImpl;
+import com.netflix.metacat.connector.s3.util.ConverterUtil;
 
 /**
  * Guice module.

@@ -41,11 +41,6 @@ public interface ConnectorFactory {
     String getName();
 
     /**
-     * Initializes the factory.
-     */
-    void start();
-
-    /**
      * Shuts down the factory.
      */
     void stop();

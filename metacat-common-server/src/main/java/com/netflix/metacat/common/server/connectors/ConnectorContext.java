@@ -17,7 +17,9 @@
  */
 package com.netflix.metacat.common.server.connectors;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * The context of the request to Metacat.
@@ -26,7 +28,9 @@ import lombok.Data;
  * @author tgianos
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ConnectorContext {
-    private final long timestamp;
-    private final String userName;
+    private long timestamp;
+    private String userName;
 }

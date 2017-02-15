@@ -25,7 +25,7 @@ import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 /**
  * This is a default implementation of the NotificationService interface. It doesn't really do anything other than
@@ -43,7 +43,8 @@ public class DefaultNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfPartitionAddition(@NotNull final MetacatSaveTablePartitionPostEvent event) {
+    public void notifyOfPartitionAddition(@Nonnull
+    final MetacatSaveTablePartitionPostEvent event) {
         log.debug(event.toString());
     }
 
@@ -51,7 +52,7 @@ public class DefaultNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfPartitionDeletion(@NotNull final MetacatDeleteTablePartitionPostEvent event) {
+    public void notifyOfPartitionDeletion(@Nonnull final MetacatDeleteTablePartitionPostEvent event) {
         log.debug(event.toString());
     }
 
@@ -59,7 +60,7 @@ public class DefaultNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableCreation(@NotNull final MetacatCreateTablePostEvent event) {
+    public void notifyOfTableCreation(@Nonnull final MetacatCreateTablePostEvent event) {
         log.debug(event.toString());
     }
 
@@ -67,7 +68,7 @@ public class DefaultNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableDeletion(@NotNull final MetacatDeleteTablePostEvent event) {
+    public void notifyOfTableDeletion(@Nonnull final MetacatDeleteTablePostEvent event) {
         log.debug(event.toString());
     }
 
@@ -75,7 +76,7 @@ public class DefaultNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableRename(@NotNull final MetacatRenameTablePostEvent event) {
+    public void notifyOfTableRename(@Nonnull final MetacatRenameTablePostEvent event) {
         log.debug(event.toString());
     }
 
@@ -83,7 +84,7 @@ public class DefaultNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableUpdate(@NotNull final MetacatUpdateTablePostEvent event) {
+    public void notifyOfTableUpdate(@Nonnull final MetacatUpdateTablePostEvent event) {
         log.debug(event.toString());
     }
 }

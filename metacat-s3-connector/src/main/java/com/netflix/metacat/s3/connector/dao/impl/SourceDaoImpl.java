@@ -11,14 +11,14 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.s3.connector.dao.impl;
+package com.netflix.metacat.connector.s3.dao.impl;
 
 import com.facebook.presto.exception.CatalogNotFoundException;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.netflix.metacat.s3.connector.dao.SourceDao;
-import com.netflix.metacat.s3.connector.model.Source;
+import com.netflix.metacat.connector.s3.dao.SourceDao;
+import com.netflix.metacat.connector.s3.model.Source;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

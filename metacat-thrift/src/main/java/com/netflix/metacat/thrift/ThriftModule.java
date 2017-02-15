@@ -22,5 +22,8 @@ public class ThriftModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(CatalogThriftServiceFactory.class).to(CatalogThriftServiceFactoryImpl.class).asEagerSingleton();
+        bind(HiveConverters.class).to(HiveConvertersImpl.class).asEagerSingleton();
+        // This is a bad pattern, but I am doing it as a first step so we can abstract out configuration lookup
+        binder().requestStaticInjection(DateConverters.class);
     }
 }

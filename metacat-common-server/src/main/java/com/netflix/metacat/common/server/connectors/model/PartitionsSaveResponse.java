@@ -13,6 +13,8 @@
 
 package com.netflix.metacat.common.server.connectors.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -23,6 +25,8 @@ import java.util.List;
  * Partition save response.
  */
 @Data
+@Builder
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 public class PartitionsSaveResponse {
     /** List of added partition names. */

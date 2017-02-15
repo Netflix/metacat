@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.main.services.impl;
 
-import com.facebook.presto.Session;
 import com.google.inject.Inject;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
@@ -21,15 +20,15 @@ import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.CatalogMappingDto;
 import com.netflix.metacat.common.dto.CreateCatalogDto;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePreEvent;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.MetacatContextManager;
-import com.netflix.metacat.main.connector.MetacatConnectorManager;
-import com.netflix.metacat.main.presto.metadata.MetadataManager;
+import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.CatalogService;
-import com.netflix.metacat.main.services.SessionProvider;
 import com.netflix.metacat.main.spi.MetacatCatalogConfig;
 
 import javax.annotation.Nonnull;
@@ -41,42 +40,40 @@ import java.util.stream.Collectors;
  * Catalog service implementation.
  */
 public class CatalogServiceImpl implements CatalogService {
-    private final MetacatConnectorManager metacatConnectorManager;
-    private final MetadataManager metadataManager;
-    private final SessionProvider sessionProvider;
+    private final ConnectorManager connectorManager;
     private final UserMetadataService userMetadataService;
     private final MetacatEventBus eventBus;
+    private final ConverterUtil converterUtil;
 
     /**
      * Constructor.
-     * @param metacatConnectorManager connector manager
-     * @param metadataManager metadata manager
-     * @param sessionProvider session provider
+     * @param connectorManager connector manager
      * @param userMetadataService user metadata service
      * @param eventBus Internal event bus
+     * @param converterUtil utility to convert to/from Dto to connector resources
      */
     @Inject
-    public CatalogServiceImpl(final MetacatConnectorManager metacatConnectorManager,
-        final MetadataManager metadataManager, final SessionProvider sessionProvider,
-        final UserMetadataService userMetadataService, final MetacatEventBus eventBus) {
-        this.metacatConnectorManager = metacatConnectorManager;
-        this.metadataManager = metadataManager;
-        this.sessionProvider = sessionProvider;
+    public CatalogServiceImpl(final ConnectorManager connectorManager,
+        final UserMetadataService userMetadataService, final MetacatEventBus eventBus,
+        final ConverterUtil converterUtil) {
+        this.connectorManager = connectorManager;
         this.userMetadataService = userMetadataService;
         this.eventBus = eventBus;
+        this.converterUtil = converterUtil;
     }
 
     @Nonnull
     @Override
     public CatalogDto get(@Nonnull final QualifiedName name) {
-        final Session session = sessionProvider.getSession(name);
-        final MetacatCatalogConfig config = metacatConnectorManager.getCatalogConfig(name);
+        final MetacatCatalogConfig config = connectorManager.getCatalogConfig(name);
 
         final CatalogDto result = new CatalogDto();
         result.setName(name);
         result.setType(config.getType());
-        result.setDatabases(metadataManager.listSchemaNames(session, name.getCatalogName())
-            .stream()
+        final ConnectorContext context = converterUtil.toConnectorContext(MetacatContextManager.getContext());
+        result.setDatabases(
+            connectorManager.getDatabaseService(name.getCatalogName()).listNames(context, name, null, null, null)
+            .stream().map(QualifiedName::getDatabaseName)
             .filter(s -> config.getSchemaBlacklist().isEmpty() || !config.getSchemaBlacklist().contains(s))
             .filter(s -> config.getSchemaWhitelist().isEmpty() || config.getSchemaWhitelist().contains(s))
             .sorted(String.CASE_INSENSITIVE_ORDER)
@@ -89,7 +86,7 @@ public class CatalogServiceImpl implements CatalogService {
     @Nonnull
     @Override
     public List<CatalogMappingDto> getCatalogNames() {
-        final Map<String, MetacatCatalogConfig> catalogs = metacatConnectorManager.getCatalogs();
+        final Map<String, MetacatCatalogConfig> catalogs = connectorManager.getCatalogs();
         if (catalogs.isEmpty()) {
             throw new MetacatNotFoundException("Unable to locate any catalogs");
         }
@@ -101,10 +98,10 @@ public class CatalogServiceImpl implements CatalogService {
 
     @Override
     public void update(@Nonnull final QualifiedName name, @Nonnull final CreateCatalogDto createCatalogDto) {
-        final Session session = sessionProvider.getSession(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext));
-        userMetadataService.saveMetadata(session.getUser(), createCatalogDto, true);
+        connectorManager.getCatalogConfig(name);
+        userMetadataService.saveMetadata(metacatRequestContext.getUserName(), createCatalogDto, true);
         eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext));
     }
 }

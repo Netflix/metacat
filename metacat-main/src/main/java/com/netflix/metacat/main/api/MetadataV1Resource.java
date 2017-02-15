@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.main.api;
 
-import com.facebook.presto.spi.NotFoundException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
@@ -25,6 +24,7 @@ import com.netflix.metacat.common.dto.DataMetadataGetRequestDto;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
 import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.SortOrder;
+import com.netflix.metacat.common.server.exception.NotFoundException;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.main.services.MetacatService;

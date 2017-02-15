@@ -11,11 +11,11 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.s3.connector.dao.impl;
+package com.netflix.metacat.connector.s3.dao.impl;
 
 import com.google.common.collect.Lists;
-import com.netflix.metacat.s3.connector.dao.TableDao;
-import com.netflix.metacat.s3.connector.model.Table;
+import com.netflix.metacat.connector.s3.dao.TableDao;
+import com.netflix.metacat.connector.s3.model.Table;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

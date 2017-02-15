@@ -13,9 +13,9 @@
 
 package com.netflix.metacat.thrift;
 
-import com.facebook.presto.hive.$internal.com.facebook.fb303.FacebookBase;
-import com.facebook.presto.hive.$internal.com.facebook.fb303.FacebookService;
-import com.facebook.presto.hive.$internal.com.facebook.fb303.fb_status;
+import com.facebook.fb303.FacebookBase;
+import com.facebook.fb303.FacebookService;
+import com.facebook.fb303.fb_status;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -41,8 +41,6 @@ import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.monitoring.TimerWrapper;
 import com.netflix.metacat.common.server.Config;
-import com.netflix.metacat.converters.HiveConverters;
-import com.netflix.metacat.converters.TypeConverterProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.Warehouse;
@@ -142,9 +140,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     private final Config config;
     private final HiveConverters hiveConverters;
     private final PartitionV1 partV1;
-    //    private final TypeConverterProvider typeConverterProvider;
     private final MetacatV1 v1;
-    //    private final PartitionExpressionProxy partitionExpressionProxy = new PartitionExpressionForMetastore();
     private final Map<String, List<PrivilegeGrantInfo>> defaultRolesPrivilegeSet =
         Maps.newHashMap(ImmutableMap.of("users",
             Lists.newArrayList(new PrivilegeGrantInfo("ALL", 0, "hadoop", PrincipalType.ROLE, true))));
@@ -152,7 +148,6 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     /**
      * Constructor.
      * @param config config
-     * @param typeConverterProvider provider
      * @param hiveConverters hive converter
      * @param metacatV1 Metacat V1 resource
      * @param partitionV1 Partition V1 resource
@@ -160,7 +155,6 @@ public class CatalogThriftHiveMetastore extends FacebookBase
      */
     public CatalogThriftHiveMetastore(
         final Config config,
-        final TypeConverterProvider typeConverterProvider,
         final HiveConverters hiveConverters,
         final MetacatV1 metacatV1,
         final PartitionV1 partitionV1,
@@ -169,8 +163,6 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         super("CatalogThriftHiveMetastore");
 
         this.config = Preconditions.checkNotNull(config, "config is null");
-        //        this.typeConverterProvider = checkNotNull(typeConverterProvider, "type converters is null");
-        Preconditions.checkNotNull(typeConverterProvider, "type converters is null");
         this.hiveConverters = Preconditions.checkNotNull(hiveConverters, "hive converters is null");
         this.v1 = Preconditions.checkNotNull(metacatV1, "metacat api is null");
         this.partV1 = Preconditions.checkNotNull(partitionV1, "partition api is null");

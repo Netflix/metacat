@@ -13,14 +13,13 @@
 
 package com.netflix.metacat.main.api;
 
-import com.facebook.presto.spi.SchemaTableName;
-import com.facebook.presto.spi.TableNotFoundException;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.api.TagV1;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
+import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.common.usermetadata.TagService;
 import com.netflix.metacat.common.util.MetacatContextManager;
 import com.netflix.metacat.main.services.TableService;
@@ -89,7 +88,7 @@ public class TagV1Resource implements TagV1 {
             RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
         return RequestWrapper.requestWrapper(name, "TagV1Resource.setTableTags", () -> {
             if (!tableService.exists(name)) {
-                throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
+                throw new TableNotFoundException(name);
             }
             final TableDto oldTable = this.tableService
                 .get(name, true)
@@ -117,7 +116,7 @@ public class TagV1Resource implements TagV1 {
             if (!tableService.exists(name)) {
                 // Delete tags if exists
                 tagService.delete(name, false);
-                throw new TableNotFoundException(new SchemaTableName(name.getDatabaseName(), name.getTableName()));
+                throw new TableNotFoundException(name);
             }
             final TableDto oldTable = this.tableService
                 .get(name, true)

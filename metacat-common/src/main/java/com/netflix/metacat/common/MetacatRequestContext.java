@@ -54,10 +54,5 @@ public class MetacatRequestContext {
     private final String clientAppName;
     private final String clientId;
     private final String jobId;
-    private final DataTypeContext dataTypeContext;
-
-    /**
-     * Data type context.
-     */
-    public enum DataTypeContext { hive, pig, presto }
+    private final String dataTypeContext;
 }

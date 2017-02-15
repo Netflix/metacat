@@ -33,6 +33,13 @@ import java.util.Map;
 public final class PartitionInfo extends BaseInfo {
     private StorageInfo serde;
 
+    /**
+     * Constructor.
+     * @param name name of the partition
+     * @param auditInfo audit information of the partition
+     * @param metadata metadata of the partition.
+     * @param serde storage info of the partition
+     */
     @Builder
     private PartitionInfo(final QualifiedName name, final AuditInfo auditInfo,
                          final Map<String, String> metadata, final StorageInfo serde) {

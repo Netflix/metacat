@@ -45,7 +45,7 @@ import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.main.services.notifications.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.util.UUID;
@@ -76,11 +76,11 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * @param retry             The retry factory to use. Should already be configured
      */
     public SNSNotificationServiceImpl(
-        @NotNull final AmazonSNSClient client,
-        @NotNull @Size(min = 1) final String tableTopicArn,
-        @NotNull @Size(min = 1) final String partitionTopicArn,
-        @NotNull final ObjectMapper mapper,
-        @NotNull final Retryer<PublishResult> retry
+        @Nonnull final AmazonSNSClient client,
+        @Nonnull @Size(min = 1) final String tableTopicArn,
+        @Nonnull @Size(min = 1) final String partitionTopicArn,
+        @Nonnull final ObjectMapper mapper,
+        @Nonnull final Retryer<PublishResult> retry
     ) {
         this.client = client;
         this.tableTopicArn = tableTopicArn;
@@ -93,7 +93,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfPartitionAddition(@NotNull final MetacatSaveTablePartitionPostEvent event) {
+    public void notifyOfPartitionAddition(@Nonnull final MetacatSaveTablePartitionPostEvent event) {
         try {
             final String name = event.getName().toString();
             final long timestamp = event.getRequestContext().getTimestamp();
@@ -136,7 +136,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfPartitionDeletion(@NotNull final MetacatDeleteTablePartitionPostEvent event) {
+    public void notifyOfPartitionDeletion(@Nonnull final MetacatDeleteTablePartitionPostEvent event) {
         try {
             final String name = event.getName().toString();
             final long timestamp = event.getRequestContext().getTimestamp();
@@ -177,7 +177,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableCreation(@NotNull final MetacatCreateTablePostEvent event) {
+    public void notifyOfTableCreation(@Nonnull final MetacatCreateTablePostEvent event) {
         try {
             final CreateTableMessage message = new CreateTableMessage(
                 UUID.randomUUID().toString(),
@@ -198,7 +198,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableDeletion(@NotNull final MetacatDeleteTablePostEvent event) {
+    public void notifyOfTableDeletion(@Nonnull final MetacatDeleteTablePostEvent event) {
         try {
             final DeleteTableMessage message = new DeleteTableMessage(
                 UUID.randomUUID().toString(),
@@ -219,7 +219,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableRename(@NotNull final MetacatRenameTablePostEvent event) {
+    public void notifyOfTableRename(@Nonnull final MetacatRenameTablePostEvent event) {
         try {
             final UpdateTableMessage message = this.createUpdateTableMessage(
                 UUID.randomUUID().toString(),
@@ -241,7 +241,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableUpdate(@NotNull final MetacatUpdateTablePostEvent event) {
+    public void notifyOfTableUpdate(@Nonnull final MetacatUpdateTablePostEvent event) {
         try {
             final UpdateTableMessage message = this.createUpdateTableMessage(
                 UUID.randomUUID().toString(),

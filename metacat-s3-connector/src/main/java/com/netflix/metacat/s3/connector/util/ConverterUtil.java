@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.s3.connector.util;
+package com.netflix.metacat.connector.s3.util;
 
 import com.facebook.presto.spi.AuditInfo;
 import com.facebook.presto.spi.ColumnDetailMetadata;
@@ -29,12 +29,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.converters.impl.PigTypeConverter;
-import com.netflix.metacat.s3.connector.model.Field;
-import com.netflix.metacat.s3.connector.model.Info;
-import com.netflix.metacat.s3.connector.model.Location;
-import com.netflix.metacat.s3.connector.model.Partition;
-import com.netflix.metacat.s3.connector.model.Schema;
-import com.netflix.metacat.s3.connector.model.Table;
+import com.netflix.metacat.connector.s3.model.Field;
+import com.netflix.metacat.connector.s3.model.Info;
+import com.netflix.metacat.connector.s3.model.Location;
+import com.netflix.metacat.connector.s3.model.Partition;
+import com.netflix.metacat.connector.s3.model.Schema;
+import com.netflix.metacat.connector.s3.model.Table;
 
 import javax.inject.Inject;
 import java.util.Comparator;

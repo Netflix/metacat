@@ -12,11 +12,7 @@
  */
 
 dependencies {
-    compile project(':metacat-converters')
-    compile project(':metacat-hive-connector')
-    compile project(':metacat-mysql-connector')
-    compile project(':metacat-postgres-connector')
-    compile project(':metacat-s3-connector')
+    compile project(':metacat-connector-s3')
     compile project(':metacat-common-server')
     compile project(':metacat-thrift')
     testCompile project(':metacat-user-metadata-mysql')
@@ -27,14 +23,11 @@ dependencies {
         exclude module: 'guava'
     }
 
-    compile "com.facebook.presto:presto-main:${presto_version}"
-
     compile "com.google.inject:guice:${guice_version}"
     compile "com.google.inject.extensions:guice-persist:${guice_version}"
     compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
     compile "com.google.inject.extensions:guice-servlet:${guice_version}"
-
-    testCompile "com.facebook.presto:presto-example-http:${presto_version}"
+    compile "javax.validation:validation-api:1.1.0.Final"
     testCompile 'io.airlift:testing-mysql-server:0.1'
     testCompile project(':metacat-common').sourceSets.test.output
 }

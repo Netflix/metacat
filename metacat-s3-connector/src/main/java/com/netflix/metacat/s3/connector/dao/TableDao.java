@@ -11,9 +11,9 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.s3.connector.dao;
+package com.netflix.metacat.connector.s3.dao;
 
-import com.netflix.metacat.s3.connector.model.Table;
+import com.netflix.metacat.connector.s3.model.Table;
 
 import java.util.List;
 

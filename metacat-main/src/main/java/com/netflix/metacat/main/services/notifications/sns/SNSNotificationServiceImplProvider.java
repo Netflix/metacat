@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -57,7 +57,7 @@ public class SNSNotificationServiceImplProvider implements Provider<Notification
      * @param mapper The JSON object mapper to use
      */
     @Inject
-    public SNSNotificationServiceImplProvider(@NotNull final Config config, @NotNull final ObjectMapper mapper) {
+    public SNSNotificationServiceImplProvider(@Nonnull final Config config, @Nonnull final ObjectMapper mapper) {
         this.config = config;
         this.mapper = mapper;
     }

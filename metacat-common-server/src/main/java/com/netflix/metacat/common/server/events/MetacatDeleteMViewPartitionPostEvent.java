@@ -23,7 +23,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,11 +44,11 @@ public class MetacatDeleteMViewPartitionPostEvent extends MetacatEvent {
      * @param partitionIds partition names
      */
     public MetacatDeleteMViewPartitionPostEvent(
-        @NotNull
+        @Nonnull
         final QualifiedName name,
-        @NotNull
+        @Nonnull
         final MetacatRequestContext requestContext,
-        @NotNull
+        @Nonnull
         final List<String> partitionIds
     ) {
         super(name, requestContext);

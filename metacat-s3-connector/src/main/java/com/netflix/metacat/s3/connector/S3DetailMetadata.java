@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.s3.connector;
+package com.netflix.metacat.connector.s3;
 
 import com.facebook.presto.exception.SchemaAlreadyExistsException;
 import com.facebook.presto.hive.HdfsEnvironment;
@@ -52,17 +52,17 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.persist.Transactional;
-import com.netflix.metacat.s3.connector.dao.DatabaseDao;
-import com.netflix.metacat.s3.connector.dao.FieldDao;
-import com.netflix.metacat.s3.connector.dao.SourceDao;
-import com.netflix.metacat.s3.connector.dao.TableDao;
-import com.netflix.metacat.s3.connector.model.Database;
-import com.netflix.metacat.s3.connector.model.Field;
-import com.netflix.metacat.s3.connector.model.Info;
-import com.netflix.metacat.s3.connector.model.Location;
-import com.netflix.metacat.s3.connector.model.Schema;
-import com.netflix.metacat.s3.connector.model.Table;
-import com.netflix.metacat.s3.connector.util.ConverterUtil;
+import com.netflix.metacat.connector.s3.dao.DatabaseDao;
+import com.netflix.metacat.connector.s3.dao.FieldDao;
+import com.netflix.metacat.connector.s3.dao.SourceDao;
+import com.netflix.metacat.connector.s3.dao.TableDao;
+import com.netflix.metacat.connector.s3.model.Database;
+import com.netflix.metacat.connector.s3.model.Field;
+import com.netflix.metacat.connector.s3.model.Info;
+import com.netflix.metacat.connector.s3.model.Location;
+import com.netflix.metacat.connector.s3.model.Schema;
+import com.netflix.metacat.connector.s3.model.Table;
+import com.netflix.metacat.connector.s3.util.ConverterUtil;
 import io.airlift.slice.Slice;
 import org.apache.hadoop.fs.Path;
 

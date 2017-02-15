@@ -13,10 +13,6 @@
 
 package com.netflix.metacat.main.services.search;
 
-import com.facebook.presto.spi.Pageable;
-import com.facebook.presto.spi.SchemaNotFoundException;
-import com.facebook.presto.spi.Sort;
-import com.facebook.presto.spi.SortOrder;
 import com.google.common.base.Functions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -34,13 +30,17 @@ import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.CatalogMappingDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.HasMetadata;
+import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
+import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.monitoring.TimerWrapper;
 import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
+import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.usermetadata.TagService;
 import com.netflix.metacat.common.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.util.MetacatContextManager;
@@ -176,7 +176,7 @@ public class ElasticSearchMetacatRefresh {
             final List<ListenableFuture<Void>> indexFutures = Lists.newArrayList();
             int offset = 0;
             int count;
-            Sort sort;
+            final Sort sort;
             if ("s3".equals(tableName.getCatalogName()) || "aegisthus".equals(tableName.getCatalogName())) {
                 sort = new Sort("id", SortOrder.ASC);
             } else {
@@ -339,7 +339,7 @@ public class ElasticSearchMetacatRefresh {
                         if (dto == null) {
                             result = true;
                         }
-                    } catch (SchemaNotFoundException ignored) {
+                    } catch (DatabaseNotFoundException ignored) {
                         result = true;
                     } catch (Exception ignored) {
                     }

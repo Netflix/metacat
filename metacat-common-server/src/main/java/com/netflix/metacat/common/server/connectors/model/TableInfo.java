@@ -33,6 +33,14 @@ public class TableInfo extends BaseInfo {
     private List<FieldInfo> fields;
     private StorageInfo serde;
 
+    /**
+     * Constructor.
+     * @param name name of the table
+     * @param auditInfo audit information of the table
+     * @param metadata metadata of the table.
+     * @param fields list of columns
+     * @param serde storage informations
+     */
     @Builder
     private TableInfo(final QualifiedName name, final AuditInfo auditInfo,
                       final Map<String, String> metadata, final List<FieldInfo> fields, final StorageInfo serde) {

@@ -101,14 +101,12 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * Returns all the partition names referring to the given <code>uris</code>.
      *
      * @param context The Metacat request context
-     * @param tableName tablename
      * @param uris           locations
      * @param prefixSearch   if true, we look for tables whose location starts with the given <code>uri</code>
      * @return map of uri to list of partition names
      */
     default Map<String, List<QualifiedName>> getPartitionNames(
         @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName tableName,
         @Nonnull final List<String> uris,
         final boolean prefixSearch
     ) {
