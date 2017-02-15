@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 /**
  * Pre table update event.
@@ -45,14 +45,10 @@ public class MetacatUpdateTablePreEvent extends MetacatEvent {
      * @param currentTable new table info
      */
     public MetacatUpdateTablePreEvent(
-        @NotNull
-        final QualifiedName name,
-        @NotNull
-        final MetacatRequestContext requestContext,
-        @NotNull
-        final TableDto oldTable,
-        @NotNull
-        final TableDto currentTable
+        @Nonnull final QualifiedName name,
+        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final TableDto oldTable,
+        @Nonnull final TableDto currentTable
     ) {
         super(name, requestContext);
         this.oldTable = oldTable;

@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.main.services;
 
-import com.facebook.presto.metadata.TableHandle;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.TableDto;
@@ -53,13 +52,6 @@ public interface TableService extends MetacatService<TableDto> {
      */
     Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeInfo,
         boolean includeDefinitionMetadata, boolean includeDataMetadata);
-
-    /**
-     * Returns the table handle.
-     * @param name qualified name of the table
-     * @return Returns the table handle with the given name
-     */
-    Optional<TableHandle> getTableHandle(@Nonnull QualifiedName name);
 
     /**
      * Rename the table from <code>oldName</code> to <code>newName</code>.

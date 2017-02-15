@@ -80,8 +80,8 @@ public class ArchaiusConfigImpl implements Config {
      * @param factory property factory
      */
     public ArchaiusConfigImpl(final DynamicPropertyFactory factory) {
-        this.defaultTypeConverter = factory
-            .getStringProperty("metacat.type.converter", "com.netflix.metacat.converters.impl.PrestoTypeConverter");
+        this.defaultTypeConverter = factory.getStringProperty("metacat.type.converter",
+            "com.netflix.metacat.common.server.converter.DefaultTypeConverter");
         this.isElasticSearchEnabled = factory.getBooleanProperty("metacat.elacticsearch.enabled", true);
         this.elasticSearchIndexName = factory.getStringProperty("metacat.elacticsearch.index.name", "metacat");
         this.elasticSearchMergeIndexName =

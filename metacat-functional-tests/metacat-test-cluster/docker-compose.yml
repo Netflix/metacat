@@ -35,7 +35,6 @@ services:
             - ./resources/logging.properties:/usr/local/tomcat/conf/logging.properties
         environment:
             VIRTUAL_HOST: metacat.docker
-            TOMCAT_OPTS: -Dlog4j.configuration=metacat-functional-test.log4j.properties
             JAVA_OPTS: '-ea
                 -Xmx2G
                 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
@@ -46,7 +45,6 @@ services:
                 -Dnetflix.appinfo.vipAddress=
                 -Dnetflix.appinfo.metadata.route53NamePrefix=
                 -Dnetflix.appinfo.metadata.enableRoute53=false
-                -Dmetacat.elacticsearch.cluster.name=
                 -Dmetacat.plugin.config.location=/etc/metacat/catalog
                 -Dmetacat.usermetadata.config.location=/etc/metacat/usermetadata.properties'
         labels:

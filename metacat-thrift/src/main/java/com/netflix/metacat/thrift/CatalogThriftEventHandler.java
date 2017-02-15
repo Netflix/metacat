@@ -44,7 +44,7 @@ public class CatalogThriftEventHandler implements TServerEventHandler {
             null,
             clientHost,
             null,
-            MetacatRequestContext.DataTypeContext.hive,
+            "hive",
             requestThreadId
         );
         MetacatContextManager.setContext(context);
@@ -86,7 +86,7 @@ public class CatalogThriftEventHandler implements TServerEventHandler {
             final String clientAppName,
             final String clientId,
             final String jobId,
-            final DataTypeContext dataTypeContext,
+            final String dataTypeContext,
             final long requestThreadId
         ) {
             super(userName, clientAppName, clientId, jobId, dataTypeContext);

@@ -45,6 +45,12 @@ subprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
+    configurations {
+        all*.exclude module: 'jcl-over-slf4j'
+        all*.exclude module: 'log4j-over-slf4j'
+        all*.exclude module: 'slf4j-jdk14'
+    }
+
     dependencies {
         compileOnly "org.projectlombok:lombok:1.16.10"
         testCompile 'org.spockframework:spock-core:1.1-groovy-2.4-rc-3'

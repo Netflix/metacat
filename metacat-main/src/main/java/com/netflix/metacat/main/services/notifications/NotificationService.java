@@ -17,7 +17,6 @@
  */
 package com.netflix.metacat.main.services.notifications;
 
-import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
@@ -26,7 +25,7 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 /**
  * Interface for services which will provide external notifications based on internal events. The structure and
@@ -43,8 +42,7 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a partition has been successfully added
      */
     @Subscribe
-    @AllowConcurrentEvents
-    void notifyOfPartitionAddition(@NotNull final MetacatSaveTablePartitionPostEvent event);
+    void notifyOfPartitionAddition(@Nonnull final MetacatSaveTablePartitionPostEvent event);
 
     /**
      * Publish information about a partition being deleted.
@@ -52,8 +50,7 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a partition has been successfully deleted
      */
     @Subscribe
-    @AllowConcurrentEvents
-    void notifyOfPartitionDeletion(@NotNull final MetacatDeleteTablePartitionPostEvent event);
+    void notifyOfPartitionDeletion(@Nonnull final MetacatDeleteTablePartitionPostEvent event);
 
     /**
      * Publish information about a table being created.
@@ -61,8 +58,7 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a table has been successfully created
      */
     @Subscribe
-    @AllowConcurrentEvents
-    void notifyOfTableCreation(@NotNull final MetacatCreateTablePostEvent event);
+    void notifyOfTableCreation(@Nonnull final MetacatCreateTablePostEvent event);
 
     /**
      * Publish information about a table being deleted.
@@ -70,8 +66,7 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a table has been successfully deleted
      */
     @Subscribe
-    @AllowConcurrentEvents
-    void notifyOfTableDeletion(@NotNull final MetacatDeleteTablePostEvent event);
+    void notifyOfTableDeletion(@Nonnull final MetacatDeleteTablePostEvent event);
 
     /**
      * Publish information about a table being renamed.
@@ -79,8 +74,7 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a table has been successfully renamed
      */
     @Subscribe
-    @AllowConcurrentEvents
-    void notifyOfTableRename(@NotNull final MetacatRenameTablePostEvent event);
+    void notifyOfTableRename(@Nonnull final MetacatRenameTablePostEvent event);
 
     /**
      * Publish information about a table being updated.
@@ -88,6 +82,5 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a table has been successfully updated
      */
     @Subscribe
-    @AllowConcurrentEvents
-    void notifyOfTableUpdate(@NotNull final MetacatUpdateTablePostEvent event);
+    void notifyOfTableUpdate(@Nonnull final MetacatUpdateTablePostEvent event);
 }

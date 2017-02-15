@@ -13,9 +13,6 @@
 
 package com.netflix.metacat.main.manager
 
-import com.facebook.presto.Session
-import com.facebook.presto.metadata.SessionPropertyManager
-import com.facebook.presto.spi.security.Identity
 import com.google.inject.Inject
 import com.netflix.metacat.main.init.MetacatInitializationService
 import com.netflix.metacat.main.init.MetacatServletModule
@@ -26,15 +23,11 @@ import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
-import java.nio.file.Files
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
 import java.sql.Statement
 import java.util.concurrent.atomic.AtomicBoolean
-
-import static com.facebook.presto.spi.type.TimeZoneKey.UTC_KEY
-import static java.util.Locale.ENGLISH
 
 @UseModules([
         MetacatServletModule.class,
@@ -42,41 +35,6 @@ import static java.util.Locale.ENGLISH
 ])
 @Ignore
 class BaseSpec extends Specification {
-
-    public static final Session TEST_SESSION = Session.builder(new SessionPropertyManager())
-            .setIdentity(new Identity("user", Optional.empty()))
-            .setSource("source")
-            .setCatalog("example")
-            .setSchema("tiny")
-            .setTimeZoneKey(UTC_KEY)
-            .setLocale(ENGLISH)
-            .setRemoteUserAddress("address")
-            .setUserAgent("agent")
-            .build();
-    public static final Session TEST_MYSQL_SESSION = Session.builder(new SessionPropertyManager())
-            .setIdentity(new Identity("user", Optional.empty()))
-            .setSource("test")
-            .setCatalog("mysql")
-            .setSchema("metacat")
-            .setTimeZoneKey(UTC_KEY)
-            .setLocale(ENGLISH)
-            .build();
-    public static final Session TEST_HIVE_SESSION = Session.builder(new SessionPropertyManager())
-            .setIdentity(new Identity("user", Optional.empty()))
-            .setSource("test")
-            .setCatalog("hive")
-            .setSchema("metacat")
-            .setTimeZoneKey(UTC_KEY)
-            .setLocale(ENGLISH)
-            .build();
-    public static final Session TEST_FRANKLIN_SESSION = Session.builder(new SessionPropertyManager())
-            .setIdentity(new Identity("user", Optional.empty()))
-            .setSource("test")
-            .setCatalog("franklin")
-            .setSchema("metacat")
-            .setTimeZoneKey(UTC_KEY)
-            .setLocale(ENGLISH)
-            .build();
     private static final AtomicBoolean initialized = new AtomicBoolean();
     @Inject
     @Shared

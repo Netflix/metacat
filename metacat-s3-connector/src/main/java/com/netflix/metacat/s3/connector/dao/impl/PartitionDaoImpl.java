@@ -11,14 +11,14 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.s3.connector.dao.impl;
+package com.netflix.metacat.connector.s3.dao.impl;
 
 import com.facebook.presto.spi.Pageable;
 import com.facebook.presto.spi.Sort;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.netflix.metacat.s3.connector.dao.PartitionDao;
-import com.netflix.metacat.s3.connector.model.Partition;
+import com.netflix.metacat.connector.s3.dao.PartitionDao;
+import com.netflix.metacat.connector.s3.model.Partition;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

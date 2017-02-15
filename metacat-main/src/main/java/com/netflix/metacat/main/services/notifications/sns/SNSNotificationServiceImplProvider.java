@@ -18,7 +18,14 @@
 package com.netflix.metacat.main.services.notifications.sns;
 
 import com.amazonaws.services.sns.AmazonSNSClient;
+import com.amazonaws.services.sns.model.InternalErrorException;
+import com.amazonaws.services.sns.model.PublishResult;
+import com.amazonaws.services.sns.model.ThrottledException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
+import com.github.rholder.retry.WaitStrategies;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import com.netflix.metacat.common.server.Config;
@@ -28,7 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Provides an instance of SNSNotificationServiceImpl if conditions are right.
@@ -49,7 +57,7 @@ public class SNSNotificationServiceImplProvider implements Provider<Notification
      * @param mapper The JSON object mapper to use
      */
     @Inject
-    public SNSNotificationServiceImplProvider(@NotNull final Config config, @NotNull final ObjectMapper mapper) {
+    public SNSNotificationServiceImplProvider(@Nonnull final Config config, @Nonnull final ObjectMapper mapper) {
         this.config = config;
         this.mapper = mapper;
     }
@@ -74,7 +82,13 @@ public class SNSNotificationServiceImplProvider implements Provider<Notification
             }
 
             log.info("SNS notifications are enabled. Providing SNSNotificationServiceImpl implementation.");
-            return new SNSNotificationServiceImpl(new AmazonSNSClient(), tableArn, partitionArn, this.mapper);
+            final Retryer<PublishResult> retry = RetryerBuilder.<PublishResult>newBuilder()
+                .retryIfExceptionOfType(InternalErrorException.class)
+                .retryIfExceptionOfType(ThrottledException.class)
+                .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.SECONDS, 30, TimeUnit.SECONDS))
+                .withStopStrategy(StopStrategies.stopAfterAttempt(3))
+                .build();
+            return new SNSNotificationServiceImpl(new AmazonSNSClient(), tableArn, partitionArn, this.mapper, retry);
         } else {
             log.info("SNS notifications are not enabled. Ignoring and providing default implementation.");
             return new DefaultNotificationServiceImpl();

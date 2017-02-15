@@ -11,13 +11,13 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.s3.connector.dao.impl
+package com.netflix.metacat.connector.s3.dao.impl
 
-import com.netflix.metacat.s3.connector.BaseSpec
-import com.netflix.metacat.s3.connector.dao.DatabaseDao
-import com.netflix.metacat.s3.connector.dao.SourceDao
-import com.netflix.metacat.s3.connector.model.Database
-import com.netflix.metacat.s3.connector.model.Source
+import com.netflix.metacat.connector.s3.BaseSpec
+import com.netflix.metacat.connector.s3.dao.DatabaseDao
+import com.netflix.metacat.connector.s3.dao.SourceDao
+import com.netflix.metacat.connector.s3.model.Database
+import com.netflix.metacat.connector.s3.model.Source
 
 import javax.inject.Inject
 import javax.persistence.EntityManager

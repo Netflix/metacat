@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 /**
  * Post table rename event.
@@ -45,14 +45,10 @@ public class MetacatRenameTablePostEvent extends MetacatEvent {
      * @param currentTable   The new representation of the table
      */
     public MetacatRenameTablePostEvent(
-        @NotNull
-        final QualifiedName name,
-        @NotNull
-        final MetacatRequestContext requestContext,
-        @NotNull
-        final TableDto oldTable,
-        @NotNull
-        final TableDto currentTable
+        @Nonnull final QualifiedName name,
+        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final TableDto oldTable,
+        @Nonnull final TableDto currentTable
     ) {
         super(name, requestContext);
         this.oldTable = oldTable;

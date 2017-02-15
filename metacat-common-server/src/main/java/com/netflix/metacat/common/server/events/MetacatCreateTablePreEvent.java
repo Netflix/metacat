@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 /**
  * Pre create table event.
@@ -43,12 +43,9 @@ public class MetacatCreateTablePreEvent extends MetacatEvent {
      * @param table table info
      */
     public MetacatCreateTablePreEvent(
-        @NotNull
-        final QualifiedName name,
-        @NotNull
-        final MetacatRequestContext requestContext,
-        @NotNull
-        final TableDto table
+        @Nonnull final QualifiedName name,
+        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull final TableDto table
     ) {
         super(name, requestContext);
         this.table = table;

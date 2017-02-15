@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.s3.connector;
+package com.netflix.metacat.connector.s3;
 
 import com.facebook.presto.hive.HiveConnectorId;
 import com.facebook.presto.hive.HiveUtil;
@@ -44,13 +44,13 @@ import com.netflix.metacat.common.partition.util.FilterPartition;
 import com.netflix.metacat.common.partition.util.PartitionUtil;
 import com.netflix.metacat.common.partition.visitor.PartitionKeyParserEval;
 import com.netflix.metacat.common.partition.visitor.PartitionParamParserEval;
-import com.netflix.metacat.s3.connector.dao.PartitionDao;
-import com.netflix.metacat.s3.connector.dao.TableDao;
-import com.netflix.metacat.s3.connector.model.Info;
-import com.netflix.metacat.s3.connector.model.Location;
-import com.netflix.metacat.s3.connector.model.Partition;
-import com.netflix.metacat.s3.connector.model.Table;
-import com.netflix.metacat.s3.connector.util.ConverterUtil;
+import com.netflix.metacat.connector.s3.dao.PartitionDao;
+import com.netflix.metacat.connector.s3.dao.TableDao;
+import com.netflix.metacat.connector.s3.model.Info;
+import com.netflix.metacat.connector.s3.model.Location;
+import com.netflix.metacat.connector.s3.model.Partition;
+import com.netflix.metacat.connector.s3.model.Table;
+import com.netflix.metacat.connector.s3.util.ConverterUtil;
 
 import javax.inject.Inject;
 import java.io.StringReader;
