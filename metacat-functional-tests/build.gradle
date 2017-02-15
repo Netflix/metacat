@@ -68,6 +68,10 @@ task createWarDockerfile() {
     outputs.file ext.destFile
 
     doLast {
+        copy {
+            from 'build/resources/functionalTest/logging.properties'
+            into 'build/metacat-war-expanded'
+        }
         ext.destFile.text = """
 FROM tomcat:8.0-jre8
 MAINTAINER dwatson@netflix.com
@@ -75,6 +79,7 @@ VOLUME ["/usr/local/tomcat/logs", "/etc/metacat"]
 EXPOSE 7001 7101 12001 12002
 RUN rm -rf /usr/local/tomcat/webapps
 COPY ./ROOT /usr/local/tomcat/webapps/ROOT
+COPY ./logging.properties /usr/local/tomcat/conf/
 """.trim()
     }
 }
