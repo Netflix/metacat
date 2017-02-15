@@ -15,6 +15,7 @@ package com.netflix.metacat.connector.s3;
 
 import com.google.inject.Binder;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import com.google.inject.name.Names;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
@@ -59,9 +60,9 @@ public class S3Module implements Module {
         binder.bind(String.class).annotatedWith(Names.named("catalogName")).toInstance(catalogName);
         binder.bind(ConnectorInfoConverter.class).toInstance(infoConverter);
         binder.bind(S3ConnectorInfoConverter.class).toInstance(infoConverter);
-        binder.bind(ConnectorDatabaseService.class).to(S3ConnectorDatabaseService.class);
-        binder.bind(ConnectorTableService.class).to(S3ConnectorTableService.class);
-        binder.bind(ConnectorPartitionService.class).to(S3ConnectorPartitionService.class);
+        binder.bind(ConnectorDatabaseService.class).to(S3ConnectorDatabaseService.class).in(Scopes.SINGLETON);
+        binder.bind(ConnectorTableService.class).to(S3ConnectorTableService.class).in(Scopes.SINGLETON);
+        binder.bind(ConnectorPartitionService.class).to(S3ConnectorPartitionService.class).in(Scopes.SINGLETON);
         binder.bind(DatabaseDao.class).to(DatabaseDaoImpl.class);
         binder.bind(PartitionDao.class).to(PartitionDaoImpl.class);
         binder.bind(SourceDao.class).to(SourceDaoImpl.class);
