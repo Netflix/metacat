@@ -56,6 +56,13 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     private HiveTypeConverter hiveTypeConverter = new HiveTypeConverter();
 
     /**
+     * Constructor.
+      * @param hiveTypeConverter typeconverter
+     */
+    public HiveConnectorInfoConverter(@Nonnull final HiveTypeConverter hiveTypeConverter) {
+        this.hiveTypeConverter = hiveTypeConverter;
+    }
+    /**
      * Converts to DatabaseDto.
      *
      * @param database connector database

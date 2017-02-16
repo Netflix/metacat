@@ -24,6 +24,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.exception.TableAlreadyExistsException
 import com.netflix.metacat.common.server.exception.TableNotFoundException
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
+import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor
 import org.apache.hadoop.hive.metastore.api.Table
@@ -40,11 +41,11 @@ class HiveConnectorTableSpec extends Specification {
     @Shared
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient);
     @Shared
-    HiveConnectorTableService hiveConnectorTableService = new HiveConnectorTableService(metacatHiveClient, new HiveConnectorInfoConverter() )
+    HiveConnectorTableService hiveConnectorTableService = new HiveConnectorTableService(metacatHiveClient, new HiveConnectorInfoConverter(new HiveTypeConverter()) )
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(1, null);
     @Shared
-    HiveConnectorInfoConverter hiveConnectorInfoConverter = new HiveConnectorInfoConverter()
+    HiveConnectorInfoConverter hiveConnectorInfoConverter = new HiveConnectorInfoConverter(new HiveTypeConverter())
 
     def setupSpec() {
         metacatHiveClient.createTable(hiveConnectorInfoConverter.fromTableInfo(

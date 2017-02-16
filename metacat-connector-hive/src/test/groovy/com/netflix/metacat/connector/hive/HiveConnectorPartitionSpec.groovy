@@ -20,6 +20,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.*
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
+import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.Partition
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor
@@ -34,11 +35,11 @@ class HiveConnectorPartitionSpec extends Specification{
     @Shared
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient);
     @Shared
-    HiveConnectorPartitionService hiveConnectorPartitionService = new HiveConnectorPartitionService(metacatHiveClient, new HiveConnectorInfoConverter() )
+    HiveConnectorPartitionService hiveConnectorPartitionService = new HiveConnectorPartitionService(metacatHiveClient, new HiveConnectorInfoConverter(new HiveTypeConverter()) )
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(1, null);
     @Shared
-    HiveConnectorInfoConverter hiveConnectorInfoConverter = new HiveConnectorInfoConverter()
+    HiveConnectorInfoConverter hiveConnectorInfoConverter = new HiveConnectorInfoConverter( new HiveTypeConverter())
 
     def setupSpec() {
        // metacatHiveClient.getPartition("testdb", "test1", "dateint=20170101/hour=1") >> { getPartition("test", "testtable1", "dateint=20170101/hour=1")}
