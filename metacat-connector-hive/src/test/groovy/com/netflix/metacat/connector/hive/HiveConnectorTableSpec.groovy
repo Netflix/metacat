@@ -14,7 +14,7 @@
  *     limitations under the License.
  */
 
-package hive
+package com.netflix.metacat.connector.hive
 
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.connector.hive.HiveConnectorTableService

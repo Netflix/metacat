@@ -42,8 +42,8 @@ import java.util.List;
  * @author zhenl
  */
 public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
-    private final MetacatHiveClient metacatHiveClient;
-    private final HiveConnectorInfoConverter hiveMetacatConverters;
+    final MetacatHiveClient metacatHiveClient;
+    final HiveConnectorInfoConverter hiveMetacatConverters;
 
     /**
      * Constructor.
@@ -88,7 +88,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     @Override
     public DatabaseInfo get(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
         try {
-            final Database database = this.metacatHiveClient.getDatabase(name.getDatabaseName());
+            final Database database = metacatHiveClient.getDatabase(name.getDatabaseName());
             return hiveMetacatConverters.toDatabaseInfo(name, database);
         } catch (TException exception) {
             throw new DatabaseNotFoundException(name, exception);
@@ -122,7 +122,11 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         try {
             List<QualifiedName> qualifiedNames = Lists.newArrayList();
             for (String databaseName : metacatHiveClient.getAllDatabases()) {
-                qualifiedNames.add(QualifiedName.ofDatabase(name.getCatalogName(), databaseName));
+                final QualifiedName qualifiedName = QualifiedName.ofDatabase(name.getCatalogName(), databaseName);
+                if (!qualifiedName.toString().startsWith(prefix.toString())) {
+                    continue;
+                }
+                qualifiedNames.add(qualifiedName);
             }
             if (null != pageable && pageable.isPageable()) {
                 final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), qualifiedNames.size());
