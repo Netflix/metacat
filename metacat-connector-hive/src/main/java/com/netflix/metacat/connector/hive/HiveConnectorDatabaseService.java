@@ -28,7 +28,6 @@ import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsExceptio
 import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import lombok.Getter;
-import lombok.Setter;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.thrift.TException;
@@ -45,10 +44,8 @@ import java.util.List;
  */
 public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     @Getter
-    @Setter
     private final MetacatHiveClient metacatHiveClient;
     @Getter
-    @Setter
     private final HiveConnectorInfoConverter hiveMetacatConverters;
 
     /**
@@ -127,9 +124,10 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     ) {
         try {
             List<QualifiedName> qualifiedNames = Lists.newArrayList();
+            final String databaseFilter = (prefix != null) ? prefix.getDatabaseName() : null;
             for (String databaseName : metacatHiveClient.getAllDatabases()) {
                 final QualifiedName qualifiedName = QualifiedName.ofDatabase(name.getCatalogName(), databaseName);
-                if (prefix != null && !qualifiedName.toString().startsWith(prefix.toString())) {
+                if (databaseFilter != null && !databaseName.startsWith(databaseFilter)) {
                     continue;
                 }
                 qualifiedNames.add(qualifiedName);

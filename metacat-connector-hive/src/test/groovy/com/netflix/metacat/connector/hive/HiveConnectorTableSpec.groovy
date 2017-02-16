@@ -89,7 +89,6 @@ class HiveConnectorTableSpec extends Specification {
         return table
     }
 
-    @Unroll
     def "Test for create database" (){
         when:
         hiveConnectorTableService.create( connectorContext, TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testingtable")).build())
@@ -97,7 +96,6 @@ class HiveConnectorTableSpec extends Specification {
         noExceptionThrown()
     }
 
-    @Unroll
     def "Test for create database throw exception" (){
         when:
         hiveConnectorTableService.create( connectorContext, TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testtable1")).build())
@@ -105,7 +103,6 @@ class HiveConnectorTableSpec extends Specification {
         thrown TableAlreadyExistsException
     }
 
-    @Unroll
     def "Test for get table" (){
         when:
         def name = QualifiedName.ofTable("testhive", "test1", "testtable1")
@@ -116,7 +113,6 @@ class HiveConnectorTableSpec extends Specification {
             tableInfo == expected
     }
 
-    @Unroll
     def "Test for get table with exception" (){
         when:
         hiveConnectorTableService.get( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable3"))
@@ -124,7 +120,6 @@ class HiveConnectorTableSpec extends Specification {
         thrown TableNotFoundException
     }
 
-    @Unroll
     def "Test for delete table" (){
         when:
         def name = QualifiedName.ofTable("testhive", "test1", "testtable1")
@@ -133,7 +128,6 @@ class HiveConnectorTableSpec extends Specification {
         noExceptionThrown()
     }
 
-    @Unroll
     def "Test for delete table throw exception" (){
         when:
         def name = QualifiedName.ofTable("testhive", "test1", "testtable3")
@@ -142,7 +136,6 @@ class HiveConnectorTableSpec extends Specification {
         thrown TableNotFoundException
     }
 
-    @Unroll
     def "Test for listNames tables"(){
         when:
         def tables = hiveConnectorTableService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","test1"), null, null, null )
@@ -154,19 +147,21 @@ class HiveConnectorTableSpec extends Specification {
     def "Test for listNames tables with page"(){
         given:
         def tbls = hiveConnectorTableService.listNames(
-            connectorContext, QualifiedName.ofDatabase("testhive", "test1"), QualifiedName.ofTable("testhive", "test1", "test"), null, pageable)
+            connectorContext, QualifiedName.ofDatabase("testhive", "test1"), prefix, null, pageable)
 
         expect:
         tbls == result
 
         where:
-        pageable          | result
-        new Pageable(2,1) |[QualifiedName.ofTable("testhive", "test1", "testtable2"),QualifiedName.ofTable("testhive", "test1", "devtable2")]
-        new Pageable(1,0) |[QualifiedName.ofTable("testhive", "test1", "testtable1")]
-        new Pageable(0,0) |[]
+        prefix                                             | pageable          | result
+        null | new Pageable(2,1) |[QualifiedName.ofTable("testhive", "test1", "testtable2"),QualifiedName.ofTable("testhive", "test1", "devtable2")]
+        QualifiedName.ofDatabase("testhive", "test1") | new Pageable(2,1) |[QualifiedName.ofTable("testhive", "test1", "testtable2"),QualifiedName.ofTable("testhive", "test1", "devtable2")]
+        QualifiedName.ofTable("testhive", "test1", "test") | new Pageable(2,1) |[QualifiedName.ofTable("testhive", "test1", "testtable2")]
+        QualifiedName.ofTable("testhive", "test1", "test") | new Pageable(1,0) |[QualifiedName.ofTable("testhive", "test1", "testtable1")]
+        QualifiedName.ofTable("testhive", "test1", "test") | new Pageable(0,0) |[]
+        QualifiedName.ofTable("testhive", "test3", "test") | new Pageable(2,1) |[]
     }
 
-    @Unroll
     def "Test for rename tables"() {
         when:
         hiveConnectorTableService.rename(

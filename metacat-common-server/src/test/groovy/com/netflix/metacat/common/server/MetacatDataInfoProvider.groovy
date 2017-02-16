@@ -16,18 +16,10 @@
 
 package com.netflix.metacat.common.server
 
-import com.facebook.presto.type.CharType
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.dto.TableDto
-import com.netflix.metacat.common.server.connectors.model.AuditInfo
-import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
-import com.netflix.metacat.common.server.connectors.model.FieldInfo
-import com.netflix.metacat.common.server.connectors.model.PartitionInfo
-import com.netflix.metacat.common.server.connectors.model.StorageInfo
-import com.netflix.metacat.common.server.connectors.model.TableInfo
+import com.netflix.metacat.common.server.connectors.model.*
 import com.netflix.metacat.common.type.BaseType
 import com.netflix.metacat.common.type.VarcharType
-import com.sun.xml.internal.fastinfoset.util.CharArray
 
 /**
  * MetacatDataInfoProvider.

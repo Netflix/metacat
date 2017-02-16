@@ -18,18 +18,13 @@ package com.netflix.metacat.connector.hive
 
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.ConnectorContext
-import com.netflix.metacat.common.server.connectors.model.AuditInfo
-import com.netflix.metacat.common.server.connectors.model.PartitionInfo
-import com.netflix.metacat.common.server.connectors.model.PartitionListRequest
-import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest
-import com.netflix.metacat.common.server.connectors.model.StorageInfo
+import com.netflix.metacat.common.server.connectors.model.*
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.Partition
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor
 import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Unroll
 
 /**
  * Unit test for HiveConnectorPartitionSpec.
@@ -82,7 +77,6 @@ class HiveConnectorPartitionSpec extends Specification{
             .build()
         }
 
-    @Unroll
     def "Test for get partitions with prefix" (){
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
@@ -95,7 +89,6 @@ class HiveConnectorPartitionSpec extends Specification{
         partionInfos == expected
     }
 
-    @Unroll
     def "Test for get partitions" (){
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
@@ -107,7 +100,6 @@ class HiveConnectorPartitionSpec extends Specification{
         partionInfos == expected
     }
 
-    @Unroll
     def "Test for getNameOfPartitions" (){
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
@@ -117,7 +109,6 @@ class HiveConnectorPartitionSpec extends Specification{
         partitionNames == expected
     }
 
-    @Unroll
     def "Test for getNameOfPartitions with partitionIds" (){
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
@@ -130,7 +121,6 @@ class HiveConnectorPartitionSpec extends Specification{
         partitionNames == expected
     }
 
-    @Unroll
     def "Test for getPartitionUris" (){
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
@@ -143,7 +133,6 @@ class HiveConnectorPartitionSpec extends Specification{
         partitionUris == expected
     }
 
-    @Unroll
     def "Test for getPartitionKeys" (){
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
@@ -156,7 +145,6 @@ class HiveConnectorPartitionSpec extends Specification{
         partitionKeys == expected
     }
 
-    @Unroll
     def "Test for getPartitionCount" (){
         when:
         def count = hiveConnectorPartitionService.getPartitionCount( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"))
@@ -164,7 +152,6 @@ class HiveConnectorPartitionSpec extends Specification{
         count == 3
     }
 
-    @Unroll
     def "Test for savePartition" (){
         when:
         def saverequest = new PartitionsSaveRequest()

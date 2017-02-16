@@ -136,14 +136,25 @@ public class HiveConnectorTableService implements ConnectorTableService {
     ) {
         try {
             List<QualifiedName> qualifiedNames = Lists.newArrayList();
+
+            final String tableFilter = (prefix != null && prefix.isTableDefinition()) ? prefix.getTableName() : null;
             for (String tableName : metacatHiveClient.getAllTables(name.getDatabaseName())) {
-                qualifiedNames.add(QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName));
+                if (tableFilter == null || tableName.startsWith(tableFilter)) {
+                    final QualifiedName qualifiedName =
+                        QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName);
+                    if (prefix != null && !qualifiedName.toString().startsWith(prefix.toString())) {
+                        continue;
+                    }
+                    qualifiedNames.add(qualifiedName);
+
+                }
             }
             if (null != pageable && pageable.isPageable()) {
                 final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), qualifiedNames.size());
                 qualifiedNames = (pageable.getOffset() > limit) ? Lists.newArrayList()
                     : qualifiedNames.subList(pageable.getOffset(), limit);
             }
+
             return qualifiedNames;
         } catch (MetaException exception) {
             throw new DatabaseNotFoundException(name, exception);

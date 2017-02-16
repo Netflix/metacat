@@ -49,7 +49,6 @@ class HiveConnectorDatabaseSpec extends Specification{
         metacatHiveClient.createDatabase(new Database("testdb2","testdb2","",Collections.EMPTY_MAP)) >> { throw new TException()}
     }
 
-    @Unroll
     def "Test for create database" (){
         when:
             hiveConnectorDatabaseService.create( connectorContext, DatabaseInfo.builder().name(QualifiedName.ofDatabase("testhive", "testdb3")).build())
@@ -57,7 +56,6 @@ class HiveConnectorDatabaseSpec extends Specification{
         noExceptionThrown()
     }
 
-    @Unroll
     def "Test for create database with exception" (){
         when:
         hiveConnectorDatabaseService.create( connectorContext, DatabaseInfo.builder().name(QualifiedName.ofDatabase("testhive", "testdb2")).build())
@@ -65,7 +63,6 @@ class HiveConnectorDatabaseSpec extends Specification{
         thrown DatabaseAlreadyExistsException
     }
 
-    @Unroll
     def "Test for listNames database"(){
         when:
         def dbs = hiveConnectorDatabaseService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","testdb"), null, null, null )
@@ -74,7 +71,6 @@ class HiveConnectorDatabaseSpec extends Specification{
 
     }
 
-    @Unroll
     def "Test for get database" (){
         when:
         def dbInfo = hiveConnectorDatabaseService.get( connectorContext, QualifiedName.ofDatabase("testhive", "testdb"))
@@ -83,7 +79,6 @@ class HiveConnectorDatabaseSpec extends Specification{
         dbInfo.name.databaseName == "testdb"
     }
 
-    @Unroll
     def "Test for get database with exception" (){
         when:
         hiveConnectorDatabaseService.get( connectorContext, QualifiedName.ofDatabase("testhive", "testdb2"))
@@ -91,7 +86,6 @@ class HiveConnectorDatabaseSpec extends Specification{
         thrown DatabaseNotFoundException
     }
 
-    @Unroll
     def "Test for list database" (){
         when:
         def dbs = hiveConnectorDatabaseService.list( connectorContext, QualifiedName.ofDatabase("testhive", ""), QualifiedName.ofDatabase("testhive", "test"), null, null)
