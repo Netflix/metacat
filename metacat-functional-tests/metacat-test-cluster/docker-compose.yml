@@ -19,7 +19,7 @@ version: "2"
 
 services:
     metacat:
-        image: netflix_metacat_test/metacat_server:latest
+        image: tomcat:8.0-jre8
         links:
             - hive-metastore
             - hive-metastore-db
@@ -27,12 +27,11 @@ services:
             - '8080'
             - '8000'
             - '12001'
-            - '12002'
         volumes:
+            - ../build/metacat-war-expanded/ROOT:/usr/local/tomcat/webapps/ROOT
+            - ../build/resources/functionalTest/logging.properties:/usr/local/tomcat/conf/logging.properties
             - ../build/logs/metacat:/usr/local/tomcat/logs
             - ./etc-metacat:/etc/metacat:ro
-            - ./resources/log4j.properties:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/log4j.properties
-            - ./resources/logging.properties:/usr/local/tomcat/conf/logging.properties
         environment:
             VIRTUAL_HOST: metacat.docker
             JAVA_OPTS: '-ea
@@ -68,9 +67,9 @@ services:
             - hive-metastore-db
         ports:
             - '9083'
-            - '8000'
+            - '8005'
         environment:
-            - HIVE_METASTORE_HADOOP_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
+            - HIVE_METASTORE_HADOOP_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8005
         labels:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.hive"
@@ -100,7 +99,6 @@ services:
         environment:
             - TARGETS=metacat:8080
             - TARGETS=metacat:12001
-            - TARGETS=metacat:12002
         labels:
           - "com.netflix.metacat.oss.test"
     # postgres-host-84:

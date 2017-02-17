@@ -60,38 +60,6 @@ task expandWar(type: Copy) {
     into file("${buildDir}/metacat-war-expanded/ROOT")
 }
 
-task createWarDockerfile() {
-    dependsOn 'expandWar'
-
-    ext.destFile = project.file('build/metacat-war-expanded/Dockerfile')
-
-    outputs.file ext.destFile
-
-    doLast {
-        copy {
-            from 'build/resources/functionalTest/logging.properties'
-            into 'build/metacat-war-expanded'
-        }
-        ext.destFile.text = """
-FROM tomcat:8.0-jre8
-MAINTAINER dwatson@netflix.com
-VOLUME ["/usr/local/tomcat/logs", "/etc/metacat"]
-EXPOSE 7001 7101 12001 12002
-RUN rm -rf /usr/local/tomcat/webapps
-COPY ./ROOT /usr/local/tomcat/webapps/ROOT
-COPY ./logging.properties /usr/local/tomcat/conf/
-""".trim()
-    }
-}
-
-task buildWarImage(type: Exec) {
-    dependsOn 'createWarDockerfile'
-
-    inputs.file createWarDockerfile.destFile
-
-    commandLine 'docker', 'build', '--pull', '--tag', 'netflix_metacat_test/metacat_server', createWarDockerfile.destFile.parentFile
-}
-
 task startMetacatCluster(type: Exec) {
     if (project.ext.startCluster) {
         commandLine rootProject.file('scripts/start_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose.yml')
@@ -111,9 +79,10 @@ task stopMetacatCluster(type: Exec) {
 task metacatPorts {
     dependsOn 'startMetacatCluster'
     ext.http_port = null
+    ext.metacat_http_debug_port = null
     ext.metacat_hive_thrift_port = null
-    ext.metacat_s3_thrift_port = null
     ext.hive_thrift_port = null
+    ext.hive_debug_port = null
 
     doLast {
         def get_docker_port = { String label, int exposed_port ->
@@ -127,13 +96,17 @@ task metacatPorts {
         }
 
         ext.http_port = get_docker_port('com.netflix.metacat.oss.test.war', 8080)
+        ext.metacat_http_debug_port = get_docker_port('com.netflix.metacat.oss.test.war', 8000)
         ext.metacat_hive_thrift_port = get_docker_port('com.netflix.metacat.oss.test.war', 12001)
-        ext.metacat_s3_thrift_port = get_docker_port('com.netflix.metacat.oss.test.war', 12002)
         ext.hive_thrift_port = get_docker_port('com.netflix.metacat.oss.test.hive', 9083)
+        ext.hive_debug_port = get_docker_port('com.netflix.metacat.oss.test.hive', 8005)
 
-        logger.info('metacat-functional-tests: metacat http_port {}, metacat_hive_thrift_port {}, ' +
-                'metacat_s3_thrift_port {}, hive_thrift_port {}',
-                ext.http_port, ext.metacat_hive_thrift_port, ext.metacat_s3_thrift_port, ext.hive_thrift_port)
+        println '++ Container Exposed ports ++'
+        println '+++ Metacat Web Port:' + ext.http_port
+        println '+++ Metacat Web Debug Port:' + ext.metacat_http_debug_port
+        println '+++ Metacat Hive Thrift Port:' + ext.metacat_hive_thrift_port
+        println '+++ Metacat Hive Metastore Port:' + ext.hive_thrift_port
+        println '+++ Metacat Hive Metastore Debug Port:' + ext.hive_debug_port
     }
 }
 
@@ -146,7 +119,6 @@ task functionalTest(type: Test) {
         def properties = [
                 'metacat_http_port'                     : metacatPorts.http_port as String,
                 'metacat_hive_thrift_port'              : metacatPorts.metacat_hive_thrift_port as String,
-                'metacat_s3_thrift_port'                : metacatPorts.metacat_s3_thrift_port as String,
                 'hive_thrift_port'                      : metacatPorts.hive_thrift_port as String,
                 'org.slf4j.simpleLogger.defaultLogLevel': 'debug'
         ]
@@ -160,6 +132,6 @@ task functionalTest(type: Test) {
         showStandardStreams = true
     }
 
-    dependsOn 'startMetacatCluster', 'metacatPorts'
+    dependsOn 'expandWar', 'startMetacatCluster', 'metacatPorts'
     finalizedBy 'stopMetacatCluster'
 }
