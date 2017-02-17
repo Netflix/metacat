@@ -31,16 +31,6 @@ import static java.lang.String.format
 class S3TestModule implements Module{
     @Override
     void configure(Binder binder) {
-        TestingMySqlServer mysqlServer = new TestingMySqlServer("test", "test", "metacat")
-        Properties props = new Properties()
-        props.setProperty('javax.persistence.jdbc.url', format("jdbc:mysql://localhost:%d/%s?user=%s&password=%s", mysqlServer.port, "metacat", mysqlServer.user, mysqlServer.password))
-        props.setProperty('javax.persistence.jdbc.user', mysqlServer.getUser())
-        props.setProperty('javax.persistence.jdbc.password', mysqlServer.getPassword())
-        props.setProperty('javax.persistence.jdbc.driver', 'com.mysql.jdbc.Driver')
-        props.setProperty('javax.jdo.option.defaultTransactionIsolation','READ_COMMITTED')
-        props.setProperty('javax.jdo.option.defaultAutoCommit', 'false');
-        props.setProperty('javax.persistence.schema-generation.database.action', 'drop-and-create')
-
         URL url = Thread.currentThread().getContextClassLoader().getResource("s3.properties")
         Path filePath
         if( url != null) {
@@ -52,10 +42,9 @@ class S3TestModule implements Module{
             }
             filePath = Paths.get(metadataFile.getPath())
         }
-        def jpaProps = Maps.newHashMap(props)
-        props.store(Files.newOutputStream(filePath), "test")
-        binder.install(new JpaPersistModule("s3").properties(jpaProps))
-        binder.bind(TestingMySqlServer.class).toInstance(mysqlServer)
+        Properties props = new Properties()
+        props.load(Files.newBufferedReader(filePath))
+        binder.install(new JpaPersistModule("s3").properties(Maps.newHashMap(props)))
         S3ConnectorPlugin plugin = new S3ConnectorPlugin();
         Module module = new S3Module("s3", null, (S3ConnectorInfoConverter)plugin.getInfoConverter());
         module.configure(binder)

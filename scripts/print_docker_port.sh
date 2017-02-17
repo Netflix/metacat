@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -x
-
 DOCKER_FILTER=$1
 DOCKER_PORT_NUM=$2
 

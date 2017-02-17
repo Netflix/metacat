@@ -57,7 +57,8 @@ subprojects {
         testCompile 'org.spockframework:spock-guice:1.1-groovy-2.4-rc-3'
         testCompile 'org.codehaus.gpars:gpars:1.2.1'
         testCompile 'org.objenesis:objenesis:2.2' // Required by spock to mock classes
-        testCompile "cglib:cglib-nodep:3.2.4"
+        testCompile 'cglib:cglib-nodep:3.2.4'
+        testCompile 'org.hsqldb:hsqldb:2.3.4'
     }
 
     checkstyle {

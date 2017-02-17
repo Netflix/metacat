@@ -41,7 +41,6 @@ import java.sql.Statement
 ])
 @Ignore
 class BaseSpec extends Specification {
-    @Shared @Inject TestingMySqlServer mysqlServer
     @Shared @Inject PersistService persistService
     @Shared Map<String, Source> sources
     @Shared Map<String, Database> databases
@@ -92,66 +91,12 @@ class BaseSpec extends Specification {
     }
 
     def setupMysql() {
-        File prepareFile = new File('src/test/resources/sql/prepare-test.sql')
-        if( !prepareFile.exists()){
-            prepareFile = new File('metacat-s3-connector/src/test/resources/sql/prepare-test.sql')
-        }
-        runScript(DriverManager.getConnection(mysqlServer.getJdbcUrl()), new FileReader(prepareFile), ';')
-
         persistService.start()
-    }
-
-    def runScript(Connection conn, Reader reader, String delimiter) throws IOException,
-            SQLException {
-        StringBuffer command = null;
-        try {
-            LineNumberReader lineReader = new LineNumberReader(reader);
-            String line = null;
-            while ((line = lineReader.readLine()) != null) {
-                if (command == null) {
-                    command = new StringBuffer();
-                }
-                String trimmedLine = line.trim();
-                if (trimmedLine.startsWith("--")) {
-                    println(trimmedLine);
-                } else if (trimmedLine.length() < 1
-                        || trimmedLine.startsWith("//")) {
-                    // Do nothing
-                } else if (trimmedLine.length() < 1
-                        || trimmedLine.startsWith("--")) {
-                    // Do nothing
-                } else if (trimmedLine.endsWith(delimiter)) {
-                    command.append(line.substring(0, line
-                            .lastIndexOf(delimiter)));
-                    command.append(" ");
-                    Statement statement = conn.createStatement();
-
-                    println(command);
-                    statement.execute(command.toString());
-
-                    command = null;
-                    try {
-                        statement.close();
-                    } catch (Exception e) {
-                        // Ignore to workaround a bug in Jakarta DBCP
-                    }
-                    Thread.yield();
-                } else {
-                    command.append(line);
-                    command.append(" ");
-                }
-            }
-        } catch (Exception e) {
-            throw e;
-        }
     }
 
     def cleanupSpec() {
         if( persistService != null){
             persistService.stop()
-        }
-        if (mysqlServer != null) {
-            mysqlServer.close()
         }
     }
 }
