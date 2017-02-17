@@ -35,7 +35,7 @@ class HiveConnectorPartitionSpec extends Specification{
     @Shared
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient);
     @Shared
-    HiveConnectorPartitionService hiveConnectorPartitionService = new HiveConnectorPartitionService(metacatHiveClient, new HiveConnectorInfoConverter(new HiveTypeConverter()) )
+    HiveConnectorPartitionService hiveConnectorPartitionService = new HiveConnectorPartitionService("testhive", metacatHiveClient, new HiveConnectorInfoConverter(new HiveTypeConverter()) )
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(1, null);
     @Shared

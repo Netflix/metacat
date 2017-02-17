@@ -27,7 +27,6 @@ import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import lombok.Getter;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.thrift.TException;
@@ -35,6 +34,7 @@ import org.apache.thrift.TException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.List;
 
 /**
@@ -43,22 +43,24 @@ import java.util.List;
  * @author zhenl
  */
 public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
-    @Getter
     private final MetacatHiveClient metacatHiveClient;
-    @Getter
     private final HiveConnectorInfoConverter hiveMetacatConverters;
+    private final String catalogName;
 
     /**
      * Constructor.
      *
+     * @param catalogName           catalogname
      * @param metacatHiveClient     hiveclient
      * @param hiveMetacatConverters hive converter
      */
     @Inject
-    public HiveConnectorDatabaseService(@Nonnull final MetacatHiveClient metacatHiveClient,
+    public HiveConnectorDatabaseService(@Named("catalogName") final String catalogName,
+                                        @Nonnull final MetacatHiveClient metacatHiveClient,
                                         @Nonnull final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
+        this.catalogName = catalogName;
     }
 
     /**

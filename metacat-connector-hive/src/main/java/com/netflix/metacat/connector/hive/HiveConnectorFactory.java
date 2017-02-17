@@ -21,8 +21,6 @@ import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.persist.PersistService;
-import com.google.inject.persist.jpa.JpaPersistModule;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
@@ -43,7 +41,6 @@ public class HiveConnectorFactory implements ConnectorFactory {
     private ConnectorDatabaseService databaseService;
     private ConnectorTableService tableService;
     private ConnectorPartitionService partitionService;
-    private PersistService persistService;
 
 
     /**
@@ -67,11 +64,8 @@ public class HiveConnectorFactory implements ConnectorFactory {
         final Map<String, Object> props = Maps.newHashMap(configuration);
         props.put("hibernate.connection.datasource",
             DataSourceManager.get().load(name, configuration).get(name));
-        final Module jpaModule = new JpaPersistModule("hive").properties(props);
         final Module hiveModule = new HiveConnectorModule(name, configuration, infoConverter);
-        final Injector injector = Guice.createInjector(jpaModule, hiveModule);
-        persistService = injector.getInstance(PersistService.class);
-        persistService.start();
+        final Injector injector = Guice.createInjector(hiveModule);
         this.databaseService = injector.getInstance(ConnectorDatabaseService.class);
         this.tableService = injector.getInstance(ConnectorTableService.class);
         this.partitionService = injector.getInstance(ConnectorPartitionService.class);
@@ -99,6 +93,5 @@ public class HiveConnectorFactory implements ConnectorFactory {
 
     @Override
     public void stop() {
-        persistService.stop();
     }
 }

@@ -41,6 +41,7 @@ import org.apache.thrift.TException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,18 +53,21 @@ import java.util.List;
 public class HiveConnectorPartitionService implements ConnectorPartitionService {
     private final MetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
+    private final String catalogName;
 
     /**
      * Constructor.
-     *
+     * @param catalogName catalogname
      * @param metacatHiveClient     hive client
      * @param hiveMetacatConverters hive converter
      */
     @Inject
-    public HiveConnectorPartitionService(@Nonnull final MetacatHiveClient metacatHiveClient,
+    public HiveConnectorPartitionService(@Named("catalogName") final String catalogName,
+                                         @Nonnull final MetacatHiveClient metacatHiveClient,
                                          @Nonnull final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
+        this.catalogName = catalogName;
     }
 
     /**

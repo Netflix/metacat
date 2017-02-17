@@ -41,7 +41,7 @@ class HiveConnectorTableSpec extends Specification {
     @Shared
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient);
     @Shared
-    HiveConnectorTableService hiveConnectorTableService = new HiveConnectorTableService(metacatHiveClient, new HiveConnectorInfoConverter(new HiveTypeConverter()) )
+    HiveConnectorTableService hiveConnectorTableService = new HiveConnectorTableService("testhive", metacatHiveClient, new HiveConnectorInfoConverter(new HiveTypeConverter()) )
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(1, null);
     @Shared

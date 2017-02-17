@@ -24,35 +24,44 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import org.apache.hadoop.hive.conf.HiveConf;
 
 import java.util.Map;
 
 /**
  * HiveConnectorModule.
+ *
  * @author zhenl
  */
 
 public class HiveConnectorModule implements Module {
+    private static final  String HIVE_METASTORE_URIS = "hive.metastore.uris";
     private final String catalogName;
     private final Map<String, String> configuration;
     private final HiveConnectorInfoConverter infoConverter;
+    private final HiveConf hiveConf = new HiveConf();
 
     /**
      * Constructor.
-     * @param catalogName catalog name.
+     *
+     * @param catalogName   catalog name.
      * @param configuration configuration properties
      * @param infoConverter Hive info converter
      */
     public HiveConnectorModule(final String catalogName, final Map<String, String> configuration,
-                    final HiveConnectorInfoConverter infoConverter) {
+                               final HiveConnectorInfoConverter infoConverter) {
         this.catalogName = catalogName;
         this.configuration = configuration;
         this.infoConverter = infoConverter;
+        if (configuration.containsKey(HIVE_METASTORE_URIS)) {
+            this.hiveConf.set(HIVE_METASTORE_URIS, configuration.get(HIVE_METASTORE_URIS));
+        }
     }
 
     @Override
     public void configure(final Binder binder) {
         binder.bind(String.class).annotatedWith(Names.named("catalogName")).toInstance(catalogName);
+        binder.bind(HiveConf.class).toInstance(hiveConf);
         binder.bind(HiveConnectorInfoConverter.class).toInstance(infoConverter);
         binder.bind(ConnectorDatabaseService.class).to(HiveConnectorDatabaseService.class).in(Scopes.SINGLETON);
         binder.bind(ConnectorTableService.class).to(HiveConnectorTableService.class).in(Scopes.SINGLETON);

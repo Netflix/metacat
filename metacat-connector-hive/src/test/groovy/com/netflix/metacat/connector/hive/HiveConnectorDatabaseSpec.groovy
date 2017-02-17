@@ -38,7 +38,7 @@ class HiveConnectorDatabaseSpec extends Specification{
     @Shared
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient);
     @Shared
-    HiveConnectorDatabaseService hiveConnectorDatabaseService = new HiveConnectorDatabaseService( this.metacatHiveClient, new HiveConnectorInfoConverter() )
+    HiveConnectorDatabaseService hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", this.metacatHiveClient, new HiveConnectorInfoConverter() )
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(1, null);
 

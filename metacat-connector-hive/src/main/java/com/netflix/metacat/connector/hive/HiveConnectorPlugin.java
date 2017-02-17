@@ -32,7 +32,7 @@ import java.util.Map;
  */
 public class HiveConnectorPlugin implements ConnectorPlugin {
     /** Type of the connector. */
-    public static final String CONNECTOR_TYPE = "s3";
+    public static final String CONNECTOR_TYPE = "hive";
     private static final HiveTypeConverter HIVE_TYPE_CONVERTER = new HiveTypeConverter();
     private static final ConnectorInfoConverter INFO_CONVERTER_HIVE =
         new HiveConnectorInfoConverter(HIVE_TYPE_CONVERTER);
