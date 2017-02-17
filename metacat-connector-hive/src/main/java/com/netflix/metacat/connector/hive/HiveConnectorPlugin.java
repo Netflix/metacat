@@ -16,11 +16,6 @@
 
 package com.netflix.metacat.connector.hive;
 
-/**
- * Hive connector.
- * @author zhenl
- */
-
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
@@ -32,7 +27,8 @@ import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
- * S3 plugin.
+ * Hive plugin.
+ * @author zhenl
  */
 public class HiveConnectorPlugin implements ConnectorPlugin {
     /** Type of the connector. */

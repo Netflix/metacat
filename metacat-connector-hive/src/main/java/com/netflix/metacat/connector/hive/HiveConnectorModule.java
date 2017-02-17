@@ -41,7 +41,7 @@ public class HiveConnectorModule implements Module {
      * Constructor.
      * @param catalogName catalog name.
      * @param configuration configuration properties
-     * @param infoConverter S3 info converter
+     * @param infoConverter Hive info converter
      */
     public HiveConnectorModule(final String catalogName, final Map<String, String> configuration,
                     final HiveConnectorInfoConverter infoConverter) {

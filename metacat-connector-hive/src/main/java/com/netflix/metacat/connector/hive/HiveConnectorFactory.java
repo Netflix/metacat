@@ -50,7 +50,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
      * Constructor.
      * @param name connector name. Also the catalog name.
      * @param configuration configuration properties
-     * @param infoConverter S3 info converter
+     * @param infoConverter hive info converter
      */
     public HiveConnectorFactory(final String name, final Map<String, String> configuration,
                               final HiveConnectorInfoConverter infoConverter) {
@@ -67,9 +67,9 @@ public class HiveConnectorFactory implements ConnectorFactory {
         final Map<String, Object> props = Maps.newHashMap(configuration);
         props.put("hibernate.connection.datasource",
             DataSourceManager.get().load(name, configuration).get(name));
-        final Module jpaModule = new JpaPersistModule("s3").properties(props);
-        final Module s3Module = new HiveConnectorModule(name, configuration, infoConverter);
-        final Injector injector = Guice.createInjector(jpaModule, s3Module);
+        final Module jpaModule = new JpaPersistModule("hive").properties(props);
+        final Module hiveModule = new HiveConnectorModule(name, configuration, infoConverter);
+        final Injector injector = Guice.createInjector(jpaModule, hiveModule);
         persistService = injector.getInstance(PersistService.class);
         persistService.start();
         this.databaseService = injector.getInstance(ConnectorDatabaseService.class);
