@@ -56,7 +56,7 @@ class MetacatFunctionalSpec extends Specification {
     public static final long BATCH_ID = System.currentTimeSeconds()
 
     def setupSpec() {
-        String httpPort = System.properties['metacat_http_port']?.toString()?.trim()
+        String httpPort = 32801
         assert httpPort, 'Required system property "metacat_http_port" is not set'
 
         def client = Client.builder()

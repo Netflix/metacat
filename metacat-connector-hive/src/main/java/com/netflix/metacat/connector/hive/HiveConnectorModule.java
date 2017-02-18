@@ -35,7 +35,6 @@ import java.util.Map;
  */
 
 public class HiveConnectorModule implements Module {
-    private static final  String HIVE_METASTORE_URIS = "hive.metastore.uris";
     private final String catalogName;
     private final Map<String, String> configuration;
     private final HiveConnectorInfoConverter infoConverter;
@@ -53,8 +52,8 @@ public class HiveConnectorModule implements Module {
         this.catalogName = catalogName;
         this.configuration = configuration;
         this.infoConverter = infoConverter;
-        if (configuration.containsKey(HIVE_METASTORE_URIS)) {
-            this.hiveConf.set(HIVE_METASTORE_URIS, configuration.get(HIVE_METASTORE_URIS));
+        for (Map.Entry<String, String> conf : configuration.entrySet()) {
+            this.hiveConf.set(conf.getKey(), conf.getValue());
         }
     }
 

@@ -21,10 +21,10 @@ import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.server.MetacatDataInfoProvider
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.TableInfo
-import com.netflix.metacat.common.server.exception.TableAlreadyExistsException
 import com.netflix.metacat.common.server.exception.TableNotFoundException
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
+import com.netflix.metacat.common.server.exception.ConnectorException
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor
 import org.apache.hadoop.hive.metastore.api.Table
@@ -101,7 +101,7 @@ class HiveConnectorTableSpec extends Specification {
         when:
         hiveConnectorTableService.create( connectorContext, TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testtable1")).build())
         then:
-        thrown TableAlreadyExistsException
+        thrown ConnectorException
     }
 
     def "Test for get table" (){
@@ -118,7 +118,7 @@ class HiveConnectorTableSpec extends Specification {
         when:
         hiveConnectorTableService.get( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable3"))
         then:
-        thrown TableNotFoundException
+        thrown ConnectorException
     }
 
     def "Test for delete table" (){
@@ -134,7 +134,7 @@ class HiveConnectorTableSpec extends Specification {
         def name = QualifiedName.ofTable("testhive", "test1", "testtable3")
         hiveConnectorTableService.delete( connectorContext, name)
         then:
-        thrown TableNotFoundException
+        thrown ConnectorException
     }
 
     def "Test for listNames tables"(){
