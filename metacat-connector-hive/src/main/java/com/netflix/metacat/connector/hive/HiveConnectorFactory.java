@@ -17,7 +17,6 @@
 package com.netflix.metacat.connector.hive;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -25,7 +24,6 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
-import com.netflix.metacat.common.util.DataSourceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 
 import java.util.Map;
@@ -60,10 +58,6 @@ public class HiveConnectorFactory implements ConnectorFactory {
     }
 
     private void init() {
-        //JPA module
-        final Map<String, Object> props = Maps.newHashMap(configuration);
-        props.put("hibernate.connection.datasource",
-            DataSourceManager.get().load(name, configuration).get(name));
         final Module hiveModule = new HiveConnectorModule(name, configuration, infoConverter);
         final Injector injector = Guice.createInjector(hiveModule);
         this.databaseService = injector.getInstance(ConnectorDatabaseService.class);

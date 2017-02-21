@@ -92,7 +92,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         db
         db.name != null
         db.description != null
-        db.locationUri != null
+        //db.locationUri != null
         db.parameters != null
     }
 
