@@ -26,7 +26,7 @@ services:
         ports:
             - '8080'
             - '8000'
-           # - '12001'
+            - '12001'
         volumes:
             - ../build/metacat-war-expanded/ROOT:/usr/local/tomcat/webapps/ROOT
             - ../build/resources/functionalTest/logging.properties:/usr/local/tomcat/conf/logging.properties
@@ -98,7 +98,7 @@ services:
             - metacat
         environment:
             - TARGETS=metacat:8080
-        #    - TARGETS=metacat:12001
+            - TARGETS=metacat:12001
         labels:
           - "com.netflix.metacat.oss.test"
     # postgres-host-84:
