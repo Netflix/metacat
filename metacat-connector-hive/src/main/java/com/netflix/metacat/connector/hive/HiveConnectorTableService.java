@@ -28,6 +28,7 @@ import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -91,7 +92,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
      *
      * @param requestContext The request context
      * @param tableInfo      The resource metadata
-     * @throws ConnectorException  exception
+     * @throws ConnectorException exception
      */
     @Override
     public void create(@Nonnull final ConnectorContext requestContext, @Nonnull final TableInfo tableInfo) {
@@ -99,6 +100,10 @@ public class HiveConnectorTableService implements ConnectorTableService {
             metacatHiveClient.createTable(hiveMetacatConverters.fromTableInfo(tableInfo));
         } catch (MetaException exception) {
             throw new InvalidMetaException(tableInfo.getName(), exception);
+        } catch (InvalidObjectException exception) {
+            throw new DatabaseNotFoundException(
+                QualifiedName.ofDatabase(tableInfo.getName().getCatalogName(),
+                    tableInfo.getName().getDatabaseName()), exception);
         } catch (TException exception) {
             throw new ConnectorException(tableInfo.getName().toString(), exception);
         }

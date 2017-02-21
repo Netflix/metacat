@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
@@ -31,6 +32,7 @@ import com.netflix.metacat.common.server.exception.InvalidMetaException;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.thrift.TException;
@@ -94,6 +96,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             throw new DatabaseNotFoundException(name, exception);
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
+        } catch (InvalidOperationException exception) {
+            throw new MetacatNotSupportedException(exception.getMessage());
         } catch (TException exception) {
             throw new ConnectorException(name.toString(), exception);
         }

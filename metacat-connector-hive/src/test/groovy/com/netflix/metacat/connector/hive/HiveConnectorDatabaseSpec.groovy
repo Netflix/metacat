@@ -44,8 +44,8 @@ class HiveConnectorDatabaseSpec extends Specification{
     def setupSpec() {
         metacatHiveClient.getAllDatabases() >> ["test1", "test2", "dev1", "dev2"]
         metacatHiveClient.getDatabase("testdb2") >> { throw new TException() }
-        metacatHiveClient.createDatabase(new Database("testdb3","testdb3","",Collections.EMPTY_MAP)) >> {}
-        metacatHiveClient.createDatabase(new Database("testdb2","testdb2","",Collections.EMPTY_MAP)) >> { throw new TException()}
+        metacatHiveClient.createDatabase(new Database("testdb3","testdb3","file://temp/",Collections.EMPTY_MAP)) >> {}
+        metacatHiveClient.createDatabase(new Database("testdb2","testdb2","file://temp/",Collections.EMPTY_MAP)) >> { throw new TException()}
     }
 
     def "Test for create database" (){
