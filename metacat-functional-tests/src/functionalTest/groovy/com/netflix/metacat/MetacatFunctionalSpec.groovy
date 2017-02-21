@@ -22,14 +22,7 @@ import com.netflix.metacat.client.Client
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.api.MetacatV1
 import com.netflix.metacat.common.api.PartitionV1
-import com.netflix.metacat.common.dto.AuditDto
-import com.netflix.metacat.common.dto.CreateCatalogDto
-import com.netflix.metacat.common.dto.DatabaseCreateRequestDto
-import com.netflix.metacat.common.dto.FieldDto
-import com.netflix.metacat.common.dto.PartitionDto
-import com.netflix.metacat.common.dto.PartitionsSaveRequestDto
-import com.netflix.metacat.common.dto.StorageDto
-import com.netflix.metacat.common.dto.TableDto
+import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
 import com.netflix.metacat.common.exception.MetacatBadRequestException
 import com.netflix.metacat.common.exception.MetacatNotFoundException
@@ -56,7 +49,7 @@ class MetacatFunctionalSpec extends Specification {
     public static final long BATCH_ID = System.currentTimeSeconds()
 
     def setupSpec() {
-        String httpPort = 32801
+
         assert httpPort, 'Required system property "metacat_http_port" is not set'
 
         def client = Client.builder()
@@ -70,7 +63,9 @@ class MetacatFunctionalSpec extends Specification {
         partitionApi = client.partitionApi
 
         TestCatalogs.resetAll()
+
     }
+
 
     def 'getCatalogName: existing catalogs'() {
         when:
@@ -162,6 +157,28 @@ class MetacatFunctionalSpec extends Specification {
         catalog << TestCatalogs.ALL
     }
 
+    def "create test_db"(){
+        given:
+        ObjectNode metadata = metacatJson.parseJsonObject('{"objectField": {}}')
+        def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
+        String databaseName = "test_db"
+
+        when:
+        def catalogResponse = api.getCatalog(catalog.name)
+
+        then:
+        if ( !catalogResponse.databases.contains(databaseName) ) {
+            api.createDatabase(catalog.name, databaseName, dto)
+        }
+        else {
+            println "test_db already exists in $catalog.name. Skipping create test_db"
+        }
+
+        where:
+        catalog << TestCatalogs.getCanCreateDatabase(TestCatalogs.ALL)
+    }
+
+
     def 'createDatabase: nonexistent_catalog #metadataMessage fails'() {
         given:
         def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
@@ -192,6 +209,7 @@ class MetacatFunctionalSpec extends Specification {
         catalog << TestCatalogs.getCanNotCreateDatabase(TestCatalogs.ALL)
     }
 
+    @Ignore
     def 'createDatabase: can create a database in #catalog.name without metadata'() {
         given:
         ObjectNode metadata = null
@@ -290,7 +308,7 @@ class MetacatFunctionalSpec extends Specification {
 
         then:
         thrown(MetacatAlreadyExistsException)
-
+        //to create stub data
         where:
         name << TestCatalogs.getAllDatabases(TestCatalogs.getCanCreateDatabase(TestCatalogs.ALL))
     }
@@ -374,10 +392,9 @@ class MetacatFunctionalSpec extends Specification {
         catalog << TestCatalogs.getCanNotCreateTable(TestCatalogs.ALL)
     }
 
-
     def 'createTable: should fail for nonexistent catalog zz_#catalog.name'() {
         given:
-        def databaseName = (catalog.preExistingDatabases + catalog.createdDatabases).first().databaseName
+        def databaseName = "created_database"
         def tableName = "table_$BATCH_ID".toString()
         def dto = new TableDto(
                 name: QualifiedName.ofTable('zz_' + catalog.name, databaseName, tableName),
@@ -424,11 +441,12 @@ class MetacatFunctionalSpec extends Specification {
         given:
         def tableName = "table_$BATCH_ID".toString()
         def now = new Date()
-        def dataUri = "file:/tmp/${name.catalogName}/${name.databaseName}/${tableName}".toString()
+        def databaseName = "test_db"
+        def dataUri = "file:/tmp/${catalog.name}/${databaseName}/${tableName}".toString()
         ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
         ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
         def dto = new TableDto(
-                name: QualifiedName.ofTable(name.catalogName, name.databaseName, tableName),
+                name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
                 audit: new AuditDto(
                         createdBy: 'createdBy',
                         createdDate: now
@@ -478,25 +496,26 @@ class MetacatFunctionalSpec extends Specification {
         )
 
         when:
-        def database = api.getDatabase(name.catalogName, name.databaseName, false)
+        def database = api.getDatabase(catalog.name, databaseName, false)
 
         then:
         !database.tables.contains(tableName)
 
         when:
-        api.createTable(name.catalogName, name.databaseName, tableName, dto)
-        database = api.getDatabase(name.catalogName, name.databaseName, false)
+        api.createTable(catalog.name, databaseName, tableName, dto)
+        database = api.getDatabase(catalog.name, databaseName, false)
 
         then:
         database.tables.contains(tableName)
 
         when:
-        def table = api.getTable(name.catalogName, name.databaseName, tableName, true, true, true)
+        def table = api.getTable(catalog.name, databaseName, tableName, true, true, true)
+        def name = QualifiedName.ofTable(catalog.name,databaseName,tableName)
 
         then:
         table.serde.owner == 'metacat-test'
-        table.name.catalogName == name.catalogName
-        table.name.databaseName == name.databaseName
+        table.name.catalogName == catalog.name
+        table.name.databaseName == databaseName
         table.name.tableName == tableName
         table.definitionMetadata == definitionMetadata
         table.dataMetadata == dataMetadata
@@ -505,6 +524,7 @@ class MetacatFunctionalSpec extends Specification {
         table.fields.find { it.name == 'p' }.partition_key
         !table.fields.find { it.name == 'field4' }.partition_key
         // Hive partitions keys are always sorted to the end of the fields.
+
         if (TestCatalogs.findByQualifiedName(name).partitionKeysAppearLast) {
             assert table.fields*.name == ['field2', 'field4', 'field1', 'p']
             table.fields*.partition_key == [false, false, true, true]
@@ -516,15 +536,91 @@ class MetacatFunctionalSpec extends Specification {
         TestCatalogs.findByQualifiedName(name).createdTables << table.name
 
         where:
-        name << TestCatalogs.getCreatedDatabases(TestCatalogs.getCanCreateTable(TestCatalogs.ALL))
+        catalog << TestCatalogs.getCanCreateTable(TestCatalogs.ALL)
     }
+
+    def 'createTable: test_table'() {
+        given:
+        def tableName = "test_table".toString()
+        def now = new Date()
+        def databaseName = "test_db"
+        def dataUri = "file:/tmp/${catalog.name}/${databaseName}/${tableName}".toString()
+        ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
+        ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
+        def dto = new TableDto(
+            name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
+            audit: new AuditDto(
+                createdBy: 'createdBy',
+                createdDate: now
+            ),
+            serde: new StorageDto(
+                owner: 'metacat-test',
+                inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                parameters: [
+                    'serialization.format': '1'
+                ],
+                uri: dataUri
+            ),
+            definitionMetadata: definitionMetadata,
+            dataMetadata: dataMetadata,
+            fields: [
+                new FieldDto(
+                    comment: 'added 1st - partition key',
+                    name: 'field1',
+                    pos: 0,
+                    type: 'boolean',
+                    partition_key: true
+                ),
+                new FieldDto(
+                    comment: 'added 2st',
+                    name: 'field2',
+                    pos: 1,
+                    type: 'boolean',
+                    partition_key: false
+                ),
+                new FieldDto(
+                    comment: 'added 3rd, a single char partition key to test that use case',
+                    name: 'p',
+                    pos: 2,
+                    type: 'boolean',
+                    partition_key: true
+                ),
+                new FieldDto(
+                    comment: 'added 4st',
+                    name: 'field4',
+                    pos: 3,
+                    type: 'boolean',
+                    partition_key: false
+                ),
+            ]
+        )
+
+        when:
+        def database = api.getDatabase(catalog.name, databaseName, false)
+
+        then:
+        if (!database.tables.contains(tableName) ) {
+            api.createTable(catalog.name, databaseName, tableName, dto)
+        }
+        else {
+            println "test_table already exist in $catalog.name/$databaseName Skipping create test_table"
+        }
+
+        where:
+        catalog << TestCatalogs.getCanCreateTable(TestCatalogs.ALL)
+    }
+
 
     def 'updateTable: #name'() {
         given:
         def now = new Date()
 
         when:
-        def table = api.getTable(name.catalogName, name.databaseName, name.tableName, true, true, true)
+        def tableName = "test_table"
+        def databaseName = "test_db"
+        def table = api.getTable(catalog.name, databaseName, tableName, true, true, true)
         def originalDefinitionMetadata = table.definitionMetadata
         def mergedDefinitionMetadata = metacatJson.emptyObjectNode().put('now', now.toString())
         if (originalDefinitionMetadata?.toString()) {
@@ -541,8 +637,8 @@ class MetacatFunctionalSpec extends Specification {
         table.serde.uri = updatedDataUri
 
         and:
-        api.updateTable(name.catalogName, name.databaseName, name.tableName, table)
-        table = api.getTable(name.catalogName, name.databaseName, name.tableName, true, true, true)
+        api.updateTable(catalog.name, databaseName, tableName, table)
+        table = api.getTable(catalog.name, databaseName, tableName, true, true, true)
 
         then: 'saving should merge or insert metadata'
         table.definitionMetadata == mergedDefinitionMetadata
@@ -557,8 +653,8 @@ class MetacatFunctionalSpec extends Specification {
         table.serde.uri = origDataUri
         table.definitionMetadata = null
         table.dataMetadata = null
-        api.updateTable(name.catalogName, name.databaseName, name.tableName, table)
-        table = api.getTable(name.catalogName, name.databaseName, name.tableName, true, true, true)
+        api.updateTable(catalog.name, databaseName, tableName, table)
+        table = api.getTable(catalog.name,databaseName, tableName, true, true, true)
 
         then: 'the old data metadata should be back'
         table.dataMetadata == originalDataMetadata
@@ -568,13 +664,14 @@ class MetacatFunctionalSpec extends Specification {
         table.definitionMetadata == mergedDefinitionMetadata
 
         where:
-        name << TestCatalogs.getCreatedTables(TestCatalogs.ALL)
+        catalog << TestCatalogs.getCanCreateTable(TestCatalogs.ALL)
     }
 
+    @Ignore
     def 'savePartition: should fail when given a null or missing value for #pname'() {
         given:
         def name = pname as QualifiedName
-        def dataUri = "file:/tmp/${name.catalogName}/${name.databaseName}/${name.tableName}/${name.partitionName}".toString()
+        def dataUri = "file:/tmp/${name.catalogName}/test_db/test_table/${name.partitionName}".toString()
 
         def request = new PartitionsSaveRequestDto(
                 partitions: [
@@ -600,7 +697,7 @@ class MetacatFunctionalSpec extends Specification {
         message.contains('cannot be null or empty') || message.contains('is invalid')
 
         where:
-        pname << TestCatalogs.getCreatedTables(TestCatalogs.ALL)
+        pname << TestCatalogs.getCanCreateTable(TestCatalogs.ALL)
                 .collect { tname ->
             [
                     [field1: 'null', p: 'valid'],
@@ -613,11 +710,12 @@ class MetacatFunctionalSpec extends Specification {
                     [field1: '', p: ''],
             ].collect {
                 String unescapedPartitionName = "field1=${it.field1}/p=${it.p}".toString()
-                QualifiedName.ofPartition(tname.catalogName, tname.databaseName, tname.tableName, unescapedPartitionName)
+                QualifiedName.ofPartition(tname.name, "test_db", "test_table", unescapedPartitionName)
             }
         }.flatten()
     }
 
+    @Ignore
     def 'savePartition: can add partitions to #args.name'() {
         given:
         def name = args.name as QualifiedName
@@ -996,6 +1094,7 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getCreatedTables(TestCatalogs.getCanDeleteTable(TestCatalogs.ALL))
     }
 
+    @Ignore
     def 'deletePartition: #name'() {
         given:
         def spec = Warehouse.makeSpecFromName(name.partitionName)
@@ -1137,6 +1236,8 @@ class MetacatFunctionalSpec extends Specification {
                 .collect { QualifiedName.ofDatabase(it.catalogName, 'does_not_exist') }
     }
 
+    @Ignore
+    // this behaves the same as the database not empty
     def 'deleteDatabase: can delete #name'() {
         when:
         def catalog = api.getCatalog(name.catalogName)
