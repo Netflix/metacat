@@ -147,7 +147,6 @@ public class MetacatHiveClient {
         table.setDbName(newdatabadeName);
         table.setTableName(newName);
         hiveMetaStoreClient.createTable(table);
-
     }
 
     /**

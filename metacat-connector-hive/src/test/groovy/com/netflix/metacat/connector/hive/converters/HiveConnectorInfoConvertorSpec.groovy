@@ -54,7 +54,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
     def setup() {
         // Stub this to always return true
         config.isEpochInSeconds() >> true
-        converter = new HiveConnectorInfoConverter()
+        converter = new HiveConnectorInfoConverter( new HiveTypeConverter())
     }
 
     def 'test date to epoch seconds'() {

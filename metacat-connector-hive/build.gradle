@@ -13,10 +13,11 @@
 
 dependencies {
     compile project(':metacat-common-server')
-    compile "org.apache.hive:hive-metastore:${hive_version}"
+    compile "org.apache.hive:hive-metastore:${hivemetastore_version}"
     compile "org.apache.hadoop:hadoop-core:${hadoopcore_version}"
     compile "com.google.guava:guava:${guava_version}"
     compile "com.google.inject:guice:${guice_version}"
     compile "com.google.inject.extensions:guice-persist:${guice_version}"
     compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
+    testCompile project(':metacat-common-server').sourceSets.test.output
 }
