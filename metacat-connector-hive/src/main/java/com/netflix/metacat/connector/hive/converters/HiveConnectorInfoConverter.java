@@ -56,6 +56,13 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     private HiveTypeConverter hiveTypeConverter = new HiveTypeConverter();
 
     /**
+     * Constructor.
+      * @param hiveTypeConverter typeconverter
+     */
+    public HiveConnectorInfoConverter(@Nonnull final HiveTypeConverter hiveTypeConverter) {
+        this.hiveTypeConverter = hiveTypeConverter;
+    }
+    /**
      * Converts to DatabaseDto.
      *
      * @param database connector database
@@ -76,10 +83,9 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     public Database fromDatabaseInfo(final DatabaseInfo databaseInfo) {
         final QualifiedName databaseName = databaseInfo.getName();
         final String name = (databaseName == null) ? "" : databaseName.getDatabaseName();
-        final String dbUri = Strings.isNullOrEmpty(databaseInfo.getUri()) ? "" : databaseInfo.getUri();
         final Map<String, String> metadata
             = (databaseInfo.getMetadata() != null) ? databaseInfo.getMetadata() : Collections.EMPTY_MAP;
-        return new Database(name, name, dbUri, metadata);
+        return new Database(name, name, databaseInfo.getUri(), metadata);
     }
 
     /**
@@ -325,7 +331,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
             sdParams);
     }
 
-    private Date epochSecondsToDate(final long seconds) {
+    static Date epochSecondsToDate(final long seconds) {
         return Date.from(Instant.ofEpochSecond(seconds));
     }
 

@@ -23,17 +23,21 @@ import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
-import com.netflix.metacat.common.server.exception.TableAlreadyExistsException;
+import com.netflix.metacat.common.server.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.List;
 
 /**
@@ -44,18 +48,22 @@ import java.util.List;
 public class HiveConnectorTableService implements ConnectorTableService {
     private final MetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
+    private final String catalogName;
 
     /**
      * Constructor.
      *
+     * @param catalogName           catalogname
      * @param metacatHiveClient     hiveclient
      * @param hiveMetacatConverters converter
      */
     @Inject
-    public HiveConnectorTableService(@Nonnull final MetacatHiveClient metacatHiveClient,
+    public HiveConnectorTableService(@Named("catalogName") final String catalogName,
+                                     @Nonnull final MetacatHiveClient metacatHiveClient,
                                      @Nonnull final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
+        this.catalogName = catalogName;
     }
 
     /**
@@ -70,8 +78,12 @@ public class HiveConnectorTableService implements ConnectorTableService {
         try {
             final Table table = metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName());
             return hiveMetacatConverters.toTableInfo(name, table);
+        } catch (NoSuchObjectException exception) {
+            throw new TableNotFoundException(name, exception);
+        } catch (MetaException exception) {
+            throw new InvalidMetaException(name, exception);
         } catch (TException exception) {
-            throw new TableNotFoundException(name);
+            throw new ConnectorException(name.toString(), exception);
         }
     }
 
@@ -80,14 +92,20 @@ public class HiveConnectorTableService implements ConnectorTableService {
      *
      * @param requestContext The request context
      * @param tableInfo      The resource metadata
-     * @throws TableAlreadyExistsException already exist exception
+     * @throws ConnectorException exception
      */
     @Override
     public void create(@Nonnull final ConnectorContext requestContext, @Nonnull final TableInfo tableInfo) {
         try {
             metacatHiveClient.createTable(hiveMetacatConverters.fromTableInfo(tableInfo));
+        } catch (MetaException exception) {
+            throw new InvalidMetaException(tableInfo.getName(), exception);
+        } catch (InvalidObjectException exception) {
+            throw new DatabaseNotFoundException(
+                QualifiedName.ofDatabase(tableInfo.getName().getCatalogName(),
+                    tableInfo.getName().getDatabaseName()), exception);
         } catch (TException exception) {
-            throw new TableAlreadyExistsException(tableInfo.getName(), exception);
+            throw new ConnectorException(tableInfo.getName().toString(), exception);
         }
     }
 
@@ -101,8 +119,12 @@ public class HiveConnectorTableService implements ConnectorTableService {
     public void delete(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
         try {
             metacatHiveClient.dropTable(name.getDatabaseName(), name.getTableName());
-        } catch (TException exception) {
+        } catch (NoSuchObjectException exception) {
             throw new TableNotFoundException(name, exception);
+        } catch (MetaException exception) {
+            throw new InvalidMetaException(name, exception);
+        } catch (TException exception) {
+            throw new ConnectorException(name.toString(), exception);
         }
     }
 
@@ -118,8 +140,12 @@ public class HiveConnectorTableService implements ConnectorTableService {
             metacatHiveClient.alterTable(tableInfo.getName().getDatabaseName(),
                 tableInfo.getName().getTableName(),
                 hiveMetacatConverters.fromTableInfo(tableInfo));
-        } catch (TException exception) {
+        } catch (NoSuchObjectException exception) {
             throw new TableNotFoundException(tableInfo.getName(), exception);
+        } catch (MetaException exception) {
+            throw new InvalidMetaException(tableInfo.getName(), exception);
+        } catch (TException exception) {
+            throw new ConnectorException(tableInfo.getName().toString(), exception);
         }
     }
 
@@ -136,14 +162,25 @@ public class HiveConnectorTableService implements ConnectorTableService {
     ) {
         try {
             List<QualifiedName> qualifiedNames = Lists.newArrayList();
+
+            final String tableFilter = (prefix != null && prefix.isTableDefinition()) ? prefix.getTableName() : null;
             for (String tableName : metacatHiveClient.getAllTables(name.getDatabaseName())) {
-                qualifiedNames.add(QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName));
+                if (tableFilter == null || tableName.startsWith(tableFilter)) {
+                    final QualifiedName qualifiedName =
+                        QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName);
+                    if (prefix != null && !qualifiedName.toString().startsWith(prefix.toString())) {
+                        continue;
+                    }
+                    qualifiedNames.add(qualifiedName);
+
+                }
             }
             if (null != pageable && pageable.isPageable()) {
                 final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), qualifiedNames.size());
                 qualifiedNames = (pageable.getOffset() > limit) ? Lists.newArrayList()
                     : qualifiedNames.subList(pageable.getOffset(), limit);
             }
+
             return qualifiedNames;
         } catch (MetaException exception) {
             throw new DatabaseNotFoundException(name, exception);
@@ -181,7 +218,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
         } catch (MetaException exception) {
             throw new DatabaseNotFoundException(name, exception);
         } catch (TException exception) {
-            throw new TableNotFoundException(name, exception);
+            throw new ConnectorException(name.toString(), exception);
         }
     }
 
@@ -193,7 +230,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
         try {
             return metacatHiveClient.tableExists(name.getDatabaseName(), name.getTableName());
         } catch (TException exception) {
-            throw new DatabaseNotFoundException(name, exception);
+            throw new ConnectorException("Check exists " + name.toString(), exception);
         }
     }
 
@@ -209,8 +246,12 @@ public class HiveConnectorTableService implements ConnectorTableService {
         try {
             metacatHiveClient.rename(oldName.getDatabaseName(), oldName.getTableName(),
                 newName.getDatabaseName(), newName.getTableName());
+        } catch (NoSuchObjectException exception) {
+            throw new TableNotFoundException(oldName, exception);
+        } catch (MetaException exception) {
+            throw new InvalidMetaException(newName, exception);
         } catch (TException exception) {
-            throw new DatabaseNotFoundException(oldName, exception);
+            throw new ConnectorException("renaming from " + oldName.toString() + " to" + newName.toString(), exception);
         }
     }
 }

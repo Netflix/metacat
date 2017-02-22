@@ -104,7 +104,7 @@ public class ConnectorManager {
             connectorFactories.put(catalogName, connectorFactory);
 
             final MetacatCatalogConfig config =
-                MetacatCatalogConfig.createFromMapAndRemoveProperties(connectorFactory.getName(), properties);
+                MetacatCatalogConfig.createFromMapAndRemoveProperties(connectorType, properties);
             catalogs.put(catalogName, config);
         } else {
             log.warn("No plugin for connector with type %s", connectorType);

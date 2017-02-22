@@ -62,10 +62,6 @@ public class BaseType extends AbstractType {
      */
     public static final Type JSON = createBaseType(TypeEnum.JSON.getBaseTypeDisplayName());
     /**
-     * VARBINARY type.
-     */
-    public static final Type VARBINARY = createBaseType(TypeEnum.VARBINARY.getBaseTypeDisplayName());
-    /**
      * DATE type.
      */
     public static final Type DATE = createBaseType(TypeEnum.DATE.getBaseTypeDisplayName());
@@ -97,10 +93,6 @@ public class BaseType extends AbstractType {
      */
     public static final Type INTERVAL_DAY_TO_SECOND =
         createBaseType(TypeEnum.INTERVAL_DAY_TO_SECOND.getBaseTypeDisplayName());
-//    /**
-//     * DECIMAL type.
-//     */
-//    public static final Type DECIMAL = new BaseType(TypeEnum.DECIMAL);
 
 
     /**

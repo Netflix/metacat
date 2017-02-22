@@ -19,4 +19,5 @@ dependencies {
     compile "com.google.inject:guice:${guice_version}"
     compile "com.google.inject.extensions:guice-persist:${guice_version}"
     compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
+    testCompile project(':metacat-common-server').sourceSets.test.output
 }
