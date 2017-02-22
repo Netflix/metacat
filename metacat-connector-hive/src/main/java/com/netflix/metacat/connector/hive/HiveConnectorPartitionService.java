@@ -41,6 +41,7 @@ import org.apache.thrift.TException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,18 +53,21 @@ import java.util.List;
 public class HiveConnectorPartitionService implements ConnectorPartitionService {
     private final MetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
+    private final String catalogName;
 
     /**
      * Constructor.
-     *
+     * @param catalogName catalogname
      * @param metacatHiveClient     hive client
      * @param hiveMetacatConverters hive converter
      */
     @Inject
-    public HiveConnectorPartitionService(@Nonnull final MetacatHiveClient metacatHiveClient,
+    public HiveConnectorPartitionService(@Named("catalogName") final String catalogName,
+                                         @Nonnull final MetacatHiveClient metacatHiveClient,
                                          @Nonnull final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
+        this.catalogName = catalogName;
     }
 
     /**
@@ -72,24 +76,24 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     @Override
     public List<PartitionInfo> getPartitions(
         @Nonnull final ConnectorContext requestContext,
-        @Nonnull final QualifiedName name,
+        @Nonnull final QualifiedName tableName,
         @Nonnull final PartitionListRequest partitionsRequest
     ) {
         try {
-            final List<Partition> partitions = getPartitions(name,
+            final List<Partition> partitions = getPartitions(tableName,
                 partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
                 partitionsRequest.getSort(), partitionsRequest.getPageable());
-            final Table table = metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName());
-            final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(name, table);
+            final Table table = metacatHiveClient.getTableByName(tableName.getDatabaseName(), tableName.getTableName());
+            final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(tableName, table);
             final List<PartitionInfo> partitionInfos = new ArrayList<>();
             for (Partition partition : partitions) {
                 partitionInfos.add(hiveMetacatConverters.toPartitionInfo(tableInfo, partition));
             }
             return partitionInfos;
         } catch (MetaException | InvalidObjectException e) {
-            throw new InvalidMetaException("Invalid metadata for " + name, e);
+            throw new InvalidMetaException("Invalid metadata for " + tableName, e);
         } catch (TException e) {
-            throw new TableNotFoundException(name, e);
+            throw new TableNotFoundException(tableName, e);
         }
     }
 

@@ -41,17 +41,17 @@ class TestCatalogs {
     }
 
     static final Set<TestCatalog> ALL = [
-//            new TestCatalog(
-//                    createDatabase: true,
-//                    createPartition: true,
-//                    createTable: true,
-//                    deleteDatabase: true,
-//                    deleteTable: true,
-//                    name: 'hive-metastore',
-//                    partitionKeysAppearLast: true,
-//                    type: 'metacat-hive',
-//                    createView: true,
-//            ),
+            new TestCatalog(
+                    createDatabase: true,
+                    createPartition: true,
+                    createTable: true,
+                    deleteDatabase: true,
+                    deleteTable: true,
+                    name: 'hive-metastore',
+                    partitionKeysAppearLast: true,
+                    type: 'hive',
+                    createView: true,
+            ),
             new TestCatalog(
                     createDatabase: true,
                     createPartition: true,

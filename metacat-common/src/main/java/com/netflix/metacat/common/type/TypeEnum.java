@@ -49,7 +49,7 @@ public enum TypeEnum {
     /** boolean type. */
     BOOLEAN("boolean", false),
     /** varbinary type. */
-    VARBINARY("varbinary", false),
+    VARBINARY("varbinary", true),
 
     /** date year/month/day in the form YYYY-­MM-­DD. */
     DATE("date", false),
