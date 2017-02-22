@@ -45,7 +45,6 @@ public final class TypeRegistry implements TypeManager {
         addType(BaseType.FLOAT);
         addType(BaseType.DOUBLE);
         addType(BaseType.DATE);
-        addType(BaseType.VARBINARY);
         addType(BaseType.INT);
         addType(BaseType.SMALLINT);
         addType(BaseType.TINYINT);
@@ -63,6 +62,8 @@ public final class TypeRegistry implements TypeManager {
         addParametricType(MapType.MAP);
         addParametricType(RowType.ROW);
         addParametricType(ArrayType.ARRAY);
+        addParametricType(VarbinaryType.VARBINARY);
+        addParametricType(VarcharType.VARCHAR);
     }
 
     public static TypeRegistry getTypeRegistry() {

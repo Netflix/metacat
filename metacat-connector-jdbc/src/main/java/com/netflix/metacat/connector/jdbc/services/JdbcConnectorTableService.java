@@ -29,6 +29,7 @@ import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.type.BaseType;
 import com.netflix.metacat.common.type.Type;
+import com.netflix.metacat.common.type.VarbinaryType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -274,7 +275,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             case Types.BINARY:
             case Types.VARBINARY:
             case Types.LONGVARBINARY:
-                return BaseType.VARBINARY;
+                return VarbinaryType.VARBINARY;
             case Types.DATE:
                 return BaseType.DATE;
             case Types.TIME:

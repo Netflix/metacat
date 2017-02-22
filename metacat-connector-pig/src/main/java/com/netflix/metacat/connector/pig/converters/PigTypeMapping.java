@@ -21,6 +21,7 @@ package com.netflix.metacat.connector.pig.converters;
 import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.type.BaseType;
 import com.netflix.metacat.common.type.Type;
+import com.netflix.metacat.common.type.VarbinaryType;
 import lombok.Getter;
 import org.apache.pig.data.DataType;
 
@@ -32,7 +33,7 @@ import java.util.Map;
 public class PigTypeMapping {
     @Getter
     private static final Map<Type, Byte> CANONICAL_TO_PIG = new ImmutableMap.Builder<Type, Byte>()
-        .put(BaseType.VARBINARY, Byte.valueOf(DataType.BYTEARRAY))
+        .put(VarbinaryType.VARBINARY, Byte.valueOf(DataType.BYTEARRAY))
         .put(BaseType.BOOLEAN, Byte.valueOf(DataType.BOOLEAN))
         .put(BaseType.INT, Byte.valueOf(DataType.INTEGER))
         .put(BaseType.SMALLINT, Byte.valueOf(DataType.INTEGER))
@@ -50,8 +51,8 @@ public class PigTypeMapping {
     private static final Map<Byte, Type> PIG_TO_CANONICAL = new ImmutableMap.Builder<Byte, Type>()
         .put(Byte.valueOf(DataType.BOOLEAN), BaseType.BOOLEAN)
         .put(Byte.valueOf(DataType.UNKNOWN), BaseType.UNKNOWN)
-        .put(Byte.valueOf(DataType.BYTE), BaseType.VARBINARY)
-        .put(Byte.valueOf(DataType.BYTEARRAY), BaseType.VARBINARY)
+        .put(Byte.valueOf(DataType.BYTE), VarbinaryType.VARBINARY)
+        .put(Byte.valueOf(DataType.BYTEARRAY), VarbinaryType.VARBINARY)
         .put(Byte.valueOf(DataType.INTEGER), BaseType.INT)
         .put(Byte.valueOf(DataType.LONG), BaseType.BIGINT)
         .put(Byte.valueOf(DataType.BIGINTEGER), BaseType.BIGINT)

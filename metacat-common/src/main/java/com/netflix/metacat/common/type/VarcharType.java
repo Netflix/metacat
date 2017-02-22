@@ -17,12 +17,14 @@ import com.google.common.collect.Lists;
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Varchar type.
+ *
  * @author zhenl
  */
-public final class VarcharType extends AbstractType {
+public final class VarcharType extends AbstractType implements ParametricType {
     /**
      * Default varchar type.
      */
@@ -33,9 +35,9 @@ public final class VarcharType extends AbstractType {
 
     private VarcharType(final int length) {
         super(
-            new TypeSignature(
-                TypeEnum.VARCHAR.getBaseTypeDisplayName(), new ArrayList<TypeSignature>(),
-                Lists.<Object>newArrayList((long) length)));
+                new TypeSignature(
+                        TypeEnum.VARCHAR.getBaseTypeDisplayName(), new ArrayList<TypeSignature>(),
+                        Lists.<Object>newArrayList((long) length)));
 
         if (length < 0) {
             throw new IllegalArgumentException("Invalid VARCHAR length " + length);
@@ -51,5 +53,25 @@ public final class VarcharType extends AbstractType {
      */
     public static VarcharType createVarcharType(final int length) {
         return new VarcharType(length);
+    }
+
+    @Override
+    public String getParametricTypeName() {
+        return TypeEnum.VARCHAR.getBaseTypeDisplayName();
+    }
+
+    @Override
+    public Type createType(final List<Type> types, final List<Object> literals) {
+        if (literals.isEmpty()) {
+            return createVarcharType(1);
+        }
+        if (literals.size() != 1) {
+            throw new IllegalArgumentException("Expected at most one parameter for VARCHAR");
+        }
+        try {
+            return createVarcharType(Integer.parseInt(String.valueOf(literals.get(0))));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("VARCHAR length must be a number");
+        }
     }
 }
