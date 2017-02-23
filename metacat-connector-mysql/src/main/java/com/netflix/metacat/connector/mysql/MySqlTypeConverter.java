@@ -41,8 +41,9 @@ import java.util.regex.Pattern;
 @Slf4j
 public class MySqlTypeConverter implements ConnectorTypeConverter {
 
-    private static final Pattern TYPE_PATTERN
-        = Pattern.compile("^\\s*?(\\w+)\\s*?(?:\\(\\s*?(\\d+)(?:\\s*?,\\s*?(\\d+))?\\s*?\\))?(?:\\s*?(\\w+))?$");
+    private static final Pattern TYPE_PATTERN = Pattern.compile(
+        "^\\s*?(\\w+(?: precision)?)\\s*?(?:\\(\\s*?(\\d+)(?:\\s*?,\\s*?(\\d+))?\\s*?\\))?(?:\\s*?(\\w+))?$"
+    );
 
     /**
      * {@inheritDoc}
@@ -74,6 +75,7 @@ public class MySqlTypeConverter implements ConnectorTypeConverter {
             case "float":  // TODO: MySQL precision is lost
                 return BaseType.FLOAT;
             case "double":
+            case "double precision":
                 return BaseType.DOUBLE;
             case "decimal":
             case "dec":
@@ -105,7 +107,6 @@ public class MySqlTypeConverter implements ConnectorTypeConverter {
             case "year":
             case "enum":
             case "set":
-            case "double precision": // TODO: Will break the parser anyway so I'm just putting this here to discuss
                 // TODO: What do we do with these?
                 throw new UnsupportedOperationException("Encountered " + splitType[0] + " type. Ignoring");
             default:
