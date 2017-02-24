@@ -20,16 +20,17 @@ package com.netflix.metacat.connector.jdbc.services;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
-import com.netflix.metacat.common.type.BaseType;
-import com.netflix.metacat.common.type.Type;
-import com.netflix.metacat.common.type.VarbinaryType;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -40,7 +41,6 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -52,17 +52,25 @@ import java.util.Locale;
  * @since 0.1.52
  */
 @Slf4j
+@Getter
 public class JdbcConnectorTableService implements ConnectorTableService {
 
     private final DataSource dataSource;
+    private final ConnectorTypeConverter typeConverter;
 
     /**
      * Constructor.
      *
-     * @param dataSource the datasource to use to connect to the database
+     * @param dataSource    the datasource to use to connect to the database
+     * @param typeConverter The type converter to use from the SQL type to Metacat canonical type
      */
-    public JdbcConnectorTableService(@Nonnull final DataSource dataSource) {
+    @Inject
+    public JdbcConnectorTableService(
+        @Nonnull @NonNull final DataSource dataSource,
+        @Nonnull @NonNull final ConnectorTypeConverter typeConverter
+    ) {
         this.dataSource = dataSource;
+        this.typeConverter = typeConverter;
     }
 
     /**
@@ -103,20 +111,23 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             final String escapeString = metaData.getSearchStringEscape();
 
             final ImmutableList.Builder<FieldInfo> fields = ImmutableList.builder();
-            final ResultSet columns
-                = metaData.getColumns(connection.getCatalog(), database, name.getTableName(), escapeString);
-            while (columns.next()) {
-                final FieldInfo fieldInfo = FieldInfo.builder()
-                    .name(columns.getString("COLUMN_NAME"))
-                    .sourceType(columns.getString("TYPE_NAME"))
-                    .type(this.toMetacatType(columns.getInt("DATA_TYPE")))
-                    .comment(columns.getString("REMARKS"))
-                    .pos(columns.getInt("ORDINAL_POSITION"))
-                    .isNullable(columns.getString("IS_NULLABLE").equals("YES"))
-                    .size(columns.getInt("COLUMN_SIZE"))
-                    .defaultValue(columns.getString("COLUMN_DEF"))
-                    .build();
-                fields.add(fieldInfo);
+            try (final ResultSet columns
+                     = metaData.getColumns(connection.getCatalog(), database, name.getTableName(), escapeString)
+            ) {
+                while (columns.next()) {
+                    final String sourceType = columns.getString("TYPE_NAME");
+                    final FieldInfo fieldInfo = FieldInfo.builder()
+                        .name(columns.getString("COLUMN_NAME"))
+                        .sourceType(sourceType)
+                        .type(this.typeConverter.toMetacatType(sourceType))
+                        .comment(columns.getString("REMARKS"))
+                        .pos(columns.getInt("ORDINAL_POSITION"))
+                        .isNullable(columns.getString("IS_NULLABLE").equals("YES"))
+                        .size(columns.getInt("COLUMN_SIZE"))
+                        .defaultValue(columns.getString("COLUMN_DEF"))
+                        .build();
+                    fields.add(fieldInfo);
+                }
             }
             log.debug("Finished getting table metadata for qualified name {} for request {}", name, context);
             return TableInfo.builder().name(name).fields(fields.build()).build();
@@ -158,28 +169,28 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         @Nullable final Pageable pageable
     ) {
         log.debug("Beginning to list tables names for qualified name {} for request {}", name, context);
+        final String catalog = name.getCatalogName();
+        final String database = name.getDatabaseName();
 
         try (final Connection connection = this.dataSource.getConnection()) {
-            final String catalog = name.getCatalogName();
-            final String database = name.getDatabaseName();
             connection.setSchema(database);
             final DatabaseMetaData metaData = connection.getMetaData();
             final String escapeString = metaData.getSearchStringEscape();
             final List<QualifiedName> names = Lists.newArrayList();
-            final ResultSet tables;
-            if (prefix == null || StringUtils.isEmpty(prefix.getTableName())) {
-                tables = metaData.getTables(connection.getCatalog(), database, escapeString, null);
-            } else {
-                tables = metaData.getTables(
-                    connection.getCatalog(),
-                    database,
-                    prefix.getTableName() + escapeString,
-                    null
-                );
-            }
-
-            while (tables.next()) {
-                names.add(QualifiedName.ofTable(catalog, database, tables.getString("TABLE_NAME")));
+            try (
+                final ResultSet tables = prefix == null || StringUtils.isEmpty(prefix.getTableName())
+                    ? metaData.getTables(connection.getCatalog(), database, escapeString, null)
+                    : metaData
+                    .getTables(
+                        connection.getCatalog(),
+                        database,
+                        prefix.getTableName() + escapeString,
+                        null
+                    )
+            ) {
+                while (tables.next()) {
+                    names.add(QualifiedName.ofTable(catalog, database, tables.getString("TABLE_NAME")));
+                }
             }
 
             // Does user want sorting?
@@ -246,44 +257,6 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             );
         } catch (final SQLException se) {
             throw Throwables.propagate(se);
-        }
-    }
-
-    private Type toMetacatType(final int jdbcType) {
-        switch (jdbcType) {
-            case Types.BIT:
-            case Types.BOOLEAN:
-                return BaseType.BOOLEAN;
-            case Types.TINYINT:
-            case Types.SMALLINT:
-            case Types.INTEGER:
-            case Types.BIGINT:
-                return BaseType.BIGINT;
-            case Types.FLOAT:
-            case Types.REAL:
-            case Types.DOUBLE:
-            case Types.NUMERIC:
-            case Types.DECIMAL:
-                return BaseType.DOUBLE;
-            case Types.CHAR:
-            case Types.NCHAR:
-            case Types.VARCHAR:
-            case Types.NVARCHAR:
-            case Types.LONGVARCHAR:
-            case Types.LONGNVARCHAR:
-                return BaseType.STRING;
-            case Types.BINARY:
-            case Types.VARBINARY:
-            case Types.LONGVARBINARY:
-                return VarbinaryType.VARBINARY;
-            case Types.DATE:
-                return BaseType.DATE;
-            case Types.TIME:
-                return BaseType.TIME;
-            case Types.TIMESTAMP:
-                return BaseType.TIMESTAMP;
-            default:
-                throw new IllegalArgumentException("Unmapped SQL type " + jdbcType);
         }
     }
 }

@@ -41,41 +41,41 @@ class TestCatalogs {
     }
 
     static final Set<TestCatalog> ALL = [
-            new TestCatalog(
-                    createDatabase: true,
-                    createPartition: true,
-                    createTable: true,
-                    deleteDatabase: true,
-                    deleteTable: true,
-                    name: 'hive-metastore',
-                    partitionKeysAppearLast: true,
-                    type: 'hive',
-                    createView: true,
-            ),
-            new TestCatalog(
-                    createDatabase: true,
-                    createPartition: true,
-                    createTable: true,
-                    deleteDatabase: true,
-                    deleteTable: true,
-                    name: 's3-mysql-db',
-                    type: 's3',
-                    validateFilterExpressionBasedOnPartitionKeyType: false
-            ),
-//            new TestCatalog(
-//                    name: 'mysql-56-db',
-//                    preExistingDatabases: [
-//                            QualifiedName.ofDatabase('mysql-56-db', 'sakila'),
-//                            QualifiedName.ofDatabase('mysql-56-db', 'world'),
-//                    ],
-//                    preExistingTables: [
-//                            QualifiedName.ofTable('mysql-56-db', 'sakila', 'city'),
-//                            QualifiedName.ofTable('mysql-56-db', 'sakila', 'country'),
-//                            QualifiedName.ofTable('mysql-56-db', 'world', 'City'),
-//                            QualifiedName.ofTable('mysql-56-db', 'world', 'Country'),
-//                    ],
-//                    type: 'metacat-mysql',
-//            ),
+        new TestCatalog(
+            createDatabase: true,
+            createPartition: true,
+            createTable: true,
+            deleteDatabase: true,
+            deleteTable: true,
+            name: 'hive-metastore',
+            partitionKeysAppearLast: true,
+            type: 'hive',
+            createView: true,
+        ),
+        new TestCatalog(
+            createDatabase: true,
+            createPartition: true,
+            createTable: true,
+            deleteDatabase: true,
+            deleteTable: true,
+            name: 's3-mysql-db',
+            type: 's3',
+            validateFilterExpressionBasedOnPartitionKeyType: false
+        ),
+        new TestCatalog(
+            name: 'mysql-56-db',
+            preExistingDatabases: [
+                QualifiedName.ofDatabase('mysql-56-db', 'sakila'),
+                QualifiedName.ofDatabase('mysql-56-db', 'world'),
+            ],
+            preExistingTables: [
+                QualifiedName.ofTable('mysql-56-db', 'sakila', 'city'),
+                QualifiedName.ofTable('mysql-56-db', 'sakila', 'country'),
+                QualifiedName.ofTable('mysql-56-db', 'world', 'City'),
+                QualifiedName.ofTable('mysql-56-db', 'world', 'Country'),
+            ],
+            type: 'mysql',
+        ),
     ]
 
     static TestCatalog findByCatalogName(String name) {

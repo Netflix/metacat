@@ -26,6 +26,8 @@ import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -48,6 +50,7 @@ import java.util.Locale;
  * @since 0.1.52
  */
 @Slf4j
+@Getter
 public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
 
     private final DataSource dataSource;
@@ -58,7 +61,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
      * @param dataSource The jdbc datasource instance to use to make connections
      */
     @Inject
-    public JdbcConnectorDatabaseService(@Nonnull final DataSource dataSource) {
+    public JdbcConnectorDatabaseService(@Nonnull @NonNull final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -170,20 +173,21 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
         try (final Connection connection = this.dataSource.getConnection()) {
             final DatabaseMetaData metaData = connection.getMetaData();
             final List<QualifiedName> names = Lists.newArrayList();
-            final ResultSet schemas;
-            if (prefix == null || StringUtils.isEmpty(prefix.getDatabaseName())) {
-                schemas = metaData.getSchemas();
-            } else {
-                schemas = metaData.getSchemas(
+
+            try (final ResultSet schemas = prefix == null || StringUtils.isEmpty(prefix.getDatabaseName())
+                ? metaData.getSchemas()
+                : metaData
+                .getSchemas(
                     connection.getCatalog(),
                     prefix.getDatabaseName() + metaData.getSearchStringEscape()
-                );
-            }
-            while (schemas.next()) {
-                final String schemaName = schemas.getString("TABLE_SCHEM").toLowerCase(Locale.ENGLISH);
-                // skip internal schemas
-                if (!schemaName.equals("information_schema")) {
-                    names.add(QualifiedName.ofDatabase(name.getCatalogName(), schemaName));
+                )
+            ) {
+                while (schemas.next()) {
+                    final String schemaName = schemas.getString("TABLE_SCHEM").toLowerCase(Locale.ENGLISH);
+                    // skip internal schemas
+                    if (!schemaName.equals("information_schema")) {
+                        names.add(QualifiedName.ofDatabase(name.getCatalogName(), schemaName));
+                    }
                 }
             }
 
