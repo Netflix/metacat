@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import lombok.NonNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -53,10 +54,8 @@ public final class JdbcConnectorUtils {
      * @param sql        The sql to execute
      * @return The number of rows updated or exception
      */
-    static int executeUpdate(@Nonnull final Connection connection, @Nonnull final String sql) {
-        try (
-            final Statement statement = connection.createStatement()
-        ) {
+    static int executeUpdate(@Nonnull @NonNull final Connection connection, @Nonnull @NonNull final String sql) {
+        try (final Statement statement = connection.createStatement()) {
             return statement.executeUpdate(sql);
         } catch (final SQLException se) {
             throw Throwables.propagate(se);
@@ -70,10 +69,10 @@ public final class JdbcConnectorUtils {
      * @param sort       The sort object defining ascending or descending order
      * @param comparator The comparator to use
      */
-    static void sort(
-        @Nonnull final List<QualifiedName> names,
-        @Nonnull final Sort sort,
-        @Nonnull final Comparator<QualifiedName> comparator
+    public static void sort(
+        @Nonnull @NonNull final List<QualifiedName> names,
+        @Nonnull @NonNull final Sort sort,
+        @Nonnull @NonNull final Comparator<QualifiedName> comparator
     ) {
         switch (sort.getOrder()) {
             case DESC:
@@ -93,7 +92,10 @@ public final class JdbcConnectorUtils {
      * @param pageable The pagination parameters or null if no pagination required
      * @return The final list of qualified names
      */
-    static List<QualifiedName> paginate(@Nonnull final List<QualifiedName> names, @Nullable final Pageable pageable) {
+    public static List<QualifiedName> paginate(
+        @Nonnull @NonNull final List<QualifiedName> names,
+        @Nullable final Pageable pageable
+    ) {
         final ImmutableList.Builder<QualifiedName> results = ImmutableList.builder();
         if (pageable != null && pageable.isPageable()) {
             results.addAll(

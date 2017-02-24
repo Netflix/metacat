@@ -22,7 +22,10 @@ import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter
 import com.netflix.metacat.common.server.connectors.model.TableInfo
+import com.netflix.metacat.common.type.BaseType
+import com.netflix.metacat.common.type.VarcharType
 import spock.lang.Specification
 
 import javax.sql.DataSource
@@ -38,7 +41,8 @@ class JdbcConnectorTableServiceSpec extends Specification {
 
     def context = Mock(ConnectorContext)
     def dataSource = Mock(DataSource)
-    def service = new JdbcConnectorTableService(this.dataSource)
+    def typeConverter = Mock(ConnectorTypeConverter)
+    def service = new JdbcConnectorTableService(this.dataSource, this.typeConverter)
 
     def "Can't create a table"() {
         when:
@@ -122,7 +126,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
         2 * columnResultSet.getString("COLUMN_NAME") >>> ["column1", "column2"]
         2 * columnResultSet.getInt("ORDINAL_POSITION") >>> [1, 2]
         2 * columnResultSet.getString("TYPE_NAME") >>> ["VARCHAR", "INTEGER"]
-        2 * columnResultSet.getInt("DATA_TYPE") >>> [Types.VARCHAR, Types.INTEGER]
+        2 * this.typeConverter.toMetacatType(_ as String) >>> [VarcharType.createVarcharType(255), BaseType.INT]
         2 * columnResultSet.getString("IS_NULLABLE") >>> ["YES", "NO"]
         2 * columnResultSet.getInt("COLUMN_SIZE") >>> [255, 11]
         2 * columnResultSet.getString("COLUMN_DEF") >>> [null, "0"]

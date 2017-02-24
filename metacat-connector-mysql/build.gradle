@@ -1,4 +1,4 @@
 dependencies {
     compile project(":metacat-connector-jdbc")
-    compile ("mysql:mysql-connector-java:6.0.5")
+    compile ("mysql:mysql-connector-java:${mysql_connector_version}")
 }

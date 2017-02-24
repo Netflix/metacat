@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright 2016 Netflix, Inc.
+ *  Copyright 2017 Netflix, Inc.
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -15,10 +15,33 @@
  *     limitations under the License.
  *
  */
+package com.netflix.metacat.connector.mysql
+
+import spock.lang.Specification
 
 /**
- * This package includes mysql connector classes.
+ * Tests for the MySqlConnectorPlugin class.
  *
- * @author amajumdar
+ * @author tgianos
+ * @since 0.1.52
  */
-package com.netflix.metacat.plugin.mysql;
+class MySqlConnectorPluginSpec extends Specification {
+
+    def plugin = new MySqlConnectorPlugin()
+
+    def "Can get connector type"() {
+        when:
+        def type = this.plugin.getType()
+
+        then:
+        type == "mysql"
+    }
+
+    def "Can get connector type converter"() {
+        when:
+        def converter = this.plugin.getTypeConverter()
+
+        then:
+        converter instanceof MySqlTypeConverter
+    }
+}
