@@ -101,7 +101,7 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
         log.debug("Start: Delete database {}", name);
         final String databaseName = name.getDatabaseName();
         Preconditions.checkNotNull(databaseName, "Database name is null");
-        final Database database = databaseDao.getByName(databaseName);
+        final Database database = databaseDao.getBySourceDatabaseName(catalogName, databaseName);
         if (database == null) {
             throw new DatabaseNotFoundException(name);
         } else if (database.getTables() != null && !database.getTables().isEmpty()) {
@@ -115,14 +115,17 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     public DatabaseInfo get(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
         final String databaseName = name.getDatabaseName();
         Preconditions.checkNotNull(databaseName, "Database name is null");
-        final Database database = databaseDao.getBySourceDatabaseName(catalogName, name.getDatabaseName());
         log.debug("Get database {}", name);
+        final Database database = databaseDao.getBySourceDatabaseName(catalogName, databaseName);
+        if (database == null) {
+            throw new DatabaseNotFoundException(name);
+        }
         return infoConverter.toDatabaseInfo(QualifiedName.ofCatalog(catalogName), database);
     }
 
     @Override
     public boolean exists(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
-        return databaseDao.getByName(name.getDatabaseName()) != null;
+        return databaseDao.getBySourceDatabaseName(catalogName, name.getDatabaseName()) != null;
     }
 
     @Override

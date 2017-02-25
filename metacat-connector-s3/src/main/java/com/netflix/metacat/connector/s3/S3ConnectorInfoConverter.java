@@ -216,7 +216,11 @@ public class S3ConnectorInfoConverter implements ConnectorInfoConverter<Database
                 result.setInputFormat(info.getInputFormat());
                 result.setOutputFormat(info.getOutputFormat());
                 result.setSerializationLib(info.getSerializationLib());
-                result.setSerdeInfoParameters(Maps.newHashMap(info.getParameters()));
+                final Map<String, String> infoParameters = Maps.newHashMap();
+                if (info.getParameters() != null) {
+                    infoParameters.putAll(info.getParameters());
+                }
+                result.setSerdeInfoParameters(infoParameters);
             }
         }
         return result;
@@ -315,7 +319,7 @@ public class S3ConnectorInfoConverter implements ConnectorInfoConverter<Database
         if (isUsePigTypes) {
             result = pigTypeConverter.fromMetacatType(type);
         } else {
-            result = type.getTypeSignature().toString();
+            result = type.getDisplayName();
         }
         return result;
     }

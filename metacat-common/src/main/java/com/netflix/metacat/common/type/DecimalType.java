@@ -14,6 +14,7 @@
 package com.netflix.metacat.common.type;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -45,7 +46,7 @@ public final class DecimalType extends AbstractType implements ParametricType {
     private final int scale;
 
     private DecimalType(final int precision, final int scale) {
-        super(new TypeSignature(TypeEnum.DECIMAL.getBaseTypeDisplayName(),
+        super(new TypeSignature(TypeEnum.DECIMAL,
             new ArrayList<TypeSignature>(),
             Lists.<Object>newArrayList((long) precision, (long) scale)));
         Preconditions.checkArgument(precision >= 0, "Invalid decimal precision " + precision);
@@ -75,6 +76,11 @@ public final class DecimalType extends AbstractType implements ParametricType {
         return createDecimalType(precision, DEFAULT_SCALE);
     }
 
+    @Override
+    public List<Type> getParameters() {
+        return ImmutableList.of();
+    }
+
     /**
      * Constructor.
      *
@@ -85,8 +91,8 @@ public final class DecimalType extends AbstractType implements ParametricType {
     }
 
     @Override
-    public String getParametricTypeName() {
-        return TypeEnum.DECIMAL.getBaseTypeDisplayName();
+    public TypeEnum getBaseType() {
+        return TypeEnum.DECIMAL;
     }
 
     @Override

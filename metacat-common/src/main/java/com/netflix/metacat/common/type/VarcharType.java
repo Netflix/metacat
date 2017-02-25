@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.common.type;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import lombok.Getter;
 
@@ -36,7 +37,7 @@ public final class VarcharType extends AbstractType implements ParametricType {
     private VarcharType(final int length) {
         super(
                 new TypeSignature(
-                        TypeEnum.VARCHAR.getBaseTypeDisplayName(), new ArrayList<TypeSignature>(),
+                        TypeEnum.VARCHAR, new ArrayList<TypeSignature>(),
                         Lists.<Object>newArrayList((long) length)));
 
         if (length < 0) {
@@ -56,8 +57,13 @@ public final class VarcharType extends AbstractType implements ParametricType {
     }
 
     @Override
-    public String getParametricTypeName() {
-        return TypeEnum.VARCHAR.getBaseTypeDisplayName();
+    public TypeEnum getBaseType() {
+        return TypeEnum.VARCHAR;
+    }
+
+    @Override
+    public List<Type> getParameters() {
+        return ImmutableList.of();
     }
 
     @Override

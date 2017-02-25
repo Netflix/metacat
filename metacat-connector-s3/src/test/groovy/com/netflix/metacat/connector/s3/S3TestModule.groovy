@@ -17,13 +17,10 @@ import com.google.common.collect.Maps
 import com.google.inject.Binder
 import com.google.inject.Module
 import com.google.inject.persist.jpa.JpaPersistModule
-import io.airlift.testing.mysql.TestingMySqlServer
 
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-
-import static java.lang.String.format
 
 /**
  * Created by amajumdar on 10/12/15.

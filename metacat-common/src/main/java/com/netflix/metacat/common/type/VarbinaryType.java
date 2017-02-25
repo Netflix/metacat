@@ -16,6 +16,7 @@
 
 package com.netflix.metacat.common.type;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import lombok.Getter;
 
@@ -38,7 +39,7 @@ public final class VarbinaryType extends AbstractType implements ParametricType 
 
     private VarbinaryType(final int length) {
         super(new TypeSignature(
-                TypeEnum.VARBINARY.getBaseTypeDisplayName(),
+                TypeEnum.VARBINARY,
                 new ArrayList<TypeSignature>(),
                 Lists.<Object>newArrayList((long) length)));
 
@@ -60,8 +61,13 @@ public final class VarbinaryType extends AbstractType implements ParametricType 
     }
 
     @Override
-    public String getParametricTypeName() {
-        return TypeEnum.VARBINARY.getBaseTypeDisplayName();
+    public TypeEnum getBaseType() {
+        return TypeEnum.VARBINARY;
+    }
+
+    @Override
+    public List<Type> getParameters() {
+        return ImmutableList.of();
     }
 
     @Override

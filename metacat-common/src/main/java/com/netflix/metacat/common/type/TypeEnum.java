@@ -110,9 +110,10 @@ public enum TypeEnum {
      * @param name name
      * @return TypeEnum type
      */
-    public TypeEnum fromName(final String name) {
+    public static TypeEnum fromName(final String name) {
         try {
-            return TypeEnum.valueOf(name);
+            final String typeName = name.trim().toUpperCase().replace(' ', '_');
+            return TypeEnum.valueOf(typeName);
         } catch (Exception e) {
             return UNKNOWN;
         }

@@ -31,7 +31,7 @@ import java.util.Collections;
 @EqualsAndHashCode
 @Getter
 public class TypeSignature {
-    protected final String base;
+    protected final TypeEnum base;
     protected final List<TypeSignature> parameters;
     protected final List<Object> literalParameters;
 
@@ -40,7 +40,7 @@ public class TypeSignature {
      *
      * @param base basetype
      */
-    public TypeSignature(final String base) {
+    public TypeSignature(final TypeEnum base) {
         Preconditions.checkArgument(base != null, "base is null");
         this.base = base;
         this.parameters = Lists.newArrayList();
@@ -54,12 +54,10 @@ public class TypeSignature {
      * @param parameters        type parameter
      * @param literalParameters literal parameter
      */
-    public TypeSignature(final String base, final List<TypeSignature> parameters,
+    public TypeSignature(final TypeEnum base, final List<TypeSignature> parameters,
                          final List<Object> literalParameters) {
         Preconditions.checkArgument(base != null, "base is null");
         this.base = base;
-        Preconditions.checkArgument(!base.isEmpty(), "base is empty");
-        Preconditions.checkArgument(validateName(base), "Bad characters in base type: %s", base);
         Preconditions.checkArgument(parameters != null, "parameters is null");
         Preconditions.checkArgument(literalParameters != null, "literalParameters is null");
         for (Object literal : literalParameters) {
@@ -71,14 +69,16 @@ public class TypeSignature {
         this.literalParameters = Collections.unmodifiableList(new ArrayList<>(literalParameters));
     }
 
-    private static boolean validateName(final String name) {
-        for (int i = 0; i < name.length(); i++) {
-            final char c = name.charAt(i);
-            if (c == '<' || c == '>' || c == ',') {
-                return false;
-            }
-        }
-        return true;
+    /**
+     * Type signature constructor.
+     *
+     * @param base              base type
+     * @param parameters        type parameter
+     * @param literalParameters literal parameter
+     */
+    private TypeSignature(final String base, final List<TypeSignature> parameters,
+        final List<Object> literalParameters) {
+        this(TypeEnum.fromName(base), parameters, literalParameters);
     }
 
     /**
@@ -168,7 +168,7 @@ public class TypeSignature {
     @Override
     @JsonValue
     public String toString() {
-        final StringBuilder typeName = new StringBuilder(base);
+        final StringBuilder typeName = new StringBuilder(base.getBaseTypeDisplayName());
         if (!parameters.isEmpty()) {
             typeName.append("<");
             boolean first = true;

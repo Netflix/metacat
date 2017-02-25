@@ -19,6 +19,6 @@ public class DefaultTypeConverter implements ConnectorTypeConverter {
 
     @Override
     public String fromMetacatType(final Type type) {
-        return type.getTypeSignature().toString();
+        return type.getDisplayName();
     }
 }

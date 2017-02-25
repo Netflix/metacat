@@ -22,5 +22,4 @@ dependencies {
     compile "com.google.inject.extensions:guice-persist:${guice_version}"
     compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
     compile "com.google.inject.extensions:guice-servlet:${guice_version}"
-    testCompile 'io.airlift:testing-mysql-server:0.1'
 }

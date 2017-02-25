@@ -45,15 +45,16 @@ public class MapType extends AbstractType implements ParametricType {
      * @param valueType valuetype
      */
     public MapType(final Type keyType, final Type valueType) {
-        super(TypeUtils.parameterizedTypeName("map", keyType.getTypeSignature(), valueType.getTypeSignature()));
+        super(TypeUtils.parameterizedTypeSignature(TypeEnum.MAP,
+            keyType.getTypeSignature(), valueType.getTypeSignature()));
         this.keyType = keyType;
         this.valueType = valueType;
     }
 
     @Override
     public String getDisplayName() {
-        return "map<" + keyType.getTypeSignature().toString()
-            + ", " + valueType.getTypeSignature().toString() + ">";
+        return "map<" + keyType.getDisplayName()
+            + ", " + valueType.getDisplayName() + ">";
     }
 
     @Override
@@ -62,8 +63,8 @@ public class MapType extends AbstractType implements ParametricType {
     }
 
     @Override
-    public String getParametricTypeName() {
-        return TypeEnum.MAP.getBaseTypeDisplayName();
+    public TypeEnum getBaseType() {
+        return TypeEnum.MAP;
     }
 
     @Override

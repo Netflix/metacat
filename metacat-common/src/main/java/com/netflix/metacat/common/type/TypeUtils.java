@@ -29,12 +29,13 @@ public final class TypeUtils {
     /**
      * parameterizedTypeName.
      *
-     * @param base          base
+     * @param baseType   baseType
      * @param argumentNames args
      * @return typesignature
      */
-    public static TypeSignature parameterizedTypeName(final String base, final TypeSignature... argumentNames) {
-        return new TypeSignature(base, ImmutableList.copyOf(argumentNames), ImmutableList.of());
+    public static TypeSignature parameterizedTypeSignature(final TypeEnum baseType,
+        final TypeSignature... argumentNames) {
+        return new TypeSignature(baseType, ImmutableList.copyOf(argumentNames), ImmutableList.of());
     }
 
     /**
