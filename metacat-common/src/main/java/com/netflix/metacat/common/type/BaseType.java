@@ -14,10 +14,6 @@
 package com.netflix.metacat.common.type;
 
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.List;
 
 /**
  * TypeEnum class implements the type interface.
@@ -28,83 +24,77 @@ public class BaseType extends AbstractType {
     /**
      * BOOLEAN type.
      */
-    public static final Type BOOLEAN = createBaseType(TypeEnum.BOOLEAN.getBaseTypeDisplayName());
+    public static final Type BOOLEAN = createBaseType(TypeEnum.BOOLEAN);
     /**
      * TINYINT type.
      */
-    public static final Type TINYINT = createBaseType(TypeEnum.TINYINT.getBaseTypeDisplayName());
+    public static final Type TINYINT = createBaseType(TypeEnum.TINYINT);
     /**
      * SMALLINT type.
      */
-    public static final Type SMALLINT = createBaseType(TypeEnum.SMALLINT.getBaseTypeDisplayName());
+    public static final Type SMALLINT = createBaseType(TypeEnum.SMALLINT);
     /**
      * INT type.
      */
-    public static final Type INT = createBaseType(TypeEnum.INT.getBaseTypeDisplayName());
+    public static final Type INT = createBaseType(TypeEnum.INT);
     /**
      * BIGINT type.
      */
-    public static final Type BIGINT = createBaseType(TypeEnum.BIGINT.getBaseTypeDisplayName());
+    public static final Type BIGINT = createBaseType(TypeEnum.BIGINT);
     /**
      * FLOAT type.
      */
-    public static final Type FLOAT = createBaseType(TypeEnum.FLOAT.getBaseTypeDisplayName());
+    public static final Type FLOAT = createBaseType(TypeEnum.FLOAT);
     /**
      * DOUBLE type.
      */
-    public static final Type DOUBLE = createBaseType(TypeEnum.DOUBLE.getBaseTypeDisplayName());
+    public static final Type DOUBLE = createBaseType(TypeEnum.DOUBLE);
     /**
      * STRING type.
      */
-    public static final Type STRING = createBaseType(TypeEnum.STRING.getBaseTypeDisplayName());
+    public static final Type STRING = createBaseType(TypeEnum.STRING);
     /**
      * JSON type.
      */
-    public static final Type JSON = createBaseType(TypeEnum.JSON.getBaseTypeDisplayName());
+    public static final Type JSON = createBaseType(TypeEnum.JSON);
     /**
      * DATE type.
      */
-    public static final Type DATE = createBaseType(TypeEnum.DATE.getBaseTypeDisplayName());
+    public static final Type DATE = createBaseType(TypeEnum.DATE);
     /**
      * TIME type.
      */
-    public static final Type TIME = createBaseType(TypeEnum.TIME.getBaseTypeDisplayName());
+    public static final Type TIME = createBaseType(TypeEnum.TIME);
     /**
      * TIME_WITH_TIME_ZONE type.
      */
     public static final Type TIME_WITH_TIME_ZONE =
-        createBaseType(TypeEnum.TIME_WITH_TIME_ZONE.getBaseTypeDisplayName());
+        createBaseType(TypeEnum.TIME_WITH_TIME_ZONE);
     /**
      * TIMESTAMP type.
      */
-    public static final Type TIMESTAMP = createBaseType(TypeEnum.TIMESTAMP.getBaseTypeDisplayName());
+    public static final Type TIMESTAMP = createBaseType(TypeEnum.TIMESTAMP);
     /**
      * TIMESTAMP_WITH_TIME_ZONE type.
      */
     public static final Type TIMESTAMP_WITH_TIME_ZONE =
-        createBaseType(TypeEnum.TIMESTAMP_WITH_TIME_ZONE.getBaseTypeDisplayName());
+        createBaseType(TypeEnum.TIMESTAMP_WITH_TIME_ZONE);
     /**
      * INTERVAL_YEAR_TO_MONTH type.
      */
     public static final Type INTERVAL_YEAR_TO_MONTH =
-        createBaseType(TypeEnum.INTERVAL_YEAR_TO_MONTH.getBaseTypeDisplayName());
+        createBaseType(TypeEnum.INTERVAL_YEAR_TO_MONTH);
     /**
      * INTERVAL_DAY_TO_SECOND type.
      */
     public static final Type INTERVAL_DAY_TO_SECOND =
-        createBaseType(TypeEnum.INTERVAL_DAY_TO_SECOND.getBaseTypeDisplayName());
+        createBaseType(TypeEnum.INTERVAL_DAY_TO_SECOND);
 
 
     /**
      * UNKNOWN.
      */
-    public static final Type UNKNOWN = createBaseType(TypeEnum.UNKNOWN.getBaseTypeDisplayName());
-
-    @Getter
-    protected final List<Type> parameters;
-    @Getter
-    @Setter
-    private String sourceType;
+    public static final Type UNKNOWN = createBaseType(TypeEnum.UNKNOWN);
 
     /**
      * BaseType constructor.
@@ -112,22 +102,10 @@ public class BaseType extends AbstractType {
      * @param signature base type
      */
     public BaseType(final TypeSignature signature) {
-        this(signature, null);
+        super(signature);
     }
 
-    /**
-     * BaseType constructor.
-     *
-     * @param signature  base type
-     * @param sourceType sourcetype
-     */
-    public BaseType(final TypeSignature signature, final String sourceType) {
-        super(signature, sourceType);
-        this.parameters = null;
-        this.sourceType = sourceType;
-    }
-
-    private static BaseType createBaseType(final String baseType) {
+    private static BaseType createBaseType(final TypeEnum baseType) {
         return new BaseType(new TypeSignature(baseType));
     }
 }

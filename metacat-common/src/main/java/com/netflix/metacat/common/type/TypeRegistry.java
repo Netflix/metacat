@@ -17,7 +17,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -32,7 +31,7 @@ public final class TypeRegistry implements TypeManager {
     private static final TypeRegistry INSTANCE = new TypeRegistry();
 
     private final ConcurrentMap<TypeSignature, Type> types = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, ParametricType> parametricTypes = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TypeEnum, ParametricType> parametricTypes = new ConcurrentHashMap<>();
 
     /**
      * Constructor.
@@ -81,10 +80,10 @@ public final class TypeRegistry implements TypeManager {
     }
 
     @Override
-    public Type getParameterizedType(final String baseTypeName,
+    public Type getParameterizedType(final TypeEnum baseType,
                                      final List<TypeSignature> typeParameters,
                                      final List<Object> literalParameters) {
-        return getType(new TypeSignature(baseTypeName, typeParameters, literalParameters));
+        return getType(new TypeSignature(baseType, typeParameters, literalParameters));
     }
 
     private Type instantiateParametricType(final TypeSignature signature) {
@@ -97,7 +96,7 @@ public final class TypeRegistry implements TypeManager {
             parameterTypes.add(parameterType);
         }
 
-        final ParametricType parametricType = parametricTypes.get(signature.getBase().toLowerCase(Locale.ENGLISH));
+        final ParametricType parametricType = parametricTypes.get(signature.getBase());
         if (parametricType == null) {
             return null;
         }
@@ -137,9 +136,10 @@ public final class TypeRegistry implements TypeManager {
      * @param parametricType Type
      */
     public void addParametricType(final ParametricType parametricType) {
-        final String name = parametricType.getParametricTypeName().toLowerCase(Locale.ENGLISH);
-        Preconditions.checkArgument(!parametricTypes.containsKey(name), "Parametric type already registered: %s", name);
-        parametricTypes.putIfAbsent(name, parametricType);
+        final TypeEnum baseType = parametricType.getBaseType();
+        Preconditions.checkArgument(!parametricTypes.containsKey(baseType),
+            "Parametric type already registered: %s", baseType);
+        parametricTypes.putIfAbsent(baseType, parametricType);
     }
 
     @Override

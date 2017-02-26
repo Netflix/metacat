@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.common.type;
 
+import com.google.common.collect.ImmutableList;
 import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public class CharType extends AbstractType implements ParametricType {
     public CharType(final int length) {
         super(
             new TypeSignature(
-                TypeEnum.CHAR.getBaseTypeDisplayName(),
+                TypeEnum.CHAR,
                 new ArrayList<TypeSignature>(),
                 Collections.<Object>singletonList((long) length)));
 
@@ -48,8 +49,8 @@ public class CharType extends AbstractType implements ParametricType {
     }
 
     @Override
-    public String getParametricTypeName() {
-        return TypeEnum.CHAR.getBaseTypeDisplayName();
+    public TypeEnum getBaseType() {
+        return TypeEnum.CHAR;
     }
 
     @Override
@@ -65,6 +66,11 @@ public class CharType extends AbstractType implements ParametricType {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("CHAR length must be a number");
         }
+    }
+
+    @Override
+    public List<Type> getParameters() {
+        return ImmutableList.of();
     }
 
     /**

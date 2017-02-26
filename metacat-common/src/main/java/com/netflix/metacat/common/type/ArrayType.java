@@ -38,13 +38,13 @@ public class ArrayType extends AbstractType implements ParametricType {
      * @param elementType elementtype
      */
     public ArrayType(final Type elementType) {
-        super(TypeUtils.parameterizedTypeName("array", elementType.getTypeSignature()));
+        super(TypeUtils.parameterizedTypeSignature(TypeEnum.ARRAY, elementType.getTypeSignature()));
         this.elementType = Preconditions.checkNotNull(elementType, "elementType is null");
     }
 
     @Override
-    public String getParametricTypeName() {
-        return TypeEnum.ARRAY.getBaseTypeDisplayName();
+    public TypeEnum getBaseType() {
+        return TypeEnum.ARRAY;
     }
 
     @Override

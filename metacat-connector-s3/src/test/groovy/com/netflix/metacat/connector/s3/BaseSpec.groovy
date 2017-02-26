@@ -23,17 +23,13 @@ import com.netflix.metacat.connector.s3.model.Partition
 import com.netflix.metacat.connector.s3.model.Schema
 import com.netflix.metacat.connector.s3.model.Source
 import com.netflix.metacat.connector.s3.model.Table
-import io.airlift.testing.mysql.TestingMySqlServer
 import spock.guice.UseModules
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.inject.Inject
-import java.sql.Connection
 import java.sql.DriverManager
-import java.sql.SQLException
-import java.sql.Statement
 
 @UseModules([
         CommonModule.class,
@@ -48,7 +44,7 @@ class BaseSpec extends Specification {
     @Shared Map<String, Partition> partitions
 
     def setupSpec() {
-        setupMysql()
+        setupPersist()
         setModels()
     }
 
@@ -90,12 +86,13 @@ class BaseSpec extends Specification {
         partitions = ['dateint=20171212': partition, 'dateint=20171213': partition1, 'dateint=20171214': partition2]
     }
 
-    def setupMysql() {
+    def setupPersist() {
         persistService.start()
     }
 
     def cleanupSpec() {
         if( persistService != null){
+            DriverManager.getConnection("jdbc:hsqldb:mem:metacat", 'sa','').createStatement().execute('SHUTDOWN')
             persistService.stop()
         }
     }
