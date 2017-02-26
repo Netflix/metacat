@@ -92,7 +92,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
      *
      * @param requestContext The request context
      * @param tableInfo      The resource metadata
-     * @throws ConnectorException exception
+     * @throws Exception exception
      */
     @Override
     public void create(@Nonnull final ConnectorContext requestContext, @Nonnull final TableInfo tableInfo) {
@@ -102,8 +102,8 @@ public class HiveConnectorTableService implements ConnectorTableService {
             throw new InvalidMetaException(tableInfo.getName(), exception);
         } catch (InvalidObjectException exception) {
             throw new DatabaseNotFoundException(
-                QualifiedName.ofDatabase(tableInfo.getName().getCatalogName(),
-                    tableInfo.getName().getDatabaseName()), exception);
+                    QualifiedName.ofDatabase(tableInfo.getName().getCatalogName(),
+                            tableInfo.getName().getDatabaseName()), exception);
         } catch (TException exception) {
             throw new ConnectorException(tableInfo.getName().toString(), exception);
         }
@@ -138,8 +138,8 @@ public class HiveConnectorTableService implements ConnectorTableService {
     public void update(@Nonnull final ConnectorContext requestContext, @Nonnull final TableInfo tableInfo) {
         try {
             metacatHiveClient.alterTable(tableInfo.getName().getDatabaseName(),
-                tableInfo.getName().getTableName(),
-                hiveMetacatConverters.fromTableInfo(tableInfo));
+                    tableInfo.getName().getTableName(),
+                    hiveMetacatConverters.fromTableInfo(tableInfo));
         } catch (NoSuchObjectException exception) {
             throw new TableNotFoundException(tableInfo.getName(), exception);
         } catch (MetaException exception) {
@@ -154,11 +154,11 @@ public class HiveConnectorTableService implements ConnectorTableService {
      */
     @Override
     public List<QualifiedName> listNames(
-        @Nonnull final ConnectorContext requestContext,
-        @Nonnull final QualifiedName name,
-        @Nullable final QualifiedName prefix,
-        @Nullable final Sort sort,
-        @Nullable final Pageable pageable
+            @Nonnull final ConnectorContext requestContext,
+            @Nonnull final QualifiedName name,
+            @Nullable final QualifiedName prefix,
+            @Nullable final Sort sort,
+            @Nullable final Pageable pageable
     ) {
         try {
             List<QualifiedName> qualifiedNames = Lists.newArrayList();
@@ -167,7 +167,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
             for (String tableName : metacatHiveClient.getAllTables(name.getDatabaseName())) {
                 if (tableFilter == null || tableName.startsWith(tableFilter)) {
                     final QualifiedName qualifiedName =
-                        QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName);
+                            QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName);
                     if (prefix != null && !qualifiedName.toString().startsWith(prefix.toString())) {
                         continue;
                     }
@@ -178,12 +178,16 @@ public class HiveConnectorTableService implements ConnectorTableService {
             if (null != pageable && pageable.isPageable()) {
                 final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), qualifiedNames.size());
                 qualifiedNames = (pageable.getOffset() > limit) ? Lists.newArrayList()
-                    : qualifiedNames.subList(pageable.getOffset(), limit);
+                        : qualifiedNames.subList(pageable.getOffset(), limit);
             }
 
             return qualifiedNames;
         } catch (MetaException exception) {
+            throw new InvalidMetaException(name, exception);
+        } catch (NoSuchObjectException exception) {
             throw new DatabaseNotFoundException(name, exception);
+        } catch (TException exception) {
+            throw new ConnectorException(name.toString() + "listNames error", exception);
         }
     }
 
@@ -192,11 +196,11 @@ public class HiveConnectorTableService implements ConnectorTableService {
      */
     @Override
     public List<TableInfo> list(
-        @Nonnull final ConnectorContext requestContext,
-        @Nonnull final QualifiedName name,
-        @Nullable final QualifiedName prefix,
-        @Nullable final Sort sort,
-        @Nullable final Pageable pageable
+            @Nonnull final ConnectorContext requestContext,
+            @Nonnull final QualifiedName name,
+            @Nullable final QualifiedName prefix,
+            @Nullable final Sort sort,
+            @Nullable final Pageable pageable
     ) {
 
         try {
@@ -212,7 +216,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
             if (null != pageable && pageable.isPageable()) {
                 final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), tableInfos.size());
                 tableInfos = (pageable.getOffset() > limit) ? Lists.newArrayList()
-                    : tableInfos.subList(pageable.getOffset(), limit);
+                        : tableInfos.subList(pageable.getOffset(), limit);
             }
             return tableInfos;
         } catch (MetaException exception) {
@@ -228,7 +232,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
     @Override
     public boolean exists(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
         try {
-            return metacatHiveClient.tableExists(name.getDatabaseName(), name.getTableName());
+            return metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName()) != null;
         } catch (TException exception) {
             throw new ConnectorException("Check exists " + name.toString(), exception);
         }
@@ -239,13 +243,13 @@ public class HiveConnectorTableService implements ConnectorTableService {
      */
     @Override
     public void rename(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName oldName,
-        @Nonnull final QualifiedName newName
+            @Nonnull final ConnectorContext context,
+            @Nonnull final QualifiedName oldName,
+            @Nonnull final QualifiedName newName
     ) {
         try {
             metacatHiveClient.rename(oldName.getDatabaseName(), oldName.getTableName(),
-                newName.getDatabaseName(), newName.getTableName());
+                    newName.getDatabaseName(), newName.getTableName());
         } catch (NoSuchObjectException exception) {
             throw new TableNotFoundException(oldName, exception);
         } catch (MetaException exception) {

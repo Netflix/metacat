@@ -81,7 +81,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         } catch (MetaException exception) {
             throw new InvalidMetaException(databaseInfo.getName(), exception);
         } catch (TException exception) {
-            throw new ConnectorException(databaseInfo.getName().toString(), exception);
+            throw new ConnectorException(databaseInfo.getName().toString() + " create error", exception);
         }
     }
 
@@ -99,7 +99,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         } catch (InvalidOperationException exception) {
             throw new MetacatNotSupportedException(exception.getMessage());
         } catch (TException exception) {
-            throw new ConnectorException(name.toString(), exception);
+            throw new ConnectorException(name.toString() + " delete error", exception);
         }
     }
 
@@ -116,7 +116,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (TException exception) {
-            throw new ConnectorException(name.toString(), exception);
+            throw new ConnectorException(name.toString() + " get error", exception);
         }
     }
 
@@ -138,11 +138,11 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Override
     public List<QualifiedName> listNames(
-        @Nonnull final ConnectorContext requestContext,
-        @Nonnull final QualifiedName name,
-        @Nullable final QualifiedName prefix,
-        @Nullable final Sort sort,
-        @Nullable final Pageable pageable
+            @Nonnull final ConnectorContext requestContext,
+            @Nonnull final QualifiedName name,
+            @Nullable final QualifiedName prefix,
+            @Nullable final Sort sort,
+            @Nullable final Pageable pageable
     ) {
         try {
             List<QualifiedName> qualifiedNames = Lists.newArrayList();
@@ -157,11 +157,13 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             if (null != pageable && pageable.isPageable()) {
                 final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), qualifiedNames.size());
                 qualifiedNames = (pageable.getOffset() > limit) ? Lists.newArrayList()
-                    : qualifiedNames.subList(pageable.getOffset(), limit);
+                        : qualifiedNames.subList(pageable.getOffset(), limit);
             }
             return qualifiedNames;
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
+        } catch (TException exception) {
+            throw new ConnectorException(name.toString() + "listNames error", exception);
         }
     }
 
@@ -170,11 +172,11 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Override
     public List<DatabaseInfo> list(
-        @Nonnull final ConnectorContext requestContext,
-        @Nonnull final QualifiedName name,
-        @Nullable final QualifiedName prefix,
-        @Nullable final Sort sort,
-        @Nullable final Pageable pageable
+            @Nonnull final ConnectorContext requestContext,
+            @Nonnull final QualifiedName name,
+            @Nullable final QualifiedName prefix,
+            @Nullable final Sort sort,
+            @Nullable final Pageable pageable
     ) {
 
         try {
@@ -189,11 +191,13 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             if (null != pageable && pageable.isPageable()) {
                 final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), databaseInfos.size());
                 databaseInfos = (pageable.getOffset() > limit) ? Lists.newArrayList()
-                    : databaseInfos.subList(pageable.getOffset(), limit);
+                        : databaseInfos.subList(pageable.getOffset(), limit);
             }
             return databaseInfos;
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
+        } catch (TException exception) {
+            throw new ConnectorException(name.toString() + " list error", exception);
         }
     }
 }

@@ -99,6 +99,7 @@ services:
         environment:
             - TARGETS=metacat:8080
             - TARGETS=metacat:12001
+            - TIMEOUT=180
         labels:
           - "com.netflix.metacat.oss.test"
     # postgres-host-84:
