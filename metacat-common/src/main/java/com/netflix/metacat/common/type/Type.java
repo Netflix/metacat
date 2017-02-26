@@ -13,8 +13,6 @@
 
 package com.netflix.metacat.common.type;
 
-import java.util.List;
-
 /**
  * Canonical type interface.
  * @author zhenl
@@ -28,14 +26,8 @@ public interface Type {
     TypeSignature getTypeSignature();
 
     /**
-     * Returns the list of parameters.
-     * @return List of paramenters
+     * get display name.
+     * @return name
      */
-    List<Type> getParameters();
-
-    /**
-     * Returns the raw type.
-     * @return Source type
-     */
-    String getSourceType();
+    String getDisplayName();
 }

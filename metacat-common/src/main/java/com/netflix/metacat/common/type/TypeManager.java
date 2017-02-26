@@ -31,12 +31,12 @@ public interface TypeManager {
     /**
      * Get the type with the specified paramenters, or null if not found.
      *
-     * @param baseTypeName      baseType
+     * @param baseType      baseType
      * @param typeParameters    typeParameters
      * @param literalParameters literalParameters
      * @return Type
      */
-    Type getParameterizedType(String baseTypeName, List<TypeSignature> typeParameters, List<Object> literalParameters);
+    Type getParameterizedType(TypeEnum baseType, List<TypeSignature> typeParameters, List<Object> literalParameters);
 
     /**
      * Gets a list of all registered types.

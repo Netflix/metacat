@@ -19,13 +19,13 @@ import java.util.List;
  * Parametic type.
  * @author zhenl
  */
-public interface ParametricType {
+public interface ParametricType extends Type {
     /**
      * Get type name.
      *
      * @return string
      */
-    String getParametricTypeName();
+    TypeEnum getBaseType();
 
     /**
      * Create type.
@@ -35,4 +35,10 @@ public interface ParametricType {
      * @return type
      */
     Type createType(List<Type> types, List<Object> literals);
+
+    /**
+     * Returns the list of parameters.
+     * @return List of paramenters
+     */
+    List<Type> getParameters();
 }

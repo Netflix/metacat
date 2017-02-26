@@ -18,6 +18,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.type.CharType;
 import com.netflix.metacat.common.type.DecimalType;
 import com.netflix.metacat.common.type.MapType;
+import com.netflix.metacat.common.type.ParametricType;
 import com.netflix.metacat.common.type.RowType;
 import com.netflix.metacat.common.type.Type;
 import com.netflix.metacat.common.type.TypeEnum;
@@ -75,25 +76,21 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
         if (HiveTypeMapping.getCANONICAL_TO_HIVE().containsKey(type)) {
             return HiveTypeMapping.getCANONICAL_TO_HIVE().get(type);
         }
-        if (type instanceof DecimalType) {
-            return ((DecimalType) type).getDisplayName();
-        } else if (type instanceof CharType) {
-            return ((CharType) type).getDisplayName();
-        } else if (type instanceof VarcharType) {
-            return ((VarcharType) type).getDisplayName();
-        } else if (type.getTypeSignature().getBase().equals(TypeEnum.MAP.getBaseTypeDisplayName())) {
+        if (type instanceof DecimalType | type instanceof CharType | type instanceof VarcharType) {
+            return type.getDisplayName();
+        } else if (type.getTypeSignature().getBase().equals(TypeEnum.MAP)) {
             final MapType mapType = (MapType) type;
             return "map<" + fromMetacatType(mapType.getKeyType())
                 + "," + fromMetacatType(mapType.getValueType()) + ">";
-        } else if (type.getTypeSignature().getBase().equals(TypeEnum.ROW.getBaseTypeDisplayName())) {
+        } else if (type.getTypeSignature().getBase().equals(TypeEnum.ROW)) {
             final RowType rowType = (RowType) type;
             final String typeString = rowType.getFields()
                 .stream()
                 .map(this::rowFieldToString)
                 .collect(Collectors.joining(","));
             return "struct<" + typeString + ">";
-        } else if (type.getTypeSignature().getBase().equals(TypeEnum.ARRAY.getBaseTypeDisplayName())) {
-            final String typeString = type.getParameters().stream().map(this::fromMetacatType)
+        } else if (type.getTypeSignature().getBase().equals(TypeEnum.ARRAY)) {
+            final String typeString = ((ParametricType) type).getParameters().stream().map(this::fromMetacatType)
                 .collect(Collectors.joining(","));
             return "array<" + typeString + ">";
         }
@@ -151,7 +148,7 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
                 if (keyType == null || valueType == null) {
                     return null;
                 }
-                return TypeRegistry.getTypeRegistry().getParameterizedType(TypeEnum.MAP.getBaseTypeDisplayName(),
+                return TypeRegistry.getTypeRegistry().getParameterizedType(TypeEnum.MAP,
                     ImmutableList.of(keyType.getTypeSignature(), valueType.getTypeSignature()), ImmutableList.of());
             case LIST:
                 final ListObjectInspector listObjectInspector =
@@ -162,7 +159,7 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
                 if (elementType == null) {
                     return null;
                 }
-                return TypeRegistry.getTypeRegistry().getParameterizedType(TypeEnum.ARRAY.getBaseTypeDisplayName(),
+                return TypeRegistry.getTypeRegistry().getParameterizedType(TypeEnum.ARRAY,
                     ImmutableList.of(elementType.getTypeSignature()), ImmutableList.of());
             case STRUCT:
                 final StructObjectInspector structObjectInspector =
@@ -178,7 +175,7 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
                     fieldTypes.add(fieldType.getTypeSignature());
                 }
                 return TypeRegistry.getTypeRegistry()
-                    .getParameterizedType(TypeEnum.ROW.getBaseTypeDisplayName(), fieldTypes, fieldNames);
+                    .getParameterizedType(TypeEnum.ROW, fieldTypes, fieldNames);
             default:
                 throw new IllegalArgumentException("Unsupported hive type " + fieldInspector.getTypeName());
         }

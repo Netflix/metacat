@@ -73,11 +73,11 @@ public class S3ConnectorTableService implements ConnectorTableService {
     @Inject
     public S3ConnectorTableService(@Named("catalogName") final String catalogName, final DatabaseDao databaseDao,
         final TableDao tableDao, final FieldDao fieldDao, final S3ConnectorInfoConverter infoConverter) {
+        this.catalogName = catalogName;
         this.databaseDao = databaseDao;
         this.tableDao = tableDao;
         this.fieldDao = fieldDao;
         this.infoConverter = infoConverter;
-        this.catalogName = catalogName;
     }
     @Override
     public void create(@Nonnull final ConnectorContext context, @Nonnull final TableInfo tableInfo) {

@@ -40,7 +40,7 @@ public class RowType extends AbstractType implements ParametricType {
      */
     public RowType(final List<Type> fieldTypes, final List<String> fieldNames) {
         super(new TypeSignature(
-                "row",
+                TypeEnum.ROW,
                 Lists.transform(fieldTypes, new Function<Type, TypeSignature>() {
                     public TypeSignature apply(@Nullable final Type input) {
                         return input == null ? null : input.getTypeSignature();
@@ -58,8 +58,8 @@ public class RowType extends AbstractType implements ParametricType {
     }
 
     @Override
-    public String getParametricTypeName() {
-        return TypeEnum.ROW.getBaseTypeDisplayName();
+    public TypeEnum getBaseType() {
+        return TypeEnum.ROW;
     }
 
     @Override
@@ -79,15 +79,6 @@ public class RowType extends AbstractType implements ParametricType {
         return new RowType(types, builder.build());
     }
 
-    @Override
-    public List<Type> getParameters() {
-        final ImmutableList.Builder<Type> result = ImmutableList.builder();
-        for (RowField field: fields) {
-            result.add(field.getType());
-        }
-        return result.build();
-    }
-
     /**
      * Row field.
      */
@@ -104,6 +95,15 @@ public class RowType extends AbstractType implements ParametricType {
             this.name = Preconditions.checkNotNull(name, "name is null");
         }
 
+    }
+
+    @Override
+    public List<Type> getParameters() {
+        final ImmutableList.Builder<Type> result = ImmutableList.builder();
+        for (RowField field: fields) {
+            result.add(field.getType());
+        }
+        return result.build();
     }
 
 }
