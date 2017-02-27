@@ -37,7 +37,7 @@ import java.util.Map;
 @Slf4j
 
 public class HiveConnectorModule implements Module {
-    private final String thriftHOSTPORT = "hive.metastore.uris";
+    private final String thrifturi = "hive.metastore.uris";
     private final String catalogName;
     private final HiveConnectorInfoConverter infoConverter;
     private final HiveMetastoreClientFactory hiveMetastoreClientFactory;
@@ -58,9 +58,9 @@ public class HiveConnectorModule implements Module {
         this.hiveMetastoreClientFactory =
                 new HiveMetastoreClientFactory(null);
         try {
-            this.uri = new URI(configuration.get(thriftHOSTPORT));
+            this.uri = new URI(configuration.get(thrifturi));
         } catch (Exception e) {
-            log.info("Invalid thrift uri %s", configuration.get(thriftHOSTPORT));
+            log.info("Invalid thrift uri %s", configuration.get(thrifturi));
         }
     }
 

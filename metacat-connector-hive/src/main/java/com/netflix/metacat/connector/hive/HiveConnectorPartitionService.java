@@ -271,25 +271,17 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                     addedPartitionIds.add(partitionName);
                     hivePartitions.add(hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo));
                 } else {
-                    //the partition exists, we should not do anythin for the partition exists
+                    //the partition exists, we should not do anything for the partition exists
                     //unless we alterifExists
-                    // final String partitionUri = partitionInfo.getSerde().getUri();
-                    // final String hivePartitionUri = hivePartition.getSd().getLocation();
-                    // if (partitionUri == null || !partitionUri.equals(hivePartitionUri)) {
                     if (partitionsSaveRequest.getAlterIfExists()) {
                         final Partition existingPartition =
                                 hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo);
                         existingPartitionIds.add(partitionName);
                         existingPartition.setParameters(hivePartition.getParameters());
                         existingPartition.setCreateTime(hivePartition.getCreateTime());
-                        //this is not clear
                         existingPartition.setLastAccessTime(hivePartition.getLastAccessTime());
                         existingHivePartitions.add(existingPartition);
                     }
-//                        else {
-//                            hivePartitions.add(hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo));
-//                        }
-                    // }
                 }
             }
 
@@ -314,15 +306,13 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             final PartitionsSaveResponse result = new PartitionsSaveResponse();
             result.setAdded(addedPartitionIds);
             result.setUpdated(existingPartitionIds);
-            final List<Partition> parts = getPartitions(tableName, null, null, null, null);
-            System.out.print(parts);
             return result;
         } catch (NoSuchObjectException exception) {
             throw new TableNotFoundException(tableName, exception);
         } catch (MetaException | InvalidObjectException exception) {
             throw new InvalidMetaException("One or more partitions are invalid.", exception);
         } catch (TException exception) {
-            throw new ConnectorException(tableName.toString(), exception);
+            throw new ConnectorException(tableName.toString()+ " savePartitions error", exception);
         }
     }
 
