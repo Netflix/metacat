@@ -81,7 +81,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         } catch (MetaException exception) {
             throw new InvalidMetaException(databaseInfo.getName(), exception);
         } catch (TException exception) {
-            throw new ConnectorException(databaseInfo.getName().toString() + " create error", exception);
+            throw new ConnectorException(
+                    String.format("Failed creating hive database %s", databaseInfo.getName()), exception);
         }
     }
 
@@ -99,7 +100,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         } catch (InvalidOperationException exception) {
             throw new MetacatNotSupportedException(exception.getMessage());
         } catch (TException exception) {
-            throw new ConnectorException(name.toString() + " delete error", exception);
+            throw new ConnectorException(String.format("Failed delete hive database %s", name), exception);
         }
     }
 
@@ -116,7 +117,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (TException exception) {
-            throw new ConnectorException(name.toString() + " get error", exception);
+            throw new ConnectorException(String.format("Failed get hive database %s", name), exception);
         }
     }
 
@@ -163,7 +164,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (TException exception) {
-            throw new ConnectorException(name.toString() + "listNames error", exception);
+            throw new ConnectorException(String.format("Failed listName hive database %s", name), exception);
         }
     }
 
@@ -197,7 +198,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (TException exception) {
-            throw new ConnectorException(name.toString() + " list error", exception);
+            throw new ConnectorException(String.format("Failed list hive database %s", name), exception);
         }
     }
 }

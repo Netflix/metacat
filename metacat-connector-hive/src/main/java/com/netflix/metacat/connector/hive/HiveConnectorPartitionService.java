@@ -312,7 +312,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
         } catch (MetaException | InvalidObjectException exception) {
             throw new InvalidMetaException("One or more partitions are invalid.", exception);
         } catch (TException exception) {
-            throw new ConnectorException(tableName.toString() + " savePartitions error", exception);
+            throw new ConnectorException(String.format("Failed savePartitions hive table %s", tableName), exception);
         }
     }
 
@@ -401,7 +401,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                 }
             }, Function.identity()));
         } catch (TException exception) {
-            throw new ConnectorException(table.toString(), exception);
+            throw new ConnectorException(String.format("Failed getPartitionsByNames hive table %s", table), exception);
         }
     }
 

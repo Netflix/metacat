@@ -34,6 +34,7 @@ import org.apache.thrift.transport.TTransportException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.net.URI;
 import java.util.List;
 
@@ -56,7 +57,7 @@ public class MetacatHiveClient {
      * @throws MetaException exception
      */
     @Inject
-    public MetacatHiveClient(@Nonnull final URI address,
+    public MetacatHiveClient(@Named("thrifturi") @Nonnull final URI address,
                              @Nonnull final HiveMetastoreClientFactory hiveMetastoreClientFactory)
             throws MetaException {
         this.hiveMetastoreClientFactory = hiveMetastoreClientFactory;
@@ -318,7 +319,8 @@ public class MetacatHiveClient {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (TException e) {
             throw new ConnectorException(
-            String.format("Internal server error adding/dropping partitions for table %s.%s", dbName, tableName), e);
+                    String.format("Internal server error adding/dropping partitions for table %s.%s",
+                            dbName, tableName), e);
         }
     }
 
