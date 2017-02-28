@@ -548,53 +548,53 @@ class MetacatFunctionalSpec extends Specification {
         ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
         ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
         def dto = new TableDto(
-            name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
-            audit: new AuditDto(
-                createdBy: 'createdBy',
-                createdDate: now
-            ),
-            serde: new StorageDto(
-                owner: 'metacat-test',
-                inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
-                outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
-                serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
-                parameters: [
-                    'serialization.format': '1'
-                ],
-                uri: dataUri
-            ),
-            definitionMetadata: definitionMetadata,
-            dataMetadata: dataMetadata,
-            fields: [
-                new FieldDto(
-                    comment: 'added 1st - partition key',
-                    name: 'field1',
-                    pos: 0,
-                    type: 'boolean',
-                    partition_key: true
+                name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
+                audit: new AuditDto(
+                        createdBy: 'createdBy',
+                        createdDate: now
                 ),
-                new FieldDto(
-                    comment: 'added 2st',
-                    name: 'field2',
-                    pos: 1,
-                    type: 'boolean',
-                    partition_key: false
+                serde: new StorageDto(
+                        owner: 'metacat-test',
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        parameters: [
+                                'serialization.format': '1'
+                        ],
+                        uri: dataUri
                 ),
-                new FieldDto(
-                    comment: 'added 3rd, a single char partition key to test that use case',
-                    name: 'p',
-                    pos: 2,
-                    type: 'boolean',
-                    partition_key: true
-                ),
-                new FieldDto(
-                    comment: 'added 4st',
-                    name: 'field4',
-                    pos: 3,
-                    type: 'boolean',
-                    partition_key: false
-                ),
-            ]
+                definitionMetadata: definitionMetadata,
+                dataMetadata: dataMetadata,
+                fields: [
+                        new FieldDto(
+                                comment: 'added 1st - partition key',
+                                name: 'field1',
+                                pos: 0,
+                                type: 'boolean',
+                                partition_key: true
+                        ),
+                        new FieldDto(
+                                comment: 'added 2st',
+                                name: 'field2',
+                                pos: 1,
+                                type: 'boolean',
+                                partition_key: false
+                        ),
+                        new FieldDto(
+                                comment: 'added 3rd, a single char partition key to test that use case',
+                                name: 'p',
+                                pos: 2,
+                                type: 'boolean',
+                                partition_key: true
+                        ),
+                        new FieldDto(
+                                comment: 'added 4st',
+                                name: 'field4',
+                                pos: 3,
+                                type: 'boolean',
+                                partition_key: false
+                        ),
+                ]
         )
 
         when:
@@ -667,7 +667,6 @@ class MetacatFunctionalSpec extends Specification {
         catalog << TestCatalogs.getCanCreateTable(TestCatalogs.ALL)
     }
 
-    @Ignore
     def 'savePartition: should fail when given a null or missing value for #pname'() {
         given:
         def name = pname as QualifiedName
@@ -715,7 +714,6 @@ class MetacatFunctionalSpec extends Specification {
         }.flatten()
     }
 
-    @Ignore
     def 'savePartition: can add partitions to #args.name'() {
         given:
         def name = args.name as QualifiedName
@@ -776,8 +774,8 @@ class MetacatFunctionalSpec extends Specification {
         allPartitions
         savedPartition
         savedPartition.name == escapedName
-        dateCloseEnough(savedPartition.audit.createdDate, now, 60)
-        dateCloseEnough(savedPartition.audit.lastModifiedDate, now, 60)
+        dateCloseEnough(savedPartition.audit.createdDate, now, 120)
+        dateCloseEnough(savedPartition.audit.lastModifiedDate, now, 120)
         savedPartition.serde.uri == dataUri
         savedPartition.definitionMetadata.get('part_def_field').longValue() == Long.MAX_VALUE
         savedPartition.dataMetadata.get('part_data_field').intValue() == Integer.MIN_VALUE
@@ -809,6 +807,7 @@ class MetacatFunctionalSpec extends Specification {
         request.partitions.first().serde.uri = "${dataUri}_new_uri"
         request.partitions.first().definitionMetadata = metacatJson.parseJsonObject('{"updated_field": 1}')
         request.partitions.first().dataMetadata = metacatJson.parseJsonObject('{"new_entry":true}')
+        request.alterIfExists = Boolean.TRUE
         response = partitionApi.savePartitions(name.catalogName, name.databaseName, name.tableName, request)
 
         then: "the partition is updated"
@@ -823,8 +822,8 @@ class MetacatFunctionalSpec extends Specification {
         allPartitions
         savedPartition
         savedPartition.name == escapedName
-        dateCloseEnough(savedPartition.audit.createdDate, now, 60)
-        dateCloseEnough(savedPartition.audit.lastModifiedDate, now, 60)
+        dateCloseEnough(savedPartition.audit.createdDate, now, 120)
+        dateCloseEnough(savedPartition.audit.lastModifiedDate, now, 120)
         savedPartition.serde.uri == "${dataUri}_new_uri".toString()
         savedPartition.definitionMetadata.get('updated_field').intValue() == 1
         savedPartition.definitionMetadata.get('part_def_field').longValue() == Long.MAX_VALUE

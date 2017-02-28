@@ -42,10 +42,9 @@ class HiveConnectorPartitionSpec extends Specification{
     HiveConnectorInfoConverter hiveConnectorInfoConverter = new HiveConnectorInfoConverter( new HiveTypeConverter())
 
     def setupSpec() {
-       // metacatHiveClient.getPartition("testdb", "test1", "dateint=20170101/hour=1") >> { getPartition("test", "testtable1", "dateint=20170101/hour=1")}
         metacatHiveClient.getTableByName("test1", "testtable1") >> { HiveConnectorTableSpec.getPartitionTable("testtable1")}
         metacatHiveClient.getTableByName("test1", "testtable2") >> { HiveConnectorTableSpec.getPartitionTable("testtable2")}
-        metacatHiveClient.listAllPartitions("test1", "testtable2") >> { getPartition("test1", "testtable2")}
+        metacatHiveClient.getPartitions("test1", "testtable2", null) >> { getPartition("test1", "testtable2")}
         metacatHiveClient.getPartitionNames("test1", "testtable2") >> {return [ "dateint=20170101/hour=1", "dateint=20170101/hour=2","dateint=20170101/hour=3"] }
         metacatHiveClient.getPartitionCount("test1", "testtable2") >> {return 3}
         metacatHiveClient.savePartitions(_) >> {}
