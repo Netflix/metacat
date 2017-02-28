@@ -61,6 +61,7 @@ task expandWar(type: Copy) {
 }
 
 task startMetacatCluster(type: Exec) {
+    dependsOn 'expandWar'
     if (project.ext.startCluster) {
         commandLine rootProject.file('scripts/start_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose.yml')
     } else {

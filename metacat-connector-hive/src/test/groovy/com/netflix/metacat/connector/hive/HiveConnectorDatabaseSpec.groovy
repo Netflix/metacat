@@ -50,14 +50,14 @@ class HiveConnectorDatabaseSpec extends Specification{
 
     def "Test for create database" (){
         when:
-            hiveConnectorDatabaseService.create( connectorContext, DatabaseInfo.builder().name(QualifiedName.ofDatabase("testhive", "testdb3")).uri("file://temp/").build())
+            hiveConnectorDatabaseService.create( connectorContext, DatabaseInfo.builder().name(QualifiedName.ofDatabase("testhive", "testdb3")).build())
         then:
         noExceptionThrown()
     }
 
     def "Test for create database with exception" (){
         when:
-        hiveConnectorDatabaseService.create( connectorContext, DatabaseInfo.builder().name(QualifiedName.ofDatabase("testhive", "testdb2")).uri("file://temp/").build())
+        hiveConnectorDatabaseService.create( connectorContext, DatabaseInfo.builder().name(QualifiedName.ofDatabase("testhive", "testdb2")).build())
         then:
         thrown ConnectorException
     }

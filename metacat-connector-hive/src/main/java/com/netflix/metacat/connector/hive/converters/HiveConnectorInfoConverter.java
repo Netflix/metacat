@@ -83,9 +83,11 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     public Database fromDatabaseInfo(final DatabaseInfo databaseInfo) {
         final QualifiedName databaseName = databaseInfo.getName();
         final String name = (databaseName == null) ? "" : databaseName.getDatabaseName();
+        //this is a temp hack to resolve the uri = null issue
+        final String dbUri = Strings.isNullOrEmpty(databaseInfo.getUri()) ? "file://temp/" : databaseInfo.getUri();
         final Map<String, String> metadata
             = (databaseInfo.getMetadata() != null) ? databaseInfo.getMetadata() : Collections.EMPTY_MAP;
-        return new Database(name, name, databaseInfo.getUri(), metadata);
+        return new Database(name, name, dbUri, metadata);
     }
 
     /**

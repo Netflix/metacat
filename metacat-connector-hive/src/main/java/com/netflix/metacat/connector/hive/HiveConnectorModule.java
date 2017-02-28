@@ -24,8 +24,9 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import org.apache.hadoop.hive.conf.HiveConf;
+import lombok.extern.slf4j.Slf4j;
 
+import java.net.URI;
 import java.util.Map;
 
 /**
@@ -33,12 +34,14 @@ import java.util.Map;
  *
  * @author zhenl
  */
+@Slf4j
 
 public class HiveConnectorModule implements Module {
+    private final String thrifturi = "hive.metastore.uris";
     private final String catalogName;
-    private final Map<String, String> configuration;
     private final HiveConnectorInfoConverter infoConverter;
-    private final HiveConf hiveConf = new HiveConf();
+    private final HiveMetastoreClientFactory hiveMetastoreClientFactory;
+    private URI uri;
 
     /**
      * Constructor.
@@ -46,22 +49,27 @@ public class HiveConnectorModule implements Module {
      * @param catalogName   catalog name.
      * @param configuration configuration properties
      * @param infoConverter Hive info converter
+     * @throws Exception exception
      */
     public HiveConnectorModule(final String catalogName, final Map<String, String> configuration,
                                final HiveConnectorInfoConverter infoConverter) {
         this.catalogName = catalogName;
-        this.configuration = configuration;
         this.infoConverter = infoConverter;
-        for (Map.Entry<String, String> conf : configuration.entrySet()) {
-            this.hiveConf.set(conf.getKey(), conf.getValue());
+        this.hiveMetastoreClientFactory =
+                new HiveMetastoreClientFactory(null);
+        try {
+            this.uri = new URI(configuration.get(thrifturi));
+        } catch (Exception e) {
+            log.info("Invalid thrift uri %s", configuration.get(thrifturi));
         }
     }
 
     @Override
     public void configure(final Binder binder) {
         binder.bind(String.class).annotatedWith(Names.named("catalogName")).toInstance(catalogName);
-        binder.bind(HiveConf.class).toInstance(hiveConf);
         binder.bind(HiveConnectorInfoConverter.class).toInstance(infoConverter);
+        binder.bind(HiveMetastoreClientFactory.class).toInstance(hiveMetastoreClientFactory);
+        binder.bind(URI.class).annotatedWith(Names.named("thrifturi")).toInstance(uri);
         binder.bind(ConnectorDatabaseService.class).to(HiveConnectorDatabaseService.class).in(Scopes.SINGLETON);
         binder.bind(ConnectorTableService.class).to(HiveConnectorTableService.class).in(Scopes.SINGLETON);
         binder.bind(ConnectorPartitionService.class).to(HiveConnectorPartitionService.class).in(Scopes.SINGLETON);
