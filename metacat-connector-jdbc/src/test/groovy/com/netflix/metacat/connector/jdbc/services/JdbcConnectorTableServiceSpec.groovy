@@ -22,14 +22,17 @@ import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
-import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.type.BaseType
 import com.netflix.metacat.common.type.VarcharType
+import com.netflix.metacat.connector.jdbc.JdbcTypeConverter
 import spock.lang.Specification
 
 import javax.sql.DataSource
-import java.sql.*
+import java.sql.Connection
+import java.sql.DatabaseMetaData
+import java.sql.ResultSet
+import java.sql.Statement
 
 /**
  * Tests for the JdbcConnectorTableService APIs.
@@ -41,7 +44,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
 
     def context = Mock(ConnectorContext)
     def dataSource = Mock(DataSource)
-    def typeConverter = Mock(ConnectorTypeConverter)
+    def typeConverter = Mock(JdbcTypeConverter)
     def service = new JdbcConnectorTableService(this.dataSource, this.typeConverter)
 
     def "Can't create a table"() {

@@ -1,0 +1,4 @@
+dependencies {
+    compile project(":metacat-connector-jdbc")
+    runtime ("org.postgresql:postgresql:${postgresql_driver_version}")
+}

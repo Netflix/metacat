@@ -23,6 +23,7 @@ services:
         links:
             - hive-metastore
             - hive-metastore-db
+            - postgresql-db
         ports:
             - '8080'
             - '8000'
@@ -54,11 +55,20 @@ services:
         volumes:
             - ./sql/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
         environment:
-        environment:
             - MYSQL_ROOT_PASSWORD=root_password
             - MYSQL_USER=metacat_user
             - MYSQL_PASSWORD=metacat_user_password
             - MYSQL_DATABASE=metacat
+        labels:
+          - "com.netflix.metacat.oss.test"
+    postgresql-db:
+        image: postgres:9.6
+        volumes:
+            - ./sql/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+        environment:
+            - POSTGRES_USER=metacat_user
+            - POSTGRES_PASSWORD=metacat_user_password
+            - POSTGRES_DB=metacat
         labels:
           - "com.netflix.metacat.oss.test"
     hive-metastore:
@@ -78,8 +88,10 @@ services:
         image: martin/wait:latest
         links:
             - hive-metastore-db
+            - postgresql-db
         environment:
             - TARGETS=hive-metastore-db:3306
+            - TARGETS=postgresql-db:5432
         labels:
           - "com.netflix.metacat.oss.test"
     service-barrier:

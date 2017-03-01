@@ -15,6 +15,7 @@ dependencies {
     compile project(':metacat-connector-s3')
     compile project(':metacat-connector-hive')
     compile project(":metacat-connector-mysql")
+    compile project(":metacat-connector-postgresql")
     compile project(':metacat-common-server')
     compile project(':metacat-thrift')
     testCompile project(':metacat-user-metadata-mysql')

@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright 2016 Netflix, Inc.
+ *  Copyright 2017 Netflix, Inc.
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  *     limitations under the License.
  *
  */
+/**
+ * @author tgianos
+ */
 
 /**
- * This package includes postgres connector classes.
+ * Classes related to creating a connector for PostgreSQL for Metacat.
  *
- * @author amajumdar
+ * @author tgianos
+ * @since 0.1.52
  */
-package com.netflix.metacat.plugin.postgresql;
+package com.netflix.metacat.connector.postgresql;
