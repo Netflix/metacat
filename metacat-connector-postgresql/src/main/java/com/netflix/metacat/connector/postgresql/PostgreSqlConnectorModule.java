@@ -15,7 +15,7 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.connector.mysql;
+package com.netflix.metacat.connector.postgresql;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
@@ -24,6 +24,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.util.DataSourceManager;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
+import com.netflix.metacat.connector.jdbc.services.JdbcConnectorDatabaseService;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorPartitionService;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorTableService;
 import lombok.NonNull;
@@ -38,7 +39,7 @@ import java.util.Map;
  * @author tgianos
  * @since 0.1.52
  */
-public class MySqlConnectorModule extends AbstractModule {
+public class PostgreSqlConnectorModule extends AbstractModule {
 
     private final String name;
     private final Map<String, String> configuration;
@@ -49,7 +50,7 @@ public class MySqlConnectorModule extends AbstractModule {
      * @param name          The name of the catalog this module is associated will be associated with
      * @param configuration The connector configuration
      */
-    MySqlConnectorModule(
+    PostgreSqlConnectorModule(
         @Nonnull @NonNull final String name,
         @Nonnull @NonNull final Map<String, String> configuration
     ) {
@@ -64,8 +65,8 @@ public class MySqlConnectorModule extends AbstractModule {
     protected void configure() {
         this.bind(DataSource.class)
             .toInstance(DataSourceManager.get().load(this.name, this.configuration).get(this.name));
-        this.bind(JdbcTypeConverter.class).to(MySqlTypeConverter.class).in(Scopes.SINGLETON);
-        this.bind(ConnectorDatabaseService.class).to(MySqlConnectorDatabaseService.class).in(Scopes.SINGLETON);
+        this.bind(JdbcTypeConverter.class).to(PostgreSqlTypeConverter.class).in(Scopes.SINGLETON);
+        this.bind(ConnectorDatabaseService.class).to(JdbcConnectorDatabaseService.class).in(Scopes.SINGLETON);
         this.bind(ConnectorTableService.class).to(JdbcConnectorTableService.class).in(Scopes.SINGLETON);
         this.bind(ConnectorPartitionService.class).to(JdbcConnectorPartitionService.class).in(Scopes.SINGLETON);
     }

@@ -1,1 +1,0 @@
-sakila-db/sakila-schema.sql

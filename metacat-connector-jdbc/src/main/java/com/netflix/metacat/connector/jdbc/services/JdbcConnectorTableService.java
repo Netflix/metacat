@@ -26,9 +26,9 @@ import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
-import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +56,7 @@ import java.util.Locale;
 public class JdbcConnectorTableService implements ConnectorTableService {
 
     private final DataSource dataSource;
-    private final ConnectorTypeConverter typeConverter;
+    private final JdbcTypeConverter typeConverter;
 
     /**
      * Constructor.
@@ -67,7 +67,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     @Inject
     public JdbcConnectorTableService(
         @Nonnull @NonNull final DataSource dataSource,
-        @Nonnull @NonNull final ConnectorTypeConverter typeConverter
+        @Nonnull @NonNull final JdbcTypeConverter typeConverter
     ) {
         this.dataSource = dataSource;
         this.typeConverter = typeConverter;

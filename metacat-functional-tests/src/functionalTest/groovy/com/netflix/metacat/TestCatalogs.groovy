@@ -76,6 +76,23 @@ class TestCatalogs {
             ],
             type: 'mysql',
         ),
+        new TestCatalog(
+            name: 'postgresql-96-db',
+            preExistingDatabases: [
+//                QualifiedName.ofDatabase('postgresql-96-db', 'sakila'),
+//                QualifiedName.ofDatabase('postgresql-96-db', 'world'),
+                QualifiedName.ofDatabase('postgresql-96-db', 'public'),
+                QualifiedName.ofDatabase('postgresql-96-db', 'pg_catalog'),
+            ],
+            preExistingTables: [
+//                QualifiedName.ofTable('postgresql-96-db', 'sakila', 'city'),
+//                QualifiedName.ofTable('postgresql-96-db', 'sakila', 'country'),
+                QualifiedName.ofTable('postgresql-96-db', 'world', 'City'),
+                QualifiedName.ofTable('postgresql-96-db', 'world', 'Country'),
+                QualifiedName.ofTable('postgresql-96-db', 'world', 'countrylanguage'),
+            ],
+            type: 'postgresql',
+        ),
     ]
 
     static TestCatalog findByCatalogName(String name) {
