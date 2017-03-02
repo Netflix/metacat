@@ -16,7 +16,6 @@ package com.netflix.metacat.server.init;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Module;
-import com.netflix.blitz4j.LoggingConfiguration;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.main.init.MetacatInitializationService;
@@ -43,16 +42,12 @@ public class MetacatContextListener extends JerseyGuiceServletContextListener {
         } catch (IOException ignored) {
             //Do not stop the server initialization
         }
-        //Initialize logging
-        LoggingConfiguration.getInstance().configure();
     }
 
     @Override
     public void contextDestroyed(final ServletContextEvent sce) {
         log.info("Start contextDestroyed");
         super.contextDestroyed(sce);
-        // Stop logging
-        LoggingConfiguration.getInstance().stop();
         final MetacatInitializationService service = getInjector().getInstance(MetacatInitializationService.class);
         try {
             service.stop();

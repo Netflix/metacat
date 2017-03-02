@@ -157,7 +157,9 @@ public class DatabaseServiceImpl implements DatabaseService {
         List<QualifiedName> viewNames = Collections.emptyList();
         if (config.isIncludeViewsWithTables()) {
             // TODO JdbcMetadata returns ImmutableList.of() for views.  We should change it to fetch views.
-            viewNames = service.listViewNames(connectorContext, name);
+            try {
+                viewNames = service.listViewNames(connectorContext, name);
+            } catch (UnsupportedOperationException ignored) { }
         }
 
         // Check to see if schema exists

@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * The base dao.
- * @param <T>
+ * @param <T> model entity type.
  */
 public interface BaseDao<T> {
 

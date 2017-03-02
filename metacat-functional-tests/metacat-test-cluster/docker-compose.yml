@@ -30,13 +30,14 @@ services:
             - '12001'
         volumes:
             - ../build/metacat-war-expanded/ROOT:/usr/local/tomcat/webapps/ROOT
-            - ../build/resources/functionalTest/logging.properties:/usr/local/tomcat/conf/logging.properties
+            - ./resources/log4j.properties:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/log4j.properties
+            - ./resources/logging.properties:/usr/local/tomcat/conf/logging.properties
             - ../build/logs/metacat:/usr/local/tomcat/logs
             - ./etc-metacat:/etc/metacat:ro
         environment:
             VIRTUAL_HOST: metacat.docker
             JAVA_OPTS: '-ea
-                -Xmx2G
+                -Xmx1G
                 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
                 -noverify
                 -Dnetflix.environment=test
@@ -79,7 +80,7 @@ services:
             - '9083'
             - '8005'
         environment:
-            - HIVE_METASTORE_HADOOP_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8005
+            - HIVE_METASTORE_HADOOP_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8005 -Dhive.metastore.client.socket.timeout=60
         labels:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.hive"
@@ -90,8 +91,7 @@ services:
             - hive-metastore-db
             - postgresql-db
         environment:
-            - TARGETS=hive-metastore-db:3306
-            - TARGETS=postgresql-db:5432
+            - TARGETS=hive-metastore-db:3306,postgresql-db:5432
         labels:
           - "com.netflix.metacat.oss.test"
     service-barrier:
@@ -109,18 +109,7 @@ services:
         links:
             - metacat
         environment:
-            - TARGETS=metacat:8080
-            - TARGETS=metacat:12001
+            - TARGETS=metacat:8080,metacat:12001
             - TIMEOUT=180
         labels:
           - "com.netflix.metacat.oss.test"
-    # postgres-host-84:
-    #     image: postgres:8.4
-    #     volumes:
-    #         - ./sql/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
-    #     environment:
-    #         - POSTGRES_PASSWORD=postgres_host_password
-    #         - POSTGRES_USER=metacat_user
-    #         - POSTGRES_DB=test
-    #     labels:
-    #       - "com.netflix.metacat.oss.test"

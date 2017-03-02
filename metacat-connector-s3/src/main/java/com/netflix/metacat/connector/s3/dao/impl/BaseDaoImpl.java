@@ -25,7 +25,7 @@ import java.util.List;
 
 /**
  * Base DAO implementation.
- * @param <T>
+ * @param <T> model entity type.
  */
 public abstract class BaseDaoImpl<T> implements BaseDao<T> {
     private static final String SQL_GET_BY_NAME = "select a from %s a where name=:name";
