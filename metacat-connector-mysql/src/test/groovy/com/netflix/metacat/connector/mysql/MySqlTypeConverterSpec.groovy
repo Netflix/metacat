@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.connector.mysql
 
+import com.google.common.collect.Lists
 import com.netflix.metacat.common.type.*
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -94,14 +95,79 @@ class MySqlTypeConverterSpec extends Specification {
     }
 
     @Unroll
+    "Can convert type #type to MySQL string #sql"() {
+
+        expect:
+        this.converter.fromMetacatType(type) == sql
+
+        where:
+        type                                                                      | sql
+        BaseType.BIGINT                                                           | "BIGINT"
+        BaseType.BOOLEAN                                                          | "BOOLEAN"
+        CharType.createCharType(42)                                               | "CHAR(42)"
+        CharType.createCharType(MySqlTypeConverter.MAX_BYTE_LENGTH)               |
+            "CHAR(" + MySqlTypeConverter.MAX_BYTE_LENGTH + ")"
+        CharType.createCharType(MySqlTypeConverter.MAX_BYTE_LENGTH + 1)           | "TEXT"
+        BaseType.DATE                                                             | "DATE"
+        DecimalType.createDecimalType(15, 14)                                     | "DECIMAL(15, 14)"
+        DecimalType.createDecimalType(13, 12)                                     | "DECIMAL(13, 12)"
+        DecimalType.createDecimalType(13)                                         | "DECIMAL(13, 0)"
+        DecimalType.createDecimalType()                                           | "DECIMAL(10, 0)"
+        BaseType.DOUBLE                                                           | "DOUBLE"
+        BaseType.FLOAT                                                            | "FLOAT(24)"
+        BaseType.INT                                                              | "INT"
+        BaseType.JSON                                                             | "JSON"
+        BaseType.SMALLINT                                                         | "SMALLINT"
+        BaseType.STRING                                                           | "TEXT"
+        BaseType.TIME                                                             | "TIME"
+        BaseType.TIME_WITH_TIME_ZONE                                              | "TIME"
+        BaseType.TIMESTAMP                                                        | "TIMESTAMP"
+        BaseType.TIMESTAMP_WITH_TIME_ZONE                                         | "TIMESTAMP"
+        BaseType.TINYINT                                                          | "TINYINT"
+        VarbinaryType.createVarbinaryType(2)                                      | "VARBINARY(2)"
+        VarbinaryType.createVarbinaryType(52)                                     | "VARBINARY(52)"
+        VarbinaryType.createVarbinaryType(MySqlTypeConverter.MAX_BYTE_LENGTH)     |
+            "VARBINARY(" + MySqlTypeConverter.MAX_BYTE_LENGTH + ")"
+        VarbinaryType.createVarbinaryType(MySqlTypeConverter.MAX_BYTE_LENGTH + 1) | "BLOB"
+        VarcharType.createVarcharType(255)                                        | "VARCHAR(255)"
+        VarcharType.createVarcharType(MySqlTypeConverter.MAX_BYTE_LENGTH)         |
+            "VARCHAR(" + MySqlTypeConverter.MAX_BYTE_LENGTH + ")"
+        VarcharType.createVarcharType(MySqlTypeConverter.MAX_BYTE_LENGTH + 1)     | "TEXT"
+    }
+
+    @Unroll
+    "Can't convert type #type back to SQL"() {
+        when:
+        this.converter.fromMetacatType(type)
+
+        then:
+        thrown exception
+
+        where:
+        type                                       | exception
+        new ArrayType(BaseType.DOUBLE)             | UnsupportedOperationException
+        BaseType.INTERVAL_DAY_TO_SECOND            | UnsupportedOperationException
+        BaseType.INTERVAL_YEAR_TO_MONTH            | UnsupportedOperationException
+        new MapType(BaseType.STRING, BaseType.INT) | UnsupportedOperationException
+        new RowType(
+            Lists.asList(BaseType.STRING),
+            Lists.asList(UUID.randomUUID().toString())
+        )                                          | UnsupportedOperationException
+        BaseType.UNKNOWN                           | IllegalArgumentException
+//        new CharType(MySqlTypeConverter.MIN_BYTE_LENGTH - 1)                      | IllegalArgumentException
+//        VarbinaryType.createVarbinaryType(MySqlTypeConverter.MIN_BYTE_LENGTH - 1) | IllegalArgumentException
+//        VarcharType.createVarcharType(MySqlTypeConverter.MIN_BYTE_LENGTH - 1)     | IllegalArgumentException
+    }
+
+    @Unroll
     "Can Split Type: #type into base: #base, array: #array, size: #size, magnitude: #magnitude and extra: #extra"() {
         expect:
         def split = this.converter.splitType(type)
         split.length == 5
         split[0] == base
-        split[1] == array
-        split[2] == size
-        split[3] == magnitude
+        split[1] == size
+        split[2] == magnitude
+        split[3] == array
         split[4] == extra
 
         where:
@@ -117,6 +183,8 @@ class MySqlTypeConverterSpec extends Specification {
         "timestamp with time zone" | "timestamp" | null   | null | null      | "with time zone"
         "integer []"               | "integer"   | "[]"   | null | null      | null
         "int[][]"                  | "int"       | "[][]" | null | null      | null
+        "char (4) [][]"            | "char"      | "[][]" | "4"  | null      | null
+        "char(4)[]"                | "char"      | "[]"   | "4"  | null      | null
     }
 
     def "Can't split up a bad input"() {

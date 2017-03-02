@@ -18,7 +18,11 @@
 package com.netflix.metacat.connector.mysql;
 
 import com.netflix.metacat.common.type.BaseType;
+import com.netflix.metacat.common.type.CharType;
+import com.netflix.metacat.common.type.DecimalType;
 import com.netflix.metacat.common.type.Type;
+import com.netflix.metacat.common.type.VarbinaryType;
+import com.netflix.metacat.common.type.VarcharType;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +37,9 @@ import javax.annotation.Nonnull;
  */
 @Slf4j
 public class MySqlTypeConverter extends JdbcTypeConverter {
+
+    static final int MAX_BYTE_LENGTH = 65_535;
+    private static final int MIN_BYTE_LENGTH = 0;
 
     /**
      * {@inheritDoc}
@@ -108,6 +115,107 @@ public class MySqlTypeConverter extends JdbcTypeConverter {
      */
     @Override
     public String fromMetacatType(@Nonnull @NonNull final Type type) {
-        return null;
+        switch (type.getTypeSignature().getBase()) {
+            case ARRAY:
+                throw new UnsupportedOperationException("MySQL doesn't support array types");
+            case BIGINT:
+                return "BIGINT";
+            case BOOLEAN:
+                return "BOOLEAN";
+            case CHAR:
+                if (!(type instanceof CharType)) {
+                    throw new IllegalArgumentException("Expected char type but was " + type.getClass().getName());
+                }
+                final CharType charType = (CharType) type;
+                final int charLength = charType.getLength();
+                if (charLength < MIN_BYTE_LENGTH) {
+                    throw new IllegalArgumentException("CHAR type must have a length > 0");
+                }
+                // NOTE: Note that for MySQL the max column size is 65,535 bytes so technically you can have a table
+                //       of a single char column of this length but that's it. Hard to handle that in here when
+                //       just doing the conversions. It would have to be handled by higher level logic that had the
+                //       entire picture.
+                if (charLength <= MAX_BYTE_LENGTH) {
+                    return "CHAR(" + charLength + ")";
+                } else {
+                    return "TEXT";
+                }
+            case DATE:
+                return "DATE";
+            case DECIMAL:
+                if (!(type instanceof DecimalType)) {
+                    throw new IllegalArgumentException("Expected decimal type but was " + type.getClass().getName());
+                }
+                final DecimalType decimalType = (DecimalType) type;
+                return "DECIMAL(" + decimalType.getPrecision() + ", " + decimalType.getScale() + ")";
+            case DOUBLE:
+                return "DOUBLE";
+            case FLOAT:
+                return "FLOAT(24)";
+            case INT:
+                return "INT";
+            case INTERVAL_DAY_TO_SECOND:
+                throw new UnsupportedOperationException("MySQL doesn't support interval types");
+            case INTERVAL_YEAR_TO_MONTH:
+                throw new UnsupportedOperationException("MySQL doesn't support interval types");
+            case JSON:
+                return "JSON";
+            case MAP:
+                throw new UnsupportedOperationException("MySQL doesn't support map types");
+            case ROW:
+                throw new UnsupportedOperationException("MySQL doesn't support row types");
+            case SMALLINT:
+                return "SMALLINT";
+            case STRING:
+                return "TEXT";
+            case TIME:
+            case TIME_WITH_TIME_ZONE:
+                return "TIME";
+            case TIMESTAMP:
+            case TIMESTAMP_WITH_TIME_ZONE:
+                return "TIMESTAMP";
+            case TINYINT:
+                return "TINYINT";
+            case UNKNOWN:
+                throw new IllegalArgumentException("Can't map an unknown type");
+            case VARBINARY:
+                if (!(type instanceof VarbinaryType)) {
+                    throw new IllegalArgumentException("Expected varbinary type but was " + type.getClass().getName());
+                }
+                final VarbinaryType varbinaryType = (VarbinaryType) type;
+                final int binaryLength = varbinaryType.getLength();
+                if (binaryLength < MIN_BYTE_LENGTH) {
+                    throw new IllegalArgumentException("VARBINARY type must have a length > 0");
+                }
+                // NOTE: Note that for MySQL the max column size is 65,535 bytes so technically you can have a table
+                //       of a single varbinary column of this length but that's it. Hard to handle that in here when
+                //       just doing the conversions. It would have to be handled by higher level logic that had the
+                //       entire picture.
+                if (binaryLength <= MAX_BYTE_LENGTH) {
+                    return "VARBINARY(" + binaryLength + ")";
+                } else {
+                    return "BLOB";
+                }
+            case VARCHAR:
+                if (!(type instanceof VarcharType)) {
+                    throw new IllegalArgumentException("Expected varchar type but was " + type.getClass().getName());
+                }
+                final VarcharType varcharType = (VarcharType) type;
+                final int varCharLength = varcharType.getLength();
+                if (varCharLength < MIN_BYTE_LENGTH) {
+                    throw new IllegalArgumentException("VARCHAR type must have a length > 0");
+                }
+                // NOTE: Note that for MySQL the max column size is 65,535 bytes so technically you can have a table
+                //       of a single varchar column of this length but that's it. Hard to handle that in here when
+                //       just doing the conversions. It would have to be handled by higher level logic that had the
+                //       entire picture.
+                if (varCharLength <= MAX_BYTE_LENGTH) {
+                    return "VARCHAR(" + varCharLength + ")";
+                } else {
+                    return "TEXT";
+                }
+            default:
+                throw new IllegalArgumentException("Unknown type " + type.getTypeSignature().getBase());
+        }
     }
 }

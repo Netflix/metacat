@@ -15,6 +15,7 @@ package com.netflix.metacat.common.type;
 
 import com.google.common.collect.ImmutableList;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +25,7 @@ import java.util.List;
  * Char type class.
  * @author zhenl
  */
+@Getter
 @EqualsAndHashCode(callSuper = true)
 public class CharType extends AbstractType implements ParametricType {
     /** Default character type. */
