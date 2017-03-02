@@ -89,8 +89,13 @@ class MetacatDataInfoProvider {
             "testtable1" : TableInfo.builder()
                     .name(QualifiedName.ofTable("testhive", "test1", "testtable1"))
                     .fields([ fields.fielddate] )
-                    .serde( StorageInfo.builder().owner("test").uri("s3://test/uri").build())
-                    .metadata ( Collections.emptyMap())
+                    .serde( StorageInfo.builder().owner("test").uri("s3://test/uri")
+                    .serializationLib('org.apache.hadoop.hive.ql.io.orc.OrcSerde')
+                    .outputFormat('org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat')
+                    .inputFormat('org.apache.hadoop.hive.ql.io.orc.OrcInputFormat')
+                    .serdeInfoParameters(['serialization.format': '1'])
+                    .build())
+                    .metadata ( ['tp_k1': 'tp_v1'])
                     .auditInfo( AuditInfo.builder().build())
                     .build(),
             //partitiontable

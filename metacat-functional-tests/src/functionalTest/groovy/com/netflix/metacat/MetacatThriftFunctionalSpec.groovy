@@ -42,7 +42,6 @@ import spock.lang.Specification
 import spock.lang.Stepwise
 import spock.lang.Unroll
 
-@Ignore
 @Stepwise
 @Unroll
 class MetacatThriftFunctionalSpec extends Specification {
@@ -165,6 +164,7 @@ class MetacatThriftFunctionalSpec extends Specification {
     def setupSpec() {
         String thriftPort = System.properties['metacat_hive_thrift_port']?.toString()?.trim()
         assert thriftPort, 'Required system property "metacat_hive_thrift_port" is not set'
+
         metacatHiveThriftUri = "thrift://localhost:${thriftPort}".toString()
         TestCatalogs.findByCatalogName('hive-metastore').thriftUri = metacatHiveThriftUri
 
