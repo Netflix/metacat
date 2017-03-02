@@ -1,3 +1,4 @@
+
 /*
  *  Copyright 2017 Netflix, Inc.
  *
@@ -14,7 +15,8 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.common.server
+package com.netflix.metacat.testdata.provider
+
 
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.model.*
@@ -22,7 +24,7 @@ import com.netflix.metacat.common.type.BaseType
 import com.netflix.metacat.common.type.VarcharType
 
 /**
- * MetacatDataInfoProvider.
+ * com.netflix.metacat.common.server.MetacatDataInfoProvider.
  * @author zhenl
  */
 class MetacatDataInfoProvider {
@@ -43,70 +45,70 @@ class MetacatDataInfoProvider {
                                  TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "devtable3")).build()]
 
     private static databaseNames = [
-        QualifiedName.ofDatabase("testhive", "test1"),
-        QualifiedName.ofDatabase("testhive", "test2"),
-        QualifiedName.ofDatabase("testhive", "dev1"),
-        QualifiedName.ofDatabase("testhive", "dev2")
+            QualifiedName.ofDatabase("testhive", "test1"),
+            QualifiedName.ofDatabase("testhive", "test2"),
+            QualifiedName.ofDatabase("testhive", "dev1"),
+            QualifiedName.ofDatabase("testhive", "dev2")
     ]
 
     private static testdatabaseNames = [
-        QualifiedName.ofDatabase("testhive", "test1"),
-        QualifiedName.ofDatabase("testhive", "test2"),
+            QualifiedName.ofDatabase("testhive", "test1"),
+            QualifiedName.ofDatabase("testhive", "test2"),
     ]
 
     private static tableNames = [
-        QualifiedName.ofTable("testhive", "test1", "testtable1"),
-        QualifiedName.ofTable("testhive", "test1", "testtable2"),
-        QualifiedName.ofTable("testhive", "test1", "devtable2"),
-        QualifiedName.ofTable("testhive", "test1", "devtable3")
+            QualifiedName.ofTable("testhive", "test1", "testtable1"),
+            QualifiedName.ofTable("testhive", "test1", "testtable2"),
+            QualifiedName.ofTable("testhive", "test1", "devtable2"),
+            QualifiedName.ofTable("testhive", "test1", "devtable3")
     ]
 
     private static tableNameStrings = [
-        "testtable1",
-        "testtable2",
-        "devtable2",
-        "devtable3"
+            "testtable1",
+            "testtable2",
+            "devtable2",
+            "devtable3"
     ]
 
     private static tables = [
-        "testtable1" ,
-        "testtable2",
-        "devtable2",
-        "devtable3"
+            "testtable1" ,
+            "testtable2",
+            "devtable2",
+            "devtable3"
     ]
     private static fields = [
-        "fielddate": FieldInfo.builder().name("coldate").type(BaseType.DATE).sourceType("date").comment("").build(),
-        "fieldint" :  FieldInfo.builder().name("colint").type(BaseType.DATE).sourceType("int").comment("").build(),
-        "fieldstring" :  FieldInfo.builder().name("colstring").type(VarcharType.VARCHAR).sourceType("string").comment("").build(),
-        "fieldboolean" :  FieldInfo.builder().name("colboolean").type(BaseType.BOOLEAN).sourceType("boolean").comment("").build(),
-        "fielddateint": FieldInfo.builder().name("dateint").type(VarcharType.VARCHAR).sourceType("string").comment("").partitionKey(true).build(),
-        "fieldhour": FieldInfo.builder().name("hour").type(BaseType.INT).sourceType("string").comment("").partitionKey(true).build()
+            "fielddate": FieldInfo.builder().name("coldate").type(BaseType.DATE).sourceType("date").comment("").build(),
+            "fieldint" :  FieldInfo.builder().name("colint").type(BaseType.DATE).sourceType("int").comment("").build(),
+            "fieldstring" :  FieldInfo.builder().name("colstring").type(VarcharType.VARCHAR).sourceType("string").comment("").build(),
+            "fieldboolean" :  FieldInfo.builder().name("colboolean").type(BaseType.BOOLEAN).sourceType("boolean").comment("").build(),
+            "fielddateint": FieldInfo.builder().name("dateint").type(VarcharType.VARCHAR).sourceType("string").comment("").partitionKey(true).build(),
+            "fieldhour": FieldInfo.builder().name("hour").type(BaseType.INT).sourceType("string").comment("").partitionKey(true).build()
     ]
     private static tableInfoMap = [
-        //nonpartitiontable
-        "testtable1" : TableInfo.builder()
-            .name(QualifiedName.ofTable("testhive", "test1", "testtable1"))
-            .fields([ fields.fielddate] )
-            .serde( StorageInfo.builder().owner("test").uri("s3://test/uri").build())
-            .metadata ( Collections.emptyMap())
-            .auditInfo( AuditInfo.builder().build())
-            .build(),
-        //partitiontable
-        "testtable2" : TableInfo.builder()
-            .name(QualifiedName.ofTable("testhive", "test1", "testtable2"))
-            .fields([ fields.fielddateint, fields.fieldhour, fields.fieldstring] )
-            .serde( StorageInfo.builder().owner("test").uri("s3://test/uri").build())
-            .metadata ( Collections.emptyMap())
-            .auditInfo( AuditInfo.builder().build())
-            .build()
+            //nonpartitiontable
+            "testtable1" : TableInfo.builder()
+                    .name(QualifiedName.ofTable("testhive", "test1", "testtable1"))
+                    .fields([ fields.fielddate] )
+                    .serde( StorageInfo.builder().owner("test").uri("s3://test/uri").build())
+                    .metadata ( Collections.emptyMap())
+                    .auditInfo( AuditInfo.builder().build())
+                    .build(),
+            //partitiontable
+            "testtable2" : TableInfo.builder()
+                    .name(QualifiedName.ofTable("testhive", "test1", "testtable2"))
+                    .fields([ fields.fielddateint, fields.fieldhour, fields.fieldstring] )
+                    .serde( StorageInfo.builder().owner("test").uri("s3://test/uri").build())
+                    .metadata ( Collections.emptyMap())
+                    .auditInfo( AuditInfo.builder().build())
+                    .build()
     ]
 
     private static partitionInfoMap = [
-        "date=20170101/hour=1" : PartitionInfo.builder()
-            .name(QualifiedName.ofPartition("testhive", "test1", "testtable2", "date=20170101/hour=1"))
-            .auditInfo( AuditInfo.builder().build())
-            .metadata(Collections.emptyMap())
-            .build()
+            "date=20170101/hour=1" : PartitionInfo.builder()
+                    .name(QualifiedName.ofPartition("testhive", "test1", "testtable2", "date=20170101/hour=1"))
+                    .auditInfo( AuditInfo.builder().build())
+                    .metadata(Collections.emptyMap())
+                    .build()
     ]
 
     def static List<DatabaseInfo> getAllTestDatabaseInfo(){
