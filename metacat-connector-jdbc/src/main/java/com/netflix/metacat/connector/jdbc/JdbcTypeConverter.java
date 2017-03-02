@@ -42,11 +42,12 @@ public abstract class JdbcTypeConverter implements ConnectorTypeConverter {
 
     private static final Pattern TYPE_PATTERN = Pattern.compile(
         "^\\s*?"
-            + "(\\w+(?:\\s(?:precision|varying))?)"
-            + "\\s*?(\\[\\](?:\\[\\])?)?"
+            + "(\\w+(?:\\s(?:precision|varying))?)" // group 0
             + "\\s*?"
-            + "(?:\\(\\s*?(\\d+)(?:\\s*?,\\s*?(\\d+))?\\s*?\\))?"
-            + "(?:\\s*?(\\w+(?:\\s\\w+)*))?$"
+            + "(?:\\(\\s*?(\\d+)(?:\\s*?,\\s*?(\\d+))?\\s*?\\))?" // group 1 and 2
+            + "\\s*?"
+            + "(\\[\\](?:\\[\\])?)?" // group 3
+            + "(?:\\s*?(\\w+(?:\\s\\w+)*))?$" // group 4
     );
 
     protected String[] splitType(final String type) {
@@ -65,10 +66,10 @@ public abstract class JdbcTypeConverter implements ConnectorTypeConverter {
 
     protected Type toMetacatBitType(@Nonnull final String[] bit) {
         // No size parameter
-        if (bit[2] == null || Integer.parseInt(bit[2]) == 1) {
+        if (bit[1] == null || Integer.parseInt(bit[1]) == 1) {
             return BaseType.BOOLEAN;
         } else {
-            final int bytes = (int) Math.ceil(Double.parseDouble(bit[2]) / 8.0);
+            final int bytes = (int) Math.ceil(Double.parseDouble(bit[1]) / 8.0);
             return VarbinaryType.createVarbinaryType(bytes);
         }
 
@@ -76,14 +77,14 @@ public abstract class JdbcTypeConverter implements ConnectorTypeConverter {
     }
 
     protected DecimalType toMetacatDecimalType(@Nonnull final String[] splitType) {
-        if (splitType[2] == null && splitType[3] == null) {
+        if (splitType[1] == null && splitType[2] == null) {
             return DecimalType.createDecimalType();
-        } else if (splitType[2] != null) {
-            final int precision = Integer.parseInt(splitType[2]);
-            if (splitType[3] == null) {
+        } else if (splitType[1] != null) {
+            final int precision = Integer.parseInt(splitType[1]);
+            if (splitType[2] == null) {
                 return DecimalType.createDecimalType(precision);
             } else {
-                return DecimalType.createDecimalType(precision, Integer.parseInt(splitType[3]));
+                return DecimalType.createDecimalType(precision, Integer.parseInt(splitType[2]));
             }
         } else {
             throw new IllegalArgumentException("Illegal definition of a decimal type: " + Arrays.toString(splitType));
@@ -91,11 +92,11 @@ public abstract class JdbcTypeConverter implements ConnectorTypeConverter {
     }
 
     protected Type toMetacatCharType(@Nonnull final String[] splitType) {
-        if (splitType[2] == null) {
+        if (splitType[1] == null) {
             throw new IllegalArgumentException("Must have size for char type");
         }
 
-        final int size = Integer.parseInt(splitType[2]);
+        final int size = Integer.parseInt(splitType[1]);
         // Check if we're dealing with binary or not
         if (splitType[4] != null) {
             if (!splitType[4].equals("binary")) {
@@ -110,11 +111,11 @@ public abstract class JdbcTypeConverter implements ConnectorTypeConverter {
     }
 
     protected Type toMetacatVarcharType(@Nonnull final String[] splitType) {
-        if (splitType[2] == null) {
+        if (splitType[1] == null) {
             throw new IllegalArgumentException("Must have size for varchar type");
         }
 
-        final int size = Integer.parseInt(splitType[2]);
+        final int size = Integer.parseInt(splitType[1]);
         // Check if we're dealing with binary or not
         if (splitType[4] != null) {
             if (!splitType[4].equals("binary")) {
@@ -133,11 +134,11 @@ public abstract class JdbcTypeConverter implements ConnectorTypeConverter {
             // Blob
             return VarbinaryType.createVarbinaryType(Integer.MAX_VALUE);
         }
-        if (splitType[2] == null) {
+        if (splitType[1] == null) {
             throw new IllegalArgumentException("Must have size for varbinary type");
         }
 
-        return VarbinaryType.createVarbinaryType(Integer.parseInt(splitType[2]));
+        return VarbinaryType.createVarbinaryType(Integer.parseInt(splitType[1]));
     }
 
     protected Type toMetacatTimeType(@Nonnull final String[] splitType) {

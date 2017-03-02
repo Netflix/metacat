@@ -15,14 +15,12 @@
  *     limitations under the License.
  *
  */
-/**
- * @author tgianos
- */
 
 /**
  * Classes related to getting metadata from a generic JDBC connection.
  *
  * @author tgianos
- * @sincde 0.1.52
+ * @since 0.1.52
+ * @since 0.1.52
  */
 package com.netflix.metacat.connector.jdbc;
