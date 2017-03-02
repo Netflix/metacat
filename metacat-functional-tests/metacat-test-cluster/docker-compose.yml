@@ -30,8 +30,8 @@ services:
             - '12001'
         volumes:
             - ../build/metacat-war-expanded/ROOT:/usr/local/tomcat/webapps/ROOT
-            - ../build/resources/functionalTest/log4j.properties:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/log4j.properties
-            - ../build/resources/functionalTest/logging.properties:/usr/local/tomcat/conf/logging.properties
+            - ./resources/log4j.properties:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/log4j.properties
+            - ./resources/logging.properties:/usr/local/tomcat/conf/logging.properties
             - ../build/logs/metacat:/usr/local/tomcat/logs
             - ./etc-metacat:/etc/metacat:ro
         environment:
