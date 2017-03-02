@@ -49,7 +49,6 @@ public class HiveConnectorModule implements Module {
      * @param catalogName   catalog name.
      * @param configuration configuration properties
      * @param infoConverter Hive info converter
-     * @throws Exception exception
      */
     public HiveConnectorModule(final String catalogName, final Map<String, String> configuration,
                                final HiveConnectorInfoConverter infoConverter) {
@@ -57,10 +56,13 @@ public class HiveConnectorModule implements Module {
         this.infoConverter = infoConverter;
         this.hiveMetastoreClientFactory =
                 new HiveMetastoreClientFactory(null);
+        final String metastoreUri = configuration.get(thrifturi);
         try {
-            this.uri = new URI(configuration.get(thrifturi));
+            this.uri = new URI(metastoreUri);
         } catch (Exception e) {
-            log.info("Invalid thrift uri %s", configuration.get(thrifturi));
+            final String message = String.format("Invalid thrift uri %s", metastoreUri);
+            log.info(message);
+            throw new IllegalArgumentException(message, e);
         }
     }
 

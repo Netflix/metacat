@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * Id Entity DAO.
- * @param <T>
+ * @param <T> model entity type.
  */
 public abstract class IdEntityDaoImpl<T extends IdEntity> extends BaseDaoImpl<T> implements
     BaseDao<T> {

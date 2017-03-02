@@ -92,7 +92,6 @@ public class HiveConnectorTableService implements ConnectorTableService {
      *
      * @param requestContext The request context
      * @param tableInfo      The resource metadata
-     * @throws Exception exception
      */
     @Override
     public void create(@Nonnull final ConnectorContext requestContext, @Nonnull final TableInfo tableInfo) {
