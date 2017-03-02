@@ -20,7 +20,7 @@ import javax.annotation.Nonnull;
 
 /**
  * Base service interface for all entities like catalog, database, table, view and partition.
- * @param <T>
+ * @param <T> Resource entity type.
  */
 public interface MetacatService<T extends BaseDto> {
     /**

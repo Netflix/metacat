@@ -26,7 +26,6 @@ configurations {
 dependencies {
     compile project(':metacat-main')
     compile project(':metacat-user-metadata-mysql')
-    compile 'com.netflix.blitz4j:blitz4j:1.36.0'
     compile('com.squarespace.jersey2-guice:jersey2-guice:0.5') {
         exclude group: 'com.google.inject'
         exclude group: 'com.google.inject.extensions'
@@ -49,16 +48,17 @@ task(console, dependsOn: 'testClasses', type: JavaExec) {
 
 war {
     baseName = 'metacat'
+    doLast{
+        copy{
+            from(war.archivePath) {
+                rename 'metacat(.*).war', 'metacat.war'
+            }
+            into project.parent.buildDir.absolutePath
+        }
+    }
 }
 
 jettyRunWar {
     httpPort = 7001
     contextPath = ''
-}
-
-task buildAndCopyWar(type: Exec, dependsOn: 'war') {
-    workingDir rootDir
-
-    executable 'sh'
-    args '-c', 'mkdir build || true && find . -type f -name "*.war" | xargs ls -r | head -1 | xargs -J % cp % build/metacat.war'
 }
