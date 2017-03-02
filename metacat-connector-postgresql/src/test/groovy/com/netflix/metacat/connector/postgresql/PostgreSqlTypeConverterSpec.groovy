@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.connector.postgresql
 
+import com.google.common.collect.Lists
 import com.netflix.metacat.common.type.*
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -40,16 +41,22 @@ class PostgreSqlTypeConverterSpec extends Specification {
         where:
         type                           | signature
         "SMALLINT"                     | BaseType.SMALLINT.getTypeSignature().toString()
+        "int2"                         | BaseType.SMALLINT.getTypeSignature().toString()
         "int"                          | BaseType.INT.getTypeSignature().toString()
+        "int4"                         | BaseType.INT.getTypeSignature().toString()
+        "INteger"                      | BaseType.INT.getTypeSignature().toString()
         " BIGINt"                      | BaseType.BIGINT.getTypeSignature().toString()
+        "int8"                         | BaseType.BIGINT.getTypeSignature().toString()
         "decimal (15)"                 | DecimalType.createDecimalType(15).getTypeSignature().toString()
         "DECIMAL"                      | DecimalType.createDecimalType().getTypeSignature().toString()
         "DEciMal(15, 14)"              | DecimalType.createDecimalType(15, 14).getTypeSignature().toString()
         "numeric"                      | DecimalType.createDecimalType().getTypeSignature().toString()
         "REAL"                         | BaseType.FLOAT.getTypeSignature().toString()
+        "float4"                       | BaseType.FLOAT.getTypeSignature().toString()
         "double PRECISION (15)"        | BaseType.DOUBLE.getTypeSignature().toString()
         "double PRECISION (15, 3)"     | BaseType.DOUBLE.getTypeSignature().toString()
         "double precision"             | BaseType.DOUBLE.getTypeSignature().toString()
+        "FLOAT8"                       | BaseType.DOUBLE.getTypeSignature().toString()
         "character varying (17)"       | VarcharType.createVarcharType(17).getTypeSignature().toString()
         "varchar(53)"                  | VarcharType.createVarcharType(53).getTypeSignature().toString()
         "character (3)"                | CharType.createCharType(3).getTypeSignature().toString()
@@ -61,12 +68,16 @@ class PostgreSqlTypeConverterSpec extends Specification {
             .toString()
         "timestamp (7) with time zone" | BaseType.TIMESTAMP_WITH_TIME_ZONE.getTypeSignature().toString()
         "TIMESTAMP(16)"                | BaseType.TIMESTAMP.getTypeSignature().toString()
+        "tiMestampz"                   | BaseType.TIMESTAMP_WITH_TIME_ZONE.getTypeSignature().toString()
         "date"                         | BaseType.DATE.getTypeSignature().toString()
         "TIME WITH TIME ZONE"          | BaseType.TIME_WITH_TIME_ZONE.getTypeSignature().toString()
+        "timez"                        | BaseType.TIME_WITH_TIME_ZONE.getTypeSignature().toString()
         "time"                         | BaseType.TIME.getTypeSignature().toString()
         "BOOLEAN"                      | BaseType.BOOLEAN.getTypeSignature().toString()
+        "bool"                         | BaseType.BOOLEAN.getTypeSignature().toString()
         "bit(2)"                       | VarbinaryType.createVarbinaryType(1).getTypeSignature().toString()
         "bit varying (9)"              | VarbinaryType.createVarbinaryType(2).getTypeSignature().toString()
+        "varbit (9)"                   | VarbinaryType.createVarbinaryType(2).getTypeSignature().toString()
         "JSON"                         | BaseType.JSON.getTypeSignature().toString()
         "int []"                       | new ArrayType(BaseType.INT).getTypeSignature().toString()
         "double precision[]"           | new ArrayType(BaseType.DOUBLE).getTypeSignature().toString()
@@ -86,8 +97,11 @@ class PostgreSqlTypeConverterSpec extends Specification {
         where:
         type            | _
         "smallserial"   | _
+        "serial2"       | _
         "serial"        | _
+        "serial4"       | _
         "bigserial"     | _
+        "serial8"       | _
         "money"         | _
         "interval"      | _
         "enum"          | _
@@ -123,6 +137,62 @@ class PostgreSqlTypeConverterSpec extends Specification {
         "regconfig"     | _
         "regdictionary" | _
         "pg_lsn"        | _
+        "jsonb"         | _
+        "txid_snapshot" | _
+    }
+
+    @Unroll
+    "Can convert type #type to PostgreSQL string #sql"() {
+
+        expect:
+        this.converter.fromMetacatType(type) == sql
+
+        where:
+        type                                                     | sql
+        BaseType.BIGINT                                          | "BIGINT"
+        BaseType.BOOLEAN                                         | "BOOLEAN"
+        CharType.createCharType(42)                              | "CHAR(42)"
+        BaseType.DATE                                            | "DATE"
+        DecimalType.createDecimalType(15, 14)                    | "NUMERIC(15, 14)"
+        DecimalType.createDecimalType(13, 12)                    | "NUMERIC(13, 12)"
+        DecimalType.createDecimalType(13)                        | "NUMERIC(13, 0)"
+        DecimalType.createDecimalType()                          | "NUMERIC(10, 0)"
+        BaseType.DOUBLE                                          | "DOUBLE PRECISION"
+        BaseType.FLOAT                                           | "REAL"
+        BaseType.INT                                             | "INT"
+        BaseType.JSON                                            | "JSON"
+        BaseType.SMALLINT                                        | "SMALLINT"
+        BaseType.STRING                                          | "TEXT"
+        BaseType.TIME                                            | "TIME"
+        BaseType.TIME_WITH_TIME_ZONE                             | "TIME WITH TIME ZONE"
+        BaseType.TIMESTAMP                                       | "TIMESTAMP"
+        BaseType.TIMESTAMP_WITH_TIME_ZONE                        | "TIMESTAMP WITH TIME ZONE"
+        BaseType.TINYINT                                         | "SMALLINT"
+        VarbinaryType.createVarbinaryType(2)                     | "BYTEA"
+        VarcharType.createVarcharType(255)                       | "CHARACTER VARYING(255)"
+        new ArrayType(CharType.createCharType(5))                | "CHAR(5)[]"
+        new ArrayType(new ArrayType(CharType.createCharType(5))) | "CHAR(5)[][]"
+        new ArrayType(BaseType.DOUBLE)                           | "DOUBLE PRECISION[]"
+    }
+
+    @Unroll
+    "Can't convert type #type back to SQL"() {
+        when:
+        this.converter.fromMetacatType(type)
+
+        then:
+        thrown exception
+
+        where:
+        type                                       | exception
+        BaseType.INTERVAL_DAY_TO_SECOND            | UnsupportedOperationException
+        BaseType.INTERVAL_YEAR_TO_MONTH            | UnsupportedOperationException
+        new MapType(BaseType.STRING, BaseType.INT) | UnsupportedOperationException
+        new RowType(
+            Lists.asList(BaseType.STRING),
+            Lists.asList(UUID.randomUUID().toString())
+        )                                          | UnsupportedOperationException
+        BaseType.UNKNOWN                           | IllegalArgumentException
     }
 
     @Unroll
@@ -131,9 +201,9 @@ class PostgreSqlTypeConverterSpec extends Specification {
         def split = this.converter.splitType(type)
         split.length == 5
         split[0] == base
-        split[1] == array
-        split[2] == size
-        split[3] == magnitude
+        split[1] == size
+        split[2] == magnitude
+        split[3] == array
         split[4] == extra
 
         where:
@@ -149,6 +219,8 @@ class PostgreSqlTypeConverterSpec extends Specification {
         "timestamp with time zone" | "timestamp" | null   | null | null      | "with time zone"
         "integer []"               | "integer"   | "[]"   | null | null      | null
         "int[][]"                  | "int"       | "[][]" | null | null      | null
+        "char (4) [][]"            | "char"      | "[][]" | "4"  | null      | null
+        "char(4)[]"                | "char"      | "[]"   | "4"  | null      | null
     }
 
     def "Can't split up a bad input"() {
