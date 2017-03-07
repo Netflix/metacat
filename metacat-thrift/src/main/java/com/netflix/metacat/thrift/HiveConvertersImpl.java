@@ -203,7 +203,8 @@ public class HiveConvertersImpl implements HiveConverters {
             table.setPartitionKeys(partitionFields);
             sd.setCols(nonPartitionFields);
         }
-
+        table.setViewOriginalText("");
+        table.setViewExpandedText("");
         return table;
     }
 
