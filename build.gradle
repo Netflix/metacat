@@ -11,8 +11,6 @@
  *    limitations under the License.
  */
 
-
-
 buildscript {
     repositories {
         jcenter()
@@ -20,7 +18,7 @@ buildscript {
 }
 
 plugins {
-    id 'nebula.netflixoss' version '3.5.2'
+    id 'nebula.netflixoss' version '3.6.0'
 }
 
 ext.githubProjectName = rootProject.name
@@ -28,6 +26,9 @@ ext.githubProjectName = rootProject.name
 allprojects {
     repositories {
         jcenter()
+        maven {
+            url "http://redshift-maven-repository.s3-website-us-east-1.amazonaws.com/release"
+        }
     }
 }
 
