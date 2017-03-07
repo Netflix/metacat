@@ -28,4 +28,7 @@ include 'metacat-main'
 include 'metacat-server'
 include 'metacat-thrift'
 include 'metacat-user-metadata-mysql'
+include 'metacat-connector-pig'
+include 'metacat-connector-hive'
+include 'metacat-testdata-provider'
 

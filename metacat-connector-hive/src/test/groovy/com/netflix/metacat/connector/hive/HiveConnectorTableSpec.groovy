@@ -18,17 +18,21 @@ package com.netflix.metacat.connector.hive
 
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
-import com.netflix.metacat.common.server.MetacatDataInfoProvider
 import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.model.AuditInfo
+import com.netflix.metacat.common.server.connectors.model.StorageInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
-import com.netflix.metacat.common.server.exception.TableNotFoundException
+import com.netflix.metacat.common.server.exception.InvalidMetaException
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.common.server.exception.ConnectorException
+import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
 import org.apache.hadoop.hive.metastore.api.FieldSchema
+import org.apache.hadoop.hive.metastore.api.SerDeInfo
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor
 import org.apache.hadoop.hive.metastore.api.Table
 import org.apache.thrift.TException
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -41,17 +45,16 @@ class HiveConnectorTableSpec extends Specification {
     @Shared
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient);
     @Shared
-    HiveConnectorTableService hiveConnectorTableService = new HiveConnectorTableService("testhive", metacatHiveClient, new HiveConnectorInfoConverter(new HiveTypeConverter()) )
+    HiveConnectorDatabaseService hiveConnectorDatabaseService = Mock(HiveConnectorDatabaseService);
+    @Shared
+    HiveConnectorTableService hiveConnectorTableService = new HiveConnectorTableService("testhive", metacatHiveClient, hiveConnectorDatabaseService, new HiveConnectorInfoConverter(new HiveTypeConverter()) )
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(1, null);
     @Shared
     HiveConnectorInfoConverter hiveConnectorInfoConverter = new HiveConnectorInfoConverter(new HiveTypeConverter())
 
     def setupSpec() {
-        metacatHiveClient.createTable(hiveConnectorInfoConverter.fromTableInfo(
-            TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testtable1")).build())) >> { throw new TException()}
-        metacatHiveClient.createTable(hiveConnectorInfoConverter.fromTableInfo(
-            TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testingtable")).build())) >> {}
+        metacatHiveClient.createTable(_) >> {}
         metacatHiveClient.getAllTables("test1") >> MetacatDataInfoProvider.getTables()
         metacatHiveClient.getTableByName("test1", "testtable3") >> { throw new TException()}
         metacatHiveClient.rename("test1", "testtable1", "test2", "testtable2") >> {}
@@ -67,9 +70,15 @@ class HiveConnectorTableSpec extends Specification {
         table.partitionKeys = new ArrayList<>()
         table.sd = new StorageDescriptor()
         table.sd.setLocation("s3://test/uri")
+        table.sd.setOutputFormat("org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat")
+        table.sd.setInputFormat('org.apache.hadoop.hive.ql.io.orc.OrcInputFormat')
+        def serializationLib = 'org.apache.hadoop.hive.ql.io.orc.OrcSerde'
+        def sdInfoName = 'is ignored for now'
+        def sdInfoParams = ['serialization.format': '1']
+        table.sd.setSerdeInfo(new SerDeInfo(sdInfoName, serializationLib, sdInfoParams));
         table.sd.cols = new ArrayList<>()
         table.sd.cols.add(new FieldSchema("coldate", "date", ""))
-        table.parameters = Collections.emptyMap()
+        table.parameters = ['tp_k1': 'tp_v1']
         return table
     }
 
@@ -80,28 +89,62 @@ class HiveConnectorTableSpec extends Specification {
         table.partitionKeys = new ArrayList<>()
         table.sd = new StorageDescriptor()
         table.sd.setLocation("s3://test/uri")
+        table.sd.setOutputFormat("org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat")
+        table.sd.setInputFormat('org.apache.hadoop.hive.ql.io.orc.OrcInputFormat')
+        def serializationLib = 'org.apache.hadoop.hive.ql.io.orc.OrcSerde'
+        def sdInfoName = 'is ignored for now'
+        def sdInfoParams = ['serialization.format': '1']
+        table.sd.setSerdeInfo(new SerDeInfo(sdInfoName, serializationLib, sdInfoParams));
         table.sd.cols = new ArrayList<>()
         FieldSchema hour = new FieldSchema("hour", "string", "")
         FieldSchema date = new FieldSchema("dateint", "string", "")
         table.sd.cols.add(new FieldSchema("coldstring", "string", ""))
         table.addToPartitionKeys(date)
         table.addToPartitionKeys(hour)
-        table.parameters = Collections.emptyMap()
         return table
     }
 
-    def "Test for create database" (){
+    def "Test for create table" (){
         when:
-        hiveConnectorTableService.create( connectorContext, TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testingtable")).build())
+        hiveConnectorTableService.create( connectorContext,
+                TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testingtable"))
+                        .serde(StorageInfo.builder().serializationLib('org.apache.hadoop.hive.ql.io.orc.OrcSerde').outputFormat('org.apache.hadoop.hive.ql.io.orc.OrcInputFormat').build()).build())
         then:
         noExceptionThrown()
     }
 
-    def "Test for create database throw exception" (){
+    def "Test for create table throw exception" (){
         when:
-        hiveConnectorTableService.create( connectorContext, TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testtable1")).build())
+        hiveConnectorTableService.create( connectorContext,
+                TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testingtable")).build())
         then:
-        thrown ConnectorException
+        thrown InvalidMetaException
+    }
+
+    @Unroll
+    def "Test for update table" (){
+        given:
+            hiveConnectorTableService.updateTable( connectorContext, table, tableInfo)
+        expect:
+            table.getParameters().get("EXTERNAL") == "TRUE"
+            table.getParameters() != null
+            table.getSd() != null
+        where:
+        table                           | tableInfo
+        getPartitionTable("testtable")  | TableInfo.builder()
+                                          .name(QualifiedName.ofTable("testhive", "test1", "testtable1"))
+                                          .serde( StorageInfo.builder().owner("test").uri("s3://test/uri").build())
+                                          .metadata ( ['tp_k1': 'tp_v1'])
+                                          .auditInfo( AuditInfo.builder().build())
+                                          .build()
+        getPartitionTable("testtable2")  | TableInfo.builder()
+                .name(QualifiedName.ofTable("testhive", "test1", "testtable2"))
+                .serde( StorageInfo.builder().owner("test").uri("s3://test/uri").build())
+                .auditInfo( AuditInfo.builder().build())
+                .build()
+        getPartitionTable("testtable3")  | TableInfo.builder()
+                .name(QualifiedName.ofTable("testhive", "test1", "testtable3"))
+                .build()
     }
 
     def "Test for get table" (){

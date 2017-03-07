@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * HiveConnectorModule.
@@ -38,6 +39,7 @@ import java.util.Map;
 
 public class HiveConnectorModule implements Module {
     private final String thrifturi = "hive.metastore.uris";
+    private final String hivemetastoreTimeout = "hive.metastore-timeout";
     private final String catalogName;
     private final HiveConnectorInfoConverter infoConverter;
     private final HiveMetastoreClientFactory hiveMetastoreClientFactory;
@@ -55,7 +57,9 @@ public class HiveConnectorModule implements Module {
         this.catalogName = catalogName;
         this.infoConverter = infoConverter;
         this.hiveMetastoreClientFactory =
-                new HiveMetastoreClientFactory(null);
+                new HiveMetastoreClientFactory(null,
+                        (int) HiveConnectorUtil.toTime(configuration.getOrDefault(hivemetastoreTimeout, "20s"),
+                                TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
         final String metastoreUri = configuration.get(thrifturi);
         try {
             this.uri = new URI(metastoreUri);
@@ -76,4 +80,5 @@ public class HiveConnectorModule implements Module {
         binder.bind(ConnectorTableService.class).to(HiveConnectorTableService.class).in(Scopes.SINGLETON);
         binder.bind(ConnectorPartitionService.class).to(HiveConnectorPartitionService.class).in(Scopes.SINGLETON);
     }
+
 }

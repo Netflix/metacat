@@ -37,16 +37,19 @@ import java.net.SocketAddress;
  */
 public class HiveMetastoreClientFactory {
     private final HostAndPort socksProxy;
-    private final int timeoutMillis = 3000;
+    private int timeoutMillis = 3000;
 
     /**
      * Constructor.
      *
      * @param socksProxy address
+     * @param timeoutMillis timeoutMillis
      */
     @Inject
-    public HiveMetastoreClientFactory(@Nullable final HostAndPort socksProxy) {
+    public HiveMetastoreClientFactory(@Nullable final HostAndPort socksProxy,
+                                      final int timeoutMillis) {
         this.socksProxy = socksProxy;
+        this.timeoutMillis = timeoutMillis;
     }
 
     private static Socket createSocksSocket(final HostAndPort proxy) {
