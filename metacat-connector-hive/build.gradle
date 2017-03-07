@@ -13,10 +13,7 @@
 
 dependencies {
     compile project(':metacat-common-server')
-    compile("org.apache.hive:hive-metastore:${hive_version}") {
-        exclude group: 'com.google.guava'
-    }
-    compile("com.facebook.presto.hive:hive-apache:${facebook_hive_apache}")
+    compile "org.apache.hive:hive-metastore:${hive_version}"
     compile "org.apache.hadoop:hadoop-core:${hadoopcore_version}"
     compile "com.google.guava:guava:${guava_version}"
     compile "com.google.inject:guice:${guice_version}"
