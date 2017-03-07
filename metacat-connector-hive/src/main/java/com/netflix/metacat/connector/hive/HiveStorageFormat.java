@@ -16,8 +16,23 @@
 
 package com.netflix.metacat.connector.hive;
 
-import javax.annotation.Nonnull;
+import org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat;
+import org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat;
+import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
+import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcInputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat;
+import org.apache.hadoop.hive.ql.io.orc.OrcSerde;
+import org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat;
+import org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat;
+import org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe;
+import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
+import org.apache.hadoop.hive.serde2.columnar.LazyBinaryColumnarSerDe;
+import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
+import org.apache.hadoop.mapred.SequenceFileInputFormat;
+import org.apache.hadoop.mapred.TextInputFormat;
 
+import javax.annotation.Nonnull;
 
 /**
  * Hive storage format.
@@ -28,43 +43,43 @@ public enum HiveStorageFormat {
     /**
      * Optimized Row Columnar.
      */
-    ORC("org.apache.hadoop.hive.ql.io.orc.OrcSerde",
-            "org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
-            "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat"),
+    ORC(OrcSerde.class.getName(),
+            OrcInputFormat.class.getName(),
+            OrcOutputFormat.class.getName()),
     /**
      * PARQUET.
      */
-    PARQUET("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
-            "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-            "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"),
+    PARQUET(ParquetHiveSerDe.class.getName(),
+            MapredParquetInputFormat.class.getName(),
+            MapredParquetOutputFormat.class.getName()),
 
     /**
      * RCBINARY.
      */
-    RCBINARY("org.apache.hadoop.hive.serde2.columnar.LazyBinaryColumnarSerDe",
-            "org.apache.hadoop.hive.ql.io.RCFileInputFormat",
-            "org.apache.hadoop.hive.ql.io.RCFileOutputFormat"),
+    RCBINARY(LazyBinaryColumnarSerDe.class.getName(),
+            RCFileInputFormat.class.getName(),
+            RCFileOutputFormat.class.getName()),
 
     /**
      * RCTEXT.
      */
-    RCTEXT("org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe",
-            "org.apache.hadoop.hive.ql.io.RCFileInputFormat",
-            "org.apache.hadoop.hive.ql.io.RCFileOutputFormat"),
+    RCTEXT(ColumnarSerDe.class.getName(),
+            RCFileInputFormat.class.getName(),
+            RCFileOutputFormat.class.getName()),
 
     /**
      * SEQUENCEFILE.
      */
-    SEQUENCEFILE("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
-            "org.apache.hadoop.mapred.SequenceFileInputFormat",
-            "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat"),
+    SEQUENCEFILE(LazySimpleSerDe.class.getName(),
+            SequenceFileInputFormat.class.getName(),
+            HiveSequenceFileOutputFormat.class.getName()),
 
     /**
      * TEXTFILE.
      */
-    TEXTFILE("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
-            "org.apache.hadoop.mapred.TextInputFormat",
-            "org.apache.hadoop.mapred.TextInputFormat");
+    TEXTFILE(LazySimpleSerDe.class.getName(),
+            TextInputFormat.class.getName(),
+            HiveIgnoreKeyTextOutputFormat.class.getName());
 
     private final String serde;
     private final String inputFormat;
@@ -89,5 +104,4 @@ public enum HiveStorageFormat {
     public String getOutputFormat() {
         return outputFormat;
     }
-
 }
