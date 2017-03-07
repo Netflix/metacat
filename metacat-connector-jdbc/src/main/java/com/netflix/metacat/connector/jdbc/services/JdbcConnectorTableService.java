@@ -107,13 +107,8 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         try (final Connection connection = this.dataSource.getConnection()) {
             final String database = name.getDatabaseName();
             connection.setSchema(database);
-            final DatabaseMetaData metaData = connection.getMetaData();
-            final String escapeString = metaData.getSearchStringEscape();
-
             final ImmutableList.Builder<FieldInfo> fields = ImmutableList.builder();
-            try (final ResultSet columns
-                     = metaData.getColumns(connection.getCatalog(), database, name.getTableName(), escapeString)
-            ) {
+            try (final ResultSet columns = this.getColumns(connection, name)) {
                 while (columns.next()) {
                     final String sourceType = columns.getString("TYPE_NAME");
                     final FieldInfo fieldInfo = FieldInfo.builder()
@@ -174,20 +169,8 @@ public class JdbcConnectorTableService implements ConnectorTableService {
 
         try (final Connection connection = this.dataSource.getConnection()) {
             connection.setSchema(database);
-            final DatabaseMetaData metaData = connection.getMetaData();
-            final String escapeString = metaData.getSearchStringEscape();
             final List<QualifiedName> names = Lists.newArrayList();
-            try (
-                final ResultSet tables = prefix == null || StringUtils.isEmpty(prefix.getTableName())
-                    ? metaData.getTables(connection.getCatalog(), database, escapeString, null)
-                    : metaData
-                    .getTables(
-                        connection.getCatalog(),
-                        database,
-                        prefix.getTableName() + escapeString,
-                        null
-                    )
-            ) {
+            try (final ResultSet tables = this.getTables(connection, name, prefix)) {
                 while (tables.next()) {
                     names.add(QualifiedName.ofTable(catalog, database, tables.getString("TABLE_NAME")));
                 }
@@ -258,5 +241,51 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         } catch (final SQLException se) {
             throw Throwables.propagate(se);
         }
+    }
+
+    /**
+     * Get the tables. See {@link java.sql.DatabaseMetaData#getTables(String, String, String, String[]) getTables} for
+     * expected format of the ResultSet columns.
+     *
+     * @param connection The database connection to use
+     * @param name       The qualified name of the database to get tables for
+     * @param prefix     An optional database table name prefix to search for
+     * @return The result set with columns as described in the getTables method from java.sql.DatabaseMetaData
+     * @throws SQLException on query error
+     */
+    protected ResultSet getTables(
+        @Nonnull @NonNull final Connection connection,
+        @Nonnull @NonNull final QualifiedName name,
+        @Nullable final QualifiedName prefix
+    ) throws SQLException {
+        final String database = name.getDatabaseName();
+        final DatabaseMetaData metaData = connection.getMetaData();
+        final String escapeString = metaData.getSearchStringEscape();
+        return prefix == null || StringUtils.isEmpty(prefix.getTableName())
+            ? metaData.getTables(connection.getCatalog(), database, escapeString, null)
+            : metaData
+            .getTables(
+                connection.getCatalog(), database, prefix.getTableName() + escapeString, null
+            );
+    }
+
+    /**
+     * Get the columns for a table. See
+     * {@link java.sql.DatabaseMetaData#getColumns(String, String, String, String) getColumns} for format of the
+     * ResultSet columns.
+     *
+     * @param connection The database connection to use
+     * @param name       The qualified name of the table to get the column descriptions for
+     * @return The result set of information
+     * @throws SQLException on query error
+     */
+    protected ResultSet getColumns(
+        @Nonnull @NonNull final Connection connection,
+        @Nonnull @NonNull final QualifiedName name
+    ) throws SQLException {
+        final String database = name.getDatabaseName();
+        final DatabaseMetaData metaData = connection.getMetaData();
+        final String escapeString = metaData.getSearchStringEscape();
+        return metaData.getColumns(connection.getCatalog(), database, name.getTableName(), escapeString);
     }
 }
