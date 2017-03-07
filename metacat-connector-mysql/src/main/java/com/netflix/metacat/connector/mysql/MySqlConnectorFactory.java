@@ -17,14 +17,9 @@
  */
 package com.netflix.metacat.connector.mysql;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
-import com.netflix.metacat.common.server.connectors.ConnectorFactory;
-import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
-import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.google.common.collect.Lists;
+import com.netflix.metacat.connector.jdbc.JdbcConnectorFactory;
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -35,11 +30,7 @@ import java.util.Map;
  * @author tgianos
  * @since 0.1.52
  */
-@Slf4j
-public class MySqlConnectorFactory implements ConnectorFactory {
-
-    private final String name;
-    private final Injector injector;
+class MySqlConnectorFactory extends JdbcConnectorFactory {
 
     /**
      * Constructor.
@@ -51,48 +42,6 @@ public class MySqlConnectorFactory implements ConnectorFactory {
         @Nonnull @NonNull final String name,
         @Nonnull @NonNull final Map<String, String> configuration
     ) {
-        log.info("Creating connector factory for catalog {}", name);
-        this.name = name;
-        this.injector = Guice.createInjector(new MySqlConnectorModule(name, configuration));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ConnectorDatabaseService getDatabaseService() {
-        return this.injector.getInstance(ConnectorDatabaseService.class);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ConnectorTableService getTableService() {
-        return this.injector.getInstance(ConnectorTableService.class);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ConnectorPartitionService getPartitionService() {
-        return this.injector.getInstance(ConnectorPartitionService.class);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getName() {
-        return this.name;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void stop() {
-        // The data source is closed by DataSourceManager @PreDestroy method
+        super(name, Lists.newArrayList(new MySqlConnectorModule(name, configuration)));
     }
 }
