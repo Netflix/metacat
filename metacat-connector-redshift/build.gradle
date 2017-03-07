@@ -1,0 +1,4 @@
+dependencies {
+    compile project(":metacat-connector-jdbc")
+    runtime("com.amazon.redshift:redshift-jdbc42:${redshift_driver_version}")
+}

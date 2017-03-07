@@ -31,6 +31,7 @@ dependencies {
     runtime project(":metacat-connector-hive")
     runtime project(":metacat-connector-mysql")
     runtime project(":metacat-connector-postgresql")
+    runtime project(":metacat-connector-redshift")
 
     testCompile project(":metacat-user-metadata-mysql")
     testCompile "io.airlift:testing-mysql-server:0.1"

@@ -11,22 +11,21 @@
  *    limitations under the License.
  */
 
-
-
-rootProject.name='metacat'
+rootProject.name = 'metacat'
 
 include 'metacat-client'
 include 'metacat-common'
 include 'metacat-common-server'
+include 'metacat-connector-hive'
 include 'metacat-connector-jdbc'
 include 'metacat-connector-mysql'
+include 'metacat-connector-pig'
 include 'metacat-connector-postgresql'
+include 'metacat-connector-redshift'
+include 'metacat-connector-s3'
 include 'metacat-functional-tests'
 include 'metacat-main'
-include 'metacat-connector-s3'
 include 'metacat-server'
 include 'metacat-thrift'
 include 'metacat-user-metadata-mysql'
-include 'metacat-connector-pig'
-include 'metacat-connector-hive'
 
