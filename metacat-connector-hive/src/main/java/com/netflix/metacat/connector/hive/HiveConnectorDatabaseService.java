@@ -35,7 +35,6 @@ import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
-import org.apache.thrift.TException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -49,7 +48,7 @@ import java.util.List;
  * @author zhenl
  */
 public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
-    private final MetacatHiveClient metacatHiveClient;
+    private final IMetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final String catalogName;
 
@@ -62,7 +61,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Inject
     public HiveConnectorDatabaseService(@Named("catalogName") final String catalogName,
-                                        @Nonnull final MetacatHiveClient metacatHiveClient,
+                                        @Nonnull final IMetacatHiveClient metacatHiveClient,
                                         @Nonnull final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
@@ -80,7 +79,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             throw new DatabaseAlreadyExistsException(databaseInfo.getName(), exception);
         } catch (MetaException exception) {
             throw new InvalidMetaException(databaseInfo.getName(), exception);
-        } catch (TException exception) {
+        } catch (Exception exception) {
             throw new ConnectorException(
                     String.format("Failed creating hive database %s", databaseInfo.getName()), exception);
         }
@@ -99,7 +98,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             throw new InvalidMetaException(name, exception);
         } catch (InvalidOperationException exception) {
             throw new MetacatNotSupportedException(exception.getMessage());
-        } catch (TException exception) {
+        } catch (Exception exception) {
             throw new ConnectorException(String.format("Failed delete hive database %s", name), exception);
         }
     }
@@ -116,7 +115,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             throw new DatabaseNotFoundException(name, exception);
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
-        } catch (TException exception) {
+        } catch (Exception exception) {
             throw new ConnectorException(String.format("Failed get hive database %s", name), exception);
         }
     }
@@ -129,7 +128,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         try {
             final Database database = this.metacatHiveClient.getDatabase(name.getDatabaseName());
             return database != null;
-        } catch (TException exception) {
+        } catch (Exception exception) {
         }
         return false;
     }
@@ -163,7 +162,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             return qualifiedNames;
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
-        } catch (TException exception) {
+        } catch (Exception exception) {
             throw new ConnectorException(String.format("Failed listName hive database %s", name), exception);
         }
     }
@@ -197,7 +196,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             return databaseInfos;
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
-        } catch (TException exception) {
+        } catch (Exception exception) {
             throw new ConnectorException(String.format("Failed list hive database %s", name), exception);
         }
     }
