@@ -325,7 +325,7 @@ public class S3ConnectorInfoConverter implements ConnectorInfoConverter<Database
     }
 
     /**
-     * Converts from type string to presto type.
+     * Converts from type string to Metacat type.
      * @param type type
      * @return Type
      */
@@ -380,7 +380,7 @@ public class S3ConnectorInfoConverter implements ConnectorInfoConverter<Database
     /**
      * Creates s3 partition.
      * @param table table
-     * @param partitionInfo presto partition info
+     * @param partitionInfo partition info
      * @return partition
      */
     public Partition toPartition(final Table table, final PartitionInfo partitionInfo) {

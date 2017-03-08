@@ -50,7 +50,10 @@ dependencies {
 
     testCompile project(':metacat-common-server')
     testCompile 'javax.ws.rs:jsr311-api:1.1.1'
-    testCompile "com.facebook.presto:presto-hive-hadoop2:${presto_version}"
+    testCompile ("org.apache.hive:hive-exec:${hive_version}") {
+        exclude module: 'pentaho-aggdesigner-algorithm'
+    }
+    testCompile "org.apache.hadoop:hadoop-core:${hadoopcore_version}"
 }
 
 task expandWar(type: Copy) {
