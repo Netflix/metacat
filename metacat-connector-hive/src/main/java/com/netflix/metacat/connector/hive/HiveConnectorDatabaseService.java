@@ -49,7 +49,7 @@ import java.util.List;
  * @author zhenl
  */
 public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
-    private final MetacatHiveClient metacatHiveClient;
+    private final IMetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final String catalogName;
 
@@ -62,7 +62,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Inject
     public HiveConnectorDatabaseService(@Named("catalogName") final String catalogName,
-                                        @Nonnull final MetacatHiveClient metacatHiveClient,
+                                        @Nonnull final IMetacatHiveClient metacatHiveClient,
                                         @Nonnull final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;

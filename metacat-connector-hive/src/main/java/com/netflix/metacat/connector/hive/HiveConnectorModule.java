@@ -75,6 +75,7 @@ public class HiveConnectorModule implements Module {
         binder.bind(String.class).annotatedWith(Names.named("catalogName")).toInstance(catalogName);
         binder.bind(HiveConnectorInfoConverter.class).toInstance(infoConverter);
         binder.bind(HiveMetastoreClientFactory.class).toInstance(hiveMetastoreClientFactory);
+        binder.bind(IMetacatHiveClient.class).to(MetacatHiveClient.class);
         binder.bind(URI.class).annotatedWith(Names.named("thrifturi")).toInstance(uri);
         binder.bind(ConnectorDatabaseService.class).to(HiveConnectorDatabaseService.class).in(Scopes.SINGLETON);
         binder.bind(ConnectorTableService.class).to(HiveConnectorTableService.class).in(Scopes.SINGLETON);

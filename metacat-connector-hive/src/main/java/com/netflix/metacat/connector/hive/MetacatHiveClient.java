@@ -43,7 +43,7 @@ import java.util.List;
  *
  * @author zhenl
  */
-public class MetacatHiveClient {
+public class MetacatHiveClient implements IMetacatHiveClient {
     private static final short ALL_RESULTS = -1;
     private HiveMetastoreClientFactory hiveMetastoreClientFactory;
     private final String host;
@@ -81,69 +81,51 @@ public class MetacatHiveClient {
     }
 
     /**
-     * List all databases.
-     *
-     * @return database list
-     * @throws TException exceptions
+     * {@inheritDoc}.
      */
+    @Override
     public List<String> getAllDatabases() throws TException {
         return createMetastoreClient().get_all_databases();
     }
 
     /**
-     * Get all tables.
-     *
-     * @param databaseName databasename
-     * @return tableNames
-     * @throws TException metaexception
+     * {@inheritDoc}.
      */
+    @Override
     public List<String> getAllTables(@Nonnull final String databaseName) throws TException {
         return createMetastoreClient().get_all_tables(databaseName);
     }
 
+
     /**
-     * Returns the table.
-     *
-     * @param databaseName databaseName
-     * @param tableName    tableName
-     * @return list of tables
-     * @throws TException NotfoundException
+     * {@inheritDoc}.
      */
-    Table getTableByName(@Nonnull final String databaseName,
-                         @NonNull final String tableName) throws TException {
+    @Override
+    public Table getTableByName(@Nonnull final String databaseName,
+                                @NonNull final String tableName) throws TException {
         return createMetastoreClient().get_table(databaseName, tableName);
     }
 
     /**
-     * Create table.
-     *
-     * @param table database metadata
-     * @throws TException already exist exception
+     * {@inheritDoc}.
      */
-    void createTable(@NonNull final Table table) throws TException {
+    @Override
+    public void createTable(@NonNull final Table table) throws TException {
         createMetastoreClient().create_table(table);
     }
 
     /**
-     * Delete table.
-     *
-     * @param databaseName database
-     * @param tableName    tableName
-     * @throws TException NotfoundException
+     * {@inheritDoc}.
      */
-    void dropTable(@Nonnull final String databaseName, @NonNull final String tableName) throws TException {
+    @Override
+    public void dropTable(@Nonnull final String databaseName, @NonNull final String tableName) throws TException {
         createMetastoreClient().drop_table(databaseName, tableName, false);
     }
 
     /**
-     * Rename table.
-     *
-     * @param databaseName    database
-     * @param oldName         tablename
-     * @param newdatabadeName newdatabase
-     * @param newName         newName
-     * @throws TException NotfoundException
+     * {@inheritDoc}.
      */
+    @Override
     public void rename(@Nonnull final String databaseName,
                        @NonNull final String oldName,
                        @Nonnull final String newdatabadeName,
@@ -157,62 +139,47 @@ public class MetacatHiveClient {
     }
 
     /**
-     * Update table.
-     *
-     * @param databaseName databaseName
-     * @param tableName    tableName
-     * @param table        table
-     * @throws NoSuchObjectException if the database does not exist
+     * {@inheritDoc}.
      */
-    void alterTable(@NonNull final String databaseName,
-                    @NonNull final String tableName,
-                    @NonNull final Table table) throws TException {
+    @Override
+    public void alterTable(@NonNull final String databaseName,
+                           @NonNull final String tableName,
+                           @NonNull final Table table) throws TException {
         createMetastoreClient().alter_table(databaseName, tableName, table);
     }
 
     /**
-     * Create database.
-     *
-     * @param database database metadata
-     * @throws TException already exist exception
+     * {@inheritDoc}.
      */
-    void createDatabase(@NonNull final Database database) throws TException {
+    @Override
+    public void createDatabase(@NonNull final Database database) throws TException {
         createMetastoreClient().create_database(database);
     }
 
     /**
-     * Drop database.
-     *
-     * @param dbName database name
-     * @throws TException NotfoundException
+     * {@inheritDoc}.
      */
+    @Override
     public void dropDatabase(@NonNull final String dbName) throws TException {
         createMetastoreClient().drop_database(dbName, false, false);
     }
 
+
     /**
-     * Returns the table.
-     *
-     * @param databaseName databaseName
-     * @return database database
-     * @throws TException NotfoundException
+     * {@inheritDoc}.
      */
-    Database getDatabase(@Nonnull final String databaseName) throws TException {
+    @Override
+    public Database getDatabase(@Nonnull final String databaseName) throws TException {
         return createMetastoreClient().get_database(databaseName);
     }
 
     /**
-     * Returns the table.
-     *
-     * @param databaseName   databaseName
-     * @param tableName      tableName
-     * @param partitionNames partitionName
-     * @return list of partitions
-     * @throws TException TException
+     * {@inheritDoc}.
      */
-    List<Partition> getPartitions(@Nonnull final String databaseName,
-                                  @NonNull final String tableName,
-                                  @Nullable final List<String> partitionNames) throws TException {
+    @Override
+    public List<Partition> getPartitions(@Nonnull final String databaseName,
+                                         @NonNull final String tableName,
+                                         @Nullable final List<String> partitionNames) throws TException {
         final HiveMetastoreClient client = createMetastoreClient();
         if (partitionNames != null && !partitionNames.isEmpty()) {
             return client.get_partitions_by_names(databaseName, tableName, partitionNames);
@@ -222,94 +189,71 @@ public class MetacatHiveClient {
     }
 
     /**
-     * Drop a list of partitions.
-     *
-     * @param databaseName   databaseName
-     * @param tableName      tableName
-     * @param partitionNames partitionNames
-     * @throws NoSuchObjectException NoSuchObjectException
-     * @throws MetaException         MetaException
-     * @throws TException            TException
+     * {@inheritDoc}.
      */
-    void dropPartitions(@Nonnull final String databaseName,
-                        @NonNull final String tableName,
-                        @Nonnull final List<String> partitionNames) throws
+    @Override
+    public void dropPartitions(@Nonnull final String databaseName,
+                               @NonNull final String tableName,
+                               @Nonnull final List<String> partitionNames) throws
             TException {
         dropHivePartitions(createMetastoreClient(), databaseName, tableName, partitionNames);
     }
 
     /**
-     * List partitions.
-     *
-     * @param databaseName databaseName
-     * @param tableName    tableName
-     * @param filter       filter
-     * @return List of partitions
-     * @throws TException
+     * {@inheritDoc}.
      */
-    List<Partition> listPartitionsByFilter(@Nonnull final String databaseName,
-                                           @NonNull final String tableName,
-                                           @Nonnull final String filter
+    @Override
+    public List<Partition> listPartitionsByFilter(@Nonnull final String databaseName,
+                                                  @NonNull final String tableName,
+                                                  @Nonnull final String filter
     ) throws TException {
         return createMetastoreClient().get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS);
     }
 
     /**
-     * Get partition count.
-     *
-     * @param databaseName databaseName
-     * @param tableName    tableName
-     * @return partition count
-     * @throws TException
+     * {@inheritDoc}.
      */
-    int getPartitionCount(@Nonnull final String databaseName,
-                          @NonNull final String tableName) throws TException {
+    @Override
+    public int getPartitionCount(@Nonnull final String databaseName,
+                                 @NonNull final String tableName) throws TException {
 
         return getPartitions(databaseName, tableName, null).size();
     }
 
     /**
-     * Get partition keys.
-     *
-     * @param databaseName
-     * @param tableName
-     * @return
-     * @throws TException
+     * {@inheritDoc}.
      */
-    List<String> getPartitionNames(@Nonnull final String databaseName,
-                                   @NonNull final String tableName)
+    @Override
+    public List<String> getPartitionNames(@Nonnull final String databaseName,
+                                          @NonNull final String tableName)
             throws TException {
         return createMetastoreClient().get_partition_names(databaseName, tableName, ALL_RESULTS);
     }
 
     /**
-     * Save partitions.
-     *
-     * @param partitions
-     * @throws NoSuchObjectException
-     * @throws MetaException
-     * @throws TException
+     * {@inheritDoc}.
      */
-    void savePartitions(@Nonnull final List<Partition> partitions)
+    @Override
+    public void savePartitions(@Nonnull final List<Partition> partitions)
             throws TException {
         createMetastoreClient().add_partitions(partitions);
     }
 
     /**
-     * Alter partitions.
-     *
-     * @param dbName
-     * @param tableName
-     * @param partitions
-     * @throws TException
+     * {@inheritDoc}.
      */
-    void alterPartitions(@Nonnull final String dbName, @Nonnull final String tableName,
-                         @Nonnull final List<Partition> partitions) throws
+    @Override
+    public void alterPartitions(@Nonnull final String dbName, @Nonnull final String tableName,
+                                @Nonnull final List<Partition> partitions) throws
             TException {
         createMetastoreClient().alter_partitions(dbName, tableName, partitions);
     }
 
-    void addDropPartitions(final String dbName, final String tableName,
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public void addDropPartitions(final String dbName, final String tableName,
                            final List<Partition> partitions,
                            final List<String> delPartitionNames) throws NoSuchObjectException {
         try {
