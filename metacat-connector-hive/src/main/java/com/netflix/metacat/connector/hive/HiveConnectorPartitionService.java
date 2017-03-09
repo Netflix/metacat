@@ -43,6 +43,7 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.thrift.TException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -105,7 +106,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             return partitionInfos;
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + tableName, e);
-        } catch (Exception e) {
+        } catch (TException e) {
             throw new TableNotFoundException(tableName, e);
         }
     }
@@ -122,7 +123,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             return metacatHiveClient.getPartitionCount(tableName.getDatabaseName(), tableName.getTableName());
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + tableName, e);
-        } catch (Exception e) {
+        } catch (TException e) {
             throw new TableNotFoundException(tableName, e);
         }
     }
@@ -158,7 +159,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             }
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + tableName, e);
-        } catch (Exception e) {
+        } catch (TException e) {
             throw new TableNotFoundException(tableName, e);
         }
         return names;
@@ -202,7 +203,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             return partitions;
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + tableName, e);
-        } catch (Exception e) {
+        } catch (TException e) {
             throw new TableNotFoundException(tableName, e);
         }
     }
@@ -310,7 +311,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             throw new TableNotFoundException(tableName, exception);
         } catch (MetaException | InvalidObjectException exception) {
             throw new InvalidMetaException("One or more partitions are invalid.", exception);
-        } catch (Exception exception) {
+        } catch (TException exception) {
             throw new ConnectorException(String.format("Failed savePartitions hive table %s", tableName), exception);
         }
     }
@@ -329,7 +330,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             metacatHiveClient.dropPartitions(tableName.getDatabaseName(), tableName.getTableName(), partitionNames);
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
-        } catch (Exception e) {
+        } catch (TException e) {
             //not sure which qualified name to use here
             throw new TableNotFoundException(tableName, e);
         }
@@ -346,7 +347,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     String getNameOfPartition(@Nonnull final Table table, @Nonnull final Partition partition) {
         try {
             return Warehouse.makePartName(table.getPartitionKeys(), partition.getValues());
-        } catch (Exception e) {
+        } catch (TException e) {
             throw new InvalidMetaException("One or more partition names are invalid.", e);
         }
     }
@@ -399,7 +400,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                     throw new InvalidMetaException("One or more partition names are invalid.", e);
                 }
             }, Function.identity()));
-        } catch (Exception exception) {
+        } catch (TException exception) {
             throw new ConnectorException(String.format("Failed getPartitionsByNames hive table %s", table), exception);
         }
     }
