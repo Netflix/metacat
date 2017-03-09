@@ -36,6 +36,8 @@ import org.apache.hadoop.hive.ql.metadata.InvalidTableException
 import org.apache.hadoop.hive.ql.metadata.Partition
 import org.apache.hadoop.hive.ql.metadata.Table
 import org.apache.hadoop.hive.ql.plan.AddPartitionDesc
+import org.apache.log4j.Level
+import org.apache.log4j.Logger
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
@@ -162,6 +164,7 @@ class MetacatThriftFunctionalSpec extends Specification {
             });
 
     def setupSpec() {
+        Logger.getRootLogger().setLevel(Level.OFF)
         String thriftPort = System.properties['metacat_hive_thrift_port']?.toString()?.trim()
         assert thriftPort, 'Required system property "metacat_hive_thrift_port" is not set'
 

@@ -266,4 +266,10 @@ public interface IMetacatHiveClient {
                                    final List<String> delPartitionNames) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
+
+    /**
+     * Clean up any held resources.
+     * @throws TException TException
+     */
+    default void shutdown() throws TException { }
 }

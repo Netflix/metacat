@@ -24,26 +24,18 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import lombok.extern.slf4j.Slf4j;
 
-import java.net.URI;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * HiveConnectorModule.
  *
  * @author zhenl
  */
-@Slf4j
-
 public class HiveConnectorModule implements Module {
-    private final String thrifturi = "hive.metastore.uris";
-    private final String hivemetastoreTimeout = "hive.metastore-timeout";
     private final String catalogName;
     private final HiveConnectorInfoConverter infoConverter;
-    private final HiveMetastoreClientFactory hiveMetastoreClientFactory;
-    private URI uri;
+    private final IMetacatHiveClient hiveMetastoreClient;
 
     /**
      * Constructor.
@@ -51,32 +43,21 @@ public class HiveConnectorModule implements Module {
      * @param catalogName   catalog name.
      * @param configuration configuration properties
      * @param infoConverter Hive info converter
+     * @param hiveMetastoreClient hive metastore client
      */
     public HiveConnectorModule(final String catalogName, final Map<String, String> configuration,
-                               final HiveConnectorInfoConverter infoConverter) {
+                                final HiveConnectorInfoConverter infoConverter,
+                                final IMetacatHiveClient hiveMetastoreClient) {
         this.catalogName = catalogName;
         this.infoConverter = infoConverter;
-        this.hiveMetastoreClientFactory =
-                new HiveMetastoreClientFactory(null,
-                        (int) HiveConnectorUtil.toTime(configuration.getOrDefault(hivemetastoreTimeout, "20s"),
-                                TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
-        final String metastoreUri = configuration.get(thrifturi);
-        try {
-            this.uri = new URI(metastoreUri);
-        } catch (Exception e) {
-            final String message = String.format("Invalid thrift uri %s", metastoreUri);
-            log.info(message);
-            throw new IllegalArgumentException(message, e);
-        }
+        this.hiveMetastoreClient = hiveMetastoreClient;
     }
 
     @Override
     public void configure(final Binder binder) {
         binder.bind(String.class).annotatedWith(Names.named("catalogName")).toInstance(catalogName);
         binder.bind(HiveConnectorInfoConverter.class).toInstance(infoConverter);
-        binder.bind(HiveMetastoreClientFactory.class).toInstance(hiveMetastoreClientFactory);
-        binder.bind(IMetacatHiveClient.class).to(MetacatHiveClient.class);
-        binder.bind(URI.class).annotatedWith(Names.named("thrifturi")).toInstance(uri);
+        binder.bind(IMetacatHiveClient.class).toInstance(hiveMetastoreClient);
         binder.bind(ConnectorDatabaseService.class).to(HiveConnectorDatabaseService.class).in(Scopes.SINGLETON);
         binder.bind(ConnectorTableService.class).to(HiveConnectorTableService.class).in(Scopes.SINGLETON);
         binder.bind(ConnectorPartitionService.class).to(HiveConnectorPartitionService.class).in(Scopes.SINGLETON);
