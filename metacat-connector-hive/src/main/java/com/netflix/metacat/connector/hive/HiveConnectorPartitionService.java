@@ -64,7 +64,7 @@ import java.util.stream.Collectors;
  */
 public class HiveConnectorPartitionService implements ConnectorPartitionService {
 
-    private final MetacatHiveClient metacatHiveClient;
+    private final IMetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final String catalogName;
 
@@ -77,7 +77,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
      */
     @Inject
     public HiveConnectorPartitionService(@Named("catalogName") final String catalogName,
-                                         @Nonnull final MetacatHiveClient metacatHiveClient,
+                                         @Nonnull final IMetacatHiveClient metacatHiveClient,
                                          @Nonnull final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
@@ -347,7 +347,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     String getNameOfPartition(@Nonnull final Table table, @Nonnull final Partition partition) {
         try {
             return Warehouse.makePartName(table.getPartitionKeys(), partition.getValues());
-        } catch (Exception e) {
+        } catch (TException e) {
             throw new InvalidMetaException("One or more partition names are invalid.", e);
         }
     }

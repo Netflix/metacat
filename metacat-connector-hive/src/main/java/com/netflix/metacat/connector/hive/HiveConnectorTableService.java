@@ -59,7 +59,7 @@ import java.util.Map;
  */
 public class HiveConnectorTableService implements ConnectorTableService {
     private static final String PARAMETER_EXTERNAL = "EXTERNAL";
-    private final MetacatHiveClient metacatHiveClient;
+    private final IMetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final HiveConnectorDatabaseService hiveConnectorDatabaseService;
     private final String catalogName;
@@ -74,7 +74,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
      */
     @Inject
     public HiveConnectorTableService(@Named("catalogName") final String catalogName,
-                                     @Nonnull final MetacatHiveClient metacatHiveClient,
+                                     @Nonnull final IMetacatHiveClient metacatHiveClient,
                                      @Nonnull final HiveConnectorDatabaseService hiveConnectorDatabaseService,
                                      @Nonnull final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
