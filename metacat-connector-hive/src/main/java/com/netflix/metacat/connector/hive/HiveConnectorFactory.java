@@ -25,17 +25,32 @@ import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.embedded.EmbeddedHiveClient;
+import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler;
+import com.netflix.metacat.connector.hive.thrift.HiveMetastoreClientFactory;
+import com.netflix.metacat.connector.hive.thrift.MetacatHiveClient;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.thrift.TException;
 
+import java.net.URI;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * HiveConnectorFactory.
  * @author zhenl
  */
+@Slf4j
 public class HiveConnectorFactory implements ConnectorFactory {
+    private static final String THRIFT_URI = "hive.metastore.uris";
+    private static final String HIVE_METASTORE_TIMEOUT = "hive.metastore-timeout";
+    private static final String USE_EMBEDDED_METASTORE = "hive.use.embedded.metastore";
     private final String name;
     private final Map<String, String> configuration;
     private final HiveConnectorInfoConverter infoConverter;
+    private IMetacatHiveClient client;
     private ConnectorDatabaseService databaseService;
     private ConnectorTableService tableService;
     private ConnectorPartitionService partitionService;
@@ -58,11 +73,58 @@ public class HiveConnectorFactory implements ConnectorFactory {
     }
 
     private void init() {
-        final Module hiveModule = new HiveConnectorModule(name, configuration, infoConverter);
+        try {
+            final boolean useLocalMetastore = Boolean
+                .parseBoolean(configuration.getOrDefault(USE_EMBEDDED_METASTORE, "false"));
+            if (!useLocalMetastore) {
+                client = createThriftClient();
+            } else {
+                client = createLocalClient();
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                String.format("Failed creating the hive metastore client for catalog: %s", name), e);
+        }
+        final Module hiveModule = new HiveConnectorModule(name, configuration, infoConverter, client);
         final Injector injector = Guice.createInjector(hiveModule);
         this.databaseService = injector.getInstance(ConnectorDatabaseService.class);
         this.tableService = injector.getInstance(ConnectorTableService.class);
         this.partitionService = injector.getInstance(ConnectorPartitionService.class);
+    }
+
+    private IMetacatHiveClient createLocalClient() throws MetaException {
+        final HiveConf conf = getDefaultConf();
+        configuration.forEach(conf::set);
+        return new EmbeddedHiveClient(MetacatHMSHandler.newRetryingHMSHandler("metacat", conf, true));
+    }
+
+    private static HiveConf getDefaultConf() {
+        final HiveConf result = new HiveConf();
+        result.setBoolean("hive.metastore.local", true);
+        result.setInt("javax.jdo.option.DatastoreTimeout", 60000);
+        result.setInt("javax.jdo.option.DatastoreReadTimeoutMillis", 60000);
+        result.setInt("javax.jdo.option.DatastoreWriteTimeoutMillis", 60000);
+        result.setInt("hive.metastore.ds.retry.attempts", 0);
+        result.setInt("hive.hmshandler.retry.attempts", 0);
+        result.setBoolean("hive.stats.autogather", false);
+        return result;
+    }
+
+    private IMetacatHiveClient createThriftClient() throws MetaException {
+        final HiveMetastoreClientFactory factory =
+            new HiveMetastoreClientFactory(null,
+                (int) HiveConnectorUtil.toTime(configuration.getOrDefault(HIVE_METASTORE_TIMEOUT, "20s"),
+                    TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
+        final String metastoreUri = configuration.get(THRIFT_URI);
+        URI uri = null;
+        try {
+            uri = new URI(metastoreUri);
+        } catch (Exception e) {
+            final String message = String.format("Invalid thrift uri %s", metastoreUri);
+            log.info(message);
+            throw new IllegalArgumentException(message, e);
+        }
+        return new MetacatHiveClient(uri, factory);
     }
 
     @Override
@@ -87,5 +149,10 @@ public class HiveConnectorFactory implements ConnectorFactory {
 
     @Override
     public void stop() {
+        try {
+            client.shutdown();
+        } catch (TException e) {
+            log.warn(String.format("Failed shutting down the catalog: %s", name), e);
+        }
     }
 }

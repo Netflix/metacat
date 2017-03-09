@@ -14,7 +14,7 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.connector.hive;
+package com.netflix.metacat.connector.hive.thrift;
 
 import com.google.common.net.HostAndPort;
 import org.apache.thrift.transport.TSocket;
