@@ -26,13 +26,13 @@ import com.netflix.metacat.common.server.exception.InvalidMetaException
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.common.server.exception.ConnectorException
+import com.netflix.metacat.connector.hive.thrift.MetacatHiveClient
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.SerDeInfo
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor
 import org.apache.hadoop.hive.metastore.api.Table
 import org.apache.thrift.TException
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll

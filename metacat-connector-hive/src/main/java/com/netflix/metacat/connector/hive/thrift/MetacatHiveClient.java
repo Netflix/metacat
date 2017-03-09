@@ -14,11 +14,12 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.connector.hive;
+package com.netflix.metacat.connector.hive.thrift;
 
 import com.google.common.base.Preconditions;
 import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.common.server.exception.InvalidMetaException;
+import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import lombok.NonNull;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.DropPartitionsRequest;
@@ -72,7 +73,7 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      *
      * @return hivemetastore client
      */
-    HiveMetastoreClient createMetastoreClient() {
+    private HiveMetastoreClient createMetastoreClient() {
         try {
             return hiveMetastoreClientFactory.create(host, port);
         } catch (TTransportException e) {
@@ -85,7 +86,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public List<String> getAllDatabases() throws TException {
-        return createMetastoreClient().get_all_databases();
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            return client.get_all_databases();
+        }
     }
 
     /**
@@ -93,7 +96,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public List<String> getAllTables(@Nonnull final String databaseName) throws TException {
-        return createMetastoreClient().get_all_tables(databaseName);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            return client.get_all_tables(databaseName);
+        }
     }
 
 
@@ -103,7 +108,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     @Override
     public Table getTableByName(@Nonnull final String databaseName,
                                 @NonNull final String tableName) throws TException {
-        return createMetastoreClient().get_table(databaseName, tableName);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            return client.get_table(databaseName, tableName);
+        }
     }
 
     /**
@@ -111,7 +118,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void createTable(@NonNull final Table table) throws TException {
-        createMetastoreClient().create_table(table);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            client.create_table(table);
+        }
     }
 
     /**
@@ -119,7 +128,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void dropTable(@Nonnull final String databaseName, @NonNull final String tableName) throws TException {
-        createMetastoreClient().drop_table(databaseName, tableName, false);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            client.drop_table(databaseName, tableName, false);
+        }
     }
 
     /**
@@ -130,12 +141,13 @@ public class MetacatHiveClient implements IMetacatHiveClient {
                        @NonNull final String oldName,
                        @Nonnull final String newdatabadeName,
                        @Nonnull final String newName) throws TException {
-        final HiveMetastoreClient hiveMetaStoreClient = createMetastoreClient();
-        final Table table = hiveMetaStoreClient.get_table(databaseName, oldName);
-        hiveMetaStoreClient.drop_table(databaseName, oldName, false);
-        table.setDbName(newdatabadeName);
-        table.setTableName(newName);
-        hiveMetaStoreClient.create_table(table);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            final Table table = client.get_table(databaseName, oldName);
+            client.drop_table(databaseName, oldName, false);
+            table.setDbName(newdatabadeName);
+            table.setTableName(newName);
+            client.create_table(table);
+        }
     }
 
     /**
@@ -145,7 +157,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     public void alterTable(@NonNull final String databaseName,
                            @NonNull final String tableName,
                            @NonNull final Table table) throws TException {
-        createMetastoreClient().alter_table(databaseName, tableName, table);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            client.alter_table(databaseName, tableName, table);
+        }
     }
 
     /**
@@ -153,7 +167,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void createDatabase(@NonNull final Database database) throws TException {
-        createMetastoreClient().create_database(database);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            client.create_database(database);
+        }
     }
 
     /**
@@ -161,7 +177,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void dropDatabase(@NonNull final String dbName) throws TException {
-        createMetastoreClient().drop_database(dbName, false, false);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            client.drop_database(dbName, false, false);
+        }
     }
 
 
@@ -170,7 +188,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public Database getDatabase(@Nonnull final String databaseName) throws TException {
-        return createMetastoreClient().get_database(databaseName);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            return client.get_database(databaseName);
+        }
     }
 
     /**
@@ -180,11 +200,12 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     public List<Partition> getPartitions(@Nonnull final String databaseName,
                                          @NonNull final String tableName,
                                          @Nullable final List<String> partitionNames) throws TException {
-        final HiveMetastoreClient client = createMetastoreClient();
-        if (partitionNames != null && !partitionNames.isEmpty()) {
-            return client.get_partitions_by_names(databaseName, tableName, partitionNames);
-        } else {
-            return client.get_partitions(databaseName, tableName, ALL_RESULTS);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            if (partitionNames != null && !partitionNames.isEmpty()) {
+                return client.get_partitions_by_names(databaseName, tableName, partitionNames);
+            } else {
+                return client.get_partitions(databaseName, tableName, ALL_RESULTS);
+            }
         }
     }
 
@@ -207,7 +228,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
                                                   @NonNull final String tableName,
                                                   @Nonnull final String filter
     ) throws TException {
-        return createMetastoreClient().get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            return client.get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS);
+        }
     }
 
     /**
@@ -227,7 +250,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     public List<String> getPartitionNames(@Nonnull final String databaseName,
                                           @NonNull final String tableName)
             throws TException {
-        return createMetastoreClient().get_partition_names(databaseName, tableName, ALL_RESULTS);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            return client.get_partition_names(databaseName, tableName, ALL_RESULTS);
+        }
     }
 
     /**
@@ -236,7 +261,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     @Override
     public void savePartitions(@Nonnull final List<Partition> partitions)
             throws TException {
-        createMetastoreClient().add_partitions(partitions);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            client.add_partitions(partitions);
+        }
     }
 
     /**
@@ -246,7 +273,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     public void alterPartitions(@Nonnull final String dbName, @Nonnull final String tableName,
                                 @Nonnull final List<Partition> partitions) throws
             TException {
-        createMetastoreClient().alter_partitions(dbName, tableName, partitions);
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            client.alter_partitions(dbName, tableName, partitions);
+        }
     }
 
     /**
@@ -256,15 +285,17 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     public void addDropPartitions(final String dbName, final String tableName,
                            final List<Partition> partitions,
                            final List<String> delPartitionNames) throws NoSuchObjectException {
-        try {
-            dropHivePartitions(createMetastoreClient(), dbName, tableName, delPartitionNames);
-            createMetastoreClient().add_partitions(partitions);
-        } catch (MetaException | InvalidObjectException e) {
-            throw new InvalidMetaException("One or more partitions are invalid.", e);
-        } catch (TException e) {
-            throw new ConnectorException(
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            try {
+                dropHivePartitions(client, dbName, tableName, delPartitionNames);
+                client.add_partitions(partitions);
+            } catch (MetaException | InvalidObjectException e) {
+                throw new InvalidMetaException("One or more partitions are invalid.", e);
+            } catch (TException e) {
+                throw new ConnectorException(
                     String.format("Internal server error adding/dropping partitions for table %s.%s",
-                            dbName, tableName), e);
+                        dbName, tableName), e);
+            }
         }
     }
 
