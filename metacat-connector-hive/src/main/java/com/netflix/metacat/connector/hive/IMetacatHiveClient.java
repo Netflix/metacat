@@ -218,7 +218,7 @@ public interface IMetacatHiveClient {
      *
      * @param databaseName databaseName
      * @param tableName    tableName
-     * @return List<String> partitionNames
+     * @return list of partition names
      * @throws TException TException
      */
     default List<String> getPartitionNames(@Nonnull final String databaseName,
