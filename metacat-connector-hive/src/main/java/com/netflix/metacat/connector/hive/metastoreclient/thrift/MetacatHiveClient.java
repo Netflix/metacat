@@ -14,7 +14,7 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.connector.hive.thrift;
+package com.netflix.metacat.connector.hive.metastoreclient.thrift;
 
 import com.google.common.base.Preconditions;
 import com.netflix.metacat.common.server.exception.ConnectorException;

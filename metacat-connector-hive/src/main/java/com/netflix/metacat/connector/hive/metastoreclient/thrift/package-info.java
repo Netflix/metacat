@@ -18,4 +18,4 @@
  * hive thrift client implementation.
  * @author zhenl .
  */
-package com.netflix.metacat.connector.hive.thrift;
+package com.netflix.metacat.connector.hive.metastoreclient.thrift;

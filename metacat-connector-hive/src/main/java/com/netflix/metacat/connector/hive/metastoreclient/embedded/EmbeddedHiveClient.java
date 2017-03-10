@@ -1,4 +1,4 @@
-package com.netflix.metacat.connector.hive.embedded;
+package com.netflix.metacat.connector.hive.metastoreclient.embedded;
 
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import org.apache.hadoop.hive.metastore.IHMSHandler;
