@@ -70,3 +70,4 @@ metacat-main/data/
 
 # Functional tests
 metacat-functional-tests/metacat-test-cluster/build/
+/metacat-functional-tests/metastore_db/

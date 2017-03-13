@@ -26,6 +26,7 @@ import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.common.type.TypeSignature;
 import com.netflix.metacat.common.type.TypeUtils;
 import com.netflix.metacat.common.type.VarcharType;
+import lombok.NonNull;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
@@ -42,6 +43,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -53,8 +55,32 @@ import java.util.stream.Collectors;
  */
 public class HiveTypeConverter implements ConnectorTypeConverter {
 
+    private static Type getPrimitiveType(final ObjectInspector fieldInspector) {
+        final PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) fieldInspector)
+            .getPrimitiveCategory();
+        if (HiveTypeMapping.getHIVE_TO_CANONICAL().containsKey(primitiveCategory.name())) {
+            return HiveTypeMapping.getHIVE_TO_CANONICAL().get(primitiveCategory.name());
+        }
+        switch (primitiveCategory) {
+            case DECIMAL:
+                final DecimalTypeInfo decimalTypeInfo = (DecimalTypeInfo) ((PrimitiveObjectInspector) fieldInspector)
+                    .getTypeInfo();
+                return DecimalType.createDecimalType(decimalTypeInfo.precision(), decimalTypeInfo.getScale());
+            case CHAR:
+                final int cLength = ((CharTypeInfo) ((PrimitiveObjectInspector)
+                    fieldInspector).getTypeInfo()).getLength();
+                return CharType.createCharType(cLength);
+            case VARCHAR:
+                final int vLength = ((VarcharTypeInfo) ((PrimitiveObjectInspector) fieldInspector)
+                    .getTypeInfo()).getLength();
+                return VarcharType.createVarcharType(vLength);
+            default:
+                return null;
+        }
+    }
+
     @Override
-    public Type toMetacatType(final String type) {
+    public Type toMetacatType(@Nonnull @NonNull final String type) {
         // Hack to fix presto "varchar" type coming in with no length which is required by Hive.
         final TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(
             "varchar".equals(type.toLowerCase()) ? serdeConstants.STRING_TYPE_NAME : type);
@@ -72,7 +98,7 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
     }
 
     @Override
-    public String fromMetacatType(final Type type) {
+    public String fromMetacatType(@Nonnull @NonNull final Type type) {
         if (HiveTypeMapping.getCANONICAL_TO_HIVE().containsKey(type)) {
             return HiveTypeMapping.getCANONICAL_TO_HIVE().get(type);
         }
@@ -103,30 +129,6 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
             prefix = rowField.getName() + ":";
         }
         return prefix + fromMetacatType(rowField.getType());
-    }
-
-    private static Type getPrimitiveType(final ObjectInspector fieldInspector) {
-        final PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) fieldInspector)
-            .getPrimitiveCategory();
-        if (HiveTypeMapping.getHIVE_TO_CANONICAL().containsKey(primitiveCategory.name())) {
-            return HiveTypeMapping.getHIVE_TO_CANONICAL().get(primitiveCategory.name());
-        }
-        switch (primitiveCategory) {
-            case DECIMAL:
-                final DecimalTypeInfo decimalTypeInfo = (DecimalTypeInfo) ((PrimitiveObjectInspector) fieldInspector)
-                    .getTypeInfo();
-                return DecimalType.createDecimalType(decimalTypeInfo.precision(), decimalTypeInfo.getScale());
-            case CHAR:
-                final int cLength = ((CharTypeInfo) ((PrimitiveObjectInspector)
-                    fieldInspector).getTypeInfo()).getLength();
-                return CharType.createCharType(cLength);
-            case VARCHAR:
-                final int vLength = ((VarcharTypeInfo) ((PrimitiveObjectInspector) fieldInspector)
-                    .getTypeInfo()).getLength();
-                return VarcharType.createVarcharType(vLength);
-            default:
-                return null;
-        }
     }
 
     /**

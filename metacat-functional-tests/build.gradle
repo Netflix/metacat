@@ -139,3 +139,8 @@ task functionalTest(type: Test) {
     dependsOn 'expandWar', 'startMetacatCluster', 'metacatPorts'
     finalizedBy 'stopMetacatCluster'
 }
+
+clean {
+    delete "derby.log"
+    delete "metastore_db"
+}

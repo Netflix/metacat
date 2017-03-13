@@ -33,7 +33,7 @@ import javax.annotation.Nonnull;
  * Type converter for MySQL.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 @Slf4j
 public class MySqlTypeConverter extends JdbcTypeConverter {
@@ -106,7 +106,7 @@ public class MySqlTypeConverter extends JdbcTypeConverter {
             case "set":
                 throw new UnsupportedOperationException("Encountered " + splitType[0] + " type. Ignoring");
             default:
-                throw new IllegalArgumentException("Unhandled or unknown sql type" + splitType[0]);
+                throw new IllegalArgumentException("Unhandled or unknown sql type " + splitType[0]);
         }
     }
 
