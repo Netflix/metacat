@@ -16,16 +16,21 @@ package com.netflix.metacat.common.type;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Type signature class.
+ *
  * @author zhenl
  */
 @EqualsAndHashCode
@@ -38,10 +43,9 @@ public class TypeSignature {
     /**
      * Type signature constructor.
      *
-     * @param base basetype
+     * @param base base type
      */
-    public TypeSignature(final TypeEnum base) {
-        Preconditions.checkArgument(base != null, "base is null");
+    public TypeSignature(@Nonnull @NonNull final TypeEnum base) {
         this.base = base;
         this.parameters = Lists.newArrayList();
         this.literalParameters = Lists.newArrayList();
@@ -54,19 +58,23 @@ public class TypeSignature {
      * @param parameters        type parameter
      * @param literalParameters literal parameter
      */
-    public TypeSignature(final TypeEnum base, final List<TypeSignature> parameters,
-                         final List<Object> literalParameters) {
-        Preconditions.checkArgument(base != null, "base is null");
-        this.base = base;
-        Preconditions.checkArgument(parameters != null, "parameters is null");
-        Preconditions.checkArgument(literalParameters != null, "literalParameters is null");
-        for (Object literal : literalParameters) {
-            Preconditions.checkArgument(
-                literal instanceof String || literal instanceof Long,
-                "Unsupported literal type: %s", literal.getClass());
+    public TypeSignature(
+        @Nonnull @NonNull final TypeEnum base,
+        @Nonnull @NonNull final List<TypeSignature> parameters,
+        @Nullable final List<Object> literalParameters
+    ) {
+        if (literalParameters != null) {
+            for (final Object literal : literalParameters) {
+                Preconditions.checkArgument(
+                    literal instanceof String || literal instanceof Long,
+                    "Unsupported literal type: %s", literal.getClass());
+            }
+            this.literalParameters = ImmutableList.copyOf(literalParameters);
+        } else {
+            this.literalParameters = ImmutableList.copyOf(Lists.newArrayList());
         }
+        this.base = base;
         this.parameters = Collections.unmodifiableList(new ArrayList<>(parameters));
-        this.literalParameters = Collections.unmodifiableList(new ArrayList<>(literalParameters));
     }
 
     /**
@@ -76,8 +84,11 @@ public class TypeSignature {
      * @param parameters        type parameter
      * @param literalParameters literal parameter
      */
-    private TypeSignature(final String base, final List<TypeSignature> parameters,
-        final List<Object> literalParameters) {
+    private TypeSignature(
+        @Nonnull @NonNull final String base,
+        @Nonnull @NonNull final List<TypeSignature> parameters,
+        @Nullable final List<Object> literalParameters
+    ) {
         this(TypeEnum.fromName(base), parameters, literalParameters);
     }
 
