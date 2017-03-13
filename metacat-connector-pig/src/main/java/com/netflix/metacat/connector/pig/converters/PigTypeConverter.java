@@ -30,6 +30,7 @@ import com.netflix.metacat.common.type.RowType;
 import com.netflix.metacat.common.type.Type;
 import com.netflix.metacat.common.type.TypeUtils;
 import com.netflix.metacat.common.type.VarcharType;
+import lombok.NonNull;
 import org.apache.pig.data.DataType;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
@@ -37,6 +38,7 @@ import org.apache.pig.impl.util.Utils;
 import org.apache.pig.newplan.logical.Util;
 import org.apache.pig.newplan.logical.relational.LogicalSchema;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 /**
@@ -49,7 +51,7 @@ public class PigTypeConverter implements ConnectorTypeConverter {
      * {@inheritDoc}.
      */
     @Override
-    public Type toMetacatType(final String pigType) {
+    public Type toMetacatType(@Nonnull @NonNull final String pigType) {
         try {
             final LogicalSchema schema = Utils.parseSchema(pigType);
             final LogicalSchema.LogicalFieldSchema field = schema.getField(0);
@@ -63,7 +65,7 @@ public class PigTypeConverter implements ConnectorTypeConverter {
      * {@inheritDoc}.
      */
     @Override
-    public String fromMetacatType(final Type type) {
+    public String fromMetacatType(@Nonnull @NonNull final Type type) {
         final Schema schema = new Schema(Util.translateFieldSchema(fromCanonicalTypeToPigSchema(null, type)));
         final StringBuilder result = new StringBuilder();
         try {
@@ -98,8 +100,10 @@ public class PigTypeConverter implements ConnectorTypeConverter {
             Type elementType = arrayType.getElementType();
             if (elementType != null) {
                 if (!(elementType instanceof RowType)) {
-                    elementType = new RowType(Lists.newArrayList(elementType),
-                        ImmutableList.of(NAME_ARRAY_ELEMENT));
+                    elementType = RowType.createRowType(
+                        Lists.newArrayList(elementType),
+                        ImmutableList.of(NAME_ARRAY_ELEMENT)
+                    );
                 }
                 schema.addField(fromCanonicalTypeToPigSchema(alias, elementType));
             }
@@ -140,12 +144,12 @@ public class PigTypeConverter implements ConnectorTypeConverter {
             fieldTypes.add(toCanonicalType(logicalFieldSchema));
             fieldNames.add(logicalFieldSchema.alias);
         }
-        return new RowType(fieldTypes, fieldNames);
+        return RowType.createRowType(fieldTypes, fieldNames);
     }
 
     private Type toCanonicalArrayType(final LogicalSchema.LogicalFieldSchema field) {
         final LogicalSchema.LogicalFieldSchema subField = field.schema.getField(0);
-        Type elementType = null;
+        Type elementType;
         if (subField.type == DataType.TUPLE
             && !TypeUtils.isNullOrEmpty(subField.schema.getFields())
             && NAME_ARRAY_ELEMENT.equals(subField.schema.getFields().get(0).alias)) {

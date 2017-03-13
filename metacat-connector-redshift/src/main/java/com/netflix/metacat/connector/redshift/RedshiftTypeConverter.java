@@ -32,7 +32,7 @@ import javax.annotation.Nonnull;
  * Type converter for Redshift.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 @Slf4j
 public class RedshiftTypeConverter extends JdbcTypeConverter {

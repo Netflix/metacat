@@ -188,7 +188,7 @@ class PostgreSqlTypeConverterSpec extends Specification {
         BaseType.INTERVAL_DAY_TO_SECOND            | UnsupportedOperationException
         BaseType.INTERVAL_YEAR_TO_MONTH            | UnsupportedOperationException
         new MapType(BaseType.STRING, BaseType.INT) | UnsupportedOperationException
-        new RowType(
+        RowType.createRowType(
             Lists.asList(BaseType.STRING),
             Lists.asList(UUID.randomUUID().toString())
         )                                          | UnsupportedOperationException

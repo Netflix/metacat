@@ -15,35 +15,11 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.common.server.connectors;
-
-import com.netflix.metacat.common.type.Type;
-import lombok.NonNull;
-
-import javax.annotation.Nonnull;
 
 /**
- * Canonical type converter class.
+ * Classes for connecting and getting metadata for Cassandra schemas and tables.
  *
  * @author tgianos
- * @author zhenl
  * @since 1.0.0
  */
-public interface ConnectorTypeConverter {
-
-    /**
-     * Converts to metacat type.
-     *
-     * @param type type
-     * @return metacat type
-     */
-    Type toMetacatType(@Nonnull @NonNull final String type);
-
-    /**
-     * Converts from metacat type.
-     *
-     * @param type type
-     * @return connector type
-     */
-    String fromMetacatType(@Nonnull @NonNull final Type type);
-}
+package com.netflix.metacat.connector.cassandra;
