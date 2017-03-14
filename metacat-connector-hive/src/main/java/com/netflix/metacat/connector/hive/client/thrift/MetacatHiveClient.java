@@ -14,9 +14,10 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.connector.hive.metastoreclient.thrift;
+package com.netflix.metacat.connector.hive.client.thrift;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.common.server.exception.InvalidMetaException;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
@@ -38,6 +39,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 
 /**
  * MetacatHiveClient.
@@ -159,6 +161,17 @@ public class MetacatHiveClient implements IMetacatHiveClient {
                            @NonNull final Table table) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             client.alter_table(databaseName, tableName, table);
+        }
+    }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public void alterDatabase(@NonNull final String databaseName,
+                              @NonNull final Database database) throws TException {
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            client.alter_database(databaseName, database);
         }
     }
 
@@ -309,5 +322,14 @@ public class MetacatHiveClient implements IMetacatHiveClient {
             request.setDeleteData(false);
             client.drop_partitions_req(request);
         }
+    }
+
+    /**
+     * getRoles.
+     * @param user user
+     * @return set of roles
+     */
+    public Set<String> getRoles(final String user) {
+        return Sets.newHashSet();
     }
 }

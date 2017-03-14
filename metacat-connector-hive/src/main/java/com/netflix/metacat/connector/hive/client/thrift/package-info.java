@@ -15,10 +15,7 @@
  */
 
 /**
- * hive connector.
- *
- * @author zhenl
+ * hive thrift client implementation.
+ * @author zhenl .
  */
-
-package com.netflix.metacat.connector.hive;
-
+package com.netflix.metacat.connector.hive.client.thrift;

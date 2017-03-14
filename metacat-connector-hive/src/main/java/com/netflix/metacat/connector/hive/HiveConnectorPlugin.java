@@ -43,9 +43,9 @@ public class HiveConnectorPlugin implements ConnectorPlugin {
     }
 
     @Override
-    public ConnectorFactory create(@Nonnull final String connectorName,
+    public ConnectorFactory create(@Nonnull final String catalogName,
                                    @Nonnull final Map<String, String> configuration) {
-        return new HiveConnectorFactory(connectorName, configuration, (HiveConnectorInfoConverter) INFO_CONVERTER_HIVE);
+        return new HiveConnectorFactory(catalogName, configuration, (HiveConnectorInfoConverter) INFO_CONVERTER_HIVE);
     }
 
     @Override

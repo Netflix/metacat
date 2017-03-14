@@ -16,6 +16,7 @@
 
 package com.netflix.metacat.connector.hive;
 
+import com.netflix.metacat.connector.hive.client.embedded.HivePrivilege;
 import lombok.NonNull;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -25,6 +26,7 @@ import org.apache.thrift.TException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Set;
 
 /**
  * IMetacatHiveClient.
@@ -127,15 +129,15 @@ public interface IMetacatHiveClient {
      * Rename table.
      *
      * @param databaseName    database
-     * @param oldName         tablename
+     * @param oldTableName         tablename
      * @param newdatabadeName newdatabase
-     * @param newName         newName
+     * @param newTableName         newName
      * @throws TException NotfoundException
      */
     default void rename(@Nonnull final String databaseName,
-                        @NonNull final String oldName,
+                        @NonNull final String oldTableName,
                         @Nonnull final String newdatabadeName,
-                        @Nonnull final String newName) throws TException {
+                        @Nonnull final String newTableName) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -150,6 +152,18 @@ public interface IMetacatHiveClient {
     default void alterTable(@NonNull final String databaseName,
                             @NonNull final String tableName,
                             @NonNull final Table table) throws TException {
+        throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
+    }
+
+    /**
+     * Update table.
+     *
+     * @param databaseName databaseName
+     * @param database        table
+     * @throws TException if the database does not exist
+     */
+    default void alterDatabase(@NonNull final String databaseName,
+                            @NonNull final Database database) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -264,6 +278,27 @@ public interface IMetacatHiveClient {
     default void addDropPartitions(final String dbName, final String tableName,
                                    final List<Partition> partitions,
                                    final List<String> delPartitionNames) throws TException {
+        throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
+    }
+
+
+    /**
+     * getDatabasePrivileges.
+     * @param user user
+     * @param databaseName databaseName
+     * @return set of privilege
+     */
+    default Set<HivePrivilege> getDatabasePrivileges(String user, String databaseName) {
+        throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
+    }
+
+    /**
+     * getTablePrivileges.
+     * @param user user
+     * @param tableName databaseName
+     * @return set of privilege
+     */
+    default Set<HivePrivilege> getTablePrivileges(String user, String tableName) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 

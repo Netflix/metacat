@@ -15,10 +15,8 @@
  */
 
 /**
- * hive connector.
- *
- * @author zhenl
+ * com.netflix.metacat.connector.hive.util.
+ * @author zhenl .
  */
 
-package com.netflix.metacat.connector.hive;
-
+package com.netflix.metacat.connector.hive.util;

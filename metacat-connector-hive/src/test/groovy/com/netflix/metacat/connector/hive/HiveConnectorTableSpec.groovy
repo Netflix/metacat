@@ -26,7 +26,7 @@ import com.netflix.metacat.common.server.exception.InvalidMetaException
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.common.server.exception.ConnectorException
-import com.netflix.metacat.connector.hive.metastoreclient.thrift.MetacatHiveClient
+import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.SerDeInfo

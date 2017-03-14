@@ -30,8 +30,10 @@ import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsExceptio
 import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.exception.InvalidMetaException;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
@@ -52,6 +54,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     private final IMetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final String catalogName;
+    private boolean embeddedClient;
 
     /**
      * Constructor.
@@ -67,6 +70,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
         this.catalogName = catalogName;
+        this.embeddedClient = (this.metacatHiveClient instanceof EmbeddedHiveClient);
     }
 
     /**
@@ -78,7 +82,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             this.metacatHiveClient.createDatabase(hiveMetacatConverters.fromDatabaseInfo(databaseInfo));
         } catch (AlreadyExistsException exception) {
             throw new DatabaseAlreadyExistsException(databaseInfo.getName(), exception);
-        } catch (MetaException exception) {
+        } catch (MetaException | InvalidObjectException exception) {
             throw new InvalidMetaException(databaseInfo.getName(), exception);
         } catch (TException exception) {
             throw new ConnectorException(
@@ -101,6 +105,24 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             throw new MetacatNotSupportedException(exception.getMessage());
         } catch (TException exception) {
             throw new ConnectorException(String.format("Failed delete hive database %s", name), exception);
+        }
+    }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public void update(@Nonnull final ConnectorContext context, @Nonnull final DatabaseInfo databaseInfo) {
+        try {
+            this.metacatHiveClient.alterDatabase(databaseInfo.getName().getDatabaseName(),
+                    hiveMetacatConverters.fromDatabaseInfo(databaseInfo));
+        } catch (AlreadyExistsException exception) {
+            throw new DatabaseAlreadyExistsException(databaseInfo.getName(), exception);
+        } catch (MetaException | InvalidObjectException exception) {
+            throw new InvalidMetaException(databaseInfo.getName(), exception);
+        } catch (TException exception) {
+            throw new ConnectorException(
+                    String.format("Failed updating hive database %s", databaseInfo.getName()), exception);
         }
     }
 

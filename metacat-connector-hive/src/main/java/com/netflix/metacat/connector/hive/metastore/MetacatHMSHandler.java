@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2017 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ */
 package com.netflix.metacat.connector.hive.metastore;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -38,6 +53,7 @@ import java.util.regex.Pattern;
 
 /**
  * This is an extension of the HiveMetastore. This provides multi-tenancy to the hive metastore.
+ *
  * @author amajumdar
  */
 public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
@@ -53,31 +69,34 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
     };
 
     private final ThreadLocal<RawStore> threadLocalMS =
-        new ThreadLocal<RawStore>() {
-            @Override
-            protected synchronized RawStore initialValue() {
-                return null;
-            }
-        };
+            new ThreadLocal<RawStore>() {
+                @Override
+                protected synchronized RawStore initialValue() {
+                    return null;
+                }
+            };
 
     private final ThreadLocal<Configuration> threadLocalConf =
-        new ThreadLocal<Configuration>() {
-            @Override
-            protected synchronized Configuration initialValue() {
-                return null;
-            }
-        };
+            new ThreadLocal<Configuration>() {
+                @Override
+                protected synchronized Configuration initialValue() {
+                    return null;
+                }
+            };
 
     /**
      * Constructor.
+     *
      * @param name client name
      * @throws MetaException exception
      */
     public MetacatHMSHandler(final String name) throws MetaException {
         this(name, new HiveConf(HiveMetaStore.HMSHandler.class));
     }
+
     /**
      * Constructor.
+     *
      * @param name client name
      * @param conf hive configurations
      * @throws MetaException exception
@@ -85,8 +104,10 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
     public MetacatHMSHandler(final String name, final HiveConf conf) throws MetaException {
         this(name, conf, true);
     }
+
     /**
      * Constructor.
+     *
      * @param name client name
      * @param conf hive configurations
      * @param init initialize if true.
@@ -97,7 +118,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
         wh = new Warehouse(conf);
         this.hiveConf = conf;
         final String partitionValidationRegex =
-            hiveConf.getVar(HiveConf.ConfVars.METASTORE_PARTITION_NAME_WHITELIST_PATTERN);
+                hiveConf.getVar(HiveConf.ConfVars.METASTORE_PARTITION_NAME_WHITELIST_PATTERN);
         if (partitionValidationRegex != null && !partitionValidationRegex.isEmpty()) {
             partitionValidationPattern = Pattern.compile(partitionValidationRegex);
         } else {
@@ -140,7 +161,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
         final Configuration conf = getConf();
         final String rawStoreClassName = hiveConf.getVar(HiveConf.ConfVars.METASTORE_RAW_STORE_IMPL);
         LOG.info(String.format("%s: Opening raw store with implemenation class: %s", threadLocalId.get(),
-            rawStoreClassName));
+                rawStoreClassName));
         return RawStoreProxy.getProxy(hiveConf, conf, rawStoreClassName, threadLocalId.get());
     }
 
@@ -155,7 +176,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
             Metrics.startScope(function);
         } catch (IOException e) {
             LOG.debug("Exception when starting metrics scope"
-                + e.getClass().getName() + " " + e.getMessage(), e);
+                    + e.getClass().getName() + " " + e.getMessage(), e);
         }
         return function;
     }
@@ -165,7 +186,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
     }
 
     private void endFunction(final String function, final boolean successful, final Exception e,
-        final String inputTableName) {
+                             final String inputTableName) {
         endFunction(function, new MetaStoreEndFunctionContext(successful, e, inputTableName));
     }
 
@@ -188,6 +209,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
 
         /**
          * Constructor.
+         *
          * @param partition partition
          */
         PartValEqWrapper(final Partition partition) {
@@ -228,29 +250,30 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
 
     /**
      * Adds and drops partitions in one transaction.
+     *
      * @param databaseName database name
-     * @param tableName table name
-     * @param addParts list of partitions
-     * @param dropParts list of partition values
-     * @param deleteData if true, deletes the data
+     * @param tableName    table name
+     * @param addParts     list of partitions
+     * @param dropParts    list of partition values
+     * @param deleteData   if true, deletes the data
      * @return true if successful
      * @throws NoSuchObjectException Exception if table does not exists
-     * @throws MetaException Exception if
-     * @throws TException any internal exception
+     * @throws MetaException         Exception if
+     * @throws TException            any internal exception
      */
-    @SuppressWarnings({ "checkstyle:methodname" })
+    @SuppressWarnings({"checkstyle:methodname"})
     public boolean add_drop_partitions(final String databaseName,
-        final String tableName, final List<Partition> addParts,
-        final List<List<String>> dropParts, final boolean deleteData)
-        throws NoSuchObjectException, MetaException, TException {
+                                       final String tableName, final List<Partition> addParts,
+                                       final List<List<String>> dropParts, final boolean deleteData)
+            throws NoSuchObjectException, MetaException, TException {
         startFunction("add_drop_partitions : db=" + databaseName + " tbl=" + tableName);
         if (addParts.size() == 0 && dropParts.size() == 0) {
             return true;
         }
-        for (List<String> partVals: dropParts) {
+        for (List<String> partVals : dropParts) {
             LOG.info("Drop Partition values:" + partVals);
         }
-        for (Partition part: addParts) {
+        for (Partition part : addParts) {
             LOG.info("Add Partition values:" + part);
         }
 
@@ -277,10 +300,10 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
     }
 
     private boolean addDropPartitionsCore(
-        final RawStore ms, final String databaseName, final String tableName, final List<Partition> addParts,
-        final List<List<String>> dropParts, final boolean ifNotExists, final EnvironmentContext envContext)
-        throws MetaException, InvalidObjectException, NoSuchObjectException, AlreadyExistsException,
-        IOException, InvalidInputException, TException {
+            final RawStore ms, final String databaseName, final String tableName, final List<Partition> addParts,
+            final List<List<String>> dropParts, final boolean ifNotExists, final EnvironmentContext envContext)
+            throws MetaException, InvalidObjectException, NoSuchObjectException, AlreadyExistsException,
+            IOException, InvalidInputException, TException {
         logInfo("add_drop_partitions : db=" + databaseName + " tbl=" + tableName);
         boolean success = false;
         Table tbl = null;
@@ -293,7 +316,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
             tbl = get_table(databaseName, tableName);
             if (tbl == null) {
                 throw new InvalidObjectException("Unable to add partitions because "
-                    + "database or table " + databaseName + "." + tableName + " does not exist");
+                        + "database or table " + databaseName + "." + tableName + " does not exist");
             }
             // Drop the parts first
             dropPartitionsCoreNoTxn(ms, tbl, dropParts);
@@ -321,11 +344,11 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
     }
 
     private boolean startAddPartition(
-        final RawStore ms, final Partition part, final boolean ifNotExists) throws MetaException, TException {
+            final RawStore ms, final Partition part, final boolean ifNotExists) throws MetaException, TException {
         MetaStoreUtils.validatePartitionNameCharacters(part.getValues(),
-            partitionValidationPattern);
+                partitionValidationPattern);
         final boolean doesExist = ms.doesPartitionExist(
-            part.getDbName(), part.getTableName(), part.getValues());
+                part.getDbName(), part.getTableName(), part.getValues());
         if (doesExist && !ifNotExists) {
             throw new AlreadyExistsException("Partition already exists: " + part);
         }
@@ -334,12 +357,13 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
 
     /**
      * Handles the location for a partition being created.
-     * @param tbl Table.
+     *
+     * @param tbl  Table.
      * @param part Partition.
      * @return Whether the partition SD location is set to a newly created directory.
      */
     private boolean createLocationForAddedPartition(
-        final Table tbl, final Partition part) throws MetaException {
+            final Table tbl, final Partition part) throws MetaException {
         Path partLocation = null;
         String partLocationStr = null;
         if (part.getSd() != null) {
@@ -351,7 +375,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
             // a physical table partition (not a view)
             if (tbl.getSd().getLocation() != null) {
                 partLocation = new Path(tbl.getSd().getLocation(), Warehouse
-                    .makePartName(tbl.getPartitionKeys(), part.getValues()));
+                        .makePartName(tbl.getPartitionKeys(), part.getValues()));
             }
         } else {
             if (tbl.getSd().getLocation() == null) {
@@ -370,7 +394,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
             if (!wh.isDir(partLocation)) {
                 if (!wh.mkdirs(partLocation, true)) {
                     throw new MetaException(partLocation
-                        + " is not a directory or unable to create one");
+                            + " is not a directory or unable to create one");
                 }
                 result = true;
             }
@@ -379,13 +403,14 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
     }
 
     private void initializeAddedPartition(
-        final Table tbl, final Partition part, final boolean madeDir) throws MetaException {
+            final Table tbl, final Partition part, final boolean madeDir) throws MetaException {
         initializeAddedPartition(tbl, new PartitionSpecProxy.SimplePartitionWrapperIterator(part), madeDir);
     }
 
     @SuppressFBWarnings
     private void initializeAddedPartition(
-        final Table tbl, final PartitionSpecProxy.PartitionIterator part, final boolean madeDir) throws MetaException {
+            final Table tbl, final PartitionSpecProxy.PartitionIterator part,
+            final boolean madeDir) throws MetaException {
         if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVESTATSAUTOGATHER) && !MetaStoreUtils.isView(tbl)) {
             MetaStoreUtils.updatePartitionStatsFast(part, wh, madeDir, false);
         }
@@ -416,9 +441,9 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
     }
 
     private List<Partition> addPartitionsCoreNoTxn(
-        final RawStore ms, final Table tbl, final List<Partition> parts, final boolean ifNotExists,
-        final Map<PartValEqWrapper, Boolean> addedPartitions, final List<Partition> existingParts)
-        throws MetaException, InvalidObjectException, AlreadyExistsException, TException {
+            final RawStore ms, final Table tbl, final List<Partition> parts, final boolean ifNotExists,
+            final Map<PartValEqWrapper, Boolean> addedPartitions, final List<Partition> existingParts)
+            throws MetaException, InvalidObjectException, AlreadyExistsException, TException {
         logInfo("add_partitions");
         final String dbName = tbl.getDbName();
         final String tblName = tbl.getTableName();
@@ -426,7 +451,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
         for (Partition part : parts) {
             if (!part.getTableName().equals(tblName) || !part.getDbName().equals(dbName)) {
                 throw new MetaException("Partition does not belong to target table "
-                    + dbName + "." + tblName + ": " + part);
+                        + dbName + "." + tblName + ": " + part);
             }
             final boolean shouldAdd = startAddPartition(ms, part, ifNotExists);
             if (!shouldAdd) {
@@ -448,8 +473,8 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
     }
 
     private List<Partition> dropPartitionsCoreNoTxn(
-        final RawStore ms, final Table tbl, final List<List<String>> partsValues)
-        throws MetaException, NoSuchObjectException, InvalidObjectException, InvalidInputException {
+            final RawStore ms, final Table tbl, final List<List<String>> partsValues)
+            throws MetaException, NoSuchObjectException, InvalidObjectException, InvalidInputException {
         final List<Partition> deletedPartitions = new ArrayList<Partition>();
         Partition part = null;
         final String dbName = tbl.getDbName();
@@ -459,7 +484,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
             part = ms.getPartition(dbName, tblName, partValues);
             if (part == null) {
                 throw new NoSuchObjectException("Partition doesn't exist. "
-                    + partValues);
+                        + partValues);
             }
             if (!ms.dropPartition(dbName, tblName, partValues)) {
                 throw new MetaException("Unable to drop partition");
@@ -471,15 +496,17 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
 
     /**
      * Returns the Hive metastore handle.
-     * @param name client name
-     * @param conf hive conf
+     *
+     * @param name  client name
+     * @param conf  hive conf
      * @param local is local
      * @return hive metastore handle
      * @throws MetaException any exception
      */
     public static IHMSHandler newRetryingHMSHandler(final String name, final HiveConf conf, final boolean local)
-        throws MetaException {
+            throws MetaException {
         final MetacatHMSHandler baseHandler = new MetacatHMSHandler(name, conf, false);
         return RetryingHMSHandler.getProxy(conf, baseHandler, local);
     }
+
 }

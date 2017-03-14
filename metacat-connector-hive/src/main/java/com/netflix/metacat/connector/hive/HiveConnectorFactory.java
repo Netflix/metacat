@@ -24,11 +24,12 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.util.DataSourceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.metastoreclient.embedded.EmbeddedHiveClient;
+import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;
 import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler;
-import com.netflix.metacat.connector.hive.metastoreclient.thrift.HiveMetastoreClientFactory;
-import com.netflix.metacat.connector.hive.metastoreclient.thrift.MetacatHiveClient;
+import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClientFactory;
+import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -47,7 +48,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
     private static final String THRIFT_URI = "hive.metastore.uris";
     private static final String HIVE_METASTORE_TIMEOUT = "hive.metastore-timeout";
     private static final String USE_EMBEDDED_METASTORE = "hive.use.embedded.metastore";
-    private final String name;
+    private final String catalogName;
     private final Map<String, String> configuration;
     private final HiveConnectorInfoConverter infoConverter;
     private IMetacatHiveClient client;
@@ -58,15 +59,15 @@ public class HiveConnectorFactory implements ConnectorFactory {
 
     /**
      * Constructor.
-     * @param name connector name. Also the catalog name.
+     * @param catalogName connector name. Also the catalog name.
      * @param configuration configuration properties
      * @param infoConverter hive info converter
      */
-    public HiveConnectorFactory(final String name, final Map<String, String> configuration,
+    public HiveConnectorFactory(final String catalogName, final Map<String, String> configuration,
                               final HiveConnectorInfoConverter infoConverter) {
-        Preconditions.checkNotNull(name, "Catalog name is null");
+        Preconditions.checkNotNull(catalogName, "Catalog name is null");
         Preconditions.checkNotNull(configuration, "Catalog connector configuration is null");
-        this.name = name;
+        this.catalogName = catalogName;
         this.configuration = configuration;
         this.infoConverter = infoConverter;
         init();
@@ -83,9 +84,9 @@ public class HiveConnectorFactory implements ConnectorFactory {
             }
         } catch (Exception e) {
             throw new IllegalArgumentException(
-                String.format("Failed creating the hive metastore client for catalog: %s", name), e);
+                String.format("Failed creating the hive metastore client for catalog: %s", catalogName), e);
         }
-        final Module hiveModule = new HiveConnectorModule(name, configuration, infoConverter, client);
+        final Module hiveModule = new HiveConnectorModule(catalogName, configuration, infoConverter, client);
         final Injector injector = Guice.createInjector(hiveModule);
         this.databaseService = injector.getInstance(ConnectorDatabaseService.class);
         this.tableService = injector.getInstance(ConnectorTableService.class);
@@ -95,7 +96,8 @@ public class HiveConnectorFactory implements ConnectorFactory {
     private IMetacatHiveClient createLocalClient() throws MetaException {
         final HiveConf conf = getDefaultConf();
         configuration.forEach(conf::set);
-        return new EmbeddedHiveClient(MetacatHMSHandler.newRetryingHMSHandler("metacat", conf, true));
+        DataSourceManager.get().load(catalogName, configuration);
+        return new EmbeddedHiveClient(catalogName, new MetacatHMSHandler("metacat", conf, true));
     }
 
     private static HiveConf getDefaultConf() {
@@ -106,6 +108,8 @@ public class HiveConnectorFactory implements ConnectorFactory {
         result.setInt("javax.jdo.option.DatastoreWriteTimeoutMillis", 60000);
         result.setInt("hive.metastore.ds.retry.attempts", 0);
         result.setInt("hive.hmshandler.retry.attempts", 0);
+        result.set("javax.jdo.PersistenceManagerFactoryClass",
+                "com.netflix.metacat.connector.hive.client.embedded.HivePersistenceManagerFactory");
         result.setBoolean("hive.stats.autogather", false);
         return result;
     }
@@ -144,7 +148,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
 
     @Override
     public String getName() {
-        return name;
+        return catalogName;
     }
 
     @Override
@@ -152,7 +156,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
         try {
             client.shutdown();
         } catch (TException e) {
-            log.warn(String.format("Failed shutting down the catalog: %s", name), e);
+            log.warn(String.format("Failed shutting down the catalog: %s", catalogName), e);
         }
     }
 }

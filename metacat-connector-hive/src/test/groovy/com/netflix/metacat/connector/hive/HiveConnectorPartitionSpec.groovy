@@ -21,7 +21,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.*
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
-import com.netflix.metacat.connector.hive.metastoreclient.thrift.MetacatHiveClient
+import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.Partition
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor

@@ -15,7 +15,7 @@
  */
 
 /**
- * hive thrift client implementation.
- * @author zhenl .
+ * Embedded hive metastore client implementation.
+ * @author amajumdar .
  */
-package com.netflix.metacat.connector.hive.metastoreclient.thrift;
+package com.netflix.metacat.connector.hive.client.embedded;

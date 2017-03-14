@@ -14,7 +14,7 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.connector.hive.metastoreclient.thrift;
+package com.netflix.metacat.connector.hive.client.thrift;
 
 import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
 import org.apache.thrift.protocol.TBinaryProtocol;

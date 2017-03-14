@@ -14,8 +14,31 @@
  *     limitations under the License.
  */
 
+package com.netflix.metacat.connector.hive.util;
+
+import lombok.Data;
+
+import javax.annotation.Nonnull;
+
 /**
- * Embedded hive metastore client implementation.
- * @author amajumdar .
+ * HiveTableName.
+ *
+ * @author zhenl
  */
-package com.netflix.metacat.connector.hive.metastoreclient.embedded;
+@Data
+@Nonnull
+public class HiveTableName {
+    private final String databaseName;
+    private final String tableName;
+
+    /**
+     * table.
+     *
+     * @param databaseName databaseName
+     * @param tableName    tableName
+     * @return HiveTableName
+     */
+    public static HiveTableName table(final String databaseName, final String tableName) {
+        return new HiveTableName(databaseName, tableName);
+    }
+}
