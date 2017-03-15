@@ -44,7 +44,7 @@ import java.util.Locale;
  * MySql specific extension of the JdbcConnectorDatabaseService implementation for any differences from default.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 @Slf4j
 public class MySqlConnectorDatabaseService extends JdbcConnectorDatabaseService {

@@ -26,7 +26,7 @@ import spock.lang.Unroll
  * Specifications for the RedshiftTypeConverter.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 class RedshiftTypeConverterSpec extends Specification {
 
@@ -36,48 +36,42 @@ class RedshiftTypeConverterSpec extends Specification {
     "Can convert Redshift string: #type to Metacat Type: #signature"() {
 
         expect:
-        this.converter.toMetacatType(type).getTypeSignature().toString() == signature
+        this.converter.toMetacatType(type) == metacatType
 
         where:
-        type                           | signature
-        "SMALLINT"                     | BaseType.SMALLINT.getTypeSignature().toString()
-        "int2"                         | BaseType.SMALLINT.getTypeSignature().toString()
-        "int"                          | BaseType.INT.getTypeSignature().toString()
-        "int4"                         | BaseType.INT.getTypeSignature().toString()
-        "INteger"                      | BaseType.INT.getTypeSignature().toString()
-        " BIGINt"                      | BaseType.BIGINT.getTypeSignature().toString()
-        "int8"                         | BaseType.BIGINT.getTypeSignature().toString()
-        "decimal (15)"                 | DecimalType.createDecimalType(15).getTypeSignature().toString()
-        "DECIMAL"                      | DecimalType.createDecimalType().getTypeSignature().toString()
-        "DEciMal(15, 14)"              | DecimalType.createDecimalType(15, 14).getTypeSignature().toString()
-        "numeric"                      | DecimalType.createDecimalType().getTypeSignature().toString()
-        "REAL"                         | BaseType.FLOAT.getTypeSignature().toString()
-        "float4"                       | BaseType.FLOAT.getTypeSignature().toString()
-        "double PRECISION (15)"        | BaseType.DOUBLE.getTypeSignature().toString()
-        "double PRECISION (15, 3)"     | BaseType.DOUBLE.getTypeSignature().toString()
-        "double precision"             | BaseType.DOUBLE.getTypeSignature().toString()
-        "FLOAT8"                       | BaseType.DOUBLE.getTypeSignature().toString()
-        "float"                        | BaseType.DOUBLE.getTypeSignature().toString()
-        "character varying (17)"       | VarcharType.createVarcharType(17).getTypeSignature().toString()
-        "varchar(53)"                  | VarcharType.createVarcharType(53).getTypeSignature().toString()
-        "nvarchar(54)"                 | VarcharType.createVarcharType(54).getTypeSignature().toString()
-        "text"                         | VarcharType
-            .createVarcharType(RedshiftTypeConverter.DEFAULT_CHARACTER_LENGTH)
-            .getTypeSignature()
-            .toString()
-        "character (3)"                | CharType.createCharType(3).getTypeSignature().toString()
-        "char(18)"                     | CharType.createCharType(18).getTypeSignature().toString()
-        "nchar(19)"                    | CharType.createCharType(19).getTypeSignature().toString()
-        "bpchar"                       | CharType
-            .createCharType(RedshiftTypeConverter.DEFAULT_CHARACTER_LENGTH)
-            .getTypeSignature()
-            .toString()
-        "timestamp (7) with time zone" | BaseType.TIMESTAMP_WITH_TIME_ZONE.getTypeSignature().toString()
-        "TIMESTAMP(16)"                | BaseType.TIMESTAMP.getTypeSignature().toString()
-        "tiMestampz"                   | BaseType.TIMESTAMP_WITH_TIME_ZONE.getTypeSignature().toString()
-        "date"                         | BaseType.DATE.getTypeSignature().toString()
-        "BOOLEAN"                      | BaseType.BOOLEAN.getTypeSignature().toString()
-        "bool"                         | BaseType.BOOLEAN.getTypeSignature().toString()
+        type                           | metacatType
+        "SMALLINT"                     | BaseType.SMALLINT
+        "int2"                         | BaseType.SMALLINT
+        "int"                          | BaseType.INT
+        "int4"                         | BaseType.INT
+        "INteger"                      | BaseType.INT
+        " BIGINt"                      | BaseType.BIGINT
+        "int8"                         | BaseType.BIGINT
+        "decimal (15)"                 | DecimalType.createDecimalType(15)
+        "DECIMAL"                      | DecimalType.createDecimalType()
+        "DEciMal(15, 14)"              | DecimalType.createDecimalType(15, 14)
+        "numeric"                      | DecimalType.createDecimalType()
+        "REAL"                         | BaseType.FLOAT
+        "float4"                       | BaseType.FLOAT
+        "double PRECISION (15)"        | BaseType.DOUBLE
+        "double PRECISION (15, 3)"     | BaseType.DOUBLE
+        "double precision"             | BaseType.DOUBLE
+        "FLOAT8"                       | BaseType.DOUBLE
+        "float"                        | BaseType.DOUBLE
+        "character varying (17)"       | VarcharType.createVarcharType(17)
+        "varchar(53)"                  | VarcharType.createVarcharType(53)
+        "nvarchar(54)"                 | VarcharType.createVarcharType(54)
+        "text"                         | VarcharType.createVarcharType(RedshiftTypeConverter.DEFAULT_CHARACTER_LENGTH)
+        "character (3)"                | CharType.createCharType(3)
+        "char(18)"                     | CharType.createCharType(18)
+        "nchar(19)"                    | CharType.createCharType(19)
+        "bpchar"                       | CharType.createCharType(RedshiftTypeConverter.DEFAULT_CHARACTER_LENGTH)
+        "timestamp (7) with time zone" | BaseType.TIMESTAMP_WITH_TIME_ZONE
+        "TIMESTAMP(16)"                | BaseType.TIMESTAMP
+        "tiMestampz"                   | BaseType.TIMESTAMP_WITH_TIME_ZONE
+        "date"                         | BaseType.DATE
+        "BOOLEAN"                      | BaseType.BOOLEAN
+        "bool"                         | BaseType.BOOLEAN
     }
 
     /*

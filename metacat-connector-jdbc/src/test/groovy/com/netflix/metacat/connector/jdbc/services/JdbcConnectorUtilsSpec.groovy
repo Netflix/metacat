@@ -22,11 +22,12 @@ import spock.lang.Specification
 import java.sql.Connection
 import java.sql.SQLException
 import java.sql.Statement
+
 /**
  * Tests for JdbcConnectorUtils methods.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 class JdbcConnectorUtilsSpec extends Specification {
 

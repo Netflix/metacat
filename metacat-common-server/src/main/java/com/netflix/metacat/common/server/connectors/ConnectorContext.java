@@ -26,6 +26,7 @@ import lombok.NoArgsConstructor;
  *
  * @author amajumdar
  * @author tgianos
+ * @since 1.0.0
  */
 @Data
 @NoArgsConstructor

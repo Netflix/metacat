@@ -20,6 +20,7 @@ import java.util.List;
 
 /**
  * Partition save request.
+ * @since 1.0.0
  */
 @Data
 @EqualsAndHashCode(callSuper = false)

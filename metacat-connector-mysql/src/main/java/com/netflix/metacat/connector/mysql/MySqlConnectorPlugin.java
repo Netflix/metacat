@@ -29,7 +29,7 @@ import java.util.Map;
  * Implementation of the ConnectorPlugin interface for MySQL.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 public class MySqlConnectorPlugin implements ConnectorPlugin {
 

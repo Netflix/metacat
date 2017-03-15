@@ -23,6 +23,7 @@ import java.util.List;
 
 /**
  * Partition save response.
+ * @since 1.0.0
  */
 @Data
 @Builder

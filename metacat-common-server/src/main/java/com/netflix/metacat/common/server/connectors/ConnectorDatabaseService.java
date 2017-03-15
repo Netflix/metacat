@@ -27,7 +27,7 @@ import java.util.List;
  * Interfaces for manipulating database information for this connector.
  *
  * @author tgianos
- * @since 0.1.51
+ * @since 1.0.0
  */
 public interface ConnectorDatabaseService extends ConnectorBaseService<DatabaseInfo> {
     /**
@@ -36,6 +36,7 @@ public interface ConnectorDatabaseService extends ConnectorBaseService<DatabaseI
      * @param context The request context
      * @param databaseName   The name of the database under which to list resources of type <code>T</code>
      * @return A list of view qualified names
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<QualifiedName> listViewNames(
         @Nonnull final ConnectorContext context,

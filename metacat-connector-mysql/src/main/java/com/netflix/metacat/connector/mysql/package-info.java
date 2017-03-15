@@ -15,14 +15,11 @@
  *     limitations under the License.
  *
  */
-/**
- * @author tgianos
- */
 
 /**
  * MySQL connector implementation classes to plugin a MySQL based data store.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 package com.netflix.metacat.connector.mysql;

@@ -31,7 +31,7 @@ import java.util.List;
  *
  * @param <T> The Type of resource this interface works for
  * @author tgianos
- * @since 0.1.51
+ * @since 1.0.0
  */
 public interface ConnectorBaseService<T extends BaseInfo> {
     /**
@@ -42,8 +42,9 @@ public interface ConnectorBaseService<T extends BaseInfo> {
     /**
      * Create a resource.
      *
-     * @param context The request context
-     * @param resource       The resource metadata
+     * @param context  The request context
+     * @param resource The resource metadata
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default void create(@Nonnull final ConnectorContext context, @Nonnull final T resource) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
@@ -52,8 +53,9 @@ public interface ConnectorBaseService<T extends BaseInfo> {
     /**
      * Update a resource with the given metadata.
      *
-     * @param context The request context
-     * @param resource       resource metadata
+     * @param context  The request context
+     * @param resource resource metadata
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default void update(@Nonnull final ConnectorContext context, @Nonnull final T resource) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
@@ -63,7 +65,8 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * Delete a database with the given qualified name.
      *
      * @param context The request context
-     * @param name           The qualified name of the resource to delete
+     * @param name    The qualified name of the resource to delete
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default void delete(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
@@ -73,8 +76,9 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * Return a resource with the given name.
      *
      * @param context The request context
-     * @param name           The qualified name of the resource to get
+     * @param name    The qualified name of the resource to get
      * @return The resource metadata.
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default T get(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
@@ -84,8 +88,9 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * Return true, if the resource exists.
      *
      * @param context The request context
-     * @param name           The qualified name of the resource to get
+     * @param name    The qualified name of the resource to get
      * @return Return true, if the resource exists.
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default boolean exists(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
@@ -95,12 +100,13 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * Get a list of all the resources under the given resource identified by <code>name</code>. Optionally sort by
      * <code>sort</code> and add pagination via <code>pageable</code>.
      *
-     * @param context The request context
-     * @param name           The name of the resource under which to list resources of type <code>T</code>
-     * @param prefix         The optional prefix to apply to filter resources for listing
-     * @param sort           Optional sorting parameters
-     * @param pageable       Optional paging parameters
+     * @param context  The request context
+     * @param name     The name of the resource under which to list resources of type <code>T</code>
+     * @param prefix   The optional prefix to apply to filter resources for listing
+     * @param sort     Optional sorting parameters
+     * @param pageable Optional paging parameters
      * @return A list of type <code>T</code> resources in the desired order if required
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<T> list(
         @Nonnull final ConnectorContext context,
@@ -115,12 +121,13 @@ public interface ConnectorBaseService<T extends BaseInfo> {
     /**
      * Returns a list of qualified names of resources under the resource identified by <code>name</code>.
      *
-     * @param context The request context
-     * @param name           The name of the resource under which to list resources of type <code>T</code>
-     * @param prefix         The optional prefix to apply to filter resources for listing
-     * @param sort           Optional sorting parameters
-     * @param pageable       Optional paging parameters
+     * @param context  The request context
+     * @param name     The name of the resource under which to list resources of type <code>T</code>
+     * @param prefix   The optional prefix to apply to filter resources for listing
+     * @param sort     Optional sorting parameters
+     * @param pageable Optional paging parameters
      * @return A list of Qualified Names of resources in the desired order if required
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<QualifiedName> listNames(
         @Nonnull final ConnectorContext context,
@@ -136,8 +143,9 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * Rename the specified resource.
      *
      * @param context The metacat request context
-     * @param oldName        The current resource name
-     * @param newName        The new resource name
+     * @param oldName The current resource name
+     * @param newName The new resource name
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default void rename(
         @Nonnull final ConnectorContext context,

@@ -28,7 +28,7 @@ import java.util.Map;
  * PostgreSQL implementation of a connector factory.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 class PostgreSqlConnectorFactory extends JdbcConnectorFactory {
 

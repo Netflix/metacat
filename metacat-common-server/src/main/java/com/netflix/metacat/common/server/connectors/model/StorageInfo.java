@@ -23,6 +23,7 @@ import java.util.Map;
 
 /**
  * Storage Info.
+ * @since 1.0.0
  */
 @Data
 @EqualsAndHashCode(callSuper = false)

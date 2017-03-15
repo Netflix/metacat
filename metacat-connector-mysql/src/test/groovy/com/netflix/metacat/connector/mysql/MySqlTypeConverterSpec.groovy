@@ -26,7 +26,7 @@ import spock.lang.Unroll
  * Specifications for the MySqlTypeConverter.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 class MySqlTypeConverterSpec extends Specification {
 
@@ -36,46 +36,46 @@ class MySqlTypeConverterSpec extends Specification {
     "Can convert MySQL string: #type to Metacat Type: #signature"() {
 
         expect:
-        this.converter.toMetacatType(type).getTypeSignature().toString() == signature
+        this.converter.toMetacatType(type) == metacatType
 
         where:
-        type                    | signature
-        "bit (1)"               | BaseType.BOOLEAN.getTypeSignature().toString()
-        "bit"                   | BaseType.BOOLEAN.getTypeSignature().toString()
-        "BIT(16)"               | VarbinaryType.createVarbinaryType(2).getTypeSignature().toString()
-        "TINYINT"               | BaseType.TINYINT.getTypeSignature().toString()
-        "bool"                  | BaseType.BOOLEAN.getTypeSignature().toString()
-        "BOOLEAN"               | BaseType.BOOLEAN.getTypeSignature().toString()
-        "sMaLLInt"              | BaseType.SMALLINT.getTypeSignature().toString()
-        "MEDIUMINT"             | BaseType.INT.getTypeSignature().toString()
-        "INT"                   | BaseType.INT.getTypeSignature().toString()
-        "integer"               | BaseType.INT.getTypeSignature().toString()
-        "bigint"                | BaseType.BIGINT.getTypeSignature().toString()
-        "float(53)"             | BaseType.FLOAT.getTypeSignature().toString()
-        "DOUBLE"                | BaseType.DOUBLE.getTypeSignature().toString()
-        "double PRECISION (15)" | BaseType.DOUBLE.getTypeSignature().toString()
-        "DEC (15, 14)"          | DecimalType.createDecimalType(15, 14).getTypeSignature().toString()
-        "DEcimal ( 13 , 12 )"   | DecimalType.createDecimalType(13, 12).getTypeSignature().toString()
-        "Dec ( 13 )"            | DecimalType.createDecimalType(13).getTypeSignature().toString()
-        "decimal"               | DecimalType.createDecimalType().getTypeSignature().toString()
-        "date"                  | BaseType.DATE.getTypeSignature().toString()
-        "datetime"              | BaseType.TIME.getTypeSignature().toString()
-        "time"                  | BaseType.TIME.getTypeSignature().toString()
-        "timeStamp"             | BaseType.TIMESTAMP.getTypeSignature().toString()
-        "char(42)"              | CharType.createCharType(42).getTypeSignature().toString()
-        "char (52) binary"      | VarbinaryType.createVarbinaryType(52).getTypeSignature().toString()
-        "varchar (255)"         | VarcharType.createVarcharType(255).getTypeSignature().toString()
-        "varchar(255) BINARY"   | VarbinaryType.createVarbinaryType(255).getTypeSignature().toString()
-        "binary(165)"           | VarbinaryType.createVarbinaryType(165).getTypeSignature().toString()
-        "BLOB"                  | VarbinaryType.createVarbinaryType(Integer.MAX_VALUE).getTypeSignature().toString()
-        "mediumBlob"            | VarbinaryType.createVarbinaryType(Integer.MAX_VALUE).getTypeSignature().toString()
-        "longblob"              | VarbinaryType.createVarbinaryType(Integer.MAX_VALUE).getTypeSignature().toString()
-        "varbinary (234)"       | VarbinaryType.createVarbinaryType(234).getTypeSignature().toString()
-        "tinytext garbage"      | BaseType.STRING.getTypeSignature().toString()
-        "text"                  | BaseType.STRING.getTypeSignature().toString()
-        "mediumtext"            | BaseType.STRING.getTypeSignature().toString()
-        "longtext"              | BaseType.STRING.getTypeSignature().toString()
-        "json"                  | BaseType.JSON.getTypeSignature().toString()
+        type                    | metacatType
+        "bit (1)"               | BaseType.BOOLEAN
+        "bit"                   | BaseType.BOOLEAN
+        "BIT(16)"               | VarbinaryType.createVarbinaryType(2)
+        "TINYINT"               | BaseType.TINYINT
+        "bool"                  | BaseType.BOOLEAN
+        "BOOLEAN"               | BaseType.BOOLEAN
+        "sMaLLInt"              | BaseType.SMALLINT
+        "MEDIUMINT"             | BaseType.INT
+        "INT"                   | BaseType.INT
+        "integer"               | BaseType.INT
+        "bigint"                | BaseType.BIGINT
+        "float(53)"             | BaseType.FLOAT
+        "DOUBLE"                | BaseType.DOUBLE
+        "double PRECISION (15)" | BaseType.DOUBLE
+        "DEC (15, 14)"          | DecimalType.createDecimalType(15, 14)
+        "DEcimal ( 13 , 12 )"   | DecimalType.createDecimalType(13, 12)
+        "Dec ( 13 )"            | DecimalType.createDecimalType(13)
+        "decimal"               | DecimalType.createDecimalType()
+        "date"                  | BaseType.DATE
+        "datetime"              | BaseType.TIME
+        "time"                  | BaseType.TIME
+        "timeStamp"             | BaseType.TIMESTAMP
+        "char(42)"              | CharType.createCharType(42)
+        "char (52) binary"      | VarbinaryType.createVarbinaryType(52)
+        "varchar (255)"         | VarcharType.createVarcharType(255)
+        "varchar(255) BINARY"   | VarbinaryType.createVarbinaryType(255)
+        "binary(165)"           | VarbinaryType.createVarbinaryType(165)
+        "BLOB"                  | VarbinaryType.createVarbinaryType(Integer.MAX_VALUE)
+        "mediumBlob"            | VarbinaryType.createVarbinaryType(Integer.MAX_VALUE)
+        "longblob"              | VarbinaryType.createVarbinaryType(Integer.MAX_VALUE)
+        "varbinary (234)"       | VarbinaryType.createVarbinaryType(234)
+        "tinytext garbage"      | BaseType.STRING
+        "text"                  | BaseType.STRING
+        "mediumtext"            | BaseType.STRING
+        "longtext"              | BaseType.STRING
+        "json"                  | BaseType.JSON
     }
 
     @Unroll

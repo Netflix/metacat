@@ -32,7 +32,7 @@ import java.sql.ResultSet
  * Tests for the MySqlConnectorDatabaseService.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 class MySqlConnectorDatabaseServiceSpec extends Specification {
 

@@ -22,6 +22,7 @@ import java.util.List;
 
 /**
  * Partition get request.
+ * @since 1.0.0
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
