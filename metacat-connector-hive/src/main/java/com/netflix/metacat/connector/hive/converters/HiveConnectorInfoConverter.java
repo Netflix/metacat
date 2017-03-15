@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
  * Hive connector info converter.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Database, Table, Partition> {
 

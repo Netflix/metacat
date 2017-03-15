@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
  * HiveTableName.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 @Data
 @Nonnull

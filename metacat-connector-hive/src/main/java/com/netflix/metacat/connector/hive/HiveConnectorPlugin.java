@@ -29,6 +29,7 @@ import java.util.Map;
 /**
  * Hive plugin.
  * @author zhenl
+ * @since 1.0.0
  */
 public class HiveConnectorPlugin implements ConnectorPlugin {
     /** Type of the connector. */

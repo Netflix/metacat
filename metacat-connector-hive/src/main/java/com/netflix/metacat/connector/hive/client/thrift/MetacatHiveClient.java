@@ -45,6 +45,7 @@ import java.util.Set;
  * MetacatHiveClient.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public class MetacatHiveClient implements IMetacatHiveClient {
     private static final short ALL_RESULTS = -1;

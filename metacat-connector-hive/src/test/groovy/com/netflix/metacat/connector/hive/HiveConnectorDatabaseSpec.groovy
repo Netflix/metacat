@@ -33,6 +33,7 @@ import spock.lang.Unroll
 /**
  * Unit test for HiveConnectorDatabaseSpec.
  * @author zhenl
+ * @since 1.0.0
  */
 class HiveConnectorDatabaseSpec extends Specification{
     @Shared

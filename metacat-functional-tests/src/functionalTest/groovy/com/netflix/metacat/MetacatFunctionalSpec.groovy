@@ -214,7 +214,6 @@ class MetacatFunctionalSpec extends Specification {
         given:
         ObjectNode metadata = null
         def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
-       // String databaseName = "db_created_without_metadata_$BATCH_ID".toString()
         String databaseName = "db_created_without_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
 
         when:
@@ -258,7 +257,6 @@ class MetacatFunctionalSpec extends Specification {
         given:
         ObjectNode metadata = metacatJson.parseJsonObject('{"objectField": {}}')
         def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
-       // String databaseName = "db_created_with_metadata_$BATCH_ID".toString()
         String databaseName = "db_created_with_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
 
         when:
@@ -396,7 +394,6 @@ class MetacatFunctionalSpec extends Specification {
 
     def 'createTable: should fail for nonexistent catalog zz_#catalog.name'() {
         given:
-      //  def databaseName = "created_database"
         def databaseName = "created_database_${catalog.name.replace('-', '_')}".toString()
         def tableName = "table_$BATCH_ID".toString()
         def dto = new TableDto(
@@ -418,7 +415,6 @@ class MetacatFunctionalSpec extends Specification {
 
     def 'createTable: should fail for nonexistent database #catalog.name/missing_database'() {
         given:
-       // def databaseName = 'missing_database'
         def databaseName = "missing_database_${catalog.name.replace('-', '_')}".toString()
         def tableName = "table_$BATCH_ID".toString()
         def dto = new TableDto(
@@ -850,14 +846,9 @@ class MetacatFunctionalSpec extends Specification {
                     [field1: 'camelCase', p: 'camelCase'],
                     [field1: 'string with space', p: 'valid'],
                     [field1: 'valid', p: 'string with space'],
-                    // TODO test escaping
-//                    [field1: 'foo:bar', p: 'valid'],
-//                    [field1: 'valid', p: 'foo:bar'],
-//                    [field1: 'http://www.example.com/service?field1=value1&p=value3', p: 'valid'],
-//                    [field1: 'valid', p: 'http://www.example.com/service?field1=value1&p=value3'],
             ].collect {
                 String unescapedPartitionName = "field1=${it.field1}/p=${it.p}".toString()
-                String escapedPartitionName = unescapedPartitionName // TODO test escaping
+                String escapedPartitionName = unescapedPartitionName
                 return [
                         name       : QualifiedName.ofPartition(tname.catalogName, tname.databaseName, tname.tableName, unescapedPartitionName),
                         escapedName: QualifiedName.ofPartition(tname.catalogName, tname.databaseName, tname.tableName, escapedPartitionName),
@@ -1045,27 +1036,10 @@ class MetacatFunctionalSpec extends Specification {
         f('pk3 >= 2').size() == 0
         f('2 < pk3').size() == 0
         f('2 <= pk3').size() == 0
-//        f('pk1 in ("odd", "even")').size() == 16
-//        f('pk1 in ("odd")').size() == 8
-//        f('pk1 in ("even")').size() == 8
-//        f('pk1 not in ("odd", "even")').size() == 0
-//        f('pk1 not in ("odd")').size() == 8
-//        f('pk1 not in ("even")').size() == 8
-//        f('pk1 like "e%"').size() == 8
-//        f('pk1 like "o%"').size() == 8
-//        f('pk1 like "a%"').size() == 0
-//        f('pk1 like "%n"').size() == 8
-//        f('pk1 like "%d"').size() == 8
-//        f('pk1 like "%a"').size() == 0
         f('pk2 between 5 and 8').size() == 4
         f('pk2 between 5 and 7').size() == 3
         f('pk2 between 5 and 6').size() == 2
         f('pk2 between 5 and 5').size() == 1
-//        f('pk1 matches "e.+n"').size() == 8
-//        f('pk1 matches "o.+d"').size() == 8
-//        f('pk1 matches "m.+g"').size() == 0
-//        f('pk1 matches "(even|odd)"').size() == 16
-
 
         where:
         name << TestCatalogs.getAllDatabases(TestCatalogs.getCanCreateTable(TestCatalogs.ALL))

@@ -40,6 +40,7 @@ import spock.lang.Unroll
 /**
  * Unit test for HiveConnectorTableSpec.
  * @author zhenl
+ * @since 1.0.0
  */
 class HiveConnectorTableSpec extends Specification {
     @Shared

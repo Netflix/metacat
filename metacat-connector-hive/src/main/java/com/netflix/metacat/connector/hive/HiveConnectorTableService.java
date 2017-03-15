@@ -56,6 +56,7 @@ import java.util.Map;
  * Hive base connector base service impl.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public class HiveConnectorTableService implements ConnectorTableService {
     private static final String PARAMETER_EXTERNAL = "EXTERNAL";

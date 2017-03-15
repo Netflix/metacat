@@ -62,6 +62,7 @@ import java.util.stream.Collectors;
  * HiveConnectorPartitionService.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public class HiveConnectorPartitionService implements ConnectorPartitionService {
 

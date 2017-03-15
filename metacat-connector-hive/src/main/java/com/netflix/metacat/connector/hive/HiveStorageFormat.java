@@ -38,6 +38,7 @@ import javax.annotation.Nonnull;
  * Hive storage format.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public enum HiveStorageFormat {
     /**

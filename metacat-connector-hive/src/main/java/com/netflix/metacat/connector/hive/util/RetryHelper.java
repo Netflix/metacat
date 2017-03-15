@@ -32,6 +32,7 @@ import java.util.function.Function;
  * RetryHelper.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 @Slf4j
 public final class RetryHelper {

@@ -48,6 +48,7 @@ import java.util.List;
  * HiveConnectorDatabaseService.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     private final IMetacatHiveClient metacatHiveClient;

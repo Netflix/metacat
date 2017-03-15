@@ -11,6 +11,7 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
  * HiveMetaStoreFsImpl.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 @Slf4j
 public class HiveMetaStoreFsImpl implements MetaStoreFS {

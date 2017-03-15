@@ -55,6 +55,7 @@ import java.util.regex.Pattern;
  * This is an extension of the HiveMetastore. This provides multi-tenancy to the hive metastore.
  *
  * @author amajumdar
+ * @since 1.0.0
  */
 public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
     private Warehouse wh;

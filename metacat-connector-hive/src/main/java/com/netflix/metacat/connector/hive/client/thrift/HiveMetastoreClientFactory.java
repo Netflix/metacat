@@ -34,6 +34,7 @@ import java.net.SocketAddress;
  * HiveMetastoreClientFactory.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public class HiveMetastoreClientFactory {
     private final HostAndPort socksProxy;

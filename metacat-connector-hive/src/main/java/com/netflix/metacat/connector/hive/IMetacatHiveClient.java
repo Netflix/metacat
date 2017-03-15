@@ -32,6 +32,7 @@ import java.util.Set;
  * IMetacatHiveClient.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public interface IMetacatHiveClient {
     /**

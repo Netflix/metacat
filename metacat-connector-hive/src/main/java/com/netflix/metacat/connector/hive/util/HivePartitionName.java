@@ -23,6 +23,7 @@ import javax.annotation.Nonnull;
 /**
  * HivePartitionName.
  * @author zhenl
+ * @since 1.0.0
  */
 @Data
 @Nonnull

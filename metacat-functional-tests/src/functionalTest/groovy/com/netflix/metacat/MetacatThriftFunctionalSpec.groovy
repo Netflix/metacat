@@ -15,7 +15,6 @@
  *
  */
 
-
 package com.netflix.metacat
 
 import com.google.common.cache.CacheBuilder
@@ -48,94 +47,14 @@ import spock.lang.Unroll
 @Unroll
 class MetacatThriftFunctionalSpec extends Specification {
     public static final long BATCH_ID = System.currentTimeSeconds()
-
-    // METHODS TO TEST
-//    alterFunction
-//    alterIndex
-//    alterIndex
-//    alterPartition
-//    alterPartition
-//    alterPartitions
-//    alterTable
-//    alterTable
-//    cancelDelegationToken
-//    clearMetaCallTiming
-//    closeCurrent
-//    compact
-//    createFunction
-//    createIndex
-//    createRole
-//    deletePartitionColumnStatistics
-//    deleteTableColumnStatistics
-//    dropFunction
-//    dropIndex
-//    dropIndex
-//    dropPartitions
-//    dropPartitions
-//    dropPartitions
-//    dropPartitions
-//    dropRole
-//    dumpAndClearMetaCallTiming
-//    exchangeTablePartitions
-//    get
-//    get
-//    get
-//    get
-//    get_privilege_set
-//    getAggrColStatsFor
-//    getAllPartitionsOf
-//    getAllRoleNames
-//    getDelegationToken
-//    getFieldsFromDeserializer
-//    getFunction
-//    getFunctions
-//    getIndex
-//    getIndex
-//    getIndexes
-//    getMetaConf
-//    getMSC
-//    getPartitionColumnStatistics
-//    getPartitionsByExpr
-//    getRoleGrantInfoForPrincipal
-//    getTableColumnStatistics
-//    getTablesByPattern
-//    getTablesByPattern
-//    getTablesForDb
-//    grantPrivileges
-//    grantRole
-//    isHadoop1
-//    listRoles
-//    loadDynamicPartitions
-//    loadPartition
-//    loadPartition
-//    loadTable
-//    moveFile
-//    newTable
-//    reloadFunctions
-//    renamePartition
-//    revokePrivileges
-//    revokeRole
-//    set
-//    setMetaConf
-//    setPartitionColumnStatistics
-//    showCompactions
-//    showPrivilegeGrant
-//    showTransactions
-//    updatePartitionColumnStatistics
-//    updateTableColumnStatistics
-//    validatePartitionNameCharacters
-
     @Shared
     String hiveThriftUri
-    @Shared
-    String metacatS3ThriftUri
     @Shared
     LoadingCache<String, Hive> METASTORES = CacheBuilder.newBuilder()
             .build(
             new CacheLoader<String, Hive>() {
                 public Hive load(String thriftUri) throws Exception {
                     assert thriftUri, 'Thrift uri is required'
-
                     HiveConf conf = new HiveConf()
                     conf.set('hive.metastore.uris', thriftUri)
                     conf.set('hive.metastore.sasl.enabled', 'false')
@@ -171,14 +90,6 @@ class MetacatThriftFunctionalSpec extends Specification {
         thriftPort = System.properties['metacat_embedded_hive_thrift_port']?.toString()?.trim()
         assert thriftPort, 'Required system property "metacat_embedded_hive_thrift_port" is not set'
         TestCatalogs.findByCatalogName('embedded-hive-metastore').thriftUri = "thrift://localhost:${thriftPort}".toString()
-
-
-        // TODO enable this, commenting out because s3 type currently doesn't have enough places to store parameters
-        // currently only table.location.info.parameters and we need 2 more parameters
-//        thriftPort = System.properties['metacat_s3_thrift_port']?.toString()?.trim()
-//        assert thriftPort, 'Required system property "metacat_s3_thrift_port" is not set'
-//        metacatS3ThriftUri = "thrift://localhost:${thriftPort}".toString()
-//        TestCatalogs.findByCatalogName('s3-mysql-db').thriftUri = metacatS3ThriftUri
 
         thriftPort = System.properties['hive_thrift_port']?.toString()?.trim()
         assert thriftPort, 'Required system property "hive_thrift_port" is not set'
@@ -557,12 +468,6 @@ class MetacatThriftFunctionalSpec extends Specification {
         then: 'TODO remove this once metacat implements alter_database and uncomment the following lines'
         thrown(Exception)
 
-//        and:
-//        db = thrift.getDatabase(name.databaseName)
-//
-//        then:
-//        db.parameters['field_added'] == now.toString()
-
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
     }
@@ -615,19 +520,10 @@ class MetacatThriftFunctionalSpec extends Specification {
                 new FieldSchema('field9', 'map<string,string>', 'field9 comment'),
         ]
 
-//        int createTime,
-//        int lastAccessTime,
-//        int retention,
-//        String tableType)
         def table = new Table(name.databaseName, tableName)
         table.owner = owner
         table.setParamters(tableParams)
         table.setPartCols(partitionKeys)
-
-//        boolean compressed,
-//        int numBuckets,
-//        List<String> bucketCols,
-//        List<Order> sortCols,
         table.sd.cols = fields
         table.sd.location = locationUri
         table.sd.inputFormat = inputFormat
@@ -707,18 +603,9 @@ class MetacatThriftFunctionalSpec extends Specification {
                 new FieldSchema('field9', 'map<string,string>', 'field9 comment'),
         ]
 
-//        int createTime,
-//        int lastAccessTime,
-//        int retention,
-//        String tableType)
         def table = new Table(name.databaseName, tableName)
         table.owner = owner
         table.setParamters(tableParams)
-
-//        boolean compressed,
-//        int numBuckets,
-//        List<String> bucketCols,
-//        List<Order> sortCols,
         table.sd.cols = fields
         table.sd.location = locationUri
         table.sd.inputFormat = inputFormat
@@ -847,11 +734,7 @@ class MetacatThriftFunctionalSpec extends Specification {
                     ['pk1': 'CAP', 'pk2': '0'],
                     ['pk1': 'ALL_CAP', 'pk2': '0'],
                     ['pk1': 'lower', 'pk2': '0'],
-                    ['pk1': 'camelCase', 'pk2': '0'],
-                    // TODO handle escaping
-//                    ['pk1': 'http://example.com/path?queryName=queryValue&q2=qv2', 'pk2': String.valueOf(Long.MAX_VALUE)],
-//                    ['pk1': 'weird=true', 'pk2': String.valueOf(Long.MIN_VALUE)],
-//                    ['pk1': 'weird:value', 'pk2': '0'],
+                    ['pk1': 'camelCase', 'pk2': '0']
 
             ].collect { spec ->
                 return [table: partitionedTable, pspec: spec]
@@ -1114,13 +997,8 @@ class MetacatThriftFunctionalSpec extends Specification {
 
         where:
         name << TestCatalogs.getCreatedPartitions(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
-        // TODO add this back when we handle encoding
-//        name << TestCatalogs.getCreatedPartitions(TestCatalogs.getThriftImplementers(TestCatalogs.ALL)).findAll {
-//            !this.needsDecoding(it.partitionName)
-//        }
     }
 
-    // TODO add this back when we handle encoding
     @Ignore
     def 'dropPartition: currently fails for encoded partition #name'() {
         given:
@@ -1144,7 +1022,6 @@ class MetacatThriftFunctionalSpec extends Specification {
         thrift.dropPartition(name.databaseName, name.tableName, partition.values, false)
 
         then:
-        // TODO this should not throw an exception
         def e = thrown(HiveException)
         e.message.contains("Partition or table doesn't exist")
 
@@ -1196,13 +1073,6 @@ class MetacatThriftFunctionalSpec extends Specification {
         def e = thrown(HiveException)
         e.cause instanceof InvalidOperationException
         e.message.contains('Not implemented yet: drop_database')
-
-        // dropDatabase isn't implemented yet
-//        database = thrift.getDatabase(name.databaseName)
-//
-//        then:
-//        database == null
-//        catalog.createdDatabases.remove(name)
 
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))

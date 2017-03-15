@@ -31,6 +31,7 @@ import spock.lang.Specification
 /**
  * Unit test for HiveConnectorPartitionSpec.
  * @author zhenl
+ * @since 1.0.0
  */
 class HiveConnectorPartitionSpec extends Specification{
     @Shared

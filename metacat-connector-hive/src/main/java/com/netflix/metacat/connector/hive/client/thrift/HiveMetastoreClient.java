@@ -27,6 +27,7 @@ import java.io.Closeable;
  * HiveMetastoreClient.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public class HiveMetastoreClient
         extends ThriftHiveMetastore.Client

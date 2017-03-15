@@ -14,6 +14,7 @@ import java.util.Map;
  * HivePersistenceManagerFactory.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public final class HivePersistenceManagerFactory {
     /**

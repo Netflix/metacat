@@ -45,6 +45,9 @@ import java.time.ZoneOffset
 
 /**
  * Unit test for hive connector info convertor.
+ *
+ * @author zhenl
+ * @since 1.0.0
  */
 class HiveConnectorInfoConvertorSpec extends Specification{
     private static final ZoneOffset PACIFIC = LocalDateTime.now().atZone(ZoneId.of('America/Los_Angeles')).offset

@@ -25,6 +25,7 @@ import java.util.Set;
  * HivePrivilege.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public enum HivePrivilege {
     /**SELECT.*/
