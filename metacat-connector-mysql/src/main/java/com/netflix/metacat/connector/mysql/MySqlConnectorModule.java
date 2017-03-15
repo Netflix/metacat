@@ -36,7 +36,7 @@ import java.util.Map;
  * A Guice Module for the MySqlConnector.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 public class MySqlConnectorModule extends AbstractModule {
 

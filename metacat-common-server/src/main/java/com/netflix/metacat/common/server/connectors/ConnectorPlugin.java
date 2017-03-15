@@ -7,6 +7,7 @@ import java.util.Map;
  * Plugin interface implemented by Connectors.
  *
  * @author amajumdar
+ * @since 1.0.0
  */
 public interface ConnectorPlugin {
 

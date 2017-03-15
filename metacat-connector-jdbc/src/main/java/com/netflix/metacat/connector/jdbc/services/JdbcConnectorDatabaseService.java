@@ -47,7 +47,7 @@ import java.util.Locale;
  * Generic JDBC implementation of the ConnectorDatabaseService.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 @Slf4j
 @Getter
@@ -102,35 +102,6 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
     public DatabaseInfo get(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
         final String databaseName = name.getDatabaseName();
         log.debug("Beginning to get database metadata for {} for request {}", databaseName, context);
-        // NOTE: This is effectively a default implementation that maps to how Postgres and Mysql handle things
-        // See http://stackoverflow.com/questions/7942520/relationship-between-catalog-schema-user-and-database-instance
-//        try (final Connection connection = this.dataSource.getConnection()) {
-//            // TODO: Convert the metadata to a DTO eventually should use a converter based on Ajoy's interface
-//            final DatabaseMetaData metaData = connection.getMetaData();
-//            final DatabaseDto database = new DatabaseDto();
-//            database.setName(name);
-//
-//            // Build up the list of table names
-//            final ImmutableList.Builder<String> tableNames = ImmutableList.builder();
-//            final ResultSet tables = metaData.getTables(
-//                connection.getCatalog(),
-//                metaData.storesUpperCaseIdentifiers()
-//                    ? name.getDatabaseName().toUpperCase(Locale.ENGLISH)
-//                    : name.getDatabaseName(),
-//                metaData.getSearchStringEscape(),
-//                null
-//            );
-//            while (tables.next()) {
-//                tableNames.add(tables.getString("TABLE_NAME"));
-//            }
-//            database.setTables(tableNames.build());
-//
-//            log.debug("Finished getting database metadata for {} for request {}", databaseName, context);
-//            return new DatabaseInfo.Builder(name).build();
-//        } catch (final SQLException se) {
-//            throw Throwables.propagate(se);
-//        }
-
         return DatabaseInfo.builder().name(name).build();
     }
 
@@ -207,5 +178,4 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
             throw Throwables.propagate(se);
         }
     }
-
 }

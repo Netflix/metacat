@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Field DTO.
+ * @since 1.0.0
  */
 @ApiModel(value = "Table field/column metadata")
 @SuppressWarnings("unused")

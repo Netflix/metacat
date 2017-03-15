@@ -24,6 +24,7 @@ import java.util.Map;
 
 /**
  * Table Info.
+ * @since 1.0.0
  */
 @SuppressWarnings("checkstyle:finalclass")
 @Data

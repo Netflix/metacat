@@ -10,6 +10,7 @@ import java.util.Date;
 
 /**
  * Audit information.
+ * @since 1.0.0
  */
 @SuppressWarnings("unused")
 @Data

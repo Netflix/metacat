@@ -23,7 +23,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
  * Generic JDBC implementation of the ConnectorPartitionService.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 public class JdbcConnectorPartitionService implements ConnectorPartitionService {
 }

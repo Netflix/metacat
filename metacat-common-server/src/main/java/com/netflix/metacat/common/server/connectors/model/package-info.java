@@ -19,5 +19,6 @@
  * Classes and interfaces related to model objects for catalog connectors.
  *
  * @author amajumdar
+ * @since 1.0.0
  */
 package com.netflix.metacat.common.server.connectors.model;

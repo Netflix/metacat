@@ -3,6 +3,7 @@ package com.netflix.metacat.common.server.connectors;
 /**
  * Factory that returns the connector implementations of the service and converter interfaces.
  * @author amajumdar
+ * @since 1.0.0
  */
 public interface ConnectorFactory {
     /**

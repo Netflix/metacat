@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2017 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.type;
 
 import com.google.common.base.Function;
@@ -64,14 +68,12 @@ public class RowType extends AbstractType implements ParametricType {
                             return input == null ? null : input.getTypeSignature();
                         }
                     }),
-                !fields.isEmpty() && fields.get(0).getName() != null
-                    ? Lists.transform(fields, new Function<RowField, Object>() {
+                Lists.transform(fields, new Function<RowField, Object>() {
                         public Object apply(@Nullable final RowField input) {
                             return input == null ? null : input.getName();
                         }
                     }
                 )
-                    : null
             )
         );
 
@@ -87,25 +89,17 @@ public class RowType extends AbstractType implements ParametricType {
      */
     public static RowType createRowType(
         @Nonnull @NonNull final List<Type> types,
-        @Nullable final List<String> names
+        @Nonnull @NonNull final List<String> names
     ) {
         Preconditions.checkArgument(!types.isEmpty(), "types is empty");
 
         final ImmutableList.Builder<RowField> builder = ImmutableList.builder();
-        if (names == null) {
-            for (final Type type : types) {
-                builder.add(new RowField(type, null));
-            }
-        } else {
-            Preconditions.checkArgument(
-                types.size() == names.size(),
-                "types and names must be matched in size"
-            );
-            for (int i = 0; i < types.size(); i++) {
-                builder.add(
-                    new RowField(types.get(i), names.get(i))
-                );
-            }
+        Preconditions.checkArgument(
+            types.size() == names.size(),
+            "types and names must be matched in size"
+        );
+        for (int i = 0; i < types.size(); i++) {
+            builder.add(new RowField(types.get(i), names.get(i)));
         }
         return new RowType(builder.build());
     }
@@ -116,16 +110,12 @@ public class RowType extends AbstractType implements ParametricType {
     }
 
     @Override
-    public RowType createType(@Nonnull @NonNull final List<Type> types, @Nullable final List<Object> literals) {
-        if (literals != null) {
-            final ImmutableList.Builder<String> builder = ImmutableList.builder();
-            for (final Object literal : literals) {
-                builder.add(TypeUtils.checkType(literal, String.class, "literal"));
-            }
-            return RowType.createRowType(types, builder.build());
-        } else {
-            return RowType.createRowType(types, null);
+    public RowType createType(@Nonnull @NonNull final List<Type> types, @Nonnull @NonNull final List<Object> literals) {
+        final ImmutableList.Builder<String> builder = ImmutableList.builder();
+        for (final Object literal : literals) {
+            builder.add(TypeUtils.checkType(literal, String.class, "literal"));
         }
+        return RowType.createRowType(types, builder.build());
     }
 
     @Override
@@ -152,7 +142,7 @@ public class RowType extends AbstractType implements ParametricType {
          * @param type type
          * @param name name
          */
-        public RowField(@Nonnull @NonNull final Type type, @Nullable final String name) {
+        public RowField(@Nonnull @NonNull final Type type, @Nonnull @NonNull final String name) {
             this.type = type;
             this.name = name;
         }

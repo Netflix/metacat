@@ -23,6 +23,7 @@ import java.util.Map;
 /**
  * Base class for catalog resources.
  * @author amajumdar
+ * @since 1.0.0
  */
 @Data
 @NoArgsConstructor

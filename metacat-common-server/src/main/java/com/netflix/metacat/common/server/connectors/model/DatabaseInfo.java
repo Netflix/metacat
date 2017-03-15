@@ -23,6 +23,7 @@ import java.util.Map;
 
 /**
  * Database information.
+ * @since 1.0.0
  */
 @Data
 @NoArgsConstructor

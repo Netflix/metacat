@@ -29,7 +29,7 @@ import java.util.Map;
  * Redshift Connector Plugin.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 public class RedshiftConnectorPlugin implements ConnectorPlugin {
 

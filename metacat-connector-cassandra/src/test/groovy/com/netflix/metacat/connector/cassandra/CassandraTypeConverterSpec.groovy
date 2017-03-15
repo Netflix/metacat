@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.connector.cassandra
 
+import com.datastax.driver.core.DataType
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.type.*
 import spock.lang.Specification
@@ -36,47 +37,49 @@ class CassandraTypeConverterSpec extends Specification {
     "Can convert Cassandra string: #type to Metacat Type: #signature"() {
 
         expect:
-        this.converter.toMetacatType(type).getTypeSignature().toString() == signature
+        this.converter.toMetacatType(type) == metacatType
 
         where:
-        type                                         | signature
-        "ASCII"                                      | BaseType.STRING.getTypeSignature().toString()
-        "BIGINT"                                     | BaseType.BIGINT.getTypeSignature().toString()
-        "blOb"                                       | VarbinaryType
-            .createVarbinaryType(Integer.MAX_VALUE)
-            .getTypeSignature()
-            .toString()
-        "BOOLEAN"                                    | BaseType.BOOLEAN.getTypeSignature().toString()
-        "counter"                                    | BaseType.BIGINT.getTypeSignature().toString()
-        "DATE"                                       | BaseType.DATE.getTypeSignature().toString()
-        "decimal"                                    | DecimalType.createDecimalType().getTypeSignature().toString()
-        "DOUBLE"                                     | BaseType.DOUBLE.getTypeSignature().toString()
-        "float"                                      | BaseType.FLOAT.getTypeSignature().toString()
-        "frozen <INT>"                               | BaseType.INT.getTypeSignature().toString()
-        "frozen <map <text, int>>"                   | new MapType(BaseType.STRING, BaseType.INT)
-            .getTypeSignature()
-            .toString()
-        "INT"                                        | BaseType.INT.getTypeSignature().toString()
-        "LIST<TEXT>"                                 | new ArrayType(BaseType.STRING).getTypeSignature().toString()
-        "map <int, frozen <map<text, int>>>"         | new MapType(
-            BaseType.INT, new MapType(BaseType.STRING, BaseType.INT)
-        )
-            .getTypeSignature()
-            .toString()
-        "sMaLLInt"                                   | BaseType.SMALLINT.getTypeSignature().toString()
-        "TEXT"                                       | BaseType.STRING.getTypeSignature().toString()
-        "time"                                       | BaseType.TIME.getTypeSignature().toString()
-        "timestamp"                                  | BaseType.TIMESTAMP.getTypeSignature().toString()
-        "tinyint"                                    | BaseType.TINYINT.getTypeSignature().toString()
-        "tuple<map<text, double>, list<int>, float>" | new RowType(
-            Lists.newArrayList(
-                new RowType.RowField(new MapType(BaseType.STRING, BaseType.DOUBLE), null),
-                new RowType.RowField(new ArrayType(BaseType.INT), null),
-                new RowType.RowField(BaseType.FLOAT, null)
+        type                                                            | metacatType
+        DataType.ascii().toString()                                     | BaseType.STRING
+        DataType.bigint().toString()                                    | BaseType.BIGINT
+        DataType.blob().toString()                                      | VarbinaryType.createVarbinaryType(Integer.MAX_VALUE)
+        DataType.cboolean().toString()                                  | BaseType.BOOLEAN
+        DataType.counter().toString()                                   | BaseType.BIGINT
+        DataType.date().toString()                                      | BaseType.DATE
+        DataType.decimal().toString()                                   | DecimalType.createDecimalType()
+        DataType.cdouble().toString()                                   | BaseType.DOUBLE
+        DataType.cfloat().toString()                                    | BaseType.FLOAT
+        DataType.frozenMap(DataType.text(), DataType.cint()).toString() | new MapType(BaseType.STRING, BaseType.INT)
+        DataType.cint().toString()                                      | BaseType.INT
+        DataType.list(DataType.text()).toString()                       | new ArrayType(BaseType.STRING)
+        DataType.map(
+            DataType.cint(),
+            DataType.frozenMap(
+                DataType.text(),
+                DataType.cint()
             )
-        ).getTypeSignature().toString()
-        "varchar"                                    | BaseType.STRING.getTypeSignature().toString()
-        "VARINT"                                     | BaseType.INT.getTypeSignature().toString()
+        ).toString()                                                    | new MapType(
+            BaseType.INT,
+            new MapType(
+                BaseType.STRING,
+                BaseType.INT
+            )
+        )
+        DataType.smallint().toString()                                  | BaseType.SMALLINT
+        DataType.text().toString()                                      | BaseType.STRING
+        DataType.time().toString()                                      | BaseType.TIME
+        DataType.timestamp().toString()                                 | BaseType.TIMESTAMP
+        DataType.tinyint().toString()                                   | BaseType.TINYINT
+        "tuple<map<text, double>, list<int>, float>"                    | new RowType(
+            Lists.newArrayList(
+                new RowType.RowField(new MapType(BaseType.STRING, BaseType.DOUBLE), "field0"),
+                new RowType.RowField(new ArrayType(BaseType.INT), "field1"),
+                new RowType.RowField(BaseType.FLOAT, "field2")
+            )
+        )
+        DataType.varchar().toString()                                   | BaseType.STRING
+        DataType.varint().toString()                                    | BaseType.INT
     }
 
     @Unroll
@@ -121,9 +124,9 @@ class CassandraTypeConverterSpec extends Specification {
         )                                                         | "map<frozen list<double>, frozen map<int, boolean>>"
         new RowType(
             Lists.newArrayList(
-                new RowType.RowField(new MapType(BaseType.STRING, BaseType.DOUBLE), null),
-                new RowType.RowField(new ArrayType(BaseType.INT), null),
-                new RowType.RowField(BaseType.FLOAT, null)
+                new RowType.RowField(new MapType(BaseType.STRING, BaseType.DOUBLE), "field0"),
+                new RowType.RowField(new ArrayType(BaseType.INT), "field1"),
+                new RowType.RowField(BaseType.FLOAT, "field2")
             )
         )                                                         | "tuple<map<text, double>, list<int>, float>"
         BaseType.SMALLINT                                         | "smallint"

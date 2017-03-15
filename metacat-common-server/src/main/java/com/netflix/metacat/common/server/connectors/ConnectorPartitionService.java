@@ -17,8 +17,6 @@
  */
 package com.netflix.metacat.common.server.connectors;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
@@ -33,115 +31,122 @@ import java.util.Map;
  * Interfaces for manipulating partition information for this connector.
  *
  * @author tgianos
- * @since 0.1.51
+ * @since 1.0.0
  */
 public interface ConnectorPartitionService extends ConnectorBaseService<PartitionInfo> {
     /**
      * Gets the Partitions based on a filter expression for the specified table.
      *
-     * @param context    The Metacat request context
+     * @param context           The Metacat request context
      * @param table             table handle to get partition for
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
      * @return filtered list of partitions
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<PartitionInfo> getPartitions(
         @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName table,
         @Nonnull final PartitionListRequest partitionsRequest
     ) {
-        throw new UnsupportedOperationException("Not implemented for this connector");
+        throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Add/Update/delete partitions for a table.
      *
-     * @param context        The Metacat request context
+     * @param context               The Metacat request context
      * @param table                 table handle to get partition for
      * @param partitionsSaveRequest Partitions to save, alter or delete
      * @return added/updated list of partition names
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default PartitionsSaveResponse savePartitions(
         @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName table,
         @Nonnull final PartitionsSaveRequest partitionsSaveRequest
     ) {
-        throw new UnsupportedOperationException("Not implemented for this connector");
+        throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Delete partitions for a table.
      *
-     * @param context The Metacat request context
+     * @param context        The Metacat request context
      * @param tableName      table name
      * @param partitionNames list of partition names
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default void deletePartitions(
         @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName tableName,
         @Nonnull final List<String> partitionNames
     ) {
-        throw new UnsupportedOperationException("Not implemented for this connector");
+        throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Number of partitions for the given table.
      *
      * @param context The Metacat request context
-     * @param table          table handle
+     * @param table   table handle
      * @return Number of partitions
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default int getPartitionCount(
         @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName table
     ) {
-        throw new UnsupportedOperationException("Not implemented for this connector");
+        throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Returns all the partition names referring to the given <code>uris</code>.
      *
-     * @param context The Metacat request context
-     * @param uris           locations
-     * @param prefixSearch   if true, we look for tables whose location starts with the given <code>uri</code>
+     * @param context      The Metacat request context
+     * @param uris         locations
+     * @param prefixSearch if true, we look for tables whose location starts with the given <code>uri</code>
      * @return map of uri to list of partition names
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default Map<String, List<QualifiedName>> getPartitionNames(
         @Nonnull final ConnectorContext context,
         @Nonnull final List<String> uris,
         final boolean prefixSearch
     ) {
-        return Maps.newHashMap();
+        throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Gets the partition names/keys based on a filter expression for the specified table.
      *
-     * @param context    The Metacat request context
+     * @param context           The Metacat request context
      * @param table             table handle to get partition for
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
      * @return filtered list of partition names
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<String> getPartitionKeys(
         @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName table,
         @Nonnull final PartitionListRequest partitionsRequest
     ) {
-        return Lists.newArrayList();
+        throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Gets the partition uris based on a filter expression for the specified table.
      *
-     * @param context    The Metacat request context
+     * @param context           The Metacat request context
      * @param table             table handle to get partition for
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
      * @return filtered list of partition uris
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<String> getPartitionUris(
         @Nonnull final ConnectorContext context,
         @Nonnull final QualifiedName table,
         @Nonnull final PartitionListRequest partitionsRequest
     ) {
-        return Lists.newArrayList();
+        throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
 }

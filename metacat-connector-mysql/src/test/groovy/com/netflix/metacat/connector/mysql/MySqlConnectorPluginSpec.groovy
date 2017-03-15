@@ -23,7 +23,7 @@ import spock.lang.Specification
  * Tests for the MySqlConnectorPlugin class.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 class MySqlConnectorPluginSpec extends Specification {
 

@@ -28,7 +28,7 @@ import java.util.Map;
  * Connector Factory for Redshift.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 class RedshiftConnectorFactory extends JdbcConnectorFactory {
 

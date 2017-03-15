@@ -49,7 +49,7 @@ import java.util.Locale;
  * Generic JDBC implementation of the ConnectorTableService.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 @Slf4j
 @Getter
