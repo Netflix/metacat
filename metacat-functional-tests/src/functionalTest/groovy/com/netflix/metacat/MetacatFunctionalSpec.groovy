@@ -161,7 +161,7 @@ class MetacatFunctionalSpec extends Specification {
         given:
         ObjectNode metadata = metacatJson.parseJsonObject('{"objectField": {}}')
         def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
-        String databaseName = "test_db"
+        String databaseName =  "test_db_${catalog.name.replace('-', '_')}".toString()
 
         when:
         def catalogResponse = api.getCatalog(catalog.name)
@@ -214,7 +214,8 @@ class MetacatFunctionalSpec extends Specification {
         given:
         ObjectNode metadata = null
         def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
-        String databaseName = "db_created_without_metadata_$BATCH_ID".toString()
+       // String databaseName = "db_created_without_metadata_$BATCH_ID".toString()
+        String databaseName = "db_created_without_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
 
         when:
         def catalogResponse = api.getCatalog(catalog.name)
@@ -257,7 +258,8 @@ class MetacatFunctionalSpec extends Specification {
         given:
         ObjectNode metadata = metacatJson.parseJsonObject('{"objectField": {}}')
         def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
-        String databaseName = "db_created_with_metadata_$BATCH_ID".toString()
+       // String databaseName = "db_created_with_metadata_$BATCH_ID".toString()
+        String databaseName = "db_created_with_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
 
         when:
         def catalogResponse = api.getCatalog(catalog.name)
@@ -394,7 +396,8 @@ class MetacatFunctionalSpec extends Specification {
 
     def 'createTable: should fail for nonexistent catalog zz_#catalog.name'() {
         given:
-        def databaseName = "created_database"
+      //  def databaseName = "created_database"
+        def databaseName = "created_database_${catalog.name.replace('-', '_')}".toString()
         def tableName = "table_$BATCH_ID".toString()
         def dto = new TableDto(
                 name: QualifiedName.ofTable('zz_' + catalog.name, databaseName, tableName),
@@ -415,7 +418,8 @@ class MetacatFunctionalSpec extends Specification {
 
     def 'createTable: should fail for nonexistent database #catalog.name/missing_database'() {
         given:
-        def databaseName = 'missing_database'
+       // def databaseName = 'missing_database'
+        def databaseName = "missing_database_${catalog.name.replace('-', '_')}".toString()
         def tableName = "table_$BATCH_ID".toString()
         def dto = new TableDto(
                 name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
@@ -441,7 +445,8 @@ class MetacatFunctionalSpec extends Specification {
         given:
         def tableName = "table_$BATCH_ID".toString()
         def now = new Date()
-        def databaseName = "test_db"
+        def databaseName = "test_db_${catalog.name.replace('-', '_')}".toString()
+
         def dataUri = "file:/tmp/${catalog.name}/${databaseName}/${tableName}".toString()
         ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
         ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
@@ -543,7 +548,7 @@ class MetacatFunctionalSpec extends Specification {
         given:
         def tableName = "test_table".toString()
         def now = new Date()
-        def databaseName = "test_db"
+        def databaseName = "test_db_${catalog.name.replace('-', '_')}".toString()
         def dataUri = "file:/tmp/${catalog.name}/${databaseName}/${tableName}".toString()
         ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
         ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
@@ -619,7 +624,7 @@ class MetacatFunctionalSpec extends Specification {
 
         when:
         def tableName = "test_table"
-        def databaseName = "test_db"
+        def databaseName = "test_db_${catalog.name.replace('-', '_')}".toString()
         def table = api.getTable(catalog.name, databaseName, tableName, true, true, true)
         def originalDefinitionMetadata = table.definitionMetadata
         def mergedDefinitionMetadata = metacatJson.emptyObjectNode().put('now', now.toString())
@@ -670,7 +675,9 @@ class MetacatFunctionalSpec extends Specification {
     def 'savePartition: should fail when given a null or missing value for #pname'() {
         given:
         def name = pname as QualifiedName
-        def dataUri = "file:/tmp/${name.catalogName}/test_db/test_table/${name.partitionName}".toString()
+        def dbname = "test_db_${name.catalogName.replace('-', '_')}".toString()
+
+        def dataUri = "file:/tmp/${name.catalogName}/$dbname/test_table/${name.partitionName}".toString()
 
         def request = new PartitionsSaveRequestDto(
                 partitions: [
@@ -709,7 +716,7 @@ class MetacatFunctionalSpec extends Specification {
                     [field1: '', p: ''],
             ].collect {
                 String unescapedPartitionName = "field1=${it.field1}/p=${it.p}".toString()
-                QualifiedName.ofPartition(tname.name, "test_db", "test_table", unescapedPartitionName)
+                QualifiedName.ofPartition(tname.name, "test_db_${tname.name.replace('-', '_')}".toString(), "test_table", unescapedPartitionName)
             }
         }.flatten()
     }

@@ -21,16 +21,19 @@ import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.partition.util.PartitionUtil;
 import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
+import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClient;
 import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler;
 import com.netflix.metacat.connector.hive.util.RetryHelper;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.IHMSHandler;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.DropPartitionsRequest;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.RequestPartsSpec;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 
@@ -151,6 +154,27 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
         }
     }
 
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public void dropPartitions(@Nonnull final String databaseName,
+                               @NonNull final String tableName,
+                               @Nonnull final List<String> partitionNames) throws
+            TException {
+        dropHivePartitions(databaseName, tableName, partitionNames);
+    }
+
+    private void dropHivePartitions(final String dbName, final String tableName,
+                                    final List<String> partitionNames)
+            throws TException {
+        if (partitionNames != null && !partitionNames.isEmpty()) {
+            final DropPartitionsRequest request = new DropPartitionsRequest(dbName, tableName, new RequestPartsSpec(
+                    RequestPartsSpec._Fields.NAMES, partitionNames));
+            request.setDeleteData(false);
+            handler.drop_partitions_req(request);
+        }
+    }
     /**
      * {@inheritDoc}.
      */

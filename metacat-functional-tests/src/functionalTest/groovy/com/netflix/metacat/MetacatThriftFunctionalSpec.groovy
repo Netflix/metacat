@@ -128,10 +128,8 @@ class MetacatThriftFunctionalSpec extends Specification {
     @Shared
     String hiveThriftUri
     @Shared
-    String metacatHiveThriftUri
-    @Shared
     String metacatS3ThriftUri
-
+    @Shared
     LoadingCache<String, Hive> METASTORES = CacheBuilder.newBuilder()
             .build(
             new CacheLoader<String, Hive>() {
@@ -167,9 +165,13 @@ class MetacatThriftFunctionalSpec extends Specification {
         Logger.getRootLogger().setLevel(Level.OFF)
         String thriftPort = System.properties['metacat_hive_thrift_port']?.toString()?.trim()
         assert thriftPort, 'Required system property "metacat_hive_thrift_port" is not set'
+        TestCatalogs.findByCatalogName('hive-metastore').thriftUri = "thrift://localhost:${thriftPort}".toString()
 
-        metacatHiveThriftUri = "thrift://localhost:${thriftPort}".toString()
-        TestCatalogs.findByCatalogName('hive-metastore').thriftUri = metacatHiveThriftUri
+        Logger.getRootLogger().setLevel(Level.OFF)
+        thriftPort = System.properties['metacat_embedded_hive_thrift_port']?.toString()?.trim()
+        assert thriftPort, 'Required system property "metacat_embedded_hive_thrift_port" is not set'
+        TestCatalogs.findByCatalogName('embedded-hive-metastore').thriftUri = "thrift://localhost:${thriftPort}".toString()
+
 
         // TODO enable this, commenting out because s3 type currently doesn't have enough places to store parameters
         // currently only table.location.info.parameters and we need 2 more parameters
@@ -181,8 +183,8 @@ class MetacatThriftFunctionalSpec extends Specification {
         thriftPort = System.properties['hive_thrift_port']?.toString()?.trim()
         assert thriftPort, 'Required system property "hive_thrift_port" is not set'
         hiveThriftUri = "thrift://localhost:${thriftPort}".toString()
-
         TestCatalogs.resetAll()
+
     }
 
     List<String> databaseDifferences(Database actual, Database expected) {
@@ -400,9 +402,10 @@ class MetacatThriftFunctionalSpec extends Specification {
         return result
     }
 
+
     def 'getAllDatabases: returns the same databases for metacat and hive'() {
         given:
-        Hive metacat = METASTORES.get(metacatHiveThriftUri)
+        Hive metacat = METASTORES.get(catalog.thriftUri)
         Hive hive = METASTORES.get(hiveThriftUri)
 
         when:
@@ -411,6 +414,9 @@ class MetacatThriftFunctionalSpec extends Specification {
 
         then:
         metacatDatabases == hiveDatabases
+
+        where:
+        catalog << TestCatalogs.getThriftImplementers(TestCatalogs.ALL)
     }
 
     def 'createDatabase: can create a database for "#catalog.name"'() {
@@ -454,7 +460,8 @@ class MetacatThriftFunctionalSpec extends Specification {
 
     def 'getDatabase returns the same for metacat and hive after create for #name'() {
         given:
-        Hive metacat = METASTORES.get(metacatHiveThriftUri)
+        def catalog = TestCatalogs.findByQualifiedName(name)
+        Hive metacat = METASTORES.get(catalog.thriftUri)
         Hive hive = METASTORES.get(hiveThriftUri)
 
         when:
@@ -562,7 +569,8 @@ class MetacatThriftFunctionalSpec extends Specification {
 
     def 'getDatabase returns the same for metacat and hive after alter for #name'() {
         given:
-        Hive metacat = METASTORES.get(metacatHiveThriftUri)
+        def catalog = TestCatalogs.findByQualifiedName(name)
+        Hive metacat = METASTORES.get(catalog.thriftUri)
         Hive hive = METASTORES.get(hiveThriftUri)
 
         when:
@@ -647,7 +655,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         resultTbl.tableName == tableName
         resultTbl.dbName == name.databaseName
         resultTbl.owner == owner
-        DateUtilities.epochCloseEnough(resultTbl.getTTable().createTime, now, 60)
+        DateUtilities.epochCloseEnough(resultTbl.getTTable().createTime, now, 1200)
         !resultTbl.lastAccessTime
         !resultTbl.retention
         resultTbl.tableType == TableType.EXTERNAL_TABLE
@@ -765,7 +773,8 @@ class MetacatThriftFunctionalSpec extends Specification {
 
     def 'getTable returns the same for metacat and hive after table create for #name'() {
         given:
-        Hive metacat = METASTORES.get(metacatHiveThriftUri)
+        def catalog = TestCatalogs.findByQualifiedName(name)
+        Hive metacat = METASTORES.get(catalog.thriftUri)
         Hive hive = METASTORES.get(hiveThriftUri)
 
         when:
@@ -1047,7 +1056,8 @@ class MetacatThriftFunctionalSpec extends Specification {
 
     def 'getPartition returns the same for metacat and hive after partition create for #name'() {
         given:
-        Hive metacat = METASTORES.get(metacatHiveThriftUri)
+        def catalog = TestCatalogs.findByQualifiedName(name)
+        Hive metacat = METASTORES.get(catalog.thriftUri)
         Hive hive = METASTORES.get(hiveThriftUri)
 
         when:

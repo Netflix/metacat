@@ -30,7 +30,6 @@ import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsExceptio
 import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.exception.InvalidMetaException;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
@@ -54,7 +53,6 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     private final IMetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final String catalogName;
-    private boolean embeddedClient;
 
     /**
      * Constructor.
@@ -70,7 +68,6 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
         this.catalogName = catalogName;
-        this.embeddedClient = (this.metacatHiveClient instanceof EmbeddedHiveClient);
     }
 
     /**

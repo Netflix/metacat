@@ -20,6 +20,6 @@ dependencies {
     compile "com.google.inject:guice:${guice_version}"
     compile "com.google.inject.extensions:guice-persist:${guice_version}"
     compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
-    compile "mysql:mysql-connector-java:${mysql_connector_version}"
+    runtime "mysql:mysql-connector-java:${mysql_connector_version}"
     testCompile project(':metacat-testdata-provider').sourceSets.test.output
 }
