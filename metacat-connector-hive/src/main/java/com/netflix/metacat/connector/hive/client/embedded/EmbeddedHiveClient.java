@@ -21,9 +21,12 @@ import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.partition.util.PartitionUtil;
 import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
+import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClient;
 import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler;
 import com.netflix.metacat.connector.hive.util.RetryHelper;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hadoop.hive.metastore.IHMSHandler;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -46,6 +49,7 @@ import java.util.concurrent.Callable;
  *
  * @author zhenl
  */
+@Slf4j
 public class EmbeddedHiveClient implements IMetacatHiveClient {
     /**
      * EXCEPTION_JDO_PREFIX.
@@ -77,19 +81,23 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     private static final short ALL_RESULTS = -1;
 
-    private final MetacatHMSHandler handler;
+    private final IHMSHandler handler;
+    private final MetacatHMSHandler metacatHMSHandler;
     private final String catalogName;
 
     /**
      * Embedded hive client implementation.
      *
-     * @param catalogName catalogName
-     * @param handler     hive metastore handler
+     * @param catalogName       catalogName
+     * @param metacatHMSHandler metacatHMSHandler
+     * @param handler           hive metastore handler
      */
     @Inject
-    public EmbeddedHiveClient(final String catalogName, final MetacatHMSHandler handler) {
+    public EmbeddedHiveClient(final String catalogName, final MetacatHMSHandler metacatHMSHandler,
+                              final IHMSHandler handler) {
         this.catalogName = catalogName;
         this.handler = handler;
+        this.metacatHMSHandler = metacatHMSHandler;
     }
 
     @Override
@@ -99,9 +107,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
 
     private void handleSqlException(final TException ex) {
         if (ex.getCause() instanceof SQLException || ex.getMessage().startsWith(EXCEPTION_JDO_PREFIX)
-           || ex.getMessage().contains(EXCEPTION_SQL_PREFIX)
-           || ex.getMessage().contains(EX_MESSAGE_RESTART_TRANSACTION)) {
-                CounterWrapper.incrementCounter("dse.metacat." + catalogName + ".sql.lock.error");
+                || ex.getMessage().contains(EXCEPTION_SQL_PREFIX)
+                || ex.getMessage().contains(EX_MESSAGE_RESTART_TRANSACTION)) {
+            CounterWrapper.incrementCounter("dse.metacat." + catalogName + ".sql.lock.error");
         }
     }
 
@@ -112,6 +120,19 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public void createDatabase(@NonNull final Database database) throws TException {
         try {
             handler.create_database(database);
+        } catch (TException e) {
+            handleSqlException(e);
+            throw e;
+        }
+    }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public void createTable(@NonNull final Table table) throws TException {
+        try {
+            handler.create_table(table);
         } catch (TException e) {
             handleSqlException(e);
             throw e;
@@ -288,12 +309,13 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
                                   @Nonnull final String tableName,
                                   @Nonnull final List<Partition> addParts,
                                   @Nonnull final List<String> dropPartNames) throws TException {
+
         try {
             final List<List<String>> dropParts = new ArrayList<>();
             for (String partName : dropPartNames) {
-                dropParts.add((ArrayList<String>) PartitionUtil.getPartitionKeyValues(partName).values());
+                dropParts.add(new ArrayList<String>(PartitionUtil.getPartitionKeyValues(partName).values()));
             }
-            handler.add_drop_partitions(dbName, tableName, addParts, dropParts, false);
+            metacatHMSHandler.add_drop_partitions(dbName, tableName, addParts, dropParts, false);
         } catch (TException e) {
             handleSqlException(e);
             throw e;
@@ -373,7 +395,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
             handleSqlException(e);
             throw e;
         } catch (Exception e) {
-            throw new ConnectorException("dropTable failure", e);
+            throw new ConnectorException("getPartitions failure", e);
         }
     }
 
@@ -409,4 +431,26 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
         }
     }
 
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public List<Partition> listPartitionsByFilter(@Nonnull final String databaseName,
+                                                  @NonNull final String tableName,
+                                                  @Nonnull final String filter
+    ) throws TException {
+        try {
+            return RetryHelper.retry()
+                    .maxAttempts(RETRY_ATTEMPTS)
+                    .stopOn(NoSuchObjectException.class)
+                    .stopOnIllegalExceptions()
+                    .run("listPartitionsByFilter", RetryHelper.callableWrap(() ->
+                            handler.get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS)));
+        } catch (TException e) {
+            handleSqlException(e);
+            throw e;
+        } catch (Exception e) {
+            throw new ConnectorException("getPartitionNames failure", e);
+        }
+    }
 }

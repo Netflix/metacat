@@ -509,4 +509,22 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
         return RetryingHMSHandler.getProxy(conf, baseHandler, local);
     }
 
+
+    /**
+     * Returns the Hive metastore handle.
+     *
+     * @param name  client name
+     * @param conf  hive conf
+     * @param local is local
+     * @param baseHandler  baseHandler
+     * @return hive metastore handle
+     * @throws MetaException any exception
+     */
+    public static IHMSHandler newRetryingHMSHandler(final String name,
+                                                    final HiveConf conf,
+                                                    final boolean local, final MetacatHMSHandler baseHandler)
+            throws MetaException {
+        return RetryingHMSHandler.getProxy(conf, baseHandler, local);
+    }
+
 }

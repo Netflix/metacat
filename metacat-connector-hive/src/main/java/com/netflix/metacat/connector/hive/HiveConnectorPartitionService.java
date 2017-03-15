@@ -51,6 +51,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -413,7 +414,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             final StorageDescriptor sd = partition.getSd();
             final StorageDescriptor tableSdCopy = table.getSd().deepCopy();
             if (tableSdCopy.getSerdeInfo() == null) {
-                final SerDeInfo serDeInfo = new SerDeInfo(null, null, Collections.emptyMap());
+                final SerDeInfo serDeInfo = new SerDeInfo(null, null, new HashMap<>());
                 tableSdCopy.setSerdeInfo(serDeInfo);
             }
 

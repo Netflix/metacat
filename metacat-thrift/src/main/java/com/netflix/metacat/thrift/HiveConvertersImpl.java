@@ -38,6 +38,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,7 +173,7 @@ public class HiveConvertersImpl implements HiveConverters {
             table.setCreateTime(dateToEpochSeconds(auditDto.getCreatedDate()));
         }
 
-        Map<String, String> params = Collections.emptyMap();
+        Map<String, String> params = new HashMap<>();
         if (dto.getMetadata() != null) {
             params = dto.getMetadata();
         }

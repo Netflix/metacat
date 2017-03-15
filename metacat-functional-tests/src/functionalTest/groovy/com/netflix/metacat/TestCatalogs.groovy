@@ -41,6 +41,17 @@ class TestCatalogs {
     }
 
     static final Set<TestCatalog> ALL = [
+            new TestCatalog(
+                    createDatabase: true,
+                    createPartition: true,
+                    createTable: true,
+                    deleteDatabase: true,
+                    deleteTable: true,
+                    name: 'embedded-hive-metastore',
+                    partitionKeysAppearLast: true,
+                    type: 'hive',
+                    createView: true,
+            ),
         new TestCatalog(
             createDatabase: true,
             createPartition: true,

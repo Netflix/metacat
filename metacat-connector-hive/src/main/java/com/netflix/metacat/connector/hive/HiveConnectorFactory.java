@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * HiveConnectorFactory.
+ *
  * @author zhenl
  */
 @Slf4j
@@ -59,12 +60,13 @@ public class HiveConnectorFactory implements ConnectorFactory {
 
     /**
      * Constructor.
-     * @param catalogName connector name. Also the catalog name.
+     *
+     * @param catalogName   connector name. Also the catalog name.
      * @param configuration configuration properties
      * @param infoConverter hive info converter
      */
     public HiveConnectorFactory(final String catalogName, final Map<String, String> configuration,
-                              final HiveConnectorInfoConverter infoConverter) {
+                                final HiveConnectorInfoConverter infoConverter) {
         Preconditions.checkNotNull(catalogName, "Catalog name is null");
         Preconditions.checkNotNull(configuration, "Catalog connector configuration is null");
         this.catalogName = catalogName;
@@ -76,7 +78,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
     private void init() {
         try {
             final boolean useLocalMetastore = Boolean
-                .parseBoolean(configuration.getOrDefault(USE_EMBEDDED_METASTORE, "false"));
+                    .parseBoolean(configuration.getOrDefault(USE_EMBEDDED_METASTORE, "false"));
             if (!useLocalMetastore) {
                 client = createThriftClient();
             } else {
@@ -84,7 +86,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
             }
         } catch (Exception e) {
             throw new IllegalArgumentException(
-                String.format("Failed creating the hive metastore client for catalog: %s", catalogName), e);
+                    String.format("Failed creating the hive metastore client for catalog: %s", catalogName), e);
         }
         final Module hiveModule = new HiveConnectorModule(catalogName, configuration, infoConverter, client);
         final Injector injector = Guice.createInjector(hiveModule);
@@ -97,7 +99,10 @@ public class HiveConnectorFactory implements ConnectorFactory {
         final HiveConf conf = getDefaultConf();
         configuration.forEach(conf::set);
         DataSourceManager.get().load(catalogName, configuration);
-        return new EmbeddedHiveClient(catalogName, new MetacatHMSHandler("metacat", conf, true));
+        final MetacatHMSHandler metacatHMSHandler =
+                new MetacatHMSHandler("metacat", conf, false);
+        return new EmbeddedHiveClient(catalogName, metacatHMSHandler,
+                MetacatHMSHandler.newRetryingHMSHandler("metacat", conf, true, metacatHMSHandler));
     }
 
     private static HiveConf getDefaultConf() {
@@ -116,9 +121,9 @@ public class HiveConnectorFactory implements ConnectorFactory {
 
     private IMetacatHiveClient createThriftClient() throws MetaException {
         final HiveMetastoreClientFactory factory =
-            new HiveMetastoreClientFactory(null,
-                (int) HiveConnectorUtil.toTime(configuration.getOrDefault(HIVE_METASTORE_TIMEOUT, "20s"),
-                    TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
+                new HiveMetastoreClientFactory(null,
+                        (int) HiveConnectorUtil.toTime(configuration.getOrDefault(HIVE_METASTORE_TIMEOUT, "20s"),
+                                TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
         final String metastoreUri = configuration.get(THRIFT_URI);
         URI uri = null;
         try {

@@ -41,6 +41,7 @@ import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -145,7 +146,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
                 ? dateToEpochSeconds(auditInfo.getCreatedDate()) : 0;
 
         final Map<String, String> params = (tableInfo.getMetadata() != null)
-                ? tableInfo.getMetadata() : Collections.emptyMap();
+                ? tableInfo.getMetadata() : new HashMap<>();
 
         final List<FieldInfo> fields = tableInfo.getFields();
         List<FieldSchema> partitionFields = Collections.emptyList();
@@ -219,7 +220,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         final List<String> values = Lists.newArrayListWithCapacity(16);
         Map<String, String> metadata = partition.getMetadata();
         if (metadata == null) {
-            metadata = Collections.emptyMap();
+            metadata = new HashMap<>(); //can't use Collections.emptyMap() which is immutable and can't be modifed by add parts in the embedded
         }
 
         final List<FieldInfo> fields = tableInfo.getFields();
@@ -320,19 +321,19 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
                     "",
                     false,
                     0,
-                    new SerDeInfo("", "", Collections.emptyMap()),
+                    new SerDeInfo("", "", new HashMap<>()),
                     Collections.emptyList(),
                     Collections.emptyList(),
-                    Collections.emptyMap());
+                    new HashMap<>());
         }
         // Set all required fields to a non-null value
         final String inputFormat = notNull(storageInfo.getInputFormat()) ? storageInfo.getInputFormat() : "";
         final String location = notNull(storageInfo.getUri()) ? storageInfo.getUri() : "";
         final String outputFormat = notNull(storageInfo.getOutputFormat()) ? storageInfo.getOutputFormat() : "";
         final Map<String, String> sdParams = notNull(storageInfo.getParameters())
-                ? storageInfo.getParameters() : Collections.emptyMap();
+                ? storageInfo.getParameters() : new HashMap<>();
         final Map<String, String> serdeParams = notNull(storageInfo.getSerdeInfoParameters())
-                ? storageInfo.getSerdeInfoParameters() : Collections.emptyMap();
+                ? storageInfo.getSerdeInfoParameters() : new HashMap<>();
         final String serializationLib = notNull(storageInfo.getSerializationLib())
                 ? storageInfo.getSerializationLib() : "";
         return new StorageDescriptor(
