@@ -21,7 +21,6 @@ import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.partition.util.PartitionUtil;
 import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
-import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClient;
 import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler;
 import com.netflix.metacat.connector.hive.util.RetryHelper;
 import lombok.NonNull;

@@ -220,7 +220,10 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         final List<String> values = Lists.newArrayListWithCapacity(16);
         Map<String, String> metadata = partition.getMetadata();
         if (metadata == null) {
-            metadata = new HashMap<>(); //can't use Collections.emptyMap() which is immutable and can't be modifed by add parts in the embedded
+            metadata = new HashMap<>();
+            //can't use Collections.emptyMap()
+            // which is immutable and can't be
+            // modifed by add parts in the embedded
         }
 
         final List<FieldInfo> fields = tableInfo.getFields();
