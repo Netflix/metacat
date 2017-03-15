@@ -77,21 +77,27 @@ public class PartitionServiceImpl implements PartitionService {
 
     /**
      * Constructor.
-     * @param catalogService catalog service
-     * @param connectorManager connector manager
-     * @param tableService table service
-     * @param userMetadataService user metadata service
+     *
+     * @param catalogService       catalog service
+     * @param connectorManager     connector manager
+     * @param tableService         table service
+     * @param userMetadataService  user metadata service
      * @param threadServiceManager thread manager
-     * @param config configurations
-     * @param eventBus Internal event bus
-     * @param converterUtil utility to convert to/from Dto to connector resources
+     * @param config               configurations
+     * @param eventBus             Internal event bus
+     * @param converterUtil        utility to convert to/from Dto to connector resources
      */
     @Inject
-    public PartitionServiceImpl(final CatalogService catalogService,
+    public PartitionServiceImpl(
+        final CatalogService catalogService,
         final ConnectorManager connectorManager,
-        final TableService tableService, final UserMetadataService userMetadataService,
+        final TableService tableService,
+        final UserMetadataService userMetadataService,
         final ThreadServiceManager threadServiceManager,
-        final Config config, final MetacatEventBus eventBus, final ConverterUtil converterUtil) {
+        final Config config,
+        final MetacatEventBus eventBus,
+        final ConverterUtil converterUtil
+    ) {
         this.catalogService = catalogService;
         this.connectorManager = connectorManager;
         this.tableService = tableService;
@@ -104,9 +110,9 @@ public class PartitionServiceImpl implements PartitionService {
 
     @Override
     public List<PartitionDto> list(final QualifiedName name, final String filter, final List<String> partitionNames,
-        final Sort sort, final Pageable pageable,
-        final boolean includeUserDefinitionMetadata, final boolean includeUserDataMetadata,
-        final boolean includePartitionDetails) {
+                                   final Sort sort, final Pageable pageable,
+                                   final boolean includeUserDefinitionMetadata, final boolean includeUserDataMetadata,
+                                   final boolean includePartitionDetails) {
         if (Strings.isNullOrEmpty(filter)
             && (pageable == null || !pageable.isPageable())
             && (partitionNames == null || partitionNames.isEmpty())
@@ -292,16 +298,20 @@ public class PartitionServiceImpl implements PartitionService {
                 final ConnectorPartitionService service =
                     connectorManager.getPartitionService(catalog.getCatalogName());
                 final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-                final Map<String, List<QualifiedName>> partitionNames = service
-                    .getPartitionNames(connectorContext, uris, prefixSearch);
-                partitionNames.forEach((uri, subPartitionNames) -> {
-                    final List<QualifiedName> existingPartitionNames = result.get(uri);
-                    if (existingPartitionNames == null) {
-                        result.put(uri, subPartitionNames);
-                    } else {
-                        existingPartitionNames.addAll(subPartitionNames);
-                    }
-                });
+                try {
+                    final Map<String, List<QualifiedName>> partitionNames = service
+                        .getPartitionNames(connectorContext, uris, prefixSearch);
+                    partitionNames.forEach((uri, subPartitionNames) -> {
+                        final List<QualifiedName> existingPartitionNames = result.get(uri);
+                        if (existingPartitionNames == null) {
+                            result.put(uri, subPartitionNames);
+                        } else {
+                            existingPartitionNames.addAll(subPartitionNames);
+                        }
+                    });
+                } catch (final UnsupportedOperationException uoe) {
+                    log.debug("Catalog {} doesn't support getPartitionNames. Ignoring.", catalog.getCatalogName());
+                }
                 return null;
             }));
         });
@@ -314,8 +324,13 @@ public class PartitionServiceImpl implements PartitionService {
     }
 
     @Override
-    public List<String> getPartitionKeys(final QualifiedName name, final String filter,
-        final List<String> partitionNames, final Sort sort, final Pageable pageable) {
+    public List<String> getPartitionKeys(
+        final QualifiedName name,
+        final String filter,
+        final List<String> partitionNames,
+        final Sort sort,
+        final Pageable pageable
+    ) {
         List<String> result = Lists.newArrayList();
         if (tableService.exists(name)) {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -324,15 +339,27 @@ public class PartitionServiceImpl implements PartitionService {
             requestDto.setFilter(filter);
             requestDto.setPartitionNames(partitionNames);
             final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-            result = service.getPartitionKeys(connectorContext, name,
-                converterUtil.toPartitionListRequest(requestDto, pageable, sort));
+            try {
+                result = service.getPartitionKeys(
+                    connectorContext,
+                    name,
+                    converterUtil.toPartitionListRequest(requestDto, pageable, sort)
+                );
+            } catch (final UnsupportedOperationException uoe) {
+                log.debug("Catalog {} doesn't support getPartitionKeys. Ignoring.", name.getCatalogName());
+            }
         }
         return result;
     }
 
     @Override
-    public List<String> getPartitionUris(final QualifiedName name, final String filter,
-        final List<String> partitionNames, final Sort sort, final Pageable pageable) {
+    public List<String> getPartitionUris(
+        final QualifiedName name,
+        final String filter,
+        final List<String> partitionNames,
+        final Sort sort,
+        final Pageable pageable
+    ) {
         List<String> result = Lists.newArrayList();
         if (tableService.exists(name)) {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -341,8 +368,12 @@ public class PartitionServiceImpl implements PartitionService {
             requestDto.setFilter(filter);
             requestDto.setPartitionNames(partitionNames);
             final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-            result = service.getPartitionUris(connectorContext, name,
-                converterUtil.toPartitionListRequest(requestDto, pageable, sort));
+            try {
+                result = service.getPartitionUris(connectorContext, name,
+                    converterUtil.toPartitionListRequest(requestDto, pageable, sort));
+            } catch (final UnsupportedOperationException uoe) {
+                log.info("Catalog {} doesn't support getPartitionUris. Ignoring.", name.getCatalogName());
+            }
         }
         return result;
     }

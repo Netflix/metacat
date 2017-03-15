@@ -12,6 +12,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
  * @param <T> Connector table type
  * @param <P> Connector partition type
  * @author amajumdar
+ * @since 1.0.0
  */
 public interface ConnectorInfoConverter<D, T, P> {
     /**

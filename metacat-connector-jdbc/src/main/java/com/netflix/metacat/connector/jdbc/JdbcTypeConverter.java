@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
  * Type converter utilities for JDBC connectors.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 @Slf4j
 public abstract class JdbcTypeConverter implements ConnectorTypeConverter {

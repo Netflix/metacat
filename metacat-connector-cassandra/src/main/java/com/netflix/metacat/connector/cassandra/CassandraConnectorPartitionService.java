@@ -15,11 +15,17 @@
  *     limitations under the License.
  *
  */
+package com.netflix.metacat.connector.cassandra;
+
+import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 
 /**
- * Classes related to getting metadata from a generic JDBC connection.
+ * Just a default implementation of this interface that takes the default implementations as Cassandra doesn't
+ * have partitions.
  *
  * @author tgianos
+ * @see ConnectorPartitionService
  * @since 1.0.0
  */
-package com.netflix.metacat.connector.jdbc;
+public class CassandraConnectorPartitionService implements ConnectorPartitionService {
+}

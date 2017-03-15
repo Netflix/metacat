@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.connector.jdbc.services
 
+import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
@@ -27,6 +28,7 @@ import com.netflix.metacat.common.type.BaseType
 import com.netflix.metacat.common.type.VarcharType
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import javax.sql.DataSource
 import java.sql.Connection
@@ -38,7 +40,7 @@ import java.sql.Statement
  * Tests for the JdbcConnectorTableService APIs.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 class JdbcConnectorTableServiceSpec extends Specification {
 
@@ -294,5 +296,50 @@ class JdbcConnectorTableServiceSpec extends Specification {
         1 * connection.getMetaData() >> metadata
         1 * metadata.storesUpperCaseIdentifiers() >> false
         1 * statement.executeUpdate("ALTER TABLE c RENAME d;")
+    }
+
+    @Unroll
+    "Can't call unsupported method #methodName"() {
+        when:
+        method.call()
+
+        then:
+        thrown exception
+
+        where:
+        method | methodName      | exception
+        (
+            {
+                new JdbcConnectorTableService(Mock(DataSource), Mock(JdbcTypeConverter)).getTableNames(
+                    Mock(ConnectorContext),
+                    Lists.newArrayList(),
+                    false
+                )
+            }
+        )      | "getTableNames" | UnsupportedOperationException
+        (
+            {
+                new JdbcConnectorTableService(Mock(DataSource), Mock(JdbcTypeConverter)).create(
+                    Mock(ConnectorContext),
+                    TableInfo.builder().name(QualifiedName.ofTable("catalog", "database", "table")).build()
+                )
+            }
+        )      | "create"        | UnsupportedOperationException
+        (
+            {
+                new JdbcConnectorTableService(Mock(DataSource), Mock(JdbcTypeConverter)).update(
+                    Mock(ConnectorContext),
+                    TableInfo.builder().name(QualifiedName.ofTable("catalog", "database", "table")).build()
+                )
+            }
+        )      | "update"       | UnsupportedOperationException
+        (
+            {
+                new JdbcConnectorTableService(Mock(DataSource), Mock(JdbcTypeConverter)).exists(
+                    Mock(ConnectorContext),
+                    QualifiedName.ofTable("catalog", "database", "table")
+                )
+            }
+        )      | "exists"        | UnsupportedOperationException
     }
 }

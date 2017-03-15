@@ -17,7 +17,6 @@
  */
 package com.netflix.metacat.common.server.connectors;
 
-import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 
@@ -29,24 +28,24 @@ import java.util.Map;
  * Service interface for connector to implement and expose Table related metadata.
  *
  * @author tgianos
- * @since 0.1.51
+ * @since 1.0.0
  */
 public interface ConnectorTableService extends ConnectorBaseService<TableInfo> {
 
     /**
      * Returns all the table names referring to the given <code>uris</code>.
      *
-     * @param context The Metacat request context
-     * @param uris           locations
-     * @param prefixSearch   if true, we look for tables whose location starts with the given <code>uri</code>
+     * @param context      The Metacat request context
+     * @param uris         locations
+     * @param prefixSearch if true, we look for tables whose location starts with the given <code>uri</code>
      * @return map of uri to list of partition names
+     * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default Map<String, List<QualifiedName>> getTableNames(
-        @Nonnull
-        final ConnectorContext context,
+        @Nonnull final ConnectorContext context,
         @Nonnull final List<String> uris,
         final boolean prefixSearch
     ) {
-        return Maps.newHashMap();
+        throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
 }

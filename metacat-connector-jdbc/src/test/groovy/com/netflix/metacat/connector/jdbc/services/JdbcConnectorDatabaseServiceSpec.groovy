@@ -24,6 +24,7 @@ import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import javax.sql.DataSource
 import java.sql.*
@@ -32,7 +33,7 @@ import java.sql.*
  * Tests for JdbcConnectorDatabaseService.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 class JdbcConnectorDatabaseServiceSpec extends Specification {
 
@@ -86,79 +87,33 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
     }
 
     def "Can get a Database Info Instance"() {
-//        def catalog = UUID.randomUUID().toString()
         def databaseName = UUID.randomUUID().toString()
         def qName = QualifiedName.ofDatabase(UUID.randomUUID().toString(), databaseName)
-//        def dbMetadata = Mock(DatabaseMetaData)
-//        def resultSet = Mock(ResultSet)
-//        def expectedTables = ["one", "two", "three"]
 
         when:
         def db = this.service.get(this.context, qName)
 
         then:
         db.getName() == qName
-//        1 * this.dataSource.getConnection() >> this.connection
-//        1 * this.connection.getMetaData() >> dbMetadata
-//        1 * this.connection.getCatalog() >> catalog
-//        1 * dbMetadata.getSearchStringEscape() >> "%"
-//        1 * dbMetadata.getTables(catalog, databaseName, "%", null) >> resultSet
-//        4 * resultSet.next() >>> [true, true, true, false]
-//        3 * resultSet.getString("TABLE_NAME") >>> ["one", "two", "three"]
-//        db.getName() == qName
-//        db.getTables().size() == 3
-//        db.getTables() == expectedTables
     }
 
-//    def "Can't get a Database Info on SQL exception"() {
-//        def databaseName = UUID.randomUUID().toString()
-//        def qName = QualifiedName.ofDatabase(UUID.randomUUID().toString(), databaseName)
-//
-//        when:
-//        this.service.get(this.context, qName)
-//
-//        then:
-//        1 * this.dataSource.getConnection() >> { throw new SQLException("blah") }
-//        thrown RuntimeException
-//    }
-
     def "Can list database Info's"() {
-        def catalog = UUID.randomUUID().toString()
         def qName = QualifiedName.ofCatalog(UUID.randomUUID().toString())
         def schemaMetadata = Mock(DatabaseMetaData)
-        def dbMetadata1 = Mock(DatabaseMetaData)
-        def dbMetadata2 = Mock(DatabaseMetaData)
         def schemaResultSet = Mock(ResultSet)
-//        def aDatabaseResultSet = Mock(ResultSet)
-//        def bDatabaseResultSet = Mock(ResultSet)
 
         when:
         def databases = this.service.list(this.context, qName, null, null, null)
 
         then:
-//        3 * this.dataSource.getConnection() >> this.connection
-//        3 * this.connection.getMetaData() >>> [schemaMetadata, dbMetadata1, dbMetadata2]
         1 * this.dataSource.getConnection() >> this.connection
         1 * this.connection.getMetaData() >> schemaMetadata
         1 * schemaMetadata.getSchemas() >> schemaResultSet
         3 * schemaResultSet.next() >>> [true, true, false]
         2 * schemaResultSet.getString("TABLE_SCHEM") >>> ["a", "b"]
-//        2 * this.connection.getCatalog() >> catalog
-//        1 * dbMetadata1.getSearchStringEscape() >> "%"
-//        1 * dbMetadata1.getTables(catalog, "a", "%", null) >> aDatabaseResultSet
-//        4 * aDatabaseResultSet.next() >>> [true, true, true, false]
-//        3 * aDatabaseResultSet.getString("TABLE_NAME") >>> ["one", "two", "three"]
-//        1 * dbMetadata2.getSearchStringEscape() >> "%"
-//        1 * dbMetadata2.getTables(catalog, "b", "%", null) >> bDatabaseResultSet
-//        5 * bDatabaseResultSet.next() >>> [true, true, true, true, false]
-//        4 * bDatabaseResultSet.getString("TABLE_NAME") >>> ["four", "five", "six", "seven"]
         databases.size() == 2
         databases.get(0).getName().getDatabaseName() == "a"
-//        databases.get(0).getTables().size() == 3
-//        databases.get(0).getTables() == ["one", "two", "three"]
         databases.get(1).getName().getDatabaseName() == "b"
-//        databases.get(1).getTables().size() == 4
-//        databases.get(1).getTables() == ["four", "five", "six", "seven"]
     }
 
     def "Can get list of database names without prefix, sort by or pagination"() {
@@ -291,15 +246,48 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         databases.size() == 0
     }
 
-    def "Renaming a database isn't supported"() {
+    @Unroll
+    "Can't call unsupported method #methodName"() {
         when:
-        this.service.rename(
-            this.context,
-            QualifiedName.ofCatalog(UUID.randomUUID().toString()),
-            QualifiedName.ofCatalog(UUID.randomUUID().toString())
-        )
+        method.call()
 
         then:
-        thrown UnsupportedOperationException
+        thrown exception
+
+        where:
+        method | methodName      | exception
+        (
+            {
+                new JdbcConnectorDatabaseService(Mock(DataSource)).listViewNames(
+                    Mock(ConnectorContext),
+                    QualifiedName.ofDatabase("catalog", "database")
+                )
+            }
+        )      | "listViewNames" | UnsupportedOperationException
+        (
+            {
+                new JdbcConnectorDatabaseService(Mock(DataSource)).update(
+                    Mock(ConnectorContext),
+                    DatabaseInfo.builder().name(QualifiedName.ofCatalog("blah")).build()
+                )
+            }
+        )      | "update"        | UnsupportedOperationException
+        (
+            {
+                new JdbcConnectorDatabaseService(Mock(DataSource)).exists(
+                    Mock(ConnectorContext),
+                    QualifiedName.ofDatabase("catalog", "database")
+                )
+            }
+        )      | "exists"        | UnsupportedOperationException
+        (
+            {
+                new JdbcConnectorDatabaseService(Mock(DataSource)).rename(
+                    Mock(ConnectorContext),
+                    QualifiedName.ofDatabase("catalog", "database"),
+                    QualifiedName.ofDatabase("catalog", "new")
+                )
+            }
+        )      | "rename"        | UnsupportedOperationException
     }
 }

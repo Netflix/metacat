@@ -121,11 +121,12 @@ public class CassandraTypeConverter implements ConnectorTypeConverter {
                     }
                     final Matcher tupleMatcher = TUPLE_PARAM_PATTERN.matcher(matcher.group(PARAM_GROUP));
                     final ImmutableList.Builder<RowType.RowField> tupleFields = ImmutableList.builder();
+                    int rowFieldNumber = 0;
                     while (tupleMatcher.find()) {
                         tupleFields.add(
                             new RowType.RowField(
                                 this.toMetacatType(tupleMatcher.group(TUPLE_GROUP)),
-                                null
+                                "field" + rowFieldNumber++
                             )
                         );
                     }

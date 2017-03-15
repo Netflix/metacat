@@ -24,6 +24,7 @@ import java.util.Map;
 
 /**
  * Partition DTO.
+ * @since 1.0.0
  */
 @SuppressWarnings("unused")
 @Data

@@ -19,5 +19,6 @@
  * Classes and interfaces related to SPI (Service Provider Interface) for catalog connectors.
  *
  * @author tgianos
+ * @since 1.0.0
  */
 package com.netflix.metacat.common.server.connectors;

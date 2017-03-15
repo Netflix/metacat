@@ -15,14 +15,11 @@
  *     limitations under the License.
  *
  */
-/**
- * @author tgianos
- */
 
 /**
  * Classes related to creating a connector for PostgreSQL for Metacat.
  *
  * @author tgianos
- * @since 0.1.52
+ * @since 1.0.0
  */
 package com.netflix.metacat.connector.postgresql;

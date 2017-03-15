@@ -78,22 +78,28 @@ public class TableServiceImpl implements TableService {
 
     /**
      * Constructor.
-     * @param connectorManager connector manager
-     * @param databaseService database service
-     * @param tagService tag service
-     * @param mViewService view service
-     * @param userMetadataService user metadata service
+     *
+     * @param connectorManager     connector manager
+     * @param databaseService      database service
+     * @param tagService           tag service
+     * @param mViewService         view service
+     * @param userMetadataService  user metadata service
      * @param threadServiceManager thread service
-     * @param config configurations
-     * @param eventBus Internal event bus
-     * @param converterUtil utility to convert to/from Dto to connector resources
+     * @param config               configurations
+     * @param eventBus             Internal event bus
+     * @param converterUtil        utility to convert to/from Dto to connector resources
      */
     @Inject
-    public TableServiceImpl(final ConnectorManager connectorManager,
+    public TableServiceImpl(
+        final ConnectorManager connectorManager,
         final DatabaseService databaseService,
-        final TagService tagService, final MViewService mViewService,
-        final UserMetadataService userMetadataService, final ThreadServiceManager threadServiceManager,
-        final Config config, final MetacatEventBus eventBus, final ConverterUtil converterUtil) {
+        final TagService tagService,
+        final MViewService mViewService,
+        final UserMetadataService userMetadataService,
+        final ThreadServiceManager threadServiceManager,
+        final Config config, final MetacatEventBus eventBus,
+        final ConverterUtil converterUtil
+    ) {
         this.connectorManager = connectorManager;
         this.databaseService = databaseService;
         this.tagService = tagService;
@@ -213,7 +219,7 @@ public class TableServiceImpl implements TableService {
 
     @Override
     public Optional<TableDto> get(@Nonnull final QualifiedName name, final boolean includeInfo,
-        final boolean includeDefinitionMetadata, final boolean includeDataMetadata) {
+                                  final boolean includeDefinitionMetadata, final boolean includeDataMetadata) {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
@@ -242,7 +248,8 @@ public class TableServiceImpl implements TableService {
             if (!includeInfo) {
                 try {
                     dto = converterUtil.toTableDto(service.get(connectorContext, name));
-                } catch (NotFoundException ignored) { }
+                } catch (NotFoundException ignored) {
+                }
             }
             if (dto != null && dto.getSerde() != null) {
                 final Optional<ObjectNode> dataMetadata =
@@ -257,8 +264,11 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public void rename(@Nonnull final QualifiedName oldName, @Nonnull final QualifiedName newName,
-        final boolean isMView) {
+    public void rename(
+        @Nonnull final QualifiedName oldName,
+        @Nonnull final QualifiedName newName,
+        final boolean isMView
+    ) {
         validate(oldName);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(oldName.getCatalogName());
@@ -283,7 +293,8 @@ public class TableServiceImpl implements TableService {
                         });
                     }
                 }
-            } catch (UnsupportedOperationException ignored) { }
+            } catch (UnsupportedOperationException ignored) {
+            }
             userMetadataService.renameDefinitionMetadataKey(oldName, newName);
             tagService.rename(oldName, newName.getTableName());
 
@@ -309,7 +320,8 @@ public class TableServiceImpl implements TableService {
             log.info("Updating table {}", name);
             final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
             service.update(connectorContext, converterUtil.fromTableDto(tableDto));
-        } catch (UnsupportedOperationException ignored) { }
+        } catch (UnsupportedOperationException ignored) {
+        }
 
         // Merge in metadata if the user sent any
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
@@ -381,7 +393,7 @@ public class TableServiceImpl implements TableService {
 
     @Override
     public void saveMetadata(@Nonnull final QualifiedName name, final ObjectNode definitionMetadata,
-        final ObjectNode dataMetadata) {
+                             final ObjectNode dataMetadata) {
         validate(name);
         final Optional<TableDto> tableDtoOptional = get(name, false);
         if (tableDtoOptional.isPresent()) {
@@ -403,11 +415,15 @@ public class TableServiceImpl implements TableService {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
             final ConnectorTableService service = connectorManager.getTableService(catalogName);
             final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-            final Map<String, List<QualifiedName>> names =
-                service.getTableNames(connectorContext, Lists.newArrayList(uri), prefixSearch);
-            final List<QualifiedName> qualifiedNames = names.values().stream().flatMap(Collection::stream)
-                .collect(Collectors.toList());
-            result.addAll(qualifiedNames);
+            try {
+                final Map<String, List<QualifiedName>> names =
+                    service.getTableNames(connectorContext, Lists.newArrayList(uri), prefixSearch);
+                final List<QualifiedName> qualifiedNames = names.values().stream().flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+                result.addAll(qualifiedNames);
+            } catch (final UnsupportedOperationException uoe) {
+                log.debug("Catalog {} doesn't support getting table names by URI. Skipping", catalogName);
+            }
         });
         return result;
     }
