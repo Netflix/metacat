@@ -14,7 +14,7 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.connector.hive.thrift;
+package com.netflix.metacat.connector.hive.client.thrift;
 
 import com.google.common.net.HostAndPort;
 import org.apache.thrift.transport.TSocket;
@@ -34,6 +34,7 @@ import java.net.SocketAddress;
  * HiveMetastoreClientFactory.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public class HiveMetastoreClientFactory {
     private final HostAndPort socksProxy;

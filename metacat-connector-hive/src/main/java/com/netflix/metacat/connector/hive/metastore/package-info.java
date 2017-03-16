@@ -16,6 +16,8 @@
 
 /**
  * Classes to extend hive metastore.
- * @author amajumdar .
+ *
+ * @author amajumdar
+ * @since 1.0.0
  */
 package com.netflix.metacat.connector.hive.metastore;

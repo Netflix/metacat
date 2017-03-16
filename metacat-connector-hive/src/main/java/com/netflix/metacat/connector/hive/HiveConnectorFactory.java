@@ -16,7 +16,6 @@
 
 package com.netflix.metacat.connector.hive;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -24,58 +23,57 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.util.DataSourceManager;
+import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;
+import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClientFactory;
+import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.embedded.EmbeddedHiveClient;
 import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler;
-import com.netflix.metacat.connector.hive.thrift.HiveMetastoreClientFactory;
-import com.netflix.metacat.connector.hive.thrift.MetacatHiveClient;
+import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.thrift.TException;
 
+import javax.annotation.Nonnull;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
  * HiveConnectorFactory.
+ *
  * @author zhenl
+ * @since 1.0.0
  */
 @Slf4j
 public class HiveConnectorFactory implements ConnectorFactory {
-    private static final String THRIFT_URI = "hive.metastore.uris";
-    private static final String HIVE_METASTORE_TIMEOUT = "hive.metastore-timeout";
-    private static final String USE_EMBEDDED_METASTORE = "hive.use.embedded.metastore";
-    private final String name;
+    private static final String THRIFT_URI = HiveConfigConstants.THRIFT_URI;
+    private static final String HIVE_METASTORE_TIMEOUT = HiveConfigConstants.HIVE_METASTORE_TIMEOUT;
+    private static final String USE_EMBEDDED_METASTORE = HiveConfigConstants.USE_EMBEDDED_METASTORE;
+    private final String catalogName;
     private final Map<String, String> configuration;
     private final HiveConnectorInfoConverter infoConverter;
     private IMetacatHiveClient client;
-    private ConnectorDatabaseService databaseService;
-    private ConnectorTableService tableService;
-    private ConnectorPartitionService partitionService;
-
+    private final Injector injector;
 
     /**
      * Constructor.
-     * @param name connector name. Also the catalog name.
+     *
+     * @param catalogName   connector name. Also the catalog name.
      * @param configuration configuration properties
      * @param infoConverter hive info converter
      */
-    public HiveConnectorFactory(final String name, final Map<String, String> configuration,
-                              final HiveConnectorInfoConverter infoConverter) {
-        Preconditions.checkNotNull(name, "Catalog name is null");
-        Preconditions.checkNotNull(configuration, "Catalog connector configuration is null");
-        this.name = name;
+    public HiveConnectorFactory(@Nonnull @NonNull final String catalogName,
+                                @Nonnull @NonNull final Map<String, String> configuration,
+                                final HiveConnectorInfoConverter infoConverter) {
+        this.catalogName = catalogName;
         this.configuration = configuration;
         this.infoConverter = infoConverter;
-        init();
-    }
-
-    private void init() {
         try {
             final boolean useLocalMetastore = Boolean
-                .parseBoolean(configuration.getOrDefault(USE_EMBEDDED_METASTORE, "false"));
+                    .parseBoolean(configuration.getOrDefault(USE_EMBEDDED_METASTORE, "false"));
             if (!useLocalMetastore) {
                 client = createThriftClient();
             } else {
@@ -83,38 +81,43 @@ public class HiveConnectorFactory implements ConnectorFactory {
             }
         } catch (Exception e) {
             throw new IllegalArgumentException(
-                String.format("Failed creating the hive metastore client for catalog: %s", name), e);
+                    String.format("Failed creating the hive metastore client for catalog: %s", catalogName), e);
         }
-        final Module hiveModule = new HiveConnectorModule(name, configuration, infoConverter, client);
-        final Injector injector = Guice.createInjector(hiveModule);
-        this.databaseService = injector.getInstance(ConnectorDatabaseService.class);
-        this.tableService = injector.getInstance(ConnectorTableService.class);
-        this.partitionService = injector.getInstance(ConnectorPartitionService.class);
+        final Module hiveModule = new HiveConnectorModule(catalogName, configuration, infoConverter, client);
+        this.injector = Guice.createInjector(hiveModule);
     }
 
     private IMetacatHiveClient createLocalClient() throws MetaException {
         final HiveConf conf = getDefaultConf();
         configuration.forEach(conf::set);
-        return new EmbeddedHiveClient(MetacatHMSHandler.newRetryingHMSHandler("metacat", conf, true));
+        //Change the usage of DataSourceManager later
+        DataSourceManager.get().load(catalogName, configuration);
+        final MetacatHMSHandler metacatHMSHandler =
+                new MetacatHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME, conf, false);
+        return new EmbeddedHiveClient(catalogName, metacatHMSHandler,
+                MetacatHMSHandler.newRetryingHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME,
+                        conf, true, metacatHMSHandler));
     }
 
     private static HiveConf getDefaultConf() {
         final HiveConf result = new HiveConf();
-        result.setBoolean("hive.metastore.local", true);
-        result.setInt("javax.jdo.option.DatastoreTimeout", 60000);
-        result.setInt("javax.jdo.option.DatastoreReadTimeoutMillis", 60000);
-        result.setInt("javax.jdo.option.DatastoreWriteTimeoutMillis", 60000);
-        result.setInt("hive.metastore.ds.retry.attempts", 0);
-        result.setInt("hive.hmshandler.retry.attempts", 0);
-        result.setBoolean("hive.stats.autogather", false);
+        result.setBoolean(HiveConfigConstants.USE_METASTORE_LOCAL, true);
+        result.setInt(HiveConfigConstants.JAVAX_JDO_DATASTORETIMEOUT, 60000);
+        result.setInt(HiveConfigConstants.JAVAX_JDO_DATASTOREREADTIMEOUT, 60000);
+        result.setInt(HiveConfigConstants.JAVAX_JDO_DATASTOREWRITETIMEOUT, 60000);
+        result.setInt(HiveConfigConstants.HIVE_METASTORE_DS_RETRY, 0);
+        result.setInt(HiveConfigConstants.HIVE_HMSHANDLER_RETRY, 0);
+        result.set(HiveConfigConstants.JAVAX_JDO_PERSISTENCEMANAGER_FACTORY_CLASS,
+                HiveConfigConstants.JAVAX_JDO_PERSISTENCEMANAGER_FACTORY);
+        result.setBoolean(HiveConfigConstants.HIVE_STATS_AUTOGATHER, false);
         return result;
     }
 
     private IMetacatHiveClient createThriftClient() throws MetaException {
         final HiveMetastoreClientFactory factory =
-            new HiveMetastoreClientFactory(null,
-                (int) HiveConnectorUtil.toTime(configuration.getOrDefault(HIVE_METASTORE_TIMEOUT, "20s"),
-                    TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
+                new HiveMetastoreClientFactory(null,
+                        (int) HiveConnectorUtil.toTime(configuration.getOrDefault(HIVE_METASTORE_TIMEOUT, "20s"),
+                                TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
         final String metastoreUri = configuration.get(THRIFT_URI);
         URI uri = null;
         try {
@@ -129,22 +132,22 @@ public class HiveConnectorFactory implements ConnectorFactory {
 
     @Override
     public ConnectorDatabaseService getDatabaseService() {
-        return databaseService;
+        return this.injector.getInstance(ConnectorDatabaseService.class);
     }
 
     @Override
     public ConnectorTableService getTableService() {
-        return tableService;
+        return this.injector.getInstance(ConnectorTableService.class);
     }
 
     @Override
     public ConnectorPartitionService getPartitionService() {
-        return partitionService;
+        return this.injector.getInstance(ConnectorPartitionService.class);
     }
 
     @Override
     public String getName() {
-        return name;
+        return catalogName;
     }
 
     @Override
@@ -152,7 +155,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
         try {
             client.shutdown();
         } catch (TException e) {
-            log.warn(String.format("Failed shutting down the catalog: %s", name), e);
+            log.warn("Failed shutting down the catalog: {}", catalogName, e);
         }
     }
 }

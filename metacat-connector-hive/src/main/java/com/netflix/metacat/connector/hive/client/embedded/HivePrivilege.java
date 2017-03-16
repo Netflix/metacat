@@ -1,5 +1,4 @@
 /*
- *
  *  Copyright 2017 Netflix, Inc.
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,36 +12,27 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
- *
  */
 
-package com.netflix.metacat.common.server.connectors.model;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-
-import java.util.Date;
+package com.netflix.metacat.connector.hive.client.embedded;
 
 /**
- * Audit information.
+ * HivePrivilege.
+ *
+ * @author zhenl
  * @since 1.0.0
  */
-@SuppressWarnings("unused")
-@Data
-@EqualsAndHashCode(callSuper = false)
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class AuditInfo {
-    /* Created By */
-    private String createdBy;
-    /* Created date */
-    private Date createdDate;
-    /* Last modified by */
-    private String lastModifiedBy;
-    /* Last modified date */
-    private Date lastModifiedDate;
+public enum HivePrivilege {
+    /**SELECT.*/
+    SELECT,
+    /**INSERT.*/
+    INSERT,
+    /**UPDATE.*/
+    UPDATE,
+    /**DELETE.*/
+    DELETE,
+    /**OWNERSHIP.*/
+    OWNERSHIP,
+    /**GRANT.*/
+    GRANT;
 }
