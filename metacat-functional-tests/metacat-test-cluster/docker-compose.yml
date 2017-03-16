@@ -20,10 +20,11 @@ version: "2"
 services:
     metacat:
         image: tomcat:8.0-jre8
-        links:
+        depends_on:
             - hive-metastore
             - hive-metastore-db
-            - postgresql-db
+            - postgresql
+            - cassandra
         ports:
             - '8080'
             - '8000'
@@ -52,10 +53,16 @@ services:
         labels:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.war"
+    cassandra:
+        image: cassandra:3.10
+        volumes:
+          - ./datastores/cassandra/:/init
+        labels:
+          - "com.netflix.metacat.oss.test"
     hive-metastore-db:
         image: mysql:5.6
         volumes:
-            - ./sql/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+            - ./datastores/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
         environment:
             - MYSQL_ROOT_PASSWORD=root_password
             - MYSQL_USER=metacat_user
@@ -63,10 +70,10 @@ services:
             - MYSQL_DATABASE=metacat
         labels:
           - "com.netflix.metacat.oss.test"
-    postgresql-db:
+    postgresql:
         image: postgres:9.6
         volumes:
-            - ./sql/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+            - ./datastores/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
         environment:
             - POSTGRES_USER=metacat_user
             - POSTGRES_PASSWORD=metacat_user_password
@@ -75,7 +82,7 @@ services:
           - "com.netflix.metacat.oss.test"
     hive-metastore:
         image: danielbwatson/metacat-test-hive-metastore:1.0.0
-        links:
+        depends_on:
             - hive-metastore-db
         ports:
             - '9083'
@@ -86,28 +93,26 @@ services:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.hive"
     storage-barrier:
-        #image: ddn0/wait:latest
         image: martin/wait:latest
-        links:
+        depends_on:
             - hive-metastore-db
-            - postgresql-db
+            - postgresql
+            - cassandra
         environment:
-            - TARGETS=hive-metastore-db:3306,postgresql-db:5432
+            - TARGETS=postgresql:5432,cassandra:9042,hive-metastore-db:3306
         labels:
           - "com.netflix.metacat.oss.test"
     service-barrier:
-        #image: ddn0/wait:latest
         image: martin/wait:latest
-        links:
+        depends_on:
             - hive-metastore
         environment:
             - TARGETS=hive-metastore:9083
         labels:
           - "com.netflix.metacat.oss.test"
     metacat-barrier:
-        #image: ddn0/wait:latest
         image: martin/wait:latest
-        links:
+        depends_on:
             - metacat
         environment:
             - TARGETS=metacat:8080,metacat:12001,metacat:12003

@@ -27,11 +27,12 @@ dependencies {
     compile "com.google.inject.extensions:guice-servlet:${guice_version}"
     compile "javax.validation:validation-api:1.1.0.Final"
 
-    runtime project(":metacat-connector-s3")
+    runtime project(":metacat-connector-cassandra")
     runtime project(":metacat-connector-hive")
     runtime project(":metacat-connector-mysql")
     runtime project(":metacat-connector-postgresql")
     runtime project(":metacat-connector-redshift")
+    runtime project(":metacat-connector-s3")
 
     testCompile project(":metacat-user-metadata-mysql")
     testCompile "io.airlift:testing-mysql-server:0.1"
