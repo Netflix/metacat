@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
  * Class to convert hive to canonical type and vice versa.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public class HiveTypeConverter implements ConnectorTypeConverter {
 

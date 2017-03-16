@@ -85,6 +85,7 @@ task metacatPorts {
     ext.http_port = null
     ext.metacat_http_debug_port = null
     ext.metacat_hive_thrift_port = null
+    ext.metacat_embedded_hive_thrift_port = null
     ext.hive_thrift_port = null
     ext.hive_debug_port = null
 
@@ -102,6 +103,7 @@ task metacatPorts {
         ext.http_port = get_docker_port('com.netflix.metacat.oss.test.war', 8080)
         ext.metacat_http_debug_port = get_docker_port('com.netflix.metacat.oss.test.war', 8000)
         ext.metacat_hive_thrift_port = get_docker_port('com.netflix.metacat.oss.test.war', 12001)
+        ext.metacat_embedded_hive_thrift_port = get_docker_port('com.netflix.metacat.oss.test.war', 12003)
         ext.hive_thrift_port = get_docker_port('com.netflix.metacat.oss.test.hive', 9083)
         ext.hive_debug_port = get_docker_port('com.netflix.metacat.oss.test.hive', 8005)
 
@@ -109,6 +111,7 @@ task metacatPorts {
         println '+++ Metacat Web Port:' + ext.http_port
         println '+++ Metacat Web Debug Port:' + ext.metacat_http_debug_port
         println '+++ Metacat Hive Thrift Port:' + ext.metacat_hive_thrift_port
+        println '+++ Metacat Embedded Hive Thrift Port:' + ext.metacat_embedded_hive_thrift_port
         println '+++ Metacat Hive Metastore Port:' + ext.hive_thrift_port
         println '+++ Metacat Hive Metastore Debug Port:' + ext.hive_debug_port
     }
@@ -124,6 +127,7 @@ task functionalTest(type: Test) {
                 'metacat_http_port'                     : metacatPorts.http_port as String,
                 'metacat_hive_thrift_port'              : metacatPorts.metacat_hive_thrift_port as String,
                 'hive_thrift_port'                      : metacatPorts.hive_thrift_port as String,
+                'metacat_embedded_hive_thrift_port'     : metacatPorts.metacat_embedded_hive_thrift_port as String,
                 'org.slf4j.simpleLogger.defaultLogLevel': 'debug'
         ]
         System.properties.stringPropertyNames().findAll { it?.toLowerCase()?.contains("metacat") }.each {

@@ -14,9 +14,10 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.connector.hive.thrift;
+package com.netflix.metacat.connector.hive.client.thrift;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.common.server.exception.InvalidMetaException;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
@@ -38,11 +39,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 
 /**
  * MetacatHiveClient.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public class MetacatHiveClient implements IMetacatHiveClient {
     private static final short ALL_RESULTS = -1;
@@ -58,8 +61,8 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * @throws MetaException exception
      */
     @Inject
-    public MetacatHiveClient(@Named("thrifturi") @Nonnull final URI address,
-                             @Nonnull final HiveMetastoreClientFactory hiveMetastoreClientFactory)
+    public MetacatHiveClient(@Named("thrifturi") @Nonnull @NonNull final URI address,
+                             @Nonnull @NonNull final HiveMetastoreClientFactory hiveMetastoreClientFactory)
             throws MetaException {
         this.hiveMetastoreClientFactory = hiveMetastoreClientFactory;
         Preconditions.checkArgument(address.getHost() != null, "metastoreUri host is missing: " + address);
@@ -95,7 +98,7 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public List<String> getAllTables(@Nonnull final String databaseName) throws TException {
+    public List<String> getAllTables(@Nonnull @NonNull final String databaseName) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             return client.get_all_tables(databaseName);
         }
@@ -106,8 +109,8 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public Table getTableByName(@Nonnull final String databaseName,
-                                @NonNull final String tableName) throws TException {
+    public Table getTableByName(@Nonnull @NonNull final String databaseName,
+                                @Nonnull @NonNull final String tableName) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             return client.get_table(databaseName, tableName);
         }
@@ -117,7 +120,7 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void createTable(@NonNull final Table table) throws TException {
+    public void createTable(@Nonnull @NonNull final Table table) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             client.create_table(table);
         }
@@ -127,7 +130,8 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void dropTable(@Nonnull final String databaseName, @NonNull final String tableName) throws TException {
+    public void dropTable(@Nonnull @NonNull final String databaseName,
+                          @Nonnull @NonNull final String tableName) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             client.drop_table(databaseName, tableName, false);
         }
@@ -137,10 +141,10 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void rename(@Nonnull final String databaseName,
-                       @NonNull final String oldName,
-                       @Nonnull final String newdatabadeName,
-                       @Nonnull final String newName) throws TException {
+    public void rename(@Nonnull @NonNull final String databaseName,
+                       @Nonnull @NonNull final String oldName,
+                       @Nonnull @NonNull final String newdatabadeName,
+                       @Nonnull @NonNull final String newName) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             final Table table = client.get_table(databaseName, oldName);
             client.drop_table(databaseName, oldName, false);
@@ -154,9 +158,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void alterTable(@NonNull final String databaseName,
-                           @NonNull final String tableName,
-                           @NonNull final Table table) throws TException {
+    public void alterTable(@Nonnull @NonNull final String databaseName,
+                           @Nonnull @NonNull final String tableName,
+                           @Nonnull @NonNull final Table table) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             client.alter_table(databaseName, tableName, table);
         }
@@ -166,7 +170,18 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void createDatabase(@NonNull final Database database) throws TException {
+    public void alterDatabase(@Nonnull @NonNull final String databaseName,
+                              @Nonnull @NonNull final Database database) throws TException {
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            client.alter_database(databaseName, database);
+        }
+    }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public void createDatabase(@Nonnull @NonNull final Database database) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             client.create_database(database);
         }
@@ -176,7 +191,7 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void dropDatabase(@NonNull final String dbName) throws TException {
+    public void dropDatabase(@Nonnull @NonNull final String dbName) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             client.drop_database(dbName, false, false);
         }
@@ -187,7 +202,7 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public Database getDatabase(@Nonnull final String databaseName) throws TException {
+    public Database getDatabase(@Nonnull @NonNull final String databaseName) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             return client.get_database(databaseName);
         }
@@ -197,8 +212,8 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public List<Partition> getPartitions(@Nonnull final String databaseName,
-                                         @NonNull final String tableName,
+    public List<Partition> getPartitions(@Nonnull @NonNull final String databaseName,
+                                         @Nonnull @NonNull final String tableName,
                                          @Nullable final List<String> partitionNames) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             if (partitionNames != null && !partitionNames.isEmpty()) {
@@ -213,9 +228,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void dropPartitions(@Nonnull final String databaseName,
-                               @NonNull final String tableName,
-                               @Nonnull final List<String> partitionNames) throws
+    public void dropPartitions(@Nonnull @NonNull final String databaseName,
+                               @Nonnull @NonNull final String tableName,
+                               @Nonnull @NonNull final List<String> partitionNames) throws
             TException {
         dropHivePartitions(createMetastoreClient(), databaseName, tableName, partitionNames);
     }
@@ -224,9 +239,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public List<Partition> listPartitionsByFilter(@Nonnull final String databaseName,
-                                                  @NonNull final String tableName,
-                                                  @Nonnull final String filter
+    public List<Partition> listPartitionsByFilter(@Nonnull @NonNull final String databaseName,
+                                                  @Nonnull @NonNull final String tableName,
+                                                  @Nonnull @NonNull final String filter
     ) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             return client.get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS);
@@ -237,8 +252,8 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public int getPartitionCount(@Nonnull final String databaseName,
-                                 @NonNull final String tableName) throws TException {
+    public int getPartitionCount(@Nonnull @NonNull final String databaseName,
+                                 @Nonnull @NonNull final String tableName) throws TException {
 
         return getPartitions(databaseName, tableName, null).size();
     }
@@ -247,8 +262,8 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public List<String> getPartitionNames(@Nonnull final String databaseName,
-                                          @NonNull final String tableName)
+    public List<String> getPartitionNames(@Nonnull @NonNull final String databaseName,
+                                          @Nonnull @NonNull final String tableName)
             throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             return client.get_partition_names(databaseName, tableName, ALL_RESULTS);
@@ -259,7 +274,7 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void savePartitions(@Nonnull final List<Partition> partitions)
+    public void savePartitions(@Nonnull @NonNull final List<Partition> partitions)
             throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             client.add_partitions(partitions);
@@ -270,8 +285,8 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void alterPartitions(@Nonnull final String dbName, @Nonnull final String tableName,
-                                @Nonnull final List<Partition> partitions) throws
+    public void alterPartitions(@Nonnull @NonNull final String dbName, @Nonnull @NonNull final String tableName,
+                                @Nonnull @NonNull final List<Partition> partitions) throws
             TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             client.alter_partitions(dbName, tableName, partitions);
@@ -309,5 +324,14 @@ public class MetacatHiveClient implements IMetacatHiveClient {
             request.setDeleteData(false);
             client.drop_partitions_req(request);
         }
+    }
+
+    /**
+     * getRoles.
+     * @param user user
+     * @return set of roles
+     */
+    public Set<String> getRoles(final String user) {
+        return Sets.newHashSet();
     }
 }

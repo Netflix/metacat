@@ -19,6 +19,8 @@ import spock.lang.Unroll
 
 /**
  * Unit test for hive and canonical type converter.
+ * @author zhenl
+ * @since 1.0.0
  */
 class HiveTypeConverterSpec extends Specification {
     @Shared

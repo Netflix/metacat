@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
  * HiveConnectorUtil.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public final class HiveConnectorUtil {
     private HiveConnectorUtil() {

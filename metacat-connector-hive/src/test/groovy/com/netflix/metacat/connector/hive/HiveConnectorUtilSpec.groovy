@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit
 /**
  * HiveConnectorUtilSpec.
  * @author zhenl
+ * @since 1.0.0
  */
 class HiveConnectorUtilSpec extends Specification{
     @Unroll

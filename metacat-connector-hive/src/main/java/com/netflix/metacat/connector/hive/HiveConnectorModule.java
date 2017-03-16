@@ -31,6 +31,7 @@ import java.util.Map;
  * HiveConnectorModule.
  *
  * @author zhenl
+ * @since 1.0.0
  */
 public class HiveConnectorModule implements Module {
     private final String catalogName;

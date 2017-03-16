@@ -28,6 +28,7 @@ services:
             - '8080'
             - '8000'
             - '12001'
+            - '12003'
         volumes:
             - ../build/metacat-war-expanded/ROOT:/usr/local/tomcat/webapps/ROOT
             - ./resources/log4j.properties:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/log4j.properties
@@ -109,7 +110,7 @@ services:
         links:
             - metacat
         environment:
-            - TARGETS=metacat:8080,metacat:12001
-            - TIMEOUT=180
+            - TARGETS=metacat:8080,metacat:12001,metacat:12003
+            - TIMEOUT=240
         labels:
           - "com.netflix.metacat.oss.test"
