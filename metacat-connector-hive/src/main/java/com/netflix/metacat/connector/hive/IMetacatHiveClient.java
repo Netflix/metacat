@@ -46,7 +46,7 @@ public interface IMetacatHiveClient {
      * @param database database metadata
      * @throws TException already exist TException
      */
-    default void createDatabase(@NonNull final Database database) throws TException {
+    default void createDatabase(@Nonnull @NonNull final Database database) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -56,7 +56,7 @@ public interface IMetacatHiveClient {
      * @param dbName database name
      * @throws TException NotfoundException
      */
-    default void dropDatabase(@NonNull final String dbName) throws TException {
+    default void dropDatabase(@Nonnull @NonNull final String dbName) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -67,7 +67,7 @@ public interface IMetacatHiveClient {
      * @return database database
      * @throws TException NotfoundException
      */
-    default Database getDatabase(@Nonnull final String databaseName) throws TException {
+    default Database getDatabase(@Nonnull @NonNull final String databaseName) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -88,7 +88,7 @@ public interface IMetacatHiveClient {
      * @return tableNames
      * @throws TException metaexception
      */
-    default List<String> getAllTables(@Nonnull final String databaseName) throws TException {
+    default List<String> getAllTables(@Nonnull @NonNull final String databaseName) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -100,8 +100,8 @@ public interface IMetacatHiveClient {
      * @return list of tables
      * @throws TException NotfoundException
      */
-    default Table getTableByName(@Nonnull final String databaseName,
-                                 @NonNull final String tableName) throws TException {
+    default Table getTableByName(@Nonnull @NonNull final String databaseName,
+                                 @Nonnull @NonNull final String tableName) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -111,7 +111,7 @@ public interface IMetacatHiveClient {
      * @param table database metadata
      * @throws TException already exist TException
      */
-    default void createTable(@NonNull final Table table) throws TException {
+    default void createTable(@Nonnull @NonNull final Table table) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -122,7 +122,8 @@ public interface IMetacatHiveClient {
      * @param tableName    tableName
      * @throws TException NotfoundException
      */
-    default void dropTable(@Nonnull final String databaseName, @NonNull final String tableName) throws TException {
+    default void dropTable(@Nonnull @NonNull final String databaseName,
+                           @Nonnull @NonNull final String tableName) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -130,15 +131,15 @@ public interface IMetacatHiveClient {
      * Rename table.
      *
      * @param databaseName    database
-     * @param oldTableName         tablename
+     * @param oldTableName    tablename
      * @param newdatabadeName newdatabase
-     * @param newTableName         newName
+     * @param newTableName    newName
      * @throws TException NotfoundException
      */
-    default void rename(@Nonnull final String databaseName,
-                        @NonNull final String oldTableName,
-                        @Nonnull final String newdatabadeName,
-                        @Nonnull final String newTableName) throws TException {
+    default void rename(@Nonnull @NonNull final String databaseName,
+                        @Nonnull @NonNull final String oldTableName,
+                        @Nonnull @NonNull final String newdatabadeName,
+                        @Nonnull @NonNull final String newTableName) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -160,11 +161,11 @@ public interface IMetacatHiveClient {
      * Update table.
      *
      * @param databaseName databaseName
-     * @param database        table
+     * @param database     table
      * @throws TException if the database does not exist
      */
     default void alterDatabase(@NonNull final String databaseName,
-                            @NonNull final Database database) throws TException {
+                               @NonNull final Database database) throws TException {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -270,9 +271,9 @@ public interface IMetacatHiveClient {
     /**
      * addDropPartitions.
      *
-     * @param dbName dbName
-     * @param tableName tableName
-     * @param partitions partittions
+     * @param dbName            dbName
+     * @param tableName         tableName
+     * @param partitions        partittions
      * @param delPartitionNames deletePartitionNames
      * @throws TException TException
      */
@@ -285,7 +286,8 @@ public interface IMetacatHiveClient {
 
     /**
      * getDatabasePrivileges.
-     * @param user user
+     *
+     * @param user         user
      * @param databaseName databaseName
      * @return set of privilege
      */
@@ -295,7 +297,8 @@ public interface IMetacatHiveClient {
 
     /**
      * getTablePrivileges.
-     * @param user user
+     *
+     * @param user      user
      * @param tableName databaseName
      * @return set of privilege
      */
@@ -305,7 +308,9 @@ public interface IMetacatHiveClient {
 
     /**
      * Clean up any held resources.
+     *
      * @throws TException TException
      */
-    default void shutdown() throws TException { }
+    default void shutdown() throws TException {
+    }
 }

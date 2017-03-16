@@ -119,7 +119,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void createDatabase(@NonNull final Database database) throws TException {
+    public void createDatabase(@Nonnull @NonNull final Database database) throws TException {
         try {
             handler.create_database(database);
         } catch (TException e) {
@@ -132,7 +132,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void createTable(@NonNull final Table table) throws TException {
+    public void createTable(@Nonnull @NonNull final Table table) throws TException {
         try {
             handler.create_table(table);
         } catch (TException e) {
@@ -145,7 +145,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void dropDatabase(@NonNull final String dbName) throws TException {
+    public void dropDatabase(@Nonnull @NonNull final String dbName) throws TException {
         try {
             handler.drop_database(dbName, false, false);
         } catch (TException e) {
@@ -158,9 +158,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void dropPartitions(@Nonnull final String databaseName,
-                               @NonNull final String tableName,
-                               @Nonnull final List<String> partitionNames) throws
+    public void dropPartitions(@Nonnull @NonNull final String databaseName,
+                               @Nonnull @NonNull final String tableName,
+                               @Nonnull @NonNull final List<String> partitionNames) throws
             TException {
         dropHivePartitions(databaseName, tableName, partitionNames);
     }
@@ -179,8 +179,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void alterDatabase(@NonNull final String databaseName,
-                              @NonNull final Database database) throws TException {
+    public void alterDatabase(@Nonnull @NonNull final String databaseName,
+                              @Nonnull @NonNull final Database database) throws TException {
         try {
             handler.alter_database(databaseName, database);
         } catch (TException e) {
@@ -219,7 +219,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public Database getDatabase(@NonNull final String databaseName) throws TException {
+    public Database getDatabase(@Nonnull @NonNull final String databaseName) throws TException {
         try {
             return RetryHelper.retry()
                     .maxAttempts(RETRY_ATTEMPTS)
@@ -237,7 +237,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public List<String> getAllTables(@Nonnull final String databaseName) throws TException {
+    public List<String> getAllTables(@Nonnull @NonNull final String databaseName) throws TException {
         final Callable<List<String>> getAllTables =
                 RetryHelper.callableWrap(() -> handler.get_all_tables(databaseName));
         //in case if no table returned check to see if the database exists
@@ -269,8 +269,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public Table getTableByName(@Nonnull final String databaseName,
-                                @NonNull final String tableName) throws TException {
+    public Table getTableByName(@Nonnull @NonNull final String databaseName,
+                                @Nonnull @NonNull final String tableName) throws TException {
         try {
             return loadTable(databaseName, tableName);
         } catch (TException e) {
@@ -295,9 +295,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void alterTable(@NonNull final String databaseName,
-                           @NonNull final String tableName,
-                           @NonNull final Table table) throws TException {
+    public void alterTable(@Nonnull @NonNull final String databaseName,
+                           @Nonnull @NonNull final String tableName,
+                           @Nonnull @NonNull final Table table) throws TException {
         try {
             handler.alter_table(databaseName, tableName, table);
         } catch (TException e) {
@@ -312,8 +312,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void alterPartitions(@Nonnull final String dbName, @Nonnull final String tableName,
-                                @Nonnull final List<Partition> partitions) throws TException {
+    public void alterPartitions(@Nonnull @NonNull final String dbName,
+                                @Nonnull @NonNull final String tableName,
+                                @Nonnull @NonNull final List<Partition> partitions) throws TException {
         try {
             handler.alter_partitions(dbName, tableName, partitions);
         } catch (TException e) {
@@ -328,10 +329,10 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void addDropPartitions(@Nonnull final String dbName,
-                                  @Nonnull final String tableName,
-                                  @Nonnull final List<Partition> addParts,
-                                  @Nonnull final List<String> dropPartNames) throws TException {
+    public void addDropPartitions(@Nonnull @NonNull final String dbName,
+                                  @Nonnull @NonNull final String tableName,
+                                  @Nonnull @NonNull final List<Partition> addParts,
+                                  @Nonnull @NonNull final List<String> dropPartNames) throws TException {
 
         try {
             final List<List<String>> dropParts = new ArrayList<>();
@@ -351,7 +352,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void dropTable(@Nonnull final String databaseName, @NonNull final String tableName) throws TException {
+    public void dropTable(@Nonnull @NonNull final String databaseName,
+                          @Nonnull @NonNull final String tableName) throws TException {
         try {
             handler.drop_table(databaseName, tableName, false);
         } catch (TException e) {
@@ -366,10 +368,10 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void rename(@Nonnull final String databaseName,
-                       @NonNull final String oldTableName,
-                       @Nonnull final String newdatabadeName,
-                       @Nonnull final String newTableName) throws TException {
+    public void rename(@Nonnull @NonNull final String databaseName,
+                       @Nonnull @NonNull final String oldTableName,
+                       @Nonnull @NonNull final String newdatabadeName,
+                       @Nonnull @NonNull final String newTableName) throws TException {
         try {
             RetryHelper.retry()
                     .maxAttempts(RETRY_ATTEMPTS)
@@ -395,8 +397,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public List<Partition> getPartitions(@Nonnull final String databaseName,
-                                         @NonNull final String tableName,
+    public List<Partition> getPartitions(@Nonnull @NonNull final String databaseName,
+                                         @Nonnull @NonNull final String tableName,
                                          @Nullable final List<String> partitionNames) throws TException {
         try {
             if (partitionNames != null && !partitionNames.isEmpty()) {
@@ -426,8 +428,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public int getPartitionCount(@Nonnull final String databaseName,
-                                 @NonNull final String tableName) throws TException {
+    public int getPartitionCount(@Nonnull @NonNull final String databaseName,
+                                 @Nonnull @NonNull final String tableName) throws TException {
 
         return getPartitions(databaseName, tableName, null).size();
     }
@@ -436,8 +438,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public List<String> getPartitionNames(@Nonnull final String databaseName,
-                                          @NonNull final String tableName)
+    public List<String> getPartitionNames(@Nonnull @NonNull final String databaseName,
+                                          @Nonnull @NonNull final String tableName)
             throws TException {
         try {
             return RetryHelper.retry()
@@ -458,9 +460,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public List<Partition> listPartitionsByFilter(@Nonnull final String databaseName,
-                                                  @NonNull final String tableName,
-                                                  @Nonnull final String filter
+    public List<Partition> listPartitionsByFilter(@Nonnull @NonNull final String databaseName,
+                                                  @Nonnull @NonNull final String tableName,
+                                                  @Nonnull @NonNull final String filter
     ) throws TException {
         try {
             return RetryHelper.retry()

@@ -16,11 +16,6 @@
 
 package com.netflix.metacat.connector.hive.client.embedded;
 
-import com.google.common.collect.ImmutableSet;
-import org.apache.hadoop.hive.metastore.api.PrivilegeGrantInfo;
-
-import java.util.Set;
-
 /**
  * HivePrivilege.
  *
@@ -40,27 +35,4 @@ public enum HivePrivilege {
     OWNERSHIP,
     /**GRANT.*/
     GRANT;
-
-    /**
-     * parsePrivilege.
-     * @param userGrant userGrant
-     * @return set of hive privilege
-     */
-    public static Set<HivePrivilege> parsePrivilege(final PrivilegeGrantInfo userGrant) {
-        final String name = userGrant.getPrivilege().toUpperCase(java.util.Locale.ENGLISH);
-        switch (name) {
-            case "ALL":
-                return ImmutableSet.copyOf(values());
-            case "SELECT":
-                return ImmutableSet.of(SELECT);
-            case "INSERT":
-                return ImmutableSet.of(INSERT);
-            case "UPDATE":
-                return ImmutableSet.of(UPDATE);
-            case "DELETE":
-                return ImmutableSet.of(DELETE);
-            default:
-                return ImmutableSet.of();
-        }
-    }
 }

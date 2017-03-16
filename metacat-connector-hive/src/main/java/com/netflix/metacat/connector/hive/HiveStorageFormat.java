@@ -16,6 +16,9 @@
 
 package com.netflix.metacat.connector.hive;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NonNull;
 import org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat;
 import org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
@@ -32,14 +35,14 @@ import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.TextInputFormat;
 
-import javax.annotation.Nonnull;
-
 /**
  * Hive storage format.
  *
  * @author zhenl
  * @since 1.0.0
  */
+@Getter
+@AllArgsConstructor
 public enum HiveStorageFormat {
     /**
      * Optimized Row Columnar.
@@ -81,28 +84,10 @@ public enum HiveStorageFormat {
     TEXTFILE(LazySimpleSerDe.class.getName(),
             TextInputFormat.class.getName(),
             HiveIgnoreKeyTextOutputFormat.class.getName());
-
+    @NonNull
     private final String serde;
+    @NonNull
     private final String inputFormat;
+    @NonNull
     private final String outputFormat;
-
-    HiveStorageFormat(@Nonnull final String serde,
-                      @Nonnull final String inputFormat,
-                      @Nonnull final String outputFormat) {
-        this.serde = serde;
-        this.inputFormat = inputFormat;
-        this.outputFormat = outputFormat;
-    }
-
-    public String getSerDe() {
-        return serde;
-    }
-
-    public String getInputFormat() {
-        return inputFormat;
-    }
-
-    public String getOutputFormat() {
-        return outputFormat;
-    }
 }
