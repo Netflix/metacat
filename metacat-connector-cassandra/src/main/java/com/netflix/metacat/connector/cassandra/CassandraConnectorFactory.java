@@ -15,8 +15,9 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.connector.postgresql;
+package com.netflix.metacat.connector.cassandra;
 
+import com.datastax.driver.core.Cluster;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.server.connectors.DefaultConnectorFactory;
 import lombok.NonNull;
@@ -25,12 +26,12 @@ import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
- * PostgreSQL implementation of a connector factory.
+ * Cassandra implementation of a connector factory.
  *
  * @author tgianos
  * @since 1.0.0
  */
-class PostgreSqlConnectorFactory extends DefaultConnectorFactory {
+class CassandraConnectorFactory extends DefaultConnectorFactory {
 
     /**
      * Constructor.
@@ -38,10 +39,23 @@ class PostgreSqlConnectorFactory extends DefaultConnectorFactory {
      * @param name          The catalog name
      * @param configuration The catalog configuration
      */
-    PostgreSqlConnectorFactory(
+    CassandraConnectorFactory(
         @Nonnull @NonNull final String name,
         @Nonnull @NonNull final Map<String, String> configuration
     ) {
-        super(name, Lists.newArrayList(new PostgreSqlConnectorModule(name, configuration)));
+        super(name, Lists.newArrayList(new CassandraConnectorModule(name, configuration)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void stop() {
+        super.stop();
+        // Stop the cassandra cluster
+        final Cluster cluster = this.getInjector().getInstance(Cluster.class);
+        if (cluster != null) {
+            cluster.close();
+        }
     }
 }

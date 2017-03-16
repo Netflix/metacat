@@ -18,7 +18,7 @@
 package com.netflix.metacat.connector.mysql;
 
 import com.google.common.collect.Lists;
-import com.netflix.metacat.connector.jdbc.JdbcConnectorFactory;
+import com.netflix.metacat.common.server.connectors.DefaultConnectorFactory;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
@@ -30,7 +30,7 @@ import java.util.Map;
  * @author tgianos
  * @since 1.0.0
  */
-class MySqlConnectorFactory extends JdbcConnectorFactory {
+class MySqlConnectorFactory extends DefaultConnectorFactory {
 
     /**
      * Constructor.
