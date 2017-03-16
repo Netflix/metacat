@@ -15,28 +15,26 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.connector.jdbc;
+package com.netflix.metacat.common.server.connectors;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
-import com.netflix.metacat.common.server.connectors.ConnectorFactory;
-import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
-import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 
 /**
- * Generic JDBC connector factory.
+ * Common connector factory with repeatable functionality.
  *
  * @author tgianos
  * @since 1.0.0
  */
 @Slf4j
-public class JdbcConnectorFactory implements ConnectorFactory {
+@Getter
+public class DefaultConnectorFactory implements ConnectorFactory {
 
     private final String name;
     private final Injector injector;
@@ -47,7 +45,7 @@ public class JdbcConnectorFactory implements ConnectorFactory {
      * @param name          The catalog name
      * @param modules The catalog configuration
      */
-    public JdbcConnectorFactory(
+    public DefaultConnectorFactory(
         @Nonnull @NonNull final String name,
         @Nonnull @NonNull final Iterable<? extends Module> modules
     ) {
@@ -61,7 +59,7 @@ public class JdbcConnectorFactory implements ConnectorFactory {
      */
     @Override
     public ConnectorDatabaseService getDatabaseService() {
-        return this.injector.getInstance(ConnectorDatabaseService.class);
+        return this.getService(ConnectorDatabaseService.class);
     }
 
     /**
@@ -69,7 +67,7 @@ public class JdbcConnectorFactory implements ConnectorFactory {
      */
     @Override
     public ConnectorTableService getTableService() {
-        return this.injector.getInstance(ConnectorTableService.class);
+        return this.getService(ConnectorTableService.class);
     }
 
     /**
@@ -77,7 +75,7 @@ public class JdbcConnectorFactory implements ConnectorFactory {
      */
     @Override
     public ConnectorPartitionService getPartitionService() {
-        return this.injector.getInstance(ConnectorPartitionService.class);
+        return this.getService(ConnectorPartitionService.class);
     }
 
     /**
@@ -93,6 +91,14 @@ public class JdbcConnectorFactory implements ConnectorFactory {
      */
     @Override
     public void stop() {
-        // The data source is closed by DataSourceManager @PreDestroy method
+    }
+
+    private <T extends ConnectorBaseService> T getService(@Nonnull @NonNull final Class<T> serviceClass) {
+        final T service = this.injector.getInstance(serviceClass);
+        if (service != null) {
+            return service;
+        } else {
+            throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
+        }
     }
 }

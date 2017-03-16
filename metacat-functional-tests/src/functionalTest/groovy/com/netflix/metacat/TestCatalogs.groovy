@@ -90,19 +90,29 @@ class TestCatalogs {
         new TestCatalog(
             name: 'postgresql-96-db',
             preExistingDatabases: [
-//                QualifiedName.ofDatabase('postgresql-96-db', 'sakila'),
-//                QualifiedName.ofDatabase('postgresql-96-db', 'world'),
                 QualifiedName.ofDatabase('postgresql-96-db', 'public'),
                 QualifiedName.ofDatabase('postgresql-96-db', 'pg_catalog'),
             ],
             preExistingTables: [
-//                QualifiedName.ofTable('postgresql-96-db', 'sakila', 'city'),
-//                QualifiedName.ofTable('postgresql-96-db', 'sakila', 'country'),
                 QualifiedName.ofTable('postgresql-96-db', 'world', 'City'),
                 QualifiedName.ofTable('postgresql-96-db', 'world', 'Country'),
                 QualifiedName.ofTable('postgresql-96-db', 'world', 'countrylanguage'),
             ],
             type: 'postgresql',
+        ),
+        new TestCatalog(
+            name: 'cassandra-310',
+            preExistingDatabases: [
+                QualifiedName.ofDatabase('cassandra-310', 'bills'),
+                QualifiedName.ofDatabase('cassandra-310', 'real_estate'),
+            ],
+            preExistingTables: [
+                QualifiedName.ofTable('cassandra-310', 'bills', 'bills_compress'),
+                QualifiedName.ofTable('cassandra-310', 'bills', 'bills_nc'),
+                QualifiedName.ofTable('cassandra-310', 'real_estate', 'houses'),
+                QualifiedName.ofTable('cassandra-310', 'real_estate', 'apartments'),
+            ],
+            type: 'cassandra',
         ),
     ]
 
