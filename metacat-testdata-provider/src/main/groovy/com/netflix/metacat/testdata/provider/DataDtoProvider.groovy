@@ -25,6 +25,9 @@ import com.netflix.metacat.common.json.MetacatJsonLocator
  */
 class DataDtoProvider {
     private static final MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
+    /**
+     * Returns a tableDto with the provided information.
+     */
     def static TableDto getTable(String sourceName, String databaseName, String tableName, String owner, String uri){
         if( uri == null){
             uri = String.format("s3://wh/%s.db/%s", databaseName, tableName);
@@ -81,6 +84,9 @@ class DataDtoProvider {
         )
     }
 
+    /**
+     * Returns a list of tableDtos with the provided information. Table names and uris will be appended by the index.
+     */
     def static List<TableDto> getTables(String sourceName, String databaseName, String tableName, String owner, String uri, int noOfTables){
         def result = [] as List<TableDto>
         for(int i=0;i<noOfTables;i++){
@@ -88,7 +94,10 @@ class DataDtoProvider {
         }
         return result
     }
-
+    /**
+     * Returns a list of partition dtos with the provided information. Partition names and uris will be appended by the
+     * index.
+     */
     def static List<PartitionDto> getPartitions(String sourceName, String databaseName, String tableName, String name, String uri, int noOfPartitions){
         def result = [] as List<PartitionDto>
         for(int i=0;i<noOfPartitions;i++){
@@ -96,7 +105,9 @@ class DataDtoProvider {
         }
         return result
     }
-
+    /**
+     * Returns a Partition dto with the provided information.
+     */
     def static PartitionDto getPartition(String sourceName, String databaseName, String tableName, String name, String uri){
         if( uri == null){
             uri = String.format("s3://wh/%s.db/%s/%s/batchid=1361678899", databaseName,tableName, name);
@@ -118,7 +129,9 @@ class DataDtoProvider {
                 dataMetadata: metacatJson.parseJsonObject('{"metrics": {}}')
         )
     }
-
+    /**
+     * Returns a tableDto with the provided information. This table contains two columns.
+     */
     def static TableDto getPartTable(String sourceName, String databaseName, String owner, String uri){
         def tableName = 'part'
         if (uri == null){
@@ -161,7 +174,9 @@ class DataDtoProvider {
             definitionMetadata: getDefinitionMetadata(owner)
         )
     }
-
+    /**
+     * Returns a tableDto with the provided information. This table contains three columns.
+     */
     def static TableDto getPartsTable(String sourceName, String databaseName, String owner, String uri){
         def tableName = 'parts'
         if (uri == null){
@@ -211,7 +226,9 @@ class DataDtoProvider {
             definitionMetadata: getDefinitionMetadata(owner)
         )
     }
-
+    /**
+     * Returns a tableDto with the provided information. This table contains columns with different data types.
+     */
     def static TableDto getMetacatAllTypesTable(String sourceName, String databaseName, String owner, String uri){
         def f = this.getClassLoader().getResource('metacatAllTypes.json')
         if( uri == null){
