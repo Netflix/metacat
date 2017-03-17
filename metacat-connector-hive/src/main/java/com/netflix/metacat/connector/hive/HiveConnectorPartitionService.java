@@ -66,10 +66,10 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 public class HiveConnectorPartitionService implements ConnectorPartitionService {
-
+    protected final String catalogName;
     private final IMetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
-    private final String catalogName;
+
 
     /**
      * Constructor.
@@ -371,6 +371,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
         }
         return result;
     }
+
 
     protected Map<String, Partition> getPartitionsByNames(final Table table, final List<String> partitionNames) {
         final String databasename = table.getDbName();
