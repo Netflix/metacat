@@ -36,7 +36,7 @@ dependencies {
 
     testCompile project(":metacat-user-metadata-mysql")
     testCompile "io.airlift:testing-mysql-server:0.1"
-    testCompile project(":metacat-common").sourceSets.test.output
+    testCompile project(':metacat-testdata-provider')
 }
 
 test {

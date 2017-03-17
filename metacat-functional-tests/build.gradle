@@ -54,6 +54,8 @@ dependencies {
         exclude module: 'pentaho-aggdesigner-algorithm'
     }
     testCompile "org.apache.hadoop:hadoop-core:${hadoopcore_version}"
+    testCompile project(':metacat-testdata-provider')
+    testCompile project(':metacat-connector-hive')
 }
 
 task expandWar(type: Copy) {

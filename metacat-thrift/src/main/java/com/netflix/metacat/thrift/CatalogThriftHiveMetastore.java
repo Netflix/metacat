@@ -688,7 +688,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
 
     @Override
     public List<String> get_functions(final String dbName, final String pattern) throws TException {
-        throw unimplemented("get_functions", new Object[] {dbName, pattern });
+        return Collections.emptyList();
     }
 
     @Override

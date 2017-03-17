@@ -17,6 +17,7 @@
 
 package com.netflix.metacat
 
+import com.google.common.base.Strings
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -35,6 +36,7 @@ import org.apache.hadoop.hive.ql.metadata.InvalidTableException
 import org.apache.hadoop.hive.ql.metadata.Partition
 import org.apache.hadoop.hive.ql.metadata.Table
 import org.apache.hadoop.hive.ql.plan.AddPartitionDesc
+import org.apache.hadoop.hive.ql.session.SessionState
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import spock.lang.Ignore
@@ -51,34 +53,20 @@ class MetacatThriftFunctionalSpec extends Specification {
     String hiveThriftUri
     @Shared
     LoadingCache<String, Hive> METASTORES = CacheBuilder.newBuilder()
-            .build(
-            new CacheLoader<String, Hive>() {
-                public Hive load(String thriftUri) throws Exception {
-                    assert thriftUri, 'Thrift uri is required'
+        .build(
+        new CacheLoader<String, Hive>() {
+            public Hive load(String thriftUri) throws Exception {
+                if (!Strings.isNullOrEmpty(thriftUri)) {
                     HiveConf conf = new HiveConf()
                     conf.set('hive.metastore.uris', thriftUri)
-                    conf.set('hive.metastore.sasl.enabled', 'false')
-                    conf.set('hive.allow-drop-table', 'true')
-                    conf.set('hive.allow-rename-table', 'true')
-                    conf.set('hive.assume-canonical-partition-keys', 'true')
-                    conf.set('hive.metastore-cache-ttl', '1m')
-                    conf.set('hive.metastore-refresh-interval', '1m')
-                    conf.set('hive.metastore-timeout', '20s')
-                    conf.set('hive.parquet.use-column-names', 'false')
-                    conf.set('hive.s3.connect-timeout', '2m')
-                    conf.set('hive.s3.max-backoff-time', '10m')
-                    conf.set('hive.s3.max-client-retries', '25')
-                    conf.set('hive.s3.max-connections', '500')
-                    conf.set('hive.s3.max-error-retries', '50')
-                    conf.set('hive.s3.max-retry-time', '10m')
-                    conf.set('hive.s3.socket-timeout', '2m')
-                    conf.set('hive.s3.staging-directory', '/tmp')
-                    conf.set('hive.storage-format', 'PARQUET')
-
+                    SessionState.setCurrentSessionState(new SessionState(conf))
                     // Hive.get stores the client in a thread local, use the private constructor to manage our own cache
                     return new Hive(conf)
+                } else {
+                    throw new IllegalArgumentException("Invalid Thrift URI")
                 }
-            });
+            }
+        });
 
     def setupSpec() {
         Logger.getRootLogger().setLevel(Level.OFF)
