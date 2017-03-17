@@ -208,6 +208,7 @@ public class S3ConnectorInfoConverter implements ConnectorInfoConverter<Database
         StorageInfo result = null;
         final Location location = table.getLocation();
         if (location != null) {
+            final Map<String, String> infoParameters = Maps.newHashMap();
             result = new StorageInfo();
             result.setUri(location.getUri());
             final Info info = location.getInfo();
@@ -216,12 +217,12 @@ public class S3ConnectorInfoConverter implements ConnectorInfoConverter<Database
                 result.setInputFormat(info.getInputFormat());
                 result.setOutputFormat(info.getOutputFormat());
                 result.setSerializationLib(info.getSerializationLib());
-                final Map<String, String> infoParameters = Maps.newHashMap();
                 if (info.getParameters() != null) {
                     infoParameters.putAll(info.getParameters());
                 }
-                result.setSerdeInfoParameters(infoParameters);
             }
+            result.setSerdeInfoParameters(infoParameters);
+            result.setParameters(Maps.newHashMap());
         }
         return result;
     }

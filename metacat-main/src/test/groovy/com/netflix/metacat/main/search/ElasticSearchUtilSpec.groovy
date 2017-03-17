@@ -16,8 +16,8 @@ package com.netflix.metacat.main.search
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.json.MetacatJsonLocator
-import com.netflix.metacat.common.util.DataProvider
 import com.netflix.metacat.main.services.search.ElasticSearchDoc
+import com.netflix.metacat.testdata.provider.DataDtoProvider
 import spock.lang.Unroll
 
 import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Type
@@ -30,7 +30,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test save for #id"(){
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
         def result = (TableDto)es.get(Type.table.name(),id).getDto()
         expect:
@@ -44,7 +44,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test saves for #id"(){
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b/c")
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b/c")
         es.save(Type.table.name(),[new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false)])
         def result = (TableDto)es.get(Type.table.name(),id).getDto()
         expect:
@@ -59,7 +59,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test delete for #id"(){
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
         softDelete?es.softDelete(Type.table.name(), id, metacatContext):es.delete(Type.table.name(), id)
         def result =  es.get(Type.table.name(),id, esIndex)
@@ -79,7 +79,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test deletes for #id"(){
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
         softDelete?es.softDelete(Type.table.name(), [id], metacatContext):es.delete(Type.table.name(), [id])
         def result = es.get(Type.table.name(),id)
@@ -99,7 +99,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test updates for #id"(){
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
         es.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), MetacatJsonLocator.INSTANCE.parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
         def result = es.get(Type.table.name(),id)
@@ -122,7 +122,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test deletes for #type"(){
         given:
-        def tables = DataProvider.getTables(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b", noOfTables)
+        def tables = DataDtoProvider.getTables(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b", noOfTables)
         def docs = tables.collect{
             String userName = it.getAudit() != null ? it.getAudit().getCreatedBy()
                     : "admin";
@@ -143,7 +143,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test migSave for #id"(){
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
         for (String index : [esIndex, esMergeIndex]) {
             def result = (TableDto) es.get(Type.table.name(), id, index).getDto()
@@ -159,7 +159,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test migSave for list of #id"() {
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         esMig.save(Type.table.name(), [new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false)])
         for (String index : [esIndex, esMergeIndex]) {
             def result = (TableDto) es.get(Type.table.name(), id, index).getDto()
@@ -175,7 +175,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test migSoftDelete for #id that does not exists in mergeIndex"(){
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
         esMig.softDelete(Type.table.name(), id, metacatContext)
         for (String index : [esIndex, esMergeIndex]) {
@@ -192,7 +192,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test migSoftDeletes for list of #id that exists in mergeIndex"(){
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         def docs = [new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
                     new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
                     new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false)]
@@ -213,7 +213,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test migSoftDeletes for list of #id that do not exist in mergeIndex"(){
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         def docs = [new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
                     new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
                     new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false)]
@@ -233,7 +233,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test migUpdates for #id that exists in mergeIndex"(){
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
         esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
         esMig.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), MetacatJsonLocator.INSTANCE.parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
         for ( String index : [esIndex, esMergeIndex]) {
@@ -256,7 +256,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
     @Unroll
     def "Test migUpdates for #id that does not exists in mergeIndex"(){
         given:
-        def table = DataProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
         esMig.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), MetacatJsonLocator.INSTANCE.parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
         for ( String index : [esIndex, esMergeIndex]) {

@@ -14,4 +14,5 @@
 dependencies {
     compile project(':metacat-common')
     compile project(':metacat-common-server')
+    compile 'org.codehaus.groovy:groovy-all:2.4.6'
 }

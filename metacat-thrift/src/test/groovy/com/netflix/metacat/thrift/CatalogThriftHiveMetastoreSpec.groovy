@@ -1001,10 +1001,10 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_functions'() {
         when:
-        ms.get_functions(null, null)
+        def result = ms.get_functions(null, null)
 
         then:
-        thrown(InvalidOperationException)
+        result == []
     }
 
     def 'test get_index_by_name'() {

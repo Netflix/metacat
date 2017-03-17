@@ -22,5 +22,5 @@ dependencies {
     compile ("mysql:mysql-connector-java:${mysql_connector_version}")
 
     testCompile 'io.airlift:testing-mysql-server:0.1'
-    testCompile project(':metacat-common').sourceSets.test.output
+    testCompile project(':metacat-testdata-provider')
 }

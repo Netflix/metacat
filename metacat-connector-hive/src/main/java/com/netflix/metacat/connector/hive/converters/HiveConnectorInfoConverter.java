@@ -174,8 +174,8 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
                 sd,
                 partitionFields,
                 params,
-                "",
-                "",
+                null,
+                null,
                 "EXTERNAL_TABLE");
     }
 
