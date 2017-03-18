@@ -47,11 +47,11 @@ class MetacatFunctionalSpec extends Specification {
     public static PartitionV1 partitionApi
     public static final MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
     public static final long BATCH_ID = System.currentTimeSeconds()
+    public static final int timediff = 24*3600
 
     def setupSpec() {
         String httpPort = System.properties['metacat_http_port']?.toString()?.trim()
         assert httpPort, 'Required system property "metacat_http_port" is not set'
-
         def client = Client.builder()
                 .withHost("http://localhost:$httpPort")
                 .withDataTypeContext('pig')
@@ -777,8 +777,8 @@ class MetacatFunctionalSpec extends Specification {
         allPartitions
         savedPartition
         savedPartition.name == escapedName
-        dateCloseEnough(savedPartition.audit.createdDate, now, 120)
-        dateCloseEnough(savedPartition.audit.lastModifiedDate, now, 120)
+        dateCloseEnough(savedPartition.audit.createdDate, now, timediff)
+        dateCloseEnough(savedPartition.audit.lastModifiedDate, now, timediff)
         savedPartition.serde.uri == dataUri
         savedPartition.definitionMetadata.get('part_def_field').longValue() == Long.MAX_VALUE
         savedPartition.dataMetadata.get('part_data_field').intValue() == Integer.MIN_VALUE
@@ -825,8 +825,8 @@ class MetacatFunctionalSpec extends Specification {
         allPartitions
         savedPartition
         savedPartition.name == escapedName
-        dateCloseEnough(savedPartition.audit.createdDate, now, 120)
-        dateCloseEnough(savedPartition.audit.lastModifiedDate, now, 120)
+        dateCloseEnough(savedPartition.audit.createdDate, now, timediff)
+        dateCloseEnough(savedPartition.audit.lastModifiedDate, now, timediff)
         savedPartition.serde.uri == "${dataUri}_new_uri".toString()
         savedPartition.definitionMetadata.get('updated_field').intValue() == 1
         savedPartition.definitionMetadata.get('part_def_field').longValue() == Long.MAX_VALUE

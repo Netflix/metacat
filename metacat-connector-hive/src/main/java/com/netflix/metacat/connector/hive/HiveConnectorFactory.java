@@ -73,6 +73,10 @@ public class HiveConnectorFactory implements ConnectorFactory {
                     .parseBoolean(configuration.getOrDefault(HiveConfigConstants.USE_EMBEDDED_METASTORE, "false"));
             if (!useLocalMetastore) {
                 client = createThriftClient();
+                if ( configuration.containsKey(HiveConfigConstants.USE_FASTHIVE_SERVICE) ) {
+                    configuration.replace(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false");
+                    log.info("Always not use HiveConnectorFastService in thrift client mode");
+                }
             } else {
                 client = createLocalClient();
             }

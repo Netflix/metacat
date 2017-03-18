@@ -20,7 +20,9 @@ dependencies {
     compile "com.google.inject:guice:${guice_version}"
     compile "com.google.inject.extensions:guice-persist:${guice_version}"
     compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
-    compile "com.github.rholder:guava-retrying:${guavaretrying_version}"
+    compile("com.github.rholder:guava-retrying:${guavaretrying_version}") {
+        exclude group: 'com.google.guava'
+    }
     compile "commons-dbutils:commons-dbutils:${commondbutil_version}"
     runtime "mysql:mysql-connector-java:${mysql_connector_version}"
     testCompile project(':metacat-testdata-provider')
