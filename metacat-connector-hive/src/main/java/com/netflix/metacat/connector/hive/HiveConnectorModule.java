@@ -20,9 +20,12 @@ import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
+import com.netflix.metacat.common.server.ArchaiusConfigImpl;
+import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 
@@ -63,6 +66,8 @@ public class HiveConnectorModule implements Module {
 
     @Override
     public void configure(final Binder binder) {
+        binder.bind(Config.class).toInstance(new ArchaiusConfigImpl());
+        binder.bind(ThreadServiceManager.class).asEagerSingleton();
         binder.bind(String.class).annotatedWith(Names.named("catalogName")).toInstance(catalogName);
         binder.bind(Boolean.class).annotatedWith(Names.named("allowRenameTable")).toInstance(allowRenameTable);
         binder.bind(HiveConnectorInfoConverter.class).toInstance(infoConverter);
