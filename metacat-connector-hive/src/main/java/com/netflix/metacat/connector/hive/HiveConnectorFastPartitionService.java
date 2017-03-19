@@ -58,6 +58,7 @@ import javax.sql.DataSource;
 import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -330,8 +331,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                     storageInfo.setOutputFormat(outputFormat);
                     storageInfo.setSerializationLib(serializationLib);
                     final AuditInfo auditInfo = new AuditInfo();
-                    auditInfo.setCreatedDate(new Date(createdDate));
-                    auditInfo.setLastModifiedDate(new Date(createdDate));
+                    auditInfo.setCreatedDate(Date.from(Instant.ofEpochSecond(createdDate)));
+                    auditInfo.setLastModifiedDate(Date.from(Instant.ofEpochSecond(createdDate)));
 
                     result.add(new PartitionDetail(id, sdId, serdeId,
                             PartitionInfo.builder().name(QualifiedName.ofPartition(catalogName,
