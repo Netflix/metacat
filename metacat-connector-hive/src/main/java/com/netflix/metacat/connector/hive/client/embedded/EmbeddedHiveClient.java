@@ -16,13 +16,15 @@
 
 package com.netflix.metacat.connector.hive.client.embedded;
 
+import com.github.rholder.retry.AttemptTimeLimiters;
+import com.github.rholder.retry.RetryerBuilder;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.partition.util.PartitionUtil;
 import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler;
-import com.netflix.metacat.connector.hive.util.RetryHelper;
+import com.netflix.metacat.connector.hive.util.MetacatStopStrategy;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.IHMSHandler;
@@ -44,6 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Embedded hive metastore client implementation.
@@ -72,9 +76,14 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public static final int RETRY_ATTEMPTS = 3;
 
     /**
+     * attempt execution limit in seconds.
+     */
+    public static final int MAX_ATTEMPT_TIMEOUT = 30;
+
+    /**
      * DEFAULT_PRIVILEGES.
      */
-    static final Set<HivePrivilege> DEFAULT_PRIVILEGES =
+    private static final Set<HivePrivilege> DEFAULT_PRIVILEGES =
             Sets.newHashSet(HivePrivilege.DELETE, HivePrivilege.INSERT, HivePrivilege.SELECT, HivePrivilege.UPDATE);
 
 
@@ -120,12 +129,10 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void createDatabase(@Nonnull @NonNull final Database database) throws TException {
-        try {
+        retryExec("createDatabase", () -> {
             handler.create_database(database);
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        }
+            return null;
+        });
     }
 
     /**
@@ -133,12 +140,10 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void createTable(@Nonnull @NonNull final Table table) throws TException {
-        try {
+        retryExec("dropDatabase", () -> {
             handler.create_table(table);
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        }
+            return null;
+        });
     }
 
     /**
@@ -146,12 +151,10 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void dropDatabase(@Nonnull @NonNull final String dbName) throws TException {
-        try {
+        retryExec("dropDatabase", () -> {
             handler.drop_database(dbName, false, false);
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        }
+            return null;
+        });
     }
 
     /**
@@ -172,20 +175,10 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
             final DropPartitionsRequest request = new DropPartitionsRequest(dbName, tableName, new RequestPartsSpec(
                     RequestPartsSpec._Fields.NAMES, partitionNames));
             request.setDeleteData(false);
-            handler.drop_partitions_req(request);
-        }
-    }
-    /**
-     * {@inheritDoc}.
-     */
-    @Override
-    public void alterDatabase(@Nonnull @NonNull final String databaseName,
-                              @Nonnull @NonNull final Database database) throws TException {
-        try {
-            handler.alter_database(databaseName, database);
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
+            retryExec("dropHivePartitions", () -> {
+                handler.drop_partitions_req(request);
+                return null;
+            });
         }
     }
 
@@ -193,18 +186,20 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
+    public void alterDatabase(@Nonnull @NonNull final String databaseName,
+                              @Nonnull @NonNull final Database database) throws TException {
+        retryExec("alterDatabase", () -> {
+            handler.alter_database(databaseName, database);
+            return null;
+        });
+    }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
     public List<String> getAllDatabases() throws TException {
-        try {
-            return RetryHelper.retry()
-                    .maxAttempts(RETRY_ATTEMPTS)
-                    .stopOnIllegalExceptions()
-                    .run("getAllDatabases", RetryHelper.callableWrap(() -> handler.get_all_databases()));
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        } catch (Exception e) {
-            throw new ConnectorException("getAllDatabases failure", e);
-        }
+        return retryExec("getAllDatabases", handler::get_all_databases);
     }
 
     /**
@@ -220,17 +215,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public Database getDatabase(@Nonnull @NonNull final String databaseName) throws TException {
-        try {
-            return RetryHelper.retry()
-                    .maxAttempts(RETRY_ATTEMPTS)
-                    .stopOnIllegalExceptions()
-                    .run("getDatabase", RetryHelper.callableWrap(() -> handler.get_database(databaseName)));
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        } catch (Exception e) {
-            throw new ConnectorException("getDatabase failure", e);
-        }
+        return retryExec("getDatabase", () -> handler.get_database(databaseName));
     }
 
     /**
@@ -239,30 +224,20 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     @Override
     public List<String> getAllTables(@Nonnull @NonNull final String databaseName) throws TException {
         final Callable<List<String>> getAllTables =
-                RetryHelper.callableWrap(() -> handler.get_all_tables(databaseName));
+                callableWrap(() -> handler.get_all_tables(databaseName));
         //in case if no table returned check to see if the database exists
-        final Callable<Void> getDatabase = RetryHelper.callableWrap(() -> {
+        final Callable<Void> getDatabase = callableWrap(() -> {
             handler.get_database(databaseName);
             return null;
         });
-        try {
-            return RetryHelper.retry()
-                    .maxAttempts(RETRY_ATTEMPTS)
-                    .stopOn(NoSuchObjectException.class)
-                    .stopOnIllegalExceptions()
-                    .run("getAllTables", () -> {
-                        final List<String> tables = getAllTables.call();
-                        if (tables.isEmpty()) {
-                            getDatabase.call();
-                        }
-                        return tables;
-                    });
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        } catch (Exception e) {
-            throw new ConnectorException("getAllTables failure", e);
-        }
+        return retryExec("getDatabase", () -> {
+            final List<String> tables = getAllTables.call();
+            if (tables.isEmpty()) {
+                getDatabase.call();
+            }
+            return tables;
+        });
+
     }
 
     /**
@@ -271,24 +246,11 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     @Override
     public Table getTableByName(@Nonnull @NonNull final String databaseName,
                                 @Nonnull @NonNull final String tableName) throws TException {
-        try {
-            return loadTable(databaseName, tableName);
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        } catch (Exception e) {
-            throw new ConnectorException("getTableByName failure", e);
-        }
+        return loadTable(databaseName, tableName);
     }
 
-    private Table loadTable(final String dbName, final String tableName) throws Exception {
-        return RetryHelper.retry()
-                .maxAttempts(RETRY_ATTEMPTS)
-                .stopOn(NoSuchObjectException.class)
-                .stopOnIllegalExceptions()
-                .run("getTable", RetryHelper.callableWrap(() -> {
-                    return handler.get_table(dbName, tableName);
-                }));
+    private Table loadTable(final String dbName, final String tableName) throws TException {
+        return retryExec("loadTable", () -> handler.get_table(dbName, tableName));
     }
 
     /**
@@ -298,14 +260,10 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public void alterTable(@Nonnull @NonNull final String databaseName,
                            @Nonnull @NonNull final String tableName,
                            @Nonnull @NonNull final Table table) throws TException {
-        try {
+        retryExec("loadTable", () -> {
             handler.alter_table(databaseName, tableName, table);
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        } catch (Exception e) {
-            throw new ConnectorException("alterTable failure", e);
-        }
+            return null;
+        });
     }
 
     /**
@@ -315,14 +273,10 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public void alterPartitions(@Nonnull @NonNull final String dbName,
                                 @Nonnull @NonNull final String tableName,
                                 @Nonnull @NonNull final List<Partition> partitions) throws TException {
-        try {
+        retryExec("alterPartitions", () -> {
             handler.alter_partitions(dbName, tableName, partitions);
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        } catch (Exception e) {
-            throw new ConnectorException("alterPartitions failure", e);
-        }
+            return null;
+        });
     }
 
     /**
@@ -333,19 +287,14 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
                                   @Nonnull @NonNull final String tableName,
                                   @Nonnull @NonNull final List<Partition> addParts,
                                   @Nonnull @NonNull final List<String> dropPartNames) throws TException {
-
-        try {
-            final List<List<String>> dropParts = new ArrayList<>();
-            for (String partName : dropPartNames) {
-                dropParts.add(new ArrayList<String>(PartitionUtil.getPartitionKeyValues(partName).values()));
-            }
-            metacatHMSHandler.add_drop_partitions(dbName, tableName, addParts, dropParts, false);
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        } catch (Exception e) {
-            throw new ConnectorException("alterPartitions failure", e);
+        final List<List<String>> dropParts = new ArrayList<>();
+        for (String partName : dropPartNames) {
+            dropParts.add(new ArrayList<String>(PartitionUtil.getPartitionKeyValues(partName).values()));
         }
+        retryExec("addDropPartitions", () -> {
+            metacatHMSHandler.add_drop_partitions(dbName, tableName, addParts, dropParts, false);
+            return null;
+        });
     }
 
     /**
@@ -354,74 +303,46 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     @Override
     public void dropTable(@Nonnull @NonNull final String databaseName,
                           @Nonnull @NonNull final String tableName) throws TException {
-        try {
+        retryExec("dropTable", () -> {
             handler.drop_table(databaseName, tableName, false);
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        } catch (Exception e) {
-            throw new ConnectorException("dropTable failure", e);
-        }
+            return null;
+        });
+
     }
 
     /**
      * {@inheritDoc}.
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void rename(@Nonnull @NonNull final String databaseName,
                        @Nonnull @NonNull final String oldTableName,
                        @Nonnull @NonNull final String newdatabadeName,
                        @Nonnull @NonNull final String newTableName) throws TException {
-        try {
-            RetryHelper.retry()
-                    .maxAttempts(RETRY_ATTEMPTS)
-                    .stopOn(InvalidOperationException.class, MetaException.class, NoSuchObjectException.class)
-                    .stopOnIllegalExceptions()
-                    .run("renameTable", RetryHelper.callableWrap(() -> {
-                        final Table table = new Table(loadTable(databaseName, oldTableName));
-                        table.setDbName(newdatabadeName);
-                        table.setTableName(newTableName);
-                        handler.alter_table(databaseName, oldTableName, table);
-                        return null;
-                    }));
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        } catch (Exception e) {
-            throw new ConnectorException("dropTable failure", e);
-        }
-
+        retryExec("rename", () -> {
+                    final Table table = new Table(loadTable(databaseName, oldTableName));
+                    table.setDbName(newdatabadeName);
+                    table.setTableName(newTableName);
+                    handler.alter_table(databaseName, oldTableName, table);
+                    return null;
+                },
+                InvalidOperationException.class, MetaException.class, NoSuchObjectException.class);
     }
 
     /**
      * {@inheritDoc}.
      */
     @Override
+    @SuppressWarnings("unchecked")
     public List<Partition> getPartitions(@Nonnull @NonNull final String databaseName,
                                          @Nonnull @NonNull final String tableName,
                                          @Nullable final List<String> partitionNames) throws TException {
-        try {
-            if (partitionNames != null && !partitionNames.isEmpty()) {
-                return RetryHelper.retry()
-                        .maxAttempts(RETRY_ATTEMPTS)
-                        .stopOn(NoSuchObjectException.class)
-                        .stopOnIllegalExceptions()
-                        .run("getPartitionsByNames", RetryHelper.callableWrap(() ->
-                                handler.get_partitions_by_names(databaseName, tableName, partitionNames)));
-            } else {
-                return RetryHelper.retry()
-                        .maxAttempts(RETRY_ATTEMPTS)
-                        .stopOn(NoSuchObjectException.class)
-                        .stopOnIllegalExceptions()
-                        .run("getPartitionsByNames", RetryHelper.callableWrap(() ->
-                                handler.get_partitions(databaseName, tableName, ALL_RESULTS)));
-            }
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        } catch (Exception e) {
-            throw new ConnectorException("getPartitions failure", e);
+        if (partitionNames != null && !partitionNames.isEmpty()) {
+            return retryExec("rename", () -> handler.get_partitions_by_names(databaseName, tableName, partitionNames),
+                    InvalidOperationException.class, MetaException.class, NoSuchObjectException.class);
         }
+        return retryExec("rename", () -> handler.get_partitions(databaseName, tableName, ALL_RESULTS),
+                InvalidOperationException.class, MetaException.class, NoSuchObjectException.class);
     }
 
     /**
@@ -438,44 +359,75 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
+    @SuppressWarnings("unchecked")
     public List<String> getPartitionNames(@Nonnull @NonNull final String databaseName,
                                           @Nonnull @NonNull final String tableName)
             throws TException {
-        try {
-            return RetryHelper.retry()
-                    .maxAttempts(RETRY_ATTEMPTS)
-                    .stopOn(NoSuchObjectException.class)
-                    .stopOnIllegalExceptions()
-                    .run("getPartitionsByNames", RetryHelper.callableWrap(() ->
-                            handler.get_partition_names(databaseName, tableName, ALL_RESULTS)));
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
-        } catch (Exception e) {
-            throw new ConnectorException("getPartitionNames failure", e);
-        }
+        return retryExec("getPartitionNames", () -> handler.get_partition_names(databaseName, tableName, ALL_RESULTS),
+                NoSuchObjectException.class);
     }
 
     /**
      * {@inheritDoc}.
      */
     @Override
+    @SuppressWarnings("unchecked")
     public List<Partition> listPartitionsByFilter(@Nonnull @NonNull final String databaseName,
                                                   @Nonnull @NonNull final String tableName,
                                                   @Nonnull @NonNull final String filter
     ) throws TException {
+        return retryExec("listPartitionsByFilter",
+                () -> handler.get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS),
+                NoSuchObjectException.class);
+    }
+
+    /**
+     * Wrapper class for retry execution with exception handling.
+     * @param functionName functionName
+     * @param callable callable
+     * @param classes exception class
+     * @param <V> v
+     * @return function call result, Void in case null
+     * @throws TException
+     * @throws ConnectorException
+     */
+    private <V> V retryExec(final String functionName,
+                            @Nonnull @NonNull final Callable<V> callable,
+                            @NonNull final Class<? extends Exception>... classes)
+            throws TException, ConnectorException {
         try {
-            return RetryHelper.retry()
-                    .maxAttempts(RETRY_ATTEMPTS)
-                    .stopOn(NoSuchObjectException.class)
-                    .stopOnIllegalExceptions()
-                    .run("listPartitionsByFilter", RetryHelper.callableWrap(() ->
-                            handler.get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS)));
-        } catch (TException e) {
-            handleSqlException(e);
-            throw e;
+            return RetryerBuilder.<V>newBuilder()
+                    .withAttemptTimeLimiter(
+                            AttemptTimeLimiters.<V>fixedTimeLimit(MAX_ATTEMPT_TIMEOUT, TimeUnit.SECONDS))
+                    .withStopStrategy(new MetacatStopStrategy()
+                            .stopAfterAttemptAndExceptions(RETRY_ATTEMPTS)
+                            .stopOn(classes))
+                    .build()
+                    .call(callableWrap(callable));
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof TException) {
+                handleSqlException((TException) e.getCause());
+                throw (TException) e.getCause();
+            } else {
+                throw new ConnectorException(functionName + " failure", e);
+            }
         } catch (Exception e) {
-            throw new ConnectorException("getPartitionNames failure", e);
+            throw new ConnectorException(functionName + " failure", e);
         }
+    }
+
+    /**
+     * callableWrap.
+     * @param callable callable
+     * @param <V> v
+     * @return callable
+     */
+    public static <V> Callable<V> callableWrap(final Callable<V> callable) {
+        return new Callable<V>() {
+            @Override
+            public V call() throws Exception {
+                return callable.call();
+            }
+        };
     }
 }

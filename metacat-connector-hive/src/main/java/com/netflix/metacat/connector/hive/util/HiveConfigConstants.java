@@ -39,6 +39,15 @@ public final class HiveConfigConstants {
     public static final String USE_EMBEDDED_METASTORE = "hive.use.embedded.metastore";
 
     /**
+     * ALLOW_RENAME_TABLE.
+     */
+    public static final String ALLOW_RENAME_TABLE = "hive.allow-rename-table";
+    /**
+     * USE_FASTPARTITION_SERVICE.
+     */
+    public static final String USE_FASTHIVE_SERVICE = "hive.use.embedded.fastservice";
+
+    /**
      * USE_METASTORE_LOCAL.
      */
     public static final String USE_METASTORE_LOCAL = "hive.metastore.local";

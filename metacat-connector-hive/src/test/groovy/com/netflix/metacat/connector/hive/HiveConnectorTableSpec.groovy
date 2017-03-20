@@ -48,7 +48,8 @@ class HiveConnectorTableSpec extends Specification {
     @Shared
     HiveConnectorDatabaseService hiveConnectorDatabaseService = Mock(HiveConnectorDatabaseService);
     @Shared
-    HiveConnectorTableService hiveConnectorTableService = new HiveConnectorTableService("testhive", metacatHiveClient, hiveConnectorDatabaseService, new HiveConnectorInfoConverter(new HiveTypeConverter()) )
+    HiveConnectorTableService hiveConnectorTableService = new HiveConnectorTableService("testhive", metacatHiveClient,
+            hiveConnectorDatabaseService, new HiveConnectorInfoConverter(new HiveTypeConverter()), true )
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(1, null);
     @Shared
