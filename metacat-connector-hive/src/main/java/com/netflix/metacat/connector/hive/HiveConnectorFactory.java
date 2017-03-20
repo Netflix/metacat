@@ -49,9 +49,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class HiveConnectorFactory implements ConnectorFactory {
-    private static final String THRIFT_URI = HiveConfigConstants.THRIFT_URI;
-    private static final String HIVE_METASTORE_TIMEOUT = HiveConfigConstants.HIVE_METASTORE_TIMEOUT;
-    private static final String USE_EMBEDDED_METASTORE = HiveConfigConstants.USE_EMBEDDED_METASTORE;
     private final String catalogName;
     private final Map<String, String> configuration;
     private final HiveConnectorInfoConverter infoConverter;
@@ -73,9 +70,13 @@ public class HiveConnectorFactory implements ConnectorFactory {
         this.infoConverter = infoConverter;
         try {
             final boolean useLocalMetastore = Boolean
-                    .parseBoolean(configuration.getOrDefault(USE_EMBEDDED_METASTORE, "false"));
+                    .parseBoolean(configuration.getOrDefault(HiveConfigConstants.USE_EMBEDDED_METASTORE, "false"));
             if (!useLocalMetastore) {
                 client = createThriftClient();
+                if (configuration.containsKey(HiveConfigConstants.USE_FASTHIVE_SERVICE)) {
+                    configuration.replace(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false");
+                    log.info("Always not use HiveConnectorFastService in thrift client mode");
+                }
             } else {
                 client = createLocalClient();
             }
@@ -97,6 +98,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
         return new EmbeddedHiveClient(catalogName, metacatHMSHandler,
                 MetacatHMSHandler.newRetryingHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME,
                         conf, true, metacatHMSHandler));
+
     }
 
     private static HiveConf getDefaultConf() {
@@ -116,9 +118,10 @@ public class HiveConnectorFactory implements ConnectorFactory {
     private IMetacatHiveClient createThriftClient() throws MetaException {
         final HiveMetastoreClientFactory factory =
                 new HiveMetastoreClientFactory(null,
-                        (int) HiveConnectorUtil.toTime(configuration.getOrDefault(HIVE_METASTORE_TIMEOUT, "20s"),
+                        (int) HiveConnectorUtil.toTime(
+                                configuration.getOrDefault(HiveConfigConstants.HIVE_METASTORE_TIMEOUT, "20s"),
                                 TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
-        final String metastoreUri = configuration.get(THRIFT_URI);
+        final String metastoreUri = configuration.get(HiveConfigConstants.THRIFT_URI);
         URI uri = null;
         try {
             uri = new URI(metastoreUri);

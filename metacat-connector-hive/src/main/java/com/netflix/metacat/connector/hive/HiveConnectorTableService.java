@@ -61,10 +61,12 @@ import java.util.Map;
  */
 public class HiveConnectorTableService implements ConnectorTableService {
     private static final String PARAMETER_EXTERNAL = "EXTERNAL";
+    protected final String catalogName;
     private final IMetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final HiveConnectorDatabaseService hiveConnectorDatabaseService;
-    private final String catalogName;
+    private final boolean allowRenameTable;
+
 
     /**
      * Constructor.
@@ -73,16 +75,19 @@ public class HiveConnectorTableService implements ConnectorTableService {
      * @param metacatHiveClient            hiveclient
      * @param hiveConnectorDatabaseService hivedatabaseService
      * @param hiveMetacatConverters        converter
+     * @param allowRenameTable             allow rename table
      */
     @Inject
     public HiveConnectorTableService(@Named("catalogName") final String catalogName,
                                      @Nonnull @NonNull final IMetacatHiveClient metacatHiveClient,
                                      @Nonnull @NonNull final HiveConnectorDatabaseService hiveConnectorDatabaseService,
-                                     @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters) {
+                                     @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters,
+                                     @Named("allowRenameTable") final boolean allowRenameTable) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
         this.hiveConnectorDatabaseService = hiveConnectorDatabaseService;
         this.catalogName = catalogName;
+        this.allowRenameTable = allowRenameTable;
     }
 
     /**
@@ -389,6 +394,10 @@ public class HiveConnectorTableService implements ConnectorTableService {
             @Nonnull @NonNull final QualifiedName oldName,
             @Nonnull @NonNull final QualifiedName newName
     ) {
+        if (!allowRenameTable) {
+            throw new ConnectorException(
+                    "Renaming tables is disabled in catalog " + catalogName, null);
+        }
         try {
             metacatHiveClient.rename(oldName.getDatabaseName(), oldName.getTableName(),
                     newName.getDatabaseName(), newName.getTableName());

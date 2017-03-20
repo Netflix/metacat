@@ -61,6 +61,7 @@ class MetacatSmokeSpec extends Specification {
     def setupSpec() {
         String url = "http://localhost:${System.properties['metacat_http_port']}"
         assert url, 'Required system property "metacat_url" is not set'
+
         ObjectMapper mapper = metacatJson.getPrettyObjectMapper().copy()
                 .registerModule(new GuavaModule())
                 .registerModule(new JaxbAnnotationModule());
@@ -375,7 +376,6 @@ class MetacatSmokeSpec extends Specification {
     }
 
     //TODO: support one=='xyz'
-    @Ignore
     @Unroll
     def "Test: get partitions for filter #filter with offset #offset and limit #limit returned #result partitions"() {
         given:
@@ -385,11 +385,13 @@ class MetacatSmokeSpec extends Specification {
             partitionApi.savePartitions('embedded-hive-metastore', 'smoke_db', 'parts', new PartitionsSaveRequestDto(partitions: DataDtoProvider.getPartitions('embedded-hive-metastore', 'smoke_db', 'parts', 'one=xyz/total=1', uri, 10)))
         }
         def partitionKeys = partitionApi.getPartitionKeys('embedded-hive-metastore', 'smoke_db', 'parts', filter, null, null, offset, limit)
+
         expect:
         partitionKeys.size() == result
         cleanup:
         if (cursor == 'end') {
-            partitionApi.deletePartitions('embedded-hive-metastore', 'smoke_db', 'parts', partitionKeys)
+            def partitionKeysToDrop = partitionApi.getPartitionKeys('embedded-hive-metastore', 'smoke_db', 'parts', null, null, null, null, null)
+            partitionApi.deletePartitions('embedded-hive-metastore', 'smoke_db', 'parts', partitionKeysToDrop)
         }
         where:
         cursor  | filter                                    | offset | limit | result

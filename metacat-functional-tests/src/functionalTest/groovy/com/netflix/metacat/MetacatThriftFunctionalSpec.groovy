@@ -49,6 +49,7 @@ import spock.lang.Unroll
 @Unroll
 class MetacatThriftFunctionalSpec extends Specification {
     public static final long BATCH_ID = System.currentTimeSeconds()
+    public static final int timediff = 24*3600
     @Shared
     String hiveThriftUri
     @Shared
@@ -539,7 +540,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         resultTbl.tableName == tableName
         resultTbl.dbName == name.databaseName
         resultTbl.owner == owner
-        DateUtilities.epochCloseEnough(resultTbl.getTTable().createTime, now, 1200)
+        DateUtilities.epochCloseEnough(resultTbl.getTTable().createTime, now, timediff)
         !resultTbl.lastAccessTime
         !resultTbl.retention
         resultTbl.tableType == TableType.EXTERNAL_TABLE
@@ -621,7 +622,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         resultTbl.tableName == tableName
         resultTbl.dbName == name.databaseName
         resultTbl.owner == owner
-        DateUtilities.epochCloseEnough(resultTbl.getTTable().createTime, now, 60)
+        DateUtilities.epochCloseEnough(resultTbl.getTTable().createTime, now, timediff)
         !resultTbl.lastAccessTime
         !resultTbl.retention
         resultTbl.tableType == TableType.EXTERNAL_TABLE
