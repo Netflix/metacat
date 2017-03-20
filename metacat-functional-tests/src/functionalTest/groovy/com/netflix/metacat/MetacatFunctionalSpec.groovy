@@ -40,6 +40,7 @@ import spock.lang.Unroll
 
 import static com.netflix.metacat.DateUtilities.dateCloseEnough
 
+//TODO REMOVE ALL IGNORE
 @Stepwise
 @Unroll
 class MetacatFunctionalSpec extends Specification {

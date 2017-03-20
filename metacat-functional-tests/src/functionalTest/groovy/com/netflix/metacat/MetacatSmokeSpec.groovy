@@ -326,12 +326,11 @@ class MetacatSmokeSpec extends Specification {
         catalogName                | databaseName   | tableName           | viewName    | error                          | repeat
         'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
         'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | true
-        //TODO:'embedded-hive-metastore'  | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
+        'embedded-hive-metastore'  | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
         's3-mysql-db'              | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
         'xyz'                      | 'smoke_db4'    | 'z'                 | 'part_view' | MetacatNotFoundException.class | false
     }
 
-    //TODO: support one=='xyz'
     @Unroll
     def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
         expect:
@@ -353,6 +352,7 @@ class MetacatSmokeSpec extends Specification {
             e.class == error
         }
         if (!error) {
+            //To test the case that double quoats are supported
             def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionName.replace('=', '="') + '"', null, null, null, null, true)
             assert partitions != null && partitions.size() == 1 && partitions.find {it.name.partitionName == partitionName} != null
             def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: partitionName.replace('=', '="') + '"', includePartitionDetails: true))
@@ -368,6 +368,10 @@ class MetacatSmokeSpec extends Specification {
         'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
         'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
         'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
+        'hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
+        'hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
+        'hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
+        'hive-metastore'  | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
         's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
         's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
         's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
@@ -375,7 +379,6 @@ class MetacatSmokeSpec extends Specification {
         's3-mysql-db'              | 'invalid-catalog' | 'z'       | 'one=xyz'     | false  | false | MetacatNotFoundException.class
     }
 
-    //TODO: support one=='xyz'
     @Unroll
     def "Test: get partitions for filter #filter with offset #offset and limit #limit returned #result partitions"() {
         given:
@@ -422,6 +425,8 @@ class MetacatSmokeSpec extends Specification {
         'end'   | null                                      | 10     | 10    | 0
 
     }
+
+    //TODO CREATE TEST CASE FOR HIVE-METASTORE
 
     @Unroll
     def "Load test save partitions for #catalogName/#databaseName/#tableName with partition names(#count) starting with #partitionName"() {
