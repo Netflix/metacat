@@ -52,6 +52,7 @@ class MetacatFunctionalSpec extends Specification {
     def setupSpec() {
         String httpPort = System.properties['metacat_http_port']?.toString()?.trim()
         assert httpPort, 'Required system property "metacat_http_port" is not set'
+
         def client = Client.builder()
                 .withHost("http://localhost:$httpPort")
                 .withDataTypeContext('pig')
