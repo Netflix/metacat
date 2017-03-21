@@ -22,6 +22,7 @@ import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper
 import spock.lang.Specification
 
 import javax.sql.DataSource
@@ -39,8 +40,9 @@ class MySqlConnectorDatabaseServiceSpec extends Specification {
     def dataSource = Mock(DataSource)
     def connection = Mock(Connection)
     def context = Mock(ConnectorContext)
+    def exceptionMapper = Mock(JdbcExceptionMapper)
 
-    def service = new MySqlConnectorDatabaseService(this.dataSource)
+    def service = new MySqlConnectorDatabaseService(this.dataSource, this.exceptionMapper)
 
     def "Can get list of database names without prefix, sort by or pagination"() {
         def qName = QualifiedName.ofCatalog(UUID.randomUUID().toString())

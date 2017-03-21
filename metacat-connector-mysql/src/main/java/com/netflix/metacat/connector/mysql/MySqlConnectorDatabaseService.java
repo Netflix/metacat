@@ -17,13 +17,13 @@
  */
 package com.netflix.metacat.connector.mysql;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorDatabaseService;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorUtils;
 import lombok.NonNull;
@@ -52,11 +52,15 @@ public class MySqlConnectorDatabaseService extends JdbcConnectorDatabaseService 
     /**
      * Constructor.
      *
-     * @param dataSource The datasource to use
+     * @param dataSource      The datasource to use
+     * @param exceptionMapper The exception mapper to use
      */
     @Inject
-    public MySqlConnectorDatabaseService(@Nonnull @NonNull final DataSource dataSource) {
-        super(dataSource);
+    public MySqlConnectorDatabaseService(
+        @Nonnull @NonNull final DataSource dataSource,
+        @Nonnull @NonNull final JdbcExceptionMapper exceptionMapper
+    ) {
+        super(dataSource, exceptionMapper);
     }
 
     /**
@@ -105,7 +109,7 @@ public class MySqlConnectorDatabaseService extends JdbcConnectorDatabaseService 
             log.debug("Finished listing database names for catalog {} for request {}", catalogName, context);
             return results;
         } catch (final SQLException se) {
-            throw Throwables.propagate(se);
+            throw this.getExceptionMapper().toConnectorException(se, name);
         }
     }
 }

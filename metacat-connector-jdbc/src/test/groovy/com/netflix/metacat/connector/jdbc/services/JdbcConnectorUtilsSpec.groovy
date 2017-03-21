@@ -54,6 +54,6 @@ class JdbcConnectorUtilsSpec extends Specification {
 
         then: "Will propagate a runtime exception"
         1 * connection.createStatement() >> { throw new SQLException("oops") }
-        thrown RuntimeException
+        thrown SQLException
     }
 }

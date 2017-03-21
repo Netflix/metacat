@@ -17,7 +17,6 @@
  */
 package com.netflix.metacat.connector.jdbc.services;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
@@ -26,6 +25,7 @@ import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
+import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -54,15 +54,21 @@ import java.util.Locale;
 public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
 
     private final DataSource dataSource;
+    private final JdbcExceptionMapper exceptionMapper;
 
     /**
      * Constructor.
      *
-     * @param dataSource The jdbc datasource instance to use to make connections
+     * @param dataSource      The jdbc datasource instance to use to make connections
+     * @param exceptionMapper The exception mapper to use
      */
     @Inject
-    public JdbcConnectorDatabaseService(@Nonnull @NonNull final DataSource dataSource) {
+    public JdbcConnectorDatabaseService(
+        @Nonnull @NonNull final DataSource dataSource,
+        @Nonnull @NonNull final JdbcExceptionMapper exceptionMapper
+    ) {
         this.dataSource = dataSource;
+        this.exceptionMapper = exceptionMapper;
     }
 
     /**
@@ -76,7 +82,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
             JdbcConnectorUtils.executeUpdate(connection, "CREATE DATABASE " + databaseName);
             log.debug("Finished creating database {} for request {}", databaseName, context);
         } catch (final SQLException se) {
-            throw Throwables.propagate(se);
+            throw this.exceptionMapper.toConnectorException(se, resource.getName());
         }
     }
 
@@ -91,7 +97,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
             JdbcConnectorUtils.executeUpdate(connection, "DROP DATABASE " + databaseName);
             log.debug("Finished dropping database {} for request {}", databaseName, context);
         } catch (final SQLException se) {
-            throw Throwables.propagate(se);
+            throw this.exceptionMapper.toConnectorException(se, name);
         }
     }
 
@@ -150,7 +156,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
                 : metaData
                 .getSchemas(
                     connection.getCatalog(),
-                    prefix.getDatabaseName() + metaData.getSearchStringEscape()
+                    prefix.getDatabaseName() + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH
                 )
             ) {
                 while (schemas.next()) {
@@ -175,7 +181,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
             log.debug("Finished listing database names for catalog {} for request {}", catalogName, context);
             return results;
         } catch (final SQLException se) {
-            throw Throwables.propagate(se);
+            throw this.exceptionMapper.toConnectorException(se, name);
         }
     }
 }

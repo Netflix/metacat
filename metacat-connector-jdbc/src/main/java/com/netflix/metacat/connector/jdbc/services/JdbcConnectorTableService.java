@@ -17,7 +17,6 @@
  */
 package com.netflix.metacat.connector.jdbc.services;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -28,6 +27,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
 import lombok.Getter;
 import lombok.NonNull;
@@ -55,22 +55,28 @@ import java.util.Locale;
 @Getter
 public class JdbcConnectorTableService implements ConnectorTableService {
 
+    private static final String[] TABLES_TYPE = {"TABLE"};
+
     private final DataSource dataSource;
     private final JdbcTypeConverter typeConverter;
+    private final JdbcExceptionMapper exceptionMapper;
 
     /**
      * Constructor.
      *
-     * @param dataSource    the datasource to use to connect to the database
-     * @param typeConverter The type converter to use from the SQL type to Metacat canonical type
+     * @param dataSource      the datasource to use to connect to the database
+     * @param typeConverter   The type converter to use from the SQL type to Metacat canonical type
+     * @param exceptionMapper The exception mapper to use
      */
     @Inject
     public JdbcConnectorTableService(
         @Nonnull @NonNull final DataSource dataSource,
-        @Nonnull @NonNull final JdbcTypeConverter typeConverter
+        @Nonnull @NonNull final JdbcTypeConverter typeConverter,
+        @Nonnull @NonNull final JdbcExceptionMapper exceptionMapper
     ) {
         this.dataSource = dataSource;
         this.typeConverter = typeConverter;
+        this.exceptionMapper = exceptionMapper;
     }
 
     /**
@@ -93,7 +99,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             JdbcConnectorUtils.executeUpdate(connection, sql);
             log.debug("Deleted table {} from database {} for request {}", tableName, databaseName, context);
         } catch (final SQLException se) {
-            throw Throwables.propagate(se);
+            throw this.exceptionMapper.toConnectorException(se, name);
         }
     }
 
@@ -127,7 +133,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             log.debug("Finished getting table metadata for qualified name {} for request {}", name, context);
             return TableInfo.builder().name(name).fields(fields.build()).build();
         } catch (final SQLException se) {
-            throw Throwables.propagate(se);
+            throw this.exceptionMapper.toConnectorException(se, name);
         }
     }
 
@@ -188,7 +194,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             log.debug("Finished listing tables names for qualified name {} for request {}", name, context);
             return results;
         } catch (final SQLException se) {
-            throw Throwables.propagate(se);
+            throw this.exceptionMapper.toConnectorException(se, name);
         }
     }
 
@@ -239,7 +245,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
                 context
             );
         } catch (final SQLException se) {
-            throw Throwables.propagate(se);
+            throw this.exceptionMapper.toConnectorException(se, oldName);
         }
     }
 
@@ -260,12 +266,14 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     ) throws SQLException {
         final String database = name.getDatabaseName();
         final DatabaseMetaData metaData = connection.getMetaData();
-        final String escapeString = metaData.getSearchStringEscape();
         return prefix == null || StringUtils.isEmpty(prefix.getTableName())
-            ? metaData.getTables(connection.getCatalog(), database, escapeString, null)
+            ? metaData.getTables(database, database, null, TABLES_TYPE)
             : metaData
             .getTables(
-                connection.getCatalog(), database, prefix.getTableName() + escapeString, null
+                database,
+                database,
+                prefix.getTableName() + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH,
+                TABLES_TYPE
             );
     }
 
@@ -285,7 +293,11 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     ) throws SQLException {
         final String database = name.getDatabaseName();
         final DatabaseMetaData metaData = connection.getMetaData();
-        final String escapeString = metaData.getSearchStringEscape();
-        return metaData.getColumns(connection.getCatalog(), database, name.getTableName(), escapeString);
+        return metaData.getColumns(
+            database,
+            database,
+            name.getTableName(),
+            JdbcConnectorUtils.MULTI_CHARACTER_SEARCH
+        );
     }
 }
