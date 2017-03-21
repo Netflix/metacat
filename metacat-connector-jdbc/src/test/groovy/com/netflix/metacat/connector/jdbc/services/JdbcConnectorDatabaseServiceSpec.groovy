@@ -23,12 +23,13 @@ import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
+import com.netflix.metacat.common.server.exception.ConnectorException
+import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.sql.DataSource
 import java.sql.*
-
 /**
  * Tests for JdbcConnectorDatabaseService.
  *
@@ -41,8 +42,9 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
     def connection = Mock(Connection)
     def statement = Mock(Statement)
     def context = Mock(ConnectorContext)
+    def exceptionMapper = Mock(JdbcExceptionMapper)
 
-    def service = new JdbcConnectorDatabaseService(this.dataSource)
+    def service = new JdbcConnectorDatabaseService(this.dataSource, this.exceptionMapper)
 
     def "Can create a database"() {
         def databaseName = UUID.randomUUID().toString()
@@ -70,7 +72,8 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         1 * this.dataSource.getConnection() >> this.connection
         1 * this.connection.createStatement() >> this.statement
         1 * this.statement.executeUpdate("CREATE DATABASE " + databaseName) >> { throw new SQLException("blah") }
-        thrown RuntimeException
+        1 * this.exceptionMapper.toConnectorException(_ as SQLException, _ as QualifiedName) >> Mock(ConnectorException)
+        thrown ConnectorException
     }
 
     def "Can drop a database"() {
@@ -151,8 +154,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         1 * this.dataSource.getConnection() >> this.connection
         1 * this.connection.getCatalog() >> UUID.randomUUID().toString()
         1 * this.connection.getMetaData() >> dbMetadata
-        1 * dbMetadata.getSearchStringEscape() >> "%"
-        1 * dbMetadata.getSchemas(_ as String, "a%") >> schemaResultSet
+        1 * dbMetadata.getSchemas(_ as String, "a" + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH) >> schemaResultSet
         4 * schemaResultSet.next() >>> [true, true, true, false]
         3 * schemaResultSet.getString("TABLE_SCHEM") >>> ["a", "ac", "ad"]
         databases.size() == 3
@@ -258,7 +260,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         method | methodName      | exception
         (
             {
-                new JdbcConnectorDatabaseService(Mock(DataSource)).listViewNames(
+                new JdbcConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).listViewNames(
                     Mock(ConnectorContext),
                     QualifiedName.ofDatabase("catalog", "database")
                 )
@@ -266,7 +268,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         )      | "listViewNames" | UnsupportedOperationException
         (
             {
-                new JdbcConnectorDatabaseService(Mock(DataSource)).update(
+                new JdbcConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).update(
                     Mock(ConnectorContext),
                     DatabaseInfo.builder().name(QualifiedName.ofCatalog("blah")).build()
                 )
@@ -274,7 +276,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         )      | "update"        | UnsupportedOperationException
         (
             {
-                new JdbcConnectorDatabaseService(Mock(DataSource)).exists(
+                new JdbcConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).exists(
                     Mock(ConnectorContext),
                     QualifiedName.ofDatabase("catalog", "database")
                 )
@@ -282,7 +284,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         )      | "exists"        | UnsupportedOperationException
         (
             {
-                new JdbcConnectorDatabaseService(Mock(DataSource)).rename(
+                new JdbcConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).rename(
                     Mock(ConnectorContext),
                     QualifiedName.ofDatabase("catalog", "database"),
                     QualifiedName.ofDatabase("catalog", "new")

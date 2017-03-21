@@ -23,6 +23,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.util.DataSourceManager;
+import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorPartitionService;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorTableService;
@@ -65,6 +66,7 @@ public class MySqlConnectorModule extends AbstractModule {
         this.bind(DataSource.class)
             .toInstance(DataSourceManager.get().load(this.name, this.configuration).get(this.name));
         this.bind(JdbcTypeConverter.class).to(MySqlTypeConverter.class).in(Scopes.SINGLETON);
+        this.bind(JdbcExceptionMapper.class).to(MySqlExceptionMapper.class).in(Scopes.SINGLETON);
         this.bind(ConnectorDatabaseService.class).to(MySqlConnectorDatabaseService.class).in(Scopes.SINGLETON);
         this.bind(ConnectorTableService.class).to(JdbcConnectorTableService.class).in(Scopes.SINGLETON);
         this.bind(ConnectorPartitionService.class).to(JdbcConnectorPartitionService.class).in(Scopes.SINGLETON);
