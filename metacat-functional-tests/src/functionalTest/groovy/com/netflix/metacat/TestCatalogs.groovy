@@ -75,6 +75,7 @@ class TestCatalogs {
             validateFilterExpressionBasedOnPartitionKeyType: false
         ),
         new TestCatalog(
+            createDatabase: true,
             name: 'mysql-56-db',
             preExistingDatabases: [
                 QualifiedName.ofDatabase('mysql-56-db', 'sakila'),
@@ -102,6 +103,7 @@ class TestCatalogs {
             type: 'postgresql',
         ),
         new TestCatalog(
+            createDatabase: true,
             name: 'cassandra-310',
             preExistingDatabases: [
                 QualifiedName.ofDatabase('cassandra-310', 'bills'),
