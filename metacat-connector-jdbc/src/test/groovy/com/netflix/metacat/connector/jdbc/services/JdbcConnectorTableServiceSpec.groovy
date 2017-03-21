@@ -26,6 +26,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.type.BaseType
 import com.netflix.metacat.common.type.VarcharType
+import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -47,23 +48,8 @@ class JdbcConnectorTableServiceSpec extends Specification {
     def context = Mock(ConnectorContext)
     def dataSource = Mock(DataSource)
     def typeConverter = Mock(JdbcTypeConverter)
-    def service = new JdbcConnectorTableService(this.dataSource, this.typeConverter)
-
-    def "Can't create a table"() {
-        when:
-        this.service.create(this.context, Mock(TableInfo))
-
-        then:
-        thrown UnsupportedOperationException
-    }
-
-    def "Can't update a table"() {
-        when:
-        this.service.update(this.context, Mock(TableInfo))
-
-        then:
-        thrown UnsupportedOperationException
-    }
+    def exceptionMapper = Mock(JdbcExceptionMapper)
+    def service = new JdbcConnectorTableService(this.dataSource, this.typeConverter, this.exceptionMapper)
 
     def "Can delete an uppercase table"() {
         def connection = Mock(Connection)
@@ -112,7 +98,6 @@ class JdbcConnectorTableServiceSpec extends Specification {
         def database = UUID.randomUUID().toString()
         def table = UUID.randomUUID().toString()
         def qName = QualifiedName.ofTable(catalog, database, table)
-        def escapeString = "%"
         def connection = Mock(Connection)
         def metadata = Mock(DatabaseMetaData)
         def columnResultSet = Mock(ResultSet)
@@ -123,9 +108,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.getMetaData() >> metadata
-        1 * connection.getCatalog() >> catalog
-        1 * metadata.getSearchStringEscape() >> escapeString
-        1 * metadata.getColumns(catalog, database, table, escapeString) >> columnResultSet
+        1 * metadata.getColumns(database, database, table, JdbcConnectorUtils.MULTI_CHARACTER_SEARCH) >> columnResultSet
         3 * columnResultSet.next() >>> [true, true, false]
         2 * columnResultSet.getString("REMARKS") >>> ["comment1", "comment2"]
         2 * columnResultSet.getString("COLUMN_NAME") >>> ["column1", "column2"]
@@ -142,7 +125,6 @@ class JdbcConnectorTableServiceSpec extends Specification {
     }
 
     def "Can list table names without prefix, sort or pagination"() {
-        def escapeString = "%"
         def catalog = UUID.randomUUID().toString()
         def database = UUID.randomUUID().toString()
         def qName = QualifiedName.ofDatabase(catalog, database)
@@ -156,9 +138,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.getMetaData() >> metadata
-        1 * connection.getCatalog() >> catalog
-        1 * metadata.getSearchStringEscape() >> escapeString
-        1 * metadata.getTables(catalog, database, escapeString, null) >> tablesResultSet
+        1 * metadata.getTables(database, database, null, ["TABLE"].toArray(new String[1])) >> tablesResultSet
         5 * tablesResultSet.next() >>> [true, true, true, true, false]
         4 * tablesResultSet.getString("TABLE_NAME") >>> ["a", "b", "c", "d"]
         tableNames.size() == 4
@@ -169,7 +149,6 @@ class JdbcConnectorTableServiceSpec extends Specification {
     }
 
     def "Can list table names with prefix but without sort or pagination"() {
-        def escapeString = "%"
         def catalog = UUID.randomUUID().toString()
         def database = UUID.randomUUID().toString()
         def qName = QualifiedName.ofDatabase(catalog, database)
@@ -185,9 +164,9 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.getMetaData() >> metadata
-        1 * connection.getCatalog() >> catalog
-        1 * metadata.getSearchStringEscape() >> escapeString
-        1 * metadata.getTables(catalog, database, prefix + escapeString, null) >> tablesResultSet
+        1 * metadata.getTables(
+            database, database, prefix + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH, ["TABLE"].toArray(new String[1])
+        ) >> tablesResultSet
         5 * tablesResultSet.next() >>> [true, true, true, true, false]
         4 * tablesResultSet.getString("TABLE_NAME") >>> ["a", "b", "c", "d"]
         tableNames.size() == 4
@@ -198,7 +177,6 @@ class JdbcConnectorTableServiceSpec extends Specification {
     }
 
     def "Can list table names with sort but without prefix or pagination"() {
-        def escapeString = "%"
         def catalog = UUID.randomUUID().toString()
         def database = UUID.randomUUID().toString()
         def qName = QualifiedName.ofDatabase(catalog, database)
@@ -213,9 +191,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.getMetaData() >> metadata
-        1 * connection.getCatalog() >> catalog
-        1 * metadata.getSearchStringEscape() >> escapeString
-        1 * metadata.getTables(catalog, database, escapeString, null) >> tablesResultSet
+        1 * metadata.getTables(database, database, null, ["TABLE"].toArray(new String[1])) >> tablesResultSet
         5 * tablesResultSet.next() >>> [true, true, true, true, false]
         4 * tablesResultSet.getString("TABLE_NAME") >>> ["a", "b", "c", "d"]
         tableNames.size() == 4
@@ -226,7 +202,6 @@ class JdbcConnectorTableServiceSpec extends Specification {
     }
 
     def "Can list table names with sort and pagination but without prefix"() {
-        def escapeString = "%"
         def catalog = UUID.randomUUID().toString()
         def database = UUID.randomUUID().toString()
         def qName = QualifiedName.ofDatabase(catalog, database)
@@ -242,9 +217,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.getMetaData() >> metadata
-        1 * connection.getCatalog() >> catalog
-        1 * metadata.getSearchStringEscape() >> escapeString
-        1 * metadata.getTables(catalog, database, escapeString, null) >> tablesResultSet
+        1 * metadata.getTables(database, database, null, ["TABLE"].toArray(new String[1])) >> tablesResultSet
         5 * tablesResultSet.next() >>> [true, true, true, true, false]
         4 * tablesResultSet.getString("TABLE_NAME") >>> ["a", "b", "c", "d"]
         tableNames.size() == 1
@@ -310,7 +283,9 @@ class JdbcConnectorTableServiceSpec extends Specification {
         method | methodName      | exception
         (
             {
-                new JdbcConnectorTableService(Mock(DataSource), Mock(JdbcTypeConverter)).getTableNames(
+                new JdbcConnectorTableService(
+                    Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
+                ).getTableNames(
                     Mock(ConnectorContext),
                     Lists.newArrayList(),
                     false
@@ -319,7 +294,9 @@ class JdbcConnectorTableServiceSpec extends Specification {
         )      | "getTableNames" | UnsupportedOperationException
         (
             {
-                new JdbcConnectorTableService(Mock(DataSource), Mock(JdbcTypeConverter)).create(
+                new JdbcConnectorTableService(
+                    Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
+                ).create(
                     Mock(ConnectorContext),
                     TableInfo.builder().name(QualifiedName.ofTable("catalog", "database", "table")).build()
                 )
@@ -327,15 +304,19 @@ class JdbcConnectorTableServiceSpec extends Specification {
         )      | "create"        | UnsupportedOperationException
         (
             {
-                new JdbcConnectorTableService(Mock(DataSource), Mock(JdbcTypeConverter)).update(
+                new JdbcConnectorTableService(
+                    Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
+                ).update(
                     Mock(ConnectorContext),
                     TableInfo.builder().name(QualifiedName.ofTable("catalog", "database", "table")).build()
                 )
             }
-        )      | "update"       | UnsupportedOperationException
+        )      | "update"        | UnsupportedOperationException
         (
             {
-                new JdbcConnectorTableService(Mock(DataSource), Mock(JdbcTypeConverter)).exists(
+                new JdbcConnectorTableService(
+                    Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
+                ).exists(
                     Mock(ConnectorContext),
                     QualifiedName.ofTable("catalog", "database", "table")
                 )

@@ -17,7 +17,6 @@
  */
 package com.netflix.metacat.connector.jdbc.services;
 
-import com.google.common.base.Throwables;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import lombok.NonNull;
 
@@ -35,6 +34,16 @@ import java.sql.Statement;
 public final class JdbcConnectorUtils extends ConnectorUtils {
 
     /**
+     * The string used for multi character search in SQL.
+     */
+    public static final String MULTI_CHARACTER_SEARCH = "%";
+
+    /**
+     * The string used for single character search in SQL.
+     */
+    public static final String SINGLE_CHARACTER_SEARCH = "_";
+
+    /**
      * Utility class constructor private.
      */
     protected JdbcConnectorUtils() {
@@ -46,12 +55,14 @@ public final class JdbcConnectorUtils extends ConnectorUtils {
      * @param connection The connection to attempt to execute an update against
      * @param sql        The sql to execute
      * @return The number of rows updated or exception
+     * @throws SQLException on error during execution of the update to the underlying SQL data store
      */
-    static int executeUpdate(@Nonnull @NonNull final Connection connection, @Nonnull @NonNull final String sql) {
+    static int executeUpdate(
+        @Nonnull @NonNull final Connection connection,
+        @Nonnull @NonNull final String sql
+    ) throws SQLException {
         try (final Statement statement = connection.createStatement()) {
             return statement.executeUpdate(sql);
-        } catch (final SQLException se) {
-            throw Throwables.propagate(se);
         }
     }
 }
