@@ -40,6 +40,7 @@ import spock.lang.Unroll
 
 import static com.netflix.metacat.DateUtilities.dateCloseEnough
 
+//TODO REMOVE ALL IGNORE
 @Stepwise
 @Unroll
 class MetacatFunctionalSpec extends Specification {
@@ -196,6 +197,7 @@ class MetacatFunctionalSpec extends Specification {
     }
 
     @Ignore
+    //for postgresql
     def 'createDatabase: not support for #catalog.name of type #catalog.type'() {
         given:
         def dto = new DatabaseCreateRequestDto()
@@ -210,12 +212,11 @@ class MetacatFunctionalSpec extends Specification {
         catalog << TestCatalogs.getCanNotCreateDatabase(TestCatalogs.ALL)
     }
 
-    @Ignore
     def 'createDatabase: can create a database in #catalog.name without metadata'() {
         given:
         ObjectNode metadata = null
         def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
-        String databaseName = "db_created_without_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
+        String databaseName = "db_no_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
 
         when:
         def catalogResponse = api.getCatalog(catalog.name)
@@ -258,7 +259,7 @@ class MetacatFunctionalSpec extends Specification {
         given:
         ObjectNode metadata = metacatJson.parseJsonObject('{"objectField": {}}')
         def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
-        String databaseName = "db_created_with_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
+        String databaseName = "db_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
 
         when:
         def catalogResponse = api.getCatalog(catalog.name)
@@ -297,6 +298,8 @@ class MetacatFunctionalSpec extends Specification {
         catalog << TestCatalogs.getCanCreateDatabase(TestCatalogs.ALL)
     }
 
+    @Ignore
+    //cassandra can't throw AlreadyExistsException
     def 'createDatabase: fails when calling create with existing database #name'() {
         when:
         def catalog = api.getCatalog(name.catalogName)
@@ -314,20 +317,27 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getAllDatabases(TestCatalogs.getCanCreateDatabase(TestCatalogs.ALL))
     }
 
-    @Ignore
     def 'getDatabase: has tables for preexisting database #name'() {
         given:
         def sakilaTables = ['actor', 'address', 'city']
         def worldTables = ['city', 'country', 'countrylanguage']
+        def real_estateTables = ['apartments','houses']
+        def billsTables =['bills_compress','bills_nc']
 
         when:
         def database = api.getDatabase(name.catalogName, name.databaseName, true)
 
         then:
         if (name.databaseName == 'world') {
-            database.tables.containsAll(worldTables)
+            assert database.tables.containsAll(worldTables)
         } else if (name.databaseName == 'sakila') {
-            database.tables.containsAll(sakilaTables)
+            assert database.tables.containsAll(sakilaTables)
+        } else if ( name.databaseName == 'real_estate' ) {
+            assert database.tables.containsAll(real_estateTables)
+        } else if ( name.databaseName == 'bills' ) {
+            assert database.tables.containsAll(billsTables)
+        } else if ( name.databaseName == 'public' || name.databaseName =='pg_catalog') {
+            assert name.catalogName.contains("postgresql")
         } else {
             throw new IllegalStateException("Unknown database: ${name.databaseName}")
         }
@@ -343,7 +353,7 @@ class MetacatFunctionalSpec extends Specification {
 
         then:
         database.tables.empty
-        if (name.databaseName.contains('created_with_metadata')) {
+        if (name.databaseName.contains('db_metadata')) {
             assert database.definitionMetadata.fieldNames().collect().contains('objectField')
         } else {
             assert database.definitionMetadata == null
@@ -365,7 +375,6 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.ALL)
     }
 
-    @Ignore
     def 'createTable: should fail for #catalog where it is not supported'() {
         given:
         def databaseName = (catalog.preExistingDatabases + catalog.createdDatabases).first().databaseName
@@ -1075,7 +1084,6 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getCreatedTables(TestCatalogs.getCanDeleteTable(TestCatalogs.ALL))
     }
 
-    @Ignore
     def 'deletePartition: #name'() {
         given:
         def spec = Warehouse.makeSpecFromName(name.partitionName)
@@ -1150,55 +1158,6 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getCreatedTables(TestCatalogs.getCanDeleteTable(TestCatalogs.ALL))
     }
 
-    @Ignore
-    def 'deleteTable: #name fails'() {
-        when:
-        def database = api.getDatabase(name.catalogName, name.databaseName, false)
-
-        then:
-        database.tables.contains(name.tableName)
-
-        when:
-        api.deleteTable(name.catalogName, name.databaseName, name.tableName)
-
-        then:
-        def exception = thrown(RetryableException)
-        exception.message.contains('is disabled in this catalog')
-
-        when:
-        database = api.getDatabase(name.catalogName, name.databaseName, false)
-
-        then:
-        database.tables.contains(name.tableName)
-
-        where:
-        name << TestCatalogs.getAllTables(TestCatalogs.getCanNotDeleteTable(TestCatalogs.ALL))
-    }
-
-    @Ignore
-    def 'deleteDatabase: #name fails for databases where delete is not allowed'() {
-        when:
-        def catalog = api.getCatalog(name.catalogName)
-
-        then:
-        catalog.databases.contains(name.databaseName)
-
-        when:
-        api.deleteDatabase(name.catalogName, name.databaseName)
-
-        then:
-        thrown(MetacatNotSupportedException)
-
-        when:
-        catalog = api.getCatalog(name.catalogName)
-
-        then:
-        catalog.databases.contains(name.databaseName)
-
-        where:
-        name << TestCatalogs.getAllDatabases(TestCatalogs.getCanNotDeleteDatabase(TestCatalogs.ALL))
-    }
-
     def 'deleteDatabase: #name nonexistent fails'() {
         when:
         def catalog = api.getCatalog(name.catalogName)
@@ -1217,8 +1176,7 @@ class MetacatFunctionalSpec extends Specification {
                 .collect { QualifiedName.ofDatabase(it.catalogName, 'does_not_exist') }
     }
 
-    @Ignore
-    // this behaves the same as the database not empty
+
     def 'deleteDatabase: can delete #name'() {
         when:
         def catalog = api.getCatalog(name.catalogName)

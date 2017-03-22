@@ -49,6 +49,7 @@ services:
                 -Dnetflix.appinfo.metadata.route53NamePrefix=
                 -Dnetflix.appinfo.metadata.enableRoute53=false
                 -Dmetacat.plugin.config.location=/etc/metacat/catalog
+                -Dmetacat.type.converter=com.netflix.metacat.connector.pig.converters.PigTypeConverter
                 -Dmetacat.usermetadata.config.location=/etc/metacat/usermetadata.properties'
         labels:
           - "com.netflix.metacat.oss.test"

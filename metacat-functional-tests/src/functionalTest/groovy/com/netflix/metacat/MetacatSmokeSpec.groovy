@@ -36,7 +36,7 @@ import com.netflix.metacat.common.exception.MetacatNotFoundException
 import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
-import com.netflix.metacat.testdata.provider.DataDtoProvider
+import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.*
 import feign.jaxrs.JAXRSContract
 import feign.slf4j.Slf4jLogger
@@ -135,13 +135,13 @@ class MetacatSmokeSpec extends Specification {
         if(!database.getTables().contains(tableName)){
             def newTable;
             if ('part' == tableName){
-                newTable = DataDtoProvider.getPartTable(catalogName, databaseName, owner, uri)
+                newTable = PigDataDtoProvider.getPartTable(catalogName, databaseName, owner, uri)
             } else if ('parts' == tableName){
-                newTable = DataDtoProvider.getPartsTable(catalogName, databaseName, owner, uri)
+                newTable = PigDataDtoProvider.getPartsTable(catalogName, databaseName, owner, uri)
             } else if ('metacat_all_types' == tableName){
-                newTable = DataDtoProvider.getMetacatAllTypesTable(catalogName, databaseName, owner, uri)
+                newTable = PigDataDtoProvider.getMetacatAllTypesTable(catalogName, databaseName, owner, uri)
             } else {
-                newTable = DataDtoProvider.getTable(catalogName, databaseName, tableName, owner, uri)
+                newTable = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, owner, uri)
             }
             api.createTable(catalogName, databaseName, tableName, newTable)
         }
@@ -220,7 +220,7 @@ class MetacatSmokeSpec extends Specification {
                 api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
             } catch (Exception ignored) {}
             def uri = isLocalEnv?String.format('file:/tmp/%s/%s', databaseName, tableName):null
-            def tableDto = DataDtoProvider.getTable(catalogName, databaseName, tableName, 'amajumdar', uri)
+            def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'amajumdar', uri)
             if (!setUri) {
                 tableDto.getSerde().setUri(null)
             }
@@ -326,19 +326,18 @@ class MetacatSmokeSpec extends Specification {
         catalogName                | databaseName   | tableName           | viewName    | error                          | repeat
         'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
         'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | true
-        //TODO:'embedded-hive-metastore'  | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
+  //      'embedded-hive-metastore'  | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
         's3-mysql-db'              | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
         'xyz'                      | 'smoke_db4'    | 'z'                 | 'part_view' | MetacatNotFoundException.class | false
     }
 
-    //TODO: support one=='xyz'
     @Unroll
     def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
         expect:
         try {
             def uri = isLocalEnv?'file:/tmp/abc':null
             createTable(catalogName, databaseName, tableName)
-            def partition = DataDtoProvider.getPartition(catalogName, databaseName, tableName, partitionName, uri)
+            def partition = PigDataDtoProvider.getPartition(catalogName, databaseName, tableName, partitionName, uri)
             def request = new PartitionsSaveRequestDto(partitions: [partition])
             partitionApi.savePartitions(catalogName, databaseName, tableName, request)
             if (repeat) {
@@ -353,6 +352,7 @@ class MetacatSmokeSpec extends Specification {
             e.class == error
         }
         if (!error) {
+            //To test the case that double quoats are supported
             def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionName.replace('=', '="') + '"', null, null, null, null, true)
             assert partitions != null && partitions.size() == 1 && partitions.find {it.name.partitionName == partitionName} != null
             def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: partitionName.replace('=', '="') + '"', includePartitionDetails: true))
@@ -368,6 +368,10 @@ class MetacatSmokeSpec extends Specification {
         'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
         'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
         'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
+        'hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
+        'hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
+        'hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
+        'hive-metastore'  | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
         's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
         's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
         's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
@@ -375,14 +379,13 @@ class MetacatSmokeSpec extends Specification {
         's3-mysql-db'              | 'invalid-catalog' | 'z'       | 'one=xyz'     | false  | false | MetacatNotFoundException.class
     }
 
-    //TODO: support one=='xyz'
     @Unroll
     def "Test: get partitions for filter #filter with offset #offset and limit #limit returned #result partitions"() {
         given:
         if (cursor == 'start') {
             def uri = isLocalEnv?'file:/tmp/abc':null
             createTable('embedded-hive-metastore', 'smoke_db', 'parts')
-            partitionApi.savePartitions('embedded-hive-metastore', 'smoke_db', 'parts', new PartitionsSaveRequestDto(partitions: DataDtoProvider.getPartitions('embedded-hive-metastore', 'smoke_db', 'parts', 'one=xyz/total=1', uri, 10)))
+            partitionApi.savePartitions('embedded-hive-metastore', 'smoke_db', 'parts', new PartitionsSaveRequestDto(partitions: PigDataDtoProvider.getPartitions('embedded-hive-metastore', 'smoke_db', 'parts', 'one=xyz/total=1', uri, 10)))
         }
         def partitionKeys = partitionApi.getPartitionKeys('embedded-hive-metastore', 'smoke_db', 'parts', filter, null, null, offset, limit)
 
@@ -423,13 +426,15 @@ class MetacatSmokeSpec extends Specification {
 
     }
 
+    //TODO CREATE TEST CASE FOR HIVE-METASTORE
+
     @Unroll
     def "Load test save partitions for #catalogName/#databaseName/#tableName with partition names(#count) starting with #partitionName"() {
         when:
         def request = new PartitionsSaveRequestDto()
         def uri = isLocalEnv?'file:/tmp/abc':null
         createTable(catalogName, databaseName, tableName)
-        def partitions = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, partitionName, uri, count)
+        def partitions = PigDataDtoProvider.getPartitions(catalogName, databaseName, tableName, partitionName, uri, count)
         request.setPartitions(partitions)
         partitionApi.savePartitions(catalogName, databaseName, tableName, request)
         def savedPartitions = partitionApi.getPartitions(catalogName, databaseName, tableName, null, null, null, null, null, true)
