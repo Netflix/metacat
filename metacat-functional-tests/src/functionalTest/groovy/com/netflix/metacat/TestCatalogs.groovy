@@ -94,7 +94,6 @@ class TestCatalogs {
         ),
         new TestCatalog(
             name: 'postgresql-96-db',
-            deleteDatabase: true,
             deleteTable: true,
             preExistingDatabases: [
                 QualifiedName.ofDatabase('postgresql-96-db', 'public'),

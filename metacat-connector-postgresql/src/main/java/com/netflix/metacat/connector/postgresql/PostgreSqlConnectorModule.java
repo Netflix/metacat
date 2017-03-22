@@ -25,7 +25,6 @@ import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.util.DataSourceManager;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
-import com.netflix.metacat.connector.jdbc.services.JdbcConnectorDatabaseService;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorPartitionService;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorTableService;
 import lombok.NonNull;
@@ -68,7 +67,7 @@ public class PostgreSqlConnectorModule extends AbstractModule {
             .toInstance(DataSourceManager.get().load(this.name, this.configuration).get(this.name));
         this.bind(JdbcTypeConverter.class).to(PostgreSqlTypeConverter.class).in(Scopes.SINGLETON);
         this.bind(JdbcExceptionMapper.class).to(PostgreSqlExceptionMapper.class).in(Scopes.SINGLETON);
-        this.bind(ConnectorDatabaseService.class).to(JdbcConnectorDatabaseService.class).in(Scopes.SINGLETON);
+        this.bind(ConnectorDatabaseService.class).to(PostgreSqlConnectorDatabaseService.class).in(Scopes.SINGLETON);
         this.bind(ConnectorTableService.class).to(JdbcConnectorTableService.class).in(Scopes.SINGLETON);
         this.bind(ConnectorPartitionService.class).to(JdbcConnectorPartitionService.class).in(Scopes.SINGLETON);
     }

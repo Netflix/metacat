@@ -196,8 +196,6 @@ class MetacatFunctionalSpec extends Specification {
         metadataMessage = metadata == null ? 'without metadata' : 'with metadata'
     }
 
-    @Ignore
-    //for postgresql
     def 'createDatabase: not support for #catalog.name of type #catalog.type'() {
         given:
         def dto = new DatabaseCreateRequestDto()
