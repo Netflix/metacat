@@ -990,6 +990,7 @@ class MetacatThriftFunctionalSpec extends Specification {
     }
 
     @Ignore
+    //this is for testing the special character in partion
     def 'dropPartition: currently fails for encoded partition #name'() {
         given:
         def catalog = TestCatalogs.findByQualifiedName(name)

@@ -112,20 +112,18 @@ class MetacatSmokeThriftSpec extends Specification {
         catalogName << clients.keySet()
     }
 
-    @Ignore
+    @Unroll
     def "Test create database for catalog #catalogName"() {
         when:
         def databaseName = 'test_db1_' + catalogName
         client.createDatabase(new Database(databaseName, 'test_db1', null, null))
         then:
         def database = client.getDatabase(databaseName)
-        assert database != null && database.name == 'test_db1'
+        assert database != null && database.name == 'test_db1_' + catalogName
         when:
         client.createDatabase(new Database(databaseName, 'test_db1', null, null))
         then:
         thrown(AlreadyExistsException)
-        cleanup:
-        client.dropDatabase(databaseName)
         where:
         client << clients.values()
         catalogName << clients.keySet()
