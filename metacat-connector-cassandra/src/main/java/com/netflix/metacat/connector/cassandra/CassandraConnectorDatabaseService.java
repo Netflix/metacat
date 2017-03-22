@@ -20,6 +20,7 @@ package com.netflix.metacat.connector.cassandra;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.MaterializedViewMetadata;
+import com.datastax.driver.core.exceptions.DriverException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
@@ -53,11 +54,15 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
     /**
      * Constructor.
      *
-     * @param cluster The cassandra cluster connection to use
+     * @param cluster         The cassandra cluster connection to use
+     * @param exceptionMapper The exception mapper to use to convert from DriverException to ConnectorException
      */
     @Inject
-    public CassandraConnectorDatabaseService(@Nonnull @NonNull final Cluster cluster) {
-        super(cluster);
+    public CassandraConnectorDatabaseService(
+        @Nonnull @NonNull final Cluster cluster,
+        @Nonnull @NonNull final CassandraExceptionMapper exceptionMapper
+    ) {
+        super(cluster, exceptionMapper);
     }
 
     /**
@@ -70,12 +75,18 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
     ) {
         final String keyspace = resource.getName().getDatabaseName();
         log.debug("Attempting to create a Cassandra Keyspace named {} for request {}", keyspace, context);
-        this.executeQuery(
-            "CREATE KEYSPACE IF NOT EXISTS "
-                + keyspace
-                + " WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3};"
-        );
-        log.debug("Successfully created Cassandra Keyspace named {} for request {}", keyspace, context);
+        try {
+            // TODO: Make this take parameters for replication and the class
+            this.executeQuery(
+                "CREATE KEYSPACE "
+                    + keyspace
+                    + " WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3};"
+            );
+            log.debug("Successfully created Cassandra Keyspace named {} for request {}", keyspace, context);
+        } catch (final DriverException de) {
+            log.error(de.getMessage(), de);
+            throw this.getExceptionMapper().toConnectorException(de, resource.getName());
+        }
     }
 
     /**
@@ -85,8 +96,13 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
     public void delete(@Nonnull @NonNull final ConnectorContext context, @Nonnull @NonNull final QualifiedName name) {
         final String keyspace = name.getDatabaseName();
         log.debug("Attempting to drop Cassandra keyspace {} for request {}", keyspace, context);
-        this.executeQuery("DROP KEYSPACE IF EXISTS " + keyspace + ";");
-        log.debug("Successfully dropped {} keyspace", keyspace);
+        try {
+            this.executeQuery("DROP KEYSPACE IF EXISTS " + keyspace + ";");
+            log.debug("Successfully dropped {} keyspace", keyspace);
+        } catch (final DriverException de) {
+            log.error(de.getMessage(), de);
+            throw this.getExceptionMapper().toConnectorException(de, name);
+        }
     }
 
     /**
@@ -99,13 +115,18 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
     ) {
         final String keyspace = name.getDatabaseName();
         log.debug("Attempting to get keyspace metadata for keyspace {} for request", keyspace, context);
-        final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
-        if (keyspaceMetadata == null) {
-            throw new DatabaseNotFoundException(name);
-        }
+        try {
+            final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
+            if (keyspaceMetadata == null) {
+                throw new DatabaseNotFoundException(name);
+            }
 
-        log.debug("Successfully found the keyspace metadata for {} for request", name, context);
-        return DatabaseInfo.builder().name(name).build();
+            log.debug("Successfully found the keyspace metadata for {} for request", name, context);
+            return DatabaseInfo.builder().name(name).build();
+        } catch (final DriverException de) {
+            log.error(de.getMessage(), de);
+            throw this.getExceptionMapper().toConnectorException(de, name);
+        }
     }
 
     /**
@@ -119,21 +140,26 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
         final String catalogName = databaseName.getCatalogName();
         final String keyspace = databaseName.getDatabaseName();
         log.debug("Attempting to get materialized view names for keyspace {} due to request {}", keyspace, context);
-        final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
-        if (keyspaceMetadata == null) {
-            throw new DatabaseNotFoundException(databaseName);
-        }
+        try {
+            final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
+            if (keyspaceMetadata == null) {
+                throw new DatabaseNotFoundException(databaseName);
+            }
 
-        final ImmutableList.Builder<QualifiedName> viewsBuilder = ImmutableList.builder();
-        for (final MaterializedViewMetadata view : keyspaceMetadata.getMaterializedViews()) {
-            viewsBuilder.add(
-                QualifiedName.ofView(catalogName, keyspace, view.getBaseTable().getName(), view.getName())
-            );
-        }
+            final ImmutableList.Builder<QualifiedName> viewsBuilder = ImmutableList.builder();
+            for (final MaterializedViewMetadata view : keyspaceMetadata.getMaterializedViews()) {
+                viewsBuilder.add(
+                    QualifiedName.ofView(catalogName, keyspace, view.getBaseTable().getName(), view.getName())
+                );
+            }
 
-        final List<QualifiedName> views = viewsBuilder.build();
-        log.debug("Successfully found {} views for keyspace {} due to request {}", views.size(), keyspace, context);
-        return views;
+            final List<QualifiedName> views = viewsBuilder.build();
+            log.debug("Successfully found {} views for keyspace {} due to request {}", views.size(), keyspace, context);
+            return views;
+        } catch (final DriverException de) {
+            log.error(de.getMessage(), de);
+            throw this.getExceptionMapper().toConnectorException(de, databaseName);
+        }
     }
 
     /**
@@ -146,9 +172,14 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
     ) {
         final String keyspace = name.getDatabaseName();
         log.debug("Checking if keyspace {} exists for request", keyspace, context);
-        final boolean exists = this.getCluster().getMetadata().getKeyspace(keyspace) != null;
-        log.debug("Keyspace {} {} for request {}", keyspace, exists ? "exists" : "doesn't exist", context);
-        return exists;
+        try {
+            final boolean exists = this.getCluster().getMetadata().getKeyspace(keyspace) != null;
+            log.debug("Keyspace {} {} for request {}", keyspace, exists ? "exists" : "doesn't exist", context);
+            return exists;
+        } catch (final DriverException de) {
+            log.error(de.getMessage(), de);
+            throw this.getExceptionMapper().toConnectorException(de, name);
+        }
     }
 
     /**
@@ -184,23 +215,28 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
         @Nullable final Pageable pageable
     ) {
         log.debug("Attempting to list keyspaces for request {}", context);
-        final List<QualifiedName> names = Lists.newArrayList();
-        for (final KeyspaceMetadata keyspace : this.getCluster().getMetadata().getKeyspaces()) {
-            final String keyspaceName = keyspace.getName();
-            if (prefix != null && !keyspaceName.startsWith(prefix.getDatabaseName())) {
-                continue;
+        try {
+            final List<QualifiedName> names = Lists.newArrayList();
+            for (final KeyspaceMetadata keyspace : this.getCluster().getMetadata().getKeyspaces()) {
+                final String keyspaceName = keyspace.getName();
+                if (prefix != null && !keyspaceName.startsWith(prefix.getDatabaseName())) {
+                    continue;
+                }
+                names.add(QualifiedName.ofDatabase(name.getCatalogName(), keyspaceName));
             }
-            names.add(QualifiedName.ofDatabase(name.getCatalogName(), keyspaceName));
-        }
 
-        if (sort != null) {
-            // We can only really sort by the database name at this level so ignore SortBy field
-            final Comparator<QualifiedName> comparator = Comparator.comparing(QualifiedName::getDatabaseName);
-            ConnectorUtils.sort(names, sort, comparator);
-        }
+            if (sort != null) {
+                // We can only really sort by the database name at this level so ignore SortBy field
+                final Comparator<QualifiedName> comparator = Comparator.comparing(QualifiedName::getDatabaseName);
+                ConnectorUtils.sort(names, sort, comparator);
+            }
 
-        final List<QualifiedName> results = ConnectorUtils.paginate(names, pageable);
-        log.debug("Finished listing keyspaces for request {}", context);
-        return results;
+            final List<QualifiedName> results = ConnectorUtils.paginate(names, pageable);
+            log.debug("Finished listing keyspaces for request {}", context);
+            return results;
+        } catch (final DriverException de) {
+            log.error(de.getMessage(), de);
+            throw this.getExceptionMapper().toConnectorException(de, name);
+        }
     }
 }

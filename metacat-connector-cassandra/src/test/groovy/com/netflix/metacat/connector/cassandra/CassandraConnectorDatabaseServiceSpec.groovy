@@ -55,7 +55,7 @@ class CassandraConnectorDatabaseServiceSpec extends Specification {
     def context = Mock(ConnectorContext)
     def cluster = Mock(Cluster)
     def session = Mock(Session)
-    def service = new CassandraConnectorDatabaseService(this.cluster)
+    def service = new CassandraConnectorDatabaseService(this.cluster, new CassandraExceptionMapper())
 
     def "Can create a Keyspace"() {
         def keyspace = UUID.randomUUID().toString()
@@ -68,7 +68,7 @@ class CassandraConnectorDatabaseServiceSpec extends Specification {
         then:
         1 * this.cluster.connect() >> this.session
         1 * this.session.execute(
-            "CREATE KEYSPACE IF NOT EXISTS "
+            "CREATE KEYSPACE "
                 + keyspace
                 + " WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3};"
         )
@@ -212,13 +212,13 @@ class CassandraConnectorDatabaseServiceSpec extends Specification {
         method | methodName | exception
         (
             {
-                new CassandraConnectorDatabaseService(Mock(Cluster))
+                new CassandraConnectorDatabaseService(Mock(Cluster), new CassandraExceptionMapper())
                     .rename(Mock(ConnectorContext), QualifiedName.ofCatalog("blah"), QualifiedName.ofCatalog("junk"))
             }
         )      | "rename"   | UnsupportedOperationException
         (
             {
-                new CassandraConnectorDatabaseService(Mock(Cluster)).update(
+                new CassandraConnectorDatabaseService(Mock(Cluster), new CassandraExceptionMapper()).update(
                     Mock(ConnectorContext),
                     DatabaseInfo.builder().name(QualifiedName.ofCatalog("blah")).build()
                 )
