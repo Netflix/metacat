@@ -57,7 +57,8 @@ class PigTypeConverterSpec extends Specification {
             "{rows: (track_id: int, sub_root_uuid: chararray, list_type: chararray, item_type: chararray, hasevidence: chararray, listContext: chararray, genre_id: int, evidence: map[], presentation_row_number: int, mmid: {t: (show_title_id: int, source_title_id: int, evidence: chararray, evidenceType: chararray, context: chararray, interleaving: chararray)}, diversity_score: int,random_group: chararray,is_fallback: chararray,expected_reward_score: chararray, track_ids: {track_id: (track_id: int)})}",
             "{(show_title_id: int,location_id: int,vhs_bag: {t: (view_utc_sec: long,view_duration: int,title_id: int, play_request_id: chararray, runtime_minutes:float, play_row: int)})}",
             "{(show_title_id: int,source_title_id: int,title_evidence: chararray,title_evidence_type: chararray,row_context: chararray,presentation_rank_number: int,play_count: int,play_duration: int,vhs_bag: {t: (credit_request_id: {t: (credit_request_id: chararray)},credit_timestamp: {t: (credit_timestamp: long)},titles: {t: (play_timestamp: long,play_duration: int,play_title_id: int,play_request_id: chararray,runtime_minutes: float , play_rank:int)})}, join_type:chararray, interleaving: chararray)}",
-            "{(presentation_rank_number: int, show_title_id: int)}"
+            "{(presentation_rank_number: int, show_title_id: int)}",
+           // "{(array_element:map[chararray])}"
         ]
         //what should do with these?
         //"boolean",

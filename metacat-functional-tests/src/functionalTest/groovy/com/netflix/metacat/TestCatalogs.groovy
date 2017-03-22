@@ -26,6 +26,7 @@ class TestCatalogs {
         boolean createPartition
         boolean createTable
         boolean deleteDatabase
+        boolean deleteDatabaseWithNoCheck
         boolean deleteTable
         boolean createView
         List<QualifiedName> createdDatabases = []
@@ -76,6 +77,8 @@ class TestCatalogs {
         ),
         new TestCatalog(
             createDatabase: true,
+            deleteDatabaseWithNoCheck: true,
+            deleteTable: true,
             name: 'mysql-56-db',
             preExistingDatabases: [
                 QualifiedName.ofDatabase('mysql-56-db', 'sakila'),
@@ -91,6 +94,8 @@ class TestCatalogs {
         ),
         new TestCatalog(
             name: 'postgresql-96-db',
+            deleteDatabase: true,
+            deleteTable: true,
             preExistingDatabases: [
                 QualifiedName.ofDatabase('postgresql-96-db', 'public'),
                 QualifiedName.ofDatabase('postgresql-96-db', 'pg_catalog'),
@@ -104,6 +109,8 @@ class TestCatalogs {
         ),
         new TestCatalog(
             createDatabase: true,
+            deleteDatabaseWithNoCheck: true,
+            deleteTable: true,
             name: 'cassandra-310',
             preExistingDatabases: [
                 QualifiedName.ofDatabase('cassandra-310', 'bills'),
@@ -185,6 +192,10 @@ class TestCatalogs {
 
     static Collection<TestCatalog> getCanDeleteDatabase(Collection<TestCatalog> source) {
         return source.findAll { it.deleteDatabase }
+    }
+
+    static Collection<TestCatalog> getCanDeleteDatabaseWithNoCheck(Collection<TestCatalog> source) {
+        return source.findAll { it.deleteDatabaseWithNoCheck }
     }
 
     static Collection<TestCatalog> getCanNotDeleteDatabase(Collection<TestCatalog> source) {

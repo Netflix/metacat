@@ -53,6 +53,7 @@ class MetacatFunctionalSpec extends Specification {
     def setupSpec() {
         String httpPort = System.properties['metacat_http_port']?.toString()?.trim()
         assert httpPort, 'Required system property "metacat_http_port" is not set'
+
         def client = Client.builder()
                 .withHost("http://localhost:$httpPort")
                 .withDataTypeContext('pig')
@@ -196,6 +197,7 @@ class MetacatFunctionalSpec extends Specification {
     }
 
     @Ignore
+    //for postgresql
     def 'createDatabase: not support for #catalog.name of type #catalog.type'() {
         given:
         def dto = new DatabaseCreateRequestDto()
@@ -315,8 +317,6 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getAllDatabases(TestCatalogs.getCanCreateDatabase(TestCatalogs.ALL))
     }
 
-    //@Ignore
-    //JDBC Connector can't list tables
     def 'getDatabase: has tables for preexisting database #name'() {
         given:
         def sakilaTables = ['actor', 'address', 'city']
@@ -1158,56 +1158,6 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getCreatedTables(TestCatalogs.getCanDeleteTable(TestCatalogs.ALL))
     }
 
-    @Ignore
-    //to add drop table disable option
-    def 'deleteTable: #name fails'() {
-        when:
-        def database = api.getDatabase(name.catalogName, name.databaseName, false)
-
-        then:
-        database.tables.contains(name.tableName)
-
-        when:
-        api.deleteTable(name.catalogName, name.databaseName, name.tableName)
-
-        then:
-        def exception = thrown(RetryableException)
-        exception.message.contains('is disabled in this catalog')
-
-        when:
-        database = api.getDatabase(name.catalogName, name.databaseName, false)
-
-        then:
-        database.tables.contains(name.tableName)
-
-        where:
-        name << TestCatalogs.getAllTables(TestCatalogs.getCanNotDeleteTable(TestCatalogs.ALL))
-    }
-
-    @Ignore
-    def 'deleteDatabase: #name fails for databases where delete is not allowed'() {
-        when:
-        def catalog = api.getCatalog(name.catalogName)
-
-        then:
-        catalog.databases.contains(name.databaseName)
-
-        when:
-        api.deleteDatabase(name.catalogName, name.databaseName)
-
-        then:
-        thrown(MetacatNotSupportedException)
-
-        when:
-        catalog = api.getCatalog(name.catalogName)
-
-        then:
-        catalog.databases.contains(name.databaseName)
-
-        where:
-        name << TestCatalogs.getAllDatabases(TestCatalogs.getCanNotDeleteDatabase(TestCatalogs.ALL))
-    }
-
     def 'deleteDatabase: #name nonexistent fails'() {
         when:
         def catalog = api.getCatalog(name.catalogName)
@@ -1227,7 +1177,6 @@ class MetacatFunctionalSpec extends Specification {
     }
 
 
-    // this behaves the same as the database not empty
     def 'deleteDatabase: can delete #name'() {
         when:
         def catalog = api.getCatalog(name.catalogName)
