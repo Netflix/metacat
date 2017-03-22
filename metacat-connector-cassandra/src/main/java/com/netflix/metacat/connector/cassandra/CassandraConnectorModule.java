@@ -69,6 +69,7 @@ public class CassandraConnectorModule extends AbstractModule {
     @Override
     protected void configure() {
         this.bind(CassandraTypeConverter.class).toInstance(new CassandraTypeConverter());
+        this.bind(CassandraExceptionMapper.class).toInstance(new CassandraExceptionMapper());
         this.bind(ConnectorDatabaseService.class).to(CassandraConnectorDatabaseService.class).in(Scopes.SINGLETON);
         this.bind(ConnectorTableService.class).to(CassandraConnectorTableService.class).in(Scopes.SINGLETON);
         this.bind(ConnectorPartitionService.class).to(CassandraConnectorPartitionService.class).in(Scopes.SINGLETON);

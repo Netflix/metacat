@@ -52,7 +52,11 @@ class CassandraConnectorTableServiceSpec extends Specification {
 
     def context = Mock(ConnectorContext)
     def cluster = Mock(Cluster)
-    def service = new CassandraConnectorTableService(this.cluster, new CassandraTypeConverter())
+    def service = new CassandraConnectorTableService(
+        this.cluster,
+        new CassandraExceptionMapper(),
+        new CassandraTypeConverter()
+    )
 
     def "Can Delete Table"() {
         def keyspace = UUID.randomUUID().toString()
@@ -401,7 +405,11 @@ class CassandraConnectorTableServiceSpec extends Specification {
         method | methodName      | exception
         (
             {
-                new CassandraConnectorTableService(Mock(Cluster), new CassandraTypeConverter()).create(
+                new CassandraConnectorTableService(
+                    Mock(Cluster),
+                    new CassandraExceptionMapper(),
+                    new CassandraTypeConverter()
+                ).create(
                     Mock(ConnectorContext),
                     TableInfo.builder().name(QualifiedName.ofTable("blah", "blah", "blah")).build()
                 )
@@ -409,7 +417,11 @@ class CassandraConnectorTableServiceSpec extends Specification {
         )      | "create"        | UnsupportedOperationException
         (
             {
-                new CassandraConnectorTableService(Mock(Cluster), new CassandraTypeConverter()).update(
+                new CassandraConnectorTableService(
+                    Mock(Cluster),
+                    new CassandraExceptionMapper(),
+                    new CassandraTypeConverter()
+                ).update(
                     Mock(ConnectorContext),
                     TableInfo.builder().name(QualifiedName.ofTable("blah", "blah", "blah")).build()
                 )
@@ -417,16 +429,24 @@ class CassandraConnectorTableServiceSpec extends Specification {
         )      | "update"        | UnsupportedOperationException
         (
             {
-                new CassandraConnectorTableService(Mock(Cluster), new CassandraTypeConverter()).rename(
+                new CassandraConnectorTableService(
+                    Mock(Cluster),
+                    new CassandraExceptionMapper(),
+                    new CassandraTypeConverter()
+                ).rename(
                     Mock(ConnectorContext),
                     QualifiedName.ofTable("blah", "blah", "blah"),
                     QualifiedName.ofTable("blah", "blah", "blah2")
                 )
             }
-        )      | "rename" | UnsupportedOperationException
+        )      | "rename"        | UnsupportedOperationException
         (
             {
-                new CassandraConnectorTableService(Mock(Cluster), new CassandraTypeConverter()).getTableNames(
+                new CassandraConnectorTableService(
+                    Mock(Cluster),
+                    new CassandraExceptionMapper(),
+                    new CassandraTypeConverter()
+                ).getTableNames(
                     Mock(ConnectorContext),
                     Lists.newArrayList(),
                     false

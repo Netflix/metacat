@@ -33,14 +33,12 @@ import feign.Logger
 import feign.RetryableException
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.joda.time.Instant
-import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Stepwise
 import spock.lang.Unroll
 
 import static com.netflix.metacat.DateUtilities.dateCloseEnough
 
-//TODO REMOVE ALL IGNORE
 @Stepwise
 @Unroll
 class MetacatFunctionalSpec extends Specification {
@@ -48,19 +46,19 @@ class MetacatFunctionalSpec extends Specification {
     public static PartitionV1 partitionApi
     public static final MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
     public static final long BATCH_ID = System.currentTimeSeconds()
-    public static final int timediff = 24*3600
+    public static final int timediff = 24 * 3600
 
     def setupSpec() {
         String httpPort = System.properties['metacat_http_port']?.toString()?.trim()
         assert httpPort, 'Required system property "metacat_http_port" is not set'
 
         def client = Client.builder()
-                .withHost("http://localhost:$httpPort")
-                .withDataTypeContext('pig')
-                .withUserName('metacat-test')
-                .withClientAppName('metacat-test')
-                .withLogLevel(Logger.Level.FULL)
-                .build()
+            .withHost("http://localhost:$httpPort")
+            .withDataTypeContext('pig')
+            .withUserName('metacat-test')
+            .withClientAppName('metacat-test')
+            .withLogLevel(Logger.Level.FULL)
+            .build()
         api = client.api
         partitionApi = client.partitionApi
 
@@ -159,20 +157,19 @@ class MetacatFunctionalSpec extends Specification {
         catalog << TestCatalogs.ALL
     }
 
-    def "create test_db"(){
+    def "create test_db"() {
         given:
         ObjectNode metadata = metacatJson.parseJsonObject('{"objectField": {}}')
         def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
-        String databaseName =  "test_db_${catalog.name.replace('-', '_')}".toString()
+        String databaseName = "test_db_${catalog.name.replace('-', '_')}".toString()
 
         when:
         def catalogResponse = api.getCatalog(catalog.name)
 
         then:
-        if ( !catalogResponse.databases.contains(databaseName) ) {
+        if (!catalogResponse.databases.contains(databaseName)) {
             api.createDatabase(catalog.name, databaseName, dto)
-        }
-        else {
+        } else {
             println "test_db already exists in $catalog.name. Skipping create test_db"
         }
 
@@ -296,8 +293,6 @@ class MetacatFunctionalSpec extends Specification {
         catalog << TestCatalogs.getCanCreateDatabase(TestCatalogs.ALL)
     }
 
-    @Ignore
-    //cassandra can't throw AlreadyExistsException
     def 'createDatabase: fails when calling create with existing database #name'() {
         when:
         def catalog = api.getCatalog(name.catalogName)
@@ -319,8 +314,8 @@ class MetacatFunctionalSpec extends Specification {
         given:
         def sakilaTables = ['actor', 'address', 'city']
         def worldTables = ['city', 'country', 'countrylanguage']
-        def real_estateTables = ['apartments','houses']
-        def billsTables =['bills_compress','bills_nc']
+        def real_estateTables = ['apartments', 'houses']
+        def billsTables = ['bills_compress', 'bills_nc']
 
         when:
         def database = api.getDatabase(name.catalogName, name.databaseName, true)
@@ -330,11 +325,11 @@ class MetacatFunctionalSpec extends Specification {
             assert database.tables.containsAll(worldTables)
         } else if (name.databaseName == 'sakila') {
             assert database.tables.containsAll(sakilaTables)
-        } else if ( name.databaseName == 'real_estate' ) {
+        } else if (name.databaseName == 'real_estate') {
             assert database.tables.containsAll(real_estateTables)
-        } else if ( name.databaseName == 'bills' ) {
+        } else if (name.databaseName == 'bills') {
             assert database.tables.containsAll(billsTables)
-        } else if ( name.databaseName == 'public' || name.databaseName =='pg_catalog') {
+        } else if (name.databaseName == 'public' || name.databaseName == 'pg_catalog') {
             assert name.catalogName.contains("postgresql")
         } else {
             throw new IllegalStateException("Unknown database: ${name.databaseName}")
@@ -378,10 +373,10 @@ class MetacatFunctionalSpec extends Specification {
         def databaseName = (catalog.preExistingDatabases + catalog.createdDatabases).first().databaseName
         def tableName = "table_$BATCH_ID".toString()
         def dto = new TableDto(
-                name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
-                serde: new StorageDto(
-                        owner: 'metacat-test'
-                )
+            name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
+            serde: new StorageDto(
+                owner: 'metacat-test'
+            )
         )
 
         when:
@@ -405,10 +400,10 @@ class MetacatFunctionalSpec extends Specification {
         def databaseName = "created_database_${catalog.name.replace('-', '_')}".toString()
         def tableName = "table_$BATCH_ID".toString()
         def dto = new TableDto(
-                name: QualifiedName.ofTable('zz_' + catalog.name, databaseName, tableName),
-                serde: new StorageDto(
-                        owner: 'metacat-test'
-                )
+            name: QualifiedName.ofTable('zz_' + catalog.name, databaseName, tableName),
+            serde: new StorageDto(
+                owner: 'metacat-test'
+            )
         )
 
         when:
@@ -426,10 +421,10 @@ class MetacatFunctionalSpec extends Specification {
         def databaseName = "missing_database_${catalog.name.replace('-', '_')}".toString()
         def tableName = "table_$BATCH_ID".toString()
         def dto = new TableDto(
-                name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
-                serde: new StorageDto(
-                        owner: 'metacat-test'
-                )
+            name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
+            serde: new StorageDto(
+                owner: 'metacat-test'
+            )
         )
 
         when:
@@ -455,53 +450,53 @@ class MetacatFunctionalSpec extends Specification {
         ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
         ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
         def dto = new TableDto(
-                name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
-                audit: new AuditDto(
-                        createdBy: 'createdBy',
-                        createdDate: now
+            name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
+            audit: new AuditDto(
+                createdBy: 'createdBy',
+                createdDate: now
+            ),
+            serde: new StorageDto(
+                owner: 'metacat-test',
+                inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                parameters: [
+                    'serialization.format': '1'
+                ],
+                uri: dataUri
+            ),
+            definitionMetadata: definitionMetadata,
+            dataMetadata: dataMetadata,
+            fields: [
+                new FieldDto(
+                    comment: 'added 1st - partition key',
+                    name: 'field1',
+                    pos: 0,
+                    type: 'boolean',
+                    partition_key: true
                 ),
-                serde: new StorageDto(
-                        owner: 'metacat-test',
-                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
-                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
-                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
-                        parameters: [
-                                'serialization.format': '1'
-                        ],
-                        uri: dataUri
+                new FieldDto(
+                    comment: 'added 2st',
+                    name: 'field2',
+                    pos: 1,
+                    type: 'boolean',
+                    partition_key: false
                 ),
-                definitionMetadata: definitionMetadata,
-                dataMetadata: dataMetadata,
-                fields: [
-                        new FieldDto(
-                                comment: 'added 1st - partition key',
-                                name: 'field1',
-                                pos: 0,
-                                type: 'boolean',
-                                partition_key: true
-                        ),
-                        new FieldDto(
-                                comment: 'added 2st',
-                                name: 'field2',
-                                pos: 1,
-                                type: 'boolean',
-                                partition_key: false
-                        ),
-                        new FieldDto(
-                                comment: 'added 3rd, a single char partition key to test that use case',
-                                name: 'p',
-                                pos: 2,
-                                type: 'boolean',
-                                partition_key: true
-                        ),
-                        new FieldDto(
-                                comment: 'added 4st',
-                                name: 'field4',
-                                pos: 3,
-                                type: 'boolean',
-                                partition_key: false
-                        ),
-                ]
+                new FieldDto(
+                    comment: 'added 3rd, a single char partition key to test that use case',
+                    name: 'p',
+                    pos: 2,
+                    type: 'boolean',
+                    partition_key: true
+                ),
+                new FieldDto(
+                    comment: 'added 4st',
+                    name: 'field4',
+                    pos: 3,
+                    type: 'boolean',
+                    partition_key: false
+                ),
+            ]
         )
 
         when:
@@ -519,7 +514,7 @@ class MetacatFunctionalSpec extends Specification {
 
         when:
         def table = api.getTable(catalog.name, databaseName, tableName, true, true, true)
-        def name = QualifiedName.ofTable(catalog.name,databaseName,tableName)
+        def name = QualifiedName.ofTable(catalog.name, databaseName, tableName)
 
         then:
         table.serde.owner == 'metacat-test'
@@ -557,63 +552,62 @@ class MetacatFunctionalSpec extends Specification {
         ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
         ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
         def dto = new TableDto(
-                name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
-                audit: new AuditDto(
-                        createdBy: 'createdBy',
-                        createdDate: now
+            name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
+            audit: new AuditDto(
+                createdBy: 'createdBy',
+                createdDate: now
+            ),
+            serde: new StorageDto(
+                owner: 'metacat-test',
+                inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                parameters: [
+                    'serialization.format': '1'
+                ],
+                uri: dataUri
+            ),
+            definitionMetadata: definitionMetadata,
+            dataMetadata: dataMetadata,
+            fields: [
+                new FieldDto(
+                    comment: 'added 1st - partition key',
+                    name: 'field1',
+                    pos: 0,
+                    type: 'boolean',
+                    partition_key: true
                 ),
-                serde: new StorageDto(
-                        owner: 'metacat-test',
-                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
-                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
-                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
-                        parameters: [
-                                'serialization.format': '1'
-                        ],
-                        uri: dataUri
+                new FieldDto(
+                    comment: 'added 2st',
+                    name: 'field2',
+                    pos: 1,
+                    type: 'boolean',
+                    partition_key: false
                 ),
-                definitionMetadata: definitionMetadata,
-                dataMetadata: dataMetadata,
-                fields: [
-                        new FieldDto(
-                                comment: 'added 1st - partition key',
-                                name: 'field1',
-                                pos: 0,
-                                type: 'boolean',
-                                partition_key: true
-                        ),
-                        new FieldDto(
-                                comment: 'added 2st',
-                                name: 'field2',
-                                pos: 1,
-                                type: 'boolean',
-                                partition_key: false
-                        ),
-                        new FieldDto(
-                                comment: 'added 3rd, a single char partition key to test that use case',
-                                name: 'p',
-                                pos: 2,
-                                type: 'boolean',
-                                partition_key: true
-                        ),
-                        new FieldDto(
-                                comment: 'added 4st',
-                                name: 'field4',
-                                pos: 3,
-                                type: 'boolean',
-                                partition_key: false
-                        ),
-                ]
+                new FieldDto(
+                    comment: 'added 3rd, a single char partition key to test that use case',
+                    name: 'p',
+                    pos: 2,
+                    type: 'boolean',
+                    partition_key: true
+                ),
+                new FieldDto(
+                    comment: 'added 4st',
+                    name: 'field4',
+                    pos: 3,
+                    type: 'boolean',
+                    partition_key: false
+                ),
+            ]
         )
 
         when:
         def database = api.getDatabase(catalog.name, databaseName, false)
 
         then:
-        if (!database.tables.contains(tableName) ) {
+        if (!database.tables.contains(tableName)) {
             api.createTable(catalog.name, databaseName, tableName, dto)
-        }
-        else {
+        } else {
             println "test_table already exist in $catalog.name/$databaseName Skipping create test_table"
         }
 
@@ -663,7 +657,7 @@ class MetacatFunctionalSpec extends Specification {
         table.definitionMetadata = null
         table.dataMetadata = null
         api.updateTable(catalog.name, databaseName, tableName, table)
-        table = api.getTable(catalog.name,databaseName, tableName, true, true, true)
+        table = api.getTable(catalog.name, databaseName, tableName, true, true, true)
 
         then: 'the old data metadata should be back'
         table.dataMetadata == originalDataMetadata
@@ -684,17 +678,17 @@ class MetacatFunctionalSpec extends Specification {
         def dataUri = "file:/tmp/${name.catalogName}/$dbname/test_table/${name.partitionName}".toString()
 
         def request = new PartitionsSaveRequestDto(
-                partitions: [
-                        new PartitionDto(
-                                name: name,
-                                serde: new StorageDto(
-                                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
-                                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
-                                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
-                                        uri: dataUri
-                                ),
-                        )
-                ]
+            partitions: [
+                new PartitionDto(
+                    name: name,
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri
+                    ),
+                )
+            ]
         )
 
         when:
@@ -708,16 +702,16 @@ class MetacatFunctionalSpec extends Specification {
 
         where:
         pname << TestCatalogs.getCanCreateTable(TestCatalogs.ALL)
-                .collect { tname ->
+            .collect { tname ->
             [
-                    [field1: 'null', p: 'valid'],
-                    [field1: '', p: 'valid'],
-                    [field1: 'valid', p: 'null'],
-                    [field1: 'valid', p: ''],
-                    [field1: 'null', p: 'null'],
-                    [field1: 'null', p: ''],
-                    [field1: '', p: 'null'],
-                    [field1: '', p: ''],
+                [field1: 'null', p: 'valid'],
+                [field1: '', p: 'valid'],
+                [field1: 'valid', p: 'null'],
+                [field1: 'valid', p: ''],
+                [field1: 'null', p: 'null'],
+                [field1: 'null', p: ''],
+                [field1: '', p: 'null'],
+                [field1: '', p: ''],
             ].collect {
                 String unescapedPartitionName = "field1=${it.field1}/p=${it.p}".toString()
                 QualifiedName.ofPartition(tname.name, "test_db_${tname.name.replace('-', '_')}".toString(), "test_table", unescapedPartitionName)
@@ -736,25 +730,25 @@ class MetacatFunctionalSpec extends Specification {
         def tableMetadata = metacatJson.emptyObjectNode().put('table_def_field', now.time)
 
         def request = new PartitionsSaveRequestDto(
-                definitionMetadata: tableMetadata,
-                partitions: [
-                        new PartitionDto(
-                                name: name,
-                                definitionMetadata: definitionMetadata,
-                                dataMetadata: dataMetadata,
-                                dataExternal: true,
-                                audit: new AuditDto(
-                                        createdDate: now,
-                                        lastModifiedDate: now
-                                ),
-                                serde: new StorageDto(
-                                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
-                                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
-                                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
-                                        uri: dataUri
-                                ),
-                        )
-                ]
+            definitionMetadata: tableMetadata,
+            partitions: [
+                new PartitionDto(
+                    name: name,
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: dataMetadata,
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdDate: now,
+                        lastModifiedDate: now
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri
+                    ),
+                )
+            ]
         )
 
         when:
@@ -799,14 +793,14 @@ class MetacatFunctionalSpec extends Specification {
 
         when: "nothing is changed on the partitions"
         request = new PartitionsSaveRequestDto(
-                partitions: [
-                        new PartitionDto(
-                                name: name,
-                                serde: new StorageDto(
-                                        uri: dataUri
-                                ),
-                        )
-                ]
+            partitions: [
+                new PartitionDto(
+                    name: name,
+                    serde: new StorageDto(
+                        uri: dataUri
+                    ),
+                )
+            ]
         )
         response = partitionApi.savePartitions(name.catalogName, name.databaseName, name.tableName, request)
 
@@ -845,21 +839,21 @@ class MetacatFunctionalSpec extends Specification {
 
         where:
         args << TestCatalogs.getCreatedTables(TestCatalogs.ALL)
-                .collect { tname ->
+            .collect { tname ->
             [
-                    [field1: 'lower', p: 'UPPER'],
-                    [field1: 'UPPER', p: 'UPPER'],
-                    [field1: 'UPPER', p: 'lower'],
-                    [field1: 'lower', p: 'lower'],
-                    [field1: 'camelCase', p: 'camelCase'],
-                    [field1: 'string with space', p: 'valid'],
-                    [field1: 'valid', p: 'string with space'],
+                [field1: 'lower', p: 'UPPER'],
+                [field1: 'UPPER', p: 'UPPER'],
+                [field1: 'UPPER', p: 'lower'],
+                [field1: 'lower', p: 'lower'],
+                [field1: 'camelCase', p: 'camelCase'],
+                [field1: 'string with space', p: 'valid'],
+                [field1: 'valid', p: 'string with space'],
             ].collect {
                 String unescapedPartitionName = "field1=${it.field1}/p=${it.p}".toString()
                 String escapedPartitionName = unescapedPartitionName
                 return [
-                        name       : QualifiedName.ofPartition(tname.catalogName, tname.databaseName, tname.tableName, unescapedPartitionName),
-                        escapedName: QualifiedName.ofPartition(tname.catalogName, tname.databaseName, tname.tableName, escapedPartitionName),
+                    name       : QualifiedName.ofPartition(tname.catalogName, tname.databaseName, tname.tableName, unescapedPartitionName),
+                    escapedName: QualifiedName.ofPartition(tname.catalogName, tname.databaseName, tname.tableName, escapedPartitionName),
                 ]
             }
         }.flatten()
@@ -869,29 +863,29 @@ class MetacatFunctionalSpec extends Specification {
         given:
         def tableName = "table_part_filtering_$BATCH_ID".toString()
         def dto = new TableDto(
-                name: QualifiedName.ofTable(name.catalogName, name.databaseName, tableName),
-                fields: [
-                        new FieldDto(
-                                name: 'pk1',
-                                type: 'chararray',
-                                partition_key: true
-                        ),
-                        new FieldDto(
-                                name: 'pk2',
-                                type: 'long',
-                                partition_key: true
-                        ),
-                        new FieldDto(
-                                name: 'pk3',
-                                type: 'long',
-                                partition_key: true
-                        ),
-                        new FieldDto(
-                                name: 'field4',
-                                type: 'chararray',
-                                partition_key: false
-                        ),
-                ]
+            name: QualifiedName.ofTable(name.catalogName, name.databaseName, tableName),
+            fields: [
+                new FieldDto(
+                    name: 'pk1',
+                    type: 'chararray',
+                    partition_key: true
+                ),
+                new FieldDto(
+                    name: 'pk2',
+                    type: 'long',
+                    partition_key: true
+                ),
+                new FieldDto(
+                    name: 'pk3',
+                    type: 'long',
+                    partition_key: true
+                ),
+                new FieldDto(
+                    name: 'field4',
+                    type: 'chararray',
+                    partition_key: false
+                ),
+            ]
         )
 
         when:
@@ -915,10 +909,10 @@ class MetacatFunctionalSpec extends Specification {
             String pk2 = Integer.valueOf(i)
             String pk3 = Integer.valueOf(i % 2)
             partitionsSaveRequestDto.partitions.add(new PartitionDto(
-                    name: QualifiedName.ofPartition(name.catalogName, name.databaseName, tableName, "pk1=${pk1}/pk2=${pk2}/pk3=${pk3}"),
-                    serde: new StorageDto(
-                            uri: "file:/tmp/${name.catalogName}/${name.databaseName}/${tableName}/${Random.newInstance().nextInt(Integer.MAX_VALUE)}".toString()
-                    ),
+                name: QualifiedName.ofPartition(name.catalogName, name.databaseName, tableName, "pk1=${pk1}/pk2=${pk2}/pk3=${pk3}"),
+                serde: new StorageDto(
+                    uri: "file:/tmp/${name.catalogName}/${name.databaseName}/${tableName}/${Random.newInstance().nextInt(Integer.MAX_VALUE)}".toString()
+                ),
             ))
         }
         def resp = partitionApi.savePartitions(name.catalogName, name.databaseName, tableName, partitionsSaveRequestDto)
@@ -941,14 +935,14 @@ class MetacatFunctionalSpec extends Specification {
         def result = null
         try {
             result = f('pk3="1"')
-        } catch(Throwable t) {
+        } catch (Throwable t) {
             result = t
         }
 
         then:
         if (TestCatalogs.findByCatalogName(name.catalogName).validateFilterExpressionBasedOnPartitionKeyType) {
             assert result instanceof Throwable,
-                    'an exception should be thrown when using a quoted long when types are verified'
+                'an exception should be thrown when using a quoted long when types are verified'
         } else {
             assert result.size() == 8
             assert result.every { PartitionDto partition -> partition.name.partitionName.endsWith('/pk3=1') }
@@ -1067,7 +1061,7 @@ class MetacatFunctionalSpec extends Specification {
         when:
         api.createMView(name.catalogName, name.databaseName, name.tableName, viewName, false, null)
         def views = api.getMViews(name.catalogName, name.databaseName, name.tableName)
-        def viewNames = views.collect{it.getName()}
+        def viewNames = views.collect { it.getName() }
 
         then:
         viewNames.contains(viewQName)
@@ -1171,7 +1165,7 @@ class MetacatFunctionalSpec extends Specification {
 
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getCanDeleteDatabase(TestCatalogs.ALL))
-                .collect { QualifiedName.ofDatabase(it.catalogName, 'does_not_exist') }
+            .collect { QualifiedName.ofDatabase(it.catalogName, 'does_not_exist') }
     }
 
 
