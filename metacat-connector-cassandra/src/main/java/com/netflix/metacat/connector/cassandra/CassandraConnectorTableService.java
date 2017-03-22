@@ -21,6 +21,7 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.exceptions.DriverException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
@@ -57,15 +58,17 @@ public class CassandraConnectorTableService extends CassandraService implements 
     /**
      * Constructor.
      *
-     * @param cluster       The cluster this service connects to
-     * @param typeConverter The type converter to convert from CQL types to Metacat Types
+     * @param cluster         The cluster this service connects to
+     * @param exceptionMapper The exception mapper to use
+     * @param typeConverter   The type converter to convert from CQL types to Metacat Types
      */
     @Inject
     public CassandraConnectorTableService(
         @Nonnull @NonNull final Cluster cluster,
+        @Nonnull @NonNull final CassandraExceptionMapper exceptionMapper,
         @Nonnull @NonNull final CassandraTypeConverter typeConverter
     ) {
-        super(cluster);
+        super(cluster, exceptionMapper);
         this.typeConverter = typeConverter;
     }
 
@@ -77,8 +80,13 @@ public class CassandraConnectorTableService extends CassandraService implements 
         final String keyspace = name.getDatabaseName();
         final String table = name.getTableName();
         log.debug("Attempting to delete Cassandra table {}.{} for request {}", keyspace, table, context);
-        this.executeQuery("USE " + keyspace + "; DROP TABLE IF EXISTS " + table + ";");
-        log.debug("Successfully deleted Cassandra table {}.{} for request {}", keyspace, table, context);
+        try {
+            this.executeQuery("USE " + keyspace + "; DROP TABLE IF EXISTS " + table + ";");
+            log.debug("Successfully deleted Cassandra table {}.{} for request {}", keyspace, table, context);
+        } catch (final DriverException de) {
+            log.error(de.getMessage(), de);
+            throw this.getExceptionMapper().toConnectorException(de, name);
+        }
     }
 
     /**
@@ -89,18 +97,23 @@ public class CassandraConnectorTableService extends CassandraService implements 
         final String keyspace = name.getDatabaseName();
         final String table = name.getTableName();
         log.debug("Attempting to get metadata for Cassandra table {}.{} for request {}", keyspace, table, context);
-        final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
-        if (keyspaceMetadata == null) {
-            throw new DatabaseNotFoundException(name);
-        }
-        final TableMetadata tableMetadata = keyspaceMetadata.getTable(table);
-        if (tableMetadata == null) {
-            throw new TableNotFoundException(name);
-        }
+        try {
+            final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
+            if (keyspaceMetadata == null) {
+                throw new DatabaseNotFoundException(name);
+            }
+            final TableMetadata tableMetadata = keyspaceMetadata.getTable(table);
+            if (tableMetadata == null) {
+                throw new TableNotFoundException(name);
+            }
 
-        final TableInfo tableInfo = this.getTableInfo(name, tableMetadata);
-        log.debug("Successfully got metadata for Cassandra table {}.{} for request {}", keyspace, table, context);
-        return tableInfo;
+            final TableInfo tableInfo = this.getTableInfo(name, tableMetadata);
+            log.debug("Successfully got metadata for Cassandra table {}.{} for request {}", keyspace, table, context);
+            return tableInfo;
+        } catch (final DriverException de) {
+            log.error(de.getMessage(), de);
+            throw this.getExceptionMapper().toConnectorException(de, name);
+        }
     }
 
     /**
@@ -114,21 +127,26 @@ public class CassandraConnectorTableService extends CassandraService implements 
         final String keyspace = name.getDatabaseName();
         final String table = name.getTableName();
         log.debug("Checking if Cassandra table {}.{} exists for request {}", keyspace, table, context);
-        final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
-        if (keyspaceMetadata == null) {
-            return false;
+        try {
+            final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
+            if (keyspaceMetadata == null) {
+                return false;
+            }
+
+            final boolean exists = keyspaceMetadata.getTable(table) != null;
+            log.debug(
+                "Cassandra table {}.{} {} for request {}",
+                keyspace,
+                table,
+                exists ? "exists" : "doesn't exist",
+                context
+            );
+
+            return exists;
+        } catch (final DriverException de) {
+            log.error(de.getMessage(), de);
+            throw this.getExceptionMapper().toConnectorException(de, name);
         }
-
-        final boolean exists = keyspaceMetadata.getTable(table) != null;
-        log.debug(
-            "Cassandra table {}.{} {} for request {}",
-            keyspace,
-            table,
-            exists ? "exists" : "doesn't exist",
-            context
-        );
-
-        return exists;
     }
 
     /**
@@ -144,31 +162,41 @@ public class CassandraConnectorTableService extends CassandraService implements 
     ) {
         final String keyspace = name.getDatabaseName();
         log.debug("Attempting to list tables in Cassandra keyspace {} for request {}", keyspace, context);
-        final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
-        if (keyspaceMetadata == null) {
-            throw new DatabaseNotFoundException(name);
-        }
-
-        // TODO: Should we include views?
-        final List<TableInfo> tables = Lists.newArrayList();
-        for (final TableMetadata tableMetadata : keyspaceMetadata.getTables()) {
-            if (prefix != null && !tableMetadata.getName().startsWith(prefix.getTableName())) {
-                continue;
+        try {
+            final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
+            if (keyspaceMetadata == null) {
+                throw new DatabaseNotFoundException(name);
             }
-            tables.add(this.getTableInfo(name, tableMetadata));
+
+            // TODO: Should we include views?
+            final List<TableInfo> tables = Lists.newArrayList();
+            for (final TableMetadata tableMetadata : keyspaceMetadata.getTables()) {
+                if (prefix != null && !tableMetadata.getName().startsWith(prefix.getTableName())) {
+                    continue;
+                }
+                tables.add(this.getTableInfo(name, tableMetadata));
+            }
+
+            // Sort
+            if (sort != null) {
+                final Comparator<TableInfo> tableComparator = Comparator.comparing((t) -> t.getName().getTableName());
+                ConnectorUtils.sort(tables, sort, tableComparator);
+            }
+
+            // Paging
+            final List<TableInfo> pagedTables = ConnectorUtils.paginate(tables, pageable);
+
+            log.debug(
+                "Listed {} tables in Cassandra keyspace {} for request {}",
+                pagedTables.size(),
+                keyspace,
+                context
+            );
+            return pagedTables;
+        } catch (final DriverException de) {
+            log.error(de.getMessage(), de);
+            throw this.getExceptionMapper().toConnectorException(de, name);
         }
-
-        // Sort
-        if (sort != null) {
-            final Comparator<TableInfo> tableComparator = Comparator.comparing((t) -> t.getName().getTableName());
-            ConnectorUtils.sort(tables, sort, tableComparator);
-        }
-
-        // Paging
-        final List<TableInfo> pagedTables = ConnectorUtils.paginate(tables, pageable);
-
-        log.debug("Listed {} tables in Cassandra keyspace {} for request {}", pagedTables.size(), keyspace, context);
-        return pagedTables;
     }
 
     /**
@@ -185,32 +213,37 @@ public class CassandraConnectorTableService extends CassandraService implements 
         final String catalog = name.getCatalogName();
         final String keyspace = name.getDatabaseName();
         log.debug("Attempting to list table names in Cassandra keyspace {} for request {}", keyspace, context);
-        final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
-        if (keyspaceMetadata == null) {
-            throw new DatabaseNotFoundException(name);
-        }
-
-        // TODO: Should we include views?
-        final List<QualifiedName> tableNames = Lists.newArrayList();
-        for (final TableMetadata tableMetadata : keyspaceMetadata.getTables()) {
-            final String tableName = tableMetadata.getName();
-            if (prefix != null && !tableName.startsWith(prefix.getTableName())) {
-                continue;
+        try {
+            final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
+            if (keyspaceMetadata == null) {
+                throw new DatabaseNotFoundException(name);
             }
-            tableNames.add(QualifiedName.ofTable(catalog, keyspace, tableName));
+
+            // TODO: Should we include views?
+            final List<QualifiedName> tableNames = Lists.newArrayList();
+            for (final TableMetadata tableMetadata : keyspaceMetadata.getTables()) {
+                final String tableName = tableMetadata.getName();
+                if (prefix != null && !tableName.startsWith(prefix.getTableName())) {
+                    continue;
+                }
+                tableNames.add(QualifiedName.ofTable(catalog, keyspace, tableName));
+            }
+
+            // Sort
+            if (sort != null) {
+                final Comparator<QualifiedName> tableNameComparator = Comparator.comparing(QualifiedName::getTableName);
+                ConnectorUtils.sort(tableNames, sort, tableNameComparator);
+            }
+
+            // Paging
+            final List<QualifiedName> paged = ConnectorUtils.paginate(tableNames, pageable);
+
+            log.debug("Listed {} table names in Cassandra keyspace {} for request {}", paged.size(), keyspace, context);
+            return paged;
+        } catch (final DriverException de) {
+            log.error(de.getMessage(), de);
+            throw this.getExceptionMapper().toConnectorException(de, name);
         }
-
-        // Sort
-        if (sort != null) {
-            final Comparator<QualifiedName> tableNameComparator = Comparator.comparing(QualifiedName::getTableName);
-            ConnectorUtils.sort(tableNames, sort, tableNameComparator);
-        }
-
-        // Paging
-        final List<QualifiedName> paged = ConnectorUtils.paginate(tableNames, pageable);
-
-        log.debug("Listed {} table names in Cassandra keyspace {} for request {}", paged.size(), keyspace, context);
-        return paged;
     }
 
     private TableInfo getTableInfo(

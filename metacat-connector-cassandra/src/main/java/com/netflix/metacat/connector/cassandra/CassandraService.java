@@ -35,9 +35,14 @@ import javax.annotation.Nonnull;
 abstract class CassandraService {
 
     private final Cluster cluster;
+    private final CassandraExceptionMapper exceptionMapper;
 
-    CassandraService(@Nonnull @NonNull final Cluster cluster) {
+    CassandraService(
+        @Nonnull @NonNull final Cluster cluster,
+        @Nonnull @NonNull final CassandraExceptionMapper exceptionMapper
+    ) {
         this.cluster = cluster;
+        this.exceptionMapper = exceptionMapper;
     }
 
     /**
@@ -58,7 +63,6 @@ abstract class CassandraService {
      *                                                                      problem).
      */
     ResultSet executeQuery(@Nonnull @NonNull final String query) {
-        // TODO: A bunch of runtime errors are thrown here should we catch and log or just let them propagate?
         try (final Session session = this.cluster.connect()) {
             // From documentation it doesn't look like ResultSet needs to be closed
             return session.execute(query);
