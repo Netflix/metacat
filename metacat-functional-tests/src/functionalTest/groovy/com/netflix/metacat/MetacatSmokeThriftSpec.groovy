@@ -277,9 +277,9 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         cursor | filter                                    | result
         'start'| "one='xyz'"                               | 10
-        //TODO:''     | "one='xyz' and one like 'xy_'"            | 10
-        //TODO:''     | "(one='xyz') and one like 'xy%'"          | 10
-        //TODO:''     | "one like 'xy%'"                          | 10
+        ''     | "one='xyz' and one like 'xy_'"            | 10
+        ''     | "(one='xyz') and one like 'xy%'"          | 10
+        ''     | "one like 'xy%'"                          | 10
         ''     | "total=10"                                | 1
         ''     | "total<1"                                 | 0
         ''     | "total>1"                                 | 10
