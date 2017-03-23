@@ -264,7 +264,12 @@ class MetacatSmokeThriftSpec extends Specification {
             client.alterPartitions(databaseName + '.' + tableName, partitions)
         }
         then:
-        client.getPartitionsByFilter(hiveTable, filter).size()==result
+        try {
+            client.getPartitionsByFilter(hiveTable, filter).size() == result
+        } catch(Exception e){
+            result == -1
+            e.message.contains('400 Bad Request')
+        }
         cleanup:
         if( cursor=='end') {
             def partitionNames = client.getPartitionNames(databaseName, tableName, (short)-1)
@@ -275,16 +280,20 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         cursor | filter                                    | result
         'start'| "one='xyz'"                               | 10
+        ''     | 'one="xyz"'                               | 10
         ''     | "one='xyz' and one like 'xy_'"            | 10
         ''     | "(one='xyz') and one like 'xy%'"          | 10
         ''     | "one like 'xy%'"                          | 10
         ''     | "total=10"                                | 1
+        ''     | "total='10'"                              | 1
         ''     | "total<1"                                 | 0
         ''     | "total>1"                                 | 10
         ''     | "total>=10"                               | 10
         ''     | "total<=20"                               | 10
         ''     | "total between 1 and 20"                  | 10
         ''     | "total not between 1 and 20"              | 0
+        ''     | 'one=xyz'                                 | -1
+        ''     | 'invalid=xyz'                             | -1
         'end'  | "one='xyz' and (total=11 or total=12)"    | 2
     }
 }
