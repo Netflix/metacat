@@ -122,7 +122,6 @@ public class JdbcConnectorTableService implements ConnectorTableService {
                         .sourceType(sourceType)
                         .type(this.typeConverter.toMetacatType(sourceType))
                         .comment(columns.getString("REMARKS"))
-                        .pos(columns.getInt("ORDINAL_POSITION"))
                         .isNullable(columns.getString("IS_NULLABLE").equals("YES"))
                         .size(columns.getInt("COLUMN_SIZE"))
                         .defaultValue(columns.getString("COLUMN_DEF"))

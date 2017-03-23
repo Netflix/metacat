@@ -91,7 +91,7 @@ public class PigTypeConverter implements ConnectorTypeConverter {
             if (((MapType) canonicalType).getValueType() != null
                 && !BaseType.UNKNOWN.equals(mapType.getValueType())) {
                 schema = new LogicalSchema();
-                schema.addField(fromCanonicalTypeToPigSchema(alias, mapType.getValueType()));
+                schema.addField(fromCanonicalTypeToPigSchema(null, mapType.getValueType()));
             }
             return new LogicalSchema.LogicalFieldSchema(alias, schema, DataType.MAP);
         } else if (canonicalType instanceof ArrayType) {
@@ -105,7 +105,7 @@ public class PigTypeConverter implements ConnectorTypeConverter {
                         ImmutableList.of(NAME_ARRAY_ELEMENT)
                     );
                 }
-                schema.addField(fromCanonicalTypeToPigSchema(alias, elementType));
+                schema.addField(fromCanonicalTypeToPigSchema(null, elementType));
             }
             return new LogicalSchema.LogicalFieldSchema(alias, schema, DataType.BAG);
 
@@ -149,7 +149,7 @@ public class PigTypeConverter implements ConnectorTypeConverter {
 
     private Type toCanonicalArrayType(final LogicalSchema.LogicalFieldSchema field) {
         final LogicalSchema.LogicalFieldSchema subField = field.schema.getField(0);
-        Type elementType;
+        final Type elementType;
         if (subField.type == DataType.TUPLE
             && !TypeUtils.isNullOrEmpty(subField.schema.getFields())
             && NAME_ARRAY_ELEMENT.equals(subField.schema.getFields().get(0).alias)) {

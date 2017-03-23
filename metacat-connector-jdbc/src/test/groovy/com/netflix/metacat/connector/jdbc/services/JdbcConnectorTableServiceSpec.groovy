@@ -112,7 +112,6 @@ class JdbcConnectorTableServiceSpec extends Specification {
         3 * columnResultSet.next() >>> [true, true, false]
         2 * columnResultSet.getString("REMARKS") >>> ["comment1", "comment2"]
         2 * columnResultSet.getString("COLUMN_NAME") >>> ["column1", "column2"]
-        2 * columnResultSet.getInt("ORDINAL_POSITION") >>> [1, 2]
         2 * columnResultSet.getString("TYPE_NAME") >>> ["VARCHAR", "INTEGER"]
         2 * this.typeConverter.toMetacatType(_ as String) >>> [VarcharType.createVarcharType(255), BaseType.INT]
         2 * columnResultSet.getString("IS_NULLABLE") >>> ["YES", "NO"]

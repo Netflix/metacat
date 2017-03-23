@@ -48,6 +48,7 @@ import org.dozer.loader.api.BeanMappingBuilder;
 import org.dozer.loader.api.FieldsMappingOptions;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -112,7 +113,16 @@ public class ConverterUtil {
      * @return table dto
      */
     public TableDto toTableDto(final TableInfo tableInfo) {
-        return mapper.map(tableInfo, TableDto.class);
+        final TableDto result =  mapper.map(tableInfo, TableDto.class);
+        //TODO: Add this logic in the mapping
+        final List<FieldDto> fields = result.getFields();
+        if (fields != null) {
+            int index = 0;
+            for (final FieldDto field: fields) {
+                field.setPos(index++);
+            }
+        }
+        return result;
     }
 
     /**

@@ -40,7 +40,6 @@ import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.*
 import feign.jaxrs.JAXRSContract
 import feign.slf4j.Slf4jLogger
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -64,7 +63,7 @@ class MetacatSmokeSpec extends Specification {
     def setupSpec() {
         String url = "http://localhost:${System.properties['metacat_http_port']}"
         assert url, 'Required system property "metacat_url" is not set'
-        
+
         ObjectMapper mapper = metacatJson.getPrettyObjectMapper().copy()
                 .registerModule(new GuavaModule())
                 .registerModule(new JaxbAnnotationModule());
@@ -166,16 +165,24 @@ class MetacatSmokeSpec extends Specification {
         } catch (Exception ignored){}
         createTable('embedded-hive-metastore', 'smoke_db', 'part')
         createTable('embedded-hive-metastore', 'smoke_db', 'parts')
-        createTable('hive-metastore', 'smoke_db', 'part')
-        createTable('hive-metastore', 'smoke_db', 'parts')
+        createTable('hive-metastore', 'hsmoke_db', 'part')
+        createTable('hive-metastore', 'hsmoke_db', 'parts')
 
         try {
             api.createDatabase('s3', 'smoke_db', new DatabaseCreateRequestDto())
         } catch (Exception ignored){}
-        //TODO: createTable('embedded-hive-metastore', 'smoke_db', 'metacat_all_types')
         createTable('s3-mysql-db', 'smoke_db', 'part')
         then:
         noExceptionThrown()
+    }
+
+    def createAllTypesTable(){
+        when:
+        createTable('embedded-hive-metastore', 'smoke_db', 'metacat_all_types')
+        def table = api.getTable('embedded-hive-metastore', 'smoke_db', 'metacat_all_types', true, true, true)
+        then:
+        noExceptionThrown()
+        table.fields.find{ it.name=='latest_is_available'}.type == '{(array_element: map[chararray])}'
     }
 
     def testGetCatalogNames() {
@@ -219,7 +226,7 @@ class MetacatSmokeSpec extends Specification {
         where:
         catalogName                | databaseName  | error
         'embedded-hive-metastore'  | 'smoke_db0'   | null
-        'hive-metastore'           | 'smoke_db0'   | null
+        'hive-metastore'           | 'hsmoke_db0'  | null
         's3-mysql-db'              | 'smoke_db0'   | null
         'invalid-catalog'          | 'smoke_db0'   | MetacatNotFoundException.class
     }
@@ -262,8 +269,8 @@ class MetacatSmokeSpec extends Specification {
         catalogName                | databaseName  | tableName           | setUri | error
         'embedded-hive-metastore'  | 'smoke_db1'   | 'test_create_table' | true   | null
         'embedded-hive-metastore'  | 'smoke_db1'   | 'test_create_table' | false  | null
-        'hive-metastore'           | 'smoke_db1'   | 'test_create_table' | true   | null
-        'hive-metastore'           | 'smoke_db1'   | 'test_create_table' | false  | null
+        'hive-metastore'           | 'hsmoke_db1'  | 'test_create_table' | true   | null
+        'hive-metastore'           | 'hsmoke_db1'  | 'test_create_table' | false  | null
         's3-mysql-db'              | 'smoke_db1'   | 'test_create_table' | true   | null
         'invalid-catalog'          | 'smoke_db1'   | 'z'                 | true   | MetacatNotFoundException.class
     }
@@ -286,7 +293,7 @@ class MetacatSmokeSpec extends Specification {
         where:
         catalogName              | databaseName        | tableName
         'embedded-hive-metastore'| 'smoke_db2'         | 'part'
-        'hive-metastore'         | 'smoke_db2'         | 'part'
+        'hive-metastore'         | 'hsmoke_db2'        | 'part'
         's3-mysql-db'            | 'smoke_db2'         | 'part'
         's3-mysql-db'            | 'smoke_db2'         | 'PART'
     }
@@ -313,7 +320,7 @@ class MetacatSmokeSpec extends Specification {
         where:
         catalogName              | databaseName | tableName           | error | newTableName
         'embedded-hive-metastore'| 'smoke_db3'  | 'test_create_table' | null  | 'test_create_table1'
-        'hive-metastore'         | 'smoke_db3'  | 'test_create_table' | null  | 'test_create_table1'
+        'hive-metastore'         | 'hsmoke_db3' | 'test_create_table' | null  | 'test_create_table1'
     }
 
     @Unroll
@@ -344,9 +351,9 @@ class MetacatSmokeSpec extends Specification {
         catalogName                | databaseName   | tableName           | viewName    | error                          | repeat
         'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
         'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | true
-        'hive-metastore'           | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
-        'hive-metastore'           | 'smoke_db4'    | 'part'              | 'part_view' | null                           | true
-  //      'embedded-hive-metastore'  | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
+        'hive-metastore'           | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | false
+        'hive-metastore'           | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | true
+        'embedded-hive-metastore'  | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
         's3-mysql-db'              | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
         'xyz'                      | 'smoke_db4'    | 'z'                 | 'part_view' | MetacatNotFoundException.class | false
     }
@@ -388,10 +395,10 @@ class MetacatSmokeSpec extends Specification {
         'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
         'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
         'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
-        'hive-metastore'           | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
-        'hive-metastore'           | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
-        'hive-metastore'           | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
-        'hive-metastore'           | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
+        'hive-metastore'           | 'hsmoke_db'       | 'part'    | 'one=xyz'     | false  | false | null
+        'hive-metastore'           | 'hsmoke_db'       | 'part'    | 'one=xyz'     | true   | false | null
+        'hive-metastore'           | 'hsmoke_db'       | 'part'    | 'one=xyz'     | true   | true  | null
+        'hive-metastore'           | 'hsmoke_db'       | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
         's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
         's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
         's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
@@ -443,6 +450,7 @@ class MetacatSmokeSpec extends Specification {
         ''      | null                                      | 0      | 10    | 10
         ''      | null                                      | 5      | 10    | 5
         'end'   | null                                      | 10     | 10    | 0
+
     }
 
     @Unroll
@@ -472,9 +480,9 @@ class MetacatSmokeSpec extends Specification {
         'embedded-hive-metastore'  | 'smoke_db5'   | 'part'    | 'one=xyz'     | 10    | 0
         'embedded-hive-metastore'  | 'smoke_db5'   | 'part'    | 'one=xyz'     | 10    | 10
         'embedded-hive-metastore'  | 'smoke_db5'   | 'part'    | 'one=xyz'     | 10    | 5
-        'hive-metastore'  | 'smoke_db5'   | 'part'    | 'one=xyz'     | 10    | 0
-        'hive-metastore'  | 'smoke_db5'   | 'part'    | 'one=xyz'     | 10    | 10
-        'hive-metastore'  | 'smoke_db5'   | 'part'    | 'one=xyz'     | 10    | 5
+        'hive-metastore'           | 'hsmoke_db5'  | 'part'    | 'one=xyz'     | 10    | 0
+        'hive-metastore'           | 'hsmoke_db5'  | 'part'    | 'one=xyz'     | 10    | 10
+        'hive-metastore'           | 'hsmoke_db5'  | 'part'    | 'one=xyz'     | 10    | 5
     }
 
     @Unroll
@@ -495,8 +503,8 @@ class MetacatSmokeSpec extends Specification {
         catalogName              | databaseName  | tableName | tags                              | repeat
         'embedded-hive-metastore'| 'smoke_db6'   | 'part'    | ['test'] as Set<String>           | true
         'embedded-hive-metastore'| 'smoke_db6'   | 'part'    | ['test', 'unused'] as Set<String> | false
-        'hive-metastore'| 'smoke_db6'   | 'part'    | ['test'] as Set<String>           | true
-        'hive-metastore'| 'smoke_db6'   | 'part'    | ['test', 'unused'] as Set<String> | false
+        'hive-metastore'         | 'hsmoke_db6'  | 'part'    | ['test'] as Set<String>           | true
+        'hive-metastore'         | 'hsmoke_db6'  | 'part'    | ['test', 'unused'] as Set<String> | false
         's3-mysql-db'            | 'smoke_db6'   | 'part'    | ['test'] as Set<String>           | true
         's3-mysql-db'            | 'smoke_db6'   | 'part'    | ['test', 'unused'] as Set<String> | false
     }
@@ -514,10 +522,10 @@ class MetacatSmokeSpec extends Specification {
         'embedded-hive-metastore'  | 'smoke_db'    | 'part'    | ['one=test', 'one=invalid']
         'embedded-hive-metastore'  | 'smoke_db'    | 'part'    | ['one=test', 'one=invalid']
         'embedded-hive-metastore'  | 'smoke_db'    | 'invalid' | ['one=test', 'one=invalid']
-        'hive-metastore'  | 'smoke_db'    | 'part'    | ['one=invalid']
-        'hive-metastore'  | 'smoke_db'    | 'part'    | ['one=test', 'one=invalid']
-        'hive-metastore'  | 'smoke_db'    | 'part'    | ['one=test', 'one=invalid']
-        'hive-metastore'  | 'smoke_db'    | 'invalid' | ['one=test', 'one=invalid']
+        'hive-metastore'           | 'hsmoke_db'   | 'part'    | ['one=invalid']
+        'hive-metastore'           | 'hsmoke_db'   | 'part'    | ['one=test', 'one=invalid']
+        'hive-metastore'           | 'hsmoke_db'   | 'part'    | ['one=test', 'one=invalid']
+        'hive-metastore'           | 'hsmoke_db'   | 'invalid' | ['one=test', 'one=invalid']
 
     }
 }
