@@ -36,7 +36,6 @@ public final class FieldInfo {
     private String comment;
     private String name;
     private boolean partitionKey;
-    private Integer pos;
     private String sourceType;
     private Type type;
     private Boolean isNullable;
