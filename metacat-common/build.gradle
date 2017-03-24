@@ -1,32 +1,50 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2017 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
 
-apply plugin: 'java'
-
 compileJava {
-    sourceCompatibility = '1.7'
-    targetCompatibility = '1.7'
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
 }
 
 dependencies {
-    compile "com.fasterxml.jackson.core:jackson-annotations:${jackson_version}"
-    compile "com.fasterxml.jackson.core:jackson-core:${jackson_version}"
-    compile "com.fasterxml.jackson.core:jackson-databind:${jackson_version}"
-    compile "com.github.fge:json-patch:1.9"
-    compile 'com.google.code.findbugs:jsr305:3.0.0'
-    compile "com.wordnik:swagger-annotations:${swagger_version}"
-    compile "javax.ws.rs:jsr311-api:1.1.1"
-    testCompile "com.google.guava:guava:${guava_version}"
-    testCompile "nl.jqno.equalsverifier:equalsverifier:1.7.2"
-    testCompile "org.apache.commons:commons-lang3:3.4"
+    /*******************************
+     * Compile Dependencies
+     *******************************/
+
+    compile("com.fasterxml.jackson.core:jackson-annotations")
+    compile("com.fasterxml.jackson.core:jackson-core")
+    compile("com.fasterxml.jackson.core:jackson-databind")
+    compile("com.github.fge:json-patch:${json_patch_version}")
+    compile("com.wordnik:swagger-annotations:${swagger_version}")
+    compile("javax.ws.rs:jsr311-api:${jsr311_api_version}")
+
+    /*******************************
+     * Provided Dependencies
+     *******************************/
+
+    /*******************************
+     * Runtime Dependencies
+     *******************************/
+
+    /*******************************
+     * Test Dependencies
+     *******************************/
+
+    testCompile("nl.jqno.equalsverifier:equalsverifier:${equalsverifier_version}")
+    testCompile("org.apache.commons:commons-lang3")
 }
