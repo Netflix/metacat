@@ -1,39 +1,54 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2017 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
 
-apply plugin: 'java'
-
 compileJava {
-    sourceCompatibility = '1.7'
-    targetCompatibility = '1.7'
-}
-
-repositories {
-    mavenCentral()
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
 }
 
 dependencies {
-    compile project(':metacat-common')
+    /*******************************
+     * Compile Dependencies
+     *******************************/
 
-    compile 'com.netflix.feign:feign-core:8.6.0'
-    compile 'com.netflix.feign:feign-jaxrs:8.6.0'
-    compile 'com.netflix.feign:feign-slf4j:8.6.0'
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-guava:${jackson_version}"
-    compile "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${jackson_version}"
-    compile "org.slf4j:slf4j-api:${slf4j_version}"
+    compile(project(":metacat-common"))
+
+    compile("com.fasterxml.jackson.datatype:jackson-datatype-guava")
+    compile("com.fasterxml.jackson.module:jackson-module-jaxb-annotations")
+    compile("io.github.openfeign:feign-core:${feign_version}")
+    compile("io.github.openfeign:feign-jaxrs:${feign_version}")
+    compile("io.github.openfeign:feign-slf4j:${feign_version}")
     compile("org.glassfish.jersey.core:jersey-server:${jersey_version}") {
-        exclude group: 'javax.ws.rs', module: 'javax.ws.rs-api'
+        exclude group: "javax.ws.rs", module: "javax.ws.rs-api"
     }
+    compile("org.slf4j:slf4j-api")
 
-    testCompile project(':metacat-common').sourceSets.test.output
+    /*******************************
+     * Provided Dependencies
+     *******************************/
+
+    /*******************************
+     * Runtime Dependencies
+     *******************************/
+
+    /*******************************
+     * Test Dependencies
+     *******************************/
+
+    testCompile(project(":metacat-common").sourceSets.test.output)
 }

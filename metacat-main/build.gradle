@@ -1,48 +1,68 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2017 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
 
 dependencies {
-    compile project(":metacat-common-server")
-    compile project(":metacat-thrift")
+    /*******************************
+     * Compile Dependencies
+     *******************************/
 
-    compile "com.amazonaws:aws-java-sdk-sns:${amazon_sns_version}"
-    compile "org.elasticsearch:elasticsearch:1.7.1"
-    compile("com.github.rholder:guava-retrying:2.0.0") {
+    compile(project(":metacat-common-server"))
+    compile(project(":metacat-thrift"))
+
+    compile("com.amazonaws:aws-java-sdk-sns:${amazon_sns_version}")
+    compile("com.github.rholder:guava-retrying:${guava_retrying_version}") {
         exclude module: "guava"
     }
+    compile("com.google.inject:guice")
+    compile("com.google.inject.extensions:guice-persist:${guice_version}")
+    compile("com.google.inject.extensions:guice-multibindings:${guice_version}")
+    compile("com.google.inject.extensions:guice-servlet:${guice_version}")
+    compile("javax.validation:validation-api")
+    compile("org.elasticsearch:elasticsearch")
 
-    compile "com.google.inject:guice:${guice_version}"
-    compile "com.google.inject.extensions:guice-persist:${guice_version}"
-    compile "com.google.inject.extensions:guice-multibindings:${guice_version}"
-    compile "com.google.inject.extensions:guice-servlet:${guice_version}"
-    compile "javax.validation:validation-api:1.1.0.Final"
+    /*******************************
+     * Provided Dependencies
+     *******************************/
 
-    runtime project(":metacat-connector-cassandra")
-    runtime project(":metacat-connector-hive")
-    runtime project(":metacat-connector-mysql")
-    runtime project(":metacat-connector-postgresql")
-    runtime project(":metacat-connector-redshift")
-    runtime project(":metacat-connector-s3")
+    /*******************************
+     * Runtime Dependencies
+     *******************************/
 
-    testCompile project(":metacat-user-metadata-mysql")
-    testCompile "io.airlift:testing-mysql-server:0.1"
-    testCompile project(':metacat-testdata-provider')
+    runtime(project(":metacat-connector-cassandra"))
+    runtime(project(":metacat-connector-hive"))
+    runtime(project(":metacat-connector-mysql"))
+    runtime(project(":metacat-connector-postgresql"))
+    runtime(project(":metacat-connector-redshift"))
+    runtime(project(":metacat-connector-s3"))
+
+    /*******************************
+     * Test Dependencies
+     *******************************/
+
+    testCompile(project(":metacat-testdata-provider"))
+    testCompile(project(":metacat-user-metadata-mysql"))
+    testCompile("io.airlift:testing-mysql-server:${testing_mysql_server_version}")
 }
 
 test {
-    systemProperty 'metacat.plugin.config.location', 'build/resources/test/etc/catalog'
-    systemProperty 'metacat.usermetadata.config.location', 'build/resources/test/usermetadata.properties'
+    systemProperty "metacat.plugin.config.location", "build/resources/test/etc/catalog"
+    systemProperty "metacat.usermetadata.config.location", "build/resources/test/usermetadata.properties"
     testLogging {
-        exceptionFormat = 'full'
+        exceptionFormat = "full"
     }
 }
