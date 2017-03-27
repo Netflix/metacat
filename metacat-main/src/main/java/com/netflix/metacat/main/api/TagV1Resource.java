@@ -20,8 +20,8 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.exception.TableNotFoundException;
-import com.netflix.metacat.common.usermetadata.TagService;
-import com.netflix.metacat.common.util.MetacatContextManager;
+import com.netflix.metacat.common.server.usermetadata.TagService;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.services.TableService;
 
 import javax.inject.Inject;

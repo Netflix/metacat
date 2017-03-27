@@ -17,7 +17,7 @@
  */
 
 ext {
-    excludePattern = "**/com/netflix/metacat/common/partition/parser/**"
+    excludePattern = "**/com/netflix/metacat/common/server/partition/parser/**"
 }
 
 dependencies {

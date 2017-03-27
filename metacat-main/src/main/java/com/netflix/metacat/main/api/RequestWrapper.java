@@ -27,7 +27,7 @@ import com.netflix.metacat.common.server.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.exception.NotFoundException;
 import com.netflix.metacat.common.server.exception.PartitionAlreadyExistsException;
 import com.netflix.metacat.common.server.exception.TableAlreadyExistsException;
-import com.netflix.metacat.common.usermetadata.UserMetadataServiceException;
+import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import com.netflix.servo.monitor.DynamicCounter;
 import com.netflix.servo.monitor.DynamicTimer;
 import com.netflix.servo.monitor.Stopwatch;

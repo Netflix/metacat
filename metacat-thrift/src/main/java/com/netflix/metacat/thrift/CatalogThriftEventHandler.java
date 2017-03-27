@@ -15,7 +15,7 @@ package com.netflix.metacat.thrift;
 
 import com.google.common.base.Objects;
 import com.netflix.metacat.common.MetacatRequestContext;
-import com.netflix.metacat.common.util.MetacatContextManager;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.server.ServerContext;
 import org.apache.thrift.server.TServerEventHandler;
