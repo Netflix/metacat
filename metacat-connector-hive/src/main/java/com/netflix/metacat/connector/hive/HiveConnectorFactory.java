@@ -95,9 +95,8 @@ public class HiveConnectorFactory implements ConnectorFactory {
         DataSourceManager.get().load(catalogName, configuration);
         final MetacatHMSHandler metacatHMSHandler =
                 new MetacatHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME, conf, false);
-        return new EmbeddedHiveClient(catalogName, metacatHMSHandler,
-                MetacatHMSHandler.newRetryingHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME,
-                        conf, true, metacatHMSHandler));
+        metacatHMSHandler.init();
+        return new EmbeddedHiveClient(catalogName, metacatHMSHandler);
 
     }
 

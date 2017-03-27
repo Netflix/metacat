@@ -19,7 +19,6 @@ import org.apache.tomcat.jdbc.pool.DataSourceProxy;
 
 import javax.annotation.PreDestroy;
 import javax.sql.DataSource;
-import java.sql.Driver;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
@@ -76,17 +75,6 @@ public final class DataSourceManager {
      */
     public DataSource get(final String catalogName) {
         return dataSources.get(catalogName);
-    }
-
-    /**
-     * Returns the driver for the given catalog name.
-     * @param catalogName catalog name
-     * @param driver JDBC driver
-     * @return Driver
-     */
-    public Driver getDriver(final String catalogName, final Driver driver) {
-        final DataSource dataSource = get(catalogName);
-        return dataSource != null ? new JdbcDriver(driver, dataSource) : driver;
     }
 
     private synchronized void createDataSource(final String catalogName, final Map props) {
