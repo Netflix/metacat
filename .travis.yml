@@ -5,6 +5,8 @@ jdk:
   - oraclejdk8
 services:
   - docker
+git:
+  depth: 250
 install:
   # Update docker-engine using Ubuntu 'trusty' apt repo
   - curl -sSL "https://get.docker.com/gpg" | sudo -E apt-key add -
