@@ -19,7 +19,7 @@ package com.netflix.metacat.connector.hive.client.embedded;
 import com.google.common.collect.Maps;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
-import com.netflix.metacat.common.util.DataSourceManager;
+import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 

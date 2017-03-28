@@ -24,7 +24,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
-import com.netflix.metacat.common.util.DataSourceManager;
+import com.netflix.metacat.common.server.util.DataSourceManager;
 
 import java.util.Map;
 

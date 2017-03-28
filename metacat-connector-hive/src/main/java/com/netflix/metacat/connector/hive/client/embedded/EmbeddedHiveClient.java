@@ -17,8 +17,8 @@
 package com.netflix.metacat.connector.hive.client.embedded;
 
 import com.google.common.collect.Sets;
-import com.netflix.metacat.common.monitoring.CounterWrapper;
-import com.netflix.metacat.common.partition.util.PartitionUtil;
+import com.netflix.metacat.common.server.monitoring.CounterWrapper;
+import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler;
 import lombok.NonNull;

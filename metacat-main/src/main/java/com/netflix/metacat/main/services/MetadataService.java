@@ -17,10 +17,10 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.monitoring.CounterWrapper;
+import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.Config;
-import com.netflix.metacat.common.usermetadata.UserMetadataService;
-import com.netflix.metacat.common.util.MetacatContextManager;
+import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 

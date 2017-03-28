@@ -21,16 +21,16 @@ import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonLocator;
-import com.netflix.metacat.common.model.Lookup;
-import com.netflix.metacat.common.model.TagItem;
+import com.netflix.metacat.common.server.model.Lookup;
+import com.netflix.metacat.common.server.model.TagItem;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.converter.DozerTypeConverter;
 import com.netflix.metacat.common.server.converter.TypeConverterProvider;
 import com.netflix.metacat.common.server.events.DeadEventHandler;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
-import com.netflix.metacat.common.util.DataSourceManager;
-import com.netflix.metacat.common.util.ThreadServiceManager;
+import com.netflix.metacat.common.server.util.DataSourceManager;
+import com.netflix.metacat.common.server.util.ThreadServiceManager;
 
 /**
  * Guice module.

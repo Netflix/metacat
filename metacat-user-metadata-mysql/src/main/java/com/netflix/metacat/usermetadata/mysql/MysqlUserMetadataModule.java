@@ -15,10 +15,10 @@ package com.netflix.metacat.usermetadata.mysql;
 
 import com.google.inject.AbstractModule;
 import com.netflix.metacat.common.json.MetacatJson;
-import com.netflix.metacat.common.usermetadata.LookupService;
-import com.netflix.metacat.common.usermetadata.TagService;
-import com.netflix.metacat.common.usermetadata.UserMetadataService;
-import com.netflix.metacat.common.util.DataSourceManager;
+import com.netflix.metacat.common.server.usermetadata.LookupService;
+import com.netflix.metacat.common.server.usermetadata.TagService;
+import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.server.util.DataSourceManager;
 
 /**
  * Guice module.

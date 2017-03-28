@@ -18,7 +18,7 @@ import com.google.common.collect.Maps;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.common.util.MetacatContextManager;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

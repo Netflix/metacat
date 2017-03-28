@@ -14,7 +14,7 @@
 package com.netflix.metacat.server.jersey;
 
 import com.netflix.metacat.common.MetacatRequestContext;
-import com.netflix.metacat.common.util.MetacatContextManager;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.container.ContainerRequestContext;

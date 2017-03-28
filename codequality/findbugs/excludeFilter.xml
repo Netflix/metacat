@@ -17,7 +17,7 @@
     </Match>
 
     <Match>
-        <Package name="~com\.netflix\.metacat\.common\.partition\.parser.*" />
+        <Package name="~com\.netflix\.metacat\.common\.server\.partition\.parser.*" />
     </Match>
 
 </FindBugsFilter>
