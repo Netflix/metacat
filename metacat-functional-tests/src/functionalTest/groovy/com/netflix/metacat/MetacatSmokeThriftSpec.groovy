@@ -17,7 +17,7 @@ package com.netflix.metacat
 
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.partition.util.PartitionUtil
+import com.netflix.metacat.common.server.partition.util.PartitionUtil
 import com.netflix.metacat.common.server.ArchaiusConfigImpl
 import com.netflix.metacat.common.server.converter.ConverterUtil
 import com.netflix.metacat.common.server.converter.DozerTypeConverter

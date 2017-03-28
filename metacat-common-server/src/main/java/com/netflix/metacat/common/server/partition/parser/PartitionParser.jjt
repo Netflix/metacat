@@ -1,0 +1,133 @@
+options {
+  NODE_DEFAULT_VOID = true;
+  MULTI = true;
+  STATIC = false;
+  VISITOR = true;
+  IGNORE_CASE = true;
+}
+
+PARSER_BEGIN(PartitionParser)
+package com.netflix.metacat.common.server.partition.parser;
+public class PartitionParser {
+	public static void main (String args []) throws ParseException {
+		PartitionParser parser = new PartitionParser(new java.io.StringReader(args[0]));
+	    SimpleNode root = parser.filter();
+	    root.dump("");
+	    System.out.println(root.jjtAccept(new com.netflix.metacat.common.server.partition.visitor.PartitionParserEval(), null));
+	}
+}
+PARSER_END(PartitionParser)
+
+SKIP :
+{
+ 	" " | "\t"
+}
+TOKEN :
+{
+	< EQUAL: "==" | "=">
+|	< NEQUAL: "!=" | "<>">
+|	< GTE: ">=" >
+|	< GT: ">" >
+|	< LTE: "<=" >
+|	< LT: "<" >
+|   < LPAREN : "(">
+|   < RPAREN : ")">
+|   < COMMA: "," >
+|   < INT: "-"( <DIGIT> )+ | ( <DIGIT> )+>
+|   < #DIGIT: ["0" - "9"] >
+|   < FLOAT: <INT> <EXPONENT> | <MANTISSA> ( <EXPONENT> )? >
+|   < #EXPONENT: ["e", "E"] ("+"|"-")? <INT> >
+|   < #MANTISSA: <INT> "." ( <DIGIT> )* | ( <DIGIT> )* "." <INT> >
+|   < #DIGITS : (["0"-"9"])+ >
+|   < AND: "and" | "&&" >
+|   < OR: "or" | "||">
+|   < NOT: "not">
+|   < MATCHES: "matches">
+|   < LIKE: "like">
+|   < BETWEEN: "between">
+|   < IN: "in">
+|   < BOOLEAN: "true" | "false" >
+|   < VARIABLE : "_" < CHARS > | ["A"-"Z"] < CHARS > | ["a"-"z"] <CHARS > | ["a"-"z","A"-"Z"] >
+|   < #CHARS : (["a"-"z","0"-"9","_","A"-"Z"])+ >
+|   < QUOTE:"\"" > : STRING_STATE
+|   < SQUOTE:"\'" > : SSTRING_STATE
+}
+<STRING_STATE> TOKEN:
+{
+  <ENDQUOTE:<QUOTE>> : DEFAULT
+| <CHAR:~["\""]>
+}
+<SSTRING_STATE> TOKEN:
+{
+  <SENDQUOTE:<SQUOTE>> : DEFAULT
+| <SCHAR:~["\'"]>
+}
+SimpleNode filter() #FILTER:
+{ }{
+  expr() <EOF> { return jjtThis; }
+}
+void expr():
+{ }
+{
+	< LPAREN > expr() < RPAREN > (< AND > expr() #AND(2) | < OR > expr() #OR(2))?
+|	EvalExpr() (< AND > expr() #AND(2) | < OR > expr() #OR(2))?
+}
+void EvalExpr() #void:
+{ boolean not = false; }
+{
+	([ < NOT > { not=true; } ] eval()) #NOT(not)
+}
+void eval() #void:
+{ }
+{
+    LOOKAHEAD({ getToken(2).kind==BETWEEN || getToken(3).kind==BETWEEN })
+	    BetweenEval()
+|   LOOKAHEAD({ getToken(2).kind==IN || getToken(3).kind==IN })
+        InEval()
+|   LOOKAHEAD({ getToken(2).kind==LIKE || getToken(3).kind==LIKE })
+        LikeEval()
+|   CompareEval()
+}
+void BetweenEval() #BETWEEN:
+{}
+{
+    term() [ < NOT > { jjtThis.not=true; } ] < BETWEEN > term() < AND > term()
+}
+void InEval() #IN:
+{}
+{
+    term() [ < NOT > { jjtThis.not=true; } ] < IN > <LPAREN> term() ( < COMMA > term() ) * <RPAREN>
+}
+void LikeEval() #LIKE:
+{}
+{
+    term() [ < NOT > { jjtThis.not=true; } ] < LIKE > term()
+}
+void CompareEval() #COMPARE:
+{}
+{
+    term() (comp() term())?
+}
+void comp():
+{ }
+{ < GT > #GT
+| < LT > #LT
+| < LTE > #LTE
+| < GTE > #GTE
+| < EQUAL > #EQ
+| < NEQUAL > #NEQ
+| < MATCHES > #MATCHES
+}
+void term():
+{
+  Token t;
+  StringBuilder builder = new StringBuilder();
+}
+{
+    ( t = < INT >   { jjtThis.value = new java.math.BigDecimal(t.image); } #NUM )
+  | ( t = < FLOAT > { jjtThis.value = new java.math.BigDecimal(t.image); } #NUM)
+  | ( < QUOTE > (t = < CHAR > { builder.append(t.image); })* < ENDQUOTE > { jjtThis.value = builder.toString(); } #STRING)
+  | ( < SQUOTE > (t = < SCHAR > { builder.append(t.image); })* < SENDQUOTE > { jjtThis.value = builder.toString(); } #STRING)
+  | ( t = < BOOLEAN > { jjtThis.value = t.image; } #BOOLEAN )
+  | ( t = < VARIABLE > { jjtThis.value = new Variable(t.image); } #VAR)
+}

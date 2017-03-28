@@ -35,7 +35,7 @@ import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTableMess
 import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTablePartitionsMessage;
 import com.netflix.metacat.common.dto.notifications.sns.payloads.TablePartitionsUpdatePayload;
 import com.netflix.metacat.common.dto.notifications.sns.payloads.UpdatePayload;
-import com.netflix.metacat.common.monitoring.CounterWrapper;
+import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;

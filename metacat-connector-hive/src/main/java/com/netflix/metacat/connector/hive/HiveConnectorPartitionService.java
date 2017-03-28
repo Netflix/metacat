@@ -22,7 +22,7 @@ import com.google.common.collect.Sets;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.partition.util.PartitionUtil;
+import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;

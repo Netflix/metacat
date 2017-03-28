@@ -17,7 +17,6 @@ import com.facebook.fb303.fb_status;
 import com.google.common.collect.ImmutableMap
 import com.google.common.collect.Lists
 import com.google.common.collect.Maps
-import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.api.MetacatV1
 import com.netflix.metacat.common.api.PartitionV1
@@ -27,8 +26,7 @@ import com.netflix.metacat.common.dto.FieldDto
 import com.netflix.metacat.common.dto.PartitionDto
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.Config
-import com.netflix.metacat.common.util.MetacatContextManager
-import com.netflix.metacat.common.server.converter.TypeConverterProvider
+import com.netflix.metacat.common.server.util.MetacatContextManager
 import org.apache.hadoop.hive.metastore.api.AddPartitionsRequest
 import org.apache.hadoop.hive.metastore.api.Database
 import org.apache.hadoop.hive.metastore.api.EnvironmentContext
