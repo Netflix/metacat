@@ -21,10 +21,18 @@ import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
 import com.netflix.metacat.common.server.exception.ConnectorException
+import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException
+import com.netflix.metacat.common.server.exception.DatabaseNotFoundException
+import com.netflix.metacat.common.server.exception.InvalidMetaException
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
+import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
+import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import org.apache.hadoop.hive.metastore.api.Database
+import org.apache.hadoop.hive.metastore.api.InvalidObjectException
+import org.apache.hadoop.hive.metastore.api.MetaException
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.thrift.TException
 import spock.lang.Shared
 import spock.lang.Specification
@@ -39,7 +47,7 @@ class HiveConnectorDatabaseSpec extends Specification{
     @Shared
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient);
     @Shared
-    HiveConnectorDatabaseService hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", this.metacatHiveClient, new HiveConnectorInfoConverter() )
+    HiveConnectorDatabaseService hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", metacatHiveClient, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(1, null);
 
@@ -47,7 +55,6 @@ class HiveConnectorDatabaseSpec extends Specification{
         metacatHiveClient.getAllDatabases() >> ["test1", "test2", "dev1", "dev2"]
         metacatHiveClient.getDatabase("testdb2") >> { throw new TException() }
         metacatHiveClient.createDatabase(new Database("testdb3","testdb3","file://temp/",Collections.EMPTY_MAP)) >> {}
-        metacatHiveClient.createDatabase(new Database("testdb2","testdb2","file://temp/",Collections.EMPTY_MAP)) >> { throw new TException()}
     }
 
     def "Test for create database" (){
@@ -57,11 +64,22 @@ class HiveConnectorDatabaseSpec extends Specification{
         noExceptionThrown()
     }
 
-    def "Test for create database with exception" (){
+    @Unroll
+    def "Test for create database with Exceptions" (){
+        def client = Mock(MetacatHiveClient);
+        def hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
         when:
         hiveConnectorDatabaseService.create( connectorContext, DatabaseInfo.builder().name(QualifiedName.ofDatabase("testhive", "testdb2")).uri("file://temp/").build())
         then:
-        thrown ConnectorException
+        1 * client.createDatabase(new Database("testdb2","testdb2","file://temp/",Collections.EMPTY_MAP)) >> { throw exception}
+        thrown result
+
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new AlreadyExistsException() |DatabaseAlreadyExistsException
+        new MetaException()          |InvalidMetaException
+        new InvalidObjectException() |InvalidMetaException
     }
 
     def "Test for listNames database"(){
@@ -69,6 +87,58 @@ class HiveConnectorDatabaseSpec extends Specification{
         def dbs = hiveConnectorDatabaseService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","testdb"), null, null, null )
         then:
         dbs == MetacatDataInfoProvider.getAllDatabaseNames()
+    }
+
+    @Unroll
+    def "Test for exist database"(){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        when:
+        def result = hiveConnectorDatabaseService.exists(connectorContext, QualifiedName.ofDatabase("testhive","testdb"))
+        then:
+        client.getDatabase(_) >> resultDB
+        result == ret
+        where:
+        resultDB        | ret
+        new Database()  | true
+        null            | false
+    }
+
+    def "Test for exist database NoSuchObjectException"(){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        when:
+        def result = hiveConnectorDatabaseService.exists(connectorContext, QualifiedName.ofDatabase("testhive","testdb"))
+        then:
+        client.getDatabase(_) >> {throw new NoSuchObjectException()}
+        result == false
+    }
+
+    def "Test for exist database TException"(){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        when:
+        def result = hiveConnectorDatabaseService.exists(connectorContext, QualifiedName.ofDatabase("testhive","testdb"))
+        then:
+        client.getDatabase(_) >> {throw new TException() }
+        thrown ConnectorException
+    }
+
+    @Unroll
+    def "Test for listNames database with Exceptions"(){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+
+        when:
+        def dbs = hiveConnectorDatabaseService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","testdb"), null, null, null )
+        then:
+        1 * client.getAllDatabases() >> {throw exception}
+        thrown result
+
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new MetaException()          |InvalidMetaException
 
     }
 
@@ -80,11 +150,20 @@ class HiveConnectorDatabaseSpec extends Specification{
         dbInfo.name.databaseName == "testdb"
     }
 
-    def "Test for get database with exception" (){
+    @Unroll
+    def "Test for get database with exceptions" (){
+        def client = Mock(MetacatHiveClient);
+        def hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
         when:
         hiveConnectorDatabaseService.get( connectorContext, QualifiedName.ofDatabase("testhive", "testdb2"))
         then:
-        thrown ConnectorException
+        1 * client.getDatabase(_) >> { throw exception}
+        thrown result
+        where:
+        exception                    | result
+        new NoSuchObjectException()  | DatabaseNotFoundException
+        new TException()             | ConnectorException
+        new MetaException()          | InvalidMetaException
     }
 
     def "Test for list database" (){
@@ -93,6 +172,22 @@ class HiveConnectorDatabaseSpec extends Specification{
         then:
         def expected = MetacatDataInfoProvider.getAllTestDatabaseInfo()
         dbs == expected
+    }
+
+    @Unroll
+    def "Test for list database exceptions" (){
+        def client = Mock(MetacatHiveClient);
+        def hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+
+        when:
+        def dbs = hiveConnectorDatabaseService.list( connectorContext, QualifiedName.ofDatabase("testhive", ""), QualifiedName.ofDatabase("testhive", "test"), null, null)
+        then:
+        1 * client.getAllDatabases() >> {throw exception}
+        thrown result
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new MetaException()          |InvalidMetaException
     }
 
     @Unroll
