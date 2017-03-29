@@ -29,11 +29,9 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.monitoring.DynamicGauge;
-import com.netflix.metacat.common.server.monitoring.LogConstants;
-import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
@@ -41,7 +39,9 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPreEv
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
-import com.netflix.metacat.common.server.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.monitoring.DynamicGauge;
+import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
@@ -109,10 +109,16 @@ public class PartitionServiceImpl implements PartitionService {
     }
 
     @Override
-    public List<PartitionDto> list(final QualifiedName name, final String filter, final List<String> partitionNames,
-                                   final Sort sort, final Pageable pageable,
-                                   final boolean includeUserDefinitionMetadata, final boolean includeUserDataMetadata,
-                                   final boolean includePartitionDetails) {
+    public List<PartitionDto> list(
+        final QualifiedName name,
+        final String filter,
+        final List<String> partitionNames,
+        final Sort sort,
+        final Pageable pageable,
+        final boolean includeUserDefinitionMetadata,
+        final boolean includeUserDataMetadata,
+        final boolean includePartitionDetails
+    ) {
         if (Strings.isNullOrEmpty(filter)
             && (pageable == null || !pageable.isPageable())
             && (partitionNames == null || partitionNames.isEmpty())
@@ -201,7 +207,7 @@ public class PartitionServiceImpl implements PartitionService {
         }
         List<HasMetadata> deletePartitions = Lists.newArrayList();
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
-            eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, dto));
+            eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
             DynamicGauge.set(LogConstants.GaugeDeletePartitions.toString(), tags, partitionIdsForDeletes.size());
             final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
             requestDto.setIncludePartitionDetails(false);
@@ -217,7 +223,7 @@ public class PartitionServiceImpl implements PartitionService {
         // Save all the new and updated partitions
         //
         eventBus
-            .postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, dto));
+            .postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, this, dto));
         log.info("Saving partitions({}) for {}", partitionDtos.size(), name);
         result = converterUtil.toPartitionsSaveResponseDto(
             service.savePartitions(connectorContext, name, converterUtil.toPartitionsSaveRequest(dto)));
@@ -231,10 +237,10 @@ public class PartitionServiceImpl implements PartitionService {
         }
         userMetadataService.saveMetadatas(metacatRequestContext.getUserName(), partitionDtos, true);
         eventBus.postAsync(
-            new MetacatSaveTablePartitionPostEvent(name, metacatRequestContext, partitionDtos, result));
+            new MetacatSaveTablePartitionPostEvent(name, metacatRequestContext, this, partitionDtos, result));
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
             eventBus.postAsync(
-                new MetacatDeleteTablePartitionPostEvent(name, metacatRequestContext, partitionIdsForDeletes));
+                new MetacatDeleteTablePartitionPostEvent(name, metacatRequestContext, this, partitionIdsForDeletes));
         }
 
         return result;
@@ -252,7 +258,7 @@ public class PartitionServiceImpl implements PartitionService {
         if (!partitionIds.isEmpty()) {
             final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
             dto.setPartitionIdsForDeletes(partitionIds);
-            eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, dto));
+            eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
             final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
             // Get the partitions before calling delete
             final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
@@ -273,7 +279,9 @@ public class PartitionServiceImpl implements PartitionService {
             if (!partitions.isEmpty()) {
                 deleteMetadatas(metacatRequestContext.getUserName(), partitions);
             }
-            eventBus.postAsync(new MetacatDeleteTablePartitionPostEvent(name, metacatRequestContext, partitionIds));
+            eventBus.postAsync(
+                new MetacatDeleteTablePartitionPostEvent(name, metacatRequestContext, this, partitionIds)
+            );
         }
     }
 

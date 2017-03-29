@@ -22,17 +22,15 @@ import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.Subscribe;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Singleton;
-
 /**
  * Noop event handler.
  */
-@Singleton
 @Slf4j
 public class DeadEventHandler {
 
     /**
      * Noop event.
+     *
      * @param event event
      */
     @Subscribe

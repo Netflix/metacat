@@ -28,30 +28,20 @@ import com.netflix.metacat.common.api.MetacatV1
 import com.netflix.metacat.common.api.MetadataV1
 import com.netflix.metacat.common.api.PartitionV1
 import com.netflix.metacat.common.api.TagV1
-import com.netflix.metacat.common.dto.CreateCatalogDto
-import com.netflix.metacat.common.dto.DatabaseCreateRequestDto
-import com.netflix.metacat.common.dto.GetPartitionsRequestDto
-import com.netflix.metacat.common.dto.PartitionDto
-import com.netflix.metacat.common.dto.PartitionsSaveRequestDto
-import com.netflix.metacat.common.dto.TableDto
+import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
 import com.netflix.metacat.common.exception.MetacatBadRequestException
 import com.netflix.metacat.common.exception.MetacatNotFoundException
 import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
-import com.netflix.metacat.common.server.exception.CatalogNotFoundException
-import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.*
 import feign.jaxrs.JAXRSContract
 import feign.slf4j.Slf4jLogger
-import org.apache.hadoop.yarn.webapp.BadRequestException
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
-
 
 import java.util.concurrent.TimeUnit
 
@@ -73,8 +63,8 @@ class MetacatSmokeSpec extends Specification {
         assert url, 'Required system property "metacat_url" is not set'
 
         ObjectMapper mapper = metacatJson.getPrettyObjectMapper().copy()
-                .registerModule(new GuavaModule())
-                .registerModule(new JaxbAnnotationModule());
+            .registerModule(new GuavaModule())
+            .registerModule(new JaxbAnnotationModule());
         RequestInterceptor interceptor = new RequestInterceptor() {
             @Override
             public void apply(RequestTemplate template) {
@@ -83,16 +73,16 @@ class MetacatSmokeSpec extends Specification {
             }
         };
         api = Feign.builder()
-                .logger(new Slf4jLogger())
-                .logLevel(Logger.Level.FULL)
-                .contract(new JAXRSContract())
-                .encoder(new JacksonEncoder(mapper))
-                .decoder(new JacksonDecoder(mapper))
-                .errorDecoder(new MetacatErrorDecoder())
-                .requestInterceptor(interceptor)
-                .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
-                .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-                .target(MetacatV1.class, url);
+            .logger(new Slf4jLogger())
+            .logLevel(Logger.Level.FULL)
+            .contract(new JAXRSContract())
+            .encoder(new JacksonEncoder(mapper))
+            .decoder(new JacksonDecoder(mapper))
+            .errorDecoder(new MetacatErrorDecoder())
+            .requestInterceptor(interceptor)
+            .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
+            .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
+            .target(MetacatV1.class, url);
         partitionApi = Feign.builder()
             .logger(new Slf4jLogger())
             .logLevel(Logger.Level.FULL)
@@ -105,50 +95,50 @@ class MetacatSmokeSpec extends Specification {
             .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
             .target(PartitionV1.class, url);
         tagApi = Feign.builder()
-                .logger(new Slf4jLogger())
-                .logLevel(Logger.Level.FULL)
-                .contract(new JAXRSContract())
-                .encoder(new JacksonEncoder(mapper))
-                .decoder(new JacksonDecoder(mapper))
-                .errorDecoder(new MetacatErrorDecoder())
-                .requestInterceptor(interceptor)
-                .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
-                .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-                .target(TagV1.class, url);
+            .logger(new Slf4jLogger())
+            .logLevel(Logger.Level.FULL)
+            .contract(new JAXRSContract())
+            .encoder(new JacksonEncoder(mapper))
+            .decoder(new JacksonDecoder(mapper))
+            .errorDecoder(new MetacatErrorDecoder())
+            .requestInterceptor(interceptor)
+            .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
+            .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
+            .target(TagV1.class, url);
         metadataApi = Feign.builder()
-                .logger(new Slf4jLogger())
-                .logLevel(Logger.Level.FULL)
-                .contract(new JAXRSContract())
-                .encoder(new JacksonEncoder(mapper))
-                .decoder(new JacksonDecoder(mapper))
-                .errorDecoder(new MetacatErrorDecoder())
-                .requestInterceptor(interceptor)
-                .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
-                .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-                .target(MetadataV1.class, url);
+            .logger(new Slf4jLogger())
+            .logLevel(Logger.Level.FULL)
+            .contract(new JAXRSContract())
+            .encoder(new JacksonEncoder(mapper))
+            .decoder(new JacksonDecoder(mapper))
+            .errorDecoder(new MetacatErrorDecoder())
+            .requestInterceptor(interceptor)
+            .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
+            .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
+            .target(MetadataV1.class, url);
     }
 
     @Shared
     boolean isLocalEnv = Boolean.valueOf(System.getProperty("local", "true"))
 
-    static createTable(String catalogName, String databaseName, String tableName){
+    static createTable(String catalogName, String databaseName, String tableName) {
         def catalog = api.getCatalog(catalogName)
-        if( !catalog.databases.contains(databaseName)){
+        if (!catalog.databases.contains(databaseName)) {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
         }
         def database = api.getDatabase(catalogName, databaseName, false)
         def owner = 'amajumdar'
         def uri = null
-        if(Boolean.valueOf(System.getProperty("local", "true"))){
+        if (Boolean.valueOf(System.getProperty("local", "true"))) {
             uri = String.format('file:/tmp/%s/%s', databaseName, tableName)
         }
-        if(!database.getTables().contains(tableName)){
+        if (!database.getTables().contains(tableName)) {
             def newTable;
-            if ('part' == tableName){
+            if ('part' == tableName) {
                 newTable = PigDataDtoProvider.getPartTable(catalogName, databaseName, owner, uri)
-            } else if ('parts' == tableName){
+            } else if ('parts' == tableName) {
                 newTable = PigDataDtoProvider.getPartsTable(catalogName, databaseName, owner, uri)
-            } else if ('metacat_all_types' == tableName){
+            } else if ('metacat_all_types' == tableName) {
                 newTable = PigDataDtoProvider.getMetacatAllTypesTable(catalogName, databaseName, owner, uri)
             } else {
                 newTable = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, owner, uri)
@@ -157,20 +147,24 @@ class MetacatSmokeSpec extends Specification {
         }
     }
 
-    def createTable(){
+    def createTable() {
         when:
         try {
             api.createDatabase('embedded-hive-metastore', 'smoke_db', new DatabaseCreateRequestDto())
-        } catch (Exception ignored){}
+        } catch (Exception ignored) {
+        }
         try {
             api.createDatabase('embedded-hive-metastore', 'franklinviews', new DatabaseCreateRequestDto())
-        } catch (Exception ignored){}
+        } catch (Exception ignored) {
+        }
         try {
             api.createDatabase('hive-metastore', 'smoke_db', new DatabaseCreateRequestDto())
-        } catch (Exception ignored){}
+        } catch (Exception ignored) {
+        }
         try {
             api.createDatabase('hive-metastore', 'franklinviews', new DatabaseCreateRequestDto())
-        } catch (Exception ignored){}
+        } catch (Exception ignored) {
+        }
         createTable('embedded-hive-metastore', 'smoke_db', 'part')
         createTable('embedded-hive-metastore', 'smoke_db', 'parts')
         createTable('hive-metastore', 'hsmoke_db', 'part')
@@ -178,25 +172,26 @@ class MetacatSmokeSpec extends Specification {
 
         try {
             api.createDatabase('s3', 'smoke_db', new DatabaseCreateRequestDto())
-        } catch (Exception ignored){}
+        } catch (Exception ignored) {
+        }
         createTable('s3-mysql-db', 'smoke_db', 'part')
         then:
         noExceptionThrown()
     }
 
-    def createAllTypesTable(){
+    def createAllTypesTable() {
         when:
         createTable('embedded-hive-metastore', 'smoke_db', 'metacat_all_types')
         def table = api.getTable('embedded-hive-metastore', 'smoke_db', 'metacat_all_types', true, true, true)
         then:
         noExceptionThrown()
-        table.fields.find{ it.name=='latest_is_available'}.type == '{(array_element: map[chararray])}'
+        table.fields.find { it.name == 'latest_is_available' }.type == '{(array_element: map[chararray])}'
     }
 
     def testGetCatalogNames() {
         when:
         def catalogs = api.getCatalogNames()
-        def catalogNames = catalogs.collect{ it.catalogName}
+        def catalogNames = catalogs.collect { it.catalogName }
         then:
         catalogNames.size() > 0
         catalogNames.contains('embedded-hive-metastore')
@@ -232,11 +227,11 @@ class MetacatSmokeSpec extends Specification {
             api.deleteDatabase(catalogName, databaseName)
         }
         where:
-        catalogName                | databaseName  | error
-        'embedded-hive-metastore'  | 'smoke_db0'   | null
-        'hive-metastore'           | 'hsmoke_db0'  | null
-        's3-mysql-db'              | 'smoke_db0'   | null
-        'invalid-catalog'          | 'smoke_db0'   | MetacatNotFoundException.class
+        catalogName               | databaseName | error
+        'embedded-hive-metastore' | 'smoke_db0'  | null
+        'hive-metastore'          | 'hsmoke_db0' | null
+        's3-mysql-db'             | 'smoke_db0'  | null
+        'invalid-catalog'         | 'smoke_db0'  | MetacatNotFoundException.class
     }
 
     @Unroll
@@ -247,8 +242,9 @@ class MetacatSmokeSpec extends Specification {
         try {
             try {
                 api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
-            } catch (Exception ignored) {}
-            def uri = isLocalEnv?String.format('file:/tmp/%s/%s', databaseName, tableName):null
+            } catch (Exception ignored) {
+            }
+            def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
             def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'amajumdar', uri)
             if (!setUri) {
                 tableDto.getSerde().setUri(null)
@@ -274,13 +270,13 @@ class MetacatSmokeSpec extends Specification {
             api.deleteTable(catalogName, databaseName, tableName)
         }
         where:
-        catalogName                | databaseName  | tableName           | setUri | error
-        'embedded-hive-metastore'  | 'smoke_db1'   | 'test_create_table' | true   | null
-        'embedded-hive-metastore'  | 'smoke_db1'   | 'test_create_table' | false  | null
-        'hive-metastore'           | 'hsmoke_db1'  | 'test_create_table' | true   | null
-        'hive-metastore'           | 'hsmoke_db1'  | 'test_create_table' | false  | null
-        's3-mysql-db'              | 'smoke_db1'   | 'test_create_table' | true   | null
-        'invalid-catalog'          | 'smoke_db1'   | 'z'                 | true   | MetacatNotFoundException.class
+        catalogName               | databaseName | tableName           | setUri | error
+        'embedded-hive-metastore' | 'smoke_db1'  | 'test_create_table' | true   | null
+        'embedded-hive-metastore' | 'smoke_db1'  | 'test_create_table' | false  | null
+        'hive-metastore'          | 'hsmoke_db1' | 'test_create_table' | true   | null
+        'hive-metastore'          | 'hsmoke_db1' | 'test_create_table' | false  | null
+        's3-mysql-db'             | 'smoke_db1'  | 'test_create_table' | true   | null
+        'invalid-catalog'         | 'smoke_db1'  | 'z'                 | true   | MetacatNotFoundException.class
     }
 
     /**
@@ -299,11 +295,11 @@ class MetacatSmokeSpec extends Specification {
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
         where:
-        catalogName              | databaseName        | tableName
-        'embedded-hive-metastore'| 'smoke_db2'         | 'part'
-        'hive-metastore'         | 'hsmoke_db2'        | 'part'
-        's3-mysql-db'            | 'smoke_db2'         | 'part'
-        's3-mysql-db'            | 'smoke_db2'         | 'PART'
+        catalogName               | databaseName | tableName
+        'embedded-hive-metastore' | 'smoke_db2'  | 'part'
+        'hive-metastore'          | 'hsmoke_db2' | 'part'
+        's3-mysql-db'             | 'smoke_db2'  | 'part'
+        's3-mysql-db'             | 'smoke_db2'  | 'PART'
     }
 
     @Unroll
@@ -326,9 +322,9 @@ class MetacatSmokeSpec extends Specification {
             api.deleteTable(catalogName, databaseName, newTableName)
         }
         where:
-        catalogName              | databaseName | tableName           | error | newTableName
-        'embedded-hive-metastore'| 'smoke_db3'  | 'test_create_table' | null  | 'test_create_table1'
-        'hive-metastore'         | 'hsmoke_db3' | 'test_create_table' | null  | 'test_create_table1'
+        catalogName               | databaseName | tableName           | error | newTableName
+        'embedded-hive-metastore' | 'smoke_db3'  | 'test_create_table' | null  | 'test_create_table1'
+        'hive-metastore'          | 'hsmoke_db3' | 'test_create_table' | null  | 'test_create_table1'
     }
 
     @Unroll
@@ -337,7 +333,8 @@ class MetacatSmokeSpec extends Specification {
         try {
             try {
                 api.createDatabase(catalogName, 'franklinviews', new DatabaseCreateRequestDto())
-            } catch (Exception ignored){}
+            } catch (Exception ignored) {
+            }
             createTable(catalogName, databaseName, tableName)
             api.createMView(catalogName, databaseName, tableName, viewName, true, null);
             if (repeat) {
@@ -356,21 +353,21 @@ class MetacatSmokeSpec extends Specification {
             api.deleteMView(catalogName, databaseName, tableName, viewName)
         }
         where:
-        catalogName                | databaseName   | tableName           | viewName    | error                          | repeat
-        'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
-        'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | true
-        'hive-metastore'           | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | false
-        'hive-metastore'           | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | true
-        'embedded-hive-metastore'  | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
-        's3-mysql-db'              | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
-        'xyz'                      | 'smoke_db4'    | 'z'                 | 'part_view' | MetacatNotFoundException.class | false
+        catalogName               | databaseName | tableName           | viewName    | error                          | repeat
+        'embedded-hive-metastore' | 'smoke_db4'  | 'part'              | 'part_view' | null                           | false
+        'embedded-hive-metastore' | 'smoke_db4'  | 'part'              | 'part_view' | null                           | true
+        'hive-metastore'          | 'hsmoke_db4' | 'part'              | 'part_view' | null                           | false
+        'hive-metastore'          | 'hsmoke_db4' | 'part'              | 'part_view' | null                           | true
+        'embedded-hive-metastore' | 'smoke_db4'  | 'metacat_all_types' | 'part_view' | null                           | false
+        's3-mysql-db'             | 'smoke_db4'  | 'part'              | 'part_view' | null                           | false
+        'xyz'                     | 'smoke_db4'  | 'z'                 | 'part_view' | MetacatNotFoundException.class | false
     }
 
     @Unroll
     def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
         expect:
         try {
-            def uri = isLocalEnv?'file:/tmp/abc':null
+            def uri = isLocalEnv ? 'file:/tmp/abc' : null
             createTable(catalogName, databaseName, tableName)
             def partition = PigDataDtoProvider.getPartition(catalogName, databaseName, tableName, partitionName, uri)
             def request = new PartitionsSaveRequestDto(partitions: [partition])
@@ -389,33 +386,39 @@ class MetacatSmokeSpec extends Specification {
         if (!error) {
             //To test the case that double quoats are supported
             def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionName.replace('=', '="') + '"', null, null, null, null, true)
-            assert partitions != null && partitions.size() == 1 && partitions.find {it.name.partitionName == partitionName} != null
+            assert partitions != null && partitions.size() == 1 && partitions.find {
+                it.name.partitionName == partitionName
+            } != null
             def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: partitionName.replace('=', '="') + '"', includePartitionDetails: true))
-            assert partitionDetails != null && partitionDetails.size() == 1 && partitionDetails.find {it.name.partitionName == partitionName} != null && partitionDetails.size() == partitions.size() && partitionDetails.find {it.name.partitionName == partitionName}.getSerde().getSerdeInfoParameters().size() >= 1
+            assert partitionDetails != null && partitionDetails.size() == 1 && partitionDetails.find {
+                it.name.partitionName == partitionName
+            } != null && partitionDetails.size() == partitions.size() && partitionDetails.find {
+                it.name.partitionName == partitionName
+            }.getSerde().getSerdeInfoParameters().size() >= 1
         }
         cleanup:
         if (!error) {
             partitionApi.deletePartitions(catalogName, databaseName, tableName, [partitionName])
         }
         where:
-        catalogName                | databaseName      | tableName | partitionName | repeat | alter | error
-        'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
-        'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
-        'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
-        'embedded-hive-metastore'  | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
-        'hive-metastore'           | 'hsmoke_db'       | 'part'    | 'one=xyz'     | false  | false | null
-        'hive-metastore'           | 'hsmoke_db'       | 'part'    | 'one=xyz'     | true   | false | null
-        'hive-metastore'           | 'hsmoke_db'       | 'part'    | 'one=xyz'     | true   | true  | null
-        'hive-metastore'           | 'hsmoke_db'       | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
-        's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
-        's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
-        's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
-        's3-mysql-db'              | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
-        's3-mysql-db'              | 'invalid-catalog' | 'z'       | 'one=xyz'     | false  | false | MetacatNotFoundException.class
+        catalogName               | databaseName      | tableName | partitionName | repeat | alter | error
+        'embedded-hive-metastore' | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
+        'embedded-hive-metastore' | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
+        'embedded-hive-metastore' | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
+        'embedded-hive-metastore' | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
+        'hive-metastore'          | 'hsmoke_db'       | 'part'    | 'one=xyz'     | false  | false | null
+        'hive-metastore'          | 'hsmoke_db'       | 'part'    | 'one=xyz'     | true   | false | null
+        'hive-metastore'          | 'hsmoke_db'       | 'part'    | 'one=xyz'     | true   | true  | null
+        'hive-metastore'          | 'hsmoke_db'       | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
+        's3-mysql-db'             | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
+        's3-mysql-db'             | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
+        's3-mysql-db'             | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
+        's3-mysql-db'             | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
+        's3-mysql-db'             | 'invalid-catalog' | 'z'       | 'one=xyz'     | false  | false | MetacatNotFoundException.class
     }
 
     @Unroll
-    def "Test catalog failure cases"(){
+    def "Test catalog failure cases"() {
         when:
         api.getDatabase('invalid', 'invalid', false)
         then:
@@ -441,11 +444,11 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatBadRequestException)
         when:
-        api.createTable('invalid', 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.createTable('invalid', 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
         then:
         thrown(MetacatNotFoundException)
         when:
-        api.updateTable('invalid', 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.updateTable('invalid', 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
         then:
         thrown(MetacatNotFoundException)
         when:
@@ -471,7 +474,7 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
-    def "Test database failure cases"(){
+    def "Test database failure cases"() {
         when:
         api.getDatabase(catalogName, 'invalid', false)
         then:
@@ -490,11 +493,11 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatNotFoundException)
         when:
-        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
         then:
         thrown(MetacatNotFoundException)
         when:
-        api.updateTable(catalogName, 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.updateTable(catalogName, 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
         then:
         thrown(MetacatNotFoundException)
         when:
@@ -524,21 +527,22 @@ class MetacatSmokeSpec extends Specification {
         then:
         noExceptionThrown()
         where:
-        catalogName << ['embedded-hive-metastore','hive-metastore','s3-mysql-db']
+        catalogName << ['embedded-hive-metastore', 'hive-metastore', 's3-mysql-db']
     }
 
     @Unroll
-    def "Test table failure cases"(){
+    def "Test table failure cases"() {
         given:
         try {
             api.createDatabase(catalogName, 'invalid', new DatabaseCreateRequestDto())
-        } catch(Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         when:
         api.getTable(catalogName, 'invalid', 'invalid', true, false, false)
         then:
         thrown(MetacatNotFoundException)
         when:
-        api.updateTable(catalogName, 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.updateTable(catalogName, 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
         then:
         thrown(MetacatNotFoundException)
         when:
@@ -560,7 +564,7 @@ class MetacatSmokeSpec extends Specification {
         thrown(MetacatNotFoundException)
         when:
         createTable(catalogName, 'invalid', 'invalid')
-        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
         then:
         thrown(MetacatAlreadyExistsException)
         when:
@@ -569,14 +573,14 @@ class MetacatSmokeSpec extends Specification {
         then:
         noExceptionThrown()
         where:
-        catalogName << ['embedded-hive-metastore','hive-metastore','s3-mysql-db']
+        catalogName << ['embedded-hive-metastore', 'hive-metastore', 's3-mysql-db']
     }
 
     @Unroll
     def "Test: embedded-hive-metastore get partitions for filter #filter with offset #offset and limit #limit returned #result partitions"() {
         given:
         if (cursor == 'start') {
-            def uri = isLocalEnv?'file:/tmp/abc':null
+            def uri = isLocalEnv ? 'file:/tmp/abc' : null
             createTable('embedded-hive-metastore', 'smoke_db', 'parts')
             partitionApi.savePartitions('embedded-hive-metastore', 'smoke_db', 'parts', new PartitionsSaveRequestDto(partitions: PigDataDtoProvider.getPartitions('embedded-hive-metastore', 'smoke_db', 'parts', 'one=xyz/total=1', uri, 10)))
         }
@@ -623,7 +627,7 @@ class MetacatSmokeSpec extends Specification {
     def "Load test save partitions for #catalogName/#databaseName/#tableName with partition names(#count) starting with #partitionName"() {
         when:
         def request = new PartitionsSaveRequestDto()
-        def uri = isLocalEnv?'file:/tmp/abc':null
+        def uri = isLocalEnv ? 'file:/tmp/abc' : null
         createTable(catalogName, databaseName, tableName)
         def partitions = PigDataDtoProvider.getPartitions(catalogName, databaseName, tableName, partitionName, uri, count)
         request.setPartitions(partitions)
@@ -636,19 +640,19 @@ class MetacatSmokeSpec extends Specification {
             request.setAlterIfExists(true)
             partitionApi.savePartitions(catalogName, databaseName, tableName, request)
         }
-        def partitionNames = savedPartitions.collect{ it.name.partitionName}
+        def partitionNames = savedPartitions.collect { it.name.partitionName }
         then:
         savedPartitions != null && savedPartitions.size() >= count
         cleanup:
         partitionApi.deletePartitions(catalogName, databaseName, tableName, partitionNames)
         where:
-        catalogName                | databaseName  | tableName | partitionName | count | alter
-        'embedded-hive-metastore'  | 'smoke_db5'   | 'part'    | 'one=xyz'     | 10    | 0
-        'embedded-hive-metastore'  | 'smoke_db5'   | 'part'    | 'one=xyz'     | 10    | 10
-        'embedded-hive-metastore'  | 'smoke_db5'   | 'part'    | 'one=xyz'     | 10    | 5
-        'hive-metastore'           | 'hsmoke_db5'  | 'part'    | 'one=xyz'     | 10    | 0
-        'hive-metastore'           | 'hsmoke_db5'  | 'part'    | 'one=xyz'     | 10    | 10
-        'hive-metastore'           | 'hsmoke_db5'  | 'part'    | 'one=xyz'     | 10    | 5
+        catalogName               | databaseName | tableName | partitionName | count | alter
+        'embedded-hive-metastore' | 'smoke_db5'  | 'part'    | 'one=xyz'     | 10    | 0
+        'embedded-hive-metastore' | 'smoke_db5'  | 'part'    | 'one=xyz'     | 10    | 10
+        'embedded-hive-metastore' | 'smoke_db5'  | 'part'    | 'one=xyz'     | 10    | 5
+        'hive-metastore'          | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 0
+        'hive-metastore'          | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 10
+        'hive-metastore'          | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 5
     }
 
     @Unroll
@@ -666,13 +670,13 @@ class MetacatSmokeSpec extends Specification {
         tagApi.removeTableTags(catalogName, databaseName, tableName, true, [] as Set<String>)
         api.deleteTable(catalogName, databaseName, tableName)
         where:
-        catalogName              | databaseName  | tableName | tags                              | repeat
-        'embedded-hive-metastore'| 'smoke_db6'   | 'part'    | ['test'] as Set<String>           | true
-        'embedded-hive-metastore'| 'smoke_db6'   | 'part'    | ['test', 'unused'] as Set<String> | false
-        'hive-metastore'         | 'hsmoke_db6'  | 'part'    | ['test'] as Set<String>           | true
-        'hive-metastore'         | 'hsmoke_db6'  | 'part'    | ['test', 'unused'] as Set<String> | false
-        's3-mysql-db'            | 'smoke_db6'   | 'part'    | ['test'] as Set<String>           | true
-        's3-mysql-db'            | 'smoke_db6'   | 'part'    | ['test', 'unused'] as Set<String> | false
+        catalogName               | databaseName | tableName | tags                              | repeat
+        'embedded-hive-metastore' | 'smoke_db6'  | 'part'    | ['test'] as Set<String>           | true
+        'embedded-hive-metastore' | 'smoke_db6'  | 'part'    | ['test', 'unused'] as Set<String> | false
+        'hive-metastore'          | 'hsmoke_db6' | 'part'    | ['test'] as Set<String>           | true
+        'hive-metastore'          | 'hsmoke_db6' | 'part'    | ['test', 'unused'] as Set<String> | false
+        's3-mysql-db'             | 'smoke_db6'  | 'part'    | ['test'] as Set<String>           | true
+        's3-mysql-db'             | 'smoke_db6'  | 'part'    | ['test', 'unused'] as Set<String> | false
     }
 
     @Unroll
@@ -683,15 +687,15 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatNotFoundException)
         where:
-        catalogName                | databaseName  | tableName | partitionNames
-        'embedded-hive-metastore'  | 'smoke_db'    | 'part'    | ['one=invalid']
-        'embedded-hive-metastore'  | 'smoke_db'    | 'part'    | ['one=test', 'one=invalid']
-        'embedded-hive-metastore'  | 'smoke_db'    | 'part'    | ['one=test', 'one=invalid']
-        'embedded-hive-metastore'  | 'smoke_db'    | 'invalid' | ['one=test', 'one=invalid']
-        'hive-metastore'           | 'hsmoke_db'   | 'part'    | ['one=invalid']
-        'hive-metastore'           | 'hsmoke_db'   | 'part'    | ['one=test', 'one=invalid']
-        'hive-metastore'           | 'hsmoke_db'   | 'part'    | ['one=test', 'one=invalid']
-        'hive-metastore'           | 'hsmoke_db'   | 'invalid' | ['one=test', 'one=invalid']
+        catalogName               | databaseName | tableName | partitionNames
+        'embedded-hive-metastore' | 'smoke_db'   | 'part'    | ['one=invalid']
+        'embedded-hive-metastore' | 'smoke_db'   | 'part'    | ['one=test', 'one=invalid']
+        'embedded-hive-metastore' | 'smoke_db'   | 'part'    | ['one=test', 'one=invalid']
+        'embedded-hive-metastore' | 'smoke_db'   | 'invalid' | ['one=test', 'one=invalid']
+        'hive-metastore'          | 'hsmoke_db'  | 'part'    | ['one=invalid']
+        'hive-metastore'          | 'hsmoke_db'  | 'part'    | ['one=test', 'one=invalid']
+        'hive-metastore'          | 'hsmoke_db'  | 'part'    | ['one=test', 'one=invalid']
+        'hive-metastore'          | 'hsmoke_db'  | 'invalid' | ['one=test', 'one=invalid']
 
     }
 }

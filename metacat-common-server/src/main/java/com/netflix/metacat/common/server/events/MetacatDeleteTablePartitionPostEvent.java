@@ -21,6 +21,7 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 
 import javax.annotation.Nonnull;
@@ -39,16 +40,19 @@ public class MetacatDeleteTablePartitionPostEvent extends MetacatEvent {
 
     /**
      * Constructor.
-     * @param name name
+     *
+     * @param name           name
      * @param requestContext context
-     * @param partitionIds partition names
+     * @param source         The source object which threw this event
+     * @param partitionIds   partition names
      */
     public MetacatDeleteTablePartitionPostEvent(
-        @Nonnull final QualifiedName name,
-        @Nonnull final MetacatRequestContext requestContext,
-        @Nonnull final List<String> partitionIds
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final Object source,
+        @Nonnull @NonNull final List<String> partitionIds
     ) {
-        super(name, requestContext);
+        super(name, requestContext, source);
         this.partitionIds = Collections.unmodifiableList(partitionIds);
     }
 }

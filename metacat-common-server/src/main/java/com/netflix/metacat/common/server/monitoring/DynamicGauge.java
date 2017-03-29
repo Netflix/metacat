@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.server.monitoring;
 
 import com.google.common.base.MoreObjects;
@@ -65,8 +69,7 @@ public final class DynamicGauge implements CompositeMonitor<Long> {
             .build(new CacheLoader<MonitorConfig, DoubleGauge>() {
                 @Override
                 public DoubleGauge load(
-                    @Nonnull
-                    final MonitorConfig config) throws Exception {
+                    @Nonnull final MonitorConfig config) throws Exception {
                     return new DoubleGauge(config);
                 }
             });
@@ -86,7 +89,8 @@ public final class DynamicGauge implements CompositeMonitor<Long> {
 
     /**
      * Increment a gauge specified by a name.
-     * @param name name
+     *
+     * @param name  name
      * @param value value
      */
     public static void set(final String name, final double value) {
@@ -95,8 +99,9 @@ public final class DynamicGauge implements CompositeMonitor<Long> {
 
     /**
      * Set the gauge for a given name, tagList by a given value.
-     * @param name name
-     * @param list tag list
+     *
+     * @param name  name
+     * @param list  tag list
      * @param value value
      */
     public static void set(final String name, final TagList list, final double value) {

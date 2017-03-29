@@ -18,7 +18,7 @@ package com.netflix.metacat.connector.hive.client.thrift;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
-import com.netflix.metacat.common.server.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import lombok.NonNull;
 import org.apache.hadoop.hive.metastore.api.Database;

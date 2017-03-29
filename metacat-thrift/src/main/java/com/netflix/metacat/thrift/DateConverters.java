@@ -13,7 +13,7 @@
 
 package com.netflix.metacat.thrift;
 
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 
 import javax.inject.Inject;
 import java.time.Instant;

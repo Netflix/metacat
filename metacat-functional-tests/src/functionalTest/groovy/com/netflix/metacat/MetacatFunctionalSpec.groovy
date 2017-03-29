@@ -16,7 +16,6 @@
  */
 package com.netflix.metacat
 
-import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.base.Throwables
 import com.netflix.metacat.client.Client
@@ -35,7 +34,6 @@ import feign.Logger
 import feign.RetryableException
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.joda.time.Instant
-import org.mortbay.util.ajax.JSON
 import org.skyscreamer.jsonassert.JSONAssert
 import spock.lang.Specification
 import spock.lang.Stepwise
@@ -525,7 +523,7 @@ class MetacatFunctionalSpec extends Specification {
 
         when:
         resovlerRep = resolverApi.resolveByUri(true,
-                new ResolveByUriRequestDto(uri: "file:/tmp/${catalog.name}/${databaseName}/".toString()))
+            new ResolveByUriRequestDto(uri: "file:/tmp/${catalog.name}/${databaseName}/".toString()))
         then:
         !resovlerRep.tables.empty
 
@@ -540,7 +538,7 @@ class MetacatFunctionalSpec extends Specification {
 
         then:
         //s3 connector maintains the order of the field, but doesn't have the soruce type
-        if ( catalog.type == "s3") {
+        if (catalog.type == "s3") {
             JSONAssert.assertEquals(expecteds3dataMetadata, tableJson, false)
         }
         //hive connector puts all the partition fields at the end
@@ -807,7 +805,7 @@ class MetacatFunctionalSpec extends Specification {
 
         when:
         resovlerRep = resolverApi.resolveByUri(true,
-                new ResolveByUriRequestDto(uri: "file:/tmp/${name.catalogName}/${name.databaseName}/${name.tableName}".toString()))
+            new ResolveByUriRequestDto(uri: "file:/tmp/${name.catalogName}/${name.databaseName}/${name.tableName}".toString()))
         then:
         !resovlerRep.partitions.empty
 

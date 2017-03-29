@@ -23,7 +23,7 @@ import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
-import com.netflix.metacat.common.server.exception.ConnectorException
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper
 import spock.lang.Specification
 import spock.lang.Unroll

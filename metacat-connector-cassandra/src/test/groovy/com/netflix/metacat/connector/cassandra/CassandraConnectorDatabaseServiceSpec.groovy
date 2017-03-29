@@ -24,7 +24,7 @@ import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException
+import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll

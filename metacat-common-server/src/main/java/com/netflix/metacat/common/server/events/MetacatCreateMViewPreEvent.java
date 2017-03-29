@@ -21,9 +21,11 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Pre create view event.
@@ -38,18 +40,21 @@ public class MetacatCreateMViewPreEvent extends MetacatEvent {
 
     /**
      * Constructor.
-     * @param name name
+     *
+     * @param name           name
      * @param requestContext context
-     * @param snapshot snapshot
-     * @param filter filter
+     * @param source         The source object which threw this event
+     * @param snapshot       snapshot
+     * @param filter         filter
      */
     public MetacatCreateMViewPreEvent(
-        @Nonnull final QualifiedName name,
-        @Nonnull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final Object source,
         final Boolean snapshot,
-        final String filter
+        @Nullable final String filter
     ) {
-        super(name, requestContext);
+        super(name, requestContext, source);
         this.snapshot = snapshot;
         this.filter = filter;
     }

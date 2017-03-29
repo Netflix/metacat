@@ -21,25 +21,21 @@ import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException
+import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException
+import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
-import com.netflix.metacat.common.server.exception.ConnectorException
-import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException
-import com.netflix.metacat.common.server.exception.InvalidMetaException
-import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
+import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
-import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
-import org.apache.hadoop.hive.metastore.api.Database
-import org.apache.hadoop.hive.metastore.api.InvalidObjectException
-import org.apache.hadoop.hive.metastore.api.MetaException
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
+import org.apache.hadoop.hive.metastore.api.*
 import org.apache.thrift.TException
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
-
 /**
  * Unit test for HiveConnectorDatabaseSpec.
  * @author zhenl
@@ -148,6 +144,7 @@ class HiveConnectorDatabaseSpec extends Specification{
 
     }
 
+    @Ignore
     def "Test for get database" (){
         when:
         def dbInfo = hiveConnectorDatabaseService.get( connectorContext, QualifiedName.ofDatabase("testhive", "testdb"))

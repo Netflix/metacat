@@ -37,10 +37,10 @@ import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.monitoring.TimerWrapper;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
@@ -397,7 +397,7 @@ public class ElasticSearchMetacatRefresh {
                         tableDto -> {
                             tagService.delete(tableDto.getName(), false);
                             this.eventBus.postAsync(
-                                new MetacatDeleteTablePostEvent(tableDto.getName(), context, tableDto)
+                                new MetacatDeleteTablePostEvent(tableDto.getName(), context, this, tableDto)
                             );
                         }
                     );

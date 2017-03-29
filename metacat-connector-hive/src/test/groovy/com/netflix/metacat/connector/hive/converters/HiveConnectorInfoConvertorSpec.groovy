@@ -17,13 +17,7 @@
 package com.netflix.metacat.connector.hive.converters
 
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.dto.AuditDto
-import com.netflix.metacat.common.dto.DatabaseDto
-import com.netflix.metacat.common.dto.FieldDto
-import com.netflix.metacat.common.dto.PartitionDto
-import com.netflix.metacat.common.dto.StorageDto
-import com.netflix.metacat.common.dto.TableDto
-import com.netflix.metacat.common.server.Config
+import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.connectors.model.AuditInfo
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
 import com.netflix.metacat.common.server.connectors.model.FieldInfo

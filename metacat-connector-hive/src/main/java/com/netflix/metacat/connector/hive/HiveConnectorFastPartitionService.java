@@ -13,7 +13,6 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-
 package com.netflix.metacat.connector.hive;
 
 import com.google.common.base.Functions;
@@ -27,18 +26,18 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
+import com.netflix.metacat.common.server.connectors.model.AuditInfo;
+import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
+import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
+import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.monitoring.TimerWrapper;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserEval;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
-import com.netflix.metacat.common.server.connectors.model.AuditInfo;
-import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
-import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
-import com.netflix.metacat.common.server.connectors.model.StorageInfo;
-import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
@@ -78,38 +77,38 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     private static final String FIELD_DATE_CREATED = "dateCreated";
     private static final String FIELD_BATCHID = "batchid";
     private static final String SQL_GET_PARTITIONS_WITH_KEY_URI =
-            "select p.PART_NAME as name, p.CREATE_TIME as dateCreated, sds.location uri"
-                    + " from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID "
-                    + "join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID";
+        "select p.PART_NAME as name, p.CREATE_TIME as dateCreated, sds.location uri"
+            + " from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID "
+            + "join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID";
     private static final String SQL_GET_PARTITIONS_WITH_KEY =
-            "select p.PART_NAME as name from PARTITIONS as p"
-                    + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d on t.DB_ID = d.DB_ID";
+        "select p.PART_NAME as name from PARTITIONS as p"
+            + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d on t.DB_ID = d.DB_ID";
     private static final String SQL_GET_PARTITIONS =
-            "select p.part_id as id, p.PART_NAME as name, p.CREATE_TIME as dateCreated,"
-                    + " sds.location uri, sds.input_format, sds.output_format,"
-                    + " sds.sd_id, s.serde_id, s.slib from PARTITIONS as p"
-                    + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d"
-                    + " on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID"
-                    + " join SERDES s on sds.SERDE_ID=s.SERDE_ID";
+        "select p.part_id as id, p.PART_NAME as name, p.CREATE_TIME as dateCreated,"
+            + " sds.location uri, sds.input_format, sds.output_format,"
+            + " sds.sd_id, s.serde_id, s.slib from PARTITIONS as p"
+            + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d"
+            + " on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID"
+            + " join SERDES s on sds.SERDE_ID=s.SERDE_ID";
     private static final String SQL_GET_PARTITION_NAMES_BY_URI =
-            "select p.part_name partition_name,t.tbl_name table_name,d.name schema_name,"
-                    + " sds.location from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID"
-                    + " join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID where";
+        "select p.part_name partition_name,t.tbl_name table_name,d.name schema_name,"
+            + " sds.location from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID"
+            + " join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID where";
     private static final String SQL_GET_PARTITION_PARAMS =
-            "select part_id, param_key, param_value from PARTITION_PARAMS where 1=1";
+        "select part_id, param_key, param_value from PARTITION_PARAMS where 1=1";
     private static final String SQL_GET_SD_PARAMS =
-            "select sd_id, param_key, param_value from SD_PARAMS where 1=1";
+        "select sd_id, param_key, param_value from SD_PARAMS where 1=1";
     private static final String SQL_GET_SERDE_PARAMS =
-            "select serde_id, param_key, param_value from SERDE_PARAMS where 1=1";
+        "select serde_id, param_key, param_value from SERDE_PARAMS where 1=1";
     private static final String SQL_GET_PARTITION_KEYS =
-            "select pkey_name, pkey_type from PARTITION_KEYS as p "
-                    + "join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d"
-                    + " on t.DB_ID = d.DB_ID where d.name=? and t.tbl_name=? order by integer_idx";
+        "select pkey_name, pkey_type from PARTITION_KEYS as p "
+            + "join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d"
+            + " on t.DB_ID = d.DB_ID where d.name=? and t.tbl_name=? order by integer_idx";
 
     private static final String SQL_GET_PARTITION_COUNT =
-            "select count(*) count from PARTITIONS as p"
-                    + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d on t.DB_ID = d.DB_ID"
-                    + " join SDS as sds on p.SD_ID = sds.SD_ID where d.NAME = ? and t.TBL_NAME = ?";
+        "select count(*) count from PARTITIONS as p"
+            + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d on t.DB_ID = d.DB_ID"
+            + " join SDS as sds on p.SD_ID = sds.SD_ID where d.NAME = ? and t.TBL_NAME = ?";
 
     private final ThreadServiceManager threadServiceManager;
 
@@ -122,13 +121,14 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @param threadServiceManager  serviceManager
      */
     @Inject
-    public HiveConnectorFastPartitionService(@Named("catalogName") final String catalogName,
-                                             @Nonnull @NonNull final IMetacatHiveClient metacatHiveClient,
-                                             @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters,
-                                             final ThreadServiceManager threadServiceManager) {
+    public HiveConnectorFastPartitionService(
+        @Named("catalogName") final String catalogName,
+        @Nonnull @NonNull final IMetacatHiveClient metacatHiveClient,
+        @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters,
+        final ThreadServiceManager threadServiceManager
+    ) {
         super(catalogName, metacatHiveClient, hiveMetacatConverters);
         this.threadServiceManager = threadServiceManager;
-        this.threadServiceManager.start();
     }
 
     /**
@@ -138,9 +138,11 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @return Number of partitions
      */
     @Override
-    public int getPartitionCount(@Nonnull @NonNull final ConnectorContext requestContext,
-                                 @Nonnull @NonNull final QualifiedName tableName) {
-        Integer result = 0;
+    public int getPartitionCount(
+        @Nonnull @NonNull final ConnectorContext requestContext,
+        @Nonnull @NonNull final QualifiedName tableName
+    ) {
+        Integer result;
         final DataSource dataSource = DataSourceManager.get().get(catalogName);
         try (Connection conn = dataSource.getConnection()) {
             // Handler for reading the result set
@@ -152,8 +154,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                 return count;
             };
             result = new QueryRunner()
-                    .query(conn, SQL_GET_PARTITION_COUNT,
-                            handler, tableName.getDatabaseName(), tableName.getTableName());
+                .query(conn, SQL_GET_PARTITION_COUNT,
+                    handler, tableName.getDatabaseName(), tableName.getTableName());
         } catch (SQLException e) {
             throw new ConnectorException("getPartitionCount", e);
         }
@@ -165,21 +167,21 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      */
     @Override
     public List<PartitionInfo> getPartitions(
-            @Nonnull @NonNull final ConnectorContext requestContext,
-            @Nonnull @NonNull final QualifiedName tableName,
-            @Nonnull @NonNull final PartitionListRequest partitionsRequest
+        @Nonnull @NonNull final ConnectorContext requestContext,
+        @Nonnull @NonNull final QualifiedName tableName,
+        @Nonnull @NonNull final PartitionListRequest partitionsRequest
     ) {
         final TimerWrapper timer = TimerWrapper.createStarted("dse.metacat.timer.getPartitions");
         try {
             return getpartitions(tableName.getDatabaseName(), tableName.getTableName(),
-                    partitionsRequest.getPartitionNames(),
-                    partitionsRequest.getFilter(),
-                    partitionsRequest.getSort(),
-                    partitionsRequest.getPageable(),
-                    partitionsRequest.getIncludePartitionDetails());
+                partitionsRequest.getPartitionNames(),
+                partitionsRequest.getFilter(),
+                partitionsRequest.getSort(),
+                partitionsRequest.getPageable(),
+                partitionsRequest.getIncludePartitionDetails());
         } finally {
             log.info("###### Time taken to complete "
-                    + "HiveConnectorFastPartitionService.getPartitions is {} ms", timer.stop());
+                + "HiveConnectorFastPartitionService.getPartitions is {} ms", timer.stop());
         }
     }
 
@@ -190,7 +192,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     public List<String> getPartitionKeys(@Nonnull @NonNull final ConnectorContext requestContext,
                                          @Nonnull @NonNull final QualifiedName tableName,
                                          @Nonnull @NonNull final PartitionListRequest partitionsRequest) {
-        List<String> result = null;
+        List<String> result;
         final List<String> partitionNames = partitionsRequest.getPartitionNames();
         final Sort sort = partitionsRequest.getSort();
         final Pageable pageable = partitionsRequest.getPageable();
@@ -200,9 +202,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             final FilterPartition filter = new FilterPartition();
             // batch exists
             final boolean isBatched =
-                    !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_BATCHID);
+                !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_BATCHID);
             final boolean hasDateCreated =
-                    !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_DATE_CREATED);
+                !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_DATE_CREATED);
             // Handler for reading the result set
             final ResultSetHandler<List<String>> handler = rs -> {
                 final List<String> names = Lists.newArrayList();
@@ -216,15 +218,15 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                         values.put(FIELD_DATE_CREATED, createdDate + "");
                     }
                     if (Strings.isNullOrEmpty(filterExpression)
-                            || filter.evaluatePartitionExpression(filterExpression, name, uri, isBatched, values)) {
+                        || filter.evaluatePartitionExpression(filterExpression, name, uri, isBatched, values)) {
                         names.add(name);
                     }
                 }
                 return names;
             };
             result = getHandlerResults(tableName.getDatabaseName(),
-                    tableName.getTableName(), filterExpression, partitionNames,
-                    SQL_GET_PARTITIONS_WITH_KEY_URI, handler, sort, pageable);
+                tableName.getTableName(), filterExpression, partitionNames,
+                SQL_GET_PARTITIONS_WITH_KEY_URI, handler, sort, pageable);
         } else {
             // Handler for reading the result set
             final ResultSetHandler<List<String>> handler = rs -> {
@@ -235,7 +237,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                 return names;
             };
             result = getHandlerResults(tableName.getDatabaseName(), tableName.getTableName(),
-                    null, partitionNames, SQL_GET_PARTITIONS_WITH_KEY, handler, sort, pageable);
+                null, partitionNames, SQL_GET_PARTITIONS_WITH_KEY, handler, sort, pageable);
         }
         return result;
     }
@@ -249,9 +251,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      */
     @Override
     public Map<String, List<QualifiedName>> getPartitionNames(
-            @Nonnull final ConnectorContext context,
-            @Nonnull final List<String> uris,
-            final boolean prefixSearch) {
+        @Nonnull final ConnectorContext context,
+        @Nonnull final List<String> uris,
+        final boolean prefixSearch) {
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
         // Get data source
         final DataSource dataSource = DataSourceManager.get().get(catalogName);
@@ -279,7 +281,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                 final String uri = rs.getString("location");
                 final List<QualifiedName> partitionNames = result.get(uri);
                 final QualifiedName qualifiedName =
-                        QualifiedName.ofPartition(catalogName, schemaName, tableName, partitionName);
+                    QualifiedName.ofPartition(catalogName, schemaName, tableName, partitionName);
                 if (partitionNames == null) {
                     result.put(uri, Lists.newArrayList(qualifiedName));
                 } else {
@@ -290,7 +292,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         };
         try (Connection conn = dataSource.getConnection()) {
             new QueryRunner()
-                    .query(conn, queryBuilder.toString(), handler, params.toArray());
+                .query(conn, queryBuilder.toString(), handler, params.toArray());
         } catch (SQLException e) {
             Throwables.propagate(e);
         }
@@ -308,7 +310,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         // batch exists
         final boolean isBatched = !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_BATCHID);
         final boolean hasDateCreated =
-                !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_DATE_CREATED);
+            !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_DATE_CREATED);
         // Handler for reading the result set
         final ResultSetHandler<List<PartitionDetail>> handler = rs -> {
             final List<PartitionDetail> result = Lists.newArrayList();
@@ -322,7 +324,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                     values.put(FIELD_DATE_CREATED, createdDate + "");
                 }
                 if (Strings.isNullOrEmpty(filterExpression)
-                        || filter.evaluatePartitionExpression(filterExpression, name, uri, isBatched, values)) {
+                    || filter.evaluatePartitionExpression(filterExpression, name, uri, isBatched, values)) {
                     final Long id = rs.getLong("id");
                     final Long sdId = rs.getLong("sd_id");
                     final Long serdeId = rs.getLong("serde_id");
@@ -339,8 +341,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                     auditInfo.setLastModifiedDate(Date.from(Instant.ofEpochSecond(createdDate)));
 
                     result.add(new PartitionDetail(id, sdId, serdeId,
-                            PartitionInfo.builder().name(QualifiedName.ofPartition(catalogName,
-                                    databaseName, tableName, name)).auditInfo(auditInfo).serde(storageInfo).build()));
+                        PartitionInfo.builder().name(QualifiedName.ofPartition(catalogName,
+                            databaseName, tableName, name)).auditInfo(auditInfo).serde(storageInfo).build()));
                 }
             }
             return result;
@@ -348,8 +350,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final List<PartitionInfo> partitionInfos = new ArrayList<>();
 
         final List<PartitionDetail> partitions =
-                getHandlerResults(databaseName, tableName, filterExpression,
-                        partitionIds, SQL_GET_PARTITIONS, handler, sort, pageable);
+            getHandlerResults(databaseName, tableName, filterExpression,
+                partitionIds, SQL_GET_PARTITIONS, handler, sort, pageable);
         if (includePartitionDetails && !partitions.isEmpty()) {
             final List<Long> partIds = Lists.newArrayListWithCapacity(partitions.size());
             final List<Long> sdIds = Lists.newArrayListWithCapacity(partitions.size());
@@ -362,20 +364,20 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             final List<ListenableFuture<Void>> futures = Lists.newArrayList();
             final Map<Long, Map<String, String>> partitionParams = Maps.newHashMap();
             futures.add(threadServiceManager.getExecutor().submit(() ->
-                    populateParameters(partIds, SQL_GET_PARTITION_PARAMS,
-                            "part_id", partitionParams)));
+                populateParameters(partIds, SQL_GET_PARTITION_PARAMS,
+                    "part_id", partitionParams)));
 
             final Map<Long, Map<String, String>> sdParams = Maps.newHashMap();
             if (!sdIds.isEmpty()) {
                 futures.add(threadServiceManager.getExecutor().submit(() ->
-                        populateParameters(sdIds, SQL_GET_SD_PARAMS,
-                                "sd_id", sdParams)));
+                    populateParameters(sdIds, SQL_GET_SD_PARAMS,
+                        "sd_id", sdParams)));
             }
             final Map<Long, Map<String, String>> serdeParams = Maps.newHashMap();
             if (!serdeIds.isEmpty()) {
                 futures.add(threadServiceManager.getExecutor().submit(() ->
-                        populateParameters(serdeIds, SQL_GET_SERDE_PARAMS,
-                                "serde_id", serdeParams)));
+                    populateParameters(serdeIds, SQL_GET_SERDE_PARAMS,
+                        "serde_id", serdeParams)));
             }
             try {
                 Futures.transform(Futures.successfulAsList(futures), Functions.constant(null)).get(1, TimeUnit.HOURS);
@@ -386,9 +388,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             for (PartitionDetail partitionDetail : partitions) {
                 partitionDetail.getPartitionInfo().setMetadata(partitionParams.get(partitionDetail.getId()));
                 partitionDetail.getPartitionInfo().getSerde()
-                        .setParameters(sdParams.get(partitionDetail.getSdId()));
+                    .setParameters(sdParams.get(partitionDetail.getSdId()));
                 partitionDetail.getPartitionInfo().getSerde()
-                        .setSerdeInfoParameters(serdeParams.get(partitionDetail.getSerdeId()));
+                    .setSerdeInfoParameters(serdeParams.get(partitionDetail.getSerdeId()));
 
             }
         }
@@ -398,21 +400,23 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         return partitionInfos;
     }
 
-    private <T> List<T> getHandlerResults(final String databaseName,
-                                          final String tableName,
-                                          final String filterExpression,
-                                          final List<String> partitionIds,
-                                          final String sql,
-                                          final ResultSetHandler<List<T>> resultSetHandler,
-                                          final Sort sort,
-                                          final Pageable pageable) {
-        List<T> partitions = null;
+    private <T> List<T> getHandlerResults(
+        final String databaseName,
+        final String tableName,
+        final String filterExpression,
+        final List<String> partitionIds,
+        final String sql,
+        final ResultSetHandler<List<T>> resultSetHandler,
+        final Sort sort,
+        final Pageable pageable
+    ) {
+        List<T> partitions;
         try {
             if (!Strings.isNullOrEmpty(filterExpression)) {
                 final PartitionFilterGenerator generator =
-                        new PartitionFilterGenerator(getPartitionKeys(databaseName, tableName));
+                    new PartitionFilterGenerator(getPartitionKeys(databaseName, tableName));
                 String filterSql = (String) new PartitionParser(new StringReader(filterExpression)).filter()
-                        .jjtAccept(generator, null);
+                    .jjtAccept(generator, null);
                 if (generator.isOptimized()) {
                     filterSql = generator.getOptimizedSql();
                 }
@@ -420,23 +424,23 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                     filterSql = " and (" + filterSql + ")";
                 }
                 partitions = gethandlerresults(databaseName, tableName, filterExpression, partitionIds,
-                        sql, resultSetHandler,
-                        generator.joinSql(), filterSql,
-                        generator.getParams(), sort, pageable);
+                    sql, resultSetHandler,
+                    generator.joinSql(), filterSql,
+                    generator.getParams(), sort, pageable);
             } else {
                 partitions = gethandlerresults(databaseName, tableName, null, partitionIds,
-                        sql, resultSetHandler,
-                        null, null,
-                        null, sort, pageable);
+                    sql, resultSetHandler,
+                    null, null,
+                    null, sort, pageable);
             }
         } catch (Exception e) {
             log.warn("Experiment: Get partitions for for table {} filter {}"
-                            + " failed with error {}", tableName, filterExpression,
-                    e.getMessage());
+                    + " failed with error {}", tableName, filterExpression,
+                e.getMessage());
             CounterWrapper.incrementCounter("dse.metacat.counter.experiment.getPartitionsFailure");
             partitions = gethandlerresults(databaseName, tableName,
-                    filterExpression, partitionIds, sql, resultSetHandler, null,
-                    prepareFilterSql(filterExpression), Lists.newArrayList(), sort, pageable);
+                filterExpression, partitionIds, sql, resultSetHandler, null,
+                prepareFilterSql(filterExpression), Lists.newArrayList(), sort, pageable);
         }
         return partitions;
     }
@@ -466,7 +470,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         if (!Strings.isNullOrEmpty(filterExpression)) {
             try {
                 values = (Collection<String>) new PartitionParser(new StringReader(filterExpression)).filter()
-                        .jjtAccept(new PartitionParamParserEval(), null);
+                    .jjtAccept(new PartitionParamParserEval(), null);
             } catch (Throwable ignored) {
                 //
             }
@@ -487,7 +491,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         if (ids.size() > 5000) {
             final List<List<Long>> subFilterPartitionNamesList = Lists.partition(ids, 5000);
             subFilterPartitionNamesList.forEach(subPartitions ->
-                    params.putAll(getparameters(subPartitions, sql, idName)));
+                params.putAll(getparameters(subPartitions, sql, idName)));
         } else {
             params.putAll(getparameters(ids, sql, idName));
         }
@@ -501,7 +505,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final StringBuilder queryBuilder = new StringBuilder(sql);
         if (!ids.isEmpty()) {
             queryBuilder.append(" and ").append(idName)
-                    .append(" in ('").append(Joiner.on("','").skipNulls().join(ids)).append("')");
+                .append(" in ('").append(Joiner.on("','").skipNulls().join(ids)).append("')");
         }
         final ResultSetHandler<Map<Long, Map<String, String>>> handler = rs -> {
             final Map<Long, Map<String, String>> result = Maps.newHashMap();
@@ -520,7 +524,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         };
         try (Connection conn = dataSource.getConnection()) {
             return new QueryRunner()
-                    .query(conn, queryBuilder.toString(), handler);
+                .query(conn, queryBuilder.toString(), handler);
         } catch (SQLException e) {
             Throwables.propagate(e);
         }
@@ -532,14 +536,14 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         if (!Strings.isNullOrEmpty(filterExpression)) {
             try {
                 result = (Collection<String>) new PartitionParser(new StringReader(filterExpression)).filter()
-                        .jjtAccept(new PartitionKeyParserEval(), null);
+                    .jjtAccept(new PartitionKeyParserEval(), null);
             } catch (Throwable ignored) {
                 //
             }
         }
         if (result != null) {
             result = result.stream().filter(s -> !(s.startsWith("batchid=") || s.startsWith("dateCreated="))).collect(
-                    Collectors.toList());
+                Collectors.toList());
         }
         return result;
     }
@@ -548,7 +552,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final StringBuilder result = new StringBuilder();
         // Support for dateCreated
         final boolean hasDateCreated =
-                !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_DATE_CREATED);
+            !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_DATE_CREATED);
         String dateCreatedSqlCriteria = null;
         if (hasDateCreated) {
             dateCreatedSqlCriteria = getDateCreatedSqlCriteria(filterExpression);
@@ -583,15 +587,15 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             final List<List<String>> subFilterPartitionNamesList = Lists.partition(partitionIds, 5000);
             final List<T> finalPartitions = partitions;
             subFilterPartitionNamesList.forEach(
-                    subPartitionIds -> finalPartitions.addAll(
-                            getsubhandlerresults(databaseName, tableName, filterExpression,
-                                    subPartitionIds, sql, resultSetHandler,
-                                    joinSql, filterSql, filterParams, sort, pageable)));
+                subPartitionIds -> finalPartitions.addAll(
+                    getsubhandlerresults(databaseName, tableName, filterExpression,
+                        subPartitionIds, sql, resultSetHandler,
+                        joinSql, filterSql, filterParams, sort, pageable)));
         } else {
             partitions = getsubhandlerresults(databaseName, tableName, filterExpression,
-                    partitionIds, sql, resultSetHandler,
-                    joinSql, filterSql, filterParams,
-                    sort, pageable);
+                partitionIds, sql, resultSetHandler,
+                joinSql, filterSql, filterParams,
+                sort, pageable);
         }
         return partitions;
     }
@@ -620,7 +624,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         }
         if (partitionIds != null && !partitionIds.isEmpty()) {
             queryBuilder.append(" and p.PART_NAME in ('")
-                    .append(Joiner.on("','").skipNulls().join(partitionIds)).append("')");
+                .append(Joiner.on("','").skipNulls().join(partitionIds)).append("')");
         }
         if (sort != null && sort.hasSort()) {
             queryBuilder.append(" order by ").append(sort.getSortBy()).append(" ").append(sort.getOrder().name());
@@ -640,7 +644,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             }
             final Object[] oParams = new Object[params.size()];
             partitions = new QueryRunner()
-                    .query(conn, queryBuilder.toString(), resultSetHandler, params.toArray(oParams));
+                .query(conn, queryBuilder.toString(), resultSetHandler, params.toArray(oParams));
         } catch (SQLException e) {
             Throwables.propagate(e);
         }
