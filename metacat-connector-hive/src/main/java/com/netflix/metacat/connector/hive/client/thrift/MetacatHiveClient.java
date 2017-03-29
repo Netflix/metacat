@@ -18,7 +18,6 @@ package com.netflix.metacat.connector.hive.client.thrift;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
-import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.common.server.exception.InvalidMetaException;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import lombok.NonNull;
@@ -26,7 +25,6 @@ import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.DropPartitionsRequest;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.RequestPartsSpec;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -299,7 +297,7 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     @Override
     public void addDropPartitions(final String dbName, final String tableName,
                            final List<Partition> partitions,
-                           final List<String> delPartitionNames) throws NoSuchObjectException {
+                           final List<String> delPartitionNames) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             try {
                 dropHivePartitions(client, dbName, tableName, delPartitionNames);
@@ -307,7 +305,7 @@ public class MetacatHiveClient implements IMetacatHiveClient {
             } catch (MetaException | InvalidObjectException e) {
                 throw new InvalidMetaException("One or more partitions are invalid.", e);
             } catch (TException e) {
-                throw new ConnectorException(
+                throw new TException(
                     String.format("Internal server error adding/dropping partitions for table %s.%s",
                         dbName, tableName), e);
             }
