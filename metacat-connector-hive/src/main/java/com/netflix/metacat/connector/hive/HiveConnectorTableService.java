@@ -32,11 +32,13 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.exception.TableAlreadyExistsException;
 import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import lombok.NonNull;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
+import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -126,7 +128,8 @@ public class HiveConnectorTableService implements ConnectorTableService {
             final Table table = hiveMetacatConverters.fromTableInfo(tableInfo);
             updateTable(requestContext, table, tableInfo);
             metacatHiveClient.createTable(table);
-
+        } catch (AlreadyExistsException exception) {
+            throw new TableAlreadyExistsException(tableName, exception);
         } catch (MetaException exception) {
             throw new InvalidMetaException(tableName, exception);
         } catch (InvalidObjectException exception) {
@@ -378,11 +381,15 @@ public class HiveConnectorTableService implements ConnectorTableService {
      */
     @Override
     public boolean exists(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
+        boolean result;
         try {
-            return metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName()) != null;
+            result =  metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName()) != null;
+        } catch (NoSuchObjectException exception) {
+            result = false;
         } catch (TException exception) {
             throw new ConnectorException(String.format("Failed exists hive table %s", name), exception);
         }
+        return result;
     }
 
     /**
