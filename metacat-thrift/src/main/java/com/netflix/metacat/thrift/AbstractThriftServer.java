@@ -18,7 +18,7 @@
 package com.netflix.metacat.thrift;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.server.TServer;

@@ -21,11 +21,11 @@ import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.*
-import com.netflix.metacat.common.server.exception.ConnectorException
-import com.netflix.metacat.common.server.exception.InvalidMetaException
-import com.netflix.metacat.common.server.exception.PartitionAlreadyExistsException
-import com.netflix.metacat.common.server.exception.PartitionNotFoundException
-import com.netflix.metacat.common.server.exception.TableNotFoundException
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
+import com.netflix.metacat.common.server.connectors.exception.PartitionAlreadyExistsException
+import com.netflix.metacat.common.server.connectors.exception.PartitionNotFoundException
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient

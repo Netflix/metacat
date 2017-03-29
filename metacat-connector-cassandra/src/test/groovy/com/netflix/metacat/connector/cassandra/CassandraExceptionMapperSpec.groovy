@@ -19,8 +19,8 @@ package com.netflix.metacat.connector.cassandra
 
 import com.datastax.driver.core.exceptions.AlreadyExistsException
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException
-import com.netflix.metacat.common.server.exception.TableAlreadyExistsException
+import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException
+import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExistsException
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll

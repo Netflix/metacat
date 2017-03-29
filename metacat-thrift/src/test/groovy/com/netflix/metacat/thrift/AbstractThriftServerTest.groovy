@@ -19,7 +19,7 @@ package com.netflix.metacat.thrift
 
 import com.google.common.base.Stopwatch
 import com.google.common.base.Throwables
-import com.netflix.metacat.common.server.Config
+import com.netflix.metacat.common.server.properties.Config
 import org.apache.thrift.TException
 import org.apache.thrift.TProcessor
 import org.apache.thrift.protocol.TProtocol

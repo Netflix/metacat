@@ -40,14 +40,10 @@ import com.netflix.metacat.common.exception.MetacatNotFoundException
 import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
-import com.netflix.metacat.common.server.exception.CatalogNotFoundException
-import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.*
 import feign.jaxrs.JAXRSContract
 import feign.slf4j.Slf4jLogger
-import org.apache.hadoop.yarn.webapp.BadRequestException
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll

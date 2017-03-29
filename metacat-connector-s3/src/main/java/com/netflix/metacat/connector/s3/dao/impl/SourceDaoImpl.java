@@ -16,7 +16,7 @@ package com.netflix.metacat.connector.s3.dao.impl;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.netflix.metacat.common.server.exception.CatalogNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.CatalogNotFoundException;
 import com.netflix.metacat.connector.s3.dao.SourceDao;
 import com.netflix.metacat.connector.s3.model.Source;
 

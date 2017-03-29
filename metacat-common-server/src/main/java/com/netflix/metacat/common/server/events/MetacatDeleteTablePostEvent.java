@@ -22,6 +22,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.TableDto;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 
 import javax.annotation.Nonnull;
@@ -38,16 +39,19 @@ public class MetacatDeleteTablePostEvent extends MetacatEvent {
 
     /**
      * Constructor.
-     * @param name name
+     *
+     * @param name           name
      * @param requestContext context
-     * @param table table info
+     * @param source         The source object which threw this event
+     * @param table          table info
      */
     public MetacatDeleteTablePostEvent(
-        @Nonnull final QualifiedName name,
-        @Nonnull final MetacatRequestContext requestContext,
-        @Nonnull final TableDto table
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final Object source,
+        @Nonnull @NonNull final TableDto table
     ) {
-        super(name, requestContext);
+        super(name, requestContext, source);
         this.table = table;
     }
 }

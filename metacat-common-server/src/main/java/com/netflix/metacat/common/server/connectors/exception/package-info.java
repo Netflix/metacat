@@ -12,7 +12,8 @@
  */
 
 /**
- * Exception package for Metacat.
+ * Exception package for Metacat connectors.
+ *
  * @author zhenl
  */
-package com.netflix.metacat.common.server.exception;
+package com.netflix.metacat.common.server.connectors.exception;

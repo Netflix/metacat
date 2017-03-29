@@ -22,6 +22,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 
 import javax.annotation.Nonnull;
@@ -38,16 +39,19 @@ public class MetacatSaveMViewPartitionPreEvent extends MetacatEvent {
 
     /**
      * Constructor.
-     * @param name name
+     *
+     * @param name           name
      * @param requestContext context
-     * @param saveRequest request
+     * @param source         The source object which threw this event
+     * @param saveRequest    request
      */
     public MetacatSaveMViewPartitionPreEvent(
-        @Nonnull final QualifiedName name,
-        @Nonnull final MetacatRequestContext requestContext,
-        @Nonnull final PartitionsSaveRequestDto saveRequest
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final Object source,
+        @Nonnull @NonNull final PartitionsSaveRequestDto saveRequest
     ) {
-        super(name, requestContext);
+        super(name, requestContext, source);
         this.saveRequest = saveRequest;
     }
 }

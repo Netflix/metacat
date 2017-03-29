@@ -1,22 +1,28 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.netflix.metacat.common.dto.PartitionDto;
+import lombok.Getter;
+import lombok.NonNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -27,24 +33,22 @@ import java.util.Objects;
 
 /**
  * A fully qualified name that references a source of data.
+ *
  * @author amajumdar
  */
+@Getter
 public final class QualifiedName implements Serializable {
-    /**
-     * Type of the connector resource.
-     */
-    public enum Type { CATALOG, DATABASE, TABLE, PARTITION, MVIEW }
     private final String catalogName;
     private final String databaseName;
     private final String partitionName;
     private final String tableName;
     private final String viewName;
-
     private String qualifiedName;
     private Map<String, String> qualifiedNameMap;
     private Type type;
 
-    private QualifiedName(@Nonnull final String catalogName,
+    private QualifiedName(
+        @Nonnull @NonNull final String catalogName,
         @Nullable final String databaseName,
         @Nullable final String tableName,
         @Nullable final String partitionName,
@@ -77,11 +81,12 @@ public final class QualifiedName implements Serializable {
 
     /**
      * Creates the name from the json.
+     *
      * @param node json node
      * @return qualified name
      */
     @JsonCreator
-    public static QualifiedName fromJson(final JsonNode node) {
+    public static QualifiedName fromJson(@Nonnull @NonNull final JsonNode node) {
         final JsonNode catalogNameNode = node.path("catalogName");
         if (catalogNameNode.isMissingNode() || catalogNameNode.isNull() || !catalogNameNode.isTextual()) {
             // If catalogName is not present try to load from the qualifiedName node instead
@@ -119,20 +124,22 @@ public final class QualifiedName implements Serializable {
 
     /**
      * Creates the qualified name from text.
+     *
      * @param s name
      * @return qualified name
      */
-    public static QualifiedName fromString(@Nonnull final String s) {
+    public static QualifiedName fromString(@Nonnull @NonNull final String s) {
         return fromString(s, false);
     }
 
     /**
      * Creates the qualified name from text.
-     * @param s name
+     *
+     * @param s      name
      * @param isView true if it represents a view
      * @return qualified name
      */
-    public static QualifiedName fromString(@Nonnull final String s, final boolean isView) {
+    public static QualifiedName fromString(@Nonnull @NonNull final String s, final boolean isView) {
         //noinspection ConstantConditions
         final String name = s == null ? "" : s.trim();
         if (name.isEmpty()) {
@@ -141,70 +148,76 @@ public final class QualifiedName implements Serializable {
 
         final String[] parts = name.split("/", 4);
         switch (parts.length) {
-        case 1:
-            return ofCatalog(parts[0]);
-        case 2:
-            return ofDatabase(parts[0], parts[1]);
-        case 3:
-            return ofTable(parts[0], parts[1], parts[2]);
-        case 4:
-            if (isView || !parts[3].contains("=")) {
-                return ofView(parts[0], parts[1], parts[2], parts[3]);
-            } else {
-                return ofPartition(parts[0], parts[1], parts[2], parts[3]);
-            }
-        default:
-            throw new IllegalArgumentException("Unable to convert '" + s + "' into a qualifiedDefinition");
+            case 1:
+                return ofCatalog(parts[0]);
+            case 2:
+                return ofDatabase(parts[0], parts[1]);
+            case 3:
+                return ofTable(parts[0], parts[1], parts[2]);
+            case 4:
+                if (isView || !parts[3].contains("=")) {
+                    return ofView(parts[0], parts[1], parts[2], parts[3]);
+                } else {
+                    return ofPartition(parts[0], parts[1], parts[2], parts[3]);
+                }
+            default:
+                throw new IllegalArgumentException("Unable to convert '" + s + "' into a qualifiedDefinition");
         }
     }
 
     /**
      * Creates the qualified name representing a catalog.
+     *
      * @param catalogName catalog name
      * @return qualified name
      */
-    public static QualifiedName ofCatalog(
-        @Nonnull final String catalogName) {
+    public static QualifiedName ofCatalog(@Nonnull @NonNull final String catalogName) {
         return new QualifiedName(catalogName, null, null, null, null);
     }
 
     /**
      * Creates the qualified name representing a database.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
      * @return qualified name
      */
     public static QualifiedName ofDatabase(
-        @Nonnull final String catalogName,
-        @Nonnull final String databaseName) {
+        @Nonnull @NonNull final String catalogName,
+        @Nonnull @NonNull final String databaseName
+    ) {
         return new QualifiedName(catalogName, databaseName, null, null, null);
     }
 
     /**
      * Creates the qualified name representing a view.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
-     * @param viewName view name
+     * @param tableName    table name
+     * @param viewName     view name
      * @return qualified name
      */
     public static QualifiedName ofView(
-        @Nonnull final String catalogName,
-        @Nonnull final String databaseName,
-        @Nonnull final String tableName,
-        @Nonnull final String viewName) {
+        @Nonnull @NonNull final String catalogName,
+        @Nonnull @NonNull final String databaseName,
+        @Nonnull @NonNull final String tableName,
+        @Nonnull @NonNull final String viewName
+    ) {
         return new QualifiedName(catalogName, databaseName, tableName, null, viewName);
     }
 
     /**
      * Creates the qualified name representing a partition.
-     * @param tableName table name
+     *
+     * @param tableName    table name
      * @param partitionDto partition
      * @return qualified name
      */
     public static QualifiedName ofPartition(
-        @Nonnull final QualifiedName tableName,
-        @Nonnull final PartitionDto partitionDto) {
+        @Nonnull @NonNull final QualifiedName tableName,
+        @Nonnull @NonNull final PartitionDto partitionDto
+    ) {
         return ofPartition(
             tableName.catalogName,
             tableName.databaseName,
@@ -215,70 +228,105 @@ public final class QualifiedName implements Serializable {
 
     /**
      * Creates the qualified name representing a partition.
-     * @param catalogName catalog name
-     * @param databaseName database name
-     * @param tableName table name
+     *
+     * @param catalogName   catalog name
+     * @param databaseName  database name
+     * @param tableName     table name
      * @param partitionName partition name
      * @return qualified name
      */
     public static QualifiedName ofPartition(
-        @Nonnull final String catalogName,
-        @Nonnull final String databaseName,
-        @Nonnull final String tableName,
-        @Nonnull final String partitionName) {
+        @Nonnull @NonNull final String catalogName,
+        @Nonnull @NonNull final String databaseName,
+        @Nonnull @NonNull final String tableName,
+        @Nonnull @NonNull final String partitionName
+    ) {
         return new QualifiedName(catalogName, databaseName, tableName, partitionName, null);
     }
 
     /**
      * Creates the qualified name representing a table.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
+     * @param tableName    table name
      * @return qualified name
      */
     public static QualifiedName ofTable(
-        @Nonnull final String catalogName,
-        @Nonnull final String databaseName,
-        @Nonnull final String tableName) {
+        @Nonnull @NonNull final String catalogName,
+        @Nonnull @NonNull final String databaseName,
+        @Nonnull @NonNull final String tableName
+    ) {
         return new QualifiedName(catalogName, databaseName, tableName, null, null);
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
+    /**
+     * Creates a wild card string format of the qualified name.
+     *
+     * @param sourceName   catalog/source name
+     * @param databaseName database name
+     * @param tableName    table name
+     * @return wild card string format of the qualified name
+     */
+    public static String toWildCardString(
+        @Nullable final String sourceName,
+        @Nullable final String databaseName,
+        @Nullable final String tableName
+    ) {
+        if (sourceName == null && databaseName == null && tableName == null) {
+            return null;
         }
-        if (!(o instanceof QualifiedName)) {
-            return false;
+        final StringBuilder builder = new StringBuilder();
+        if (sourceName != null) {
+            builder.append(sourceName);
+        } else {
+            builder.append('%');
         }
-        final QualifiedName that = (QualifiedName) o;
-        return Objects.equals(catalogName, that.catalogName)
-            && Objects.equals(databaseName, that.databaseName)
-            && Objects.equals(partitionName, that.partitionName)
-            && Objects.equals(tableName, that.tableName)
-            && Objects.equals(viewName, that.viewName);
+        if (databaseName != null) {
+            builder.append('/').append(databaseName);
+        } else {
+            builder.append("/%");
+        }
+        if (tableName != null) {
+            builder.append('/').append(tableName);
+        } else {
+            builder.append("/%");
+        }
+        builder.append('%');
+        return builder.toString();
     }
 
+    /**
+     * Get the catalog name.
+     *
+     * @return The catalog name
+     */
     public String getCatalogName() {
-        return catalogName;
+        return this.catalogName;
     }
 
     /**
      * Returns the database name.
+     *
      * @return database name
      */
     public String getDatabaseName() {
-        if (databaseName.isEmpty()) {
+        // TODO: This is a bad exception to throw. If its truly an illegal state exception we shouldn't allow that
+        //       object to be built.
+        if (this.databaseName.isEmpty()) {
             throw new IllegalStateException("This is not a database definition");
         }
-        return databaseName;
+        return this.databaseName;
     }
 
     /**
      * Returns the partition name.
+     *
      * @return partition name
      */
     public String getPartitionName() {
+        // TODO: This is a bad exception to throw. If its truly an illegal state exception we shouldn't allow that
+        //       object to be built.
         if (partitionName.isEmpty()) {
             throw new IllegalStateException("This is not a partition definition");
         }
@@ -287,18 +335,16 @@ public final class QualifiedName implements Serializable {
 
     /**
      * Returns the table name.
+     *
      * @return table name
      */
     public String getTableName() {
+        // TODO: This is a bad exception to throw. If its truly an illegal state exception we shouldn't allow that
+        //       object to be built.
         if (tableName.isEmpty()) {
             throw new IllegalStateException("This is not a table definition");
         }
         return tableName;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(catalogName, databaseName, partitionName, tableName, viewName);
     }
 
     public boolean isCatalogDefinition() {
@@ -344,6 +390,7 @@ public final class QualifiedName implements Serializable {
 
     /**
      * Returns the qualified name in the JSON format.
+     *
      * @return qualified name
      */
     @JsonValue
@@ -379,6 +426,38 @@ public final class QualifiedName implements Serializable {
         return !viewName.isEmpty();
     }
 
+    // TODO: Replace custom equals and hashcode with generated. Tried but broke tests.
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof QualifiedName)) {
+            return false;
+        }
+        final QualifiedName that = (QualifiedName) o;
+        return Objects.equals(catalogName, that.catalogName)
+            && Objects.equals(databaseName, that.databaseName)
+            && Objects.equals(partitionName, that.partitionName)
+            && Objects.equals(tableName, that.tableName)
+            && Objects.equals(viewName, that.viewName);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(catalogName, databaseName, partitionName, tableName, viewName);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         if (qualifiedName == null) {
@@ -410,41 +489,9 @@ public final class QualifiedName implements Serializable {
     }
 
     /**
-     * Creates a wild card string format of the qualified name.
-     * @param sourceName catalog/source name
-     * @param databaseName database name
-     * @param tableName table name
-     * @return wild card string format of the qualified name
+     * Type of the connector resource.
      */
-    public static String toWildCardString(final String sourceName, final String databaseName, final String tableName) {
-        if (sourceName == null && databaseName == null && tableName == null) {
-            return null;
-        }
-        final StringBuilder builder = new StringBuilder();
-        if (sourceName != null) {
-            builder.append(sourceName);
-        } else {
-            builder.append('%');
-        }
-        if (databaseName != null) {
-            builder.append('/').append(databaseName);
-        } else {
-            builder.append("/%");
-        }
-        if (tableName != null) {
-            builder.append('/').append(tableName);
-        } else {
-            builder.append("/%");
-        }
-        builder.append('%');
-        return builder.toString();
-    }
-
-    public String getViewName() {
-        return viewName;
-    }
-
-    public Type getType() {
-        return type;
+    public enum Type {
+        CATALOG, DATABASE, TABLE, PARTITION, MVIEW
     }
 }

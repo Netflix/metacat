@@ -15,7 +15,7 @@ package com.netflix.metacat.thrift;
 
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.PartitionV1;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.server.TServerEventHandler;

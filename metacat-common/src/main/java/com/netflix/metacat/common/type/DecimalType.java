@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.type;
 
 import com.google.common.base.Preconditions;
@@ -24,14 +28,12 @@ import java.util.List;
 
 /**
  * Decimal type class.
+ *
  * @author zhenl
  */
+@Getter
 @EqualsAndHashCode(callSuper = true)
 public final class DecimalType extends AbstractType implements ParametricType {
-    /**
-     * Default decimal type.
-     */
-    public static final DecimalType DECIMAL = createDecimalType();
     /**
      * If scale is not specified, it defaults to 0 (no fractional digits).
      */
@@ -40,9 +42,11 @@ public final class DecimalType extends AbstractType implements ParametricType {
      * If no precision is specified, it defaults to 10.
      */
     private static final int DEFAULT_PRECISION = 10;
-    @Getter
+    /**
+     * Default decimal type.
+     */
+    public static final DecimalType DECIMAL = createDecimalType();
     private final int precision;
-    @Getter
     private final int scale;
 
     private DecimalType(final int precision, final int scale) {
@@ -76,11 +80,6 @@ public final class DecimalType extends AbstractType implements ParametricType {
         return createDecimalType(precision, DEFAULT_SCALE);
     }
 
-    @Override
-    public List<Type> getParameters() {
-        return ImmutableList.of();
-    }
-
     /**
      * Constructor.
      *
@@ -90,11 +89,25 @@ public final class DecimalType extends AbstractType implements ParametricType {
         return createDecimalType(DEFAULT_PRECISION, DEFAULT_SCALE);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Type> getParameters() {
+        return ImmutableList.of();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TypeEnum getBaseType() {
         return TypeEnum.DECIMAL;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Type createType(final List<Type> types, final List<Object> literals) {
         switch (literals.size()) {

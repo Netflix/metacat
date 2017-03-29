@@ -20,8 +20,12 @@ package com.netflix.metacat.common.dto.notifications.sns.payloads;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.fge.jsonpatch.JsonPatch;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
+
+import javax.annotation.Nonnull;
 
 /**
  * Represents the contents of an update payload.
@@ -32,6 +36,7 @@ import lombok.ToString;
  */
 @Getter
 @ToString
+@EqualsAndHashCode
 public class UpdatePayload<T> {
     private T previous;
     private JsonPatch patch;
@@ -46,9 +51,9 @@ public class UpdatePayload<T> {
      */
     @JsonCreator
     public UpdatePayload(
-            @JsonProperty("previous") final T previous,
-            @JsonProperty("patch") final JsonPatch patch,
-            @JsonProperty("current") final T current
+        @JsonProperty("previous") @Nonnull @NonNull final T previous,
+        @JsonProperty("patch") @Nonnull @NonNull final JsonPatch patch,
+        @JsonProperty("current") @Nonnull @NonNull final T current
     ) {
         this.previous = previous;
         this.patch = patch;

@@ -17,7 +17,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Injector;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
-import com.netflix.metacat.common.server.converter.TypeConverterProvider;
+import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class PluginManager {
     private final ConnectorManager connectorManager;
-    private final TypeConverterProvider typeConverterProvider;
+    private final TypeConverterFactory typeConverterProvider;
     private final Injector injector;
     private final AtomicBoolean pluginsLoaded = new AtomicBoolean();
     private final AtomicBoolean pluginsLoading = new AtomicBoolean();
@@ -44,7 +44,7 @@ public class PluginManager {
      */
     @Inject
     public PluginManager(final Injector injector, final ConnectorManager connectorManager,
-        final TypeConverterProvider typeConverterProvider) {
+        final TypeConverterFactory typeConverterProvider) {
         Preconditions.checkNotNull(injector, "injector is null");
         this.injector = injector;
         this.connectorManager = Preconditions.checkNotNull(connectorManager, "connectorManager is null");

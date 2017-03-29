@@ -14,7 +14,7 @@
 package com.netflix.metacat.main.init;
 
 import com.google.inject.Injector;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;

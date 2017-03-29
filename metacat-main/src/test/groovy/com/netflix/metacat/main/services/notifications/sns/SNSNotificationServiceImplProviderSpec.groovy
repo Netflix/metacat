@@ -19,7 +19,7 @@ package com.netflix.metacat.main.services.notifications.sns
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.ProvisionException
-import com.netflix.metacat.common.server.Config
+import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.main.services.notifications.DefaultNotificationServiceImpl
 import spock.lang.Specification
 

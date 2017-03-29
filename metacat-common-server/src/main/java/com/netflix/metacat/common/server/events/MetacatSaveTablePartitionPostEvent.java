@@ -23,6 +23,7 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 
 import javax.annotation.Nonnull;
@@ -42,18 +43,21 @@ public class MetacatSaveTablePartitionPostEvent extends MetacatEvent {
 
     /**
      * Constructor.
-     * @param name name
-     * @param metacatRequestContext context
-     * @param partitions partitions
-     * @param partitionsSaveResponse resposne
+     *
+     * @param name                   name
+     * @param metacatRequestContext  context
+     * @param source                 The source object which threw this event
+     * @param partitions             partitions
+     * @param partitionsSaveResponse response
      */
     public MetacatSaveTablePartitionPostEvent(
-        @Nonnull final QualifiedName name,
-        @Nonnull final MetacatRequestContext metacatRequestContext,
-        @Nonnull final List<PartitionDto> partitions,
-        @Nonnull final PartitionsSaveResponseDto partitionsSaveResponse
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext metacatRequestContext,
+        @Nonnull @NonNull final Object source,
+        @Nonnull @NonNull final List<PartitionDto> partitions,
+        @Nonnull @NonNull final PartitionsSaveResponseDto partitionsSaveResponse
     ) {
-        super(name, metacatRequestContext);
+        super(name, metacatRequestContext, source);
         this.partitions = Collections.unmodifiableList(partitions);
         this.partitionsSaveResponse = partitionsSaveResponse;
     }

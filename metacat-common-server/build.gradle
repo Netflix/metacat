@@ -22,17 +22,23 @@ ext {
 
 dependencies {
     /*******************************
-     * Compile Dependencies
+     * API Dependencies
      *******************************/
 
     compile(project(":metacat-common"))
 
     compile("com.google.inject:guice")
-    compile("com.netflix.archaius:archaius-core:${archaius_version}")
-    compile("com.netflix.servo:servo-core:${servo_version}")
     compile("net.sf.dozer:dozer:${dozer_version}")
     compile("org.apache.tomcat:tomcat-jdbc")
-    compile("org.slf4j:slf4j-api")
+
+    /*******************************
+     * Implementation Dependencies
+     *******************************/
+
+    compile("com.google.guava:guava")
+    compile("org.springframework.boot:spring-boot-starter")
+    compile("org.springframework.boot:spring-boot-starter-logging")
+    compile("org.springframework.cloud:spring-cloud-starter-spectator")
 
     /*******************************
      * Provided Dependencies

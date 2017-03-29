@@ -15,13 +15,14 @@
  *     limitations under the License.
  *
  */
-
 package com.netflix.metacat.common.server.connectors;
 
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+
+import javax.annotation.Nonnull;
 
 /**
  * Converter that converts Metacat dtos to connector represented types and vice versa.
@@ -40,11 +41,12 @@ public interface ConnectorInfoConverter<D, T, P> {
 
     /**
      * Converts to DatabaseDto.
+     *
      * @param qualifiedName qualifiedName
-     * @param database connector database
+     * @param database      connector database
      * @return Metacat database dto
      */
-    default DatabaseInfo toDatabaseInfo(final QualifiedName qualifiedName, final D database) {
+    default DatabaseInfo toDatabaseInfo(@Nonnull final QualifiedName qualifiedName, @Nonnull final D database) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -54,17 +56,18 @@ public interface ConnectorInfoConverter<D, T, P> {
      * @param database Metacat database dto
      * @return connector database
      */
-    default D fromDatabaseInfo(final DatabaseInfo database) {
+    default D fromDatabaseInfo(@Nonnull final DatabaseInfo database) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Converts to TableDto.
+     *
      * @param qualifiedName qualifiedName
-     * @param table connector table
+     * @param table         connector table
      * @return Metacat table dto
      */
-    default TableInfo toTableInfo(final QualifiedName qualifiedName, final T table) {
+    default TableInfo toTableInfo(@Nonnull final QualifiedName qualifiedName, @Nonnull final T table) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -74,27 +77,29 @@ public interface ConnectorInfoConverter<D, T, P> {
      * @param table Metacat table dto
      * @return connector table
      */
-    default T fromTableInfo(final TableInfo table) {
+    default T fromTableInfo(@Nonnull final TableInfo table) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Converts to PartitionDto.
+     *
      * @param tableInfo tableInfo
      * @param partition connector partition
      * @return Metacat partition dto
      */
-    default PartitionInfo toPartitionInfo(final TableInfo tableInfo, final P partition) {
+    default PartitionInfo toPartitionInfo(@Nonnull final TableInfo tableInfo, @Nonnull final P partition) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
     /**
      * Converts from PartitionDto to the connector partition.
+     *
      * @param tableInfo tableInfo
      * @param partition Metacat partition dto
      * @return connector partition
      */
-    default P fromPartitionInfo(final TableInfo tableInfo, final PartitionInfo partition) {
+    default P fromPartitionInfo(@Nonnull final TableInfo tableInfo, @Nonnull final PartitionInfo partition) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 }

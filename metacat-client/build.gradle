@@ -23,19 +23,23 @@ compileJava {
 
 dependencies {
     /*******************************
-     * Compile Dependencies
+     * API Dependencies
      *******************************/
 
     compile(project(":metacat-common"))
 
+    compile("io.github.openfeign:feign-core:${feign_version}")
+
+    /*******************************
+     * Implementation Dependencies
+     *******************************/
+
+    compile("com.fasterxml.jackson.core:jackson-databind")
     compile("com.fasterxml.jackson.datatype:jackson-datatype-guava")
     compile("com.fasterxml.jackson.module:jackson-module-jaxb-annotations")
-    compile("io.github.openfeign:feign-core:${feign_version}")
+    compile("com.google.guava:guava")
     compile("io.github.openfeign:feign-jaxrs:${feign_version}")
     compile("io.github.openfeign:feign-slf4j:${feign_version}")
-    compile("org.glassfish.jersey.core:jersey-server:${jersey_version}") {
-        exclude group: "javax.ws.rs", module: "javax.ws.rs-api"
-    }
     compile("org.slf4j:slf4j-api")
 
     /*******************************

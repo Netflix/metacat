@@ -18,11 +18,11 @@
 package com.netflix.metacat.connector.postgresql;
 
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.server.exception.ConnectorException;
-import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException;
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
-import com.netflix.metacat.common.server.exception.TableAlreadyExistsException;
-import com.netflix.metacat.common.server.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
+import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
+import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExistsException;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import lombok.NonNull;
 

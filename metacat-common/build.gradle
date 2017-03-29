@@ -23,15 +23,19 @@ compileJava {
 
 dependencies {
     /*******************************
-     * Compile Dependencies
+     * API Dependencies
      *******************************/
 
-    compile("com.fasterxml.jackson.core:jackson-annotations")
-    compile("com.fasterxml.jackson.core:jackson-core")
     compile("com.fasterxml.jackson.core:jackson-databind")
     compile("com.github.fge:json-patch:${json_patch_version}")
     compile("com.wordnik:swagger-annotations:${swagger_version}")
     compile("javax.ws.rs:jsr311-api:${jsr311_api_version}")
+
+    /*******************************
+     * Implementation Dependencies
+     *******************************/
+
+    compile("com.google.guava:guava")
 
     /*******************************
      * Provided Dependencies

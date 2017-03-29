@@ -13,7 +13,6 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-
 package com.netflix.metacat.common.type;
 
 import com.google.common.collect.ImmutableList;
@@ -28,20 +27,20 @@ import java.util.List;
  *
  * @author zhenl
  */
+@Getter
 public final class VarbinaryType extends AbstractType implements ParametricType {
     /**
      * Default VarbinaryType type.
      */
     public static final VarbinaryType VARBINARY = new VarbinaryType(Integer.MAX_VALUE);
 
-    @Getter
     private final int length;
 
     private VarbinaryType(final int length) {
         super(new TypeSignature(
-                TypeEnum.VARBINARY,
-                new ArrayList<TypeSignature>(),
-                Lists.<Object>newArrayList((long) length)));
+            TypeEnum.VARBINARY,
+            new ArrayList<TypeSignature>(),
+            Lists.<Object>newArrayList((long) length)));
 
 
         if (length < 0) {
@@ -60,16 +59,25 @@ public final class VarbinaryType extends AbstractType implements ParametricType 
         return new VarbinaryType(length);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TypeEnum getBaseType() {
         return TypeEnum.VARBINARY;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Type> getParameters() {
         return ImmutableList.of();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Type createType(final List<Type> types, final List<Object> literals) {
         if (literals.isEmpty()) {
