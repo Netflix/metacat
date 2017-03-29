@@ -19,14 +19,22 @@ package com.netflix.metacat.connector.hive
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.*
+import com.netflix.metacat.common.server.exception.ConnectorException
+import com.netflix.metacat.common.server.exception.InvalidMetaException
+import com.netflix.metacat.common.server.exception.TableNotFoundException
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
 import org.apache.hadoop.hive.metastore.api.FieldSchema
+import org.apache.hadoop.hive.metastore.api.InvalidObjectException
+import org.apache.hadoop.hive.metastore.api.MetaException
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.hadoop.hive.metastore.api.Partition
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor
+import org.apache.thrift.TException
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Unit test for HiveConnectorPartitionSpec.
@@ -91,6 +99,29 @@ class HiveConnectorPartitionSpec extends Specification{
         partionInfos == expected
     }
 
+    @Unroll
+    def "Test for get partitions exceptions" (){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        when:
+        PartitionListRequest partitionListRequest = new PartitionListRequest();
+        partitionListRequest.partitionNames = [
+                "dateint=20170101/hour=1"
+        ]
+        hiveConnectorPartitionService.getPartitions( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+
+        then:
+        1 * client.getPartitions(_,_,_) >> { throw exception}
+        thrown result
+
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new NoSuchObjectException()  |TableNotFoundException
+        new MetaException()          |InvalidMetaException
+        new InvalidObjectException() |InvalidMetaException
+    }
+
     def "Test for get partitions" (){
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
@@ -121,6 +152,29 @@ class HiveConnectorPartitionSpec extends Specification{
         def expected = [ "dateint=20170101/hour=1", "dateint=20170101/hour=2" ]
         then:
         partitionNames == expected
+    }
+
+    @Unroll
+    def "Test for getNameOfPartitions exceptions" (){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+
+        when:
+        PartitionListRequest partitionListRequest = new PartitionListRequest()
+        partitionListRequest.partitionNames = [
+                "dateint=20170101/hour=1", "dateint=20170101/hour=2"
+        ]
+        hiveConnectorPartitionService.getPartitionKeys( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        then:
+        1 * client.getTableByName(_,_) >> { throw exception}
+        thrown result
+
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new NoSuchObjectException()  |TableNotFoundException
+        new MetaException()          |InvalidMetaException
+        new InvalidObjectException() |InvalidMetaException
     }
 
     def "Test for getPartitionUris" (){
@@ -154,13 +208,59 @@ class HiveConnectorPartitionSpec extends Specification{
         count == 3
     }
 
+    @Unroll
+    def "Test for getPartitionCount exceptions" (){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+
+        when:
+        hiveConnectorPartitionService.getPartitionCount( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"))
+        then:
+        1 * client.getPartitionCount(_,_) >> { throw exception}
+        thrown result
+
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new NoSuchObjectException()  |TableNotFoundException
+        new MetaException()          |InvalidMetaException
+        new InvalidObjectException() |InvalidMetaException
+    }
+
     def "Test for savePartition" (){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        when:
+        def saverequest = new PartitionsSaveRequest()
+        saverequest.checkIfExists = true
+        saverequest.alterIfExists = true
+        saverequest.partitions = [ PartitionInfo.builder().name(QualifiedName.ofPartition("testhive", "test1", "testtable2", "dateint=20170101/hour=3")).build() ]
+        def saveresponse = hiveConnectorPartitionService.savePartitions( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"),saverequest)
+        then:
+        1 * client.getTableByName("test1", "testtable2") >> { HiveConnectorTableSpec.getPartitionTable("testtable2") }
+        0 * client.alterPartitions("test1","testtable2",_)
+        1 * client.addDropPartitions(_,_,_,_)
+        noExceptionThrown()
+    }
+
+    @Unroll
+    def "Test for savePartition exceptions" (){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+
         when:
         def saverequest = new PartitionsSaveRequest()
         saverequest.partitions = [ PartitionInfo.builder().name(QualifiedName.ofPartition("testhive", "test1", "testtable2", "dateint=20170101/hour=3")).build() ]
         def saveresponse = hiveConnectorPartitionService.savePartitions( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"),saverequest)
         then:
-        noExceptionThrown()
+        1 * client.getTableByName("test1", "testtable2") >> { throw exception}
+        thrown result
 
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new NoSuchObjectException()  |TableNotFoundException
+        new MetaException()          |InvalidMetaException
+        new InvalidObjectException() |InvalidMetaException
     }
 }
