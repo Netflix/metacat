@@ -23,6 +23,7 @@ import com.netflix.metacat.client.module.JacksonDecoder
 import com.netflix.metacat.client.module.JacksonEncoder
 import com.netflix.metacat.client.module.MetacatErrorDecoder
 import com.netflix.metacat.common.MetacatRequestContext
+import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.api.MetacatV1
 import com.netflix.metacat.common.api.MetadataV1
 import com.netflix.metacat.common.api.PartitionV1
@@ -30,16 +31,23 @@ import com.netflix.metacat.common.api.TagV1
 import com.netflix.metacat.common.dto.CreateCatalogDto
 import com.netflix.metacat.common.dto.DatabaseCreateRequestDto
 import com.netflix.metacat.common.dto.GetPartitionsRequestDto
+import com.netflix.metacat.common.dto.PartitionDto
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto
+import com.netflix.metacat.common.dto.TableDto
+import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
 import com.netflix.metacat.common.exception.MetacatBadRequestException
 import com.netflix.metacat.common.exception.MetacatNotFoundException
 import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
+import com.netflix.metacat.common.server.exception.CatalogNotFoundException
+import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException
+import com.netflix.metacat.common.server.exception.DatabaseNotFoundException
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.*
 import feign.jaxrs.JAXRSContract
 import feign.slf4j.Slf4jLogger
+import org.apache.hadoop.yarn.webapp.BadRequestException
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -61,7 +69,7 @@ class MetacatSmokeSpec extends Specification {
     public static MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
 
     def setupSpec() {
-        String url = "http://localhost:${System.properties['metacat_http_port']}"
+        String url = "http://localhost:32778"
         assert url, 'Required system property "metacat_url" is not set'
 
         ObjectMapper mapper = metacatJson.getPrettyObjectMapper().copy()
@@ -404,6 +412,164 @@ class MetacatSmokeSpec extends Specification {
         's3-mysql-db'              | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
         's3-mysql-db'              | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
         's3-mysql-db'              | 'invalid-catalog' | 'z'       | 'one=xyz'     | false  | false | MetacatNotFoundException.class
+    }
+
+    @Unroll
+    def "Test catalog failure cases"(){
+        when:
+        api.getDatabase('invalid', 'invalid', false)
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.createDatabase('invalid', 'invalid', new DatabaseCreateRequestDto())
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.updateDatabase('invalid', 'invalid', new DatabaseCreateRequestDto())
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.deleteDatabase('invalid', 'invalid')
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.getTable('invalid', 'invalid', 'invalid', false, false, false)
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.createTable('invalid', 'invalid', 'invalid', new TableDto())
+        then:
+        thrown(MetacatBadRequestException)
+        when:
+        api.createTable('invalid', 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.updateTable('invalid', 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.deleteTable('invalid', 'invalid', 'invalid')
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        partitionApi.getPartitionCount('invalid', 'invalid', 'invalid')
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        partitionApi.savePartitions('invalid', 'invalid', 'invalid', new PartitionsSaveRequestDto())
+        then:
+        thrown(MetacatBadRequestException)
+        when:
+        partitionApi.savePartitions('invalid', 'invalid', 'invalid', new PartitionsSaveRequestDto(partitions: [new PartitionDto()]))
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        partitionApi.deletePartitions('invalid', 'invalid', 'invalid', ['dateint=1'])
+        then:
+        thrown(MetacatNotFoundException)
+    }
+
+    @Unroll
+    def "Test database failure cases"(){
+        when:
+        api.getDatabase(catalogName, 'invalid', false)
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.deleteDatabase(catalogName, 'invalid')
+        api.updateDatabase(catalogName, 'invalid', new DatabaseCreateRequestDto())
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.deleteDatabase(catalogName, 'invalid')
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.getTable(catalogName, 'invalid', 'invalid', true, false, false)
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.updateTable(catalogName, 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.deleteTable(catalogName, 'invalid', 'invalid')
+        then:
+        // Even if the table does not exist, we ignore the error so that we can delete the definition metadata
+        noExceptionThrown()
+        when:
+        def count = partitionApi.getPartitionCount(catalogName, 'invalid', 'invalid')
+        then:
+        count == 0
+        when:
+        partitionApi.savePartitions(catalogName, 'invalid', 'invalid', new PartitionsSaveRequestDto(partitions: [new PartitionDto()]))
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        partitionApi.deletePartitions(catalogName, 'invalid', 'invalid', ['dateint=1'])
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.createDatabase(catalogName, 'invalid', new DatabaseCreateRequestDto())
+        api.createDatabase(catalogName, 'invalid', new DatabaseCreateRequestDto())
+        then:
+        thrown(MetacatAlreadyExistsException)
+        when:
+        api.deleteDatabase(catalogName, 'invalid')
+        then:
+        noExceptionThrown()
+        where:
+        catalogName << ['embedded-hive-metastore','hive-metastore','s3-mysql-db']
+    }
+
+    @Unroll
+    def "Test table failure cases"(){
+        given:
+        try {
+            api.createDatabase(catalogName, 'invalid', new DatabaseCreateRequestDto())
+        } catch(Exception ignored) {}
+        when:
+        api.getTable(catalogName, 'invalid', 'invalid', true, false, false)
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.updateTable(catalogName, 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        api.deleteTable(catalogName, 'invalid', 'invalid')
+        then:
+        // Even if the table does not exist, we ignore the error so that we can delete the definition metadata
+        noExceptionThrown()
+        when:
+        def count = partitionApi.getPartitionCount(catalogName, 'invalid', 'invalid')
+        then:
+        count == 0
+        when:
+        partitionApi.savePartitions(catalogName, 'invalid', 'invalid', new PartitionsSaveRequestDto(partitions: [new PartitionDto()]))
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        partitionApi.deletePartitions(catalogName, 'invalid', 'invalid', ['dateint=1'])
+        then:
+        thrown(MetacatNotFoundException)
+        when:
+        createTable(catalogName, 'invalid', 'invalid')
+        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(name:QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        then:
+        thrown(MetacatAlreadyExistsException)
+        when:
+        api.deleteTable(catalogName, 'invalid', 'invalid')
+        api.deleteDatabase(catalogName, 'invalid')
+        then:
+        noExceptionThrown()
+        where:
+        catalogName << ['embedded-hive-metastore','hive-metastore','s3-mysql-db']
     }
 
     @Unroll

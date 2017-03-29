@@ -107,10 +107,12 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                 partitionInfos.add(hiveMetacatConverters.toPartitionInfo(tableInfo, partition));
             }
             return partitionInfos;
+        } catch (NoSuchObjectException exception) {
+            throw new TableNotFoundException(tableName, exception);
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + tableName, e);
         } catch (TException e) {
-            throw new TableNotFoundException(tableName, e);
+            throw new ConnectorException(String.format("Failed get partitions for hive table %s", tableName), e);
         }
     }
 
@@ -124,10 +126,12 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     ) {
         try {
             return metacatHiveClient.getPartitionCount(tableName.getDatabaseName(), tableName.getTableName());
+        } catch (NoSuchObjectException exception) {
+            throw new TableNotFoundException(tableName, exception);
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + tableName, e);
         } catch (TException e) {
-            throw new TableNotFoundException(tableName, e);
+            throw new ConnectorException(String.format("Failed get partitions count for hive table %s", tableName), e);
         }
     }
 
@@ -160,10 +164,12 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                             : names.subList(pageable.getOffset(), limit);
                 }
             }
+        } catch (NoSuchObjectException exception) {
+            throw new TableNotFoundException(tableName, exception);
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + tableName, e);
         } catch (TException e) {
-            throw new TableNotFoundException(tableName, e);
+            throw new ConnectorException(String.format("Failed get partitions keys for hive table %s", tableName), e);
         }
         return names;
     }
@@ -206,10 +212,12 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                         : partitions.subList(pageable.getOffset(), limit);
             }
             return partitions;
+        } catch (NoSuchObjectException exception) {
+            throw new TableNotFoundException(tableName, exception);
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("Invalid metadata for " + tableName, e);
         } catch (TException e) {
-            throw new TableNotFoundException(tableName, e);
+            throw new ConnectorException(String.format("Failed get partitions for hive table %s", tableName), e);
         }
     }
 
@@ -334,11 +342,13 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
 
         try {
             metacatHiveClient.dropPartitions(tableName.getDatabaseName(), tableName.getTableName(), partitionNames);
+        } catch (NoSuchObjectException exception) {
+            throw new TableNotFoundException(tableName, exception);
         } catch (MetaException | InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (TException e) {
             //not sure which qualified name to use here
-            throw new TableNotFoundException(tableName, e);
+            throw new ConnectorException(String.format("Failed delete partitions for hive table %s", tableName), e);
         }
 
     }
@@ -373,45 +383,42 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     }
 
 
-    protected Map<String, Partition> getPartitionsByNames(final Table table, final List<String> partitionNames) {
+    protected Map<String, Partition> getPartitionsByNames(final Table table, final List<String> partitionNames)
+        throws TException {
         final String databasename = table.getDbName();
         final String tablename = table.getTableName();
-        try {
-            List<Partition> partitions =
-                    metacatHiveClient.getPartitions(databasename, tablename, partitionNames);
-            if (partitions == null || partitions.isEmpty()) {
-                if (partitionNames == null || partitionNames.isEmpty()) {
-                    return Collections.emptyMap();
-                }
-
-                // Fall back to scanning all partitions ourselves if finding by name does not work
-                final List<Partition> allPartitions =
-                        metacatHiveClient.getPartitions(databasename, tablename,
-                                null);
-                if (allPartitions == null || allPartitions.isEmpty()) {
-                    return Collections.emptyMap();
-                }
-
-                partitions = allPartitions.stream().filter(part -> {
-                    try {
-                        return partitionNames.contains(
-                                Warehouse.makePartName(table.getPartitionKeys(), part.getValues()));
-                    } catch (Exception e) {
-                        throw new InvalidMetaException("One or more partition names are invalid.", e);
-                    }
-                }).collect(Collectors.toList());
+        List<Partition> partitions =
+            metacatHiveClient.getPartitions(databasename, tablename, partitionNames);
+        if (partitions == null || partitions.isEmpty()) {
+            if (partitionNames == null || partitionNames.isEmpty()) {
+                return Collections.emptyMap();
             }
 
-            return partitions.stream().collect(Collectors.toMap(part -> {
+            // Fall back to scanning all partitions ourselves if finding by name does not work
+            final List<Partition> allPartitions =
+                metacatHiveClient.getPartitions(databasename, tablename,
+                    null);
+            if (allPartitions == null || allPartitions.isEmpty()) {
+                return Collections.emptyMap();
+            }
+
+            partitions = allPartitions.stream().filter(part -> {
                 try {
-                    return Warehouse.makePartName(table.getPartitionKeys(), part.getValues());
+                    return partitionNames.contains(
+                        Warehouse.makePartName(table.getPartitionKeys(), part.getValues()));
                 } catch (Exception e) {
                     throw new InvalidMetaException("One or more partition names are invalid.", e);
                 }
-            }, Function.identity()));
-        } catch (TException exception) {
-            throw new ConnectorException(String.format("Failed getPartitionsByNames hive table %s", table), exception);
+            }).collect(Collectors.toList());
         }
+
+        return partitions.stream().collect(Collectors.toMap(part -> {
+            try {
+                return Warehouse.makePartName(table.getPartitionKeys(), part.getValues());
+            } catch (Exception e) {
+                throw new InvalidMetaException("One or more partition names are invalid.", e);
+            }
+        }, Function.identity()));
     }
 
     private void copyTableSdToPartitionSd(final List<Partition> hivePartitions, final Table table) {

@@ -121,8 +121,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         try {
             this.metacatHiveClient.alterDatabase(databaseName.getDatabaseName(),
                     hiveMetacatConverters.fromDatabaseInfo(databaseInfo));
-        } catch (AlreadyExistsException exception) {
-            throw new DatabaseAlreadyExistsException(databaseName, exception);
+        } catch (NoSuchObjectException exception) {
+            throw new DatabaseNotFoundException(databaseName, exception);
         } catch (MetaException | InvalidObjectException exception) {
             throw new InvalidMetaException(databaseName, exception);
         } catch (TException exception) {
@@ -155,12 +155,15 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     @Override
     public boolean exists(@Nonnull @NonNull final ConnectorContext requestContext,
                           @Nonnull @NonNull final QualifiedName name) {
+        boolean result;
         try {
-            final Database database = this.metacatHiveClient.getDatabase(name.getDatabaseName());
-            return database != null;
+            result = metacatHiveClient.getDatabase(name.getDatabaseName()) != null;
+        } catch (NoSuchObjectException exception) {
+            result = false;
         } catch (TException exception) {
+            throw new ConnectorException(String.format("Failed to check hive database %s exists", name), exception);
         }
-        return false;
+        return result;
     }
 
     /**
