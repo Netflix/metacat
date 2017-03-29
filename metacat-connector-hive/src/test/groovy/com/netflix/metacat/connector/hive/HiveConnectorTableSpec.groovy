@@ -22,13 +22,22 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.AuditInfo
 import com.netflix.metacat.common.server.connectors.model.StorageInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
+import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException
+import com.netflix.metacat.common.server.exception.DatabaseNotFoundException
 import com.netflix.metacat.common.server.exception.InvalidMetaException
+import com.netflix.metacat.common.server.exception.TableAlreadyExistsException
+import com.netflix.metacat.common.server.exception.TableNotFoundException
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.common.server.exception.ConnectorException
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
+import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
+import org.apache.hadoop.hive.metastore.api.Database
 import org.apache.hadoop.hive.metastore.api.FieldSchema
+import org.apache.hadoop.hive.metastore.api.InvalidObjectException
+import org.apache.hadoop.hive.metastore.api.MetaException
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.hadoop.hive.metastore.api.SerDeInfo
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor
 import org.apache.hadoop.hive.metastore.api.Table
@@ -86,6 +95,7 @@ class HiveConnectorTableSpec extends Specification {
 
     static getPartitionTable(String tableName){
         Table table = new Table()
+        table.dbName = "test1"
         table.tableName = tableName
         table.owner = "test"
         table.partitionKeys = new ArrayList<>()
@@ -115,12 +125,25 @@ class HiveConnectorTableSpec extends Specification {
         noExceptionThrown()
     }
 
+    @Unroll
     def "Test for create table throw exception" (){
+        def client = Mock(MetacatHiveClient);
+        def hiveConnectorTableService = new HiveConnectorTableService("testhive", client, hiveConnectorDatabaseService, new HiveConnectorInfoConverter( new HiveTypeConverter()), true )
+
         when:
         hiveConnectorTableService.create( connectorContext,
-                TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testingtable")).build())
+                TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testingtable"))
+                        .serde(StorageInfo.builder().serializationLib('org.apache.hadoop.hive.ql.io.orc.OrcSerde').outputFormat('org.apache.hadoop.hive.ql.io.orc.OrcInputFormat').build()).build())
         then:
-        thrown InvalidMetaException
+        1 * client.createTable(_) >> { throw exception}
+        thrown result
+
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new AlreadyExistsException() |TableAlreadyExistsException
+        new MetaException()          |InvalidMetaException
+        new InvalidObjectException() |DatabaseNotFoundException
     }
 
     @Unroll
@@ -159,11 +182,22 @@ class HiveConnectorTableSpec extends Specification {
             tableInfo == expected
     }
 
-    def "Test for get table with exception" (){
+    @Unroll
+    def "Test for get table with exceptions" (){
+        def client = Mock(MetacatHiveClient);
+        def hiveConnectorTableService = new HiveConnectorTableService("testhive", client, hiveConnectorDatabaseService, new HiveConnectorInfoConverter( new HiveTypeConverter()), true )
+
         when:
         hiveConnectorTableService.get( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable3"))
         then:
-        thrown ConnectorException
+        1 * client.getTableByName(_,_) >> { throw exception}
+        thrown result
+
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new MetaException()          |InvalidMetaException
+        new NoSuchObjectException()  |TableNotFoundException
     }
 
     def "Test for delete table" (){
@@ -174,12 +208,23 @@ class HiveConnectorTableSpec extends Specification {
         noExceptionThrown()
     }
 
-    def "Test for delete table throw exception" (){
+    @Unroll
+    def "Test for delete table throw exceptions" (){
+        def client = Mock(MetacatHiveClient);
+        def hiveConnectorTableService = new HiveConnectorTableService("testhive", client, hiveConnectorDatabaseService, new HiveConnectorInfoConverter( new HiveTypeConverter()), true )
+
         when:
         def name = QualifiedName.ofTable("testhive", "test1", "testtable3")
         hiveConnectorTableService.delete( connectorContext, name)
         then:
-        thrown ConnectorException
+        1 * client.dropTable(_,_) >> { throw exception}
+        thrown result
+
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new MetaException()          |InvalidMetaException
+        new NoSuchObjectException()  |TableNotFoundException
     }
 
     def "Test for listNames tables"(){
@@ -187,6 +232,60 @@ class HiveConnectorTableSpec extends Specification {
         def tables = hiveConnectorTableService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","test1"), null, null, null )
         then:
         tables == MetacatDataInfoProvider.getAllTableNames()
+    }
+
+    @Unroll
+    def "Test for listNames tables exceptions"(){
+        def client = Mock(MetacatHiveClient);
+        def hiveConnectorTableService = new HiveConnectorTableService("testhive", client, hiveConnectorDatabaseService, new HiveConnectorInfoConverter( new HiveTypeConverter()), true )
+
+        when:
+        hiveConnectorTableService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","test1"), null, null, null )
+
+        then:
+        1 * client.getAllTables(_) >> { throw exception}
+        thrown result
+
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new MetaException()          |InvalidMetaException
+        new NoSuchObjectException()  |DatabaseNotFoundException
+    }
+
+    @Unroll
+    def "Test for exist table"(){
+        def client = Mock(MetacatHiveClient);
+        def hiveConnectorTableService = new HiveConnectorTableService("testhive", client, hiveConnectorDatabaseService, new HiveConnectorInfoConverter( new HiveTypeConverter()), true )
+        when:
+        def result = hiveConnectorTableService.exists(connectorContext, QualifiedName.ofTable("testhive","testdb", "testtable1"))
+        then:
+        1 * client.getTableByName("testdb", "testtable1") >> resulttble
+        result == ret
+        where:
+        resulttble        | ret
+        new Table()       | true
+        null              | false
+    }
+
+    def "Test for exist table NoSuchObjectException"(){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorTableService = new HiveConnectorTableService("testhive", client, hiveConnectorDatabaseService, new HiveConnectorInfoConverter( new HiveTypeConverter()), true )
+        when:
+        def result = hiveConnectorTableService.exists(connectorContext, QualifiedName.ofTable("testhive","testdb", "testtable1"))
+        then:
+        1 * client.getTableByName("testdb", "testtable1") >> {throw new NoSuchObjectException()}
+        result == false
+    }
+
+    def "Test for exist table TException"(){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorTableService = new HiveConnectorTableService("testhive", client, hiveConnectorDatabaseService, new HiveConnectorInfoConverter( new HiveTypeConverter()), true )
+        when:
+        def result = hiveConnectorTableService.exists(connectorContext, QualifiedName.ofTable("testhive","testdb", "testtable1"))
+        then:
+        client.getTableByName("testdb", "testtable1") >> {throw new TException() }
+        thrown ConnectorException
     }
 
     @Unroll
@@ -217,4 +316,23 @@ class HiveConnectorTableSpec extends Specification {
         noExceptionThrown()
     }
 
+    @Unroll
+    def "Test for rename tables exceptions"() {
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorTableService = new HiveConnectorTableService("testhive", client, hiveConnectorDatabaseService, new HiveConnectorInfoConverter( new HiveTypeConverter()), true )
+
+        when:
+        hiveConnectorTableService.rename(
+                connectorContext, QualifiedName.ofTable("testhive", "test1","testtable1"),
+                QualifiedName.ofTable("testhive", "test1", "testtable2"))
+        then:
+        1 * client.rename(_,_,_,_) >> { throw exception}
+        thrown result
+
+        where:
+        exception                    | result
+        new TException()             |ConnectorException
+        new MetaException()          |InvalidMetaException
+        new NoSuchObjectException()  |TableNotFoundException
+    }
 }
