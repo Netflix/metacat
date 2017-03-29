@@ -26,6 +26,7 @@ import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
@@ -311,7 +312,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
             @Nullable final Pageable pageable
     ) {
         try {
-            List<QualifiedName> qualifiedNames = Lists.newArrayList();
+            final List<QualifiedName> qualifiedNames = Lists.newArrayList();
 
             final String tableFilter = (prefix != null && prefix.isTableDefinition()) ? prefix.getTableName() : null;
             for (String tableName : metacatHiveClient.getAllTables(name.getDatabaseName())) {
@@ -322,16 +323,9 @@ public class HiveConnectorTableService implements ConnectorTableService {
                         continue;
                     }
                     qualifiedNames.add(qualifiedName);
-
                 }
             }
-            if (null != pageable && pageable.isPageable()) {
-                final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), qualifiedNames.size());
-                qualifiedNames = (pageable.getOffset() > limit) ? Lists.newArrayList()
-                        : qualifiedNames.subList(pageable.getOffset(), limit);
-            }
-
-            return qualifiedNames;
+            return ConnectorUtils.paginate(qualifiedNames, pageable);
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (NoSuchObjectException exception) {
@@ -354,7 +348,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
     ) {
 
         try {
-            List<TableInfo> tableInfos = Lists.newArrayList();
+            final List<TableInfo> tableInfos = Lists.newArrayList();
             for (String tableName : metacatHiveClient.getAllTables(name.getDatabaseName())) {
                 final QualifiedName qualifiedName = QualifiedName.ofDatabase(name.getCatalogName(), tableName);
                 if (!qualifiedName.toString().startsWith(prefix.toString())) {
@@ -363,12 +357,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
                 final Table table = metacatHiveClient.getTableByName(name.getDatabaseName(), tableName);
                 tableInfos.add(hiveMetacatConverters.toTableInfo(name, table));
             }
-            if (null != pageable && pageable.isPageable()) {
-                final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), tableInfos.size());
-                tableInfos = (pageable.getOffset() > limit) ? Lists.newArrayList()
-                        : tableInfos.subList(pageable.getOffset(), limit);
-            }
-            return tableInfos;
+            return ConnectorUtils.paginate(tableInfos, pageable);
         } catch (MetaException exception) {
             throw new DatabaseNotFoundException(name, exception);
         } catch (TException exception) {
