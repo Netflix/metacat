@@ -55,7 +55,7 @@ import java.util.Locale;
 @Getter
 public class JdbcConnectorTableService implements ConnectorTableService {
 
-    private static final String[] TABLES_TYPE = {"TABLE"};
+    static final String[] TABLE_TYPES = {"TABLE", "VIEW"};
 
     private final DataSource dataSource;
     private final JdbcTypeConverter typeConverter;
@@ -116,17 +116,23 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             final ImmutableList.Builder<FieldInfo> fields = ImmutableList.builder();
             try (final ResultSet columns = this.getColumns(connection, name)) {
                 while (columns.next()) {
-                    final String sourceType = columns.getString("TYPE_NAME");
-                    final FieldInfo fieldInfo = FieldInfo.builder()
+                    final String type = columns.getString("TYPE_NAME");
+                    final String size = columns.getString("COLUMN_SIZE");
+                    final String precision = columns.getString("DECIMAL_DIGITS");
+                    final String sourceType = this.buildSourceType(type, size, precision);
+                    final FieldInfo.FieldInfoBuilder fieldInfo = FieldInfo.builder()
                         .name(columns.getString("COLUMN_NAME"))
                         .sourceType(sourceType)
                         .type(this.typeConverter.toMetacatType(sourceType))
                         .comment(columns.getString("REMARKS"))
                         .isNullable(columns.getString("IS_NULLABLE").equals("YES"))
-                        .size(columns.getInt("COLUMN_SIZE"))
-                        .defaultValue(columns.getString("COLUMN_DEF"))
-                        .build();
-                    fields.add(fieldInfo);
+                        .defaultValue(columns.getString("COLUMN_DEF"));
+
+                    if (size != null) {
+                        fieldInfo.size(Integer.parseInt(size));
+                    }
+
+                    fields.add(fieldInfo.build());
                 }
             }
             log.debug("Finished getting table metadata for qualified name {} for request {}", name, context);
@@ -266,13 +272,13 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         final String database = name.getDatabaseName();
         final DatabaseMetaData metaData = connection.getMetaData();
         return prefix == null || StringUtils.isEmpty(prefix.getTableName())
-            ? metaData.getTables(database, database, null, TABLES_TYPE)
+            ? metaData.getTables(database, database, null, TABLE_TYPES)
             : metaData
             .getTables(
                 database,
                 database,
                 prefix.getTableName() + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH,
-                TABLES_TYPE
+                TABLE_TYPES
             );
     }
 
@@ -298,5 +304,27 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             name.getTableName(),
             JdbcConnectorUtils.MULTI_CHARACTER_SEARCH
         );
+    }
+
+    /**
+     * Rebuild a source type definition.
+     *
+     * @param type      The base type e.g. VARCHAR
+     * @param size      The size if applicable to the {@code type}
+     * @param precision The precision if applicable to the {@code type} e.g. DECIMAL's
+     * @return The representation of source type e.g. INTEGER, VARCHAR(50) or DECIMAL(20, 10)
+     */
+    private String buildSourceType(
+        @Nonnull @NonNull final String type,
+        @Nullable final String size,
+        @Nullable final String precision
+    ) {
+        if (size != null && precision != null) {
+            return type + "(" + Integer.parseInt(size) + ", " + Integer.parseInt(precision) + ")";
+        } else if (size != null) {
+            return type + "(" + Integer.parseInt(size) + ")";
+        } else {
+            return type;
+        }
     }
 }
