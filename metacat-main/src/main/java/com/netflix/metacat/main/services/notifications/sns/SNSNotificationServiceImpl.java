@@ -94,6 +94,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     public void notifyOfPartitionAddition(@NotNull final MetacatSaveTablePartitionPostEvent event) {
+        log.debug("Received SaveTablePartitionPostEvent {}", event);
+        CounterWrapper.incrementCounter("metacat.notifications.sns.events.partitions.add");
         try {
             final String name = event.getName().toString();
             final long timestamp = event.getRequestContext().getTimestamp();
@@ -137,6 +139,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     public void notifyOfPartitionDeletion(@NotNull final MetacatDeleteTablePartitionPostEvent event) {
+        log.debug("Received DeleteTablePartition event {}", event);
+        CounterWrapper.incrementCounter("metacat.notifications.sns.events.partitions.delete");
         try {
             final String name = event.getName().toString();
             final long timestamp = event.getRequestContext().getTimestamp();
@@ -178,6 +182,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     public void notifyOfTableCreation(@NotNull final MetacatCreateTablePostEvent event) {
+        log.debug("Received CreateTableEvent {}", event);
+        CounterWrapper.incrementCounter("metacat.notifications.sns.events.tables.create");
         try {
             final CreateTableMessage message = new CreateTableMessage(
                 UUID.randomUUID().toString(),
@@ -199,6 +205,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     public void notifyOfTableDeletion(@NotNull final MetacatDeleteTablePostEvent event) {
+        log.debug("Received DeleteTableEvent {}", event);
+        CounterWrapper.incrementCounter("metacat.notifications.sns.events.tables.delete");
         try {
             final DeleteTableMessage message = new DeleteTableMessage(
                 UUID.randomUUID().toString(),
@@ -220,6 +228,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     public void notifyOfTableRename(@NotNull final MetacatRenameTablePostEvent event) {
+        log.debug("Received RenameTableEvent {}", event);
+        CounterWrapper.incrementCounter("metacat.notifications.sns.events.tables.rename");
         try {
             final UpdateTableMessage message = this.createUpdateTableMessage(
                 UUID.randomUUID().toString(),
@@ -242,6 +252,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     public void notifyOfTableUpdate(@NotNull final MetacatUpdateTablePostEvent event) {
+        log.debug("Received UpdateTableEvent {}", event);
+        CounterWrapper.incrementCounter("metacat.notifications.sns.events.tables.update");
         try {
             final UpdateTableMessage message = this.createUpdateTableMessage(
                 UUID.randomUUID().toString(),
