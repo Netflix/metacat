@@ -25,6 +25,7 @@ import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.type.BaseType
+import com.netflix.metacat.common.type.DecimalType
 import com.netflix.metacat.common.type.VarcharType
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter
@@ -109,18 +110,24 @@ class JdbcConnectorTableServiceSpec extends Specification {
         1 * this.dataSource.getConnection() >> connection
         1 * connection.getMetaData() >> metadata
         1 * metadata.getColumns(database, database, table, JdbcConnectorUtils.MULTI_CHARACTER_SEARCH) >> columnResultSet
-        3 * columnResultSet.next() >>> [true, true, false]
-        2 * columnResultSet.getString("REMARKS") >>> ["comment1", "comment2"]
-        2 * columnResultSet.getString("COLUMN_NAME") >>> ["column1", "column2"]
-        2 * columnResultSet.getString("TYPE_NAME") >>> ["VARCHAR", "INTEGER"]
-        2 * this.typeConverter.toMetacatType(_ as String) >>> [VarcharType.createVarcharType(255), BaseType.INT]
-        2 * columnResultSet.getString("IS_NULLABLE") >>> ["YES", "NO"]
-        2 * columnResultSet.getInt("COLUMN_SIZE") >>> [255, 11]
-        2 * columnResultSet.getString("COLUMN_DEF") >>> [null, "0"]
+        4 * columnResultSet.next() >>> [true, true, true, false]
+        3 * columnResultSet.getString("REMARKS") >>> ["comment1", "comment2", "comment3"]
+        3 * columnResultSet.getString("COLUMN_NAME") >>> ["column1", "column2", "column3"]
+        3 * columnResultSet.getString("TYPE_NAME") >>> ["VARCHAR", "INTEGER", "DECIMAL"]
+        3 * this.typeConverter.toMetacatType(_ as String) >>> [
+            VarcharType.createVarcharType(255),
+            BaseType.INT,
+            DecimalType.createDecimalType(20, 10)
+        ]
+        3 * columnResultSet.getString("IS_NULLABLE") >>> ["YES", "NO", "NO"]
+        3 * columnResultSet.getString("COLUMN_SIZE") >>> ["255", null, "20"]
+        3 * columnResultSet.getString("DECIMAL_DIGITS") >>> [null, null, "10"]
+        3 * columnResultSet.getString("COLUMN_DEF") >>> [null, "0", "0.0"]
         tableInfo.getName() == qName
-        tableInfo.getFields().size() == 2
+        tableInfo.getFields().size() == 3
         tableInfo.getFields().get(0).getName() == "column1"
         tableInfo.getFields().get(1).getName() == "column2"
+        tableInfo.getFields().get(2).getName() == "column3"
     }
 
     def "Can list table names without prefix, sort or pagination"() {
@@ -137,7 +144,12 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.getMetaData() >> metadata
-        1 * metadata.getTables(database, database, null, ["TABLE"].toArray(new String[1])) >> tablesResultSet
+        1 * metadata.getTables(
+            database,
+            database,
+            null,
+            JdbcConnectorTableService.TABLE_TYPES
+        ) >> tablesResultSet
         5 * tablesResultSet.next() >>> [true, true, true, true, false]
         4 * tablesResultSet.getString("TABLE_NAME") >>> ["a", "b", "c", "d"]
         tableNames.size() == 4
@@ -164,7 +176,10 @@ class JdbcConnectorTableServiceSpec extends Specification {
         1 * this.dataSource.getConnection() >> connection
         1 * connection.getMetaData() >> metadata
         1 * metadata.getTables(
-            database, database, prefix + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH, ["TABLE"].toArray(new String[1])
+            database,
+            database,
+            prefix + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH,
+            JdbcConnectorTableService.TABLE_TYPES
         ) >> tablesResultSet
         5 * tablesResultSet.next() >>> [true, true, true, true, false]
         4 * tablesResultSet.getString("TABLE_NAME") >>> ["a", "b", "c", "d"]
@@ -190,7 +205,12 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.getMetaData() >> metadata
-        1 * metadata.getTables(database, database, null, ["TABLE"].toArray(new String[1])) >> tablesResultSet
+        1 * metadata.getTables(
+            database,
+            database,
+            null,
+            JdbcConnectorTableService.TABLE_TYPES
+        ) >> tablesResultSet
         5 * tablesResultSet.next() >>> [true, true, true, true, false]
         4 * tablesResultSet.getString("TABLE_NAME") >>> ["a", "b", "c", "d"]
         tableNames.size() == 4
@@ -216,7 +236,12 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.getMetaData() >> metadata
-        1 * metadata.getTables(database, database, null, ["TABLE"].toArray(new String[1])) >> tablesResultSet
+        1 * metadata.getTables(
+            database,
+            database,
+            null,
+            JdbcConnectorTableService.TABLE_TYPES
+        ) >> tablesResultSet
         5 * tablesResultSet.next() >>> [true, true, true, true, false]
         4 * tablesResultSet.getString("TABLE_NAME") >>> ["a", "b", "c", "d"]
         tableNames.size() == 1
