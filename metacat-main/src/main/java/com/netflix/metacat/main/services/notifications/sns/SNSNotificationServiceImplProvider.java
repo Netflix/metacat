@@ -85,7 +85,7 @@ public class SNSNotificationServiceImplProvider implements Provider<Notification
             final Retryer<PublishResult> retry = RetryerBuilder.<PublishResult>newBuilder()
                 .retryIfExceptionOfType(InternalErrorException.class)
                 .retryIfExceptionOfType(ThrottledException.class)
-                .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.SECONDS, 30, TimeUnit.SECONDS))
+                .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.MILLISECONDS, 30, TimeUnit.MILLISECONDS))
                 .withStopStrategy(StopStrategies.stopAfterAttempt(3))
                 .build();
             return new SNSNotificationServiceImpl(new AmazonSNSClient(), tableArn, partitionArn, this.mapper, retry);

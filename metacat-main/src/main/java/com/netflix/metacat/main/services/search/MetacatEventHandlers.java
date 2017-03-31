@@ -14,6 +14,7 @@
 package com.netflix.metacat.main.services.search;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.dto.DatabaseDto;
@@ -62,6 +63,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatCreateDatabasePostEventHandler(final MetacatCreateDatabasePostEvent event) {
         log.debug("Received CreateDatabaseEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.database.create");
@@ -76,6 +78,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatCreateMViewPostEventHandler(final MetacatCreateMViewPostEvent event) {
         log.debug("Received CreateViewEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.view.create");
@@ -90,6 +93,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatCreateTablePostEventHandler(final MetacatCreateTablePostEvent event) {
         log.debug("Received CreateTableEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.create");
@@ -104,6 +108,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatDeleteDatabasePostEventHandler(final MetacatDeleteDatabasePostEvent event) {
         log.debug("Received DeleteDatabaseEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.database.delete");
@@ -116,6 +121,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatDeleteMViewPostEventHandler(final MetacatDeleteMViewPostEvent event) {
         log.debug("Received DeleteViewEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.view.delete");
@@ -128,6 +134,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatDeleteTablePostEventHandler(final MetacatDeleteTablePostEvent event) {
         log.debug("Received DeleteTableEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.delete");
@@ -151,6 +158,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatDeleteMViewPartitionPostEventHandler(final MetacatDeleteMViewPartitionPostEvent event) {
         log.debug("Received DeleteViewPartitionEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.view.partition.delete");
@@ -165,6 +173,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatDeleteTablePartitionPostEventHandler(final MetacatDeleteTablePartitionPostEvent event) {
         log.debug("Received DeleteTablePartitionEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.partition.delete");
@@ -179,6 +188,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatRenameTablePostEventHandler(final MetacatRenameTablePostEvent event) {
         log.debug("Received RenameTableEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.rename");
@@ -195,6 +205,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatUpdateMViewPostEventHandler(final MetacatUpdateMViewPostEvent event) {
         log.debug("Received UpdateViewEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.view.update");
@@ -209,6 +220,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatUpdateTablePostEventHandler(final MetacatUpdateTablePostEvent event) {
         log.debug("Received UpdateTableEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.update");
@@ -234,6 +246,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatSaveMViewPartitionPostEventHandler(final MetacatSaveMViewPartitionPostEvent event) {
         log.debug("Received SaveViewPartitionEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.view.partition.save");
@@ -250,6 +263,7 @@ public class MetacatEventHandlers {
      * @param event event
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void metacatSaveTablePartitionPostEventHandler(final MetacatSaveTablePartitionPostEvent event) {
         log.debug("Received SaveTablePartitionEvent {}", event);
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.partition.save");
