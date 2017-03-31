@@ -541,7 +541,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         resultTbl.tableName == tableName
         resultTbl.dbName == name.databaseName
         resultTbl.owner == owner
-        DateUtilities.epochCloseEnough(resultTbl.getTTable().createTime, now, timediff)
+        TestUtilities.epochCloseEnough(resultTbl.getTTable().createTime, now, timediff)
         !resultTbl.lastAccessTime
         !resultTbl.retention
         resultTbl.tableType == TableType.EXTERNAL_TABLE
@@ -623,7 +623,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         resultTbl.tableName == tableName
         resultTbl.dbName == name.databaseName
         resultTbl.owner == owner
-        DateUtilities.epochCloseEnough(resultTbl.getTTable().createTime, now, timediff)
+        TestUtilities.epochCloseEnough(resultTbl.getTTable().createTime, now, timediff)
         !resultTbl.lastAccessTime
         !resultTbl.retention
         resultTbl.tableType == TableType.EXTERNAL_TABLE

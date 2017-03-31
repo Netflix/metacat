@@ -77,6 +77,8 @@ dependencies {
     testCompile("org.apache.hive:hive-exec:${hive_version}") {
         exclude module: "pentaho-aggdesigner-algorithm"
     }
+
+    testCompile("org.skyscreamer:jsonassert")
 }
 
 task expandWar(type: Copy) {
