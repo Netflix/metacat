@@ -22,6 +22,7 @@ import com.google.common.collect.Sets;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
@@ -158,11 +159,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                 }
             } else {
                 names = metacatHiveClient.getPartitionNames(tableName.getDatabaseName(), tableName.getTableName());
-                if (null != pageable && pageable.isPageable()) {
-                    final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), names.size());
-                    return (pageable.getOffset() > limit) ? Lists.newArrayList()
-                            : names.subList(pageable.getOffset(), limit);
-                }
+                return ConnectorUtils.paginate(names, pageable);
             }
         } catch (NoSuchObjectException exception) {
             throw new TableNotFoundException(tableName, exception);
@@ -179,7 +176,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                                           @Nullable final List<String> partitionIds,
                                           @Nullable final Sort sort,
                                           @Nullable final Pageable pageable) {
-        List<Partition> partitions = null;
+        final List<Partition> partitions = null;
         final String databasename = tableName.getDatabaseName();
         final String tablename = tableName.getTableName();
         try {
@@ -205,13 +202,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                     filteredPartitionList.add(partition);
                 }
             });
-            partitions = filteredPartitionList;
-            if (null != pageable && pageable.isPageable()) {
-                final int limit = Math.min(pageable.getOffset() + pageable.getLimit(), partitions.size());
-                partitions = (pageable.getOffset() > limit) ? Lists.newArrayList()
-                        : partitions.subList(pageable.getOffset(), limit);
-            }
-            return partitions;
+            return ConnectorUtils.paginate(filteredPartitionList, pageable);
         } catch (NoSuchObjectException exception) {
             throw new TableNotFoundException(tableName, exception);
         } catch (MetaException | InvalidObjectException e) {

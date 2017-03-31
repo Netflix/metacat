@@ -17,8 +17,14 @@
 
 package com.netflix.metacat
 
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.ObjectMapper
+import feign.codec.EncodeException
 
-class DateUtilities {
+
+class TestUtilities {
+    final static ObjectMapper mapper = new ObjectMapper();
+
     public static boolean dateCloseEnough(Date a, Date b, int acceptableDifferenceInSeconds) {
         def diff = Math.abs(a.time - b.time)
 
@@ -33,5 +39,14 @@ class DateUtilities {
 
     public static boolean epochCloseEnough(int a, Date b, int acceptableDifferenceInSeconds) {
         return epochCloseEnough(a, Math.floorDiv(b.time, 1000) as int, acceptableDifferenceInSeconds)
+    }
+
+    public static String toJsonString(final Object object)
+            throws EncodeException {
+        try {
+            mapper.writeValueAsString(object)
+        } catch (JsonProcessingException e) {
+            throw new EncodeException(e.getMessage(), e);
+        }
     }
 }

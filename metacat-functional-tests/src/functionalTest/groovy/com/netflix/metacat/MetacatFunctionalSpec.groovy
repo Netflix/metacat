@@ -16,6 +16,7 @@
  */
 package com.netflix.metacat
 
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.base.Throwables
 import com.netflix.metacat.client.Client
@@ -33,11 +34,13 @@ import feign.Logger
 import feign.RetryableException
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.joda.time.Instant
+import org.mortbay.util.ajax.JSON
+import org.skyscreamer.jsonassert.JSONAssert
 import spock.lang.Specification
 import spock.lang.Stepwise
 import spock.lang.Unroll
 
-import static com.netflix.metacat.DateUtilities.dateCloseEnough
+import static TestUtilities.dateCloseEnough
 
 @Stepwise
 @Unroll
@@ -109,8 +112,16 @@ class MetacatFunctionalSpec extends Specification {
     def 'getCatalog: #catalog.name exists and has existing databases #catalog.preExistingDatabases'() {
         when:
         def catResponse = api.getCatalog(catalog.name)
+        def catResponseJson = TestUtilities.toJsonString(catResponse)
 
         then:
+        //String str = "{databases:[\"default\"],definitionMetadata:null,name:{catalogName:\"embedded-hive-metastore\",qualifiedName:\"embedded-hive-metastore\"},type:\"hive\"}"
+        String str = "{name:{catalogName:$catalog.name,qualifiedName:$catalog.name},type:$catalog.type}"
+        //The database not match, for example mysql it has 'hive,metacat' which we can't compare
+        //the client replace empty with default
+        //String str2 = "{databases:${catalog.preExistingDatabases*.databaseName},definitionMetadata:null,name:{catalogName:\"embedded-hive-metastore\",qualifiedName:\"embedded-hive-metastore\"},type:\"hive\"}"
+
+        JSONAssert.assertEquals(str, catResponseJson, false)
         catResponse.name == QualifiedName.ofCatalog(catalog.name)
         catResponse.type == catalog.type
         catResponse.databases.containsAll(catalog.preExistingDatabases*.databaseName)
@@ -515,8 +526,25 @@ class MetacatFunctionalSpec extends Specification {
         when:
         def table = api.getTable(catalog.name, databaseName, tableName, true, true, true)
         def name = QualifiedName.ofTable(catalog.name, databaseName, tableName)
+        def tableJson = TestUtilities.toJsonString(table)
+        def expectedhivedataMetadata = "{\"dataMetadata\":{\"data_field\":4},\"definitionMetadata\":{\"objectField\":{}},\"fields\":[{\"comment\":\"added 2st\",\"name\":\"field2\",\"partition_key\":false,\"pos\":0,\"source_type\":\"boolean\",\"type\":\"boolean\",\"isNullable\":null,\"size\":null,\"defaultValue\":null,\"isSortKey\":null,\"isIndexKey\":null},{\"comment\":\"added 4st\",\"name\":\"field4\",\"partition_key\":false,\"pos\":1,\"source_type\":\"boolean\",\"type\":\"boolean\",\"isNullable\":null,\"size\":null,\"defaultValue\":null,\"isSortKey\":null,\"isIndexKey\":null},{\"comment\":\"added 1st - partition key\",\"name\":\"field1\",\"partition_key\":true,\"pos\":2,\"source_type\":\"boolean\",\"type\":\"boolean\",\"isNullable\":null,\"size\":null,\"defaultValue\":null,\"isSortKey\":null,\"isIndexKey\":null},{\"comment\":\"added 3rd, a single char partition key to test that use case\",\"name\":\"p\",\"partition_key\":true,\"pos\":3,\"source_type\":\"boolean\",\"type\":\"boolean\",\"isNullable\":null,\"size\":null,\"defaultValue\":null,\"isSortKey\":null,\"isIndexKey\":null}]}"
+        def expecteds3dataMetadata = "{\"dataMetadata\":{\"data_field\":4},\"definitionMetadata\":{\"objectField\":{}},\"fields\":[{\"comment\":\"added 2st\",\"name\":\"field2\",\"partition_key\":false,\"pos\":1,\"source_type\":null,\"type\":\"boolean\",\"isNullable\":null,\"size\":null,\"defaultValue\":null,\"isSortKey\":null,\"isIndexKey\":null},{\"comment\":\"added 4st\",\"name\":\"field4\",\"partition_key\":false,\"pos\":3,\"source_type\":null,\"type\":\"boolean\",\"isNullable\":null,\"size\":null,\"defaultValue\":null,\"isSortKey\":null,\"isIndexKey\":null},{\"comment\":\"added 1st - partition key\",\"name\":\"field1\",\"partition_key\":true,\"pos\":0,\"source_type\":null,\"type\":\"boolean\",\"isNullable\":null,\"size\":null,\"defaultValue\":null,\"isSortKey\":null,\"isIndexKey\":null},{\"comment\":\"added 3rd, a single char partition key to test that use case\",\"name\":\"p\",\"partition_key\":true,\"pos\":2,\"source_type\":null,\"type\":\"boolean\",\"isNullable\":null,\"size\":null,\"defaultValue\":null,\"isSortKey\":null,\"isIndexKey\":null}]}"
+        def serdeStr = "{\"serde\":{\"inputFormat\":\"org.apache.hadoop.mapred.TextInputFormat\",\"outputFormat\":\"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat\",\"owner\":\"metacat-test\",\"parameters\":{\"serialization.format\":\"1\"},\"serdeInfoParameters\":{},\"serializationLib\":\"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe\",\"uri\":\"file:/tmp/${catalog.name}/$databaseName/$tableName\"},\"partition_keys\":[\"field1\",\"p\"],\"dataExternal\":true}"
+        def tablemetadataStr = "{\"metadata\":{\"EXTERNAL\":\"TRUE\"},\"name\":{\"catalogName\":$catalog.name,\"databaseName\":$databaseName,\"qualifiedName\":\"${catalog.name}/$databaseName/$tableName\",\"tableName\":\"$tableName\"}}"
 
         then:
+        println("Checking ${catalog.name}/$databaseName/$tableName")
+        //s3 connector maitains the order of the field, but doesn't have the soruce type
+        if ( catalog.type == "s3") {
+            JSONAssert.assertEquals(expecteds3dataMetadata, tableJson, false)
+        }
+        //hive connector puts all the partition fields at the end
+        if (catalog.type == 'hive') {
+            JSONAssert.assertEquals(expectedhivedataMetadata, tableJson, false)
+            JSONAssert.assertEquals(serdeStr, tableJson, false)
+            JSONAssert.assertEquals(tablemetadataStr, tableJson, false)
+        }
+
         table.serde.owner == 'metacat-test'
         table.name.catalogName == catalog.name
         table.name.databaseName == databaseName
@@ -775,7 +803,14 @@ class MetacatFunctionalSpec extends Specification {
         def allPartitions = partitionApi.getPartitions(name.catalogName, name.databaseName, name.tableName, null, null, null, null, null, true)
         def savedPartition = allPartitions?.find { it.name == escapedName }
 
+        def partitionJson = TestUtilities.toJsonString(savedPartition)
+        String dataMetadataStr = "{\"dataMetadata\":{\"part_data_field\":${Integer.MIN_VALUE}}}"
+        String definitionMetadataStr = "{\"definitionMetadata\":{\"part_def_field\":${Long.MAX_VALUE}}}"
+        def expected = "{\"dataMetadata\":{\"part_data_field\":${Integer.MIN_VALUE}},\"definitionMetadata\":{\"part_def_field\":${Long.MAX_VALUE}},\"name\":{\"catalogName\":\"${name.catalogName}\",\"partitionName\":\"${escapedName.partitionName}\",\"databaseName\":\"${name.databaseName}\",\"qualifiedName\":\"${name.catalogName}/${name.databaseName}/${name.tableName}/${escapedName.partitionName}\",\"tableName\":\"${name.tableName}\"},\"serde\":{\"inputFormat\":\"org.apache.hadoop.mapred.TextInputFormat\",\"outputFormat\":\"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat\",\"serializationLib\":\"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe\",\"uri\":\"file:/tmp/${name.catalogName}/${name.databaseName}/${name.tableName}/${escapedName.partitionName}\"},\"dataExternal\":true}"
         then:
+        JSONAssert.assertEquals(dataMetadataStr, partitionJson, false)
+        JSONAssert.assertEquals(definitionMetadataStr, partitionJson, false)
+        JSONAssert.assertEquals(expected, partitionJson, false)
         allPartitions
         savedPartition
         savedPartition.name == escapedName
@@ -787,7 +822,6 @@ class MetacatFunctionalSpec extends Specification {
 
         when:
         def table = api.getTable(name.catalogName, name.databaseName, name.tableName, true, true, true)
-
         then:
         table.definitionMetadata.get('table_def_field').longValue() == now.time
 
@@ -822,8 +856,18 @@ class MetacatFunctionalSpec extends Specification {
         when:
         allPartitions = partitionApi.getPartitions(name.catalogName, name.databaseName, name.tableName, null, null, null, null, null, true)
         savedPartition = allPartitions?.find { it.name == escapedName }
+        partitionJson = TestUtilities.toJsonString(savedPartition)
+
+        def strJson = "{\"name\":{\"catalogName\":\"${name.catalogName}\",\"partitionName\":\"${escapedName.partitionName}\",\"databaseName\":\"${name.databaseName}\",\"qualifiedName\":\"${name.catalogName}/${name.databaseName}/${name.tableName}/${escapedName.partitionName}\",\"tableName\":\"${name.tableName}\"},\"serde\":{\"inputFormat\":\"org.apache.hadoop.mapred.TextInputFormat\",\"outputFormat\":\"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat\",\"serializationLib\":\"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe\",\"uri\":\"${dataUri}_new_uri\"},\"dataExternal\":true}"
+        dataMetadataStr = "{\"dataMetadata\":{\"new_entry\":true}}"
+        definitionMetadataStr = "{\"definitionMetadata\":{\"part_def_field\":${Long.MAX_VALUE},\"updated_field\":1}}"
 
         then:
+        JSONAssert.assertEquals(dataMetadataStr, partitionJson, false)
+        JSONAssert.assertEquals(definitionMetadataStr, partitionJson, false)
+        JSONAssert.assertEquals(strJson, partitionJson, false)
+
+
         allPartitions
         savedPartition
         savedPartition.name == escapedName
