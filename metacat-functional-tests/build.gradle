@@ -49,7 +49,7 @@ dependencies {
     /*******************************
      * Compile Dependencies
      *******************************/
-    compile("org.skyscreamer:jsonassert:1.4.0")
+
     /*******************************
      * Provided Dependencies
      *******************************/
@@ -78,6 +78,7 @@ dependencies {
         exclude module: "pentaho-aggdesigner-algorithm"
     }
 
+    testCompile("org.skyscreamer:jsonassert")
 }
 
 task expandWar(type: Copy) {
