@@ -40,6 +40,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
+import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.List;
@@ -56,6 +57,7 @@ import java.util.Locale;
 public class JdbcConnectorTableService implements ConnectorTableService {
 
     static final String[] TABLE_TYPES = {"TABLE", "VIEW"};
+    private static final String ZERO = "0";
 
     private final DataSource dataSource;
     private final JdbcTypeConverter typeConverter;
@@ -313,16 +315,35 @@ public class JdbcConnectorTableService implements ConnectorTableService {
      * @param size      The size if applicable to the {@code type}
      * @param precision The precision if applicable to the {@code type} e.g. DECIMAL's
      * @return The representation of source type e.g. INTEGER, VARCHAR(50) or DECIMAL(20, 10)
+     * @throws SQLDataException When size or precision can't be parsed to integers if non null
      */
     private String buildSourceType(
         @Nonnull @NonNull final String type,
         @Nullable final String size,
         @Nullable final String precision
-    ) {
-        if (size != null && precision != null) {
-            return type + "(" + Integer.parseInt(size) + ", " + Integer.parseInt(precision) + ")";
-        } else if (size != null) {
-            return type + "(" + Integer.parseInt(size) + ")";
+    ) throws SQLDataException {
+        Integer sizeInt;
+        Integer precisionInt;
+        try {
+            sizeInt = size != null ? Integer.parseInt(size) : null;
+            if (sizeInt != null && sizeInt < 1) {
+                sizeInt = null;
+            }
+        } catch (final NumberFormatException nfe) {
+            throw new SQLDataException("Size field could not be converted to integer", nfe);
+        }
+        try {
+            precisionInt = precision != null ? Integer.parseInt(precision) : null;
+            if (precisionInt != null && precisionInt < 1) {
+                precisionInt = null;
+            }
+        } catch (final NumberFormatException nfe) {
+            throw new SQLDataException("Precision field could not be converted to integer", nfe);
+        }
+        if (sizeInt != null && precisionInt != null) {
+            return type + "(" + sizeInt + ", " + precisionInt + ")";
+        } else if (sizeInt != null) {
+            return type + "(" + sizeInt + ")";
         } else {
             return type;
         }
