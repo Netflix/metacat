@@ -45,10 +45,10 @@ class MetacatDataInfoProvider {
                                  TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "devtable3")).build()]
 
     private static databaseNames = [
-            QualifiedName.ofDatabase("testhive", "test1"),
-            QualifiedName.ofDatabase("testhive", "test2"),
             QualifiedName.ofDatabase("testhive", "dev1"),
-            QualifiedName.ofDatabase("testhive", "dev2")
+            QualifiedName.ofDatabase("testhive", "dev2"),
+            QualifiedName.ofDatabase("testhive", "test1"),
+            QualifiedName.ofDatabase("testhive", "test2")
     ]
 
     private static testdatabaseNames = [
@@ -57,10 +57,10 @@ class MetacatDataInfoProvider {
     ]
 
     private static tableNames = [
+            QualifiedName.ofTable("testhive", "test1", "devtable2"),
+            QualifiedName.ofTable("testhive", "test1", "devtable3"),
             QualifiedName.ofTable("testhive", "test1", "testtable1"),
             QualifiedName.ofTable("testhive", "test1", "testtable2"),
-            QualifiedName.ofTable("testhive", "test1", "devtable2"),
-            QualifiedName.ofTable("testhive", "test1", "devtable3")
     ]
 
     private static tableNameStrings = [

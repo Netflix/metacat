@@ -44,6 +44,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -188,6 +189,10 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
                 }
                 qualifiedNames.add(qualifiedName);
             }
+            //supporting sort by qualified name only
+            if (sort != null) {
+                ConnectorUtils.sort(qualifiedNames, sort, Comparator.comparing(QualifiedName::toString));
+            }
             return ConnectorUtils.paginate(qualifiedNames, pageable);
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
@@ -216,6 +221,10 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
                     continue;
                 }
                 databaseInfos.add(DatabaseInfo.builder().name(qualifiedName).build());
+            }
+            //supporting sort by name only
+            if (sort != null) {
+                ConnectorUtils.sort(databaseInfos, sort, Comparator.comparing(p -> p.getName().getDatabaseName()));
             }
             return ConnectorUtils.paginate(databaseInfos, pageable);
         } catch (MetaException exception) {

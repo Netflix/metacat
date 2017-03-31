@@ -18,6 +18,8 @@ package com.netflix.metacat.connector.hive
 
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
+import com.netflix.metacat.common.dto.Sort
+import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.AuditInfo
 import com.netflix.metacat.common.server.connectors.model.StorageInfo
@@ -227,11 +229,16 @@ class HiveConnectorTableSpec extends Specification {
         new NoSuchObjectException()  |TableNotFoundException
     }
 
+    @Unroll
     def "Test for listNames tables"(){
         when:
-        def tables = hiveConnectorTableService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","test1"), null, null, null )
+        def tables = hiveConnectorTableService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","test1"), null, order, null )
         then:
-        tables == MetacatDataInfoProvider.getAllTableNames()
+        tables == result
+        where:
+        order | result
+        new Sort(null, SortOrder.ASC) | MetacatDataInfoProvider.getAllTableNames()
+        new Sort(null, SortOrder.DESC)| MetacatDataInfoProvider.getAllTableNames().reverse()
     }
 
     @Unroll
