@@ -22,10 +22,10 @@ import com.google.common.collect.Sets;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.ConnectorUtils;
-import com.netflix.metacat.common.server.partition.util.PartitionUtil;
+import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
+import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
@@ -34,6 +34,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.common.server.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import lombok.NonNull;
 import org.apache.hadoop.hive.metastore.Warehouse;
@@ -176,7 +177,6 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                                           @Nullable final List<String> partitionIds,
                                           @Nullable final Sort sort,
                                           @Nullable final Pageable pageable) {
-        final List<Partition> partitions = null;
         final String databasename = tableName.getDatabaseName();
         final String tablename = tableName.getTableName();
         try {
@@ -202,6 +202,13 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                     filteredPartitionList.add(partition);
                 }
             });
+            if (sort != null) {
+                if (sort.getOrder() == SortOrder.DESC) {
+                    Collections.sort(filteredPartitionList, Collections.reverseOrder());
+                } else {
+                    Collections.sort(filteredPartitionList);
+                }
+            }
             return ConnectorUtils.paginate(filteredPartitionList, pageable);
         } catch (NoSuchObjectException exception) {
             throw new TableNotFoundException(tableName, exception);
@@ -375,11 +382,11 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
 
 
     protected Map<String, Partition> getPartitionsByNames(final Table table, final List<String> partitionNames)
-        throws TException {
+            throws TException {
         final String databasename = table.getDbName();
         final String tablename = table.getTableName();
         List<Partition> partitions =
-            metacatHiveClient.getPartitions(databasename, tablename, partitionNames);
+                metacatHiveClient.getPartitions(databasename, tablename, partitionNames);
         if (partitions == null || partitions.isEmpty()) {
             if (partitionNames == null || partitionNames.isEmpty()) {
                 return Collections.emptyMap();
@@ -387,8 +394,8 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
 
             // Fall back to scanning all partitions ourselves if finding by name does not work
             final List<Partition> allPartitions =
-                metacatHiveClient.getPartitions(databasename, tablename,
-                    null);
+                    metacatHiveClient.getPartitions(databasename, tablename,
+                            null);
             if (allPartitions == null || allPartitions.isEmpty()) {
                 return Collections.emptyMap();
             }
@@ -396,7 +403,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             partitions = allPartitions.stream().filter(part -> {
                 try {
                     return partitionNames.contains(
-                        Warehouse.makePartName(table.getPartitionKeys(), part.getValues()));
+                            Warehouse.makePartName(table.getPartitionKeys(), part.getValues()));
                 } catch (Exception e) {
                     throw new InvalidMetaException("One or more partition names are invalid.", e);
                 }

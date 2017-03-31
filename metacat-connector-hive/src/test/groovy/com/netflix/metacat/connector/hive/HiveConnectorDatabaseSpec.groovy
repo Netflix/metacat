@@ -18,6 +18,8 @@ package com.netflix.metacat.connector.hive
 
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
+import com.netflix.metacat.common.dto.Sort
+import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
 import com.netflix.metacat.common.server.exception.ConnectorException
@@ -84,9 +86,13 @@ class HiveConnectorDatabaseSpec extends Specification{
 
     def "Test for listNames database"(){
         when:
-        def dbs = hiveConnectorDatabaseService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","testdb"), null, null, null )
+        def dbs = hiveConnectorDatabaseService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","testdb"), null, order, null )
         then:
-        dbs == MetacatDataInfoProvider.getAllDatabaseNames()
+        dbs == result
+        where:
+        order | result
+        new Sort(null, SortOrder.ASC) | MetacatDataInfoProvider.getAllDatabaseNames()
+        new Sort(null, SortOrder.DESC)| MetacatDataInfoProvider.getAllDatabaseNames().reverse()
     }
 
     @Unroll
@@ -130,7 +136,7 @@ class HiveConnectorDatabaseSpec extends Specification{
         def hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
 
         when:
-        def dbs = hiveConnectorDatabaseService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","testdb"), null, null, null )
+        def dbs = hiveConnectorDatabaseService.listNames(connectorContext, QualifiedName.ofDatabase("testhive","testdb"), null, new Sort(null, SortOrder.ASC), null )
         then:
         1 * client.getAllDatabases() >> {throw exception}
         thrown result
@@ -168,7 +174,7 @@ class HiveConnectorDatabaseSpec extends Specification{
 
     def "Test for list database" (){
         when:
-        def dbs = hiveConnectorDatabaseService.list( connectorContext, QualifiedName.ofDatabase("testhive", ""), QualifiedName.ofDatabase("testhive", "test"), null, null)
+        def dbs = hiveConnectorDatabaseService.list( connectorContext, QualifiedName.ofDatabase("testhive", ""), QualifiedName.ofDatabase("testhive", "test"), new Sort(null, SortOrder.ASC), null)
         then:
         def expected = MetacatDataInfoProvider.getAllTestDatabaseInfo()
         dbs == expected
@@ -194,7 +200,7 @@ class HiveConnectorDatabaseSpec extends Specification{
     def "Test for listNames database with page" (){
         given:
         def dbs = hiveConnectorDatabaseService.listNames(
-            connectorContext, QualifiedName.ofDatabase("testhive", ""), QualifiedName.ofDatabase("testhive", "test"), null, pageable)
+            connectorContext, QualifiedName.ofDatabase("testhive", ""), QualifiedName.ofDatabase("testhive", "test"), new Sort(null, SortOrder.ASC), pageable)
 
         expect:
         dbs == result
