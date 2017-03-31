@@ -17,6 +17,8 @@
 package com.netflix.metacat.connector.hive
 
 import com.netflix.metacat.common.QualifiedName
+import com.netflix.metacat.common.dto.Sort
+import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.*
 import com.netflix.metacat.common.server.exception.ConnectorException
@@ -195,8 +197,9 @@ class HiveConnectorPartitionSpec extends Specification{
         partitionListRequest.partitionNames = [
             "dateint=20170101/hour=1", "dateint=20170101/hour=2"
         ]
+        partitionListRequest.sort = new Sort(null, SortOrder.DESC)
         def partitionKeys = hiveConnectorPartitionService.getPartitionKeys( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
-        def expected = [ "dateint=20170101/hour=1", "dateint=20170101/hour=2" ]
+        def expected = [ "dateint=20170101/hour=2", "dateint=20170101/hour=1" ]
         then:
         partitionKeys == expected
     }

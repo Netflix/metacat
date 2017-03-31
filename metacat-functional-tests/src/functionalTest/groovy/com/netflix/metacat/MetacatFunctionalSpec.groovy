@@ -115,12 +115,7 @@ class MetacatFunctionalSpec extends Specification {
         def catResponseJson = TestUtilities.toJsonString(catResponse)
 
         then:
-        //String str = "{databases:[\"default\"],definitionMetadata:null,name:{catalogName:\"embedded-hive-metastore\",qualifiedName:\"embedded-hive-metastore\"},type:\"hive\"}"
         String str = "{name:{catalogName:$catalog.name,qualifiedName:$catalog.name},type:$catalog.type}"
-        //The database not match, for example mysql it has 'hive,metacat' which we can't compare
-        //the client replace empty with default
-        //String str2 = "{databases:${catalog.preExistingDatabases*.databaseName},definitionMetadata:null,name:{catalogName:\"embedded-hive-metastore\",qualifiedName:\"embedded-hive-metastore\"},type:\"hive\"}"
-
         JSONAssert.assertEquals(str, catResponseJson, false)
         catResponse.name == QualifiedName.ofCatalog(catalog.name)
         catResponse.type == catalog.type
@@ -533,8 +528,7 @@ class MetacatFunctionalSpec extends Specification {
         def tablemetadataStr = "{\"metadata\":{\"EXTERNAL\":\"TRUE\"},\"name\":{\"catalogName\":$catalog.name,\"databaseName\":$databaseName,\"qualifiedName\":\"${catalog.name}/$databaseName/$tableName\",\"tableName\":\"$tableName\"}}"
 
         then:
-        println("Checking ${catalog.name}/$databaseName/$tableName")
-        //s3 connector maitains the order of the field, but doesn't have the soruce type
+        //s3 connector maintains the order of the field, but doesn't have the soruce type
         if ( catalog.type == "s3") {
             JSONAssert.assertEquals(expecteds3dataMetadata, tableJson, false)
         }

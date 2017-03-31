@@ -53,6 +53,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -325,6 +326,10 @@ public class HiveConnectorTableService implements ConnectorTableService {
                     qualifiedNames.add(qualifiedName);
                 }
             }
+            ////supporting sort by qualified name only
+            if (sort != null) {
+                ConnectorUtils.sort(qualifiedNames, sort, Comparator.comparing(QualifiedName::toString));
+            }
             return ConnectorUtils.paginate(qualifiedNames, pageable);
         } catch (MetaException exception) {
             throw new InvalidMetaException(name, exception);
@@ -357,6 +362,10 @@ public class HiveConnectorTableService implements ConnectorTableService {
                 final Table table = metacatHiveClient.getTableByName(name.getDatabaseName(), tableName);
                 tableInfos.add(hiveMetacatConverters.toTableInfo(name, table));
             }
+            //supporting sort by name only
+            if (sort != null) {
+                ConnectorUtils.sort(tableInfos, sort, Comparator.comparing(p -> p.getName().getTableName()));
+            }
             return ConnectorUtils.paginate(tableInfos, pageable);
         } catch (MetaException exception) {
             throw new DatabaseNotFoundException(name, exception);
@@ -372,7 +381,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
     public boolean exists(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
         boolean result;
         try {
-            result =  metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName()) != null;
+            result = metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName()) != null;
         } catch (NoSuchObjectException exception) {
             result = false;
         } catch (TException exception) {
