@@ -67,7 +67,7 @@ import java.util.stream.Collectors;
 public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     protected static final Retryer<Void> RETRY_ES_PUBLISH = RetryerBuilder.<Void>newBuilder()
         .retryIfExceptionOfType(ElasticsearchException.class)
-        .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.SECONDS, 30, TimeUnit.SECONDS))
+        .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.MILLISECONDS, 30, TimeUnit.MILLISECONDS))
         .withStopStrategy(StopStrategies.stopAfterAttempt(3))
         .build();
     protected XContentType contentType = Requests.INDEX_CONTENT_TYPE;

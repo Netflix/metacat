@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.main.services.notifications;
 
+import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
@@ -42,6 +43,7 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a partition has been successfully added
      */
     @Subscribe
+    @AllowConcurrentEvents
     void notifyOfPartitionAddition(@NotNull final MetacatSaveTablePartitionPostEvent event);
 
     /**
@@ -50,6 +52,7 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a partition has been successfully deleted
      */
     @Subscribe
+    @AllowConcurrentEvents
     void notifyOfPartitionDeletion(@NotNull final MetacatDeleteTablePartitionPostEvent event);
 
     /**
@@ -58,6 +61,7 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a table has been successfully created
      */
     @Subscribe
+    @AllowConcurrentEvents
     void notifyOfTableCreation(@NotNull final MetacatCreateTablePostEvent event);
 
     /**
@@ -66,6 +70,7 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a table has been successfully deleted
      */
     @Subscribe
+    @AllowConcurrentEvents
     void notifyOfTableDeletion(@NotNull final MetacatDeleteTablePostEvent event);
 
     /**
@@ -74,6 +79,7 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a table has been successfully renamed
      */
     @Subscribe
+    @AllowConcurrentEvents
     void notifyOfTableRename(@NotNull final MetacatRenameTablePostEvent event);
 
     /**
@@ -82,5 +88,6 @@ public interface NotificationService {
      * @param event The event passed within the JVM after a table has been successfully updated
      */
     @Subscribe
+    @AllowConcurrentEvents
     void notifyOfTableUpdate(@NotNull final MetacatUpdateTablePostEvent event);
 }
