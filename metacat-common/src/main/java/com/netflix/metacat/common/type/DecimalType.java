@@ -109,7 +109,7 @@ public final class DecimalType extends AbstractType implements ParametricType {
             case 2:
                 try {
                     return DecimalType.createDecimalType(Integer.parseInt(String.valueOf(literals.get(0))),
-                        Integer.parseInt(String.valueOf(literals.get(0))));
+                        Integer.parseInt(String.valueOf(literals.get(1))));
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("Decimal parameters must be a number");
                 }
