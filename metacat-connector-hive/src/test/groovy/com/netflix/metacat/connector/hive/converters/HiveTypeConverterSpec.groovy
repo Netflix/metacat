@@ -35,7 +35,7 @@ class HiveTypeConverterSpec extends Specification {
         metacatTypeFromHiveType ==  metacatType
         where:
         typeString << [
-        'tinyint',
+            'tinyint',
             'smallint',
             'int',
             'bigint',
@@ -43,6 +43,7 @@ class HiveTypeConverterSpec extends Specification {
             'double',
             'decimal',
             'decimal(4,2)',
+            'array<decimal(4,2)>',
             'timestamp',
             'date',
             'string',
