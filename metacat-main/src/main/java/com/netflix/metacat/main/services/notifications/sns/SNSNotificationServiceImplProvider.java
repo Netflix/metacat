@@ -18,14 +18,7 @@
 package com.netflix.metacat.main.services.notifications.sns;
 
 import com.amazonaws.services.sns.AmazonSNSClient;
-import com.amazonaws.services.sns.model.InternalErrorException;
-import com.amazonaws.services.sns.model.PublishResult;
-import com.amazonaws.services.sns.model.ThrottledException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.rholder.retry.Retryer;
-import com.github.rholder.retry.RetryerBuilder;
-import com.github.rholder.retry.StopStrategies;
-import com.github.rholder.retry.WaitStrategies;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import com.netflix.metacat.common.server.Config;
@@ -36,7 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Provides an instance of SNSNotificationServiceImpl if conditions are right.
@@ -82,13 +74,7 @@ public class SNSNotificationServiceImplProvider implements Provider<Notification
             }
 
             log.info("SNS notifications are enabled. Providing SNSNotificationServiceImpl implementation.");
-            final Retryer<PublishResult> retry = RetryerBuilder.<PublishResult>newBuilder()
-                .retryIfExceptionOfType(InternalErrorException.class)
-                .retryIfExceptionOfType(ThrottledException.class)
-                .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.MILLISECONDS, 30, TimeUnit.MILLISECONDS))
-                .withStopStrategy(StopStrategies.stopAfterAttempt(3))
-                .build();
-            return new SNSNotificationServiceImpl(new AmazonSNSClient(), tableArn, partitionArn, this.mapper, retry);
+            return new SNSNotificationServiceImpl(new AmazonSNSClient(), tableArn, partitionArn, this.mapper);
         } else {
             log.info("SNS notifications are not enabled. Ignoring and providing default implementation.");
             return new DefaultNotificationServiceImpl();
