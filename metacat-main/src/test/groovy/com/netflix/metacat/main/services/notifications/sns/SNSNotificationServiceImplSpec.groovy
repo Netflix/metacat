@@ -72,13 +72,7 @@ class SNSNotificationServiceImplSpec extends Specification {
     def mapper = Mock(ObjectMapper)
     def partitionArn = UUID.randomUUID().toString()
     def tableArn = UUID.randomUUID().toString()
-    def retry = RetryerBuilder.<PublishResult> newBuilder()
-        .retryIfExceptionOfType(InternalErrorException.class)
-        .retryIfExceptionOfType(ThrottledException.class)
-        .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.NANOSECONDS, 30, TimeUnit.NANOSECONDS))
-        .withStopStrategy(StopStrategies.stopAfterAttempt(3))
-        .build()
-    def service = new SNSNotificationServiceImpl(this.client, this.tableArn, this.partitionArn, this.mapper, this.retry)
+    def service = new SNSNotificationServiceImpl(this.client, this.tableArn, this.partitionArn, this.mapper)
 
     def "Will Notify On Partition Creation"() {
         def partitions = Lists.newArrayList(new PartitionDto(), new PartitionDto(), new PartitionDto())
@@ -187,36 +181,6 @@ class SNSNotificationServiceImplSpec extends Specification {
         2 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
         1 * this.mapper.writeValueAsString(_ as UpdateTableMessage) >> UUID.randomUUID().toString()
         1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
-    }
-
-    def "Will retry on ThrottledException"() {
-        def event = new MetacatCreateTablePostEvent(
-            this.qName,
-            Mock(MetacatRequestContext),
-            new TableDto()
-        )
-
-        when:
-        this.service.notifyOfTableCreation(event)
-
-        then:
-        3 * this.mapper.writeValueAsString(_ as CreateTableMessage) >> UUID.randomUUID().toString()
-        3 * this.client.publish(this.tableArn, _ as String) >> { throw new ThrottledException("Exception") }
-    }
-
-    def "Will retry on InternalException"() {
-        def event = new MetacatCreateTablePostEvent(
-            this.qName,
-            Mock(MetacatRequestContext),
-            new TableDto()
-        )
-
-        when:
-        this.service.notifyOfTableCreation(event)
-
-        then:
-        3 * this.mapper.writeValueAsString(_ as CreateTableMessage) >> UUID.randomUUID().toString()
-        3 * this.client.publish(this.tableArn, _ as String) >> { throw new InternalErrorException("Exception") }
     }
 
     def "Won't retry on Other Exception"() {

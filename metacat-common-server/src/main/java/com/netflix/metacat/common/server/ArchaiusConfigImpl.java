@@ -101,8 +101,8 @@ public class ArchaiusConfigImpl implements Config {
         this.elasticSearchThresholdUnmarkedTablesDelete = factory
             .getIntProperty("metacat.elacticsearch.refresh.threshold.unmarked.tables.delete", 1000);
         this.epochInSeconds = factory.getBooleanProperty("metacat.type.epoch_in_seconds", true);
-        this.eventBusExecutorThreadCount = factory.getIntProperty("metacat.event.bus.executor.thread.count", 10);
-        this.eventBusThreadCount = factory.getIntProperty("metacat.event.thread.count", 10);
+        this.eventBusExecutorThreadCount = factory.getIntProperty("metacat.event.bus.executor.thread.count", 20);
+        this.eventBusThreadCount = factory.getIntProperty("metacat.event.thread.count", 20);
         this.hivePartitionWhitelistPattern = factory
             .getStringProperty("metacat.hive.metastore.partition.name.whitelist.pattern", "");
         this.lookupServiceUserAdmin = factory.getStringProperty("metacat.lookup_service.user_admin", "admin");
