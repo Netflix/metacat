@@ -2,6 +2,7 @@ package com.netflix.metacat.connector.hive.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import lombok.NonNull;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
@@ -26,8 +27,8 @@ import java.util.Properties;
  */
 @SuppressWarnings("deprecation")
 public final class HiveTableUtil {
+    private static final String PARQUET_HIVE_SERDE = "parquet.hive.serde.ParquetHiveSerDe";
     private HiveTableUtil() {
-
     }
 
     /**
@@ -59,9 +60,9 @@ public final class HiveTableUtil {
         }
     }
 
-    private static Class<? extends Deserializer> getDeserializerClass(final String name) {
+    private static Class<? extends Deserializer> getDeserializerClass(@NonNull final String name) {
         // CDH uses different names for Parquet
-        if ("parquet.hive.serde.ParquetHiveSerDe".equals(name)) {
+        if (PARQUET_HIVE_SERDE.equals(name)) {
             return ParquetHiveSerDe.class;
         }
 
