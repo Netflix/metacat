@@ -30,12 +30,14 @@ import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 
 import javax.annotation.Nonnull;
 import java.time.Instant;
@@ -109,6 +111,17 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     @Override
     public TableInfo toTableInfo(final QualifiedName name, final Table table) {
         final List<FieldSchema> nonPartitionColumns = table.getSd().getCols();
+        // add the data fields to the nonPartitionColumns
+        if (table.getSd().getColsSize() == 0) {
+            for (StructField field : HiveTableUtil.getTableStructFields(table)) {
+                final FieldSchema fieldSchema = new FieldSchema(field.getFieldName(),
+                        field.getFieldObjectInspector().getTypeName(),
+                        field.getFieldComment());
+                nonPartitionColumns.add(fieldSchema);
+            }
+        }
+
+
         final List<FieldSchema> partitionColumns = table.getPartitionKeys();
         final Date creationDate = table.isSetCreateTime() ? epochSecondsToDate(table.getCreateTime()) : null;
         final List<FieldInfo> allFields =
@@ -284,7 +297,13 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         return result;
     }
 
-    private FieldInfo hiveToMetacatField(final FieldSchema field, final boolean isPartitionKey) {
+    /**
+     * hiveToMetacatField.
+     * @param field field
+     * @param isPartitionKey boolean
+     * @return field info obj
+     */
+    public FieldInfo hiveToMetacatField(final FieldSchema field, final boolean isPartitionKey) {
         return FieldInfo.builder().name(field.getName())
                 .type(hiveTypeConverter.toMetacatType(field.getType()))
                 .sourceType(field.getType())
