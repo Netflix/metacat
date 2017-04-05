@@ -112,7 +112,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     public TableInfo toTableInfo(final QualifiedName name, final Table table) {
         final List<FieldSchema> nonPartitionColumns = table.getSd().getCols();
         // add the data fields to the nonPartitionColumns
-        if ( table.getSd() != null && table.getSd().getColsSize() == 0) {
+        if (table.getSd() != null && table.getSd().getColsSize() == 0) {
             for (StructField field : HiveTableUtil.getTableStructFields(table)) {
                 final FieldSchema fieldSchema = new FieldSchema(field.getFieldName(),
                         field.getFieldObjectInspector().getTypeName(),
@@ -191,7 +191,6 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
                 null,
                 "EXTERNAL_TABLE");
     }
-
 
 
     /**
@@ -286,6 +285,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
 
     /**
      * metacatToHiveField.
+     *
      * @param fieldInfo fieldInfo
      * @return FieldSchema
      */
@@ -299,7 +299,8 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
 
     /**
      * hiveToMetacatField.
-     * @param field field
+     *
+     * @param field          field
      * @param isPartitionKey boolean
      * @return field info obj
      */
