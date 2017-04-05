@@ -316,11 +316,13 @@ public class TableServiceImpl implements TableService {
         final TableDto oldTable = get(name, true).orElseThrow(() -> new TableNotFoundException(name));
         eventBus.postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, oldTable, tableDto));
         //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
-        try {
-            log.info("Updating table {}", name);
-            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-            service.update(connectorContext, converterUtil.fromTableDto(tableDto));
-        } catch (UnsupportedOperationException ignored) {
+        if (isTableInfoProvided(tableDto)) {
+            try {
+                log.info("Updating table {}", name);
+                final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+                service.update(connectorContext, converterUtil.fromTableDto(tableDto));
+            } catch (UnsupportedOperationException ignored) {
+            }
         }
 
         // Merge in metadata if the user sent any
@@ -331,6 +333,17 @@ public class TableServiceImpl implements TableService {
         final TableDto updatedDto = get(name, true).orElseThrow(() -> new IllegalStateException("should exist"));
         eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, oldTable, updatedDto));
         return updatedDto;
+    }
+
+    private boolean isTableInfoProvided(final TableDto tableDto) {
+        boolean result = false;
+        if ((tableDto.getFields() != null && !tableDto.getFields().isEmpty())
+            || tableDto.getSerde() != null
+            || (tableDto.getMetadata() != null && !tableDto.getMetadata().isEmpty())
+            || tableDto.getAudit() != null) {
+            result = true;
+        }
+        return result;
     }
 
     @Override

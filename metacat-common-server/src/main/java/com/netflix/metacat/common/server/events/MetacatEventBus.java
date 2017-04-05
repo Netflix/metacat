@@ -21,8 +21,8 @@ import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
-import com.netflix.metacat.common.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PreDestroy;
