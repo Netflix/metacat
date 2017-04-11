@@ -80,24 +80,11 @@ class CassandraTypeConverterSpec extends Specification {
         )
         DataType.varchar().toString()                                   | BaseType.STRING
         DataType.varint().toString()                                    | BaseType.INT
-    }
-
-    @Unroll
-    "Can't process unsupported type #type"() {
-
-        when:
-        this.converter.toMetacatType(type)
-
-        then:
-        thrown exception
-
-        where:
-        type       | exception
-        "INET"     | UnsupportedOperationException
-        "SET"      | UnsupportedOperationException
-        "TIMEUUID" | UnsupportedOperationException
-        "UUID"     | UnsupportedOperationException
-        "UserType" | UnsupportedOperationException
+        DataType.inet().toString()                                      | BaseType.UNKNOWN
+        DataType.set(DataType.cint()).toString()                        | BaseType.UNKNOWN
+        DataType.timeuuid().toString()                                  | BaseType.UNKNOWN
+        DataType.uuid().toString()                                      | BaseType.UNKNOWN
+        "UserType"                                                      | BaseType.UNKNOWN
     }
 
     @Unroll

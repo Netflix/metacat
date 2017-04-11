@@ -166,11 +166,11 @@ public class PostgreSqlTypeConverter extends JdbcTypeConverter {
             case "pg_lsn":
             case "jsonb":
             case "txid_snapshot":
-                throw new UnsupportedOperationException("Encountered " + splitType[0] + " type. Ignoring");
             default:
                 // TODO: Will catch complex types but not sure how to parse beyond that right now, may be recursive?
                 // https://www.postgresql.org/docs/current/static/rowtypes.html
-                throw new IllegalArgumentException("Unhandled or unknown sql type " + splitType[0]);
+                log.info("Encountered {} type. Returning unknown type", splitType[0]);
+                return BaseType.UNKNOWN;
         }
 
         return this.checkForArray(splitType, elementType);

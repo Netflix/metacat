@@ -103,7 +103,8 @@ public class RedshiftTypeConverter extends JdbcTypeConverter {
                 return BaseType.BOOLEAN;
             default:
                 // see: http://docs.aws.amazon.com/redshift/latest/dg/c_unsupported-postgresql-datatypes.html
-                throw new IllegalArgumentException("Unhandled or unknown Redshift type " + splitType[0]);
+                log.info("Unhandled or unknown Redshift type {}", splitType[0]);
+                return BaseType.UNKNOWN;
         }
     }
 

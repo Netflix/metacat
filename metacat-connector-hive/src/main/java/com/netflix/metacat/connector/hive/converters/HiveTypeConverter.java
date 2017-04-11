@@ -15,6 +15,7 @@ package com.netflix.metacat.connector.hive.converters;
 
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
+import com.netflix.metacat.common.type.BaseType;
 import com.netflix.metacat.common.type.CharType;
 import com.netflix.metacat.common.type.DecimalType;
 import com.netflix.metacat.common.type.MapType;
@@ -27,6 +28,7 @@ import com.netflix.metacat.common.type.TypeSignature;
 import com.netflix.metacat.common.type.TypeUtils;
 import com.netflix.metacat.common.type.VarcharType;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
@@ -54,6 +56,7 @@ import java.util.stream.Collectors;
  * @author zhenl
  * @since 1.0.0
  */
+@Slf4j
 public class HiveTypeConverter implements ConnectorTypeConverter {
 
     private static Type getPrimitiveType(final ObjectInspector fieldInspector) {
@@ -180,7 +183,8 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
                 return TypeRegistry.getTypeRegistry()
                     .getParameterizedType(TypeEnum.ROW, fieldTypes, fieldNames);
             default:
-                throw new IllegalArgumentException("Unsupported hive type " + fieldInspector.getTypeName());
+                log.info("Currently unsupported type {}, returning Unknown type", fieldInspector.getTypeName());
+                return BaseType.UNKNOWN;
         }
     }
 
