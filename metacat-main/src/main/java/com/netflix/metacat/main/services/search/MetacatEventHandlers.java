@@ -40,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -227,17 +228,24 @@ public class MetacatEventHandlers {
         final TableDto dto = event.getCurrentTable();
         final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
             event.getRequestContext().getUserName(), false);
+        final ElasticSearchDoc oldDoc = es.get(ElasticSearchDoc.Type.table.name(), doc.getId());
         es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc.toJsonString());
-        updateEntitiesWIthSameUri(ElasticSearchDoc.Type.table.name(), dto, event.getRequestContext());
+        if (oldDoc == null || oldDoc.getDto() == null
+            || !Objects.equals(((TableDto) oldDoc.getDto()).getDataMetadata(), dto.getDataMetadata())) {
+            updateEntitiesWithSameUri(ElasticSearchDoc.Type.table.name(), dto, event.getRequestContext());
+        }
     }
 
-    private void updateEntitiesWIthSameUri(final String metadataType, final TableDto dto,
+    private void updateEntitiesWithSameUri(final String metadataType, final TableDto dto,
         final MetacatRequestContext metacatRequestContext) {
         if (dto.isDataExternal()) {
             final List<String> ids = es.getTableIdsByUri(metadataType, dto.getDataUri());
-            final ObjectNode node = MetacatJsonLocator.INSTANCE.emptyObjectNode();
-            node.put("dataMetadata", dto.getDataMetadata());
-            es.updates(ElasticSearchDoc.Type.table.name(), ids, metacatRequestContext, node);
+            ids.remove(dto.getName().toString());
+            if (!ids.isEmpty()) {
+                final ObjectNode node = MetacatJsonLocator.INSTANCE.emptyObjectNode();
+                node.set("dataMetadata", dto.getDataMetadata());
+                es.updates(ElasticSearchDoc.Type.table.name(), ids, metacatRequestContext, node);
+            }
         }
     }
 

@@ -14,8 +14,10 @@
 package com.facebook.presto.spi;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Extension of ConnectorMetadata.
@@ -66,6 +68,16 @@ public interface ConnectorDetailMetadata extends ConnectorMetadata {
      */
     default List<SchemaTableName> getTableNames(String uri, boolean prefixSearch) {
         return Lists.newArrayList();
+    }
+
+    /**
+     * Returns all the table names referring to the given <code>uris</code>.
+     * @param uris locations
+     * @param prefixSearch if tru, we look for tables whose location starts with the given <code>uri</code>
+     * @return list of table names
+     */
+    default Map<String, List<SchemaTableName>> getTableNames(List<String> uris, boolean prefixSearch) {
+        return Maps.newHashMap();
     }
 
     /**

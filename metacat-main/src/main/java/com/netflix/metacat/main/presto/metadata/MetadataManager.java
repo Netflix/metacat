@@ -57,6 +57,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.airlift.json.JsonCodec;
 import io.airlift.json.JsonCodecFactory;
 import io.airlift.json.ObjectMapperProvider;
@@ -498,6 +499,25 @@ public class MetadataManager {
             return detailMetadata.getTableNames(uri, prefixSearch);
         }
         return Lists.newArrayList();
+    }
+
+    /**
+     * List table names for the given uris.
+     * @param session session
+     * @param uris uris
+     * @param prefixSearch prefix search
+     * @return list of table names
+     */
+    public Map<String, List<SchemaTableName>> getTableNames(final Session session, final List<String> uris,
+        final boolean prefixSearch) {
+        final ConnectorMetadataEntry entry = validateCatalogName(session.getCatalog());
+
+        final ConnectorMetadata metadata = entry.getMetadata();
+        if (metadata instanceof ConnectorDetailMetadata) {
+            final ConnectorDetailMetadata detailMetadata = (ConnectorDetailMetadata) metadata;
+            return detailMetadata.getTableNames(uris, prefixSearch);
+        }
+        return Maps.newHashMap();
     }
 
     /**
