@@ -80,62 +80,49 @@ class PostgreSqlTypeConverterSpec extends Specification {
         "double precision[]"           | new ArrayType(BaseType.DOUBLE)
         "text ARRAY"                   | new ArrayType(BaseType.STRING)
         "JSON[][]"                     | new ArrayType(new ArrayType(BaseType.JSON))
-    }
-
-    @Unroll
-    "Can't process unsupported type #type"() {
-
-        when:
-        this.converter.toMetacatType(type)
-
-        then:
-        thrown UnsupportedOperationException
-
-        where:
-        type            | _
-        "smallserial"   | _
-        "serial2"       | _
-        "serial"        | _
-        "serial4"       | _
-        "bigserial"     | _
-        "serial8"       | _
-        "money"         | _
-        "interval"      | _
-        "enum"          | _
-        "point"         | _
-        "line"          | _
-        "lseg"          | _
-        "box"           | _
-        "path"          | _
-        "polygon"       | _
-        "circle"        | _
-        "cidr"          | _
-        "inet"          | _
-        "macaddr"       | _
-        "tsvector"      | _
-        "tsquery"       | _
-        "uuid"          | _
-        "xml"           | _
-        "int4range"     | _
-        "int8range"     | _
-        "numrange"      | _
-        "tsrange"       | _
-        "tstzrange"     | _
-        "daterange"     | _
-        "oid"           | _
-        "regproc"       | _
-        "regprocedure"  | _
-        "regoper"       | _
-        "regoperator"   | _
-        "regclass"      | _
-        "regtype"       | _
-        "regrole"       | _
-        "regnamespace"  | _
-        "regconfig"     | _
-        "regdictionary" | _
-        "pg_lsn"        | _
-        "jsonb"         | _
-        "txid_snapshot" | _
+        "smallserial"                  | BaseType.UNKNOWN
+        "serial2"                      | BaseType.UNKNOWN
+        "serial"                       | BaseType.UNKNOWN
+        "serial4"                      | BaseType.UNKNOWN
+        "bigserial"                    | BaseType.UNKNOWN
+        "serial8"                      | BaseType.UNKNOWN
+        "money"                        | BaseType.UNKNOWN
+        "interval"                     | BaseType.UNKNOWN
+        "enum"                         | BaseType.UNKNOWN
+        "point"                        | BaseType.UNKNOWN
+        "line"                         | BaseType.UNKNOWN
+        "lseg"                         | BaseType.UNKNOWN
+        "box"                          | BaseType.UNKNOWN
+        "path"                         | BaseType.UNKNOWN
+        "polygon"                      | BaseType.UNKNOWN
+        "circle"                       | BaseType.UNKNOWN
+        "cidr"                         | BaseType.UNKNOWN
+        "inet"                         | BaseType.UNKNOWN
+        "macaddr"                      | BaseType.UNKNOWN
+        "tsvector"                     | BaseType.UNKNOWN
+        "tsquery"                      | BaseType.UNKNOWN
+        "uuid"                         | BaseType.UNKNOWN
+        "xml"                          | BaseType.UNKNOWN
+        "int4range"                    | BaseType.UNKNOWN
+        "int8range"                    | BaseType.UNKNOWN
+        "numrange"                     | BaseType.UNKNOWN
+        "tsrange"                      | BaseType.UNKNOWN
+        "tstzrange"                    | BaseType.UNKNOWN
+        "daterange"                    | BaseType.UNKNOWN
+        "oid"                          | BaseType.UNKNOWN
+        "regproc"                      | BaseType.UNKNOWN
+        "regprocedure"                 | BaseType.UNKNOWN
+        "regoper"                      | BaseType.UNKNOWN
+        "regoperator"                  | BaseType.UNKNOWN
+        "regclass"                     | BaseType.UNKNOWN
+        "regtype"                      | BaseType.UNKNOWN
+        "regrole"                      | BaseType.UNKNOWN
+        "regnamespace"                 | BaseType.UNKNOWN
+        "regconfig"                    | BaseType.UNKNOWN
+        "regdictionary"                | BaseType.UNKNOWN
+        "pg_lsn"                       | BaseType.UNKNOWN
+        "jsonb"                        | BaseType.UNKNOWN
+        "txid_snapshot"                | BaseType.UNKNOWN
     }
 
     @Unroll

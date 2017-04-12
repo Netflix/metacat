@@ -76,22 +76,9 @@ class MySqlTypeConverterSpec extends Specification {
         "mediumtext"            | BaseType.STRING
         "longtext"              | BaseType.STRING
         "json"                  | BaseType.JSON
-    }
-
-    @Unroll
-    "Can't process unsupported type #type"() {
-
-        when:
-        this.converter.toMetacatType(type)
-
-        then:
-        thrown UnsupportedOperationException
-
-        where:
-        type   | _
-        "year" | _
-        "enum" | _
-        "set"  | _
+        "year"                  | BaseType.UNKNOWN
+        "enum"                  | BaseType.UNKNOWN
+        "set"                   | BaseType.UNKNOWN
     }
 
     @Unroll

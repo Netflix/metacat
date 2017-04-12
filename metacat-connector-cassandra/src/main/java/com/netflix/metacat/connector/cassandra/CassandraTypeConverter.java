@@ -27,6 +27,7 @@ import com.netflix.metacat.common.type.RowType;
 import com.netflix.metacat.common.type.Type;
 import com.netflix.metacat.common.type.VarbinaryType;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import java.util.regex.Matcher;
@@ -39,6 +40,7 @@ import java.util.regex.Pattern;
  * @author tgianos
  * @since 1.0.0
  */
+@Slf4j
 public class CassandraTypeConverter implements ConnectorTypeConverter {
 
     private static final Pattern TYPE_PATTERN = Pattern.compile("^\\s*?(\\w*)\\s*?(?:<\\s*?(.*)\\s*?>)?\\s*?$");
@@ -84,8 +86,6 @@ public class CassandraTypeConverter implements ConnectorTypeConverter {
                     return BaseType.FLOAT;
                 case "frozen":
                     return this.toMetacatType(matcher.group(PARAM_GROUP));
-                case "inet":
-                    throw new UnsupportedOperationException("INET CQL types not currently supported");
                 case "int":
                     return BaseType.INT;
                 case "list":
@@ -101,8 +101,6 @@ public class CassandraTypeConverter implements ConnectorTypeConverter {
                     } else {
                         throw new IllegalArgumentException("Unable to parse map params " + matcher.group(PARAM_GROUP));
                     }
-                case "set":
-                    throw new UnsupportedOperationException("SET CQL types not currently supported");
                 case "smallint":
                     return BaseType.SMALLINT;
                 case "text":
@@ -111,8 +109,6 @@ public class CassandraTypeConverter implements ConnectorTypeConverter {
                     return BaseType.TIME;
                 case "timestamp":
                     return BaseType.TIMESTAMP;
-                case "timeuuid":
-                    throw new UnsupportedOperationException("TIMEUUID CQL types not currently supported");
                 case "tinyint":
                     return BaseType.TINYINT;
                 case "tuple":
@@ -131,14 +127,17 @@ public class CassandraTypeConverter implements ConnectorTypeConverter {
                         );
                     }
                     return new RowType(tupleFields.build());
-                case "uuid":
-                    throw new UnsupportedOperationException("UUID CQL types not currently supported");
                 case "varchar":
                     return BaseType.STRING;
                 case "varint":
                     return BaseType.INT;
+                case "inet":
+                case "set":
+                case "timeuuid":
+                case "uuid":
                 default:
-                    throw new UnsupportedOperationException("Unhandled type " + cqlType);
+                    log.info("Currently unsupported type {}, returning Unknown type", cqlType);
+                    return BaseType.UNKNOWN;
             }
         } else {
             throw new IllegalArgumentException("Unable to parse CQL type " + type);
