@@ -317,7 +317,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
      * @return The representation of source type e.g. INTEGER, VARCHAR(50) or DECIMAL(20, 10)
      * @throws SQLDataException When size or precision can't be parsed to integers if non null
      */
-    private String buildSourceType(
+    protected String buildSourceType(
         @Nonnull @NonNull final String type,
         @Nullable final String size,
         @Nullable final String precision
