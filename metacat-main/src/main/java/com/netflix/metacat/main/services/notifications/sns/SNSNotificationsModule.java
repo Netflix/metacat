@@ -18,7 +18,7 @@
 package com.netflix.metacat.main.services.notifications.sns;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
+import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.netflix.metacat.main.services.notifications.NotificationService;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +41,6 @@ public class SNSNotificationsModule extends AbstractModule {
             this.binder(),
             NotificationService.class
         );
-        notificationServices.addBinding().toProvider(SNSNotificationServiceImplProvider.class).in(Singleton.class);
+        notificationServices.addBinding().toProvider(SNSNotificationServiceImplProvider.class).in(Scopes.SINGLETON);
     }
 }
