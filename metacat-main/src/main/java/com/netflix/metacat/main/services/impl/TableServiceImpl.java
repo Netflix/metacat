@@ -31,6 +31,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
@@ -452,7 +453,7 @@ public class TableServiceImpl implements TableService {
         final List<QualifiedName> result = Lists.newArrayList();
         final Map<String, String> catalogNames = metadataManager.getCatalogNames();
 
-        catalogNames.values().stream().forEach(catalogName -> {
+        catalogNames.values().forEach(catalogName -> {
             final Session session = sessionProvider.getSession(QualifiedName.ofCatalog(catalogName));
             final List<SchemaTableName> schemaTableNames = metadataManager.getTableNames(session, uri, prefixSearch);
             final List<QualifiedName> qualifiedNames = schemaTableNames.stream().map(
@@ -460,6 +461,31 @@ public class TableServiceImpl implements TableService {
                     .ofTable(catalogName, schemaTableName.getSchemaName(), schemaTableName.getTableName()))
                 .collect(Collectors.toList());
             result.addAll(qualifiedNames);
+        });
+        return result;
+    }
+
+    @Override
+    public Map<String, List<QualifiedName>> getQualifiedNames(final List<String> uris, final boolean prefixSearch) {
+        final Map<String, List<QualifiedName>> result = Maps.newHashMap();
+        final Map<String, String> catalogNames = metadataManager.getCatalogNames();
+
+        catalogNames.values().forEach(catalogName -> {
+            final Session session = sessionProvider.getSession(QualifiedName.ofCatalog(catalogName));
+            final Map<String, List<SchemaTableName>> schemaTableNames =
+                metadataManager.getTableNames(session, uris, prefixSearch);
+            schemaTableNames.forEach((uri, schemaTableNames1) -> {
+                final List<QualifiedName> names = schemaTableNames1.stream().map(
+                    schemaTableName -> QualifiedName
+                        .ofTable(catalogName, schemaTableName.getSchemaName(), schemaTableName.getTableName()))
+                    .collect(Collectors.toList());
+                final List<QualifiedName> existingNames = result.get(uri);
+                if (existingNames == null) {
+                    result.put(uri, names);
+                } else {
+                    existingNames.addAll(names);
+                }
+            });
         });
         return result;
     }

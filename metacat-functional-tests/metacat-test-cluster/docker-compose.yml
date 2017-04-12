@@ -29,8 +29,10 @@ services:
             - '12001'
             - '12002'
         volumes:
-            - ./build/logs/metacat:/usr/local/tomcat/logs
+            - ../build/logs/metacat:/usr/local/tomcat/logs
             - ./etc-metacat:/etc/metacat:ro
+            - ./resources/log4j.properties:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/log4j.properties
+            - ./resources/logging.properties:/usr/local/tomcat/conf/logging.properties
         environment:
             VIRTUAL_HOST: metacat.docker
             TOMCAT_OPTS: -Dlog4j.configuration=metacat-functional-test.log4j.properties
