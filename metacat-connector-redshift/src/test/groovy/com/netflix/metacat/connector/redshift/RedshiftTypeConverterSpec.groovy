@@ -72,71 +72,54 @@ class RedshiftTypeConverterSpec extends Specification {
         "date"                         | BaseType.DATE
         "BOOLEAN"                      | BaseType.BOOLEAN
         "bool"                         | BaseType.BOOLEAN
-    }
-
-    /*
-     * http://docs.aws.amazon.com/redshift/latest/dg/c_unsupported-postgresql-datatypes.html
-     */
-
-    @Unroll
-    "Can't process unsupported type #type"() {
-
-        when:
-        this.converter.toMetacatType(type)
-
-        then:
-        thrown IllegalArgumentException
-
-        where:
-        type                  | _
-        "bit"                 | _
-        "bit varying"         | _
-        "bytea"               | _
-        "row"                 | _
-        "map"                 | _
-        "time"                | _
-        "time with time zone" | _
-        "timez"               | _
-        "json"                | _
-        "bigserial"           | _
-        "serial8"             | _
-        "money"               | _
-        "interval"            | _
-        "enum"                | _
-        "point"               | _
-        "line"                | _
-        "lseg"                | _
-        "box"                 | _
-        "path"                | _
-        "polygon"             | _
-        "circle"              | _
-        "cidr"                | _
-        "inet"                | _
-        "macaddr"             | _
-        "tsvector"            | _
-        "tsquery"             | _
-        "uuid"                | _
-        "xml"                 | _
-        "int4range"           | _
-        "int8range"           | _
-        "numrange"            | _
-        "tsrange"             | _
-        "tstzrange"           | _
-        "daterange"           | _
-        "oid"                 | _
-        "regproc"             | _
-        "regprocedure"        | _
-        "regoper"             | _
-        "regoperator"         | _
-        "regclass"            | _
-        "regtype"             | _
-        "regrole"             | _
-        "regnamespace"        | _
-        "regconfig"           | _
-        "regdictionary"       | _
-        "pg_lsn"              | _
-        "jsonb"               | _
-        "txid_snapshot"       | _
+        "bit"                          | BaseType.UNKNOWN
+        "bit varying"                  | BaseType.UNKNOWN
+        "bytea"                        | BaseType.UNKNOWN
+        "row"                          | BaseType.UNKNOWN
+        "map"                          | BaseType.UNKNOWN
+        "time"                         | BaseType.UNKNOWN
+        "time with time zone"          | BaseType.UNKNOWN
+        "timez"                        | BaseType.UNKNOWN
+        "json"                         | BaseType.UNKNOWN
+        "bigserial"                    | BaseType.UNKNOWN
+        "serial8"                      | BaseType.UNKNOWN
+        "money"                        | BaseType.UNKNOWN
+        "interval"                     | BaseType.UNKNOWN
+        "enum"                         | BaseType.UNKNOWN
+        "point"                        | BaseType.UNKNOWN
+        "line"                         | BaseType.UNKNOWN
+        "lseg"                         | BaseType.UNKNOWN
+        "box"                          | BaseType.UNKNOWN
+        "path"                         | BaseType.UNKNOWN
+        "polygon"                      | BaseType.UNKNOWN
+        "circle"                       | BaseType.UNKNOWN
+        "cidr"                         | BaseType.UNKNOWN
+        "inet"                         | BaseType.UNKNOWN
+        "macaddr"                      | BaseType.UNKNOWN
+        "tsvector"                     | BaseType.UNKNOWN
+        "tsquery"                      | BaseType.UNKNOWN
+        "uuid"                         | BaseType.UNKNOWN
+        "xml"                          | BaseType.UNKNOWN
+        "int4range"                    | BaseType.UNKNOWN
+        "int8range"                    | BaseType.UNKNOWN
+        "numrange"                     | BaseType.UNKNOWN
+        "tsrange"                      | BaseType.UNKNOWN
+        "tstzrange"                    | BaseType.UNKNOWN
+        "daterange"                    | BaseType.UNKNOWN
+        "oid"                          | BaseType.UNKNOWN
+        "regproc"                      | BaseType.UNKNOWN
+        "regprocedure"                 | BaseType.UNKNOWN
+        "regoper"                      | BaseType.UNKNOWN
+        "regoperator"                  | BaseType.UNKNOWN
+        "regclass"                     | BaseType.UNKNOWN
+        "regtype"                      | BaseType.UNKNOWN
+        "regrole"                      | BaseType.UNKNOWN
+        "regnamespace"                 | BaseType.UNKNOWN
+        "regconfig"                    | BaseType.UNKNOWN
+        "regdictionary"                | BaseType.UNKNOWN
+        "pg_lsn"                       | BaseType.UNKNOWN
+        "jsonb"                        | BaseType.UNKNOWN
+        "txid_snapshot"                | BaseType.UNKNOWN
     }
 
     @Unroll

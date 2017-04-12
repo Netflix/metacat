@@ -104,9 +104,9 @@ public class MySqlTypeConverter extends JdbcTypeConverter {
             case "year":
             case "enum":
             case "set":
-                throw new UnsupportedOperationException("Encountered " + splitType[0] + " type. Ignoring");
             default:
-                throw new IllegalArgumentException("Unhandled or unknown sql type " + splitType[0]);
+                log.info("Encountered " + splitType[0] + " type. Returning Unknown type.");
+                return BaseType.UNKNOWN;
         }
     }
 
