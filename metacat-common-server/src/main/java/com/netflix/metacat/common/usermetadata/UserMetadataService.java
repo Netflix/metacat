@@ -42,6 +42,14 @@ public interface UserMetadataService {
             List<String> uris);
 
     /**
+     * Delete the delete markers for data metadata for the given uris.
+     * @param uris list of uris.
+     */
+    void deleteDataMetadataDeletes(
+        @Nonnull
+            List<String> uris);
+
+    /**
      * Mark data metadatas for the given uris for deletion.
      * @param userId user name
      * @param uris list of uris
