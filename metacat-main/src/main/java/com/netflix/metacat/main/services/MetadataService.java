@@ -89,7 +89,6 @@ public class MetadataService {
                             .collect(Collectors.toList());
                         log.info("Start deleting data metadata: {}", canDeleteMetadataForUris.size());
                         userMetadataService.deleteDataMetadatas(canDeleteMetadataForUris);
-                        subUris.removeAll(canDeleteMetadataForUris);
                         userMetadataService.deleteDataMetadataDeletes(subUris);
                         MetacatContextManager.removeContext();
                     });
