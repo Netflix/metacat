@@ -290,6 +290,8 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
                 throw (InvalidObjectException) e;
             } else if (e instanceof AlreadyExistsException) {
                 throw (AlreadyExistsException) e;
+            } else if (e instanceof NoSuchObjectException) {
+                throw (NoSuchObjectException) e;
             } else {
                 throw newMetaException(e);
             }
@@ -316,7 +318,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
             ms.openTransaction();
             tbl = get_table(databaseName, tableName);
             if (tbl == null) {
-                throw new InvalidObjectException("Unable to add partitions because "
+                throw new NoSuchObjectException("Unable to add partitions because "
                         + "database or table " + databaseName + "." + tableName + " does not exist");
             }
             // Drop the parts first
