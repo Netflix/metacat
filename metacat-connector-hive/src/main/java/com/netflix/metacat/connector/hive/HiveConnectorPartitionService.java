@@ -340,9 +340,9 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
 
         try {
             metacatHiveClient.dropPartitions(tableName.getDatabaseName(), tableName.getTableName(), partitionNames);
-        } catch (NoSuchObjectException exception) {
+        } catch (MetaException | NoSuchObjectException exception) {
             throw new TableNotFoundException(tableName, exception);
-        } catch (MetaException | InvalidObjectException e) {
+        } catch (InvalidObjectException e) {
             throw new InvalidMetaException("One or more partitions are invalid.", e);
         } catch (TException e) {
             //not sure which qualified name to use here

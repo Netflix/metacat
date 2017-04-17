@@ -16,7 +16,6 @@
 
 package com.netflix.metacat.connector.hive;
 
-
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;

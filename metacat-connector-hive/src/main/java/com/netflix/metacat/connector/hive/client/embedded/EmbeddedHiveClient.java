@@ -16,17 +16,16 @@
 
 package com.netflix.metacat.connector.hive.client.embedded;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
-import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler;
+import com.netflix.metacat.connector.hive.metastore.IMetacatHMSHandler;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.Database;
-import org.apache.hadoop.hive.metastore.api.DropPartitionsRequest;
 import org.apache.hadoop.hive.metastore.api.Partition;
-import org.apache.hadoop.hive.metastore.api.RequestPartsSpec;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 
@@ -82,7 +81,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     private static final short ALL_RESULTS = -1;
 
-    private final MetacatHMSHandler handler;
+    private final IMetacatHMSHandler handler;
     private final String catalogName;
 
     /**
@@ -92,7 +91,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * @param handler handler
      */
     @Inject
-    public EmbeddedHiveClient(final String catalogName, final MetacatHMSHandler handler) {
+    public EmbeddedHiveClient(final String catalogName, final IMetacatHMSHandler handler) {
         this.catalogName = catalogName;
         this.handler = handler;
     }
@@ -158,12 +157,11 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
                                     final List<String> partitionNames)
             throws TException {
         callWrap(() -> {
-            if (partitionNames != null && !partitionNames.isEmpty()) {
-                final DropPartitionsRequest request = new DropPartitionsRequest(dbName, tableName, new RequestPartsSpec(
-                    RequestPartsSpec._Fields.NAMES, partitionNames));
-                request.setDeleteData(false);
-                handler.drop_partitions_req(request);
+            final List<List<String>> dropParts = new ArrayList<>();
+            for (String partName : partitionNames) {
+                dropParts.add(new ArrayList<>(PartitionUtil.getPartitionKeyValues(partName).values()));
             }
+            handler.add_drop_partitions(dbName, tableName, Lists.newArrayList(), dropParts, false);
             return null;
         });
     }
@@ -268,7 +266,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
         callWrap(() -> {
             final List<List<String>> dropParts = new ArrayList<>();
             for (String partName : dropPartNames) {
-                dropParts.add(new ArrayList<String>(PartitionUtil.getPartitionKeyValues(partName).values()));
+                dropParts.add(new ArrayList<>(PartitionUtil.getPartitionKeyValues(partName).values()));
             }
             handler.add_drop_partitions(dbName, tableName, addParts, dropParts, false);
             return null;

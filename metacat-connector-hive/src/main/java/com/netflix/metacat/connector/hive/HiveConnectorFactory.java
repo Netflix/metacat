@@ -28,7 +28,7 @@ import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;
 import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClientFactory;
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler;
+import com.netflix.metacat.connector.hive.metastore.HMSHandlerProxy;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +68,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
         this.catalogName = catalogName;
         this.configuration = configuration;
         this.infoConverter = infoConverter;
+
         try {
             final boolean useLocalMetastore = Boolean
                     .parseBoolean(configuration.getOrDefault(HiveConfigConstants.USE_EMBEDDED_METASTORE, "false"));
@@ -88,15 +89,12 @@ public class HiveConnectorFactory implements ConnectorFactory {
         this.injector = Guice.createInjector(hiveModule);
     }
 
-    private IMetacatHiveClient createLocalClient() throws MetaException {
+    private IMetacatHiveClient createLocalClient() throws Exception {
         final HiveConf conf = getDefaultConf();
         configuration.forEach(conf::set);
-        //Change the usage of DataSourceManager later
+        //TO DO Change the usage of DataSourceManager later
         DataSourceManager.get().load(catalogName, configuration);
-        final MetacatHMSHandler metacatHMSHandler =
-                new MetacatHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME, conf, false);
-        metacatHMSHandler.init();
-        return new EmbeddedHiveClient(catalogName, metacatHMSHandler);
+        return new EmbeddedHiveClient(catalogName, HMSHandlerProxy.getProxy(conf));
 
     }
 
