@@ -21,6 +21,7 @@ import org.apache.hadoop.hive.metastore.Deadline;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 public final class HMSHandlerProxy implements InvocationHandler {
 
     private MetacatHMSHandler metacatHMSHandler;
-    private HiveConf hiveConf;
     private long timeout = 600000; //600s
 
 
@@ -42,7 +42,6 @@ public final class HMSHandlerProxy implements InvocationHandler {
         metacatHMSHandler =
                 new MetacatHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME, hiveConf, false);
         metacatHMSHandler.init();
-        this.hiveConf = hiveConf;
         timeout = HiveConf.getTimeVar(hiveConf,
                 HiveConf.ConfVars.METASTORE_CLIENT_SOCKET_TIMEOUT, TimeUnit.MILLISECONDS);
     }
@@ -72,7 +71,7 @@ public final class HMSHandlerProxy implements InvocationHandler {
             Deadline.stopTimer();
             return object;
 
-        } catch (Exception e) {
+        } catch (InvocationTargetException e) {
             throw e.getCause();
         }
     }
