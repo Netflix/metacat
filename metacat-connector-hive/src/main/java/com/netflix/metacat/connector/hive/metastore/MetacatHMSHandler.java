@@ -57,7 +57,7 @@ import java.util.regex.Pattern;
  * @author amajumdar
  * @since 1.0.0
  */
-public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
+public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMetacatHMSHandler {
     private Warehouse wh;
     private Pattern partitionValidationPattern;
     private final HiveConf hiveConf;
@@ -290,6 +290,8 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
                 throw (InvalidObjectException) e;
             } else if (e instanceof AlreadyExistsException) {
                 throw (AlreadyExistsException) e;
+            } else if (e instanceof NoSuchObjectException) {
+                throw (NoSuchObjectException) e;
             } else {
                 throw newMetaException(e);
             }
@@ -316,7 +318,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
             ms.openTransaction();
             tbl = get_table(databaseName, tableName);
             if (tbl == null) {
-                throw new InvalidObjectException("Unable to add partitions because "
+                throw new NoSuchObjectException("Unable to add partitions because "
                         + "database or table " + databaseName + "." + tableName + " does not exist");
             }
             // Drop the parts first
@@ -514,10 +516,10 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler {
     /**
      * Returns the Hive metastore handle.
      *
-     * @param name  client name
-     * @param conf  hive conf
-     * @param local is local
-     * @param baseHandler  baseHandler
+     * @param name        client name
+     * @param conf        hive conf
+     * @param local       is local
+     * @param baseHandler baseHandler
      * @return hive metastore handle
      * @throws MetaException any exception
      */
