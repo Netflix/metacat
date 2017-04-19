@@ -115,12 +115,23 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     public void deleteDataMetadatas(
         @Nonnull
         final List<String> uris) {
+        deleteDataMetadatasWithBatch(uris, true);
+    }
+
+    @Override
+    public void deleteDataMetadataDeletes(
+        @Nonnull
+        final List<String> uris) {
+        deleteDataMetadatasWithBatch(uris, false);
+    }
+
+    private void deleteDataMetadatasWithBatch(final List<String> uris, final boolean removeDataMetadata) {
         try {
             final Connection conn = poolingDataSource.getConnection();
             try {
                 final List<List<String>> subLists = Lists.partition(uris, config.getUserMetadataMaxInClauseItems());
                 for (List<String> subUris : subLists) {
-                    _deleteDataMetadatas(conn, subUris);
+                    _deleteDataMetadatas(conn, subUris, removeDataMetadata);
                 }
                 conn.commit();
             } catch (SQLException e) {
@@ -240,7 +251,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @SuppressWarnings("checkstyle:methodname")
-    private Void _deleteDataMetadatas(final Connection conn, final List<String> uris) throws SQLException {
+    private Void _deleteDataMetadatas(final Connection conn, final List<String> uris, final boolean removeDataMetadata)
+        throws SQLException {
         if (uris != null && !uris.isEmpty()) {
             final List<String> paramVariables = uris.stream().map(s -> "?").collect(Collectors.toList());
             final String[] aUris = uris.stream().toArray(String[]::new);
@@ -254,8 +266,10 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 final String idParamString = Joiner.on(",").skipNulls().join(idParamVariables);
                 new QueryRunner().update(conn,
                     String.format(SQL.DELETE_DATA_METADATA_DELETE, idParamString), (Object[]) aIds);
-                new QueryRunner().update(conn,
-                    String.format(SQL.DELETE_DATA_METADATA, idParamString), (Object[]) aIds);
+                if (removeDataMetadata) {
+                    new QueryRunner().update(conn,
+                        String.format(SQL.DELETE_DATA_METADATA, idParamString), (Object[]) aIds);
+                }
             }
         }
         return null;

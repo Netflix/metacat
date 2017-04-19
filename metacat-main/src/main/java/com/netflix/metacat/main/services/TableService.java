@@ -19,6 +19,7 @@ import com.netflix.metacat.common.dto.TableDto;
 
 import javax.annotation.Nonnull;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -92,4 +93,13 @@ public interface TableService extends MetacatService<TableDto> {
      * @return list of table names
      */
     List<QualifiedName> getQualifiedNames(String uri, boolean prefixSearch);
+
+    /**
+     * Returns a map of list of qualified names of tables that refers to the given <code>uri</code>.
+     * If prefixSearch is true, it will consider the uri has a prefix and so it does not do a exact match.
+     * @param uris uris/locations
+     * @param prefixSearch if false, the method looks for exact match for the uri
+     * @return Map of list of table names
+     */
+    Map<String, List<QualifiedName>> getQualifiedNames(List<String> uris, boolean prefixSearch);
 }
