@@ -82,7 +82,7 @@ public class MetadataService {
                                     final List<QualifiedName> subNames = Lists.newArrayList(a);
                                     subNames.addAll(b);
                                     return subNames;
-                            }));
+                                }));
                         final List<String> canDeleteMetadataForUris = subUris.parallelStream()
                             .filter(s -> !Strings.isNullOrEmpty(s))
                             .filter(s -> uriQualifiedNames.get(s) == null || uriQualifiedNames.get(s).size() == 0)

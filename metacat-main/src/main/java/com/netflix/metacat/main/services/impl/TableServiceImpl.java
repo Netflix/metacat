@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.NameDateDto;
@@ -434,6 +435,32 @@ public class TableServiceImpl implements TableService {
                 final List<QualifiedName> qualifiedNames = names.values().stream().flatMap(Collection::stream)
                     .collect(Collectors.toList());
                 result.addAll(qualifiedNames);
+            } catch (final UnsupportedOperationException uoe) {
+                log.debug("Catalog {} doesn't support getting table names by URI. Skipping", catalogName);
+            }
+        });
+        return result;
+    }
+
+    @Override
+    public Map<String, List<QualifiedName>> getQualifiedNames(final List<String> uris, final boolean prefixSearch) {
+        final Map<String, List<QualifiedName>> result = Maps.newHashMap();
+
+        connectorManager.getCatalogs().keySet().forEach(catalogName -> {
+            final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+            final ConnectorTableService service = connectorManager.getTableService(catalogName);
+            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+            try {
+                final Map<String, List<QualifiedName>> names =
+                    service.getTableNames(connectorContext, uris, prefixSearch);
+                names.forEach((uri, qNames) -> {
+                    final List<QualifiedName> existingNames = result.get(uri);
+                    if (existingNames == null) {
+                        result.put(uri, qNames);
+                    } else {
+                        existingNames.addAll(qNames);
+                    }
+                });
             } catch (final UnsupportedOperationException uoe) {
                 log.debug("Catalog {} doesn't support getting table names by URI. Skipping", catalogName);
             }

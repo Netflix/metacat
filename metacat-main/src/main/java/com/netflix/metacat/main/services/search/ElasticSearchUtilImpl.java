@@ -30,7 +30,8 @@ import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.Config;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ElasticsearchTimeoutException;
+import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -41,13 +42,19 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
+import org.elasticsearch.client.transport.NoNodeAvailableException;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.CancellableThreads;
+import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.node.NodeClosedException;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.transport.ReceiveTimeoutTransportException;
+import org.elasticsearch.transport.TransportException;
 import org.joda.time.Instant;
 
 import javax.annotation.Nullable;
@@ -66,10 +73,18 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     protected static final Retryer<Void> RETRY_ES_PUBLISH = RetryerBuilder.<Void>newBuilder()
-        .retryIfExceptionOfType(ElasticsearchException.class)
+        .retryIfExceptionOfType(FailedNodeException.class)
+        .retryIfExceptionOfType(NodeClosedException.class)
+        .retryIfExceptionOfType(NoNodeAvailableException.class)
+        .retryIfExceptionOfType(ReceiveTimeoutTransportException.class)
+        .retryIfExceptionOfType(TransportException.class)
+        .retryIfExceptionOfType(ElasticsearchTimeoutException.class)
+        .retryIfExceptionOfType(EsRejectedExecutionException.class)
+        .retryIfExceptionOfType(CancellableThreads.ExecutionCancelledException.class)
         .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.MILLISECONDS, 30, TimeUnit.MILLISECONDS))
         .withStopStrategy(StopStrategies.stopAfterAttempt(3))
         .build();
+    private static final int NO_OF_CONFLICT_RETRIES = 3;
     protected XContentType contentType = Requests.INDEX_CONTENT_TYPE;
     protected final String esIndex;
     protected final Client client;
@@ -140,7 +155,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                             log.error("Failed deleting metadata of type {} with id {}. Message: {}",
                                 type, item.getId(), item.getFailureMessage());
                             CounterWrapper.incrementCounter("dse.metacat.esDeleteFailure");
-                            log("ElasticSearchUtil.bulkDelete", type, item.getId(), null, item.getFailureMessage(),
+                            log("ElasticSearchUtil.bulkDelete.item", type, item.getId(), null, item.getFailureMessage(),
                                 null, true);
                         }
                     }
@@ -166,7 +181,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 final XContentBuilder builder = XContentFactory.contentBuilder(contentType);
                 builder.startObject().field(ElasticSearchDoc.Field.DELETED, true).field(ElasticSearchDoc.Field.USER,
                     metacatRequestContext.getUserName()).endObject();
-                client.prepareUpdate(esIndex, type, id).setDoc(builder).get();
+                client.prepareUpdate(esIndex, type, id)
+                    .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder).get();
                 ensureMigrationByCopy(type, Collections.singletonList(id));
                 return null;
             });
@@ -204,7 +220,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 final XContentBuilder builder = XContentFactory.contentBuilder(contentType);
                 builder.startObject().field(ElasticSearchDoc.Field.DELETED, true).field(ElasticSearchDoc.Field.USER,
                     metacatRequestContext.getUserName()).endObject();
-                ids.forEach(id -> bulkRequest.add(client.prepareUpdate(esIndex, type, id).setDoc(builder)));
+                ids.forEach(id -> bulkRequest.add(client.prepareUpdate(esIndex, type, id)
+                            .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder)));
                 final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
@@ -212,7 +229,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                             log.error("Failed soft deleting metadata of type {} with id {}. Message: {}",
                                 type, item.getId(), item.getFailureMessage());
                             CounterWrapper.incrementCounter("dse.metacat.esDeleteFailure");
-                            log("ElasticSearchUtil.bulkSoftDelete",
+                            log("ElasticSearchUtil.bulkSoftDelete.item",
                                 type, item.getId(), null, item.getFailureMessage(), null, true);
                         }
                     }
@@ -257,7 +274,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 final BulkRequestBuilder bulkRequest = client.prepareBulk();
                 ids.forEach(id -> {
                     node.put(ElasticSearchDoc.Field.USER, metacatRequestContext.getUserName());
-                    bulkRequest.add(client.prepareUpdate(esIndex, type, id).setDoc(metacatJson.toJsonAsBytes(node)));
+                    bulkRequest.add(client.prepareUpdate(esIndex, type, id).setRetryOnConflict(NO_OF_CONFLICT_RETRIES)
+                        .setDoc(metacatJson.toJsonAsBytes(node)));
                 });
                 final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
@@ -266,6 +284,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                             log.error("Failed updating metadata of type {} with id {}. Message: {}", type, item.getId(),
                                 item.getFailureMessage());
                             CounterWrapper.incrementCounter("dse.metacat.esUpdateFailure");
+                            log("ElasticSearchUtil.updateDocs.item",
+                                type, item.getId(), null, item.getFailureMessage(), null, true);
                         }
                     }
                 }
@@ -274,7 +294,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
         } catch (Exception e) {
             log.error(String.format("Failed updating metadata of type %s with ids %s", type, ids), e);
             CounterWrapper.incrementCounter("dse.metacat.esBulkUpdateFailure");
-            log("ElasticSearchUtil.updates", type, ids.toString(), null, e.getMessage(), e, true);
+            log("ElasticSearchUtil.updatDocs", type, ids.toString(), null, e.getMessage(), e, true);
         }
     }
     /**
@@ -302,9 +322,10 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 return null;
             });
         } catch (Exception e) {
-            log.error(String.format("Failed saving metadata of index %s type %s with id %s", index, type, id), e);
+            log.error(
+                String.format("Failed saving metadata of index %s type %s with id %s: %s", index, type, id, body), e);
             CounterWrapper.incrementCounter("dse.metacat.esSaveFailure");
-            log("ElasticSearchUtil.save", type, id, null, e.getMessage(), e, true, index);
+            log("ElasticSearchUtil.saveToIndex", type, id, null, e.getMessage(), e, true, index);
         }
     }
 
@@ -343,7 +364,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                                     log.error("Failed saving metadata of {} index type {} with id {}. Message: {}",
                                         index, type, item.getId(), item.getFailureMessage());
                                     CounterWrapper.incrementCounter("dse.metacat.esSaveFailure");
-                                    log("ElasticSearchUtil.bulkSave", type, item.getId(), null,
+                                    log("ElasticSearchUtil.bulkSaveToIndex.index", type, item.getId(), null,
                                         item.getFailureMessage(), null, true, index);
                                 }
                             }
@@ -355,7 +376,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 log.error(String.format("Failed saving metadatas of index %s type %s", index, type), e);
                 CounterWrapper.incrementCounter("dse.metacat.esBulkSaveFailure");
                 final List<String> docIds = docs.stream().map(ElasticSearchDoc::getId).collect(Collectors.toList());
-                log("ElasticSearchUtil.bulkSave", type, docIds.toString(), null, e.getMessage(), e, true, index);
+                log("ElasticSearchUtil.bulkSaveToIndex", type, docIds.toString(), null, e.getMessage(), e, true, index);
             }
         }
     }
@@ -609,6 +630,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             source.put("details", Throwables.getStackTraceAsString(ex));
             client.prepareIndex(index, "metacat-log").setSource(source).execute().actionGet();
         } catch (Exception e) {
+            CounterWrapper.incrementCounter("dse.metacat.esLogFailure");
             log.warn("Failed saving the log message in elastic search for index{} method {}, name {}. Message: {}",
                 index, method, name, e.getMessage());
         }
