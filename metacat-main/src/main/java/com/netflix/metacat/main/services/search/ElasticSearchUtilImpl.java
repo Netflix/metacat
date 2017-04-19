@@ -84,6 +84,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
         .withWaitStrategy(WaitStrategies.incrementingWait(10, TimeUnit.MILLISECONDS, 30, TimeUnit.MILLISECONDS))
         .withStopStrategy(StopStrategies.stopAfterAttempt(3))
         .build();
+    private static final int NO_OF_CONFLICT_RETRIES = 3;
     protected XContentType contentType = Requests.INDEX_CONTENT_TYPE;
     protected final String esIndex;
     protected final Client client;
@@ -180,7 +181,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 final XContentBuilder builder = XContentFactory.contentBuilder(contentType);
                 builder.startObject().field(ElasticSearchDoc.Field.DELETED, true).field(ElasticSearchDoc.Field.USER,
                     metacatRequestContext.getUserName()).endObject();
-                client.prepareUpdate(esIndex, type, id).setRetryOnConflict(3).setDoc(builder).get();
+                client.prepareUpdate(esIndex, type, id)
+                    .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder).get();
                 ensureMigrationByCopy(type, Collections.singletonList(id));
                 return null;
             });
@@ -218,8 +220,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 final XContentBuilder builder = XContentFactory.contentBuilder(contentType);
                 builder.startObject().field(ElasticSearchDoc.Field.DELETED, true).field(ElasticSearchDoc.Field.USER,
                     metacatRequestContext.getUserName()).endObject();
-                ids.forEach(id ->
-                    bulkRequest.add(client.prepareUpdate(esIndex, type, id).setRetryOnConflict(3).setDoc(builder)));
+                ids.forEach(id -> bulkRequest.add(client.prepareUpdate(esIndex, type, id)
+                            .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder)));
                 final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
@@ -272,7 +274,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 final BulkRequestBuilder bulkRequest = client.prepareBulk();
                 ids.forEach(id -> {
                     node.put(ElasticSearchDoc.Field.USER, metacatRequestContext.getUserName());
-                    bulkRequest.add(client.prepareUpdate(esIndex, type, id).setRetryOnConflict(3)
+                    bulkRequest.add(client.prepareUpdate(esIndex, type, id).setRetryOnConflict(NO_OF_CONFLICT_RETRIES)
                         .setDoc(metacatJson.toJsonAsBytes(node)));
                 });
                 final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
