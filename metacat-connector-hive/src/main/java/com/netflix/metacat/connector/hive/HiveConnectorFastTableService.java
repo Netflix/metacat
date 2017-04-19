@@ -18,7 +18,9 @@ package com.netflix.metacat.connector.hive;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
@@ -33,6 +35,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * HiveConnectorFastTableService.
@@ -42,7 +45,7 @@ import java.util.List;
  */
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private static final String SQL_GET_TABLE_NAMES_BY_URI =
-            "select d.name schema_name, t.tbl_name table_name"
+            "select d.name schema_name, t.tbl_name table_name, s.location"
                     + " from DBS d, TBLS t, SDS s where d.DB_ID=t.DB_ID and t.sd_id=s.sd_id";
     private final boolean allowRenameTable;
     private final ThreadServiceManager threadServiceManager;
@@ -70,38 +73,48 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         this.threadServiceManager.start();
     }
 
-    /**
-     * listNames.
-     *
-     * @param uri          uri
-     * @param prefixSearch prefixSearch
-     * @return list of tables matching the prefixSearch
-     */
-    public List<QualifiedName> listNames(final String uri, final boolean prefixSearch) {
-        final List<QualifiedName> result = Lists.newArrayList();
+    @Override
+    public Map<String, List<QualifiedName>> getTableNames(@Nonnull final ConnectorContext context,
+        @Nonnull final  List<String> uris, final boolean prefixSearch) {
+        final Map<String, List<QualifiedName>> result = Maps.newHashMap();
         // Get data source
         final DataSource dataSource = DataSourceManager.get().get(catalogName);
         // Create the sql
         final StringBuilder queryBuilder = new StringBuilder(SQL_GET_TABLE_NAMES_BY_URI);
-        String param = uri;
+        final List<String> params = Lists.newArrayList();
         if (prefixSearch) {
-            queryBuilder.append(" and location like ?");
-            param = uri + "%";
+            queryBuilder.append(" and (1=0");
+            uris.forEach(uri -> {
+                queryBuilder.append(" or location like ?");
+                params.add(uri + "%");
+            });
+            queryBuilder.append(" )");
         } else {
-            queryBuilder.append(" and location = ?");
+            queryBuilder.append(" and location in (");
+            uris.forEach(uri -> {
+                queryBuilder.append("?,");
+                params.add(uri);
+            });
+            queryBuilder.deleteCharAt(queryBuilder.length() - 1).append(")");
         }
         // Handler for reading the result set
-        final ResultSetHandler<List<QualifiedName>> handler = rs -> {
+        ResultSetHandler<Map<String, List<QualifiedName>>> handler = rs -> {
             while (rs.next()) {
                 final String schemaName = rs.getString("schema_name");
                 final String tableName = rs.getString("table_name");
-                result.add(QualifiedName.ofTable(catalogName, schemaName, tableName));
+                final String uri = rs.getString("location");
+                List<QualifiedName> names = result.get(uri);
+                if (names == null) {
+                    names = Lists.newArrayList();
+                    result.put(uri, names);
+                }
+                names.add(QualifiedName.ofTable(catalogName, schemaName, tableName));
             }
             return result;
         };
         try (Connection conn = dataSource.getConnection()) {
             new QueryRunner()
-                    .query(conn, queryBuilder.toString(), handler, param);
+                .query(conn, queryBuilder.toString(), handler, params.toArray());
         } catch (SQLException e) {
             throw Throwables.propagate(e);
         }

@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Metadata Service. This class includes any common services for the user metadata.
@@ -42,6 +43,8 @@ public class MetadataService {
     private Config config;
     @Inject
     private PartitionService partitionService;
+    @Inject
+    private TableService tableService;
 
     /**
      * Deletes all the data metadata marked for deletion.
@@ -68,14 +71,25 @@ public class MetadataService {
                     final List<List<String>> subListsUris = Lists.partition(uris, 1000);
                     subListsUris.parallelStream().forEach(subUris -> {
                         MetacatContextManager.setContext(metacatRequestContext);
-                        final Map<String, List<QualifiedName>> uriQualifiedNames = partitionService
+                        final Map<String, List<QualifiedName>> uriPartitionQualifiedNames = partitionService
                             .getQualifiedNames(subUris, false);
+                        final Map<String, List<QualifiedName>> uriTableQualifiedNames = tableService
+                            .getQualifiedNames(subUris, false);
+                        final Map<String, List<QualifiedName>> uriQualifiedNames =
+                            Stream.concat(uriPartitionQualifiedNames.entrySet().stream(),
+                                uriTableQualifiedNames.entrySet().stream())
+                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> {
+                                    final List<QualifiedName> subNames = Lists.newArrayList(a);
+                                    subNames.addAll(b);
+                                    return subNames;
+                                }));
                         final List<String> canDeleteMetadataForUris = subUris.parallelStream()
                             .filter(s -> !Strings.isNullOrEmpty(s))
                             .filter(s -> uriQualifiedNames.get(s) == null || uriQualifiedNames.get(s).size() == 0)
                             .collect(Collectors.toList());
                         log.info("Start deleting data metadata: {}", canDeleteMetadataForUris.size());
                         userMetadataService.deleteDataMetadatas(canDeleteMetadataForUris);
+                        userMetadataService.deleteDataMetadataDeletes(subUris);
                         MetacatContextManager.removeContext();
                     });
                 }
