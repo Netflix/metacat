@@ -51,7 +51,12 @@ public class RedshiftExceptionMapper implements JdbcExceptionMapper {
     ) {
         // TODO: For now as can't find documentation stating contrary this is a copy of PostgreSQL implementation.
         //       Source code looks pretty unclear too at cursory glance
-        switch (se.getSQLState()) {
+        final String sqlState = se.getSQLState();
+        if (sqlState == null) {
+            throw new ConnectorException(se.getMessage(), se);
+        }
+
+        switch (sqlState) {
             case "42P04": //database already exists
                 return new DatabaseAlreadyExistsException(name, se);
             case "42P07": //table already exists
