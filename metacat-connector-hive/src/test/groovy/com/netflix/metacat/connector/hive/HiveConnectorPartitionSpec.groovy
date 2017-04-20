@@ -23,10 +23,13 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.*
 import com.netflix.metacat.common.server.exception.ConnectorException
 import com.netflix.metacat.common.server.exception.InvalidMetaException
+import com.netflix.metacat.common.server.exception.PartitionAlreadyExistsException
+import com.netflix.metacat.common.server.exception.PartitionNotFoundException
 import com.netflix.metacat.common.server.exception.TableNotFoundException
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
+import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException
 import org.apache.hadoop.hive.metastore.api.MetaException
@@ -239,6 +242,7 @@ class HiveConnectorPartitionSpec extends Specification{
         saverequest.alterIfExists = true
         saverequest.partitions = [ PartitionInfo.builder().name(QualifiedName.ofPartition("testhive", "test1", "testtable2", "dateint=20170101/hour=3")).build() ]
         def saveresponse = hiveConnectorPartitionService.savePartitions( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"),saverequest)
+
         then:
         1 * client.getTableByName("test1", "testtable2") >> { HiveConnectorTableSpec.getPartitionTable("testtable2") }
         0 * client.alterPartitions("test1","testtable2",_)
@@ -260,10 +264,29 @@ class HiveConnectorPartitionSpec extends Specification{
         thrown result
 
         where:
-        exception                    | result
-        new TException()             |ConnectorException
-        new NoSuchObjectException()  |TableNotFoundException
+        exception                                                     | result
+        new TException()                                              |ConnectorException
+        new NoSuchObjectException("Database")                         |TableNotFoundException
+        new NoSuchObjectException("Partition doesn't exist")          |PartitionNotFoundException
         new MetaException()          |InvalidMetaException
         new InvalidObjectException() |InvalidMetaException
+    }
+
+    def "Test for savePartition partitionalreadyexist exception" (){
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService("testhive", client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        when:
+        def saverequest = new PartitionsSaveRequest()
+        saverequest.checkIfExists = true
+        saverequest.alterIfExists = true
+        saverequest.partitions = [ PartitionInfo.builder().name(QualifiedName.ofPartition("testhive", "test1", "testtable2", "dateint=20170101/hour=3")).build() ]
+        def saveresponse = hiveConnectorPartitionService.savePartitions( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"),saverequest)
+
+        then:
+        1 * client.getTableByName("test1", "testtable2") >> { HiveConnectorTableSpec.getPartitionTable("testtable2") }
+        0 * client.alterPartitions("test1","testtable2",_)
+        1 * client.addDropPartitions(_,_,_,_) >> { throw new AlreadyExistsException()}
+        final PartitionAlreadyExistsException exception = thrown()
+        exception.name == QualifiedName.ofTable("testhive", "test1", "testtable2")
     }
 }

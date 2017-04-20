@@ -33,11 +33,14 @@ import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.exception.ConnectorException;
 import com.netflix.metacat.common.server.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.exception.PartitionAlreadyExistsException;
+import com.netflix.metacat.common.server.exception.PartitionNotFoundException;
 import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import lombok.NonNull;
 import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -55,6 +58,7 @@ import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -247,6 +251,9 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     ) {
         final String databasename = tableName.getDatabaseName();
         final String tablename = tableName.getTableName();
+        // New partitions
+        final List<Partition> hivePartitions = Lists.newArrayList();
+
         try {
             final Table table = metacatHiveClient.getTableByName(databasename, tablename);
             final List<PartitionInfo> partitionInfos = partitionsSaveRequest.getPartitions();
@@ -256,8 +263,6 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             final List<String> existingPartitionIds = Lists.newArrayList();
             // Existing partitions
             final List<Partition> existingHivePartitions = Lists.newArrayList();
-            // New partitions
-            final List<Partition> hivePartitions = Lists.newArrayList();
 
             // Existing partition map
             Map<String, Partition> existingPartitionMap = Collections.emptyMap();
@@ -320,12 +325,37 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             result.setUpdated(existingPartitionIds);
             return result;
         } catch (NoSuchObjectException exception) {
-            throw new TableNotFoundException(tableName, exception);
+            if (exception.getMessage() != null && exception.getMessage().startsWith("Partition doesn't exist")) {
+                throw new PartitionNotFoundException(tableName, null, exception);
+            } else {
+                throw new TableNotFoundException(tableName, exception);
+            }
         } catch (MetaException | InvalidObjectException exception) {
             throw new InvalidMetaException("One or more partitions are invalid.", exception);
+        } catch (AlreadyExistsException e) {
+            final List<String> ids = getFakePartitionName(hivePartitions);
+            throw new PartitionAlreadyExistsException(tableName, ids, e);
         } catch (TException exception) {
             throw new ConnectorException(String.format("Failed savePartitions hive table %s", tableName), exception);
         }
+    }
+
+    private List<String> getFakePartitionName(final List<Partition> partitions) {
+        // Since we would have to do a table load to find out the actual partition keys here we make up fake ones
+        // so that we can generate the partition name
+        final List<String> ids = partitions.stream().map(Partition::getValues).map(values -> {
+            final Map<String, String> spec = new LinkedHashMap<>();
+            for (int i = 0; i < values.size(); i++) {
+                spec.put("fakekey" + i, values.get(i));
+            }
+            try {
+                return Warehouse.makePartPath(spec);
+            } catch (MetaException me) {
+                return "Got: '" + me.getMessage() + "' for spec: " + spec;
+            }
+        }).collect(Collectors.toList());
+
+        return ids;
     }
 
     /**
