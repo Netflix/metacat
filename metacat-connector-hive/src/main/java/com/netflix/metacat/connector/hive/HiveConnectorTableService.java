@@ -134,7 +134,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
             throw new TableAlreadyExistsException(tableName, exception);
         } catch (MetaException exception) {
             throw new InvalidMetaException(tableName, exception);
-        } catch (InvalidObjectException exception) {
+        } catch (NoSuchObjectException | InvalidObjectException exception) {
             throw new DatabaseNotFoundException(
                     QualifiedName.ofDatabase(tableName.getCatalogName(),
                             tableName.getDatabaseName()), exception);
