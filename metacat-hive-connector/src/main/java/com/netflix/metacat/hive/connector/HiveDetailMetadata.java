@@ -52,6 +52,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.converters.impl.HiveTypeConverter;
+import com.netflix.metacat.converters.impl.MapStructHiveConverters;
 import com.netflix.metacat.hive.connector.util.ConverterUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
@@ -75,8 +76,6 @@ import java.util.stream.Collectors;
  * Hive connector detail metadata.
  */
 public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailMetadata {
-    /** Name for external parameter. */
-    public static final String PARAMETER_EXTERNAL = "EXTERNAL";
     protected final HiveMetastore metastore;
     protected final TypeManager typeManager;
     protected final HiveConnectorId connectorId;
@@ -276,6 +275,7 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
         table.setDbName(tableMetadata.getTable().getSchemaName());
         table.setTableName(tableMetadata.getTable().getTableName());
         table.setOwner(tableMetadata.getOwner());
+        //setting the default tabletype to external table
         table.setTableType(TableType.EXTERNAL_TABLE.toString());
         if (tableMetadata instanceof ConnectorTableDetailMetadata) {
             updateTable(table, session, (ConnectorTableDetailMetadata) tableMetadata);
@@ -289,7 +289,16 @@ public class HiveDetailMetadata extends HiveMetadata implements ConnectorDetailM
         if (table.getParameters() == null) {
             table.setParameters(Maps.newHashMap());
         }
-        table.getParameters().putIfAbsent(PARAMETER_EXTERNAL, "TRUE");
+        //Allowing user setting the table type to managed_table with passed in parameter
+        if (null != tableDetailMetadata.getStorageInfo().getParameters()
+            && String.valueOf(Boolean.FALSE).equals(tableDetailMetadata.getStorageInfo().getParameters()
+                                                   .get(MapStructHiveConverters.PARAMETER_EXTERNAL))) {
+            table.setTableType(TableType.MANAGED_TABLE.toString());
+            table.getParameters().put(MapStructHiveConverters.PARAMETER_EXTERNAL, String.valueOf(Boolean.FALSE));
+        } else {
+            table.getParameters().put(MapStructHiveConverters.PARAMETER_EXTERNAL, String.valueOf(Boolean.TRUE));
+        }
+
         if (tableDetailMetadata.getMetadata() != null) {
             table.getParameters().putAll(tableDetailMetadata.getMetadata());
         }

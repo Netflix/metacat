@@ -18,6 +18,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.AuditDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
@@ -26,6 +27,7 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.converters.HiveConverters;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -52,6 +54,8 @@ import java.util.stream.Collectors;
     unmappedTargetPolicy = ReportingPolicy.ERROR,
     componentModel = "default")
 public abstract class MapStructHiveConverters implements HiveConverters {
+    /** Name for external parameter. */
+    public static final String PARAMETER_EXTERNAL = "EXTERNAL";
     private static final Splitter SLASH_SPLITTER = Splitter.on('/');
     private static final Splitter EQUAL_SPLITTER = Splitter.on('=').limit(2);
 
@@ -97,7 +101,17 @@ public abstract class MapStructHiveConverters implements HiveConverters {
     @Override
     public TableDto hiveToMetacatTable(final QualifiedName name, final Table table) {
         final TableDto dto = new TableDto();
-        dto.setSerde(toStorageDto(table.getSd(), table.getOwner()));
+        final StorageDto storageDto = toStorageDto(table.getSd(), table.getOwner());
+        if (null == storageDto.getParameters()) {
+            storageDto.setParameters(Maps.newHashMap());
+        }
+        if (null != table.getTableType()
+            && table.getTableType().equals(TableType.MANAGED_TABLE.toString())) {
+            storageDto.getParameters().put(PARAMETER_EXTERNAL, String.valueOf(Boolean.FALSE));
+        } else {
+            storageDto.getParameters().put(PARAMETER_EXTERNAL, String.valueOf(Boolean.TRUE));
+        }
+        dto.setSerde(storageDto);
         dto.setAudit(new AuditDto());
         dto.setName(name);
         if (table.isSetCreateTime()) {
@@ -172,6 +186,15 @@ public abstract class MapStructHiveConverters implements HiveConverters {
         }
         table.setOwner(owner);
 
+        if (null != storageDto
+            && null != storageDto.getParameters()
+            && String.valueOf(Boolean.FALSE)
+                .equals(storageDto.getParameters().get(MapStructHiveConverters.PARAMETER_EXTERNAL))) {
+            table.setTableType(TableType.MANAGED_TABLE.toString());
+        } else {
+            table.setTableType(TableType.EXTERNAL_TABLE.toString());
+        }
+
         final AuditDto auditDto = dto.getAudit();
         if (auditDto != null && auditDto.getCreatedDate() != null) {
             table.setCreateTime(dateToEpochSeconds(auditDto.getCreatedDate()));
@@ -182,9 +205,6 @@ public abstract class MapStructHiveConverters implements HiveConverters {
             params = dto.getMetadata();
         }
         table.setParameters(params);
-
-        // TODO get this
-        table.setTableType("EXTERNAL_TABLE");
 
         table.setSd(fromStorageDto(storageDto));
         final StorageDescriptor sd = table.getSd();

@@ -23,6 +23,7 @@ import com.netflix.metacat.common.dto.PartitionDto
 import com.netflix.metacat.common.dto.StorageDto
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.Config
+import org.apache.hadoop.hive.metastore.TableType
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.Partition
 import org.apache.hadoop.hive.metastore.api.SerDeInfo
@@ -171,9 +172,12 @@ class MapStructHiveConvertersSpec extends Specification {
             it.type == 'VARCHAR'
         }
         table.parameters == tableParams
-        table.tableType == 'EXTERNAL_TABLE'
+        table.tableType == tabletype
 
         where:
+        tabletype            | external  | serdeParameters
+        'MANAGED_TABLE'      | false     | ['EXTERNAL':"false"]
+        'EXTERNAL_TABLE'     | true      | ['EXTERNAL':"true"]
         databaseName = 'database'
         tableName = 'table'
         owner = 'owner'
@@ -182,7 +186,7 @@ class MapStructHiveConvertersSpec extends Specification {
         inputFormat = 'inputFormat'
         outputFormat = 'outputFormat'
         serializationLib = 'serializationLib'
-        storageParams = ['sk1': 'sv1']
+        storageParams = serdeParameters
         serdeInfoParams = ['sik1': 'siv1']
         fields = (0..9).collect {
             new FieldDto(name: "field_$it", partition_key: it < 2, comment: "comment_$it", type: 'VARCHAR')
@@ -222,6 +226,7 @@ class MapStructHiveConvertersSpec extends Specification {
         dto.serde.serializationLib == serializationLib
         dto.serde.serdeInfoParameters == serdeInfoParams
         dto.serde.parameters == sdParams
+        dto.serde.parameters.get("EXTERNAL") == external
         dto.fields.size() == columns.size() + partitonKeys.size()
         dto.fields.each {
             it.name.startsWith('field_')
@@ -232,6 +237,9 @@ class MapStructHiveConvertersSpec extends Specification {
         dto.metadata == tableParams
 
         where:
+        tabletype            | external
+        'MANAGED_TABLE'      | "false"
+        'EXTERNAL_TABLE'     | "true"
         databaseName = 'database'
         tableName = 'table'
         name = QualifiedName.ofTable('catalog', databaseName, tableName)
@@ -242,7 +250,7 @@ class MapStructHiveConvertersSpec extends Specification {
         outputFormat = 'outputFormat'
         serializationLib = 'serializationLib'
         serdeInfoParams = ['sipk1': 'sipv1']
-        sdParams = ['sdk1': 'sdv1']
+        sdParams = ['sdk1': 'sdv1', 'EXTERNAL':false]
         columns = (0..7).collect { new FieldSchema(name: "field_$it", comment: "comment_$it", type: 'VARCHAR') }
         partitonKeys = (0..1).collect { new FieldSchema(name: "field_$it", comment: "comment_$it", type: 'VARCHAR') }
         tableParams = ['tk1': 'tv1']
@@ -265,6 +273,7 @@ class MapStructHiveConvertersSpec extends Specification {
                 ),
                 partitionKeys: partitonKeys,
                 parameters: tableParams,
+                tableType: tabletype
         )
     }
 
