@@ -11,23 +11,28 @@
  *    limitations under the License.
  */
 
+package com.netflix.metacat.type.converters;
 
+import com.netflix.metacat.types.Type;
+import com.netflix.metacat.types.TypeManager;
 
-rootProject.name='metacat'
+/**
+ * Canonical type converter class.
+ */
+public interface CanonicalTypeConverter {
+    /**
+     * Converts to canonical type.
+     * @param type type
+     * @param typeRegistry typeRegistry
+     * @return canonical type
+     */
+    Type dataTypeToCanonicalType(String type, TypeManager typeRegistry);
 
-include 'metacat-client'
-include 'metacat-common'
-include 'metacat-common-server'
-include 'metacat-functional-tests'
-include 'metacat-hive-connector'
-include 'metacat-main'
-include 'metacat-mysql-connector'
-include 'metacat-postgres-connector'
-include 'metacat-s3-connector'
-include 'metacat-server'
-include 'metacat-thrift'
-include 'metacat-user-metadata-mysql'
-include 'metacat-converters'
-include 'metacat-type-converters'
-include 'metacat-schema-converters'
-
+    /**
+     * Converts from canonical type.
+     *
+     * @param type type
+     * @return connector type
+     */
+    String canonicalTypeToDataType(Type type);
+}

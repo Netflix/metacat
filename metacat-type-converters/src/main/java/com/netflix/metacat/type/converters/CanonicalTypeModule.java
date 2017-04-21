@@ -11,23 +11,19 @@
  *    limitations under the License.
  */
 
+package com.netflix.metacat.type.converters;
 
+import com.google.inject.AbstractModule;
 
-rootProject.name='metacat'
-
-include 'metacat-client'
-include 'metacat-common'
-include 'metacat-common-server'
-include 'metacat-functional-tests'
-include 'metacat-hive-connector'
-include 'metacat-main'
-include 'metacat-mysql-connector'
-include 'metacat-postgres-connector'
-include 'metacat-s3-connector'
-include 'metacat-server'
-include 'metacat-thrift'
-include 'metacat-user-metadata-mysql'
-include 'metacat-converters'
-include 'metacat-type-converters'
-include 'metacat-schema-converters'
-
+/**
+ * Canonical Type Module.
+ */
+public class CanonicalTypeModule extends AbstractModule {
+    @Override
+    protected void configure() {
+        binder().bind(CanonicalHiveTypeConverter.class).asEagerSingleton();
+        binder().bind(CanonicalTypeConverterProvider.class).asEagerSingleton();
+        binder().bind(CanonicalTypeConverter.class).toProvider(CanonicalTypeConverterProvider.class);
+        binder().bind(CanonicalPigTypeConverter.class).asEagerSingleton();
+    }
+}
