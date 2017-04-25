@@ -65,6 +65,7 @@ public class RedshiftTypeConverter extends JdbcTypeConverter {
                 return BaseType.INT;
             case "int8":
             case "bigint":
+            case "oid":
                 return BaseType.BIGINT;
             case "decimal":
             case "numeric":
@@ -79,14 +80,17 @@ public class RedshiftTypeConverter extends JdbcTypeConverter {
             case "character varying":
             case "varchar":
             case "nvarchar":
+                fixDataSizeIfIncorrect(splitType);
                 return this.toMetacatVarcharType(splitType);
             case "text":
+            case "name":
                 // text is basically alias for VARCHAR(256)
                 splitType[1] = DEFAULT_CHARACTER_LENGTH_STRING;
                 return this.toMetacatVarcharType(splitType);
             case "character":
             case "char":
             case "nchar":
+                fixDataSizeIfIncorrect(splitType);
                 return this.toMetacatCharType(splitType);
             case "bpchar":
                 // bpchar defaults to fixed length of 256 characters
@@ -105,6 +109,16 @@ public class RedshiftTypeConverter extends JdbcTypeConverter {
                 // see: http://docs.aws.amazon.com/redshift/latest/dg/c_unsupported-postgresql-datatypes.html
                 log.info("Unhandled or unknown Redshift type {}", splitType[0]);
                 return BaseType.UNKNOWN;
+        }
+    }
+
+    private void fixDataSizeIfIncorrect(final String[] splitType) {
+        //
+        // Adding a hack to ignore errors for data type with negative size.
+        // TODO: Remove this hack when we have a solution for the above.
+        //
+        if (splitType[1] == null || Integer.parseInt(splitType[1]) <= 0) {
+            splitType[1] = DEFAULT_CHARACTER_LENGTH_STRING;
         }
     }
 
