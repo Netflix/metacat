@@ -106,7 +106,8 @@ class RedshiftTypeConverterSpec extends Specification {
         "tsrange"                      | BaseType.UNKNOWN
         "tstzrange"                    | BaseType.UNKNOWN
         "daterange"                    | BaseType.UNKNOWN
-        "oid"                          | BaseType.UNKNOWN
+        "oid"                          | BaseType.BIGINT
+        "name"                         | VarcharType.createVarcharType(RedshiftTypeConverter.DEFAULT_CHARACTER_LENGTH)
         "regproc"                      | BaseType.UNKNOWN
         "regprocedure"                 | BaseType.UNKNOWN
         "regoper"                      | BaseType.UNKNOWN
