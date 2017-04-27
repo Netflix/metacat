@@ -289,5 +289,8 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         node.get("owner") != null
         node.get("lifetime") != null
         node.get("extendedSchema") != null
+        where:
+        catalogName     | databaseName  | tableName     | id                        | uri
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part' | 's3:/a/b'
     }
 }

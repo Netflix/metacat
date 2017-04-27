@@ -56,8 +56,6 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
     @ApiModelProperty(value = "metadata attached to the logical table")
     @JsonProperty
     private transient ObjectNode definitionMetadata;
-    @JsonProperty
-    private transient ObjectNode searchableDefinitionMetadata;
     private List<FieldDto> fields;
     @ApiModelProperty(value = "Any extra metadata properties of the database table")
     private Map<String, String> metadata;
