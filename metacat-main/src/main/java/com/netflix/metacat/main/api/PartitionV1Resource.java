@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.main.api;
 
-import com.google.common.base.Preconditions;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.PartitionV1;
@@ -498,19 +497,21 @@ public class PartitionV1Resource implements PartitionV1 {
         final PartitionsSaveRequestDto partitionsSaveRequestDto) {
         final QualifiedName name = QualifiedName.ofTable(catalogName, databaseName, tableName);
         return RequestWrapper.requestWrapper(name, "saveTablePartition", () -> {
-            Preconditions.checkArgument(partitionsSaveRequestDto != null
-                    && partitionsSaveRequestDto.getPartitions() != null
-                    && !partitionsSaveRequestDto.getPartitions().isEmpty(),
-                "Partitions must be present");
-            final PartitionsSaveResponseDto result = partitionService.save(name, partitionsSaveRequestDto);
+            final PartitionsSaveResponseDto result;
+            if (partitionsSaveRequestDto == null || partitionsSaveRequestDto.getPartitions() == null
+                || partitionsSaveRequestDto.getPartitions().isEmpty()) {
+                result = new PartitionsSaveResponseDto();
+            } else {
+                result = partitionService.save(name, partitionsSaveRequestDto);
 
-            // This metadata is actually for the table, if it is present update that
-            if (partitionsSaveRequestDto.getDefinitionMetadata() != null
-                || partitionsSaveRequestDto.getDataMetadata() != null) {
-                final TableDto dto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
-                dto.setDefinitionMetadata(partitionsSaveRequestDto.getDefinitionMetadata());
-                dto.setDataMetadata(partitionsSaveRequestDto.getDataMetadata());
-                v1.updateTable(catalogName, databaseName, tableName, dto);
+                // This metadata is actually for the table, if it is present update that
+                if (partitionsSaveRequestDto.getDefinitionMetadata() != null
+                    || partitionsSaveRequestDto.getDataMetadata() != null) {
+                    final TableDto dto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
+                    dto.setDefinitionMetadata(partitionsSaveRequestDto.getDefinitionMetadata());
+                    dto.setDataMetadata(partitionsSaveRequestDto.getDataMetadata());
+                    v1.updateTable(catalogName, databaseName, tableName, dto);
+                }
             }
             return result;
         });
@@ -526,19 +527,21 @@ public class PartitionV1Resource implements PartitionV1 {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
         return RequestWrapper.requestWrapper(name, "saveMViewPartition", () -> {
-            Preconditions.checkArgument(partitionsSaveRequestDto != null
-                    && partitionsSaveRequestDto.getPartitions() != null
-                    && !partitionsSaveRequestDto.getPartitions().isEmpty(),
-                "Partitions must be present");
+            final PartitionsSaveResponseDto result;
+            if (partitionsSaveRequestDto == null || partitionsSaveRequestDto.getPartitions() == null
+                || partitionsSaveRequestDto.getPartitions().isEmpty()) {
+                result = new PartitionsSaveResponseDto();
+            } else {
 
-            final PartitionsSaveResponseDto result = mViewService.savePartitions(name, partitionsSaveRequestDto, true);
-            // This metadata is actually for the view, if it is present update that
-            if (partitionsSaveRequestDto.getDefinitionMetadata() != null
-                || partitionsSaveRequestDto.getDataMetadata() != null) {
-                final TableDto dto = v1.getMView(catalogName, databaseName, tableName, viewName);
-                dto.setDefinitionMetadata(partitionsSaveRequestDto.getDefinitionMetadata());
-                dto.setDataMetadata(partitionsSaveRequestDto.getDataMetadata());
-                v1.updateMView(catalogName, databaseName, tableName, viewName, dto);
+                result = mViewService.savePartitions(name, partitionsSaveRequestDto, true);
+                // This metadata is actually for the view, if it is present update that
+                if (partitionsSaveRequestDto.getDefinitionMetadata() != null
+                    || partitionsSaveRequestDto.getDataMetadata() != null) {
+                    final TableDto dto = v1.getMView(catalogName, databaseName, tableName, viewName);
+                    dto.setDefinitionMetadata(partitionsSaveRequestDto.getDefinitionMetadata());
+                    dto.setDataMetadata(partitionsSaveRequestDto.getDataMetadata());
+                    v1.updateMView(catalogName, databaseName, tableName, viewName, dto);
+                }
             }
             return result;
         });
