@@ -459,7 +459,7 @@ class MetacatSmokeSpec extends Specification {
         when:
         partitionApi.savePartitions('invalid', 'invalid', 'invalid', new PartitionsSaveRequestDto())
         then:
-        thrown(MetacatBadRequestException)
+        noExceptionThrown()
         when:
         partitionApi.savePartitions('invalid', 'invalid', 'invalid', new PartitionsSaveRequestDto(partitions: [new PartitionDto()]))
         then:
