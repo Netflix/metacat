@@ -13,6 +13,8 @@
 
 package com.netflix.metacat.main.services.search;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
@@ -26,6 +28,7 @@ import java.util.Map;
 
 /**
  * Document that gets stored in elastic search.
+ *
  * @author amajumdar
  */
 @Getter
@@ -35,12 +38,34 @@ public class ElasticSearchDoc {
     private String user;
     private boolean deleted;
     private String refreshMarker;
+    private boolean addSearchableDefinitionMetadata;
+
+    /**
+     * Definition Metadata pull out fields.
+     */
+    private String[] definitionMetadataFields = {
+            ElasticSearchDocConstants.DEFINITION_METADATA_OWNER,
+            ElasticSearchDocConstants.DEFINITION_METADATA_TAGS,
+            ElasticSearchDocConstants.DEFINITION_METADATA_DATA_HYGIENE,
+            ElasticSearchDocConstants.DEFINITION_METADATA_LIFETIME,
+            ElasticSearchDocConstants.DEFINITION_METADATA_EXTENDED_SCHEMA,
+            ElasticSearchDocConstants.DEFINITION_METADATA_DATA_DEPENDENCY,
+            ElasticSearchDocConstants.DEFINITION_METADATA_TABLE_COST,
+            ElasticSearchDocConstants.DEFINITION_METADATA_LIFECYCLE,
+            ElasticSearchDocConstants.DEFINITION_METADATA_AUDIENCE,
+            ElasticSearchDocConstants.DEFINITION_METADATA_MODEL,
+            ElasticSearchDocConstants.DEFINITION_METADATA_SUBJECT_AREA,
+            ElasticSearchDocConstants.DEFINITION_METADATA_DATA_CATEGORY,
+            ElasticSearchDocConstants.DEFINITION_METADATA_JOB,
+            ElasticSearchDocConstants.DEFINITION_METADATA_TABLE_DESCRIPTION,
+    };
 
     /**
      * Constructor.
-     * @param id doc id
-     * @param dto dto
-     * @param user user name
+     *
+     * @param id      doc id
+     * @param dto     dto
+     * @param user    user name
      * @param deleted is it marked deleted
      */
     public ElasticSearchDoc(final String id, final Object dto, final String user, final boolean deleted) {
@@ -52,14 +77,15 @@ public class ElasticSearchDoc {
 
     /**
      * Constructor.
-     * @param id doc id
-     * @param dto dto
-     * @param user user name
-     * @param deleted is it marked deleted
+     *
+     * @param id            doc id
+     * @param dto           dto
+     * @param user          user name
+     * @param deleted       is it marked deleted
      * @param refreshMarker marker
      */
     public ElasticSearchDoc(final String id, final Object dto, final String user, final boolean deleted,
-        final String refreshMarker) {
+                            final String refreshMarker) {
         this.id = id;
         this.dto = dto;
         this.user = user;
@@ -73,6 +99,7 @@ public class ElasticSearchDoc {
 
     /**
      * Parse the elastic search response.
+     *
      * @param response response
      * @return document
      */
@@ -82,10 +109,9 @@ public class ElasticSearchDoc {
             final Map<String, Object> responseMap = response.getSourceAsMap();
             final String user = (String) responseMap.get(Field.USER);
             final boolean deleted = (boolean) responseMap.get(Field.DELETED);
-            @SuppressWarnings("unchecked")
-            final Object dto = MetacatJsonLocator.INSTANCE.parseJsonValue(
-                response.getSourceAsBytes(),
-                getClass(response.getType())
+            @SuppressWarnings("unchecked") final Object dto = MetacatJsonLocator.INSTANCE.parseJsonValue(
+                    response.getSourceAsBytes(),
+                    getClass(response.getType())
             );
             result = new ElasticSearchDoc(response.getId(), dto, user, deleted);
         }
@@ -94,6 +120,10 @@ public class ElasticSearchDoc {
 
     private ObjectNode toJsonObject() {
         final ObjectNode oMetadata = MetacatJsonLocator.INSTANCE.toJsonObject(dto);
+        if (addSearchableDefinitionMetadata) {
+            //add the searchable definition metadata
+            addSearchableDefinitionMetadata(oMetadata);
+        }
         //True if this entity has been deleted
         oMetadata.put(Field.DELETED, deleted);
         //True if this entity has been deleted
@@ -104,16 +134,36 @@ public class ElasticSearchDoc {
         return oMetadata;
     }
 
+    /**
+     * addSearchableDefinitionMetadata.
+     *
+     * @param objectNode object node
+     */
+    public void addSearchableDefinitionMetadata(final ObjectNode objectNode) {
+        final JsonNode jsonNode = objectNode.get(ElasticSearchDocConstants.DEFINITION_METADATA);
+        final ObjectNode node = JsonNodeFactory.instance.objectNode();
+        for (final String tag : definitionMetadataFields) {
+            node.set(tag, jsonNode.get(tag));
+        }
+        objectNode.set(Field.SEARCHABLE_DEFINITION_METADATA, node);
+    }
+
     String toJsonString() {
         final String result = MetacatJsonLocator.INSTANCE.toJsonString(toJsonObject());
         return result.replace("{}", "null");
     }
 
-    /** Document types. */
+    /**
+     * Document types.
+     */
     public enum Type {
-        /** Document types. */
+        /**
+         * Document types.
+         */
         catalog(CatalogDto.class), database(DatabaseDto.class), table(TableDto.class),
-        /** Document types. */
+        /**
+         * Document types.
+         */
         mview(TableDto.class), partition(PartitionDto.class);
 
         private Class clazz;
@@ -127,10 +177,15 @@ public class ElasticSearchDoc {
         }
     }
 
-    /** Document context attributes. */
+    /**
+     * Document context attributes.
+     */
     protected static class Field {
         public static final String USER = "user_";
         public static final String DELETED = "deleted_";
         public static final String REFRESH_MARKER = "refreshMarker_";
+        public static final String SEARCHABLE_DEFINITION_METADATA = "searchableDefinitionMetadata";
     }
+
+
 }
