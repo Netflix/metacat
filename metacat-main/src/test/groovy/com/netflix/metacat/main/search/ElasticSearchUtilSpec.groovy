@@ -13,6 +13,9 @@
 
 package com.netflix.metacat.main.search
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.json.MetacatJsonLocator
@@ -116,7 +119,6 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
         catalogName     | databaseName  | tableName     | id                        | uri
         'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part' | 's3:/a/b'
     }
-
 
 
     @Unroll
@@ -271,6 +273,22 @@ class ElasticSearchUtilSpec extends BaseEsSpec{
             resultByUri.size() == 1
             resultByUri[0] == id
         }
+        where:
+        catalogName     | databaseName  | tableName     | id                        | uri
+        'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part' | 's3:/a/b'
+    }
+
+    def "Test ElasticSearchDoc addSearchableDefinitionMetadata"(){
+        given:
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
+        ElasticSearchDoc doc = new ElasticSearchDoc("test", table, "zhenl", false);
+        ObjectNode oMetadata = MetacatJsonLocator.INSTANCE.toJsonObject(table);
+        doc.addSearchableDefinitionMetadata(oMetadata);
+        expect:
+        ObjectNode node = oMetadata.get("searchableDefinitionMetadata");
+        node.get("owner") != null
+        node.get("lifetime") != null
+        node.get("extendedSchema") != null
         where:
         catalogName     | databaseName  | tableName     | id                        | uri
         'prodhive'      | 'amajumdar'   | 'part'        | 'prodhive/amajumdar/part' | 's3:/a/b'
