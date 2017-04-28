@@ -82,7 +82,7 @@
                         }
                     }
                 },
-                "definitionMetadata": {
+                "searchableDefinitionMetadata": {
                     "properties": {
                         "job": {
                             "properties": {
@@ -142,45 +142,13 @@
                         }
                     }
                 },
+                "definitionMetadata": {
+                    "type": "object",
+                    "enabled": false
+                },
                 "dataMetadata":{
-                    "properties": {
-                        "metrics": {
-                            "properties": {
-                                "com.netflix.dse.mds.metric.TopK": {
-                                    "type": "object",
-                                    "enabled": false
-                                },
-                                "com.netflix.dse.mds.metric.MaxFieldMetric": {
-                                    "type": "object",
-                                    "enabled": false
-                                },
-                                "com.netflix.dse.mds.metric.MaxStrLen": {
-                                    "type": "object",
-                                    "enabled": false
-                                },
-                                "com.netflix.dse.mds.metric.MinFieldMetric": {
-                                    "type": "object",
-                                    "enabled": false
-                                },
-                                "com.netflix.dse.mds.metric.NullCountFieldMetric": {
-                                    "type": "object",
-                                    "enabled": false
-                                },
-                                "com.netflix.dse.mds.metric.SumFieldMetric": {
-                                    "type": "object",
-                                    "enabled": false
-                                },
-                                "com.netflix.dse.mds.metric.GenieJobId": {
-                                    "properties": {
-                                        "value": {
-                                            "type": "string",
-                                            "index": "not_analyzed"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    "type": "object",
+                    "enabled": false
                 },
                 "name": {
                     "properties": {
