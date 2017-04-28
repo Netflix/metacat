@@ -33,17 +33,10 @@ import java.util.Map;
  */
 @Getter
 public class ElasticSearchDoc {
-    private String id;
-    private Object dto;
-    private String user;
-    private boolean deleted;
-    private String refreshMarker;
-    private boolean addSearchableDefinitionMetadata;
-
     /**
      * Definition Metadata pull out fields.
      */
-    private String[] definitionMetadataFields = {
+    private static final String[] DEFINITION_METADATA_FIELDS = {
             ElasticSearchDocConstants.DEFINITION_METADATA_OWNER,
             ElasticSearchDocConstants.DEFINITION_METADATA_TAGS,
             ElasticSearchDocConstants.DEFINITION_METADATA_DATA_HYGIENE,
@@ -59,6 +52,14 @@ public class ElasticSearchDoc {
             ElasticSearchDocConstants.DEFINITION_METADATA_JOB,
             ElasticSearchDocConstants.DEFINITION_METADATA_TABLE_DESCRIPTION,
     };
+
+    private String id;
+    private Object dto;
+    private String user;
+    private boolean deleted;
+    private String refreshMarker;
+    private boolean addSearchableDefinitionMetadataEabled;
+
 
     /**
      * Constructor.
@@ -120,7 +121,7 @@ public class ElasticSearchDoc {
 
     private ObjectNode toJsonObject() {
         final ObjectNode oMetadata = MetacatJsonLocator.INSTANCE.toJsonObject(dto);
-        if (addSearchableDefinitionMetadata) {
+        if (addSearchableDefinitionMetadataEabled) {
             //add the searchable definition metadata
             addSearchableDefinitionMetadata(oMetadata);
         }
@@ -135,14 +136,14 @@ public class ElasticSearchDoc {
     }
 
     /**
-     * addSearchableDefinitionMetadata.
+     * addSearchableDefinitionMetadataEabled.
      *
      * @param objectNode object node
      */
     public void addSearchableDefinitionMetadata(final ObjectNode objectNode) {
         final JsonNode jsonNode = objectNode.get(ElasticSearchDocConstants.DEFINITION_METADATA);
         final ObjectNode node = JsonNodeFactory.instance.objectNode();
-        for (final String tag : definitionMetadataFields) {
+        for (final String tag : DEFINITION_METADATA_FIELDS) {
             node.set(tag, jsonNode.get(tag));
         }
         objectNode.set(Field.SEARCHABLE_DEFINITION_METADATA, node);
