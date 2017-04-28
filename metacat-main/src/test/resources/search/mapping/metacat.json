@@ -1,5 +1,6 @@
 {
     "settings": {
+        "index":{"number_of_shards":10},
         "analysis": {
             "analyzer": {
                 "paths": {

@@ -239,7 +239,6 @@ class DataDtoProvider {
     }
 
     def static getDefinitionMetadata(String owner){
-       // return metacatJson.parseJsonObject('{"hive": {"cleanup": true},"owner": {"team": "Cloud Platform Engineering","userId":"' + owner + '","name":"' + owner + '"}}')
         return metacatJson.parseJsonObject('{\n' +
                 '  "tags": [\n' +
                 '    "data-category:detailed customer",\n' +
