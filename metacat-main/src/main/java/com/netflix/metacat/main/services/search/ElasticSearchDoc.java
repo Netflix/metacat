@@ -58,7 +58,7 @@ public class ElasticSearchDoc {
     private String user;
     private boolean deleted;
     private String refreshMarker;
-    private boolean addSearchableDefinitionMetadataEabled;
+    private boolean addSearchableDefinitionMetadataEabled = true;
 
 
     /**
