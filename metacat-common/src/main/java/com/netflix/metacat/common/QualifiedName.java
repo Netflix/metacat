@@ -42,6 +42,7 @@ public final class QualifiedName implements Serializable {
 
     private String qualifiedName;
     private Map<String, String> qualifiedNameMap;
+    private Map<String, String> parts;
     private Type type;
 
     private QualifiedName(@Nonnull final String catalogName,
@@ -349,7 +350,7 @@ public final class QualifiedName implements Serializable {
     @JsonValue
     public Map<String, String> toJson() {
         if (qualifiedNameMap == null) {
-            final Map<String, String> map = new HashMap<>(4);
+            final Map<String, String> map = new HashMap<>(5);
             map.put("qualifiedName", toString());
             map.put("catalogName", catalogName);
 
@@ -373,6 +374,37 @@ public final class QualifiedName implements Serializable {
         }
 
         return qualifiedNameMap;
+    }
+
+    /**
+     * Returns the qualified name in parts.
+     * @return parts of the qualified name as a Map
+     */
+    public Map<String, String> parts() {
+        if (parts == null) {
+            final Map<String, String> map = new HashMap<>(4);
+            map.put("catalogName", catalogName);
+
+            if (!databaseName.isEmpty()) {
+                map.put("databaseName", databaseName);
+            }
+
+            if (!tableName.isEmpty()) {
+                map.put("tableName", tableName);
+            }
+
+            if (!partitionName.isEmpty()) {
+                map.put("partitionName", partitionName);
+            }
+
+            if (!viewName.isEmpty()) {
+                map.put("viewName", viewName);
+            }
+
+            parts = map;
+        }
+
+        return parts;
     }
 
     public boolean isViewDefinition() {

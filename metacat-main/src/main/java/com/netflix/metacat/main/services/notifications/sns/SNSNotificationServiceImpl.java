@@ -23,7 +23,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.diff.JsonDiff;
-import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.TableDto;
@@ -51,7 +50,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nonnull;
 import javax.validation.constraints.Size;
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -288,14 +286,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
 
     private void handleException(final QualifiedName name, final String message, final String counterKey,
         final SNSMessage payload, final Exception e) {
-        log.error(String.format("%s with payload: %s", message, payload), e);
-        DynamicCounter.increment(counterKey, getQualifiedNameTagList(name));
-    }
-
-    private static BasicTagList getQualifiedNameTagList(final QualifiedName name) {
-        final Map<String, String> tags = Maps.newHashMap(name.toJson());
-        tags.remove("qualifiedName");
-        return BasicTagList.copyOf(tags);
+        log.error("{} with payload: {}", message, payload, e);
+        DynamicCounter.increment(counterKey, BasicTagList.copyOf(name.parts()));
     }
 
     private UpdateTableMessage createUpdateTableMessage(
