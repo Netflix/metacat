@@ -38,6 +38,7 @@ public interface ConnectorPlugin {
 
     /**
      * Returns the service implementation for the type.
+     *
      * @param connectorName connector name. This is also the catalog name.
      * @param configuration configuration properties
      * @return connector factory
@@ -58,6 +59,7 @@ public interface ConnectorPlugin {
      * @return Returns the dto converter implementation of the connector.
      */
     default ConnectorInfoConverter getInfoConverter() {
-        return new ConnectorInfoConverter() { };
+        return new ConnectorInfoConverter() {
+        };
     }
 }

@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.server.monitoring;
 
 import com.google.common.cache.CacheBuilder;
@@ -97,8 +101,7 @@ public final class TimerWrapper {
         .build(
             new CacheLoader<String, Timer>() {
                 public Timer load(
-                    @Nonnull
-                    final String timerName) {
+                    @Nonnull final String timerName) {
                     final Timer timer = Monitors.newTimer(timerName);
                     DefaultMonitorRegistry.getInstance().register(timer);
                     return timer;
@@ -121,6 +124,7 @@ public final class TimerWrapper {
 
     /**
      * Creates the timer.
+     *
      * @param name name of the timer
      * @return TimerWrapper
      */
@@ -132,6 +136,7 @@ public final class TimerWrapper {
 
     /**
      * Creates the timer.
+     *
      * @param name name of the timer
      * @return TimerWrapper
      */
@@ -148,6 +153,7 @@ public final class TimerWrapper {
 
     /**
      * Stops the timer.
+     *
      * @return duration in milliseconds
      */
     public long stop() {

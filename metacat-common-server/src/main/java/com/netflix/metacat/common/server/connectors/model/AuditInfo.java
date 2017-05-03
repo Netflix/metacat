@@ -15,7 +15,6 @@
  *     limitations under the License.
  *
  */
-
 package com.netflix.metacat.common.server.connectors.model;
 
 import lombok.AllArgsConstructor;
@@ -28,6 +27,8 @@ import java.util.Date;
 
 /**
  * Audit information.
+ *
+ * @author amajumdar
  * @since 1.0.0
  */
 @SuppressWarnings("unused")

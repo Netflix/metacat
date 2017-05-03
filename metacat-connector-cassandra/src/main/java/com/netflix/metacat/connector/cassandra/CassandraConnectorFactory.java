@@ -53,7 +53,7 @@ class CassandraConnectorFactory extends DefaultConnectorFactory {
     public void stop() {
         super.stop();
         // Stop the cassandra cluster
-        final Cluster cluster = this.getInjector().getInstance(Cluster.class);
+        final Cluster cluster = this.getContext().getInstance(Cluster.class);
         if (cluster != null) {
             cluster.close();
         }

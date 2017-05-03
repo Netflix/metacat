@@ -26,9 +26,11 @@ import com.netflix.metacat.common.server.model.TagItem;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.converter.DozerTypeConverter;
-import com.netflix.metacat.common.server.converter.TypeConverterProvider;
+import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import com.netflix.metacat.common.server.events.DeadEventHandler;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
+import com.netflix.metacat.common.server.properties.ArchaiusConfigImpl;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 
@@ -53,8 +55,8 @@ public class CommonModule extends AbstractModule {
         });
         bind(ConverterUtil.class).asEagerSingleton();
         bind(DozerTypeConverter.class).asEagerSingleton();
-        binder().bind(ConnectorTypeConverter.class).toProvider(TypeConverterProvider.class);
-        bind(TypeConverterProvider.class).asEagerSingleton();
+        binder().bind(ConnectorTypeConverter.class).toProvider(TypeConverterFactory.class);
+        bind(TypeConverterFactory.class).asEagerSingleton();
 
         // Injecting statics is a bad pattern and should be avoided, but I am doing it as a first step to allow
         // us to remove the hard coded username.

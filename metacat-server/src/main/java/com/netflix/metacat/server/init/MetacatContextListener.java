@@ -17,7 +17,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Module;
 import com.netflix.config.ConfigurationManager;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.init.MetacatInitializationService;
 import com.netflix.metacat.main.init.MetacatServletModule;
 import com.netflix.metacat.usermetadata.mysql.MysqlUserMetadataModule;

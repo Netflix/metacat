@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.common.server;
+package com.netflix.metacat.common.server.properties;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -57,9 +57,6 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicBooleanProperty usePigTypes;
     private final DynamicIntProperty serviceMaxNumberOfThreads;
     private final DynamicStringProperty tableNamesToThrowErrorWhenNoFilterOnListPartitions;
-    private List<QualifiedName> qualifiedNamesToThrowErrorWhenNoFilterOnListPartitions;
-    private List<QualifiedName> qualifiedNamesElasticSearchRefreshExclude;
-    private List<QualifiedName> qualifiedNamesElasticSearchRefreshIncludeDatabases;
     private final DynamicIntProperty dataMetadataDeleteMarkerLifetimeInDays;
     private final DynamicBooleanProperty canSoftDeleteDataMetadata;
     private final DynamicBooleanProperty canCascadeViewsMetadataOnTableDelete;
@@ -67,6 +64,9 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicBooleanProperty snsEnabled;
     private final DynamicStringProperty snsTopicTableArn;
     private final DynamicStringProperty snsTopicPartitionArn;
+    private List<QualifiedName> qualifiedNamesToThrowErrorWhenNoFilterOnListPartitions;
+    private List<QualifiedName> qualifiedNamesElasticSearchRefreshExclude;
+    private List<QualifiedName> qualifiedNamesElasticSearchRefreshIncludeDatabases;
 
     /**
      * Default constructor.
@@ -77,6 +77,7 @@ public class ArchaiusConfigImpl implements Config {
 
     /**
      * Constructor.
+     *
      * @param factory property factory
      */
     public ArchaiusConfigImpl(final DynamicPropertyFactory factory) {

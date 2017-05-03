@@ -18,11 +18,11 @@ package com.netflix.metacat.common.server.monitoring;
  */
 public enum LogConstants {
     /**
-    General logging constants.
+     * General logging constants.
      */
     GlobalPrefix("dse"), AppPrefix(GlobalPrefix + ".metacat"),
     /**
-    Counters.
+     * Counters.
      */
     CounterCreateCatalog(AppPrefix + ".countCreateCatalog"),
     CounterCreateTable(AppPrefix + ".countCreateTable"),
@@ -70,8 +70,8 @@ public enum LogConstants {
     CounterUpdateTableFailure(AppPrefix + ".countUpdateTableFailure"),
     CounterSaveTablePartitionsFailure(AppPrefix + ".countSaveTablePartitionsFailure"),
     CounterSaveMViewPartitionsFailure(AppPrefix + ".countSaveMViewPartitionsFailure"),
-    /*
-    Tracers
+    /**
+     * Tracers
      */
     TracerCreateCatalog(AppPrefix + ".traceCreateCatalog"),
     TracerCreateTable(AppPrefix + ".traceCreateTable"),
@@ -96,8 +96,8 @@ public enum LogConstants {
     TracerUpdateTable(AppPrefix + ".traceUpdateTable"),
     TracerSaveTablePartitions(AppPrefix + ".traceSaveTablePartitions"),
     TracerSaveMViewPartitions(AppPrefix + ".traceSaveMViewPartitions"),
-    /*
-    Gauges
+    /**
+     * Gauges
      */
     GaugeAddPartitions(AppPrefix + ".gaugeAddPartitions"),
     GaugeDeletePartitions(AppPrefix + ".gaugeDeletePartitions"),

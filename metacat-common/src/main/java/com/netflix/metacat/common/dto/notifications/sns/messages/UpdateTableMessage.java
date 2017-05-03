@@ -23,8 +23,12 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.dto.notifications.sns.SNSMessage;
 import com.netflix.metacat.common.dto.notifications.sns.SNSMessageType;
 import com.netflix.metacat.common.dto.notifications.sns.payloads.UpdatePayload;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
+
+import javax.annotation.Nonnull;
 
 /**
  * A message sent when a table is updated.
@@ -34,6 +38,7 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class UpdateTableMessage extends SNSMessage<UpdatePayload<TableDto>> {
 
     /**
@@ -47,11 +52,11 @@ public class UpdateTableMessage extends SNSMessage<UpdatePayload<TableDto>> {
      */
     @JsonCreator
     public UpdateTableMessage(
-        @JsonProperty("id") final String id,
+        @JsonProperty("id") @Nonnull @NonNull final String id,
         @JsonProperty("timestamp") final long timestamp,
-        @JsonProperty("requestId") final String requestId,
-        @JsonProperty("name") final String name,
-        @JsonProperty("payload") final UpdatePayload<TableDto> payload
+        @JsonProperty("requestId") @Nonnull @NonNull final String requestId,
+        @JsonProperty("name") @Nonnull @NonNull final String name,
+        @JsonProperty("payload") @Nonnull @NonNull final UpdatePayload<TableDto> payload
     ) {
         super(id, timestamp, requestId, SNSMessageType.TABLE_UPDATE, name, payload);
     }

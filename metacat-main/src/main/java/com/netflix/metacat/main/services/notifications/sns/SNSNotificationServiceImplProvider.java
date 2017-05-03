@@ -21,7 +21,7 @@ import com.amazonaws.services.sns.AmazonSNSClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.services.notifications.DefaultNotificationServiceImpl;
 import com.netflix.metacat.main.services.notifications.NotificationService;
 import lombok.extern.slf4j.Slf4j;

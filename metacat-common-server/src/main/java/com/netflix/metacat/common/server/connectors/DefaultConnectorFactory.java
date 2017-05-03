@@ -17,12 +17,12 @@
  */
 package com.netflix.metacat.common.server.connectors;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import javax.annotation.Nonnull;
 
@@ -37,21 +37,21 @@ import javax.annotation.Nonnull;
 public class DefaultConnectorFactory implements ConnectorFactory {
 
     private final String name;
-    private final Injector injector;
+    private final ApplicationContext context;
 
     /**
      * Constructor.
      *
-     * @param name          The catalog name
-     * @param modules The catalog configuration
+     * @param name                 The catalog name
+     * @param configurationClasses The Spring configuration classes to use to create this factory
      */
     public DefaultConnectorFactory(
         @Nonnull @NonNull final String name,
-        @Nonnull @NonNull final Iterable<? extends Module> modules
+        @Nonnull @NonNull final Class<?>... configurationClasses
     ) {
         log.info("Creating connector factory for catalog {}", name);
         this.name = name;
-        this.injector = Guice.createInjector(modules);
+        this.context = new AnnotationConfigApplicationContext(configurationClasses);
     }
 
     /**
@@ -94,11 +94,10 @@ public class DefaultConnectorFactory implements ConnectorFactory {
     }
 
     private <T extends ConnectorBaseService> T getService(@Nonnull @NonNull final Class<T> serviceClass) {
-        final T service = this.injector.getInstance(serviceClass);
-        if (service != null) {
-            return service;
-        } else {
-            throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
+        try {
+            return this.context.getBean(serviceClass);
+        } catch (final NoSuchBeanDefinitionException nsbd) {
+            throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE, nsbd);
         }
     }
 }

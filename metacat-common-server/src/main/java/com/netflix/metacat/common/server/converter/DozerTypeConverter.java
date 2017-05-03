@@ -15,38 +15,62 @@
  *     limitations under the License.
  *
  */
-
 package com.netflix.metacat.common.server.converter;
 
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.type.Type;
+import lombok.NonNull;
 import org.dozer.DozerConverter;
+import org.springframework.beans.factory.FactoryBean;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import javax.annotation.Nonnull;
 
 /**
  * Dozer converter implementation for data types.
+ *
+ * @author amajumdar
+ * @author tgianos
+ * @since 1.0.0
  */
 public class DozerTypeConverter extends DozerConverter<Type, String> {
-    private Provider<ConnectorTypeConverter> typeConverter;
+    private FactoryBean<ConnectorTypeConverter> typeConverterFactory;
+
     /**
      * Constructor.
-     * @param typeConverter Type converter provider
+     *
+     * @param typeConverterFactory Type converter factory
      */
-    @Inject
-    public DozerTypeConverter(final Provider<ConnectorTypeConverter> typeConverter) {
+    public DozerTypeConverter(@Nonnull @NonNull final FactoryBean<ConnectorTypeConverter> typeConverterFactory) {
         super(Type.class, String.class);
-        this.typeConverter = typeConverter;
+        this.typeConverterFactory = typeConverterFactory;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String convertTo(final Type source, final String destination) {
-        return typeConverter.get().fromMetacatType(source);
+        final ConnectorTypeConverter typeConverter;
+        try {
+            typeConverter = this.typeConverterFactory.getObject();
+        } catch (final Exception e) {
+            throw new IllegalStateException("Unable to get a type converter", e);
+        }
+        return typeConverter.fromMetacatType(source);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Type convertFrom(final String source, final Type destination) {
-        return typeConverter.get().toMetacatType(source);
+        final ConnectorTypeConverter typeConverter;
+        try {
+            typeConverter = this.typeConverterFactory.getObject();
+        } catch (final Exception e) {
+            throw new IllegalStateException("Unable to get a type converter", e);
+        }
+
+        return typeConverter.toMetacatType(source);
     }
 }

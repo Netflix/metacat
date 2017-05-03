@@ -23,7 +23,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.model.Lookup;
 import com.netflix.metacat.common.server.model.TagItem;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;

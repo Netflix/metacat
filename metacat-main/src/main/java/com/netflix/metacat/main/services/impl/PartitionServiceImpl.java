@@ -31,7 +31,7 @@ import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.monitoring.DynamicGauge;
 import com.netflix.metacat.common.server.monitoring.LogConstants;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
@@ -41,7 +41,7 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPreEv
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
-import com.netflix.metacat.common.server.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;

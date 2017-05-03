@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.json;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,10 +34,12 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * MetacaJson implementation.
+ * MetacatJson implementation.
  */
 public enum MetacatJsonLocator implements MetacatJson {
-    /** default metacat JSON instance. */
+    /**
+     * default metacat JSON instance.
+     */
     INSTANCE;
 
     private final ObjectMapper objectMapper;
@@ -55,8 +61,7 @@ public enum MetacatJsonLocator implements MetacatJson {
     @Override
     @Nullable
     public ObjectNode deserializeObjectNode(
-        @Nonnull
-            final ObjectInputStream inputStream) throws IOException {
+        @Nonnull final ObjectInputStream inputStream) throws IOException {
         final boolean exists = inputStream.readBoolean();
 
         ObjectNode json = null;
@@ -85,10 +90,8 @@ public enum MetacatJsonLocator implements MetacatJson {
 
     @Override
     public void mergeIntoPrimary(
-        @Nonnull
-        final ObjectNode primary,
-        @Nonnull
-        final ObjectNode additional) {
+        @Nonnull final ObjectNode primary,
+        @Nonnull final ObjectNode additional) {
         try {
             recursiveMerge(primary, additional);
         } catch (MetacatJsonException e) {
@@ -162,10 +165,8 @@ public enum MetacatJsonLocator implements MetacatJson {
 
     @Override
     public void serializeObjectNode(
-        @Nonnull
-        final ObjectOutputStream outputStream,
-        @Nullable
-        final ObjectNode json)
+        @Nonnull final ObjectOutputStream outputStream,
+        @Nullable final ObjectNode json)
         throws IOException {
         final boolean exists = json != null;
         outputStream.writeBoolean(exists);

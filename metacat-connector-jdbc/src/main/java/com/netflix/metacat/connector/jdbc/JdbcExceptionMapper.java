@@ -18,7 +18,7 @@
 package com.netflix.metacat.connector.jdbc;
 
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.server.exception.ConnectorException;
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;

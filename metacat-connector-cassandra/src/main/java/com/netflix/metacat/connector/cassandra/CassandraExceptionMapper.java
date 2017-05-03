@@ -20,9 +20,9 @@ package com.netflix.metacat.connector.cassandra;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.server.exception.ConnectorException;
-import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException;
-import com.netflix.metacat.common.server.exception.TableAlreadyExistsException;
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
+import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
+import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExistsException;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
@@ -32,7 +32,7 @@ import javax.annotation.Nonnull;
  *
  * @author tgianos
  * @see com.datastax.driver.core.exceptions.DriverException
- * @see com.netflix.metacat.common.server.exception.ConnectorException
+ * @see com.netflix.metacat.common.server.connectors.exception.ConnectorException
  * @since 1.0.0
  */
 public class CassandraExceptionMapper {

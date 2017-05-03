@@ -21,6 +21,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -36,13 +37,13 @@ import java.util.List;
  * @author zhenl
  * @since 1.0.0
  */
+@Getter
 public class RowType extends AbstractType implements ParametricType {
     /**
      * default type.
      */
     static final RowType ROW = new RowType(Collections.<RowField>emptyList());
 
-    @Getter
     private final List<RowField> fields;
 
     /**
@@ -104,11 +105,17 @@ public class RowType extends AbstractType implements ParametricType {
         return new RowType(builder.build());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TypeEnum getBaseType() {
         return TypeEnum.ROW;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public RowType createType(@Nonnull @NonNull final List<Type> types, @Nonnull @NonNull final List<Object> literals) {
         final ImmutableList.Builder<String> builder = ImmutableList.builder();
@@ -118,6 +125,9 @@ public class RowType extends AbstractType implements ParametricType {
         return RowType.createRowType(types, builder.build());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Type> getParameters() {
         final ImmutableList.Builder<Type> result = ImmutableList.builder();
@@ -130,10 +140,10 @@ public class RowType extends AbstractType implements ParametricType {
     /**
      * Row field.
      */
+    @Getter
+    @EqualsAndHashCode
     public static class RowField {
-        @Getter
         private final Type type;
-        @Getter
         private final String name;
 
         /**

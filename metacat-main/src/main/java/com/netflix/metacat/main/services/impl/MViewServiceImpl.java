@@ -40,8 +40,8 @@ import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPreEvent;
-import com.netflix.metacat.common.server.exception.NotFoundException;
-import com.netflix.metacat.common.server.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;

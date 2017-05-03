@@ -25,7 +25,7 @@ import com.netflix.metacat.common.dto.DatabaseDto
 import com.netflix.metacat.common.dto.FieldDto
 import com.netflix.metacat.common.dto.PartitionDto
 import com.netflix.metacat.common.dto.TableDto
-import com.netflix.metacat.common.server.Config
+import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.util.MetacatContextManager
 import org.apache.hadoop.hive.metastore.api.AddPartitionsRequest
 import org.apache.hadoop.hive.metastore.api.Database

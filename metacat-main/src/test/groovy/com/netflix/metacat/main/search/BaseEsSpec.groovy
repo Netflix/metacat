@@ -16,7 +16,7 @@ package com.netflix.metacat.main.search
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
-import com.netflix.metacat.common.server.Config
+import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.main.services.search.ElasticSearchUtilImpl
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
