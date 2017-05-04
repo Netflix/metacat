@@ -17,12 +17,14 @@ import com.google.inject.servlet.ServletModule;
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.MetadataV1;
 import com.netflix.metacat.common.api.PartitionV1;
+import com.netflix.metacat.common.api.ResolverV1;
 import com.netflix.metacat.common.api.SearchMetacatV1;
 import com.netflix.metacat.common.api.TagV1;
 import com.netflix.metacat.common.server.CommonModule;
 import com.netflix.metacat.main.api.MetacatV1Resource;
 import com.netflix.metacat.main.api.MetadataV1Resource;
 import com.netflix.metacat.main.api.PartitionV1Resource;
+import com.netflix.metacat.main.api.ResovlerV1Resource;
 import com.netflix.metacat.main.api.SearchMetacatV1Resource;
 import com.netflix.metacat.main.api.TagV1Resource;
 import com.netflix.metacat.main.manager.ManagerModule;
@@ -46,5 +48,6 @@ public class MetacatServletModule extends ServletModule {
         binder().bind(SearchMetacatV1.class).to(SearchMetacatV1Resource.class).asEagerSingleton();
         binder().bind(TagV1.class).to(TagV1Resource.class).asEagerSingleton();
         binder().bind(MetacatThriftService.class).asEagerSingleton();
+        binder().bind(ResolverV1.class).to(ResovlerV1Resource.class).asEagerSingleton();
     }
 }

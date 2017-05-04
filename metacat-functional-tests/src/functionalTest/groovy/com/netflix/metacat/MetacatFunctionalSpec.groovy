@@ -23,6 +23,7 @@ import com.netflix.metacat.client.Client
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.api.MetacatV1
 import com.netflix.metacat.common.api.PartitionV1
+import com.netflix.metacat.common.api.ResolverV1
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
 import com.netflix.metacat.common.exception.MetacatBadRequestException
@@ -47,6 +48,7 @@ import static TestUtilities.dateCloseEnough
 class MetacatFunctionalSpec extends Specification {
     public static MetacatV1 api
     public static PartitionV1 partitionApi
+    public static ResolverV1 resolverApi
     public static final MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
     public static final long BATCH_ID = System.currentTimeSeconds()
     public static final int timediff = 24 * 3600
@@ -54,7 +56,6 @@ class MetacatFunctionalSpec extends Specification {
     def setupSpec() {
         String httpPort = System.properties['metacat_http_port']?.toString()?.trim()
         assert httpPort, 'Required system property "metacat_http_port" is not set'
-
         def client = Client.builder()
             .withHost("http://localhost:$httpPort")
             .withDataTypeContext('pig')
@@ -64,9 +65,8 @@ class MetacatFunctionalSpec extends Specification {
             .build()
         api = client.api
         partitionApi = client.partitionApi
-
+        resolverApi = client.resolverApi
         TestCatalogs.resetAll()
-
     }
 
 
@@ -505,6 +505,10 @@ class MetacatFunctionalSpec extends Specification {
             ]
         )
 
+        def resolveByUridto = new ResolveByUriRequestDto(
+            uri: dataUri
+        )
+
         when:
         def database = api.getDatabase(catalog.name, databaseName, false)
 
@@ -517,6 +521,12 @@ class MetacatFunctionalSpec extends Specification {
 
         then:
         database.tables.contains(tableName)
+
+        when:
+        def resovlerRep = resolverApi.resolveByUri(false, resolveByUridto)
+
+        then:
+        !resovlerRep.tables.empty
 
         when:
         def table = api.getTable(catalog.name, databaseName, tableName, true, true, true)
@@ -773,6 +783,10 @@ class MetacatFunctionalSpec extends Specification {
             ]
         )
 
+        def resolveByUridto = new ResolveByUriRequestDto(
+                uri: dataUri
+        )
+
         when:
         def keys = partitionApi.getPartitionKeys(name.catalogName, name.databaseName, name.tableName, null, null, null, null, null)
 
@@ -786,6 +800,16 @@ class MetacatFunctionalSpec extends Specification {
         then:
         response.added.contains(escapedName.partitionName)
         response.updated.empty
+
+        when:
+        def resovlerRep = resolverApi.resolveByUri(false, resolveByUridto)
+        then:
+        !resovlerRep.partitions.empty
+
+        when:
+        def usedMoreThanOnce = resolverApi.isUriUsedMoreThanOnce(false, resolveByUridto)
+        then:
+        thrown(MetacatNotFoundException)
 
         when:
         keys = partitionApi.getPartitionKeys(name.catalogName, name.databaseName, name.tableName, null, null, null, null, null)

@@ -402,7 +402,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
      * @param fields fields
      * @return partition keys
      */
-    public List<String> getPartitionKeys(final List<FieldSchema> fields) {
+    protected List<String> getPartitionKeys(final List<FieldSchema> fields) {
         final List<String> result = Lists.newArrayList();
         if (fields != null) {
             result.addAll(fields.stream().map(FieldSchema::getName).collect(Collectors.toList()));
