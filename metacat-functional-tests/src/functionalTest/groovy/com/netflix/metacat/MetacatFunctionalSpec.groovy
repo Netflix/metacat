@@ -505,10 +505,6 @@ class MetacatFunctionalSpec extends Specification {
             ]
         )
 
-        def resolveByUridto = new ResolveByUriRequestDto(
-            uri: dataUri
-        )
-
         when:
         def database = api.getDatabase(catalog.name, databaseName, false)
 
@@ -523,8 +519,13 @@ class MetacatFunctionalSpec extends Specification {
         database.tables.contains(tableName)
 
         when:
-        def resovlerRep = resolverApi.resolveByUri(false, resolveByUridto)
+        def resovlerRep = resolverApi.resolveByUri(false, new ResolveByUriRequestDto(uri: dataUri))
+        then:
+        !resovlerRep.tables.empty
 
+        when:
+        resovlerRep = resolverApi.resolveByUri(true,
+                new ResolveByUriRequestDto(uri: "file:/tmp/${catalog.name}/${databaseName}/".toString()))
         then:
         !resovlerRep.tables.empty
 
@@ -783,9 +784,7 @@ class MetacatFunctionalSpec extends Specification {
             ]
         )
 
-        def resolveByUridto = new ResolveByUriRequestDto(
-                uri: dataUri
-        )
+        def resolveByUridto = new ResolveByUriRequestDto(uri: dataUri)
 
         when:
         def keys = partitionApi.getPartitionKeys(name.catalogName, name.databaseName, name.tableName, null, null, null, null, null)
@@ -803,6 +802,12 @@ class MetacatFunctionalSpec extends Specification {
 
         when:
         def resovlerRep = resolverApi.resolveByUri(false, resolveByUridto)
+        then:
+        !resovlerRep.partitions.empty
+
+        when:
+        resovlerRep = resolverApi.resolveByUri(true,
+                new ResolveByUriRequestDto(uri: "file:/tmp/${name.catalogName}/${name.databaseName}/${name.tableName}".toString()))
         then:
         !resovlerRep.partitions.empty
 

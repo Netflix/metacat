@@ -15,7 +15,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class ResolveByUriResponseDto extends BaseDto {
-    private static final long serialVersionUID = 3567129374611992646L;
+    private static final long serialVersionUID = -4505346090786555046L;
     private List<QualifiedName> tables;
     private List<QualifiedName> partitions;
 }
