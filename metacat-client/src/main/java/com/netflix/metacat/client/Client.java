@@ -24,6 +24,7 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.MetadataV1;
 import com.netflix.metacat.common.api.PartitionV1;
+import com.netflix.metacat.common.api.ResolverV1;
 import com.netflix.metacat.common.json.MetacatJsonLocator;
 import feign.Feign;
 import feign.Request;
@@ -48,6 +49,7 @@ public final class Client {
     private final String host;
     private final PartitionV1 partitionApi;
     private final MetadataV1 metadataApi;
+    private final ResolverV1 resolverApi;
 
     private Client(
         @Nonnull
@@ -87,6 +89,7 @@ public final class Client {
         api = getApiClient(MetacatV1.class);
         partitionApi = getApiClient(PartitionV1.class);
         metadataApi = getApiClient(MetadataV1.class);
+        resolverApi = getApiClient(ResolverV1.class);
     }
 
     /**
@@ -288,5 +291,14 @@ public final class Client {
      */
     public MetadataV1 getMetadataApi() {
         return metadataApi;
+    }
+
+    /**
+     * Return an API instance that can be used to interact with
+     * the metacat server for getting the qualified name by uri.
+     * @return An instance api conforming to ResolverV1 interface
+     */
+    public ResolverV1 getResolverApi() {
+        return resolverApi;
     }
 }
