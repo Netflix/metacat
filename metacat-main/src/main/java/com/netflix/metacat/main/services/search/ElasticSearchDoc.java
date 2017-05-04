@@ -58,7 +58,7 @@ public class ElasticSearchDoc {
     private String user;
     private boolean deleted;
     private String refreshMarker;
-    private boolean addSearchableDefinitionMetadataEabled = true;
+    private boolean addSearchableDefinitionMetadataEnabled = true;
 
 
     /**
@@ -121,7 +121,7 @@ public class ElasticSearchDoc {
 
     private ObjectNode toJsonObject() {
         final ObjectNode oMetadata = MetacatJsonLocator.INSTANCE.toJsonObject(dto);
-        if (addSearchableDefinitionMetadataEabled) {
+        if (addSearchableDefinitionMetadataEnabled) {
             //add the searchable definition metadata
             addSearchableDefinitionMetadata(oMetadata);
         }
@@ -136,7 +136,7 @@ public class ElasticSearchDoc {
     }
 
     /**
-     * addSearchableDefinitionMetadataEabled.
+     * addSearchableDefinitionMetadataEnabled.
      *
      * @param objectNode object node
      */

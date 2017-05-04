@@ -247,7 +247,11 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @param prefixSearch prefixSearch
      * @return partition names
      */
-    public Map<String, List<QualifiedName>> getPartitionNames(final List<String> uris, final boolean prefixSearch) {
+    @Override
+    public Map<String, List<QualifiedName>> getPartitionNames(
+            @Nonnull final ConnectorContext context,
+            @Nonnull final List<String> uris,
+            final boolean prefixSearch) {
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
         // Get data source
         final DataSource dataSource = DataSourceManager.get().get(catalogName);
