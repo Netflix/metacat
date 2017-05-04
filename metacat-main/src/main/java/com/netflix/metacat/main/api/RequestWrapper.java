@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.main.api;
 
-import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
@@ -36,7 +35,6 @@ import com.netflix.servo.tag.TagList;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -74,7 +72,7 @@ public final class RequestWrapper {
         final QualifiedName name,
         final String resourceRequestName,
         final Supplier<R> supplier) {
-        final BasicTagList tags = getQualifiedNameTagList(name).copy("request", resourceRequestName);
+        final BasicTagList tags = BasicTagList.copyOf(name.parts()).copy("request", resourceRequestName);
         DynamicCounter.increment("dse.metacat.counter.requests", tags);
         final Stopwatch timer = DynamicTimer.start("dse.metacat.timer.requests", tags);
         try {
@@ -115,12 +113,6 @@ public final class RequestWrapper {
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
                 timer.getDuration(TimeUnit.MILLISECONDS));
         }
-    }
-
-    private static BasicTagList getQualifiedNameTagList(final QualifiedName name) {
-        final Map<String, String> tags = Maps.newHashMap(name.toJson());
-        tags.remove("qualifiedName");
-        return BasicTagList.copyOf(tags);
     }
 
     /**

@@ -18,6 +18,7 @@ import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
+import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.manager.PluginManager;
 import com.netflix.metacat.main.manager.CatalogManager;
 import com.netflix.metacat.main.services.notifications.NotificationService;
@@ -87,10 +88,11 @@ public class MetacatInitializationService {
      * @throws Exception error
      */
     public void stop() throws Exception {
+        injector.getInstance(ConnectorManager.class).stop();
         injector.getInstance(UserMetadataService.class).stop();
+        injector.getInstance(MetacatEventBus.class).shutdown();
         injector.getInstance(ThreadServiceManager.class).stop();
-        // Start the thrift services
-        final MetacatThriftService thriftService = injector.getInstance(MetacatThriftService.class);
-        thriftService.stop();
+        // Stop the thrift services
+        injector.getInstance(MetacatThriftService.class).stop();
     }
 }
