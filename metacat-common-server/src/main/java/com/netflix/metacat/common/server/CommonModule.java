@@ -14,11 +14,6 @@
 package com.netflix.metacat.common.server;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.TypeLiteral;
-import com.google.inject.matcher.Matchers;
-import com.google.inject.spi.InjectionListener;
-import com.google.inject.spi.TypeEncounter;
-import com.google.inject.spi.TypeListener;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonLocator;
 import com.netflix.metacat.common.server.model.Lookup;
@@ -44,13 +39,7 @@ public class CommonModule extends AbstractModule {
         bind(MetacatJson.class).toInstance(MetacatJsonLocator.INSTANCE);
         bind(DeadEventHandler.class).asEagerSingleton();
         bind(DataSourceManager.class).toInstance(DataSourceManager.get());
-        final MetacatEventBus eventBus = new MetacatEventBus(config);
-        bind(MetacatEventBus.class).toInstance(eventBus);
-        bindListener(Matchers.any(), new TypeListener() {
-            public <I> void hear(final TypeLiteral<I> typeLiteral, final TypeEncounter<I> typeEncounter) {
-                typeEncounter.register((InjectionListener<I>) eventBus::register);
-            }
-        });
+        bind(MetacatEventBus.class).asEagerSingleton();
         bind(ConverterUtil.class).asEagerSingleton();
         bind(DozerTypeConverter.class).asEagerSingleton();
         binder().bind(ConnectorTypeConverter.class).toProvider(TypeConverterProvider.class);
