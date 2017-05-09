@@ -30,7 +30,7 @@ import com.netflix.metacat.common.server.events.MetacatDeleteDatabasePreEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePreEvent;
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
@@ -83,7 +83,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         validate(name);
         log.info("Creating schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatCreateDatabasePreEvent(name, metacatRequestContext));
+        eventBus.postSync(new MetacatCreateDatabasePreEvent(name, metacatRequestContext, this));
         final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
         connectorManager.getDatabaseService(name.getCatalogName()).create(connectorContext,
             converterUtil.fromDatabaseDto(dto));
@@ -93,7 +93,7 @@ public class DatabaseServiceImpl implements DatabaseService {
                     Optional.of(dto.getDefinitionMetadata()), true);
         }
         final DatabaseDto createdDto = get(name, dto.getDefinitionMetadata() != null);
-        eventBus.postAsync(new MetacatCreateDatabasePostEvent(name, metacatRequestContext, createdDto));
+        eventBus.postAsync(new MetacatCreateDatabasePostEvent(name, metacatRequestContext, this, createdDto));
         return createdDto;
     }
 
@@ -102,7 +102,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         validate(name);
         log.info("Updating schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext));
+        eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
         try {
             final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
             connectorManager.getDatabaseService(name.getCatalogName())
@@ -113,7 +113,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             userMetadataService.saveDefinitionMetadata(name, metacatRequestContext.getUserName(),
                 Optional.of(dto.getDefinitionMetadata()), true);
         }
-        eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext));
+        eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
     }
 
     @Override
@@ -128,7 +128,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         log.info("Dropping schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final DatabaseDto dto = get(name, true);
-        eventBus.postSync(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, dto));
+        eventBus.postSync(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, this, dto));
         final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
         connectorManager.getDatabaseService(name.getCatalogName()).delete(connectorContext, name);
 
@@ -137,7 +137,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             log.info("Deleting user metadata for schema {}", name);
             userMetadataService.deleteDefinitionMetadatas(ImmutableList.of(name));
         }
-        eventBus.postAsync(new MetacatDeleteDatabasePostEvent(name, metacatRequestContext, dto));
+        eventBus.postAsync(new MetacatDeleteDatabasePostEvent(name, metacatRequestContext, this, dto));
     }
 
     @Override

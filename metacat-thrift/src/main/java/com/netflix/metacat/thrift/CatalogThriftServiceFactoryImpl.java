@@ -19,8 +19,8 @@ import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.PartitionV1;
-import com.netflix.metacat.common.server.Config;
-import com.netflix.metacat.common.server.converter.TypeConverterProvider;
+import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 
 import java.util.Objects;
 
@@ -32,7 +32,7 @@ public class CatalogThriftServiceFactoryImpl implements CatalogThriftServiceFact
     private final HiveConverters hiveConverters;
     private final MetacatV1 metacatV1;
     private final PartitionV1 partitionV1;
-    private final TypeConverterProvider typeConverterProvider;
+    private final TypeConverterFactory typeConverterProvider;
     private final LoadingCache<CacheKey, CatalogThriftService> cache = CacheBuilder.newBuilder()
         .build(new CacheLoader<CacheKey, CatalogThriftService>() {
             public CatalogThriftService load(final CacheKey key) {
@@ -50,7 +50,7 @@ public class CatalogThriftServiceFactoryImpl implements CatalogThriftServiceFact
      * @param partitionV1 Partition V1
      */
     @Inject
-    public CatalogThriftServiceFactoryImpl(final Config config, final TypeConverterProvider typeConverterProvider,
+    public CatalogThriftServiceFactoryImpl(final Config config, final TypeConverterFactory typeConverterProvider,
         final HiveConverters hiveConverters, final MetacatV1 metacatV1, final PartitionV1 partitionV1) {
         this.config = config;
         this.typeConverterProvider = typeConverterProvider;

@@ -40,7 +40,7 @@ import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.monitoring.TimerWrapper;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.Warehouse;

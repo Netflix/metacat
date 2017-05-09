@@ -26,8 +26,8 @@ import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.FieldInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException
-import com.netflix.metacat.common.server.exception.TableNotFoundException
+import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
 import com.netflix.metacat.common.type.ArrayType
 import com.netflix.metacat.common.type.BaseType
 import com.netflix.metacat.common.type.MapType

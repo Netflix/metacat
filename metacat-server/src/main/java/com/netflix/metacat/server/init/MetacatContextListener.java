@@ -16,8 +16,7 @@ package com.netflix.metacat.server.init;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Module;
-import com.netflix.config.ConfigurationManager;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.init.MetacatInitializationService;
 import com.netflix.metacat.main.init.MetacatServletModule;
 import com.netflix.metacat.usermetadata.mysql.MysqlUserMetadataModule;
@@ -26,7 +25,6 @@ import com.wordnik.swagger.jaxrs.config.BeanConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.servlet.ServletContextEvent;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -37,11 +35,12 @@ public class MetacatContextListener extends JerseyGuiceServletContextListener {
     static {
         // Initialize configuration
         System.setProperty("archaius.deployment.applicationId", "metacat");
-        try {
-            ConfigurationManager.loadCascadedPropertiesFromResources("metacat");
-        } catch (IOException ignored) {
-            //Do not stop the server initialization
-        }
+        // TODO: This needs to be replaced with new way to initialize properties
+//        try {
+//            ConfigurationManager.loadCascadedPropertiesFromResources("metacat");
+//        } catch (IOException ignored) {
+//            //Do not stop the server initialization
+//        }
     }
 
     @Override

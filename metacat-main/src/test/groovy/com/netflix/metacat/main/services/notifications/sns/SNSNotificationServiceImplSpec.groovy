@@ -18,36 +18,19 @@
 package com.netflix.metacat.main.services.notifications.sns
 
 import com.amazonaws.services.sns.AmazonSNSClient
-import com.amazonaws.services.sns.model.InternalErrorException
 import com.amazonaws.services.sns.model.NotFoundException
 import com.amazonaws.services.sns.model.PublishResult
-import com.amazonaws.services.sns.model.ThrottledException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.TextNode
-import com.github.rholder.retry.RetryerBuilder
-import com.github.rholder.retry.StopStrategies
-import com.github.rholder.retry.WaitStrategies
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.PartitionDto
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto
 import com.netflix.metacat.common.dto.TableDto
-import com.netflix.metacat.common.dto.notifications.sns.messages.AddPartitionMessage
-import com.netflix.metacat.common.dto.notifications.sns.messages.CreateTableMessage
-import com.netflix.metacat.common.dto.notifications.sns.messages.DeletePartitionMessage
-import com.netflix.metacat.common.dto.notifications.sns.messages.DeleteTableMessage
-import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTableMessage
-import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTablePartitionsMessage
-import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent
-import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent
-import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent
-import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent
-import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent
-import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent
+import com.netflix.metacat.common.dto.notifications.sns.messages.*
+import com.netflix.metacat.common.server.events.*
 import spock.lang.Specification
-
-import java.util.concurrent.TimeUnit
 
 /**
  * Tests for the SNSNotificationServiceImpl.
@@ -73,13 +56,21 @@ class SNSNotificationServiceImplSpec extends Specification {
     def partitionArn = UUID.randomUUID().toString()
     def tableArn = UUID.randomUUID().toString()
     def service = new SNSNotificationServiceImpl(this.client, this.tableArn, this.partitionArn, this.mapper)
+    def requestContext = new MetacatRequestContext(
+        UUID.randomUUID().toString(),
+        UUID.randomUUID().toString(),
+        UUID.randomUUID().toString(),
+        UUID.randomUUID().toString(),
+        UUID.randomUUID().toString()
+    )
 
     def "Will Notify On Partition Creation"() {
         def partitions = Lists.newArrayList(new PartitionDto(), new PartitionDto(), new PartitionDto())
 
         def event = new MetacatSaveTablePartitionPostEvent(
             this.qName,
-            Mock(MetacatRequestContext),
+            this.requestContext,
+            this,
             partitions,
             Mock(PartitionsSaveResponseDto)
         )
@@ -105,7 +96,8 @@ class SNSNotificationServiceImplSpec extends Specification {
 
         def event = new MetacatDeleteTablePartitionPostEvent(
             this.qName,
-            Mock(MetacatRequestContext),
+            this.requestContext,
+            this,
             partitions
         )
 
@@ -122,7 +114,8 @@ class SNSNotificationServiceImplSpec extends Specification {
     def "Will Notify On Table Creation"() {
         def event = new MetacatCreateTablePostEvent(
             this.qName,
-            Mock(MetacatRequestContext),
+            this.requestContext,
+            this,
             new TableDto()
         )
 
@@ -137,7 +130,8 @@ class SNSNotificationServiceImplSpec extends Specification {
     def "Will Notify On Table Deletion"() {
         def event = new MetacatDeleteTablePostEvent(
             this.qName,
-            Mock(MetacatRequestContext),
+            this.requestContext,
+            this,
             new TableDto()
         )
 
@@ -152,7 +146,8 @@ class SNSNotificationServiceImplSpec extends Specification {
     def "Will Notify On Table Rename"() {
         def event = new MetacatRenameTablePostEvent(
             this.qName,
-            Mock(MetacatRequestContext),
+            this.requestContext,
+            this,
             new TableDto(),
             new TableDto()
         )
@@ -169,7 +164,8 @@ class SNSNotificationServiceImplSpec extends Specification {
     def "Will Notify On Table Update"() {
         def event = new MetacatUpdateTablePostEvent(
             this.qName,
-            Mock(MetacatRequestContext),
+            this.requestContext,
+            this,
             new TableDto(),
             new TableDto()
         )
@@ -186,7 +182,8 @@ class SNSNotificationServiceImplSpec extends Specification {
     def "Won't retry on Other Exception"() {
         def event = new MetacatCreateTablePostEvent(
             this.qName,
-            Mock(MetacatRequestContext),
+            this.requestContext,
+            this,
             new TableDto()
         )
 

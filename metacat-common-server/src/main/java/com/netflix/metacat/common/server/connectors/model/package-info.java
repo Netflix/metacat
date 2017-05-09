@@ -15,6 +15,7 @@
  *     limitations under the License.
  *
  */
+
 /**
  * Classes and interfaces related to model objects for catalog connectors.
  *

@@ -17,44 +17,40 @@
  */
 package com.netflix.metacat.common.server.events;
 
-import com.google.common.eventbus.AsyncEventBus;
-import com.google.common.eventbus.EventBus;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
-import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.ApplicationEventMulticaster;
 
-import javax.annotation.PreDestroy;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 
 /**
  * Event bus.
+ *
+ * @author amajumdar
+ * @author tgianos
+ * @since 0.x
  */
 @Slf4j
 public class MetacatEventBus {
-    private final AsyncEventBus asyncEventBus;
-    private final EventBus syncEventBus;
-    private final ExecutorService executor;
+
+    private final ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventMulticaster eventMulticaster;
 
     /**
      * Constructor.
      *
-     * @param config config
+     * @param eventPublisher   The synchronous event publisher to use
+     * @param eventMulticaster The asynchronous event multicaster to use
      */
-    @Inject
-    public MetacatEventBus(final Config config) {
-        final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("metacat-event-pool-%d").build();
-        final int threadCount = config.getEventBusThreadCount();
-        this.executor = Executors.newFixedThreadPool(threadCount, threadFactory);
-        this.asyncEventBus = new AsyncEventBus(
-            "metacat-async-event-bus",
-            this.executor
-        );
-        this.syncEventBus = new EventBus("metacat-sync-event-bus");
+    public MetacatEventBus(
+        @Nonnull @NonNull final ApplicationEventPublisher eventPublisher,
+        @Nonnull @NonNull final ApplicationEventMulticaster eventMulticaster
+    ) {
+        this.eventPublisher = eventPublisher;
+        this.eventMulticaster = eventMulticaster;
     }
 
     /**
@@ -62,10 +58,10 @@ public class MetacatEventBus {
      *
      * @param event event
      */
-    public void postAsync(final Object event) {
+    public void postAsync(final ApplicationEvent event) {
         log.debug("Received request to post an event {} asynchronously", event);
         CounterWrapper.incrementCounter("metacat.events.async");
-        this.asyncEventBus.post(event);
+        this.eventMulticaster.multicastEvent(event);
     }
 
     /**
@@ -73,10 +69,10 @@ public class MetacatEventBus {
      *
      * @param event event
      */
-    public void postSync(final Object event) {
+    public void postSync(final ApplicationEvent event) {
         log.debug("Received request to post an event {} synchronously", event);
         CounterWrapper.incrementCounter("metacat.events.sync");
-        this.syncEventBus.post(event);
+        this.eventPublisher.publishEvent(event);
     }
 
     /**
@@ -85,8 +81,6 @@ public class MetacatEventBus {
      * @param object object
      */
     public void register(final Object object) {
-        asyncEventBus.register(object);
-        syncEventBus.register(object);
     }
 
     /**
@@ -95,32 +89,5 @@ public class MetacatEventBus {
      * @param object object
      */
     public void unregister(final Object object) {
-        asyncEventBus.unregister(object);
-        syncEventBus.unregister(object);
-    }
-
-    /**
-     * Shut down the executor. Taken from the javadoc for {@code ExecutorService}
-     *
-     * @see ExecutorService
-     */
-    @PreDestroy
-    public void shutdown() {
-        this.executor.shutdown();
-        try {
-            // Wait a while for existing tasks to terminate
-            if (!this.executor.awaitTermination(60, TimeUnit.SECONDS)) {
-                this.executor.shutdownNow(); // Cancel currently executing tasks
-                // Wait a while for tasks to respond to being cancelled
-                if (!this.executor.awaitTermination(60, TimeUnit.SECONDS)) {
-                    System.err.println("Event bus async thread executor did not terminate");
-                }
-            }
-        } catch (final InterruptedException ie) {
-            // (Re-)Cancel if current thread also interrupted
-            this.executor.shutdownNow();
-            // Preserve interrupt status
-            Thread.currentThread().interrupt();
-        }
     }
 }

@@ -15,11 +15,11 @@
  *     limitations under the License.
  *
  */
-
 package com.netflix.metacat.common.server.connectors;
 
 /**
  * Factory that returns the connector implementations of the service and converter interfaces.
+ *
  * @author amajumdar
  * @since 1.0.0
  */
@@ -31,6 +31,7 @@ public interface ConnectorFactory {
 
     /**
      * Returns the database service implementation of the connector.
+     *
      * @return Returns the database service implementation of the connector.
      */
     default ConnectorDatabaseService getDatabaseService() {
@@ -39,6 +40,7 @@ public interface ConnectorFactory {
 
     /**
      * Returns the table service implementation of the connector.
+     *
      * @return Returns the table service implementation of the connector.
      */
     default ConnectorTableService getTableService() {
@@ -47,6 +49,7 @@ public interface ConnectorFactory {
 
     /**
      * Returns the partition service implementation of the connector.
+     *
      * @return Returns the partition service implementation of the connector.
      */
     default ConnectorPartitionService getPartitionService() {
@@ -55,6 +58,7 @@ public interface ConnectorFactory {
 
     /**
      * Returns the name of the connector.
+     *
      * @return Returns the name of the connector.
      */
     String getName();

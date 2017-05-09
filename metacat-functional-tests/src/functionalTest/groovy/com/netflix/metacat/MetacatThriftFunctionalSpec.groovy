@@ -25,32 +25,23 @@ import com.netflix.metacat.common.QualifiedName
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.TableType
 import org.apache.hadoop.hive.metastore.Warehouse
-import org.apache.hadoop.hive.metastore.api.Database
-import org.apache.hadoop.hive.metastore.api.FieldSchema
-import org.apache.hadoop.hive.metastore.api.InvalidOperationException
-import org.apache.hadoop.hive.metastore.api.SerDeInfo
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor
-import org.apache.hadoop.hive.ql.metadata.Hive
-import org.apache.hadoop.hive.ql.metadata.HiveException
-import org.apache.hadoop.hive.ql.metadata.InvalidTableException
-import org.apache.hadoop.hive.ql.metadata.Partition
-import org.apache.hadoop.hive.ql.metadata.Table
+import org.apache.hadoop.hive.metastore.api.*
+import org.apache.hadoop.hive.ql.metadata.*
 import org.apache.hadoop.hive.ql.plan.AddPartitionDesc
 import org.apache.hadoop.hive.ql.session.SessionState
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
-import spock.lang.Ignore
-import spock.lang.Shared
-import spock.lang.Specification
-import spock.lang.Stepwise
-import spock.lang.Unroll
+import spock.lang.*
+
+import java.util.Date
+
 //TODO REMOVE ALL IGNORE
 
 @Stepwise
 @Unroll
 class MetacatThriftFunctionalSpec extends Specification {
     public static final long BATCH_ID = System.currentTimeSeconds()
-    public static final int timediff = 24*3600
+    public static final int timediff = 24 * 3600
     @Shared
     String hiveThriftUri
     @Shared
@@ -495,19 +486,19 @@ class MetacatThriftFunctionalSpec extends Specification {
         def sdInfoParams = ['serialization.format': '1']
         def sdParams = ['sd_k1': 'sd_v1']
         def partitionKeys = [
-                new FieldSchema('pk1', 'string', 'pk1 comment'),
-                new FieldSchema('pk2', 'bigint', 'pk2 comment')
+            new FieldSchema('pk1', 'string', 'pk1 comment'),
+            new FieldSchema('pk2', 'bigint', 'pk2 comment')
         ]
         def fields = [
-                new FieldSchema('field1', 'string', 'field1 comment'),
-                new FieldSchema('field2', 'boolean', 'field2 comment'),
-                new FieldSchema('field3', 'bigint', 'field3 comment'),
-                new FieldSchema('field4', 'double', 'field4 comment'),
-                new FieldSchema('field5', 'binary', 'field5 comment'),
-                new FieldSchema('field6', 'date', 'field6 comment'),
-                new FieldSchema('field7', 'timestamp', 'field7 comment'),
-                new FieldSchema('field8', 'array<boolean>', 'field8 comment'),
-                new FieldSchema('field9', 'map<string,string>', 'field9 comment'),
+            new FieldSchema('field1', 'string', 'field1 comment'),
+            new FieldSchema('field2', 'boolean', 'field2 comment'),
+            new FieldSchema('field3', 'bigint', 'field3 comment'),
+            new FieldSchema('field4', 'double', 'field4 comment'),
+            new FieldSchema('field5', 'binary', 'field5 comment'),
+            new FieldSchema('field6', 'date', 'field6 comment'),
+            new FieldSchema('field7', 'timestamp', 'field7 comment'),
+            new FieldSchema('field8', 'array<boolean>', 'field8 comment'),
+            new FieldSchema('field9', 'map<string,string>', 'field9 comment'),
         ]
 
         def table = new Table(name.databaseName, tableName)
@@ -582,15 +573,15 @@ class MetacatThriftFunctionalSpec extends Specification {
         def sdInfoParams = ['serialization.format': '1']
         def sdParams = ['sd_k1': 'sd_v1']
         def fields = [
-                new FieldSchema('field1', 'string', 'field1 comment'),
-                new FieldSchema('field2', 'boolean', 'field2 comment'),
-                new FieldSchema('field3', 'bigint', 'field3 comment'),
-                new FieldSchema('field4', 'double', 'field4 comment'),
-                new FieldSchema('field5', 'binary', 'field5 comment'),
-                new FieldSchema('field6', 'date', 'field6 comment'),
-                new FieldSchema('field7', 'timestamp', 'field7 comment'),
-                new FieldSchema('field8', 'array<boolean>', 'field8 comment'),
-                new FieldSchema('field9', 'map<string,string>', 'field9 comment'),
+            new FieldSchema('field1', 'string', 'field1 comment'),
+            new FieldSchema('field2', 'boolean', 'field2 comment'),
+            new FieldSchema('field3', 'bigint', 'field3 comment'),
+            new FieldSchema('field4', 'double', 'field4 comment'),
+            new FieldSchema('field5', 'binary', 'field5 comment'),
+            new FieldSchema('field6', 'date', 'field6 comment'),
+            new FieldSchema('field7', 'timestamp', 'field7 comment'),
+            new FieldSchema('field8', 'array<boolean>', 'field8 comment'),
+            new FieldSchema('field9', 'map<string,string>', 'field9 comment'),
         ]
 
         def table = new Table(name.databaseName, tableName)
@@ -685,7 +676,7 @@ class MetacatThriftFunctionalSpec extends Specification {
 
         where:
         name << TestCatalogs.getCreatedTables(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
-                .findAll { it.tableName.startsWith('unpartitioned') }
+            .findAll { it.tableName.startsWith('unpartitioned') }
     }
 
     def 'createPartition: create partition "#testCriteria.pspec" on table "#testCriteria.table"'() {
@@ -713,18 +704,18 @@ class MetacatThriftFunctionalSpec extends Specification {
         then:
         partNames.contains(partition.name)
         catalog.createdPartitions <<
-                QualifiedName.ofPartition(name.catalogName, name.databaseName, name.tableName, partition.name)
+            QualifiedName.ofPartition(name.catalogName, name.databaseName, name.tableName, partition.name)
 
         where:
         testCriteria << TestCatalogs.getCreatedTables(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
-                .findAll { it.tableName.startsWith('partitioned') }
-                .collect { partitionedTable ->
+            .findAll { it.tableName.startsWith('partitioned') }
+            .collect { partitionedTable ->
             [
-                    ['pk1': 'value with space', 'pk2': '0'],
-                    ['pk1': 'CAP', 'pk2': '0'],
-                    ['pk1': 'ALL_CAP', 'pk2': '0'],
-                    ['pk1': 'lower', 'pk2': '0'],
-                    ['pk1': 'camelCase', 'pk2': '0']
+                ['pk1': 'value with space', 'pk2': '0'],
+                ['pk1': 'CAP', 'pk2': '0'],
+                ['pk1': 'ALL_CAP', 'pk2': '0'],
+                ['pk1': 'lower', 'pk2': '0'],
+                ['pk1': 'camelCase', 'pk2': '0']
 
             ].collect { spec ->
                 return [table: partitionedTable, pspec: spec]
@@ -756,19 +747,19 @@ class MetacatThriftFunctionalSpec extends Specification {
         partitions[0].values == ['key1_val1', '0']
         partitions[0].location.endsWith('/add_part_1')
         catalog.createdPartitions <<
-                QualifiedName.ofPartition(name.catalogName, name.databaseName, name.tableName, partitions[0].name)
+            QualifiedName.ofPartition(name.catalogName, name.databaseName, name.tableName, partitions[0].name)
         partitions[1].values == ['key1_val1', '1']
         partitions[1].location.endsWith('/add_part_2')
         catalog.createdPartitions <<
-                QualifiedName.ofPartition(name.catalogName, name.databaseName, name.tableName, partitions[1].name)
+            QualifiedName.ofPartition(name.catalogName, name.databaseName, name.tableName, partitions[1].name)
         partitions[2].values == ['key1_val2', '2']
         partitions[2].location.endsWith('/add_part_3')
         catalog.createdPartitions <<
-                QualifiedName.ofPartition(name.catalogName, name.databaseName, name.tableName, partitions[2].name)
+            QualifiedName.ofPartition(name.catalogName, name.databaseName, name.tableName, partitions[2].name)
 
         where:
         name << TestCatalogs.getCreatedTables(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
-                .findAll { it.tableName.startsWith('partitioned') }
+            .findAll { it.tableName.startsWith('partitioned') }
     }
 
     def 'getPartitions can be used to find #name'() {
@@ -850,12 +841,12 @@ class MetacatThriftFunctionalSpec extends Specification {
         def thrift = METASTORES.get(catalog.thriftUri)
         def tableName = "test_0129_$BATCH_ID".toString()
         def partitionKeys = [
-                new FieldSchema('pk1', 'string', 'pk1 comment'),
-                new FieldSchema('pk2', 'bigint', 'pk2 comment'),
-                new FieldSchema('pk3', 'bigint', 'pk2 comment')
+            new FieldSchema('pk1', 'string', 'pk1 comment'),
+            new FieldSchema('pk2', 'bigint', 'pk2 comment'),
+            new FieldSchema('pk3', 'bigint', 'pk2 comment')
         ]
         def fields = [
-                new FieldSchema('field1', 'string', 'field1 comment'),
+            new FieldSchema('field1', 'string', 'field1 comment'),
         ]
 
         def table = new Table(name.databaseName, tableName)
@@ -884,9 +875,9 @@ class MetacatThriftFunctionalSpec extends Specification {
         when: 'data is added'
         (0..15).each { i ->
             thrift.createPartition(table, [
-                    'pk1': i % 2 == 0 ? 'even' : 'odd',
-                    'pk2': Integer.toString(i),
-                    'pk3': Integer.toString(i % 2)
+                'pk1': i % 2 == 0 ? 'even' : 'odd',
+                'pk2': Integer.toString(i),
+                'pk3': Integer.toString(i % 2)
             ])
         }
         def partitions = thrift.getPartitionNames(name.databaseName, tableName, (short) -1)

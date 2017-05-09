@@ -30,17 +30,17 @@ class QualifiedNameSpec extends Specification {
         new QualifiedName(catalogName, databaseName, tableName, partitionName, null)
 
         then:
-        thrown(IllegalStateException)
+        thrown(exception)
 
         where:
-        catalogName | databaseName | tableName | partitionName
-        null        | null         | null      | null
-        ''          | null         | null      | null
-        '  '        | null         | null      | null
-        'c'         | null         | 't'       | null
-        'c'         | null         | null      | 'p'
-        'c'         | null         | 't'       | 'p'
-        'c'         | 'd'          | null      | 'p'
+        catalogName | databaseName | tableName | partitionName | exception
+        null        | null         | null      | null          | NullPointerException
+        ''          | null         | null      | null          | IllegalStateException
+        '  '        | null         | null      | null          | IllegalStateException
+        'c'         | null         | 't'       | null          | IllegalStateException
+        'c'         | null         | null      | 'p'           | IllegalStateException
+        'c'         | null         | 't'       | 'p'           | IllegalStateException
+        'c'         | 'd'          | null      | 'p'           | IllegalStateException
     }
 
     @Unroll

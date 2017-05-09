@@ -24,14 +24,16 @@ dependencies {
     compile(project(":metacat-common-server"))
     compile(project(":metacat-thrift"))
 
-    compile("com.amazonaws:aws-java-sdk-sns:${amazon_sns_version}")
-    compile("com.github.rholder:guava-retrying:${guava_retrying_version}") {
+//    compile("com.amazonaws:aws-java-sdk-sns:${amazon_sns_version}")
+    compile("com.amazonaws:aws-java-sdk-sns")
+    compile("com.google.guava:guava")
+    compile("com.github.rholder:guava-retrying") {
         exclude module: "guava"
     }
     compile("com.google.inject:guice")
-    compile("com.google.inject.extensions:guice-persist:${guice_version}")
-    compile("com.google.inject.extensions:guice-multibindings:${guice_version}")
-    compile("com.google.inject.extensions:guice-servlet:${guice_version}")
+    compile("com.google.inject.extensions:guice-persist")
+    compile("com.google.inject.extensions:guice-multibindings")
+    compile("com.google.inject.extensions:guice-servlet")
     compile("javax.validation:validation-api")
     compile("org.elasticsearch:elasticsearch")
 
@@ -56,7 +58,7 @@ dependencies {
 
     testCompile(project(":metacat-testdata-provider"))
     testCompile(project(":metacat-user-metadata-mysql"))
-    testCompile("io.airlift:testing-mysql-server:${testing_mysql_server_version}")
+    testCompile("io.airlift:testing-mysql-server")
 }
 
 test {

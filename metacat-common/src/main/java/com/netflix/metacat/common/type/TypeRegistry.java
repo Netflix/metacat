@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.type;
 
 import com.google.common.base.Preconditions;
@@ -19,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
 
 /**
  * Type mapping between canonical and connector types.
@@ -69,7 +72,18 @@ public final class TypeRegistry implements TypeManager {
         return INSTANCE;
     }
 
+    /**
+     * Verify type class isn't null.
+     *
+     * @param type parameter
+     */
+    public static void verifyTypeClass(final Type type) {
+        Preconditions.checkNotNull(type, "type is null");
+    }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Type getType(final TypeSignature signature) {
         final Type type = types.get(signature);
@@ -79,6 +93,9 @@ public final class TypeRegistry implements TypeManager {
         return type;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Type getParameterizedType(final TypeEnum baseType,
                                      final List<TypeSignature> typeParameters,
@@ -109,16 +126,6 @@ public final class TypeRegistry implements TypeManager {
     }
 
     /**
-     * Verify type class isn't null.
-     *
-     * @param type parameter
-     */
-    public static void verifyTypeClass(final Type type) {
-        Preconditions.checkNotNull(type, "type is null");
-    }
-
-
-    /**
      * Add valid type to registry.
      *
      * @param type type
@@ -142,6 +149,9 @@ public final class TypeRegistry implements TypeManager {
         parametricTypes.putIfAbsent(baseType, parametricType);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Type> getTypes() {
         return null;

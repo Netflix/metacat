@@ -20,7 +20,7 @@ import com.netflix.metacat.common.dto.FieldDto
 import com.netflix.metacat.common.dto.PartitionDto
 import com.netflix.metacat.common.dto.StorageDto
 import com.netflix.metacat.common.dto.TableDto
-import com.netflix.metacat.common.server.Config
+import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter
 import com.netflix.metacat.common.type.TypeManager
 import com.netflix.metacat.common.type.VarcharType

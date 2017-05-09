@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.type;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,8 +37,8 @@ import java.util.List;
  *
  * @author zhenl
  */
-@EqualsAndHashCode
 @Getter
+@EqualsAndHashCode
 public class TypeSignature {
     protected final TypeEnum base;
     protected final List<TypeSignature> parameters;
@@ -176,10 +180,13 @@ public class TypeSignature {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @JsonValue
     public String toString() {
-        final StringBuilder typeName = new StringBuilder(base.getBaseTypeDisplayName());
+        final StringBuilder typeName = new StringBuilder(base.getType());
         if (!parameters.isEmpty()) {
             typeName.append("<");
             boolean first = true;

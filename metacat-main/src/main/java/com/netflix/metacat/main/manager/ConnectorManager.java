@@ -37,7 +37,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
-import com.netflix.metacat.common.server.exception.CatalogNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.CatalogNotFoundException;
 import com.netflix.metacat.main.spi.MetacatCatalogConfig;
 import lombok.extern.slf4j.Slf4j;
 

@@ -15,7 +15,7 @@ package com.netflix.metacat.main.services.search;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;

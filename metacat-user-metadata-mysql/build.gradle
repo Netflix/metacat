@@ -23,7 +23,7 @@ dependencies {
 
     compile(project(":metacat-common-server"))
 
-    compile("commons-dbutils:commons-dbutils:${commons_dbutils_version}")
+    compile("commons-dbutils:commons-dbutils")
     compile("com.google.guava:guava")
     compile("com.google.inject:guice")
     compile("org.apache.tomcat:tomcat-jdbc")
@@ -43,6 +43,6 @@ dependencies {
      * Test Dependencies
      *******************************/
 
-    testCompile("io.airlift:testing-mysql-server:${testing_mysql_server_version}")
+    testCompile("io.airlift:testing-mysql-server")
     testCompile(project(":metacat-testdata-provider"))
 }

@@ -23,16 +23,16 @@ dependencies {
 
     compile(project(":metacat-common-server"))
 
-    compile("org.apache.hive:hive-metastore:${hive_version}")
+    compile("org.apache.hive:hive-metastore")
     compile("org.apache.hive:hive-exec:${hive_version}:core@jar")
-    compile("org.apache.hadoop:hadoop-core:${hadoop_core_version}")
+    compile("org.apache.hadoop:hadoop-core")
     compile("com.google.inject:guice")
-    compile("com.google.inject.extensions:guice-persist:${guice_version}")
-    compile("com.google.inject.extensions:guice-multibindings:${guice_version}")
-    compile("com.github.rholder:guava-retrying:${guava_retrying_version}") {
+    compile("com.google.inject.extensions:guice-persist")
+    compile("com.google.inject.extensions:guice-multibindings")
+    compile("com.github.rholder:guava-retrying") {
         exclude module: "guava"
     }
-    compile("commons-dbutils:commons-dbutils:${commons_dbutils_version}")
+    compile("commons-dbutils:commons-dbutils")
 
     /*******************************
      * Provided Dependencies

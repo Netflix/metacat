@@ -17,8 +17,6 @@
 package com.netflix.metacat.connector.hive.client.embedded;
 
 import com.google.common.collect.Maps;
-import com.netflix.config.DynamicPropertyFactory;
-import com.netflix.config.DynamicStringProperty;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
@@ -37,8 +35,11 @@ public final class HivePersistenceManagerFactory {
     /**
      * metacat.jdo.timeout.
      */
-    public static final DynamicStringProperty JDO_TIMEOUT = DynamicPropertyFactory
-            .getInstance().getStringProperty(HiveConfigConstants.METACAT_JDO_TIMEOUT, "300000");
+    private static final String JDO_TIMEOUT = "300000";
+
+    //TODO: Figure out how to do this statically in the new Spring based system
+//    public static final DynamicStringProperty JDO_TIMEOUT = DynamicPropertyFactory
+//            .getInstance().getStringProperty(HiveConfigConstants.METACAT_JDO_TIMEOUT, "300000");
     private static Map<String, PersistenceManagerFactory> factories = Maps.newConcurrentMap();
 
     private HivePersistenceManagerFactory() {
@@ -63,7 +64,7 @@ public final class HivePersistenceManagerFactory {
         PersistenceManagerFactory result = factories.get(name);
         if (result == null) {
             final DataSource dataSource = DataSourceManager.get().get(name);
-            final String jdoTimeout = JDO_TIMEOUT.get();
+//            final String jdoTimeout = JDO_TIMEOUT.get();
             final Map<String, Object> properties = Maps.newHashMap();
             properties.put(HiveConfigConstants.DATANUCLEUS_FIXEDDATASTORE,
                     props.get(HiveConfigConstants.DATANUCLEUS_FIXEDDATASTORE));
@@ -84,9 +85,12 @@ public final class HivePersistenceManagerFactory {
             properties.put(HiveConfigConstants.DATANUCLEUS_AUTOSTARTMECHANISMMODE, "Checked");
             properties.put(HiveConfigConstants.DATANUCLEUS_DETACHALLONCOMMIT, true);
             properties.put(HiveConfigConstants.DATANUCLEUS_DETACHALLONROLLBACK, true);
-            properties.put(HiveConfigConstants.JAVAX_JDO_DATASTORETIMEOUT, jdoTimeout);
-            properties.put(HiveConfigConstants.JAVAX_JDO_DATASTOREREADTIMEOUT, jdoTimeout);
-            properties.put(HiveConfigConstants.JAVAX_JDO_DATASTOREWRITETIMEOUT, jdoTimeout);
+//            properties.put(HiveConfigConstants.JAVAX_JDO_DATASTORETIMEOUT, jdoTimeout);
+//            properties.put(HiveConfigConstants.JAVAX_JDO_DATASTOREREADTIMEOUT, jdoTimeout);
+//            properties.put(HiveConfigConstants.JAVAX_JDO_DATASTOREWRITETIMEOUT, jdoTimeout);
+            properties.put(HiveConfigConstants.JAVAX_JDO_DATASTORETIMEOUT, JDO_TIMEOUT);
+            properties.put(HiveConfigConstants.JAVAX_JDO_DATASTOREREADTIMEOUT, JDO_TIMEOUT);
+            properties.put(HiveConfigConstants.JAVAX_JDO_DATASTOREWRITETIMEOUT, JDO_TIMEOUT);
             result = JDOPersistenceManagerFactory.getPersistenceManagerFactory(properties);
             factories.put(name, result);
         }

@@ -28,6 +28,8 @@ import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatCreateMViewPostEvent;
 import com.netflix.metacat.common.server.events.MetacatCreateMViewPreEvent;
@@ -40,8 +42,6 @@ import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPreEvent;
-import com.netflix.metacat.common.server.exception.NotFoundException;
-import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
@@ -63,9 +63,11 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class MViewServiceImpl implements MViewService {
-    /** Hive database name where views are stored. */
-    public static final String VIEW_DB_NAME = "franklinviews";
-    private static final List<String> SUPPORTED_SOURCES = Lists.newArrayList("hive", "s3", "aegisthus");
+    /**
+     * Hive database name where views are stored.
+     */
+    private static final String VIEW_DB_NAME = "franklinviews";
+    //    private static final List<String> SUPPORTED_SOURCES = Lists.newArrayList("hive", "s3", "aegisthus");
     private final ConnectorManager connectorManager;
     private final TableService tableService;
     private final PartitionService partitionService;
@@ -75,19 +77,20 @@ public class MViewServiceImpl implements MViewService {
 
     /**
      * Constructor.
-     * @param connectorManager connector manager
-     * @param tableService table service
-     * @param partitionService partition service
+     *
+     * @param connectorManager    connector manager
+     * @param tableService        table service
+     * @param partitionService    partition service
      * @param userMetadataService user metadata service
-     * @param eventBus Internal event bus
-     * @param converterUtil utility to convert to/from Dto to connector resources
+     * @param eventBus            Internal event bus
+     * @param converterUtil       utility to convert to/from Dto to connector resources
      */
     @Inject
     public MViewServiceImpl(final ConnectorManager connectorManager,
-        final TableService tableService,
-        final PartitionService partitionService,
-        final UserMetadataService userMetadataService, final MetacatEventBus eventBus,
-        final ConverterUtil converterUtil) {
+                            final TableService tableService,
+                            final PartitionService partitionService,
+                            final UserMetadataService userMetadataService, final MetacatEventBus eventBus,
+                            final ConverterUtil converterUtil) {
         this.connectorManager = connectorManager;
         this.tableService = tableService;
         this.partitionService = partitionService;
@@ -111,13 +114,13 @@ public class MViewServiceImpl implements MViewService {
      */
     @Override
     public TableDto createAndSnapshotPartitions(@Nonnull final QualifiedName name,
-        final boolean snapshot,
-        final String filter) {
+                                                final boolean snapshot,
+                                                final String filter) {
         TableDto result = null;
         // Get the table
         log.info("Get the table {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatCreateMViewPreEvent(name, metacatRequestContext, snapshot, filter));
+        eventBus.postSync(new MetacatCreateMViewPreEvent(name, metacatRequestContext, this, snapshot, filter));
         final Optional<TableDto> oTable = tableService.get(name, false);
         if (oTable.isPresent()) {
             final TableDto table = oTable.get();
@@ -140,7 +143,9 @@ public class MViewServiceImpl implements MViewService {
             if (snapshot) {
                 snapshotPartitions(name, filter);
             }
-            eventBus.postAsync(new MetacatCreateMViewPostEvent(name, metacatRequestContext, result, snapshot, filter));
+            eventBus.postAsync(
+                new MetacatCreateMViewPostEvent(name, metacatRequestContext, this, result, snapshot, filter)
+            );
         } else {
             throw new TableNotFoundException(name);
         }
@@ -156,12 +161,12 @@ public class MViewServiceImpl implements MViewService {
     @Override
     public TableDto deleteAndReturn(@Nonnull final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatDeleteMViewPreEvent(name, metacatRequestContext));
+        eventBus.postSync(new MetacatDeleteMViewPreEvent(name, metacatRequestContext, this));
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         log.info("Deleting view {}.", viewQName);
         final TableDto deletedDto = tableService.deleteAndReturn(viewQName, true);
-        eventBus.postAsync(new MetacatDeleteMViewPostEvent(name, metacatRequestContext, deletedDto));
+        eventBus.postAsync(new MetacatDeleteMViewPostEvent(name, metacatRequestContext, this, deletedDto));
         return deletedDto;
     }
 
@@ -180,15 +185,16 @@ public class MViewServiceImpl implements MViewService {
     @Override
     public TableDto updateAndReturn(@Nonnull final QualifiedName name, @Nonnull final TableDto tableDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatUpdateMViewPreEvent(name, metacatRequestContext, tableDto));
+        eventBus.postSync(new MetacatUpdateMViewPreEvent(name, metacatRequestContext, this, tableDto));
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         log.info("Updating view {}.", viewQName);
         tableService.update(viewQName, tableDto);
         final TableDto updatedDto = getOpt(name).orElseThrow(() -> new IllegalStateException("should exist"));
-        eventBus.postAsync(new MetacatUpdateMViewPostEvent(name, metacatRequestContext, updatedDto));
+        eventBus.postAsync(new MetacatUpdateMViewPostEvent(name, metacatRequestContext, this, updatedDto));
         return updatedDto;
     }
+
     @Override
     public TableDto get(@Nonnull final QualifiedName name) {
         final QualifiedName viewQName =
@@ -231,9 +237,12 @@ public class MViewServiceImpl implements MViewService {
     }
 
     @Override
-    public PartitionsSaveResponseDto savePartitions(@Nonnull final QualifiedName name,
-        final PartitionsSaveRequestDto dto, final boolean merge) {
-        PartitionsSaveResponseDto result = null;
+    public PartitionsSaveResponseDto savePartitions(
+        @Nonnull final QualifiedName name,
+        final PartitionsSaveRequestDto dto,
+        final boolean merge
+    ) {
+        PartitionsSaveResponseDto result;
         final List<PartitionDto> partitionDtos = dto.getPartitions();
         if (partitionDtos == null || partitionDtos.isEmpty()) {
             return new PartitionsSaveResponseDto();
@@ -245,10 +254,10 @@ public class MViewServiceImpl implements MViewService {
                 .ofPartition(viewQName.getCatalogName(), viewQName.getDatabaseName(), viewQName.getTableName(),
                     partitionDto.getName().getPartitionName())));
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatSaveMViewPartitionPreEvent(name, metacatRequestContext, dto));
+        eventBus.postSync(new MetacatSaveMViewPartitionPreEvent(name, metacatRequestContext, this, dto));
         final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
-            eventBus.postSync(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, dto));
+            eventBus.postSync(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, this, dto));
         }
         if (merge) {
             final List<String> partitionNames = partitionDtos.stream().map(
@@ -265,14 +274,17 @@ public class MViewServiceImpl implements MViewService {
                     return mergePartition(partitionDto, existingPartition);
                 }).collect(Collectors.toList());
             dto.setPartitions(mergedPartitions);
-            result =  partitionService.save(viewQName, dto);
+            result = partitionService.save(viewQName, dto);
         } else {
             result = partitionService.save(viewQName, dto);
         }
-        eventBus.postAsync(new MetacatSaveMViewPartitionPostEvent(name, metacatRequestContext, dto.getPartitions()));
+        eventBus.postAsync(
+            new MetacatSaveMViewPartitionPostEvent(name, metacatRequestContext, this, dto.getPartitions())
+        );
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
             eventBus.postAsync(
-                new MetacatDeleteMViewPartitionPostEvent(name, metacatRequestContext, partitionIdsForDeletes));
+                new MetacatDeleteMViewPartitionPostEvent(name, metacatRequestContext, this, partitionIdsForDeletes)
+            );
         }
         return result;
     }
@@ -308,17 +320,25 @@ public class MViewServiceImpl implements MViewService {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
         dto.setPartitionIdsForDeletes(partitionIds);
-        eventBus.postSync(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, dto));
+        eventBus.postSync(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, this, dto));
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         partitionService.delete(viewQName, partitionIds);
-        eventBus.postAsync(new MetacatDeleteMViewPartitionPostEvent(name, metacatRequestContext, partitionIds));
+        eventBus.postAsync(
+            new MetacatDeleteMViewPartitionPostEvent(name, metacatRequestContext, this, partitionIds)
+        );
     }
 
     @Override
-    public List<PartitionDto> listPartitions(@Nonnull final QualifiedName name, final String filter,
-        final List<String> partitionNames, final Sort sort,
-        final Pageable pageable, final boolean includeUserMetadata, final boolean includePartitionDetails) {
+    public List<PartitionDto> listPartitions(
+        @Nonnull final QualifiedName name,
+        final String filter,
+        final List<String> partitionNames,
+        final Sort sort,
+        final Pageable pageable,
+        final boolean includeUserMetadata,
+        final boolean includePartitionDetails
+    ) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return partitionService
@@ -328,7 +348,7 @@ public class MViewServiceImpl implements MViewService {
 
     @Override
     public List<String> getPartitionKeys(@Nonnull final QualifiedName name, final String filter,
-        final List<String> partitionNames, final Sort sort, final Pageable pageable) {
+                                         final List<String> partitionNames, final Sort sort, final Pageable pageable) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return partitionService.getPartitionKeys(viewQName, filter, partitionNames, sort, pageable);
@@ -336,7 +356,7 @@ public class MViewServiceImpl implements MViewService {
 
     @Override
     public List<String> getPartitionUris(@Nonnull final QualifiedName name, final String filter,
-        final List<String> partitionNames, final Sort sort, final Pageable pageable) {
+                                         final List<String> partitionNames, final Sort sort, final Pageable pageable) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return partitionService.getPartitionUris(viewQName, filter, partitionNames, sort, pageable);
@@ -388,7 +408,7 @@ public class MViewServiceImpl implements MViewService {
 
     @Override
     public void saveMetadata(@Nonnull final QualifiedName name, final ObjectNode definitionMetadata,
-        final ObjectNode dataMetadata) {
+                             final ObjectNode dataMetadata) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         tableService.saveMetadata(viewQName, definitionMetadata, dataMetadata);

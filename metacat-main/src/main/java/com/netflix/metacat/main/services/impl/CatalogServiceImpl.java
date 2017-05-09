@@ -99,9 +99,9 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public void update(@Nonnull final QualifiedName name, @Nonnull final CreateCatalogDto createCatalogDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext));
+        eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
         connectorManager.getCatalogConfig(name);
         userMetadataService.saveMetadata(metacatRequestContext.getUserName(), createCatalogDto, true);
-        eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext));
+        eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
     }
 }

@@ -24,7 +24,7 @@ import com.netflix.metacat.common.dto.DataMetadataGetRequestDto;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
 import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.SortOrder;
-import com.netflix.metacat.common.server.exception.NotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.services.MetacatService;
