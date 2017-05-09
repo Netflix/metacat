@@ -21,6 +21,7 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 
 import javax.annotation.Nonnull;
@@ -37,16 +38,19 @@ public class MetacatRenameTablePreEvent extends MetacatEvent {
 
     /**
      * Constructor.
-     * @param name name.
+     *
+     * @param name           name.
      * @param requestContext context
-     * @param newName new name
+     * @param source         The source object which threw this event
+     * @param newName        new name
      */
     public MetacatRenameTablePreEvent(
-        @Nonnull final QualifiedName name,
-        @Nonnull final MetacatRequestContext requestContext,
-        @Nonnull final QualifiedName newName
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final Object source,
+        @Nonnull @NonNull final QualifiedName newName
     ) {
-        super(name, requestContext);
+        super(name, requestContext, source);
         this.newName = newName;
     }
 }

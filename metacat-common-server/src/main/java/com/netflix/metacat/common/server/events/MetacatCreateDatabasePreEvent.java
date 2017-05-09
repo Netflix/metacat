@@ -21,6 +21,7 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 
 import javax.annotation.Nonnull;
@@ -32,15 +33,19 @@ import javax.annotation.Nonnull;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class MetacatCreateDatabasePreEvent extends MetacatEvent {
+
     /**
      * Constructor.
-     * @param name name
+     *
+     * @param name           name
      * @param requestContext context
+     * @param source         The source object which threw this event
      */
     public MetacatCreateDatabasePreEvent(
-        @Nonnull final QualifiedName name,
-        @Nonnull final MetacatRequestContext requestContext
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final Object source
     ) {
-        super(name, requestContext);
+        super(name, requestContext, source);
     }
 }

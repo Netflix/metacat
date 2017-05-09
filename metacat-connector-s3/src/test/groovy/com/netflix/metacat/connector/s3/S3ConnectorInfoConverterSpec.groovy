@@ -3,14 +3,16 @@ package com.netflix.metacat.connector.s3
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.type.TypeRegistry
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter
+import spock.lang.Ignore
 
 /**
  * S3 Connector info converter tests.
  */
-class S3ConnectorInfoConverterSpec extends BaseSpec{
+@Ignore
+class S3ConnectorInfoConverterSpec extends BaseSpec {
     def converter = new S3ConnectorInfoConverter(new PigTypeConverter(), true, TypeRegistry.getTypeRegistry())
 
-    def testDatabaseInfo(){
+    def testDatabaseInfo() {
         when:
         def name = QualifiedName.ofDatabase(database.source.name, database.name)
         def info = converter.toDatabaseInfo(name, database)
@@ -22,7 +24,7 @@ class S3ConnectorInfoConverterSpec extends BaseSpec{
         database << databases.values()
     }
 
-    def testTableInfo(){
+    def testTableInfo() {
         when:
         def name = QualifiedName.ofTable('s3', table.database.name, table.name)
         def info = converter.toTableInfo(name, table)
@@ -34,7 +36,7 @@ class S3ConnectorInfoConverterSpec extends BaseSpec{
         table << tables.values()
     }
 
-    def testPartitionInfo(){
+    def testPartitionInfo() {
         when:
         def name = QualifiedName.ofTable('s3', table.database.name, table.name)
         def info = converter.toTableInfo(name, table)

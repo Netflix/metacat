@@ -17,9 +17,8 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import com.google.inject.Inject;
 import com.netflix.metacat.common.server.model.Lookup;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import com.netflix.metacat.common.server.util.DBUtil;
@@ -61,10 +60,10 @@ public class MySqlLookupService implements LookupService {
 
     /**
      * Constructor.
-     * @param config config
+     *
+     * @param config            config
      * @param dataSourceManager datasource manager
      */
-    @Inject
     public MySqlLookupService(final Config config, final DataSourceManager dataSourceManager) {
         this.config = Preconditions.checkNotNull(config, "config is required");
         this.dataSourceManager = Preconditions.checkNotNull(dataSourceManager, "dataSourceManager is required");
@@ -76,12 +75,13 @@ public class MySqlLookupService implements LookupService {
 
     /**
      * Returns the lookup for the given <code>name</code>.
+     *
      * @param name lookup name
      * @return lookup
      */
     @Override
     public Lookup get(final String name) {
-        Lookup result = null;
+        Lookup result;
         final Connection connection = DBUtil.getReadConnection(getDataSource());
         try {
             final ResultSetHandler<Lookup> handler = new BeanHandler<>(Lookup.class);
@@ -101,6 +101,7 @@ public class MySqlLookupService implements LookupService {
 
     /**
      * Returns the value of the lookup name.
+     *
      * @param name lookup name
      * @return scalar lookup value
      */
@@ -116,6 +117,7 @@ public class MySqlLookupService implements LookupService {
 
     /**
      * Returns the list of values of the lookup name.
+     *
      * @param lookupId lookup id
      * @return list of lookup values
      */
@@ -141,6 +143,7 @@ public class MySqlLookupService implements LookupService {
 
     /**
      * Returns the list of values of the lookup name.
+     *
      * @param name lookup name
      * @return list of lookup values
      */
@@ -166,18 +169,19 @@ public class MySqlLookupService implements LookupService {
 
     /**
      * Saves the lookup value.
-     * @param name lookup name
+     *
+     * @param name   lookup name
      * @param values multiple values
      * @return returns the lookup with the given name.
      */
     @Override
     public Lookup setValues(final String name, final Set<String> values) {
-        Lookup lookup = null;
+        Lookup lookup;
         try {
             final Connection conn = getDataSource().getConnection();
             try {
                 lookup = findOrCreateLookupByName(name, conn);
-                Set<String> inserts = Sets.newHashSet();
+                final Set<String> inserts;
                 Set<String> deletes = Sets.newHashSet();
                 final Set<String> lookupValues = lookup.getValues();
                 if (lookupValues == null || lookupValues.isEmpty()) {
@@ -228,10 +232,14 @@ public class MySqlLookupService implements LookupService {
     private Lookup findOrCreateLookupByName(final String name, final Connection conn) throws SQLException {
         Lookup lookup = get(name);
         if (lookup == null) {
-            final Object[] params = {name, STRING_TYPE, config.getLookupServiceUserAdmin(),
-                config.getLookupServiceUserAdmin(), };
+            final Object[] params = {
+                name,
+                STRING_TYPE,
+                config.getLookupServiceUserAdmin(),
+                config.getLookupServiceUserAdmin(),
+            };
             final Long lookupId = new QueryRunner().insert(conn, SQL_INSERT_LOOKUP, new ScalarHandler<>(1), params);
-            lookup = new Lookup();
+            lookup = new Lookup(this.config);
             lookup.setName(name);
             lookup.setId(lookupId);
         }
@@ -240,18 +248,19 @@ public class MySqlLookupService implements LookupService {
 
     /**
      * Saves the lookup value.
-     * @param name lookup name
+     *
+     * @param name   lookup name
      * @param values multiple values
      * @return returns the lookup with the given name.
      */
     @Override
     public Lookup addValues(final String name, final Set<String> values) {
-        Lookup lookup = null;
+        Lookup lookup;
         try {
             final Connection conn = getDataSource().getConnection();
             try {
                 lookup = findOrCreateLookupByName(name, conn);
-                Set<String> inserts = Sets.newHashSet();
+                final Set<String> inserts;
                 final Set<String> lookupValues = lookup.getValues();
                 if (lookupValues == null || lookupValues.isEmpty()) {
                     inserts = values;
@@ -279,7 +288,8 @@ public class MySqlLookupService implements LookupService {
 
     /**
      * Saves the lookup value.
-     * @param name lookup name
+     *
+     * @param name  lookup name
      * @param value lookup value
      * @return returns the lookup with the given name.
      */

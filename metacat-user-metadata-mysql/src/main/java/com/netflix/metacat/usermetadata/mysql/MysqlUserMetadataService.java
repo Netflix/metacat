@@ -27,7 +27,7 @@ import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.HasMetadata;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonException;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import com.netflix.metacat.common.server.util.DBUtil;
@@ -38,6 +38,7 @@ import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.commons.dbutils.handlers.ColumnListHandler;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.io.Reader;
@@ -65,23 +66,29 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class MysqlUserMetadataService extends BaseUserMetadataService {
-    /** Data source name used by user metadata service. */
+    /**
+     * Data source name used by user metadata service.
+     */
     public static final String NAME_DATASOURCE = "metacat-usermetadata";
-    private Properties connectionProperties;
     private final DataSourceManager dataSourceManager;
     private final MetacatJson metacatJson;
     private final Config config;
+    private Properties connectionProperties;
     private DataSource poolingDataSource;
 
     /**
      * Constructor.
+     *
      * @param dataSourceManager data source manager
-     * @param metacatJson json utility
-     * @param config config
+     * @param metacatJson       json utility
+     * @param config            config
      */
     @Inject
-    public MysqlUserMetadataService(final DataSourceManager dataSourceManager, final MetacatJson metacatJson,
-        final Config config) {
+    public MysqlUserMetadataService(
+        final DataSourceManager dataSourceManager,
+        final MetacatJson metacatJson,
+        final Config config
+    ) {
         this.dataSourceManager = dataSourceManager;
         this.metacatJson = metacatJson;
         this.config = config;
@@ -89,8 +96,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public void softDeleteDataMetadatas(final String user,
-        @Nonnull
-        final List<String> uris) {
+                                        @Nonnull final List<String> uris) {
         try {
             final Connection conn = poolingDataSource.getConnection();
             try {
@@ -113,15 +119,13 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public void deleteDataMetadatas(
-        @Nonnull
-        final List<String> uris) {
+        @Nonnull final List<String> uris) {
         deleteDataMetadatasWithBatch(uris, true);
     }
 
     @Override
     public void deleteDataMetadataDeletes(
-        @Nonnull
-        final List<String> uris) {
+        @Nonnull final List<String> uris) {
         deleteDataMetadatasWithBatch(uris, false);
     }
 
@@ -148,8 +152,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public void deleteDefinitionMetadatas(
-        @Nonnull
-        final List<QualifiedName> names) {
+        @Nonnull final List<QualifiedName> names) {
         try {
             final Connection conn = poolingDataSource.getConnection();
             try {
@@ -210,7 +213,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @SuppressWarnings("checkstyle:methodname")
-    private Void _deleteDefinitionMetadatas(final Connection conn, final List<QualifiedName> names)
+    private Void _deleteDefinitionMetadatas(final Connection conn, @Nullable final List<QualifiedName> names)
         throws SQLException {
         if (names != null && !names.isEmpty()) {
             final List<String> paramVariables = names.stream().map(s -> "?").collect(Collectors.toList());
@@ -223,7 +226,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @SuppressWarnings("checkstyle:methodname")
-    private Void _softDeleteDataMetadatas(final Connection conn, final String userId, final List<String> uris)
+    private Void _softDeleteDataMetadatas(final Connection conn, final String userId, @Nullable final List<String> uris)
         throws SQLException {
         if (uris != null && !uris.isEmpty()) {
             final List<String> paramVariables = uris.stream().map(s -> "?").collect(Collectors.toList());
@@ -242,7 +245,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     ids.removeAll(dupIds);
                 }
                 final List<Object[]> deleteDataMetadatas = Lists.newArrayList();
-                ids.forEach(id -> deleteDataMetadatas.add(new Object[] {id, userId }));
+                ids.forEach(id -> deleteDataMetadatas.add(new Object[]{id, userId}));
                 new QueryRunner().batch(conn, SQL.SOFT_DELETE_DATA_METADATA,
                     deleteDataMetadatas.toArray(new Object[deleteDataMetadatas.size()][2]));
             }
@@ -251,7 +254,11 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @SuppressWarnings("checkstyle:methodname")
-    private Void _deleteDataMetadatas(final Connection conn, final List<String> uris, final boolean removeDataMetadata)
+    private Void _deleteDataMetadatas(
+        final Connection conn,
+        @Nullable final List<String> uris,
+        final boolean removeDataMetadata
+    )
         throws SQLException {
         if (uris != null && !uris.isEmpty()) {
             final List<String> paramVariables = uris.stream().map(s -> "?").collect(Collectors.toList());
@@ -278,16 +285,14 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @Nonnull
     @Override
     public Optional<ObjectNode> getDataMetadata(
-        @Nonnull
-        final String uri) {
+        @Nonnull final String uri) {
         return getJsonForKey(SQL.GET_DATA_METADATA, uri);
     }
 
     @Nonnull
     @Override
     public Map<String, ObjectNode> getDataMetadataMap(
-        @Nonnull
-        final List<String> uris) {
+        @Nonnull final List<String> uris) {
         final Map<String, ObjectNode> result = Maps.newHashMap();
         if (!uris.isEmpty()) {
             final List<List<String>> parts = Lists.partition(uris, config.getUserMetadataMaxInClauseItems());
@@ -299,16 +304,13 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @Nonnull
     @Override
     public Optional<ObjectNode> getDefinitionMetadata(
-        @Nonnull
-        final QualifiedName name) {
+        @Nonnull final QualifiedName name) {
         return getJsonForKey(SQL.GET_DEFINITION_METADATA, name.toString());
     }
 
     @Override
-    public List<QualifiedName> getDescendantDefinitionNames(
-        @Nonnull
-        final QualifiedName name) {
-        List<String> result = null;
+    public List<QualifiedName> getDescendantDefinitionNames(@Nonnull final QualifiedName name) {
+        List<String> result;
         final Connection connection = DBUtil.getReadConnection(poolingDataSource);
         try {
             final ColumnListHandler<String> handler = new ColumnListHandler<>("name");
@@ -324,10 +326,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
-    public List<String> getDescendantDataUris(
-        @Nonnull
-        final String uri) {
-        List<String> result = null;
+    public List<String> getDescendantDataUris(@Nonnull final String uri) {
+        List<String> result;
         final Connection connection = DBUtil.getReadConnection(poolingDataSource);
         try {
             final ColumnListHandler<String> handler = new ColumnListHandler<>("uri");
@@ -344,8 +344,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @Nonnull
     @Override
     public Map<String, ObjectNode> getDefinitionMetadataMap(
-        @Nonnull
-        final List<QualifiedName> names) {
+        @Nonnull final List<QualifiedName> names) {
         if (!names.isEmpty()) {
             final List<List<QualifiedName>> parts = Lists.partition(names, config.getUserMetadataMaxInClauseItems());
             return parts.stream()
@@ -359,7 +358,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @SuppressWarnings("checkstyle:methodname")
-    private Map<String, ObjectNode> _getMetadataMap(final List<?> keys, final String sql) {
+    private Map<String, ObjectNode> _getMetadataMap(@Nullable final List<?> keys, final String sql) {
         final Map<String, ObjectNode> result = Maps.newHashMap();
         if (keys == null || keys.isEmpty()) {
             return result;
@@ -395,7 +394,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         return result;
     }
 
-    protected Optional<ObjectNode> getJsonForKey(final String query, final String keyValue) {
+    private Optional<ObjectNode> getJsonForKey(final String query, final String keyValue) {
         Optional<ObjectNode> result = Optional.empty();
         String json = null;
         final Connection connection = DBUtil.getReadConnection(poolingDataSource);
@@ -426,8 +425,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         return result;
     }
 
-    protected int executeUpdateForKey(final String query, final String... keyValues) {
-        int result = 0;
+    private int executeUpdateForKey(final String query, final String... keyValues) {
+        int result;
         try {
             final Connection conn = poolingDataSource.getConnection();
             try {
@@ -449,12 +448,9 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public void saveDataMetadata(
-        @Nonnull
-        final String uri,
-        @Nonnull
-        final String userId,
-        @Nonnull
-        final Optional<ObjectNode> metadata, final boolean merge) {
+        @Nonnull final String uri,
+        @Nonnull final String userId,
+        @Nonnull final Optional<ObjectNode> metadata, final boolean merge) {
         final Optional<ObjectNode> existingData = getDataMetadata(uri);
         final int count;
         if (existingData.isPresent() && metadata.isPresent()) {
@@ -477,12 +473,9 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public void saveDefinitionMetadata(
-        @Nonnull
-        final QualifiedName name,
-        @Nonnull
-        final String userId,
-        @Nonnull
-        final Optional<ObjectNode> metadata, final boolean merge) {
+        @Nonnull final QualifiedName name,
+        @Nonnull final String userId,
+        @Nonnull final Optional<ObjectNode> metadata, final boolean merge) {
         final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
         final int count;
         if (existingData.isPresent() && metadata.isPresent()) {
@@ -511,19 +504,15 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public int renameDataMetadataKey(
-        @Nonnull
-        final String oldUri,
-        @Nonnull
-        final String newUri) {
+        @Nonnull final String oldUri,
+        @Nonnull final String newUri) {
         return executeUpdateForKey(SQL.RENAME_DATA_METADATA, newUri, oldUri);
     }
 
     @Override
     public int renameDefinitionMetadataKey(
-        @Nonnull
-        final QualifiedName oldName,
-        @Nonnull
-        final QualifiedName newName) {
+        @Nonnull final QualifiedName oldName,
+        @Nonnull final QualifiedName newName) {
         return executeUpdateForKey(SQL.RENAME_DEFINITION_METADATA, newName.toString(), oldName.toString());
     }
 
@@ -532,9 +521,10 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         try {
             final Connection conn = poolingDataSource.getConnection();
             try {
-                @SuppressWarnings("unchecked")
-                final List<List<HasMetadata>> subLists = Lists.partition((List<HasMetadata>) metadatas,
-                    config.getUserMetadataMaxInClauseItems());
+                @SuppressWarnings("unchecked") final List<List<HasMetadata>> subLists = Lists.partition(
+                    (List<HasMetadata>) metadatas,
+                    config.getUserMetadataMaxInClauseItems()
+                );
                 for (List<HasMetadata> hasMetadatas : subLists) {
                     final List<String> uris = Lists.newArrayList();
                     final List<QualifiedName> names = Lists.newArrayList();
@@ -576,12 +566,22 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                                 if (oNode == null) {
                                     insertDefinitionMetadatas
                                         .add(
-                                            new Object[] {metacatJson.toJsonString(oDef.getDefinitionMetadata()), user,
-                                                user, name, });
+                                            new Object[]{
+                                                metacatJson.toJsonString(oDef.getDefinitionMetadata()),
+                                                user,
+                                                user,
+                                                name,
+                                            }
+                                        );
                                 } else {
                                     metacatJson.mergeIntoPrimary(oNode, oDef.getDefinitionMetadata());
                                     updateDefinitionMetadatas
-                                        .add(new Object[] {metacatJson.toJsonString(oNode), user, name });
+                                        .add(new Object[]{
+                                                metacatJson.toJsonString(oNode),
+                                                user,
+                                                name,
+                                            }
+                                        );
                                 }
                             }
                         });
@@ -591,12 +591,17 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                             if (oData.getDataMetadata() != null && oData.getDataMetadata().size() != 0) {
                                 if (oNode == null) {
                                     insertDataMetadatas.add(
-                                        new Object[] {metacatJson.toJsonString(oData.getDataMetadata()), user, user,
-                                            uri, });
+                                        new Object[]{
+                                            metacatJson.toJsonString(oData.getDataMetadata()),
+                                            user,
+                                            user,
+                                            uri,
+                                        }
+                                    );
                                 } else {
                                     metacatJson.mergeIntoPrimary(oNode, oData.getDataMetadata());
                                     updateDataMetadatas
-                                        .add(new Object[] {metacatJson.toJsonString(oNode), user, uri});
+                                        .add(new Object[]{metacatJson.toJsonString(oNode), user, uri});
                                 }
                             }
                         });
@@ -634,24 +639,31 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
-    public List<DefinitionMetadataDto> searchDefinitionMetadatas(final Set<String> propertyNames, final String type,
-        final String name, final String sortBy, final String sortOrder, final Integer offset, final Integer limit) {
+    public List<DefinitionMetadataDto> searchDefinitionMetadatas(
+        final Set<String> propertyNames,
+        final String type,
+        final String name,
+        final String sortBy,
+        final String sortOrder,
+        final Integer offset,
+        final Integer limit
+    ) {
         final List<DefinitionMetadataDto> result = Lists.newArrayList();
         final StringBuilder query = new StringBuilder(SQL.SEARCH_DEFINITION_METADATAS);
         final List<Object> paramList = Lists.newArrayList();
         if (type != null) {
             String typeRegex = null;
             switch (type) {
-            case "database":
-                typeRegex = "^[^/]*/[^/]*$";
-                break;
-            case "table":
-                typeRegex = "^[^/]*/[^/]*/[^/]*$";
-                break;
-            case "partition":
-                typeRegex = "^[^/]*/[^/]*/[^/]*/.*$";
-                break;
-            default:
+                case "database":
+                    typeRegex = "^[^/]*/[^/]*$";
+                    break;
+                case "table":
+                    typeRegex = "^[^/]*/[^/]*/[^/]*$";
+                    break;
+                case "partition":
+                    typeRegex = "^[^/]*/[^/]*/[^/]*/.*$";
+                    break;
+                default:
             }
             if (typeRegex != null) {
                 query.append(" and name rlike ?");
@@ -740,8 +752,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public List<String> getDeletedDataMetadataUris(final Date deletedPriorTo, final Integer offset,
-        final Integer limit) {
-        List<String> result = null;
+                                                   final Integer limit) {
+        List<String> result;
         final Connection connection = DBUtil.getReadConnection(poolingDataSource);
         try {
             final ColumnListHandler<String> handler = new ColumnListHandler<>("uri");

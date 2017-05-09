@@ -32,8 +32,8 @@ import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
-import com.netflix.metacat.common.server.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 

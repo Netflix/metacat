@@ -30,15 +30,17 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
-import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
+import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
+import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
-import com.netflix.metacat.common.server.exception.CatalogNotFoundException;
+import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
+import com.netflix.metacat.common.server.connectors.exception.CatalogNotFoundException;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.spi.MetacatCatalogConfig;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
@@ -60,6 +62,16 @@ public class ConnectorManager {
     // Map of catalogs registered.
     private final ConcurrentHashMap<String, MetacatCatalogConfig> catalogs = new ConcurrentHashMap<>();
     private final AtomicBoolean stopped = new AtomicBoolean();
+    private final Config config;
+
+    /**
+     * Constructor.
+     *
+     * @param config System configuration
+     */
+    public ConnectorManager(@Nonnull @NonNull final Config config) {
+        this.config = config;
+    }
 
     /**
      * Stop.
@@ -85,12 +97,13 @@ public class ConnectorManager {
 
     /**
      * Creates a connection for the given catalog.
-     * @param catalogName catalog name
+     *
+     * @param catalogName   catalog name
      * @param connectorType connector type
-     * @param properties properties
+     * @param properties    properties
      */
     synchronized void createConnection(final String catalogName, final String connectorType,
-        final Map<String, String> properties) {
+                                       final Map<String, String> properties) {
         Preconditions.checkState(!stopped.get(), "ConnectorManager is stopped");
         Preconditions.checkNotNull(catalogName, "catalogName is null");
         Preconditions.checkNotNull(connectorType, "connectorName is null");
@@ -100,12 +113,12 @@ public class ConnectorManager {
         if (connectorPlugin != null) {
             Preconditions
                 .checkState(!connectorFactories.containsKey(catalogName), "A connector %s already exists", catalogName);
-            final ConnectorFactory connectorFactory = connectorPlugin.create(catalogName, properties);
+            final ConnectorFactory connectorFactory = connectorPlugin.create(this.config, catalogName, properties);
             connectorFactories.put(catalogName, connectorFactory);
 
-            final MetacatCatalogConfig config =
+            final MetacatCatalogConfig catalogConfig =
                 MetacatCatalogConfig.createFromMapAndRemoveProperties(connectorType, properties);
-            catalogs.put(catalogName, config);
+            catalogs.put(catalogName, catalogConfig);
         } else {
             log.warn("No plugin for connector with type %s", connectorType);
         }
@@ -113,6 +126,7 @@ public class ConnectorManager {
 
     /**
      * Returns the catalog config.
+     *
      * @param name name
      * @return catalog config
      */
@@ -123,6 +137,7 @@ public class ConnectorManager {
 
     /**
      * Returns the catalog config.
+     *
      * @param catalogName catalog name
      * @return catalog config
      */
@@ -144,6 +159,7 @@ public class ConnectorManager {
 
     /**
      * Returns the connector factory for the given <code>catalogName</code>.
+     *
      * @param catalogName catalog name
      * @return Returns the connector factory for the given <code>catalogName</code>
      */
@@ -158,6 +174,7 @@ public class ConnectorManager {
 
     /**
      * Returns the connector plugin for the given <code>catalogName</code>.
+     *
      * @param connectorType connector type
      * @return Returns the plugin for the given <code>catalogName</code>
      */
@@ -170,6 +187,7 @@ public class ConnectorManager {
 
     /**
      * Returns the connector database service for the given <code>catalogName</code>.
+     *
      * @param catalogName catalog name
      * @return Returns the connector database service for the given <code>catalogName</code>
      */
@@ -179,6 +197,7 @@ public class ConnectorManager {
 
     /**
      * Returns the connector table service for the given <code>catalogName</code>.
+     *
      * @param catalogName catalog name
      * @return Returns the connector table service for the given <code>catalogName</code>
      */
@@ -188,6 +207,7 @@ public class ConnectorManager {
 
     /**
      * Returns the connector partition service for the given <code>catalogName</code>.
+     *
      * @param catalogName catalog name
      * @return Returns the connector partition service for the given <code>catalogName</code>
      */
@@ -197,6 +217,7 @@ public class ConnectorManager {
 
     /**
      * Returns the connector type converter for the given <code>connectorType</code>.
+     *
      * @param connectorType connector type
      * @return Returns the connector type converter for the given <code>connectorType</code>
      */
@@ -206,6 +227,7 @@ public class ConnectorManager {
 
     /**
      * Returns the connector dto converter for the given <code>connectorType</code>.
+     *
      * @param connectorType connector type
      * @return Returns the connector dto converter for the given <code>connectorType</code>
      */

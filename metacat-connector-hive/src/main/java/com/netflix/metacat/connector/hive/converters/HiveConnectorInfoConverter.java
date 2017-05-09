@@ -13,7 +13,6 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-
 package com.netflix.metacat.connector.hive.converters;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -31,6 +30,8 @@ import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -55,6 +56,7 @@ import java.util.stream.Collectors;
  * @author zhenl
  * @since 1.0.0
  */
+@Slf4j
 public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Database, Table, Partition> {
 
     private static final Splitter SLASH_SPLITTER = Splitter.on('/');
@@ -66,8 +68,12 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      *
      * @param hiveTypeConverter typeconverter
      */
-    public HiveConnectorInfoConverter(@Nonnull final HiveTypeConverter hiveTypeConverter) {
+    public HiveConnectorInfoConverter(@Nonnull @NonNull final HiveTypeConverter hiveTypeConverter) {
         this.hiveTypeConverter = hiveTypeConverter;
+    }
+
+    private static Date epochSecondsToDate(final long seconds) {
+        return Date.from(Instant.ofEpochSecond(seconds));
     }
 
     /**
@@ -77,12 +83,15 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @return Metacat database Info
      */
     @Override
-    public DatabaseInfo toDatabaseInfo(final QualifiedName qualifiedName, final Database database) {
+    public DatabaseInfo toDatabaseInfo(
+        @Nonnull @NonNull final QualifiedName qualifiedName,
+        @Nonnull @NonNull final Database database
+    ) {
         return DatabaseInfo.builder()
-                .name(qualifiedName)
-                .uri((database != null) ? database.getLocationUri() : null)
-                .metadata((database != null) ? database.getParameters() : Collections.EMPTY_MAP)
-                .build();
+            .name(qualifiedName)
+            .uri(database.getLocationUri())
+            .metadata(database.getParameters())
+            .build();
     }
 
     /**
@@ -92,13 +101,13 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @return connector database
      */
     @Override
-    public Database fromDatabaseInfo(final DatabaseInfo databaseInfo) {
+    public Database fromDatabaseInfo(@Nonnull @NonNull final DatabaseInfo databaseInfo) {
         final QualifiedName databaseName = databaseInfo.getName();
         final String name = (databaseName == null) ? "" : databaseName.getDatabaseName();
         //this is a temp hack to resolve the uri = null issue
         // final String dbUri = Strings.isNullOrEmpty(databaseInfo.getUri()) ? "file://temp/" : databaseInfo.getUri();
         final Map<String, String> metadata
-                = (databaseInfo.getMetadata() != null) ? databaseInfo.getMetadata() : Collections.EMPTY_MAP;
+            = (databaseInfo.getMetadata() != null) ? databaseInfo.getMetadata() : Collections.EMPTY_MAP;
         return new Database(name, name, databaseInfo.getUri(), metadata);
     }
 
@@ -109,38 +118,39 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @return Metacat table Info
      */
     @Override
-    public TableInfo toTableInfo(final QualifiedName name, final Table table) {
+    public TableInfo toTableInfo(@Nonnull @NonNull final QualifiedName name, @Nonnull @NonNull final Table table) {
         final List<FieldSchema> nonPartitionColumns =
-                (table.getSd() != null) ? table.getSd().getCols() : Collections.emptyList();
+            (table.getSd() != null) ? table.getSd().getCols() : Collections.emptyList();
         // add the data fields to the nonPartitionColumns
         //ignore all exceptions
         try {
             if (nonPartitionColumns.isEmpty()) {
                 for (StructField field : HiveTableUtil.getTableStructFields(table)) {
                     final FieldSchema fieldSchema = new FieldSchema(field.getFieldName(),
-                            field.getFieldObjectInspector().getTypeName(),
-                            field.getFieldComment());
+                        field.getFieldObjectInspector().getTypeName(),
+                        field.getFieldComment());
                     nonPartitionColumns.add(fieldSchema);
                 }
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
+            log.error(e.getMessage(), e);
         }
 
         final List<FieldSchema> partitionColumns = table.getPartitionKeys();
         final Date creationDate = table.isSetCreateTime() ? epochSecondsToDate(table.getCreateTime()) : null;
         final List<FieldInfo> allFields =
-                Lists.newArrayListWithCapacity(nonPartitionColumns.size() + partitionColumns.size());
+            Lists.newArrayListWithCapacity(nonPartitionColumns.size() + partitionColumns.size());
         nonPartitionColumns.stream()
-                .map(field -> hiveToMetacatField(field, false))
-                .forEachOrdered(allFields::add);
+            .map(field -> hiveToMetacatField(field, false))
+            .forEachOrdered(allFields::add);
         partitionColumns.stream()
-                .map(field -> hiveToMetacatField(field, true))
-                .forEachOrdered(allFields::add);
+            .map(field -> hiveToMetacatField(field, true))
+            .forEachOrdered(allFields::add);
         final AuditInfo auditInfo = AuditInfo.builder().createdDate(creationDate).build();
         return TableInfo.builder()
-                .serde(toStorageInfo(table.getSd(), table.getOwner())).fields(allFields)
-                .metadata(table.getParameters()).name(name).auditInfo(auditInfo)
-                .build();
+            .serde(toStorageInfo(table.getSd(), table.getOwner())).fields(allFields)
+            .metadata(table.getParameters()).name(name).auditInfo(auditInfo)
+            .build();
     }
 
     /**
@@ -150,21 +160,21 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @return connector table
      */
     @Override
-    public Table fromTableInfo(final TableInfo tableInfo) {
+    public Table fromTableInfo(@Nonnull @NonNull final TableInfo tableInfo) {
         final QualifiedName name = tableInfo.getName();
         final String tableName = (name != null) ? name.getTableName() : "";
         final String databaseName = (name != null) ? name.getDatabaseName() : "";
 
         final StorageInfo storageInfo = tableInfo.getSerde();
         final String owner = (storageInfo != null && storageInfo.getOwner() != null)
-                ? storageInfo.getOwner() : "";
+            ? storageInfo.getOwner() : "";
 
         final AuditInfo auditInfo = tableInfo.getAudit();
         final int createTime = (auditInfo != null && auditInfo.getCreatedDate() != null)
-                ? dateToEpochSeconds(auditInfo.getCreatedDate()) : 0;
+            ? dateToEpochSeconds(auditInfo.getCreatedDate()) : 0;
 
         final Map<String, String> params = (tableInfo.getMetadata() != null)
-                ? tableInfo.getMetadata() : new HashMap<>();
+            ? tableInfo.getMetadata() : new HashMap<>();
 
         final List<FieldInfo> fields = tableInfo.getFields();
         List<FieldSchema> partitionFields = Collections.emptyList();
@@ -183,19 +193,18 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         final StorageDescriptor sd = fromStorageInfo(storageInfo, nonPartitionFields);
 
         return new Table(tableName,
-                databaseName,
-                owner,
-                createTime,
-                0,
-                0,
-                sd,
-                partitionFields,
-                params,
-                null,
-                null,
-                "EXTERNAL_TABLE");
+            databaseName,
+            owner,
+            createTime,
+            0,
+            0,
+            sd,
+            partitionFields,
+            params,
+            null,
+            null,
+            "EXTERNAL_TABLE");
     }
-
 
     /**
      * Converts to PartitionDto.
@@ -204,24 +213,27 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @return Metacat partition Info
      */
     @Override
-    public PartitionInfo toPartitionInfo(final TableInfo tableInfo, final Partition partition) {
+    public PartitionInfo toPartitionInfo(
+        @Nonnull @NonNull final TableInfo tableInfo,
+        @Nonnull @NonNull final Partition partition
+    ) {
         final QualifiedName tableName = tableInfo.getName();
         final QualifiedName partitionName = QualifiedName.ofPartition(tableName.getCatalogName(),
-                tableName.getDatabaseName(),
-                tableName.getTableName(),
-                getNameFromPartVals(tableInfo, partition.getValues()));
+            tableName.getDatabaseName(),
+            tableName.getTableName(),
+            getNameFromPartVals(tableInfo, partition.getValues()));
 
         final String owner = notNull(tableInfo.getSerde()) ? tableInfo.getSerde().getOwner() : "";
         final AuditInfo auditInfo = AuditInfo.builder()
-                .createdDate(epochSecondsToDate(partition.getCreateTime()))
-                .lastModifiedDate(epochSecondsToDate(partition.getLastAccessTime())).build();
+            .createdDate(epochSecondsToDate(partition.getCreateTime()))
+            .lastModifiedDate(epochSecondsToDate(partition.getLastAccessTime())).build();
 
         return PartitionInfo.builder()
-                .serde(toStorageInfo(partition.getSd(), owner))
-                .name(partitionName)
-                .auditInfo(auditInfo)
-                .metadata(partition.getParameters())
-                .build();
+            .serde(toStorageInfo(partition.getSd(), owner))
+            .name(partitionName)
+            .auditInfo(auditInfo)
+            .metadata(partition.getParameters())
+            .build();
 
     }
 
@@ -232,7 +244,10 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @return connector partition
      */
     @Override
-    public Partition fromPartitionInfo(@Nonnull final TableInfo tableInfo, @Nonnull final PartitionInfo partition) {
+    public Partition fromPartitionInfo(
+        @Nonnull @NonNull final TableInfo tableInfo,
+        @Nonnull @NonNull final PartitionInfo partition
+    ) {
         final QualifiedName name = partition.getName();
         final List<String> values = Lists.newArrayListWithCapacity(16);
         Map<String, String> metadata = partition.getMetadata();
@@ -247,21 +262,24 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         List<FieldSchema> fieldSchemas = Collections.emptyList();
         if (notNull(fields)) {
             fieldSchemas = fields.stream()
-                    .filter(field -> !field.isPartitionKey())
-                    .map(this::metacatToHiveField)
-                    .collect(Collectors.toList());
+                .filter(field -> !field.isPartitionKey())
+                .map(this::metacatToHiveField)
+                .collect(Collectors.toList());
         }
         final StorageDescriptor sd = fromStorageInfo(partition.getSerde(), fieldSchemas);
-        //using the table level seralization lib
-        if (notNull(tableInfo) && (notNull(sd.getSerdeInfo())
-                && notNull(tableInfo.getSerde()) && Strings.isNullOrEmpty(sd.getSerdeInfo().getSerializationLib()))) {
+        //using the table level serialization lib
+        if (
+            notNull(sd.getSerdeInfo())
+                && notNull(tableInfo.getSerde())
+                && Strings.isNullOrEmpty(sd.getSerdeInfo().getSerializationLib())
+            ) {
             sd.getSerdeInfo().setSerializationLib(tableInfo.getSerde().getSerializationLib());
         }
         final AuditInfo auditInfo = partition.getAudit();
         final int createTime = (notNull(auditInfo) && notNull(auditInfo.getCreatedDate()))
-                ? dateToEpochSeconds(auditInfo.getCreatedDate()) : 0;
+            ? dateToEpochSeconds(auditInfo.getCreatedDate()) : 0;
         final int lastAccessTime = (notNull(auditInfo) && notNull(auditInfo.getLastModifiedDate()))
-                ? dateToEpochSeconds(auditInfo.getLastModifiedDate()) : 0;
+            ? dateToEpochSeconds(auditInfo.getLastModifiedDate()) : 0;
 
         if (null == name) {
             return new Partition(values, "", "", createTime, lastAccessTime, sd, metadata);
@@ -271,20 +289,20 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
             for (String partialPartName : SLASH_SPLITTER.split(partition.getName().getPartitionName())) {
                 final List<String> nameValues = ImmutableList.copyOf(EQUAL_SPLITTER.split(partialPartName));
                 Preconditions.checkState(nameValues.size() == 2,
-                        "Unrecognized partition name: " + partition.getName());
+                    "Unrecognized partition name: " + partition.getName());
                 values.add(nameValues.get(1));
             }
         }
         final String databaseName = notNull(name.getDatabaseName()) ? name.getDatabaseName() : "";
         final String tableName = notNull(name.getTableName()) ? name.getTableName() : "";
         return new Partition(
-                values,
-                databaseName,
-                tableName,
-                createTime,
-                lastAccessTime,
-                sd,
-                metadata);
+            values,
+            databaseName,
+            tableName,
+            createTime,
+            lastAccessTime,
+            sd,
+            metadata);
     }
 
     /**
@@ -293,7 +311,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @param fieldInfo fieldInfo
      * @return FieldSchema
      */
-    public FieldSchema metacatToHiveField(final FieldInfo fieldInfo) {
+    public FieldSchema metacatToHiveField(@Nonnull @NonNull final FieldInfo fieldInfo) {
         final FieldSchema result = new FieldSchema();
         result.setName(fieldInfo.getName());
         result.setType(hiveTypeConverter.fromMetacatType(fieldInfo.getType()));
@@ -308,13 +326,13 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @param isPartitionKey boolean
      * @return field info obj
      */
-    public FieldInfo hiveToMetacatField(final FieldSchema field, final boolean isPartitionKey) {
+    private FieldInfo hiveToMetacatField(@Nonnull @NonNull final FieldSchema field, final boolean isPartitionKey) {
         return FieldInfo.builder().name(field.getName())
-                .type(hiveTypeConverter.toMetacatType(field.getType()))
-                .sourceType(field.getType())
-                .comment(field.getComment())
-                .partitionKey(isPartitionKey)
-                .build();
+            .type(hiveTypeConverter.toMetacatType(field.getType()))
+            .sourceType(field.getType())
+            .comment(field.getComment())
+            .partitionKey(isPartitionKey)
+            .build();
     }
 
     private StorageInfo toStorageInfo(final StorageDescriptor sd, final String owner) {
@@ -323,16 +341,16 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         }
         if (sd.getSerdeInfo() != null) {
             return StorageInfo.builder().owner(owner)
-                    .uri(sd.getLocation())
-                    .inputFormat(sd.getInputFormat())
-                    .outputFormat(sd.getOutputFormat())
-                    .parameters(sd.getParameters())
-                    .serializationLib(sd.getSerdeInfo().getSerializationLib())
-                    .serdeInfoParameters(sd.getSerdeInfo().getParameters())
-                    .build();
+                .uri(sd.getLocation())
+                .inputFormat(sd.getInputFormat())
+                .outputFormat(sd.getOutputFormat())
+                .parameters(sd.getParameters())
+                .serializationLib(sd.getSerdeInfo().getSerializationLib())
+                .serdeInfoParameters(sd.getSerdeInfo().getParameters())
+                .build();
         }
         return StorageInfo.builder().owner(owner).uri(sd.getLocation()).inputFormat(sd.getInputFormat())
-                .outputFormat(sd.getOutputFormat()).parameters(sd.getParameters()).build();
+            .outputFormat(sd.getOutputFormat()).parameters(sd.getParameters()).build();
     }
 
     @VisibleForTesting
@@ -341,44 +359,40 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     }
 
     private StorageDescriptor fromStorageInfo(final StorageInfo storageInfo, final List<FieldSchema> cols) {
-        if (null == storageInfo) {
+        if (storageInfo == null) {
             return new StorageDescriptor(
-                    Collections.emptyList(),
-                    "",
-                    "",
-                    "",
-                    false,
-                    0,
-                    new SerDeInfo("", "", new HashMap<>()),
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    new HashMap<>());
+                Collections.emptyList(),
+                "",
+                "",
+                "",
+                false,
+                0,
+                new SerDeInfo("", "", new HashMap<>()),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                new HashMap<>());
         }
         // Set all required fields to a non-null value
         final String inputFormat = notNull(storageInfo.getInputFormat()) ? storageInfo.getInputFormat() : "";
         final String location = notNull(storageInfo.getUri()) ? storageInfo.getUri() : "";
         final String outputFormat = notNull(storageInfo.getOutputFormat()) ? storageInfo.getOutputFormat() : "";
         final Map<String, String> sdParams = notNull(storageInfo.getParameters())
-                ? storageInfo.getParameters() : new HashMap<>();
+            ? storageInfo.getParameters() : new HashMap<>();
         final Map<String, String> serdeParams = notNull(storageInfo.getSerdeInfoParameters())
-                ? storageInfo.getSerdeInfoParameters() : new HashMap<>();
+            ? storageInfo.getSerdeInfoParameters() : new HashMap<>();
         final String serializationLib = notNull(storageInfo.getSerializationLib())
-                ? storageInfo.getSerializationLib() : "";
+            ? storageInfo.getSerializationLib() : "";
         return new StorageDescriptor(
-                cols,
-                location,
-                inputFormat,
-                outputFormat,
-                false,
-                0,
-                new SerDeInfo("", serializationLib, serdeParams),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                sdParams);
-    }
-
-    static Date epochSecondsToDate(final long seconds) {
-        return Date.from(Instant.ofEpochSecond(seconds));
+            cols,
+            location,
+            inputFormat,
+            outputFormat,
+            false,
+            0,
+            new SerDeInfo("", serializationLib, serdeParams),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            sdParams);
     }
 
     private String getNameFromPartVals(final TableInfo tableInfo, final List<String> partVals) {
@@ -392,8 +406,8 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
                 builder.append('/');
             }
             builder.append(partitionKeys.get(i))
-                    .append('=')
-                    .append(partVals.get(i));
+                .append('=')
+                .append(partVals.get(i));
         }
         return builder.toString();
     }

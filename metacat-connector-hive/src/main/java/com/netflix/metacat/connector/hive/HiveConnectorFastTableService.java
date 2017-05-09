@@ -45,8 +45,8 @@ import java.util.Map;
  */
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private static final String SQL_GET_TABLE_NAMES_BY_URI =
-            "select d.name schema_name, t.tbl_name table_name, s.location"
-                    + " from DBS d, TBLS t, SDS s where d.DB_ID=t.DB_ID and t.sd_id=s.sd_id";
+        "select d.name schema_name, t.tbl_name table_name, s.location"
+            + " from DBS d, TBLS t, SDS s where d.DB_ID=t.DB_ID and t.sd_id=s.sd_id";
     private final boolean allowRenameTable;
     private final ThreadServiceManager threadServiceManager;
 
@@ -61,21 +61,25 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param allowRenameTable             allow rename table
      */
     @Inject
-    public HiveConnectorFastTableService(@Named("catalogName") final String catalogName,
-                                         @Nonnull @NonNull final IMetacatHiveClient metacatHiveClient,
-    @Nonnull @NonNull final HiveConnectorDatabaseService hiveConnectorDatabaseService,
-                                         @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters,
-                                         final ThreadServiceManager threadServiceManager,
-                                         @Named("allowRenameTable") final boolean allowRenameTable) {
+    public HiveConnectorFastTableService(
+        @Named("catalogName") final String catalogName,
+        @Nonnull @NonNull final IMetacatHiveClient metacatHiveClient,
+        @Nonnull @NonNull final HiveConnectorDatabaseService hiveConnectorDatabaseService,
+        @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters,
+        final ThreadServiceManager threadServiceManager,
+        @Named("allowRenameTable") final boolean allowRenameTable
+    ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, allowRenameTable);
         this.allowRenameTable = allowRenameTable;
         this.threadServiceManager = threadServiceManager;
-        this.threadServiceManager.start();
     }
 
     @Override
-    public Map<String, List<QualifiedName>> getTableNames(@Nonnull final ConnectorContext context,
-        @Nonnull final  List<String> uris, final boolean prefixSearch) {
+    public Map<String, List<QualifiedName>> getTableNames(
+        @Nonnull final ConnectorContext context,
+        @Nonnull final List<String> uris,
+        final boolean prefixSearch
+    ) {
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
         // Get data source
         final DataSource dataSource = DataSourceManager.get().get(catalogName);

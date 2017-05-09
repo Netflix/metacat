@@ -26,9 +26,9 @@ dependencies {
 
     compile("com.google.guava:guava")
     compile("com.google.inject:guice")
-    compile("com.google.inject.extensions:guice-persist:${guice_version}")
-    compile("com.google.inject.extensions:guice-multibindings:${guice_version}")
-    compile("com.google.inject.extensions:guice-servlet:${guice_version}")
+    compile("com.google.inject.extensions:guice-persist")
+    compile("com.google.inject.extensions:guice-multibindings")
+    compile("com.google.inject.extensions:guice-servlet")
     compile("joda-time:joda-time")
     compile("org.hibernate:hibernate-entitymanager")
 

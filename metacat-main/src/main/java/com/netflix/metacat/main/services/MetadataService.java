@@ -18,13 +18,14 @@ import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +37,16 @@ import java.util.stream.Stream;
  * Created by amajumdar on 9/26/16.
  */
 @Slf4j
+@AllArgsConstructor
 public class MetadataService {
-    @Inject
-    private UserMetadataService userMetadataService;
-    @Inject
-    private Config config;
-    @Inject
-    private PartitionService partitionService;
-    @Inject
-    private TableService tableService;
+    @NonNull
+    private final Config config;
+    @NonNull
+    private final TableService tableService;
+    @NonNull
+    private final PartitionService partitionService;
+    @NonNull
+    private final UserMetadataService userMetadataService;
 
     /**
      * Deletes all the data metadata marked for deletion.

@@ -23,6 +23,8 @@ dependencies {
 
     compile(project(":metacat-connector-jdbc"))
 
+    compile("com.google.inject:guice")
+
     /*******************************
      * Provided Dependencies
      *******************************/

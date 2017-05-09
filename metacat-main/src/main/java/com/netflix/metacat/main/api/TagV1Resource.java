@@ -1,37 +1,42 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *  Copyright 2017 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
  */
-
 package com.netflix.metacat.main.api;
 
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.api.TagV1;
 import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
-import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.services.TableService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Set;
 
 /**
  * Tag API implementation.
+ *
  * @author amajumdar
  */
+@Component
 public class TagV1Resource implements TagV1 {
     private TagService tagService;
     private MetacatEventBus eventBus;
@@ -39,23 +44,33 @@ public class TagV1Resource implements TagV1 {
 
     /**
      * Constructor.
-     * @param eventBus event bus
-     * @param tagService tag service
+     *
+     * @param eventBus     event bus
+     * @param tagService   tag service
      * @param tableService table service
      */
-    @Inject
-    public TagV1Resource(final MetacatEventBus eventBus, final TagService tagService,
-        final TableService tableService) {
+    @Autowired
+    public TagV1Resource(
+        final MetacatEventBus eventBus,
+        final TagService tagService,
+        final TableService tableService
+    ) {
         this.tagService = tagService;
         this.eventBus = eventBus;
         this.tableService = tableService;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Set<String> getTags() {
         return RequestWrapper.requestWrapper("TagV1Resource.getTags", tagService::getTags);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<QualifiedName> list(
         final Set<String> includeTags,
@@ -67,6 +82,9 @@ public class TagV1Resource implements TagV1 {
             () -> tagService.list(includeTags, excludeTags, sourceName, databaseName, tableName));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<QualifiedName> search(
         final String tag,
@@ -77,6 +95,9 @@ public class TagV1Resource implements TagV1 {
             () -> tagService.search(tag, sourceName, databaseName, tableName));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Set<String> setTableTags(
         final String catalogName,
@@ -97,11 +118,16 @@ public class TagV1Resource implements TagV1 {
             final TableDto currentTable = this.tableService
                 .get(name, true)
                 .orElseThrow(IllegalStateException::new);
-            eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, oldTable, currentTable));
+            eventBus.postAsync(
+                new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, currentTable)
+            );
             return result;
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void removeTableTags(
         final String catalogName,
@@ -126,7 +152,9 @@ public class TagV1Resource implements TagV1 {
                 .get(name, true)
                 .orElseThrow(IllegalStateException::new);
 
-            eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, oldTable, currentTable));
+            eventBus.postAsync(new MetacatUpdateTablePostEvent(
+                name, metacatRequestContext, this, oldTable, currentTable)
+            );
             return null;
         });
     }

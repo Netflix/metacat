@@ -30,10 +30,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.HashMap;
@@ -57,7 +56,6 @@ public class CatalogManager {
      * @param connectorManager manager
      * @param config config
      */
-    @Inject
     public CatalogManager(final ConnectorManager connectorManager, final Config config) {
         this.connectorManager = connectorManager;
         this.catalogConfigurationDir = new File(config.getPluginConfigLocation());

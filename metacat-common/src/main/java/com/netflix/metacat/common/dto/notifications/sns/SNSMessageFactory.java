@@ -25,6 +25,7 @@ import com.netflix.metacat.common.dto.notifications.sns.messages.DeletePartition
 import com.netflix.metacat.common.dto.notifications.sns.messages.DeleteTableMessage;
 import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTableMessage;
 import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTablePartitionsMessage;
+import lombok.NonNull;
 
 import java.io.IOException;
 
@@ -44,7 +45,7 @@ public class SNSMessageFactory {
      *
      * @param mapper The object mapper to use for deserialization
      */
-    public SNSMessageFactory(final ObjectMapper mapper) {
+    public SNSMessageFactory(@NonNull final ObjectMapper mapper) {
         this.mapper = mapper;
     }
 
@@ -55,7 +56,7 @@ public class SNSMessageFactory {
      * @return The message bound back into a POJO
      * @throws IOException When the input isn't valid JSON
      */
-    public SNSMessage<?> getMessage(final String json) throws IOException {
+    public SNSMessage<?> getMessage(@NonNull final String json) throws IOException {
         final JsonNode object = this.mapper.readTree(json);
         if (object.has(TYPE_FIELD)) {
             final SNSMessageType messageType = SNSMessageType.valueOf(object.get(TYPE_FIELD).asText());

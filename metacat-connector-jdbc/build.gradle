@@ -23,6 +23,8 @@ dependencies {
 
     compile(project(":metacat-common-server"))
 
+    compile("com.google.inject:guice")
+
     /*******************************
      * Provided Dependencies
      *******************************/

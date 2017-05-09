@@ -17,12 +17,14 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
+import javax.annotation.Nonnull;
 import javax.annotation.PreDestroy;
+import javax.inject.Inject;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -30,33 +32,60 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Thread service manager.
+ *
  * @author amajumdar
  */
+@Getter
 @Slf4j
+// TODO: Move to Hive connector
 public class ThreadServiceManager {
     private ListeningExecutorService executor;
-    @Inject
-    private Config config;
 
     /**
-     * Starts the manager.
+     * Constructor.
+     *
+     * @param config Program configuration
      */
-    @PostConstruct
-    public void start() {
-        final ExecutorService executorService = newFixedThreadPool(config.getServiceMaxNumberOfThreads(),
-            "metacat-service-pool-%d", 1000);
-        executor = MoreExecutors.listeningDecorator(executorService);
+    @Inject
+    public ThreadServiceManager(@Nonnull @NonNull final Config config) {
+        final ExecutorService executorService = newFixedThreadPool(
+            config.getServiceMaxNumberOfThreads(),
+            "metacat-service-pool-%d",
+            1000
+        );
+        this.executor = MoreExecutors.listeningDecorator(executorService);
+    }
+
+    /**
+     * Stops this manager.
+     */
+    @PreDestroy
+    public void stop() {
+        if (this.executor != null) {
+            // Make the executor accept no new threads and finish all existing
+            // threads in the queue
+            this.executor.shutdown();
+            try {
+                this.executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                log.error("Error while shutting down executor service : ", e);
+            }
+        }
     }
 
     @SuppressWarnings("checkstyle:hiddenfield")
-    private ExecutorService newFixedThreadPool(final int nThreads, final String threadFactoryName,
-        final int queueSize) {
-        return new ThreadPoolExecutor(nThreads, nThreads,
-            0L, TimeUnit.MILLISECONDS,
+    private ExecutorService newFixedThreadPool(
+        final int nThreads,
+        final String threadFactoryName,
+        final int queueSize
+    ) {
+        return new ThreadPoolExecutor(
+            nThreads,
+            nThreads,
+            0L,
+            TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<>(queueSize),
-            new ThreadFactoryBuilder()
-                .setNameFormat(threadFactoryName)
-                .build(),
+            new ThreadFactoryBuilder().setNameFormat(threadFactoryName).build(),
             (r, executor) -> {
                 // this will block if the queue is full
                 try {
@@ -65,27 +94,7 @@ public class ThreadServiceManager {
                     throw Throwables.propagate(e);
 
                 }
-            });
-    }
-
-    public ListeningExecutorService getExecutor() {
-        return executor;
-    }
-
-    /**
-     * Stops this manager.
-     */
-    @PreDestroy
-    public void stop() {
-        if (executor != null) {
-            // Make the executor accept no new threads and finish all existing
-            // threads in the queue
-            executor.shutdown();
-            try {
-                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
-                log.error("Error while shutting down executor service : ", e);
             }
-        }
+        );
     }
 }

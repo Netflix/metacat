@@ -17,11 +17,12 @@
  */
 package com.netflix.metacat.connector.mysql;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
-import com.netflix.metacat.common.server.connectors.ConnectorModule;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
@@ -39,7 +40,7 @@ import java.util.Map;
  * @author tgianos
  * @since 1.0.0
  */
-public class MySqlConnectorModule extends ConnectorModule {
+public class MySqlConnectorModule extends AbstractModule {
 
     private final String name;
     private final Map<String, String> configuration;
@@ -68,13 +69,13 @@ public class MySqlConnectorModule extends ConnectorModule {
         this.bind(JdbcTypeConverter.class).to(MySqlTypeConverter.class).in(Scopes.SINGLETON);
         this.bind(JdbcExceptionMapper.class).to(MySqlExceptionMapper.class).in(Scopes.SINGLETON);
         this.bind(ConnectorDatabaseService.class)
-            .to(this.getDatabaseServiceClass(this.configuration, MySqlConnectorDatabaseService.class))
+            .to(ConnectorUtils.getDatabaseServiceClass(this.configuration, MySqlConnectorDatabaseService.class))
             .in(Scopes.SINGLETON);
         this.bind(ConnectorTableService.class)
-            .to(this.getTableServiceClass(this.configuration, JdbcConnectorTableService.class))
+            .to(ConnectorUtils.getTableServiceClass(this.configuration, JdbcConnectorTableService.class))
             .in(Scopes.SINGLETON);
         this.bind(ConnectorPartitionService.class)
-            .to(this.getPartitionServiceClass(this.configuration, JdbcConnectorPartitionService.class))
+            .to(ConnectorUtils.getPartitionServiceClass(this.configuration, JdbcConnectorPartitionService.class))
             .in(Scopes.SINGLETON);
     }
 }

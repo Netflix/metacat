@@ -19,13 +19,14 @@ package com.netflix.metacat.connector.cassandra;
 
 import com.datastax.driver.core.Cluster;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
-import com.netflix.metacat.common.server.connectors.ConnectorModule;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
@@ -39,7 +40,7 @@ import java.util.Map;
  * @author tgianos
  * @since 1.0.0
  */
-public class CassandraConnectorModule extends ConnectorModule {
+public class CassandraConnectorModule extends AbstractModule {
 
     private static final String CONTACT_POINTS_KEY = "cassandra.contactPoints";
     private static final String PORT_KEY = "cassandra.port";
@@ -71,13 +72,13 @@ public class CassandraConnectorModule extends ConnectorModule {
         this.bind(CassandraTypeConverter.class).toInstance(new CassandraTypeConverter());
         this.bind(CassandraExceptionMapper.class).toInstance(new CassandraExceptionMapper());
         this.bind(ConnectorDatabaseService.class)
-            .to(this.getDatabaseServiceClass(this.configuration, CassandraConnectorDatabaseService.class))
+            .to(ConnectorUtils.getDatabaseServiceClass(this.configuration, CassandraConnectorDatabaseService.class))
             .in(Scopes.SINGLETON);
         this.bind(ConnectorTableService.class)
-            .to(this.getTableServiceClass(this.configuration, CassandraConnectorTableService.class))
+            .to(ConnectorUtils.getTableServiceClass(this.configuration, CassandraConnectorTableService.class))
             .in(Scopes.SINGLETON);
         this.bind(ConnectorPartitionService.class)
-            .to(this.getPartitionServiceClass(this.configuration, CassandraConnectorPartitionService.class))
+            .to(ConnectorUtils.getPartitionServiceClass(this.configuration, CassandraConnectorPartitionService.class))
             .in(Scopes.SINGLETON);
     }
 

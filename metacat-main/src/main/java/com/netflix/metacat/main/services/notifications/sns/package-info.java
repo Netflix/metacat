@@ -21,4 +21,7 @@
  * @author tgianos
  * @since 0.1.47
  */
+@ParametersAreNonnullByDefault
 package com.netflix.metacat.main.services.notifications.sns;
+
+import javax.annotation.ParametersAreNonnullByDefault;

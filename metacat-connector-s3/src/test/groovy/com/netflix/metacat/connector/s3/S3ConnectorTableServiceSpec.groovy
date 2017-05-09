@@ -3,22 +3,16 @@ package com.netflix.metacat.connector.s3
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.AuditInfo
-import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
 import com.netflix.metacat.common.server.connectors.model.FieldInfo
 import com.netflix.metacat.common.server.connectors.model.StorageInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
-import com.netflix.metacat.common.server.exception.ConnectorException
-import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException
+import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException
 import com.netflix.metacat.common.type.BaseType
 import com.netflix.metacat.common.type.TypeRegistry
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter
 import com.netflix.metacat.connector.s3.dao.DatabaseDao
 import com.netflix.metacat.connector.s3.dao.FieldDao
-import com.netflix.metacat.connector.s3.dao.SourceDao
 import com.netflix.metacat.connector.s3.dao.TableDao
-import com.netflix.metacat.connector.s3.model.Database
-import com.netflix.metacat.connector.s3.model.Table
 import spock.lang.Specification
 
 /**

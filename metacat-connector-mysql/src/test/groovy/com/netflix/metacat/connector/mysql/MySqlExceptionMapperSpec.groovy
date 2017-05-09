@@ -18,7 +18,7 @@
 package com.netflix.metacat.connector.mysql
 
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.server.exception.*
+import com.netflix.metacat.common.server.connectors.exception.*
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll

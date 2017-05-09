@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.api;
 
 import com.netflix.metacat.common.QualifiedName;
@@ -37,6 +41,7 @@ import java.util.Set;
 
 /**
  * API to manipulate user metadata.
+ *
  * @author amajumdar
  */
 @Path("mds/v1/metadata")
@@ -49,6 +54,7 @@ import java.util.Set;
 public interface MetadataV1 {
     /**
      * Returns the data metadata.
+     *
      * @param metadataGetRequestDto metadata request
      * @return data metadata
      */
@@ -57,18 +63,20 @@ public interface MetadataV1 {
     @ApiOperation(
         position = 1,
         value = "Returns the data metadata",
-        notes = "Returns the data metadata")
+        notes = "Returns the data metadata"
+    )
     DataMetadataDto getDataMetadata(DataMetadataGetRequestDto metadataGetRequestDto);
 
     /**
      * Returns the list of definition metadata.
-     * @param sortBy Sort the list by this value
-     * @param sortOrder Sorting order to use
-     * @param offset Offset of the list returned
-     * @param limit Size of the list
-     * @param lifetime has lifetime set
-     * @param type Type of the metadata item. Values: database, table, partition
-     * @param name Text that matches the name of the metadata (accepts sql wildcards)
+     *
+     * @param sortBy         Sort the list by this value
+     * @param sortOrder      Sorting order to use
+     * @param offset         Offset of the list returned
+     * @param limit          Size of the list
+     * @param lifetime       has lifetime set
+     * @param type           Type of the metadata item. Values: database, table, partition
+     * @param name           Text that matches the name of the metadata (accepts sql wildcards)
      * @param dataProperties Set of data property names.
      *                       Filters the returned list that only contains the given property names
      * @return list of definition metadata
@@ -78,38 +86,40 @@ public interface MetadataV1 {
     @ApiOperation(
         position = 2,
         value = "Returns the definition metadata",
-        notes = "Returns the definition metadata")
+        notes = "Returns the definition metadata"
+    )
     List<DefinitionMetadataDto> getDefinitionMetadataList(
-        @ApiParam(value = "Sort the list by this value", required = false)
+        @ApiParam(value = "Sort the list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the list", required = false)
+        @ApiParam(value = "Size of the list")
         @QueryParam("limit")
             Integer limit,
-        @ApiParam(value = "has lifetime set", required = false)
+        @ApiParam(value = "has lifetime set")
         @DefaultValue("false")
         @QueryParam("lifetime")
             Boolean lifetime,
-        @ApiParam(value = "Type of the metadata item. Values: database, table, partition", required = false)
+        @ApiParam(value = "Type of the metadata item. Values: database, table, partition")
         @QueryParam("type")
             String type,
-        @ApiParam(value = "Text that matches the name of the metadata (accepts sql wildcards)", required = false)
+        @ApiParam(value = "Text that matches the name of the metadata (accepts sql wildcards)")
         @QueryParam("name")
             String name,
         @ApiParam(value = "Set of data property names. "
-            + "Filters the returned list that only contains the given property names", required = false)
+            + "Filters the returned list that only contains the given property names")
         @QueryParam("data-property")
             Set<String> dataProperties
     );
 
     /**
      * Returns the list of qualified names owned by the given owners.
+     *
      * @param owners set of owners
      * @return the list of qualified names owned by the given owners
      */
@@ -118,7 +128,8 @@ public interface MetadataV1 {
     @ApiOperation(
         position = 3,
         value = "Returns the qualified names owned by the given owners",
-        notes = "Returns the qualified names owned by the given owners")
+        notes = "Returns the qualified names owned by the given owners"
+    )
     List<QualifiedName> searchByOwners(
         @ApiParam(value = "Set of owners", required = true)
         @QueryParam("owner")
@@ -127,7 +138,8 @@ public interface MetadataV1 {
 
     /**
      * Delete the definition metadata for the given name.
-     * @param name Name of definition metadata to be deleted
+     *
+     * @param name  Name of definition metadata to be deleted
      * @param force If true, deletes the metadata without checking if the database/table/partition exists
      */
     @DELETE
@@ -141,8 +153,7 @@ public interface MetadataV1 {
         @ApiParam(value = "Name of definition metadata to be deleted", required = true)
         @QueryParam("name")
             QualifiedName name,
-        @ApiParam(value = "If true, deletes the metadata without checking if the database/table/partition exists",
-            required = false)
+        @ApiParam(value = "If true, deletes the metadata without checking if the database/table/partition exists")
         @DefaultValue("false")
         @QueryParam("force")
             Boolean force
@@ -150,6 +161,7 @@ public interface MetadataV1 {
 
     /**
      * Deletes the data metadata marked for deletion.
+     *
      * @return response
      */
     @DELETE

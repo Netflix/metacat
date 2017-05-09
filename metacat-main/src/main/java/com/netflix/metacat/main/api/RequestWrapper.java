@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.main.api;
 
 import com.netflix.metacat.common.QualifiedName;
@@ -20,12 +24,12 @@ import com.netflix.metacat.common.exception.MetacatException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.exception.MetacatUserMetadataException;
-import com.netflix.metacat.common.server.exception.ConnectorException;
-import com.netflix.metacat.common.server.exception.DatabaseAlreadyExistsException;
-import com.netflix.metacat.common.server.exception.InvalidMetaException;
-import com.netflix.metacat.common.server.exception.NotFoundException;
-import com.netflix.metacat.common.server.exception.PartitionAlreadyExistsException;
-import com.netflix.metacat.common.server.exception.TableAlreadyExistsException;
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
+import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.PartitionAlreadyExistsException;
+import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExistsException;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import com.netflix.servo.monitor.DynamicCounter;
 import com.netflix.servo.monitor.DynamicTimer;
@@ -40,18 +44,22 @@ import java.util.function.Supplier;
 
 /**
  * Request wrapper.
+ *
+ * @author amajumdar
+ * @since 0.1.50
  */
 @Slf4j
-public final class RequestWrapper {
+final class RequestWrapper {
     private RequestWrapper() {
     }
 
     /**
      * Creates the qualified name.
+     *
      * @param nameSupplier supplier
      * @return name
      */
-    public static QualifiedName qualifyName(final Supplier<QualifiedName> nameSupplier) {
+    static QualifiedName qualifyName(final Supplier<QualifiedName> nameSupplier) {
         try {
             return nameSupplier.get();
         } catch (Exception e) {
@@ -62,13 +70,14 @@ public final class RequestWrapper {
 
     /**
      * Request wrapper.
-     * @param name name
+     *
+     * @param name                name
      * @param resourceRequestName request name
-     * @param supplier supplier
-     * @param <R> response
+     * @param supplier            supplier
+     * @param <R>                 response
      * @return response of supplier
      */
-    public static <R> R requestWrapper(
+    static <R> R requestWrapper(
         final QualifiedName name,
         final String resourceRequestName,
         final Supplier<R> supplier) {
@@ -117,12 +126,13 @@ public final class RequestWrapper {
 
     /**
      * Simple request wrapper.
+     *
      * @param resourceRequestName request name
-     * @param supplier supplier
-     * @param <R> response
+     * @param supplier            supplier
+     * @param <R>                 response
      * @return response of the supplier
      */
-    public static <R> R requestWrapper(
+    static <R> R requestWrapper(
         final String resourceRequestName,
         final Supplier<R> supplier) {
         final TagList tags = BasicTagList.of("request", resourceRequestName);

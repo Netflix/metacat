@@ -1,16 +1,19 @@
 /*
  * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
-
 package com.netflix.metacat.thrift;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -35,6 +38,7 @@ import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 
+import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
@@ -52,7 +56,7 @@ public class HiveConvertersImpl implements HiveConverters {
     private static final Splitter EQUAL_SPLITTER = Splitter.on('=').limit(2);
 
     @VisibleForTesting
-    Integer dateToEpochSeconds(final Date date) {
+    Integer dateToEpochSeconds(@Nullable final Date date) {
         if (date == null) {
             return null;
         }
@@ -90,6 +94,9 @@ public class HiveConvertersImpl implements HiveConverters {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TableDto hiveToMetacatTable(final QualifiedName name, final Table table) {
         final TableDto dto = new TableDto();
@@ -116,6 +123,9 @@ public class HiveConvertersImpl implements HiveConverters {
         return dto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @SuppressWarnings("unchecked")
     public Database metacatToHiveDatabase(final DatabaseDto dto) {
@@ -147,6 +157,9 @@ public class HiveConvertersImpl implements HiveConverters {
         return database;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Table metacatToHiveTable(final TableDto dto) {
         final Table table = new Table();
@@ -207,7 +220,7 @@ public class HiveConvertersImpl implements HiveConverters {
         return table;
     }
 
-    private StorageDto toStorageDto(final StorageDescriptor sd, final String owner) {
+    private StorageDto toStorageDto(@Nullable final StorageDescriptor sd, final String owner) {
         final StorageDto result = new StorageDto();
         if (sd != null) {
             result.setOwner(owner);
@@ -224,7 +237,7 @@ public class HiveConvertersImpl implements HiveConverters {
         return result;
     }
 
-    private StorageDescriptor fromStorageDto(final StorageDto storageDto) {
+    private StorageDescriptor fromStorageDto(@Nullable final StorageDto storageDto) {
         // Set all required fields to a non-null value
         final StorageDescriptor result = new StorageDescriptor();
         String inputFormat = "";
@@ -267,6 +280,9 @@ public class HiveConvertersImpl implements HiveConverters {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PartitionDto hiveToMetacatPartition(final TableDto tableDto, final Partition partition) {
         final QualifiedName tableName = tableDto.getName();
@@ -290,11 +306,14 @@ public class HiveConvertersImpl implements HiveConverters {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartValsFromName(final TableDto tableDto, final String partName) {
         // Unescape the partition name
 
-        LinkedHashMap<String, String> hm = null;
+        final LinkedHashMap<String, String> hm;
         try {
             hm = Warehouse.makeSpecFromName(partName);
         } catch (MetaException e) {
@@ -312,6 +331,9 @@ public class HiveConvertersImpl implements HiveConverters {
         return partVals;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getNameFromPartVals(final TableDto tableDto, final List<String> partVals) {
         final List<String> partitionKeys = tableDto.getPartition_keys();
@@ -332,8 +354,11 @@ public class HiveConvertersImpl implements HiveConverters {
         return builder.toString();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Partition metacatToHivePartition(final PartitionDto partitionDto, final TableDto tableDto) {
+    public Partition metacatToHivePartition(final PartitionDto partitionDto, @Nullable final TableDto tableDto) {
         final Partition result = new Partition();
 
         final QualifiedName name = partitionDto.getName();

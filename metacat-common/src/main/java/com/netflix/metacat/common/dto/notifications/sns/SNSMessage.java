@@ -20,7 +20,9 @@ package com.netflix.metacat.common.dto.notifications.sns;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netflix.metacat.common.dto.BaseDto;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 
 /**
@@ -32,6 +34,7 @@ import lombok.ToString;
  */
 @Getter
 @ToString
+@EqualsAndHashCode(callSuper = false)
 public class SNSMessage<P> extends BaseDto {
 
     private final String id;
@@ -53,12 +56,12 @@ public class SNSMessage<P> extends BaseDto {
      */
     @JsonCreator
     public SNSMessage(
-        @JsonProperty("id") final String id,
+        @JsonProperty("id") @NonNull final String id,
         @JsonProperty("timestamp") final long timestamp,
-        @JsonProperty("requestId") final String requestId,
-        @JsonProperty("type") final SNSMessageType type,
-        @JsonProperty("name") final String name,
-        @JsonProperty("payload") final P payload
+        @JsonProperty("requestId") @NonNull final String requestId,
+        @JsonProperty("type") @NonNull final SNSMessageType type,
+        @JsonProperty("name") @NonNull final String name,
+        @JsonProperty("payload") @NonNull final P payload
     ) {
         this.id = id;
         this.timestamp = timestamp;

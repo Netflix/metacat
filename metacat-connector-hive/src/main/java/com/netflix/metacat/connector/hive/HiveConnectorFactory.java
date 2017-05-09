@@ -23,6 +23,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;
 import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClientFactory;
@@ -52,26 +53,30 @@ public class HiveConnectorFactory implements ConnectorFactory {
     private final String catalogName;
     private final Map<String, String> configuration;
     private final HiveConnectorInfoConverter infoConverter;
-    private IMetacatHiveClient client;
     private final Injector injector;
+    private IMetacatHiveClient client;
 
     /**
      * Constructor.
      *
+     * @param config        The system config
      * @param catalogName   connector name. Also the catalog name.
      * @param configuration configuration properties
      * @param infoConverter hive info converter
      */
-    public HiveConnectorFactory(@Nonnull @NonNull final String catalogName,
-                                @Nonnull @NonNull final Map<String, String> configuration,
-                                final HiveConnectorInfoConverter infoConverter) {
+    public HiveConnectorFactory(
+        @Nonnull @NonNull final Config config,
+        @Nonnull @NonNull final String catalogName,
+        @Nonnull @NonNull final Map<String, String> configuration,
+        final HiveConnectorInfoConverter infoConverter
+    ) {
         this.catalogName = catalogName;
         this.configuration = configuration;
         this.infoConverter = infoConverter;
 
         try {
             final boolean useLocalMetastore = Boolean
-                    .parseBoolean(configuration.getOrDefault(HiveConfigConstants.USE_EMBEDDED_METASTORE, "false"));
+                .parseBoolean(configuration.getOrDefault(HiveConfigConstants.USE_EMBEDDED_METASTORE, "false"));
             if (!useLocalMetastore) {
                 client = createThriftClient();
                 if (configuration.containsKey(HiveConfigConstants.USE_FASTHIVE_SERVICE)) {
@@ -83,19 +88,10 @@ public class HiveConnectorFactory implements ConnectorFactory {
             }
         } catch (Exception e) {
             throw new IllegalArgumentException(
-                    String.format("Failed creating the hive metastore client for catalog: %s", catalogName), e);
+                String.format("Failed creating the hive metastore client for catalog: %s", catalogName), e);
         }
-        final Module hiveModule = new HiveConnectorModule(catalogName, configuration, infoConverter, client);
+        final Module hiveModule = new HiveConnectorModule(config, catalogName, configuration, infoConverter, client);
         this.injector = Guice.createInjector(hiveModule);
-    }
-
-    private IMetacatHiveClient createLocalClient() throws Exception {
-        final HiveConf conf = getDefaultConf();
-        configuration.forEach(conf::set);
-        //TO DO Change the usage of DataSourceManager later
-        DataSourceManager.get().load(catalogName, configuration);
-        return new EmbeddedHiveClient(catalogName, HMSHandlerProxy.getProxy(conf));
-
     }
 
     private static HiveConf getDefaultConf() {
@@ -107,17 +103,26 @@ public class HiveConnectorFactory implements ConnectorFactory {
         result.setInt(HiveConfigConstants.HIVE_METASTORE_DS_RETRY, 0);
         result.setInt(HiveConfigConstants.HIVE_HMSHANDLER_RETRY, 0);
         result.set(HiveConfigConstants.JAVAX_JDO_PERSISTENCEMANAGER_FACTORY_CLASS,
-                HiveConfigConstants.JAVAX_JDO_PERSISTENCEMANAGER_FACTORY);
+            HiveConfigConstants.JAVAX_JDO_PERSISTENCEMANAGER_FACTORY);
         result.setBoolean(HiveConfigConstants.HIVE_STATS_AUTOGATHER, false);
         return result;
     }
 
+    private IMetacatHiveClient createLocalClient() throws Exception {
+        final HiveConf conf = getDefaultConf();
+        configuration.forEach(conf::set);
+        //TO DO Change the usage of DataSourceManager later
+        DataSourceManager.get().load(catalogName, configuration);
+        return new EmbeddedHiveClient(catalogName, HMSHandlerProxy.getProxy(conf));
+
+    }
+
     private IMetacatHiveClient createThriftClient() throws MetaException {
         final HiveMetastoreClientFactory factory =
-                new HiveMetastoreClientFactory(null,
-                        (int) HiveConnectorUtil.toTime(
-                                configuration.getOrDefault(HiveConfigConstants.HIVE_METASTORE_TIMEOUT, "20s"),
-                                TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
+            new HiveMetastoreClientFactory(null,
+                (int) HiveConnectorUtil.toTime(
+                    configuration.getOrDefault(HiveConfigConstants.HIVE_METASTORE_TIMEOUT, "20s"),
+                    TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
         final String metastoreUri = configuration.get(HiveConfigConstants.THRIFT_URI);
         URI uri = null;
         try {

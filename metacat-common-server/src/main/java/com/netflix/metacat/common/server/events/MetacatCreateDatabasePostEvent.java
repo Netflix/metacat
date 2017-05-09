@@ -22,6 +22,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 
 import javax.annotation.Nonnull;
@@ -38,16 +39,19 @@ public class MetacatCreateDatabasePostEvent extends MetacatEvent {
 
     /**
      * Constructor.
-     * @param name name
+     *
+     * @param name           name
      * @param requestContext request context
-     * @param database database info
+     * @param source         The source object which threw this event
+     * @param database       database info
      */
     public MetacatCreateDatabasePostEvent(
-        @Nonnull final QualifiedName name,
-        @Nonnull final MetacatRequestContext requestContext,
-        @Nonnull final DatabaseDto database
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final Object source,
+        @Nonnull @NonNull final DatabaseDto database
     ) {
-        super(name, requestContext);
+        super(name, requestContext, source);
         this.database = database;
     }
 }

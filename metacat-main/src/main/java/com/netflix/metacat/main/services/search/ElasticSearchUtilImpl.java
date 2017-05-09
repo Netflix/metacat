@@ -28,7 +28,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.action.FailedNodeException;
@@ -58,7 +58,6 @@ import org.elasticsearch.transport.TransportException;
 import org.joda.time.Instant;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -72,7 +71,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class ElasticSearchUtilImpl implements ElasticSearchUtil {
-    protected static final Retryer<Void> RETRY_ES_PUBLISH = RetryerBuilder.<Void>newBuilder()
+    private static final Retryer<Void> RETRY_ES_PUBLISH = RetryerBuilder.<Void>newBuilder()
         .retryIfExceptionOfType(FailedNodeException.class)
         .retryIfExceptionOfType(NodeClosedException.class)
         .retryIfExceptionOfType(NoNodeAvailableException.class)
@@ -85,32 +84,39 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
         .withStopStrategy(StopStrategies.stopAfterAttempt(3))
         .build();
     private static final int NO_OF_CONFLICT_RETRIES = 3;
-    protected XContentType contentType = Requests.INDEX_CONTENT_TYPE;
-    protected final String esIndex;
     protected final Client client;
+    private final String esIndex;
     private final Config config;
     private final MetacatJson metacatJson;
+    private XContentType contentType = Requests.INDEX_CONTENT_TYPE;
 
     /**
      * Constructor.
-     * @param client elastic search client
-     * @param config config
+     *
+     * @param client      elastic search client
+     * @param config      config
      * @param metacatJson json utility
      */
-    @Inject
     public ElasticSearchUtilImpl(
-        @Nullable
-        final Client client, final Config config, final MetacatJson metacatJson) {
+        @Nullable final Client client,
+        final Config config,
+        final MetacatJson metacatJson
+    ) {
         this.config = config;
         this.client = client;
         this.metacatJson = metacatJson;
         this.esIndex = config.getEsIndex();
     }
 
+    protected static List<String> getIds(final SearchResponse response) {
+        return FluentIterable.from(response.getHits()).transform(SearchHit::getId).toList();
+    }
+
     /**
      * Delete index document.
+     *
      * @param type index type
-     * @param id entity id
+     * @param id   entity id
      */
     public void delete(final String type, final String id) {
         try {
@@ -127,8 +133,9 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Delete index documents.
+     *
      * @param type index type
-     * @param ids entity ids
+     * @param ids  entity ids
      */
     public void delete(final String type, final List<String> ids) {
         if (ids != null && !ids.isEmpty()) {
@@ -139,8 +146,9 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Permanently delete index documents.
+     *
      * @param type index type
-     * @param ids entity ids
+     * @param ids  entity ids
      */
     private void hardDeleteDoc(final String type, final List<String> ids) {
         try {
@@ -150,7 +158,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 log.info("Deleting metadata of type {} with count {}", type, ids.size());
                 if (bulkResponse.hasFailures()) {
-                    for (BulkItemResponse item: bulkResponse.getItems()) {
+                    for (BulkItemResponse item : bulkResponse.getItems()) {
                         if (item.isFailed()) {
                             log.error("Failed deleting metadata of type {} with id {}. Message: {}",
                                 type, item.getId(), item.getFailureMessage());
@@ -171,8 +179,9 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Marks the document as deleted.
-     * @param type index type
-     * @param id entity id
+     *
+     * @param type                  index type
+     * @param id                    entity id
      * @param metacatRequestContext context containing the user name
      */
     public void softDelete(final String type, final String id, final MetacatRequestContext metacatRequestContext) {
@@ -195,8 +204,9 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Batch marks the documents as deleted.
-     * @param type index type
-     * @param ids list of entity ids
+     *
+     * @param type                  index type
+     * @param ids                   list of entity ids
      * @param metacatRequestContext context containing the user name
      */
     public void softDelete(final String type, final List<String> ids,
@@ -221,7 +231,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 builder.startObject().field(ElasticSearchDoc.Field.DELETED, true).field(ElasticSearchDoc.Field.USER,
                     metacatRequestContext.getUserName()).endObject();
                 ids.forEach(id -> bulkRequest.add(client.prepareUpdate(esIndex, type, id)
-                            .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder)));
+                    .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder)));
                 final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
@@ -245,10 +255,11 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Batch updates the documents with partial updates with the given fields.
-     * @param type index type
-     * @param ids list of entity ids
+     *
+     * @param type                  index type
+     * @param ids                   list of entity ids
      * @param metacatRequestContext context containing the user name
-     * @param node json that represents the document source
+     * @param node                  json that represents the document source
      */
     public void updates(final String type, final List<String> ids,
                         final MetacatRequestContext metacatRequestContext, final ObjectNode node) {
@@ -262,10 +273,11 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Updates the documents with partial updates with the given fields.
-     * @param type index type
-     * @param ids list of entity ids
+     *
+     * @param type                  index type
+     * @param ids                   list of entity ids
      * @param metacatRequestContext context containing the user name
-     * @param node json that represents the document source
+     * @param node                  json that represents the document source
      */
     private void updateDocs(final String type, final List<String> ids,
                             final MetacatRequestContext metacatRequestContext, final ObjectNode node) {
@@ -297,10 +309,12 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             log("ElasticSearchUtil.updatDocs", type, ids.toString(), null, e.getMessage(), e, true);
         }
     }
+
     /**
      * Save of a single entity.
+     *
      * @param type index type
-     * @param id id of the entity
+     * @param id   id of the entity
      * @param body source string of the entity
      */
     public void save(final String type, final String id, final String body) {
@@ -310,9 +324,10 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Save of a single entity to an index.
-     * @param type index type
-     * @param id id of the entity
-     * @param body source string of the entity
+     *
+     * @param type  index type
+     * @param id    id of the entity
+     * @param body  source string of the entity
      * @param index the index name
      */
     void saveToIndex(final String type, final String id, final String body, final String index) {
@@ -331,6 +346,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Bulk save of the entities.
+     *
      * @param type index type
      * @param docs metacat documents
      */
@@ -344,6 +360,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Bulk save of the entities.
+     *
      * @param type index type
      * @param docs metacat documents
      */
@@ -383,9 +400,10 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Creates JSON from search doc.
-     * @param id doc id
-     * @param dto dto
-     * @param context context
+     *
+     * @param id        doc id
+     * @param dto       dto
+     * @param context   context
      * @param isDeleted true if it has to be mark deleted
      * @return doc
      */
@@ -396,7 +414,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * List table names by uri.
-     * @param type doc type
+     *
+     * @param type    doc type
      * @param dataUri uri
      * @return list of table names
      */
@@ -421,8 +440,9 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * List table names.
-     * @param type doc type
-     * @param qualifiedNames names
+     *
+     * @param type                  doc type
+     * @param qualifiedNames        names
      * @param excludeQualifiedNames exclude names
      * @return list of table names
      */
@@ -450,7 +470,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * List of names.
-     * @param type type
+     *
+     * @param type          type
      * @param qualifiedName name
      * @return list of names
      */
@@ -475,12 +496,13 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Search the names by names and by the given marker.
-     * @param type type
-     * @param qualifiedNames names
-     * @param marker marker
+     *
+     * @param type                  type
+     * @param qualifiedNames        names
+     * @param marker                marker
      * @param excludeQualifiedNames exclude names
-     * @param valueType dto type
-     * @param <T> dto type
+     * @param valueType             dto type
+     * @param <T>                   dto type
      * @return dto
      */
     public <T> List<T> getQualifiedNamesByMarkerByNames(final String type,
@@ -512,11 +534,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
         return result;
     }
 
-    protected static List<String> getIds(final SearchResponse response) {
-        return FluentIterable.from(response.getHits()).transform(SearchHit::getId).toList();
-    }
-
-    protected  <T> List<T> parseResponse(final SearchResponse response, final Class<T> valueType) {
+    protected <T> List<T> parseResponse(final SearchResponse response, final Class<T> valueType) {
         return FluentIterable.from(response.getHits()).transform(hit -> {
             try {
                 return metacatJson.parseJsonValue(hit.getSourceAsString(), valueType);
@@ -535,8 +553,9 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Gets the document for the given type and id.
+     *
      * @param type doc type
-     * @param id doc id
+     * @param id   doc id
      * @return doc
      */
     public ElasticSearchDoc get(final String type, final String id) {
@@ -545,8 +564,9 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Gets the document for the given type and id.
-     * @param type doc type
-     * @param id doc id
+     *
+     * @param type  doc type
+     * @param id    doc id
      * @param index the es index
      * @return doc
      */
@@ -561,9 +581,10 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Delete the records for the given type.
+     *
      * @param metacatRequestContext context
-     * @param type doc type
-     * @param softDelete if true, marks the doc for deletion
+     * @param type                  doc type
+     * @param softDelete            if true, marks the doc for deletion
      */
     public void delete(final MetacatRequestContext metacatRequestContext, final String type,
                        final boolean softDelete) {
@@ -593,13 +614,14 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Wrapper for logging the message in elastic search esIndex.
-     * @param method method
-     * @param type type
-     * @param name name
-     * @param data data
+     *
+     * @param method     method
+     * @param type       type
+     * @param name       name
+     * @param data       data
      * @param logMessage message
-     * @param ex exception
-     * @param error is an error
+     * @param ex         exception
+     * @param error      is an error
      */
     public void log(final String method, final String type, final String name, final String data,
                     final String logMessage, final Exception ex, final boolean error) {
@@ -608,14 +630,15 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Log the message in elastic search.
-     * @param method method
-     * @param type type
-     * @param name name
-     * @param data data
+     *
+     * @param method     method
+     * @param type       type
+     * @param name       name
+     * @param data       data
      * @param logMessage message
-     * @param ex exception
-     * @param error is an error
-     * @param index es index
+     * @param ex         exception
+     * @param error      is an error
+     * @param index      es index
      */
     void log(final String method, final String type, final String name, final String data,
              final String logMessage, final Exception ex, final boolean error, final String index) {
@@ -638,6 +661,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
 
     /**
      * Full text search.
+     *
      * @param searchString search text
      * @return list of table info
      */

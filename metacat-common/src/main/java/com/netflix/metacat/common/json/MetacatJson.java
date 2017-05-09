@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,13 +38,13 @@ public interface MetacatJson {
      * JSON. Same converters (serializers, deserializers) will be used as for
      * data binding, meaning same object mapper configuration works.
      *
-     * @param fromValue object to be converted
+     * @param fromValue   object to be converted
      * @param toValueType POJO class to be converted to
-     * @param <T> POJO class
+     * @param <T>         POJO class
      * @return Returns the converted POJO
      * @throws MetacatJsonException If conversion fails due to incompatible type;
-     *    if so, root cause will contain underlying checked exception data binding
-     *    functionality threw
+     *                              if so, root cause will contain underlying checked exception data binding
+     *                              functionality threw
      */
     <T> T convertValue(Object fromValue, Class<T> toValueType);
 
@@ -59,25 +63,29 @@ public interface MetacatJson {
 
     /**
      * Returns an empty object node.
+     *
      * @return an empty object node
      */
     ObjectNode emptyObjectNode();
 
     /**
      * Returns default ObjectMapper used by this instance.
+     *
      * @return The default ObjectMapper used by this instance.
      */
     ObjectMapper getObjectMapper();
 
     /**
      * Returns default ObjectMapper used by this instance configured to pretty print.
+     *
      * @return The default ObjectMapper used by this instance configured to pretty print.
      */
     ObjectMapper getPrettyObjectMapper();
 
     /**
      * Merge primary and additional json nodes.
-     * @param primary first json node
+     *
+     * @param primary    first json node
      * @param additional second json node
      */
     void mergeIntoPrimary(
@@ -98,26 +106,29 @@ public interface MetacatJson {
 
     /**
      * Parses the given JSON value.
-     * @param s json string
+     *
+     * @param s     json string
      * @param clazz class
-     * @param <T> type of the class
+     * @param <T>   type of the class
      * @return object
      */
     <T> T parseJsonValue(String s, Class<T> clazz);
 
     /**
      * Parses the given JSON value.
-     * @param s json byte array
+     *
+     * @param s     json byte array
      * @param clazz class
-     * @param <T> type of the class
+     * @param <T>   type of the class
      * @return object
      */
     <T> T parseJsonValue(byte[] s, Class<T> clazz);
 
     /**
      * Serializes the JSON.
+     *
      * @param outputStream output stream
-     * @param json json node
+     * @param json         json node
      * @throws IOException exception
      */
     void serializeObjectNode(
@@ -128,6 +139,7 @@ public interface MetacatJson {
 
     /**
      * Converts JSON as bytes.
+     *
      * @param o object
      * @return byte array
      */
@@ -135,6 +147,7 @@ public interface MetacatJson {
 
     /**
      * Converts an object to JSON.
+     *
      * @param o object
      * @return JSON node
      */
@@ -142,6 +155,7 @@ public interface MetacatJson {
 
     /**
      * Converts an object to JSON string.
+     *
      * @param o object
      * @return JSON string
      */

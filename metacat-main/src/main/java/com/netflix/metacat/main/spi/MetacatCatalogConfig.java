@@ -25,6 +25,7 @@ import java.util.Map;
 /**
  * Catalog config.
  */
+// TODO: Move/refactor into connectors?
 public final class MetacatCatalogConfig {
     private static final Splitter COMMA_LIST_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
     private final boolean includeViewsWithTables;

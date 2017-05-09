@@ -25,8 +25,8 @@ dependencies {
 
     compile("com.google.guava:guava")
     compile("com.google.inject:guice")
-    compile("org.apache.pig:pig:${pig_version}")
-    compile("org.apache.hadoop:hadoop-core:${hadoop_core_version}")
+    compile("org.apache.pig:pig")
+    compile("org.apache.hadoop:hadoop-core")
     compile("org.slf4j:slf4j-api")
 
     /*******************************

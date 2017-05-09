@@ -16,7 +16,7 @@ package com.netflix.metacat.main.search
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
-import com.netflix.metacat.common.server.Config
+import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.main.services.search.ElasticSearchUtilImpl
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
@@ -50,12 +50,12 @@ class BaseEsSpec extends Specification {
 
     def setupSpec() {
         Settings settings = ImmutableSettings.settingsBuilder()
-                .put("node.http.enabled", false)
-                .put("index.gateway.type", "none")
-                .put("index.store.type", "memory")
-                .put("index.refresh_interval", "1s")
-                .put("index.number_of_shards", 1)
-                .put("index.number_of_replicas", 0).build();
+            .put("node.http.enabled", false)
+            .put("index.gateway.type", "none")
+            .put("index.store.type", "memory")
+            .put("index.refresh_interval", "1s")
+            .put("index.number_of_shards", 1)
+            .put("index.number_of_replicas", 0).build();
         Client client = org.elasticsearch.node.NodeBuilder.nodeBuilder().local(true).settings(settings).node().client()
         String[] indices = [esIndex, esMergeIndex];
         for (String _index : indices) {
@@ -64,10 +64,10 @@ class BaseEsSpec extends Specification {
             }
         }
         // Create a new index
-        for (String _index : indices ) {
+        for (String _index : indices) {
             def index = new CreateIndexRequest(_index)
             index.source(getFile('metacat.json').getText())
-            client.admin().indices().create( index).actionGet()
+            client.admin().indices().create(index).actionGet()
         }
 
         metacatJson = MetacatJsonLocator.INSTANCE
@@ -79,9 +79,9 @@ class BaseEsSpec extends Specification {
         esMig = new ElasticSearchUtilImpl(client, config2, metacatJson)
     }
 
-    def getFile(String name){
+    def getFile(String name) {
         def f = new File('../metacat-main/src/test/resources/search/mapping/' + name)
-        if(!f.exists()){
+        if (!f.exists()) {
             f = new File('metacat-main/src/test/resources/search/mapping/' + name)
         }
         return f

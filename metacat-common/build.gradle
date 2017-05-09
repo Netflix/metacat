@@ -23,15 +23,19 @@ compileJava {
 
 dependencies {
     /*******************************
-     * Compile Dependencies
+     * API Dependencies
      *******************************/
 
-    compile("com.fasterxml.jackson.core:jackson-annotations")
-    compile("com.fasterxml.jackson.core:jackson-core")
     compile("com.fasterxml.jackson.core:jackson-databind")
-    compile("com.github.fge:json-patch:${json_patch_version}")
-    compile("com.wordnik:swagger-annotations:${swagger_version}")
-    compile("javax.ws.rs:jsr311-api:${jsr311_api_version}")
+    compile("com.github.fge:json-patch")
+    compile("com.wordnik:swagger-annotations")
+    compile("javax.ws.rs:jsr311-api")
+
+    /*******************************
+     * Implementation Dependencies
+     *******************************/
+
+    compile("com.google.guava:guava")
 
     /*******************************
      * Provided Dependencies
@@ -45,6 +49,6 @@ dependencies {
      * Test Dependencies
      *******************************/
 
-    testCompile("nl.jqno.equalsverifier:equalsverifier:${equalsverifier_version}")
+    testCompile("nl.jqno.equalsverifier:equalsverifier")
     testCompile("org.apache.commons:commons-lang3")
 }

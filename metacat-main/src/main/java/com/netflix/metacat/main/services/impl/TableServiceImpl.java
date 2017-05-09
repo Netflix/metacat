@@ -21,15 +21,15 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.MetacatRequestContext;
-import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
-import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePreEvent;
@@ -40,20 +40,15 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
-import com.netflix.metacat.common.server.exception.NotFoundException;
-import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
-import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.DatabaseService;
-import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.TableService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -70,10 +65,7 @@ public class TableServiceImpl implements TableService {
     private final ConnectorManager connectorManager;
     private final DatabaseService databaseService;
     private final TagService tagService;
-    private final MViewService mViewService;
     private final UserMetadataService userMetadataService;
-    private final ThreadServiceManager threadServiceManager;
-    private final Config config;
     private final MetacatEventBus eventBus;
     private final ConverterUtil converterUtil;
 
@@ -83,31 +75,22 @@ public class TableServiceImpl implements TableService {
      * @param connectorManager     connector manager
      * @param databaseService      database service
      * @param tagService           tag service
-     * @param mViewService         view service
      * @param userMetadataService  user metadata service
-     * @param threadServiceManager thread service
-     * @param config               configurations
      * @param eventBus             Internal event bus
      * @param converterUtil        utility to convert to/from Dto to connector resources
      */
-    @Inject
     public TableServiceImpl(
         final ConnectorManager connectorManager,
         final DatabaseService databaseService,
         final TagService tagService,
-        final MViewService mViewService,
         final UserMetadataService userMetadataService,
-        final ThreadServiceManager threadServiceManager,
-        final Config config, final MetacatEventBus eventBus,
+        final MetacatEventBus eventBus,
         final ConverterUtil converterUtil
     ) {
         this.connectorManager = connectorManager;
         this.databaseService = databaseService;
         this.tagService = tagService;
-        this.mViewService = mViewService;
         this.userMetadataService = userMetadataService;
-        this.threadServiceManager = threadServiceManager;
-        this.config = config;
         this.eventBus = eventBus;
         this.converterUtil = converterUtil;
     }
@@ -121,7 +104,7 @@ public class TableServiceImpl implements TableService {
         //
         setOwnerIfNull(tableDto, metacatRequestContext.getUserName());
         log.info("Creating table {}", name);
-        eventBus.postSync(new MetacatCreateTablePreEvent(name, metacatRequestContext, tableDto));
+        eventBus.postSync(new MetacatCreateTablePreEvent(name, metacatRequestContext, this, tableDto));
         final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
         final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
         service.create(connectorContext, converterUtil.fromTableDto(tableDto));
@@ -132,7 +115,7 @@ public class TableServiceImpl implements TableService {
             tag(name, tableDto.getDefinitionMetadata());
         }
         final TableDto dto = get(name, true).orElseThrow(() -> new IllegalStateException("Should exist"));
-        eventBus.postAsync(new MetacatCreateTablePostEvent(name, metacatRequestContext, dto));
+        eventBus.postAsync(new MetacatCreateTablePostEvent(name, metacatRequestContext, this, dto));
         return dto;
     }
 
@@ -166,7 +149,7 @@ public class TableServiceImpl implements TableService {
     @Override
     public TableDto deleteAndReturn(@Nonnull final QualifiedName name, final boolean isMView) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatDeleteTablePreEvent(name, metacatRequestContext));
+        eventBus.postSync(new MetacatDeleteTablePreEvent(name, metacatRequestContext, this));
         validate(name);
         final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
         final Optional<TableDto> oTable = get(name, true);
@@ -188,28 +171,7 @@ public class TableServiceImpl implements TableService {
         userMetadataService.deleteMetadatas(metacatRequestContext.getUserName(), Lists.newArrayList(tableDto));
         log.info("Deleting tags for table {}", name);
         tagService.delete(name, false);
-        if (config.canCascadeViewsMetadataOnTableDelete() && !isMView) {
-            // Spawning off since this is a time consuming task
-            threadServiceManager.getExecutor().submit(() -> {
-                try {
-                    // delete views associated with this table
-                    final List<NameDateDto> viewNames = mViewService.list(name);
-                    viewNames.forEach(viewName -> mViewService.deleteAndReturn(viewName.getName()));
-                } catch (Exception e) {
-                    log.warn("Failed cleaning mviews after deleting table {}", name);
-                }
-                // delete table partitions metadata
-                try {
-                    final List<QualifiedName> names = userMetadataService.getDescendantDefinitionNames(name);
-                    if (names != null && !names.isEmpty()) {
-                        userMetadataService.deleteDefinitionMetadatas(names);
-                    }
-                } catch (Exception e) {
-                    log.warn("Failed cleaning partition definition metadata after deleting table {}", name);
-                }
-            });
-        }
-        eventBus.postAsync(new MetacatDeleteTablePostEvent(name, metacatRequestContext, tableDto));
+        eventBus.postAsync(new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, tableDto));
         return tableDto;
     }
 
@@ -277,30 +239,18 @@ public class TableServiceImpl implements TableService {
         final TableDto oldTable = get(oldName, true).orElseThrow(() -> new TableNotFoundException(oldName));
         if (oldTable != null) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
-            eventBus.postSync(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, newName));
+            eventBus.postSync(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, this, newName));
             try {
                 log.info("Renaming {} {} to {}", isMView ? "view" : "table", oldName, newName);
                 final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
                 service.rename(connectorContext, oldName, newName);
-
-                if (!isMView) {
-                    final List<NameDateDto> views = mViewService.list(oldName);
-                    if (views != null && !views.isEmpty()) {
-                        views.forEach(view -> {
-                            final QualifiedName newViewName = QualifiedName
-                                .ofView(oldName.getCatalogName(), oldName.getDatabaseName(), newName.getTableName(),
-                                    view.getName().getViewName());
-                            mViewService.rename(view.getName(), newViewName);
-                        });
-                    }
-                }
             } catch (UnsupportedOperationException ignored) {
             }
             userMetadataService.renameDefinitionMetadataKey(oldName, newName);
             tagService.rename(oldName, newName.getTableName());
 
             final TableDto dto = get(newName, true).orElseThrow(() -> new IllegalStateException("should exist"));
-            eventBus.postAsync(new MetacatRenameTablePostEvent(oldName, metacatRequestContext, oldTable, dto));
+            eventBus.postAsync(new MetacatRenameTablePostEvent(oldName, metacatRequestContext, this, oldTable, dto));
         }
     }
 
@@ -315,7 +265,7 @@ public class TableServiceImpl implements TableService {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
         final TableDto oldTable = get(name, true).orElseThrow(() -> new TableNotFoundException(name));
-        eventBus.postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, oldTable, tableDto));
+        eventBus.postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, this, oldTable, tableDto));
         //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
         if (isTableInfoProvided(tableDto)) {
             try {
@@ -332,7 +282,7 @@ public class TableServiceImpl implements TableService {
             userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
         }
         final TableDto updatedDto = get(name, true).orElseThrow(() -> new IllegalStateException("should exist"));
-        eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, oldTable, updatedDto));
+        eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, updatedDto));
         return updatedDto;
     }
 

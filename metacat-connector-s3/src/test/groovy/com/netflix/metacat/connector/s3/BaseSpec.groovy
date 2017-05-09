@@ -14,15 +14,7 @@
 package com.netflix.metacat.connector.s3
 
 import com.google.inject.persist.PersistService
-import com.netflix.metacat.common.server.CommonModule
-import com.netflix.metacat.connector.s3.model.Database
-import com.netflix.metacat.connector.s3.model.Field
-import com.netflix.metacat.connector.s3.model.Info
-import com.netflix.metacat.connector.s3.model.Location
-import com.netflix.metacat.connector.s3.model.Partition
-import com.netflix.metacat.connector.s3.model.Schema
-import com.netflix.metacat.connector.s3.model.Source
-import com.netflix.metacat.connector.s3.model.Table
+import com.netflix.metacat.connector.s3.model.*
 import spock.guice.UseModules
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -32,16 +24,21 @@ import javax.inject.Inject
 import java.sql.DriverManager
 
 @UseModules([
-        CommonModule.class,
-        S3TestModule.class
+    S3TestModule.class
 ])
 @Ignore
 class BaseSpec extends Specification {
-    @Shared @Inject PersistService persistService
-    @Shared Map<String, Source> sources
-    @Shared Map<String, Database> databases
-    @Shared Map<String, Table> tables
-    @Shared Map<String, Partition> partitions
+    @Shared
+    @Inject
+    PersistService persistService
+    @Shared
+    Map<String, Source> sources
+    @Shared
+    Map<String, Database> databases
+    @Shared
+    Map<String, Table> tables
+    @Shared
+    Map<String, Partition> partitions
 
     def setupSpec() {
         setupPersist()
@@ -50,35 +47,35 @@ class BaseSpec extends Specification {
 
     def setModels() {
         // source
-        def source = new Source(name:'s3', type:'s3')
+        def source = new Source(name: 's3', type: 's3')
         // databases
         def database = new Database(name: 'test', source: source)
         def database1 = new Database(name: 'test1', source: source)
         // Table 1
-        def location = new Location(uri:'s3://')
+        def location = new Location(uri: 's3://')
         def info = new Info(owner: 'amajumdar', inputFormat: 'text', location: location)
         def schema = new Schema(location: location)
-        def field = new Field(name:'a', type:'chararray', partitionKey: true, schema: schema)
+        def field = new Field(name: 'a', type: 'chararray', partitionKey: true, schema: schema)
         schema.setFields([field])
         location.setInfo(info)
         location.setSchema(schema)
         def table = new Table(name: 'part', location: location, database: database)
         location.setTable(table)
         // Table 2
-        def location1 = new Location(uri:'s3://')
+        def location1 = new Location(uri: 's3://')
         def info1 = new Info(owner: 'amajumdar', inputFormat: 'text', location: location1)
         def schema1 = new Schema(location: location1)
-        def field1 = new Field(name:'a', type:'chararray', partitionKey: true, schema: schema1)
-        def field2 = new Field(name:'b', type:'chararray', partitionKey: true, schema: schema1)
+        def field1 = new Field(name: 'a', type: 'chararray', partitionKey: true, schema: schema1)
+        def field2 = new Field(name: 'b', type: 'chararray', partitionKey: true, schema: schema1)
         schema1.setFields([field1, field2])
         location1.setInfo(info1)
         location1.setSchema(schema1)
         def table1 = new Table(name: 'part1', location: location1, database: database)
         location1.setTable(table1)
         //Partitions
-        def partition = new Partition(name:'dateint=20171212', uri:'s3://part/dateint=20171212', table: table)
-        def partition1 = new Partition(name:'dateint=20171213', uri:'s3://part/dateint=20171213', table: table)
-        def partition2 = new Partition(name:'dateint=20171214', uri:'s3://part/dateint=20171214', table: table)
+        def partition = new Partition(name: 'dateint=20171212', uri: 's3://part/dateint=20171212', table: table)
+        def partition1 = new Partition(name: 'dateint=20171213', uri: 's3://part/dateint=20171213', table: table)
+        def partition2 = new Partition(name: 'dateint=20171214', uri: 's3://part/dateint=20171214', table: table)
 
         sources = ['s3': source]
         databases = ['test': database, 'test1': database1]
@@ -91,8 +88,8 @@ class BaseSpec extends Specification {
     }
 
     def cleanupSpec() {
-        if( persistService != null){
-            DriverManager.getConnection("jdbc:hsqldb:mem:metacat", 'sa','').createStatement().execute('SHUTDOWN')
+        if (persistService != null) {
+            DriverManager.getConnection("jdbc:hsqldb:mem:metacat", 'sa', '').createStatement().execute('SHUTDOWN')
             persistService.stop()
         }
     }
