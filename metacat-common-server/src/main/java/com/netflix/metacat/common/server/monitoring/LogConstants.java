@@ -96,6 +96,7 @@ public enum LogConstants {
     TracerUpdateTable(AppPrefix + ".traceUpdateTable"),
     TracerSaveTablePartitions(AppPrefix + ".traceSaveTablePartitions"),
     TracerSaveMViewPartitions(AppPrefix + ".traceSaveMViewPartitions"),
+
     /**
      * Gauges.
      */

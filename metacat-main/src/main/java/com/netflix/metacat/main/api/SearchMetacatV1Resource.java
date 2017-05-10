@@ -25,19 +25,23 @@ import java.util.List;
  */
 public class SearchMetacatV1Resource implements SearchMetacatV1 {
     private ElasticSearchUtil elasticSearchUtil;
+    private final RequestWrapper requestWrapper;
 
     /**
      * Constructor.
      * @param elasticSearchUtil search util
+     * @param requestWrapper   request wrapper object
      */
     @Inject
-    public SearchMetacatV1Resource(final ElasticSearchUtil elasticSearchUtil) {
+    public SearchMetacatV1Resource(final ElasticSearchUtil elasticSearchUtil,
+                                   final RequestWrapper requestWrapper) {
         this.elasticSearchUtil = elasticSearchUtil;
+        this.requestWrapper = requestWrapper;
     }
 
     @Override
     public List<TableDto> searchTables(final String searchString) {
-        return RequestWrapper.requestWrapper("SearchMetacatV1Resource.searchTables",
+        return requestWrapper.processRequest("SearchMetacatV1Resource.searchTables",
             () -> elasticSearchUtil.simpleSearch(searchString));
     }
 }

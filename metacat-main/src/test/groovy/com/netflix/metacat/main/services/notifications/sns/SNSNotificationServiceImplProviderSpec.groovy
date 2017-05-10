@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.ProvisionException
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.main.services.notifications.DefaultNotificationServiceImpl
+import com.netflix.spectator.api.Registry
 import spock.lang.Specification
 
 /**
@@ -33,9 +34,10 @@ class SNSNotificationServiceImplProviderSpec extends Specification {
 
     def config = Mock(Config)
     def mapper = Mock(ObjectMapper)
+    def registry = Mock(Registry)
 
     def "Will provide default implementation when SNS is disabled"() {
-        def provider = new SNSNotificationServiceImplProvider(config, Mock(ObjectMapper))
+        def provider = new SNSNotificationServiceImplProvider(config, Mock(ObjectMapper), registry)
 
         when: "call get"
         def service = provider.get()
@@ -48,7 +50,7 @@ class SNSNotificationServiceImplProviderSpec extends Specification {
     }
 
     def "Will provide SNS implementation when SNS is enabled"() {
-        def provider = new SNSNotificationServiceImplProvider(this.config, this.mapper)
+        def provider = new SNSNotificationServiceImplProvider(this.config, this.mapper, registry)
 
         when: "call get"
         def service = provider.get()
@@ -61,7 +63,7 @@ class SNSNotificationServiceImplProviderSpec extends Specification {
     }
 
     def "Will throw exception if partition ARN not set but SNS enabled"() {
-        def provider = new SNSNotificationServiceImplProvider(this.config, this.mapper)
+        def provider = new SNSNotificationServiceImplProvider(this.config, this.mapper, registry)
 
         when: "call get"
         provider.get()
@@ -74,7 +76,7 @@ class SNSNotificationServiceImplProviderSpec extends Specification {
     }
 
     def "Will throw exception if table ARN not set but SNS enabled"() {
-        def provider = new SNSNotificationServiceImplProvider(this.config, this.mapper)
+        def provider = new SNSNotificationServiceImplProvider(this.config, this.mapper, registry)
 
         when: "call get"
         provider.get()

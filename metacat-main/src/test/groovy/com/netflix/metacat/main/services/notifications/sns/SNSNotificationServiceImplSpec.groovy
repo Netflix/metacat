@@ -30,7 +30,14 @@ import com.netflix.metacat.common.dto.PartitionsSaveResponseDto
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.dto.notifications.sns.messages.*
 import com.netflix.metacat.common.server.events.*
+import com.netflix.spectator.api.DefaultId
+import com.netflix.spectator.api.DefaultRegistry
+import com.netflix.spectator.api.Id
+import com.netflix.spectator.api.NoopId
+import com.netflix.spectator.api.Registry
+import spock.lang.Shared
 import spock.lang.Specification
+import sun.security.krb5.internal.ccache.Tag
 
 /**
  * Tests for the SNSNotificationServiceImpl.
@@ -55,7 +62,7 @@ class SNSNotificationServiceImplSpec extends Specification {
     def mapper = Mock(ObjectMapper)
     def partitionArn = UUID.randomUUID().toString()
     def tableArn = UUID.randomUUID().toString()
-    def service = new SNSNotificationServiceImpl(this.client, this.tableArn, this.partitionArn, this.mapper)
+    def service = new SNSNotificationServiceImpl(this.client, this.tableArn, this.partitionArn, this.mapper, new DefaultRegistry())
     def requestContext = new MetacatRequestContext(
         UUID.randomUUID().toString(),
         UUID.randomUUID().toString(),

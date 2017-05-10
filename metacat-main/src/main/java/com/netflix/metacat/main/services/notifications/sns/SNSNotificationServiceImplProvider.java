@@ -24,6 +24,8 @@ import com.google.inject.ProvisionException;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.services.notifications.DefaultNotificationServiceImpl;
 import com.netflix.metacat.main.services.notifications.NotificationService;
+import com.netflix.spectator.api.Registry;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -41,17 +43,22 @@ public class SNSNotificationServiceImplProvider implements Provider<Notification
 
     private final Config config;
     private final ObjectMapper mapper;
+    private final Registry registry;
 
     /**
      * Constructor.
      *
-     * @param config The metacat configuration
-     * @param mapper The JSON object mapper to use
+     * @param config   The metacat configuration
+     * @param mapper   The JSON object mapper to use
+     * @param registry The registry of spectator
      */
     @Inject
-    public SNSNotificationServiceImplProvider(@Nonnull final Config config, @Nonnull final ObjectMapper mapper) {
+    public SNSNotificationServiceImplProvider(@Nonnull @NonNull final Config config,
+                                              @Nonnull @NonNull final ObjectMapper mapper,
+                                              @Nonnull @NonNull final Registry registry) {
         this.config = config;
         this.mapper = mapper;
+        this.registry = registry;
     }
 
     /**
@@ -63,18 +70,18 @@ public class SNSNotificationServiceImplProvider implements Provider<Notification
             final String tableArn = this.config.getSnsTopicTableArn();
             if (StringUtils.isEmpty(tableArn)) {
                 throw new ProvisionException(
-                    "SNS Notifications are enabled but no table ARN provided. Unable to configure."
+                        "SNS Notifications are enabled but no table ARN provided. Unable to configure."
                 );
             }
             final String partitionArn = this.config.getSnsTopicPartitionArn();
             if (StringUtils.isEmpty(partitionArn)) {
                 throw new ProvisionException(
-                    "SNS Notifications are enabled but no partition ARN provided. Unable to configure."
+                        "SNS Notifications are enabled but no partition ARN provided. Unable to configure."
                 );
             }
 
             log.info("SNS notifications are enabled. Providing SNSNotificationServiceImpl implementation.");
-            return new SNSNotificationServiceImpl(new AmazonSNSClient(), tableArn, partitionArn, this.mapper);
+            return new SNSNotificationServiceImpl(new AmazonSNSClient(), tableArn, partitionArn, this.mapper, registry);
         } else {
             log.info("SNS notifications are not enabled. Ignoring and providing default implementation.");
             return new DefaultNotificationServiceImpl();

@@ -20,9 +20,8 @@ package com.netflix.metacat.common.server.monitoring;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.netflix.servo.DefaultMonitorRegistry;
-import com.netflix.servo.monitor.Counter;
-import com.netflix.servo.monitor.Monitors;
+import com.netflix.spectator.api.Counter;
+import com.netflix.spectator.api.Spectator;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
@@ -32,21 +31,23 @@ import java.util.concurrent.ExecutionException;
  * Servo counter wrapper.
  *
  * @author amajumdar
+ * @since 1.0.0
  */
 @Slf4j
 public final class CounterWrapper {
 
-    private static final LoadingCache<String, Counter> COUNTERS = CacheBuilder.newBuilder()
-        .build(
+    private static final LoadingCache<String, Counter> COUNTER_LOADING_CACHE
+            = CacheBuilder.newBuilder().build(
             new CacheLoader<String, Counter>() {
                 public Counter load(
-                    @Nonnull final String counterName) {
-                    final Counter counter = Monitors.newCounter(counterName);
-                    DefaultMonitorRegistry.getInstance().register(counter);
-                    return counter;
+                        @Nonnull final String counterName) {
+                    return Spectator.globalRegistry().counter(counterName);
                 }
             });
 
+    /**
+     * Counter wrapper.
+     */
     private CounterWrapper() {
     }
 
@@ -58,7 +59,7 @@ public final class CounterWrapper {
      */
     public static void incrementCounter(final String counterName, final long incrementAmount) {
         try {
-            final Counter counter = COUNTERS.get(counterName);
+            final Counter counter = COUNTER_LOADING_CACHE.get(counterName);
             if (incrementAmount == 1) {
                 counter.increment();
             } else {

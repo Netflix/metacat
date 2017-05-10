@@ -39,30 +39,37 @@ import java.util.Set;
 
 /**
  * Metadata V1 API implementation.
+ *
  * @author amajumdar
  */
 public class MetadataV1Resource implements MetadataV1 {
     private final UserMetadataService userMetadataService;
     private final MetacatServiceHelper helper;
     private final MetadataService metadataService;
+    private final RequestWrapper requestWrapper;
 
     /**
      * Constructor.
+     *
      * @param userMetadataService user metadata service
-     * @param helper helper
-     * @param metadataService metadata service
+     * @param helper              helper
+     * @param metadataService     metadata service
+     * @param requestWrapper      request wrapper object
      */
     @Inject
     public MetadataV1Resource(final UserMetadataService userMetadataService,
-        final MetacatServiceHelper helper, final MetadataService metadataService) {
+                              final MetacatServiceHelper helper,
+                              final MetadataService metadataService,
+                              final RequestWrapper requestWrapper) {
         this.userMetadataService = userMetadataService;
         this.helper = helper;
         this.metadataService = metadataService;
+        this.requestWrapper = requestWrapper;
     }
 
     @Override
     public DataMetadataDto getDataMetadata(final DataMetadataGetRequestDto metadataGetRequestDto) {
-        return RequestWrapper.requestWrapper("getDataMetadata", () -> {
+        return requestWrapper.processRequest("getDataMetadata", () -> {
             DataMetadataDto result = null;
             if (metadataGetRequestDto.getUri() != null) {
                 final Optional<ObjectNode> o = userMetadataService.getDataMetadata(metadataGetRequestDto.getUri());
@@ -78,50 +85,50 @@ public class MetadataV1Resource implements MetadataV1 {
 
     @Override
     public List<DefinitionMetadataDto> getDefinitionMetadataList(
-        final String sortBy,
-        final SortOrder sortOrder,
-        final Integer offset,
-        final Integer limit,
-        final Boolean lifetime,
-        final String type,
-        final String name,
-        final Set<String> propertyNames) {
+            final String sortBy,
+            final SortOrder sortOrder,
+            final Integer offset,
+            final Integer limit,
+            final Boolean lifetime,
+            final String type,
+            final String name,
+            final Set<String> propertyNames) {
         if (lifetime) {
             propertyNames.add("lifetime");
         }
-        return RequestWrapper.requestWrapper("getDefinitionMetadataList",
-            () -> userMetadataService.searchDefinitionMetadatas(propertyNames, type, name, sortBy,
-                sortOrder != null ? sortOrder.name() : null, offset, limit));
+        return requestWrapper.processRequest("getDefinitionMetadataList",
+                () -> userMetadataService.searchDefinitionMetadatas(propertyNames, type, name, sortBy,
+                        sortOrder != null ? sortOrder.name() : null, offset, limit));
     }
 
     @Override
     public List<QualifiedName> searchByOwners(final Set<String> owners) {
-        return RequestWrapper.requestWrapper("searchByOwners",
-            () -> userMetadataService.searchByOwners(owners));
+        return requestWrapper.processRequest("searchByOwners",
+                () -> userMetadataService.searchByOwners(owners));
     }
 
     @Override
     public void deleteDefinitionMetadata(final QualifiedName name, final Boolean force) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        RequestWrapper.requestWrapper("deleteDefinitionMetadata",
-            () -> {
-                final MetacatService service = helper.getService(name);
-                BaseDto dto = null;
-                try {
-                    dto = service.get(name);
-                } catch (NotFoundException ignored) {
-                }
-                if ((force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
-                    helper.postPreUpdateEvent(name, metacatRequestContext, dto);
-                    userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
-                    if (dto instanceof HasDefinitionMetadata) {
-                        ((HasDefinitionMetadata) dto).setDefinitionMetadata(null);
+        requestWrapper.processRequest("deleteDefinitionMetadata",
+                () -> {
+                    final MetacatService service = helper.getService(name);
+                    BaseDto dto = null;
+                    try {
+                        dto = service.get(name);
+                    } catch (NotFoundException ignored) {
                     }
-                    final BaseDto newDto = service.get(name);
-                    helper.postPostUpdateEvent(name, metacatRequestContext, dto, newDto);
-                }
-                return null;
-            });
+                    if ((force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
+                        helper.postPreUpdateEvent(name, metacatRequestContext, dto);
+                        userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
+                        if (dto instanceof HasDefinitionMetadata) {
+                            ((HasDefinitionMetadata) dto).setDefinitionMetadata(null);
+                        }
+                        final BaseDto newDto = service.get(name);
+                        helper.postPostUpdateEvent(name, metacatRequestContext, dto, newDto);
+                    }
+                    return null;
+                });
     }
 
     @Override

@@ -17,7 +17,7 @@
  */
 package com.netflix.metacat.common.server.util;
 
-import com.netflix.metacat.common.server.monitoring.DynamicGauge;
+import com.netflix.metacat.common.server.monitoring.DynamicGauges;
 import org.apache.tomcat.jdbc.pool.ConnectionPool;
 import org.apache.tomcat.jdbc.pool.JdbcInterceptor;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
@@ -38,9 +38,11 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
     private String metricNameTotal;
     private String metricNameActive;
     private String metricNameIdle;
+    private final DynamicGauges dynamicGauges = new DynamicGauges();
 
     /**
      * Constructor.
+     *
      */
     public PoolStatsInterceptor() {
         super();
@@ -58,9 +60,9 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
 
     private void publishMetric(final ConnectionPool parent) {
         if (parent != null && metricNameTotal != null) {
-            DynamicGauge.set(metricNameTotal, parent.getSize());
-            DynamicGauge.set(metricNameActive, parent.getActive());
-            DynamicGauge.set(metricNameIdle, parent.getIdle());
+            dynamicGauges.set(metricNameTotal, parent.getSize());
+            dynamicGauges.set(metricNameActive, parent.getActive());
+            dynamicGauges.set(metricNameIdle, parent.getIdle());
         }
     }
 

@@ -43,13 +43,14 @@ import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import com.netflix.metacat.main.services.notifications.NotificationService;
-import com.netflix.servo.monitor.DynamicCounter;
-import com.netflix.servo.tag.BasicTagList;
+import com.netflix.spectator.api.Registry;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import javax.validation.constraints.Size;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.UUID;
 
 /**
@@ -65,6 +66,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
     private final String tableTopicArn;
     private final String partitionTopicArn;
     private final ObjectMapper mapper;
+    private final Registry registry;
 
     /**
      * Constructor.
@@ -73,17 +75,20 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * @param tableTopicArn     The topic to publish table related notifications to
      * @param partitionTopicArn The topic to publish partition related notifications to
      * @param mapper            The object mapper to use to convert objects to JSON strings
+     * @param registry          The registry handle of spectator
      */
     public SNSNotificationServiceImpl(
-        @Nonnull final AmazonSNSClient client,
-        @Nonnull @Size(min = 1) final String tableTopicArn,
-        @Nonnull @Size(min = 1) final String partitionTopicArn,
-        @Nonnull final ObjectMapper mapper
-    ) {
+            @Nonnull @NonNull final AmazonSNSClient client,
+            @Nonnull @NonNull @Size(min = 1) final String tableTopicArn,
+            @Nonnull @NonNull @Size(min = 1) final String partitionTopicArn,
+            @Nonnull @NonNull final ObjectMapper mapper,
+            @Nonnull @NonNull final Registry registry
+            ) {
         this.client = client;
         this.tableTopicArn = tableTopicArn;
         this.partitionTopicArn = partitionTopicArn;
         this.mapper = mapper;
+        this.registry = registry;
     }
 
     /**
@@ -327,7 +332,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final Exception e
     ) {
         log.error("{} with payload: {}", message, payload, e);
-        DynamicCounter.increment(counterKey, BasicTagList.copyOf(name.parts()));
+        registry.counter(registry.createId(counterKey).withTags(new HashMap<>(name.parts()))).increment();
     }
 
     private UpdateTableMessage createUpdateTableMessage(
