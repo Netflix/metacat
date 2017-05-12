@@ -30,6 +30,7 @@ import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.metastore.HMSHandlerProxy;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
+import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -54,6 +55,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
     private final HiveConnectorInfoConverter infoConverter;
     private IMetacatHiveClient client;
     private final Injector injector;
+    private final Registry registry;
 
     /**
      * Constructor.
@@ -61,13 +63,16 @@ public class HiveConnectorFactory implements ConnectorFactory {
      * @param catalogName   connector name. Also the catalog name.
      * @param configuration configuration properties
      * @param infoConverter hive info converter
+     * @param registry      registry to spectator
      */
     public HiveConnectorFactory(@Nonnull @NonNull final String catalogName,
                                 @Nonnull @NonNull final Map<String, String> configuration,
-                                final HiveConnectorInfoConverter infoConverter) {
+                                final HiveConnectorInfoConverter infoConverter,
+                                @Nonnull @NonNull final Registry registry) {
         this.catalogName = catalogName;
         this.configuration = configuration;
         this.infoConverter = infoConverter;
+        this.registry = registry;
 
         try {
             final boolean useLocalMetastore = Boolean
@@ -94,7 +99,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
         configuration.forEach(conf::set);
         //TO DO Change the usage of DataSourceManager later
         DataSourceManager.get().load(catalogName, configuration);
-        return new EmbeddedHiveClient(catalogName, HMSHandlerProxy.getProxy(conf));
+        return new EmbeddedHiveClient(catalogName, HMSHandlerProxy.getProxy(conf), registry);
 
     }
 

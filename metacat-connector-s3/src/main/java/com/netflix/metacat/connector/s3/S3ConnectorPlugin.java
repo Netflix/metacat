@@ -19,6 +19,8 @@ import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter;
+import com.netflix.spectator.api.Registry;
+import lombok.NonNull;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -27,11 +29,13 @@ import java.util.Map;
  * S3 plugin.
  */
 public class S3ConnectorPlugin implements ConnectorPlugin {
-    /** Type of the connector. */
+    /**
+     * Type of the connector.
+     */
     public static final String CONNECTOR_TYPE = "s3";
     private static final PigTypeConverter PIG_TYPE_CONVERTER = new PigTypeConverter();
     private static final ConnectorInfoConverter INFO_CONVERTER_S3 =
-        new S3ConnectorInfoConverter(PIG_TYPE_CONVERTER, true, TypeRegistry.getTypeRegistry());
+            new S3ConnectorInfoConverter(PIG_TYPE_CONVERTER, true, TypeRegistry.getTypeRegistry());
 
     @Override
     public String getType() {
@@ -40,7 +44,8 @@ public class S3ConnectorPlugin implements ConnectorPlugin {
 
     @Override
     public ConnectorFactory create(@Nonnull final String connectorName,
-        @Nonnull final Map<String, String> configuration) {
+                                   @Nonnull final Map<String, String> configuration,
+                                   @Nonnull @NonNull final Registry registry) {
         return new S3ConnectorFactory(connectorName, configuration, (S3ConnectorInfoConverter) getInfoConverter());
     }
 

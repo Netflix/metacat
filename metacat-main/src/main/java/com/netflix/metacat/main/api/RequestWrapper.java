@@ -28,6 +28,7 @@ import com.netflix.metacat.common.server.connectors.exception.InvalidMetaExcepti
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.PartitionAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExistsException;
+import com.netflix.metacat.common.server.monitoring.LogConstants;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
@@ -54,7 +55,6 @@ public final class RequestWrapper {
     //Metrics
     private final Id requestCounterId;
     private final Id requestTimerId;
-    private final Id requestFailureCounterId;
 
     /**
      * Wrapper class for processing the request.
@@ -64,9 +64,8 @@ public final class RequestWrapper {
     @Inject
     public RequestWrapper(@NotNull @NonNull final Registry registry) {
         this.registry = registry;
-        requestCounterId = registry.createId("dse.metacat.counter.requests");
-        requestTimerId = registry.createId("dse.metacat.timer.requests");
-        requestFailureCounterId = registry.createId("dse.metacat.counter.failure.requests");
+        requestCounterId = registry.createId(LogConstants.CounterRequestCount.name());
+        requestTimerId = registry.createId(LogConstants.TimerRequest.name());
     }
 
     /**
@@ -97,7 +96,7 @@ public final class RequestWrapper {
             final QualifiedName name,
             final String resourceRequestName,
             final Supplier<R> supplier) {
-        final long start = System.currentTimeMillis();
+        final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>(name.parts());
         tags.put("request", resourceRequestName);
         registry.counter(requestCounterId.withTags(tags)).increment();
@@ -123,21 +122,23 @@ public final class RequestWrapper {
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                     e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
-            registry.counter(requestFailureCounterId.withTags(tags)).increment();
+            tags.put(LogConstants.Status.name(), LogConstants.StatusFailure.name());
+            registry.counter(requestCounterId.withTags(tags)).increment();
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } catch (UserMetadataServiceException e) {
             final String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(),
                     e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             throw new MetacatUserMetadataException(message);
         } catch (Exception e) {
-            registry.counter(requestFailureCounterId.withTags(tags)).increment();
+            tags.put(LogConstants.Status.name(), LogConstants.StatusFailure.name());
+            registry.counter(requestCounterId.withTags(tags)).increment();
 
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                     e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } finally {
-            final long duration = System.currentTimeMillis() - start;
+            final long duration = registry.clock().monotonicTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
                     duration);
             this.registry.timer(requestTimerId).record(duration, TimeUnit.MILLISECONDS);
@@ -155,7 +156,7 @@ public final class RequestWrapper {
     public <R> R processRequest(
             final String resourceRequestName,
             final Supplier<R> supplier) {
-        final long start = System.currentTimeMillis();
+        final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = Maps.newHashMap();
         tags.put("request", resourceRequestName);
         registry.counter(requestCounterId.withTags(tags)).increment();
@@ -170,7 +171,8 @@ public final class RequestWrapper {
             throw new MetacatBadRequestException(String.format("%s.%s", e.getMessage(),
                     e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (Exception e) {
-            registry.counter(requestFailureCounterId.withTags(tags)).increment();
+            tags.put(LogConstants.Status.name(), LogConstants.StatusFailure.name());
+            registry.counter(requestCounterId.withTags(tags)).increment();
             final String message = String
                     .format("%s.%s -- %s failed.",
                             e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage(),
@@ -178,7 +180,7 @@ public final class RequestWrapper {
             log.error(message, e);
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } finally {
-            final long duration = System.currentTimeMillis() - start;
+            final long duration = registry.clock().monotonicTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
                     duration);
             this.registry.timer(requestTimerId).record(duration, TimeUnit.MILLISECONDS);

@@ -30,6 +30,7 @@ import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.services.MetacatService;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.MetadataService;
+import com.netflix.spectator.api.Registry;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -47,6 +48,7 @@ public class MetadataV1Resource implements MetadataV1 {
     private final MetacatServiceHelper helper;
     private final MetadataService metadataService;
     private final RequestWrapper requestWrapper;
+    private final Registry registry;
 
     /**
      * Constructor.
@@ -55,16 +57,19 @@ public class MetadataV1Resource implements MetadataV1 {
      * @param helper              helper
      * @param metadataService     metadata service
      * @param requestWrapper      request wrapper object
+     * @param registry            registry of spectator
      */
     @Inject
     public MetadataV1Resource(final UserMetadataService userMetadataService,
                               final MetacatServiceHelper helper,
                               final MetadataService metadataService,
-                              final RequestWrapper requestWrapper) {
+                              final RequestWrapper requestWrapper,
+                              final Registry registry) {
         this.userMetadataService = userMetadataService;
         this.helper = helper;
         this.metadataService = metadataService;
         this.requestWrapper = requestWrapper;
+        this.registry = registry;
     }
 
     @Override

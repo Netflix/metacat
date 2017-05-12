@@ -17,7 +17,9 @@
  */
 package com.netflix.metacat.common.server.util;
 
-import com.netflix.metacat.common.server.monitoring.DynamicGauges;
+import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.spectator.api.Registry;
+import com.netflix.spectator.api.Spectator;
 import org.apache.tomcat.jdbc.pool.ConnectionPool;
 import org.apache.tomcat.jdbc.pool.JdbcInterceptor;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
@@ -38,11 +40,10 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
     private String metricNameTotal;
     private String metricNameActive;
     private String metricNameIdle;
-    private final DynamicGauges dynamicGauges = new DynamicGauges();
+    private final Registry registry = Spectator.globalRegistry();
 
     /**
      * Constructor.
-     *
      */
     public PoolStatsInterceptor() {
         super();
@@ -60,9 +61,9 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
 
     private void publishMetric(final ConnectionPool parent) {
         if (parent != null && metricNameTotal != null) {
-            dynamicGauges.set(metricNameTotal, parent.getSize());
-            dynamicGauges.set(metricNameActive, parent.getActive());
-            dynamicGauges.set(metricNameIdle, parent.getIdle());
+            registry.gauge(registry.createId(metricNameTotal), parent.getSize());
+            registry.gauge(registry.createId(metricNameActive), parent.getActive());
+            registry.gauge(registry.createId(metricNameIdle), parent.getIdle());
         }
     }
 
@@ -72,9 +73,9 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
      * @param metricName metric name
      */
     public void setMetricName(final String metricName) {
-        this.metricNameTotal = "dse.metacat.gauge." + metricName + ".connections.total";
-        this.metricNameActive = "dse.metacat.gauge." + metricName + ".connections.active";
-        this.metricNameIdle = "dse.metacat.gauge." + metricName + ".connections.idle";
+        this.metricNameTotal = LogConstants.GaugeConnectionsTotal + "." + metricName;
+        this.metricNameActive = LogConstants.GaugeConnectionsActive + "." + metricName;
+        this.metricNameIdle = LogConstants.GaugeConnectionsIdle + "." + metricName;
 
     }
 

@@ -17,7 +17,10 @@ import com.google.inject.Inject;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.thrift.CatalogThriftService;
 import com.netflix.metacat.thrift.CatalogThriftServiceFactory;
+import com.netflix.spectator.api.Registry;
+import lombok.NonNull;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,29 +30,36 @@ import java.util.stream.Collectors;
 public class MetacatThriftService {
     private final ConnectorManager connectorManager;
     private final CatalogThriftServiceFactory thriftServiceFactory;
+    private final Registry registry;
 
     /**
      * Constructor.
-     * @param c factory
-     * @param m connecter manager
+     *
+     * @param catalogThriftServiceFactory factory
+     * @param connectorManager            connecter manager
+     * @param registry                    registry of spectator
      */
     @Inject
-    public MetacatThriftService(final CatalogThriftServiceFactory c, final ConnectorManager m) {
-        this.thriftServiceFactory = c;
-        this.connectorManager = m;
+    public MetacatThriftService(final CatalogThriftServiceFactory catalogThriftServiceFactory,
+                                final ConnectorManager connectorManager,
+                                @Nonnull @NonNull final Registry registry) {
+        this.thriftServiceFactory = catalogThriftServiceFactory;
+        this.connectorManager = connectorManager;
+        this.registry = registry;
     }
 
     protected List<CatalogThriftService> getCatalogThriftServices() {
         return connectorManager.getCatalogs()
-            .entrySet()
-            .stream()
-            .filter(entry -> entry.getValue().isThriftInterfaceRequested())
-            .map(entry -> thriftServiceFactory.create(entry.getKey(), entry.getValue().getThriftPort()))
-            .collect(Collectors.toList());
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().isThriftInterfaceRequested())
+                .map(entry -> thriftServiceFactory.create(entry.getKey(), entry.getValue().getThriftPort()))
+                .collect(Collectors.toList());
     }
 
     /**
      * Start.
+     *
      * @throws Exception error
      */
     public void start() throws Exception {
@@ -60,6 +70,7 @@ public class MetacatThriftService {
 
     /**
      * Stop.
+     *
      * @throws Exception error
      */
     public void stop() throws Exception {
