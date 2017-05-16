@@ -90,7 +90,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
             throw new IllegalArgumentException(
                     String.format("Failed creating the hive metastore client for catalog: %s", catalogName), e);
         }
-        final Module hiveModule = new HiveConnectorModule(catalogName, configuration, infoConverter, client);
+        final Module hiveModule = new HiveConnectorModule(catalogName, configuration, infoConverter, client, registry);
         this.injector = Guice.createInjector(hiveModule);
     }
 

@@ -18,6 +18,7 @@
 package com.netflix.metacat.common.server.util;
 
 import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import com.netflix.spectator.api.Spectator;
 import org.apache.tomcat.jdbc.pool.ConnectionPool;
@@ -37,9 +38,9 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
      * Metric name.
      */
     public static final String PROP_METRIC_NAME = "name";
-    private String metricNameTotal;
-    private String metricNameActive;
-    private String metricNameIdle;
+    private Id metricNameTotalId;
+    private Id metricNameActiveId;
+    private Id metricNameIdleId;
     private final Registry registry = Spectator.globalRegistry();
 
     /**
@@ -60,10 +61,13 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
     }
 
     private void publishMetric(final ConnectionPool parent) {
-        if (parent != null && metricNameTotal != null) {
-            registry.gauge(registry.createId(metricNameTotal), parent.getSize());
-            registry.gauge(registry.createId(metricNameActive), parent.getActive());
-            registry.gauge(registry.createId(metricNameIdle), parent.getIdle());
+        if (parent != null
+                && metricNameTotalId != null
+                && metricNameActiveId != null
+                && metricNameIdleId != null) {
+            registry.gauge(metricNameTotalId, parent.getSize());
+            registry.gauge(metricNameActiveId, parent.getActive());
+            registry.gauge(metricNameIdleId, parent.getIdle());
         }
     }
 
@@ -73,10 +77,9 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
      * @param metricName metric name
      */
     public void setMetricName(final String metricName) {
-        this.metricNameTotal = LogConstants.GaugeConnectionsTotal + "." + metricName;
-        this.metricNameActive = LogConstants.GaugeConnectionsActive + "." + metricName;
-        this.metricNameIdle = LogConstants.GaugeConnectionsIdle + "." + metricName;
-
+        this.metricNameTotalId = registry.createId(LogConstants.GaugeConnectionsTotal + "." + metricName);
+        this.metricNameActiveId = registry.createId(LogConstants.GaugeConnectionsActive + "." + metricName);
+        this.metricNameIdleId = registry.createId(LogConstants.GaugeConnectionsIdle + "." + metricName);
     }
 
     @Override

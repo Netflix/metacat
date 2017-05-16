@@ -36,7 +36,6 @@ dependencies {
     compile("com.google.inject.extensions:guice-servlet")
     compile("javax.validation:validation-api")
     compile("org.elasticsearch:elasticsearch")
-    compile("org.springframework.cloud:spring-cloud-starter-spectator")
     /*******************************
      * Provided Dependencies
      *******************************/
