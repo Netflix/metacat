@@ -43,6 +43,7 @@ public class MetacatV1Resource implements MetacatV1 {
     private final DatabaseService databaseService;
     private final MViewService mViewService;
     private final TableService tableService;
+    private final RequestWrapper requestWrapper;
 
     /**
      * Constructor.
@@ -50,17 +51,20 @@ public class MetacatV1Resource implements MetacatV1 {
      * @param databaseService database service
      * @param mViewService view service
      * @param tableService table service
+     * @param requestWrapper  request wrapper object
      */
     @Inject
     public MetacatV1Resource(
         final CatalogService catalogService,
         final DatabaseService databaseService,
         final MViewService mViewService,
-        final TableService tableService) {
+        final TableService tableService,
+        final RequestWrapper requestWrapper) {
         this.catalogService = catalogService;
         this.databaseService = databaseService;
         this.mViewService = mViewService;
         this.tableService = tableService;
+        this.requestWrapper = requestWrapper;
     }
 
     @Override
@@ -72,8 +76,8 @@ public class MetacatV1Resource implements MetacatV1 {
     public void createDatabase(final String catalogName, final String databaseName,
         final DatabaseCreateRequestDto databaseCreateRequestDto) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
-        RequestWrapper.requestWrapper(name, "createDatabase", () -> {
+            requestWrapper.qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
+        requestWrapper.processRequest(name, "createDatabase", () -> {
             final DatabaseDto newDto = new DatabaseDto();
             newDto.setName(name);
             if (databaseCreateRequestDto != null) {
@@ -93,8 +97,8 @@ public class MetacatV1Resource implements MetacatV1 {
         final String filter
     ) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return RequestWrapper.requestWrapper(name, "createMView",
+            requestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return requestWrapper.processRequest(name, "createMView",
             () -> mViewService.createAndSnapshotPartitions(name, snapshot, filter));
     }
 
@@ -102,8 +106,8 @@ public class MetacatV1Resource implements MetacatV1 {
     public TableDto createTable(final String catalogName, final String databaseName, final String tableName,
         final TableDto table) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return RequestWrapper.requestWrapper(name, "createTable", () -> {
+            requestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return requestWrapper.processRequest(name, "createTable", () -> {
             Preconditions.checkArgument(table != null, "Table cannot be null");
             Preconditions.checkArgument(tableName != null && !tableName.isEmpty(), "table name is required");
             Preconditions.checkArgument(table.getName() != null
@@ -117,8 +121,8 @@ public class MetacatV1Resource implements MetacatV1 {
     @Override
     public void deleteDatabase(final String catalogName, final String databaseName) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
-        RequestWrapper.requestWrapper(name, "deleteDatabase", () -> {
+            requestWrapper.qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
+        requestWrapper.processRequest(name, "deleteDatabase", () -> {
             databaseService.delete(name);
             return null;
         });
@@ -128,43 +132,43 @@ public class MetacatV1Resource implements MetacatV1 {
     public TableDto deleteMView(final String catalogName, final String databaseName, final String tableName,
         final String viewName) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return RequestWrapper.requestWrapper(name, "deleteMView", () -> mViewService.deleteAndReturn(name));
+            requestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return requestWrapper.processRequest(name, "deleteMView", () -> mViewService.deleteAndReturn(name));
     }
 
     @Override
     public TableDto deleteTable(final String catalogName, final String databaseName, final String tableName) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return RequestWrapper.requestWrapper(name, "deleteTable", () -> tableService.deleteAndReturn(name, false));
+            requestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return requestWrapper.processRequest(name, "deleteTable", () -> tableService.deleteAndReturn(name, false));
     }
 
     @Override
     public CatalogDto getCatalog(final String catalogName) {
-        final QualifiedName name = RequestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
-        return RequestWrapper.requestWrapper(name, "getCatalog", () -> catalogService.get(name));
+        final QualifiedName name = requestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
+        return requestWrapper.processRequest(name, "getCatalog", () -> catalogService.get(name));
     }
 
     @Override
     public List<CatalogMappingDto> getCatalogNames() {
         final QualifiedName name = QualifiedName.ofCatalog("getCatalogNames");
-        return RequestWrapper.requestWrapper(name, "getCatalogNames", catalogService::getCatalogNames);
+        return requestWrapper.processRequest(name, "getCatalogNames", catalogService::getCatalogNames);
     }
 
     @Override
     public DatabaseDto getDatabase(final String catalogName, final String databaseName,
         final Boolean includeUserMetadata) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
-        return RequestWrapper.requestWrapper(name, "getDatabase", () -> databaseService.get(name, includeUserMetadata));
+            requestWrapper.qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
+        return requestWrapper.processRequest(name, "getDatabase", () -> databaseService.get(name, includeUserMetadata));
     }
 
     @Override
     public TableDto getMView(final String catalogName, final String databaseName, final String tableName,
         final String viewName) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return RequestWrapper.requestWrapper(name, "getMView", () -> {
+            requestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return requestWrapper.processRequest(name, "getMView", () -> {
             final Optional<TableDto> table = mViewService.getOpt(name);
             return table.orElseThrow(() -> new MetacatNotFoundException("Unable to find view: " + name));
         });
@@ -172,23 +176,23 @@ public class MetacatV1Resource implements MetacatV1 {
 
     @Override
     public List<NameDateDto> getMViews(final String catalogName) {
-        final QualifiedName name = RequestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
-        return RequestWrapper.requestWrapper(name, "getMViews", () -> mViewService.list(name));
+        final QualifiedName name = requestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
+        return requestWrapper.processRequest(name, "getMViews", () -> mViewService.list(name));
     }
 
     @Override
     public List<NameDateDto> getMViews(final String catalogName, final String databaseName, final String tableName) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return RequestWrapper.requestWrapper(name, "getMViews", () -> mViewService.list(name));
+            requestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return requestWrapper.processRequest(name, "getMViews", () -> mViewService.list(name));
     }
 
     @Override
     public TableDto getTable(final String catalogName, final String databaseName, final String tableName,
         final Boolean includeInfo, final Boolean includeDefinitionMetadata, final Boolean includeDataMetadata) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return RequestWrapper.requestWrapper(name, "getTable", () -> {
+            requestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return requestWrapper.processRequest(name, "getTable", () -> {
             final Optional<TableDto> table = tableService
                 .get(name, includeInfo, includeDefinitionMetadata, includeDataMetadata);
             return table.orElseThrow(() -> new TableNotFoundException(name));
@@ -199,10 +203,10 @@ public class MetacatV1Resource implements MetacatV1 {
     public void renameTable(final String catalogName, final String databaseName, final String tableName,
         final String newTableName) {
         final QualifiedName oldName =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+            requestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
         final QualifiedName newName =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, newTableName));
-        RequestWrapper.requestWrapper(oldName, "renameTable", () -> {
+            requestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, newTableName));
+        requestWrapper.processRequest(oldName, "renameTable", () -> {
             tableService.rename(oldName, newName, false);
             return null;
         });
@@ -210,8 +214,8 @@ public class MetacatV1Resource implements MetacatV1 {
 
     @Override
     public void updateCatalog(final String catalogName, final CreateCatalogDto createCatalogDto) {
-        final QualifiedName name = RequestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
-        RequestWrapper.requestWrapper(name, "updateDatabase", () -> {
+        final QualifiedName name = requestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
+        requestWrapper.processRequest(name, "updateDatabase", () -> {
             createCatalogDto.setName(name);
             catalogService.update(name, createCatalogDto);
             return null;
@@ -224,8 +228,8 @@ public class MetacatV1Resource implements MetacatV1 {
         final String databaseName,
         final DatabaseCreateRequestDto databaseUpdateRequestDto) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
-        RequestWrapper.requestWrapper(name, "updateDatabase", () -> {
+            requestWrapper.qualifyName(() -> QualifiedName.ofDatabase(catalogName, databaseName));
+        requestWrapper.processRequest(name, "updateDatabase", () -> {
             final DatabaseDto newDto = new DatabaseDto();
             newDto.setName(name);
             newDto.setDefinitionMetadata(databaseUpdateRequestDto.getDefinitionMetadata());
@@ -238,16 +242,16 @@ public class MetacatV1Resource implements MetacatV1 {
     public TableDto updateMView(final String catalogName, final String databaseName, final String tableName,
         final String viewName, final TableDto table) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
-        return RequestWrapper.requestWrapper(name, "getMView", () -> mViewService.updateAndReturn(name, table));
+            requestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
+        return requestWrapper.processRequest(name, "getMView", () -> mViewService.updateAndReturn(name, table));
     }
 
     @Override
     public TableDto updateTable(final String catalogName, final String databaseName, final String tableName,
         final TableDto table) {
         final QualifiedName name =
-            RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
-        return RequestWrapper.requestWrapper(name, "updateTable", () -> {
+            requestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
+        return requestWrapper.processRequest(name, "updateTable", () -> {
             Preconditions.checkArgument(table != null, "Table cannot be null");
             Preconditions.checkArgument(tableName != null && !tableName.isEmpty(), "table name is required");
             Preconditions.checkArgument(table.getName() != null

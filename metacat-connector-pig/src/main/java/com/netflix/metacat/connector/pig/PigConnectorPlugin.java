@@ -22,6 +22,8 @@ import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter;
+import com.netflix.spectator.api.Registry;
+import lombok.NonNull;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -30,7 +32,9 @@ import java.util.Map;
  * S3 plugin.
  */
 public class PigConnectorPlugin implements ConnectorPlugin {
-    /** Type of the connector. */
+    /**
+     * Type of the connector.
+     */
     public static final String CONNECTOR_TYPE = "pig";
     private static final PigTypeConverter PIG_TYPE_CONVERTER = new PigTypeConverter();
 
@@ -41,7 +45,8 @@ public class PigConnectorPlugin implements ConnectorPlugin {
 
     @Override
     public ConnectorFactory create(@Nonnull final String connectorName,
-        @Nonnull final Map<String, String> configuration) {
+                                   @Nonnull final Map<String, String> configuration,
+                                   @Nonnull @NonNull final Registry registry) {
         return null;
     }
 

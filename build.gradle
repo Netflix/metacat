@@ -133,6 +133,7 @@ configure(javaProjects) {
             dependency("org.glassfish.jersey.containers:jersey-container-servlet:2.19")
             dependency("org.glassfish.jersey.media:jersey-media-json-jackson:2.19")
             dependency("org.spockframework:spock-guice:1.0-groovy-2.4")
+            dependency("com.netflix.spectator:spectator-api:0.45.0")
         }
     }
 

@@ -13,6 +13,8 @@
 
 package com.netflix.metacat.main.api;
 
+import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
@@ -26,32 +28,53 @@ import com.netflix.metacat.common.server.connectors.exception.InvalidMetaExcepti
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.PartitionAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExistsException;
+import com.netflix.metacat.common.server.monitoring.LogConstants;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
-import com.netflix.servo.monitor.DynamicCounter;
-import com.netflix.servo.monitor.DynamicTimer;
-import com.netflix.servo.monitor.Stopwatch;
-import com.netflix.servo.tag.BasicTagList;
-import com.netflix.servo.tag.TagList;
+import com.netflix.spectator.api.Id;
+import com.netflix.spectator.api.Registry;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Singleton;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+
 
 /**
  * Request wrapper.
  */
 @Slf4j
+@Singleton
 public final class RequestWrapper {
-    private RequestWrapper() {
+    private final Registry registry;
+
+    //Metrics
+    private final Id requestCounterId;
+    private final Id requestTimerId;
+
+    /**
+     * Wrapper class for processing the request.
+     *
+     * @param registry registry
+     */
+    @Inject
+    public RequestWrapper(@NotNull @NonNull final Registry registry) {
+        this.registry = registry;
+        requestCounterId = registry.createId(LogConstants.CounterRequestCount.name());
+        requestTimerId = registry.createId(LogConstants.TimerRequest.name());
     }
 
     /**
      * Creates the qualified name.
+     *
      * @param nameSupplier supplier
      * @return name
      */
-    public static QualifiedName qualifyName(final Supplier<QualifiedName> nameSupplier) {
+    public QualifiedName qualifyName(final Supplier<QualifiedName> nameSupplier) {
         try {
             return nameSupplier.get();
         } catch (Exception e) {
@@ -61,20 +84,23 @@ public final class RequestWrapper {
     }
 
     /**
-     * Request wrapper.
-     * @param name name
+     * Request wrapper to to process request.
+     *
+     * @param name                name
      * @param resourceRequestName request name
-     * @param supplier supplier
-     * @param <R> response
+     * @param supplier            supplier
+     * @param <R>                 response
      * @return response of supplier
      */
-    public static <R> R requestWrapper(
-        final QualifiedName name,
-        final String resourceRequestName,
-        final Supplier<R> supplier) {
-        final BasicTagList tags = BasicTagList.copyOf(name.parts()).copy("request", resourceRequestName);
-        DynamicCounter.increment("dse.metacat.counter.requests", tags);
-        final Stopwatch timer = DynamicTimer.start("dse.metacat.timer.requests", tags);
+    public <R> R processRequest(
+            final QualifiedName name,
+            final String resourceRequestName,
+            final Supplier<R> supplier) {
+        final long start = registry.clock().monotonicTime();
+        final Map<String, String> tags = new HashMap<String, String>(name.parts());
+        tags.put("request", resourceRequestName);
+        registry.counter(requestCounterId.withTags(tags)).increment();
+
         try {
             log.info("### Calling method: {} for {}", resourceRequestName, name);
             return supplier.get();
@@ -87,47 +113,53 @@ public final class RequestWrapper {
         } catch (NotFoundException | MetacatNotFoundException e) {
             log.error(e.getMessage(), e);
             throw new MetacatNotFoundException(
-                String.format("Unable to locate for %s. Details: %s", name, e.getMessage()));
+                    String.format("Unable to locate for %s. Details: %s", name, e.getMessage()));
         } catch (InvalidMetaException | IllegalArgumentException e) {
             log.error(e.getMessage(), e);
             throw new MetacatBadRequestException(
-                String.format("%s.%s", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage()));
+                    String.format("%s.%s", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (ConnectorException e) {
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
-                e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
+                    e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
-            DynamicCounter.increment("dse.metacat.counter.failure.requests", tags);
+            tags.put(LogConstants.Status.name(), LogConstants.StatusFailure.name());
+            registry.counter(requestCounterId.withTags(tags)).increment();
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } catch (UserMetadataServiceException e) {
             final String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(),
-                e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
+                    e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             throw new MetacatUserMetadataException(message);
         } catch (Exception e) {
-            DynamicCounter.increment("dse.metacat.counter.failure.requests", tags);
+            tags.put(LogConstants.Status.name(), LogConstants.StatusFailure.name());
+            registry.counter(requestCounterId.withTags(tags)).increment();
+
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
-                e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
+                    e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } finally {
-            timer.stop();
+            final long duration = registry.clock().monotonicTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
-                timer.getDuration(TimeUnit.MILLISECONDS));
+                    duration);
+            this.registry.timer(requestTimerId).record(duration, TimeUnit.MILLISECONDS);
         }
     }
 
     /**
-     * Simple request wrapper.
+     * Simple request wrapper to process request.
+     *
      * @param resourceRequestName request name
-     * @param supplier supplier
-     * @param <R> response
+     * @param supplier            supplier
+     * @param <R>                 response
      * @return response of the supplier
      */
-    public static <R> R requestWrapper(
-        final String resourceRequestName,
-        final Supplier<R> supplier) {
-        final TagList tags = BasicTagList.of("request", resourceRequestName);
-        DynamicCounter.increment("dse.metacat.counter.requests", tags);
-        final Stopwatch timer = DynamicTimer.start("dse.metacat.timer.requests", tags);
+    public <R> R processRequest(
+            final String resourceRequestName,
+            final Supplier<R> supplier) {
+        final long start = registry.clock().monotonicTime();
+        final Map<String, String> tags = Maps.newHashMap();
+        tags.put("request", resourceRequestName);
+        registry.counter(requestCounterId.withTags(tags)).increment();
         try {
             log.info("### Calling method: {}", resourceRequestName);
             return supplier.get();
@@ -137,18 +169,21 @@ public final class RequestWrapper {
         } catch (IllegalArgumentException e) {
             log.error(e.getMessage(), e);
             throw new MetacatBadRequestException(String.format("%s.%s", e.getMessage(),
-                e.getCause() == null ? "" : e.getCause().getMessage()));
+                    e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (Exception e) {
-            DynamicCounter.increment("dse.metacat.counter.failure.requests", tags);
+            tags.put(LogConstants.Status.name(), LogConstants.StatusFailure.name());
+            registry.counter(requestCounterId.withTags(tags)).increment();
             final String message = String
-                .format("%s.%s -- %s failed.", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage(),
-                    resourceRequestName);
+                    .format("%s.%s -- %s failed.",
+                            e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage(),
+                            resourceRequestName);
             log.error(message, e);
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } finally {
-            timer.stop();
+            final long duration = registry.clock().monotonicTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
-                timer.getDuration(TimeUnit.MILLISECONDS));
+                    duration);
+            this.registry.timer(requestTimerId).record(duration, TimeUnit.MILLISECONDS);
         }
     }
 }

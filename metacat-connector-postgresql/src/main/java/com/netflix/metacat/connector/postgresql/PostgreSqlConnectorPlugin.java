@@ -20,6 +20,7 @@ package com.netflix.metacat.connector.postgresql;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
+import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
@@ -49,8 +50,9 @@ public class PostgreSqlConnectorPlugin implements ConnectorPlugin {
      */
     @Override
     public ConnectorFactory create(
-        @Nonnull @NonNull final String connectorName,
-        @Nonnull @NonNull final Map<String, String> configuration
+            @Nonnull @NonNull final String connectorName,
+            @Nonnull @NonNull final Map<String, String> configuration,
+            @Nonnull @NonNull final Registry registry
     ) {
         return new PostgreSqlConnectorFactory(connectorName, configuration);
     }

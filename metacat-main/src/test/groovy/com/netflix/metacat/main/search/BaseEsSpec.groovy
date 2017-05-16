@@ -18,6 +18,7 @@ import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.main.services.search.ElasticSearchUtilImpl
+import com.netflix.spectator.api.Registry
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
@@ -28,7 +29,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 /**
- * Created by amajumdar on 8/17/15.
+ * BaseEsSpec .
  */
 class BaseEsSpec extends Specification {
     @Shared
@@ -47,6 +48,8 @@ class BaseEsSpec extends Specification {
     String esIndex = "metacat"
     @Shared
     String esMergeIndex = "metacat_v2"
+    @Shared
+    Registry registry
 
     def setupSpec() {
         Settings settings = ImmutableSettings.settingsBuilder()
@@ -72,11 +75,11 @@ class BaseEsSpec extends Specification {
 
         metacatJson = MetacatJsonLocator.INSTANCE
         config.getEsIndex() >> esIndex
-        es = new ElasticSearchUtilImpl(client, config, metacatJson)
+        es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
 
         config2.getEsIndex() >> esIndex
         config2.getMergeEsIndex() >> esMergeIndex
-        esMig = new ElasticSearchUtilImpl(client, config2, metacatJson)
+        esMig = new ElasticSearchUtilImpl(client, config2, metacatJson, registry)
     }
 
     def getFile(String name){

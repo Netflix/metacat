@@ -17,13 +17,16 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.server.monitoring.CounterWrapper;
+import com.netflix.metacat.common.server.monitoring.LogConstants;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
+import com.netflix.spectator.api.Registry;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
@@ -37,14 +40,33 @@ import java.util.stream.Stream;
  */
 @Slf4j
 public class MetadataService {
+    private final UserMetadataService userMetadataService;
+    private final Config config;
+    private final PartitionService partitionService;
+    private final TableService tableService;
+    private final Registry registry;
+
+    /**
+     * Metadata Service.
+     *
+     * @param userMetadataService user metadata service
+     * @param config              configuration
+     * @param partitionService    partition service
+     * @param tableService        table service
+     * @param registry            registry for spectator
+     */
     @Inject
-    private UserMetadataService userMetadataService;
-    @Inject
-    private Config config;
-    @Inject
-    private PartitionService partitionService;
-    @Inject
-    private TableService tableService;
+    public MetadataService(@NonNull @Nonnull final UserMetadataService userMetadataService,
+                           @NonNull @Nonnull final Config config,
+                           @NonNull @Nonnull final PartitionService partitionService,
+                           @NonNull @Nonnull final TableService tableService,
+                           @NonNull @Nonnull final Registry registry) {
+            this.userMetadataService = userMetadataService;
+            this.config = config;
+            this.partitionService = partitionService;
+            this.tableService = tableService;
+            this.registry = registry;
+    }
 
     /**
      * Deletes all the data metadata marked for deletion.
@@ -60,33 +82,33 @@ public class MetadataService {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
             while (true) {
                 final List<String> urisToDelete =
-                    userMetadataService.getDeletedDataMetadataUris(priorTo.toDate(), 0, limit);
+                        userMetadataService.getDeletedDataMetadataUris(priorTo.toDate(), 0, limit);
                 log.info("Count of deleted marked data metadata: {}", urisToDelete.size());
                 if (urisToDelete.size() > 0) {
                     final List<String> uris = urisToDelete.parallelStream().filter(uri -> !uri.contains("="))
-                        .map(uri -> userMetadataService.getDescendantDataUris(uri))
-                        .flatMap(Collection::stream).collect(Collectors.toList());
+                            .map(uri -> userMetadataService.getDescendantDataUris(uri))
+                            .flatMap(Collection::stream).collect(Collectors.toList());
                     uris.addAll(urisToDelete);
                     log.info("Count of deleted marked data metadata (including descendants) : {}", uris.size());
                     final List<List<String>> subListsUris = Lists.partition(uris, 1000);
                     subListsUris.parallelStream().forEach(subUris -> {
                         MetacatContextManager.setContext(metacatRequestContext);
                         final Map<String, List<QualifiedName>> uriPartitionQualifiedNames = partitionService
-                            .getQualifiedNames(subUris, false);
+                                .getQualifiedNames(subUris, false);
                         final Map<String, List<QualifiedName>> uriTableQualifiedNames = tableService
-                            .getQualifiedNames(subUris, false);
+                                .getQualifiedNames(subUris, false);
                         final Map<String, List<QualifiedName>> uriQualifiedNames =
-                            Stream.concat(uriPartitionQualifiedNames.entrySet().stream(),
-                                uriTableQualifiedNames.entrySet().stream())
-                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> {
-                                    final List<QualifiedName> subNames = Lists.newArrayList(a);
-                                    subNames.addAll(b);
-                                    return subNames;
-                                }));
+                                Stream.concat(uriPartitionQualifiedNames.entrySet().stream(),
+                                        uriTableQualifiedNames.entrySet().stream())
+                                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> {
+                                            final List<QualifiedName> subNames = Lists.newArrayList(a);
+                                            subNames.addAll(b);
+                                            return subNames;
+                                        }));
                         final List<String> canDeleteMetadataForUris = subUris.parallelStream()
-                            .filter(s -> !Strings.isNullOrEmpty(s))
-                            .filter(s -> uriQualifiedNames.get(s) == null || uriQualifiedNames.get(s).size() == 0)
-                            .collect(Collectors.toList());
+                                .filter(s -> !Strings.isNullOrEmpty(s))
+                                .filter(s -> uriQualifiedNames.get(s) == null || uriQualifiedNames.get(s).size() == 0)
+                                .collect(Collectors.toList());
                         log.info("Start deleting data metadata: {}", canDeleteMetadataForUris.size());
                         userMetadataService.deleteDataMetadatas(canDeleteMetadataForUris);
                         userMetadataService.deleteDataMetadataDeletes(subUris);
@@ -98,7 +120,7 @@ public class MetadataService {
                 }
             }
         } catch (Exception e) {
-            CounterWrapper.incrementCounter("dse.metacat.processDeletedDataMetadata");
+            registry.counter(LogConstants.CounterDeleteMetaData.name()).increment();
             log.warn("Failed deleting data metadata", e);
         }
         log.info("End deleting data metadata");

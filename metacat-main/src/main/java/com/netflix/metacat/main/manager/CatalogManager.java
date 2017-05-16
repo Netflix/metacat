@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -51,20 +52,27 @@ public class CatalogManager {
     private final File catalogConfigurationDir;
     private final AtomicBoolean catalogsLoading = new AtomicBoolean();
     private final AtomicBoolean catalogsLoaded = new AtomicBoolean();
+    private final Registry registry;
 
     /**
      * Constructor.
+     *
      * @param connectorManager manager
-     * @param config config
+     * @param config           config
+     * @param registry         registry of spectator
      */
     @Inject
-    public CatalogManager(final ConnectorManager connectorManager, final Config config) {
+    public CatalogManager(final ConnectorManager connectorManager,
+                          final Config config,
+                          final Registry registry) {
         this.connectorManager = connectorManager;
         this.catalogConfigurationDir = new File(config.getPluginConfigLocation());
+        this.registry = registry;
     }
 
     /**
      * Returns true if all catalogs are loaded.
+     *
      * @return true if all catalogs are loaded
      */
     public boolean areCatalogsLoaded() {
@@ -73,10 +81,11 @@ public class CatalogManager {
 
     /**
      * Loads catalogs.
+     *
      * @throws Exception error
      */
     public void loadCatalogs()
-        throws Exception {
+            throws Exception {
         if (!catalogsLoading.compareAndSet(false, true)) {
             return;
         }
@@ -91,17 +100,17 @@ public class CatalogManager {
     }
 
     private void loadCatalog(final File file)
-        throws Exception {
+            throws Exception {
         log.info("-- Loading catalog {} --", file);
         final Map<String, String> properties = new HashMap<>(loadProperties(file));
 
         final String connectorType = properties.remove("connector.name");
         Preconditions.checkState(connectorType != null, "Catalog configuration %s does not contain conector.name",
-            file.getAbsoluteFile());
+                file.getAbsoluteFile());
 
         final String catalogName = Files.getNameWithoutExtension(file.getName());
 
-        connectorManager.createConnection(catalogName, connectorType, properties);
+        connectorManager.createConnection(catalogName, connectorType, properties, registry);
         log.info("-- Added catalog {} using connector {} --", catalogName, connectorType);
     }
 
@@ -116,7 +125,7 @@ public class CatalogManager {
     }
 
     private static Map<String, String> loadProperties(final File file)
-        throws Exception {
+            throws Exception {
         Preconditions.checkNotNull(file, "file is null");
 
         final Properties properties = new Properties();
