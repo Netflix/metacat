@@ -17,11 +17,11 @@ package com.netflix.metacat
 
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.server.partition.util.PartitionUtil
-import com.netflix.metacat.common.server.ArchaiusConfigImpl
 import com.netflix.metacat.common.server.converter.ConverterUtil
 import com.netflix.metacat.common.server.converter.DozerTypeConverter
-import com.netflix.metacat.common.server.converter.TypeConverterProvider
+import com.netflix.metacat.common.server.converter.TypeConverterFactory
+import com.netflix.metacat.common.server.partition.util.PartitionUtil
+import com.netflix.metacat.common.server.properties.ArchaiusConfigImpl
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.testdata.provider.DataDtoProvider
@@ -43,9 +43,12 @@ import spock.lang.Unroll
  * Created by amajumdar on 5/12/15.
  */
 class MetacatSmokeThriftSpec extends Specification {
-    @Shared Map<String, Hive> clients = [:]
-    @Shared ConverterUtil converter
-    @Shared HiveConnectorInfoConverter hiveConverter
+    @Shared
+    Map<String, Hive> clients = [:]
+    @Shared
+    ConverterUtil converter
+    @Shared
+    HiveConnectorInfoConverter hiveConverter
 
     def setupSpec() {
         Logger.getRootLogger().setLevel(Level.OFF)
@@ -57,35 +60,39 @@ class MetacatSmokeThriftSpec extends Specification {
         localConf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_embedded_hive_thrift_port']}")
         SessionState.setCurrentSessionState(new SessionState(localConf))
         clients.put('local', Hive.get(localConf))
-        converter = new ConverterUtil(new DozerTypeConverter(new TypeConverterProvider(new ArchaiusConfigImpl())))
+        converter = new ConverterUtil(new DozerTypeConverter(new TypeConverterFactory(new ArchaiusConfigImpl())))
         hiveConverter = new HiveConnectorInfoConverter(new HiveTypeConverter())
     }
     @Shared
     boolean isLocalEnv = Boolean.valueOf(System.getProperty("local", "true"))
+
     @Ignore
-    def getUri( String databaseName, String tableName){
-        return isLocalEnv?String.format('file:/tmp/%s/%s', databaseName, tableName):String.format("s3://wh/%s.db/%s", databaseName, tableName)
+    def getUri(String databaseName, String tableName) {
+        return isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : String.format("s3://wh/%s.db/%s", databaseName, tableName)
     }
+
     @Ignore
-    def getUpdatedUri( String databaseName, String tableName){
-        return isLocalEnv?String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'updated'):String.format("s3://wh/%s.db/%s/%s", databaseName, tableName, 'updated')
+    def getUpdatedUri(String databaseName, String tableName) {
+        return isLocalEnv ? String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'updated') : String.format("s3://wh/%s.db/%s/%s", databaseName, tableName, 'updated')
     }
+
     @Ignore
-    def createTable(Hive client, String catalogName, String databaseName, String tableName){
+    def createTable(Hive client, String catalogName, String databaseName, String tableName) {
         try {
-            client.createDatabase(new Database( databaseName, 'test_db', null, null))
-        } catch (Exception ignored){}
+            client.createDatabase(new Database(databaseName, 'test_db', null, null))
+        } catch (Exception ignored) {
+        }
         def hiveTable = client.getTable(databaseName, tableName, false)
         def owner = 'test_owner'
         def uri = null
-        if(Boolean.valueOf(System.getProperty("local", "true"))){
+        if (Boolean.valueOf(System.getProperty("local", "true"))) {
             uri = String.format('file:/tmp/%s/%s', databaseName, tableName)
         }
-        if( hiveTable == null){
+        if (hiveTable == null) {
             def newTable;
-            if ('part' == tableName){
+            if ('part' == tableName) {
                 newTable = DataDtoProvider.getPartTable(catalogName, databaseName, owner, uri)
-            } else if ('parts' == tableName){
+            } else if ('parts' == tableName) {
                 newTable = DataDtoProvider.getPartsTable(catalogName, databaseName, owner, uri)
             } else {
                 newTable = DataDtoProvider.getTable(catalogName, databaseName, tableName, owner, uri)
@@ -97,7 +104,7 @@ class MetacatSmokeThriftSpec extends Specification {
     }
 
     @Unroll
-    def "Test create tables for catalog #catalogName"(){
+    def "Test create tables for catalog #catalogName"() {
         when:
         def databaseName = 'test_db_' + catalogName
         createTable(client, catalogName, databaseName, 'part')
@@ -130,20 +137,21 @@ class MetacatSmokeThriftSpec extends Specification {
     }
 
     @Unroll
-    def "Test create table for #catalogName/#databaseName/#tableName"(){
+    def "Test create table for #catalogName/#databaseName/#tableName"() {
         given:
         def databaseName = 'test_db2_' + catalogName
         def tableName = 'test_create_table'
         try {
-            client.createDatabase(new Database( databaseName, 'test_db', null, null))
-        } catch (Exception ignored){}
-        def uri = getUri( databaseName, tableName)
+            client.createDatabase(new Database(databaseName, 'test_db', null, null))
+        } catch (Exception ignored) {
+        }
+        def uri = getUri(databaseName, tableName)
         def dto = DataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         def hiveTable = new Table(hiveConverter.fromTableInfo(converter.fromTableDto(dto)))
         when:
         client.createTable(hiveTable)
         then:
-        def table = client.getTable( databaseName, tableName)
+        def table = client.getTable(databaseName, tableName)
         assert table != null && table.getTableName() == tableName
         assert table.getSd().getLocation() == uri
         when:
@@ -158,16 +166,16 @@ class MetacatSmokeThriftSpec extends Specification {
     }
 
     @Unroll
-    def "Test rename table for #catalogName/#databaseName/#tableName to #newTableName"(){
+    def "Test rename table for #catalogName/#databaseName/#tableName to #newTableName"() {
         when:
         def databaseName = 'test_db3_' + catalogName
         def tableName = 'test_create_table'
         def newTableName = 'test_create_table1'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
         hiveTable.setTableName(newTableName)
-        client.alterTable( databaseName + '.' + tableName, hiveTable)
+        client.alterTable(databaseName + '.' + tableName, hiveTable)
         then:
-        def table = client.getTable( databaseName, newTableName)
+        def table = client.getTable(databaseName, newTableName)
         table != null && table.getTableName() == newTableName
         cleanup:
         client.dropTable(databaseName, newTableName)
@@ -177,9 +185,9 @@ class MetacatSmokeThriftSpec extends Specification {
     }
 
     @Unroll
-    def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"(){
+    def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
         given:
-        def uri = isLocalEnv?'file:/tmp/abc':null;
+        def uri = isLocalEnv ? 'file:/tmp/abc' : null;
         def databaseName = 'test_db4_' + catalogName
         def tableName = 'part'
         def partitionName = 'one=xyz'
@@ -189,7 +197,7 @@ class MetacatSmokeThriftSpec extends Specification {
         def partition = new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(partitionDto)))
         when:
         client.alterPartition(databaseName, tableName, partition)
-        def partitions = client.getPartitionsByFilter(hiveTable, partitionName.replace("=","='") + "'")
+        def partitions = client.getPartitionsByFilter(hiveTable, partitionName.replace("=", "='") + "'")
         def partitionss = client.getPartitionsByNames(hiveTable, [partitionName])
         then:
         partitions != null && partitions.size() == 1 && partitions.get(0).name == partitionName
@@ -197,7 +205,7 @@ class MetacatSmokeThriftSpec extends Specification {
         when:
         client.alterPartition(databaseName, tableName, partition)
         client.alterPartition(databaseName, tableName, partition)
-        def rPartitions = client.getPartitionsByFilter(hiveTable, partitionName.replace("=","='") + "'")
+        def rPartitions = client.getPartitionsByFilter(hiveTable, partitionName.replace("=", "='") + "'")
         def rPartitionss = client.getPartitionsByNames(hiveTable, [partitionName])
         then:
         rPartitions != null && rPartitions.size() == 1 && rPartitions.get(0).name == partitionName
@@ -210,90 +218,94 @@ class MetacatSmokeThriftSpec extends Specification {
     }
 
     @Unroll
-    def "Test: Remote Thrift connector: get partitions for filter #filter returned #result partitions"(){
+    def "Test: Remote Thrift connector: get partitions for filter #filter returned #result partitions"() {
         when:
         def catalogName = 'remote'
         def client = clients.get(catalogName)
         def databaseName = 'test_db5_' + catalogName
         def tableName = 'parts'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
-        if(cursor =='start'){
-            def uri = isLocalEnv?'file:/tmp/abc':null;
+        if (cursor == 'start') {
+            def uri = isLocalEnv ? 'file:/tmp/abc' : null;
             def dto = converter.toTableDto(hiveConverter.toTableInfo(QualifiedName.ofTable(catalogName, databaseName, tableName), hiveTable.getTTable()))
             def partitionDtos = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, 'one=xyz/total=1', uri, 10)
-            def partitions = partitionDtos.collect{new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(it)))}
+            def partitions = partitionDtos.collect {
+                new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(it)))
+            }
             client.alterPartitions(databaseName + '.' + tableName, partitions)
         }
         then:
-        client.getPartitionsByFilter(hiveTable, filter).size()==(filter.contains('like')?0:result)
+        client.getPartitionsByFilter(hiveTable, filter).size() == (filter.contains('like') ? 0 : result)
         cleanup:
-        if( cursor=='end') {
-            def partitionNames = client.getPartitionNames(databaseName, tableName, (short)-1)
+        if (cursor == 'end') {
+            def partitionNames = client.getPartitionNames(databaseName, tableName, (short) -1)
             partitionNames.each {
                 client.dropPartition(databaseName, tableName, Lists.newArrayList(PartitionUtil.getPartitionKeyValues(it).values()), false)
             }
         }
         where:
-        cursor | filter                                    | result
-        'start'| "one='xyz'"                               | 10
-        ''     | "one='xyz' and one like 'xy_'"            | 0
-        ''     | "one like 'xy%'"                          | 10
-        ''     | "total=10"                                | 1
-        ''     | "total<1"                                 | 0
-        ''     | "total>1"                                 | 10
-        ''     | "total>=10"                               | 10
-        ''     | "total<=20"                               | 10
-        ''     | "total between 1 and 20"                  | 10
-        ''     | "total not between 1 and 20"              | 0
-        'end'  | "one='xyz' and (total=11 or total=12)"    | 2
+        cursor  | filter                                 | result
+        'start' | "one='xyz'"                            | 10
+        ''      | "one='xyz' and one like 'xy_'"         | 0
+        ''      | "one like 'xy%'"                       | 10
+        ''      | "total=10"                             | 1
+        ''      | "total<1"                              | 0
+        ''      | "total>1"                              | 10
+        ''      | "total>=10"                            | 10
+        ''      | "total<=20"                            | 10
+        ''      | "total between 1 and 20"               | 10
+        ''      | "total not between 1 and 20"           | 0
+        'end'   | "one='xyz' and (total=11 or total=12)" | 2
     }
 
     @Unroll
-    def "Test: Embedded Thrift connector: get partitions for filter #filter returned #result partitions"(){
+    def "Test: Embedded Thrift connector: get partitions for filter #filter returned #result partitions"() {
         when:
         def catalogName = 'local'
         def client = clients.get(catalogName)
         def databaseName = 'test_db5_' + catalogName
         def tableName = 'parts'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
-        if(cursor =='start'){
-            def uri = isLocalEnv?'file:/tmp/abc':null;
+        if (cursor == 'start') {
+            def uri = isLocalEnv ? 'file:/tmp/abc' : null;
             def dto = converter.toTableDto(hiveConverter.toTableInfo(QualifiedName.ofTable(catalogName, databaseName, tableName), hiveTable.getTTable()))
             def partitionDtos = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, 'one=xyz/total=1', uri, 10)
-            def partitions = partitionDtos.collect{new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(it)))}
+            def partitions = partitionDtos.collect {
+                new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(it)))
+            }
             client.alterPartitions(databaseName + '.' + tableName, partitions)
         }
         then:
         try {
             client.getPartitionsByFilter(hiveTable, filter).size() == result
-        } catch(Exception e){
+        } catch (Exception e) {
             result == -1
             e.message.contains('400 Bad Request')
         }
         cleanup:
-        if( cursor=='end') {
-            def partitionNames = client.getPartitionNames(databaseName, tableName, (short)-1)
+        if (cursor == 'end') {
+            def partitionNames = client.getPartitionNames(databaseName, tableName, (short) -1)
             partitionNames.each {
                 client.dropPartition(databaseName, tableName, Lists.newArrayList(PartitionUtil.getPartitionKeyValues(it).values()), false)
             }
         }
         where:
-        cursor | filter                                    | result
-        'start'| "one='xyz'"                               | 10
-        ''     | 'one="xyz"'                               | 10
-        ''     | "one='xyz' and one like 'xy_'"            | 10
-        ''     | "(one='xyz') and one like 'xy%'"          | 10
-        ''     | "one like 'xy%'"                          | 10
-        ''     | "total=10"                                | 1
-        ''     | "total='10'"                              | 1
-        ''     | "total<1"                                 | 0
-        ''     | "total>1"                                 | 10
-        ''     | "total>=10"                               | 10
-        ''     | "total<=20"                               | 10
-        ''     | "total between 1 and 20"                  | 10
-        ''     | "total not between 1 and 20"              | 0
-        ''     | 'one=xyz'                                 | -1
-        ''     | 'invalid=xyz'                             | -1
-        'end'  | "one='xyz' and (total=11 or total=12)"    | 2
+        cursor  | filter                                 | result
+        'start' | "one='xyz'"                            | 10
+        ''      | 'one="xyz"'                            | 10
+        ''      | "one='xyz' and one like 'xy_'"         | 10
+        ''      | "(one='xyz') and one like 'xy%'"       | 10
+        ''      | "one like 'xy%'"                       | 10
+        ''      | "total=10"                             | 1
+        ''      | "total='10'"                           | 1
+        ''      | "total<1"                              | 0
+        ''      | "total>1"                              | 10
+        ''      | "total>=10"                            | 10
+        ''      | "total<=20"                            | 10
+        ''      | "total between 1 and 20"               | 10
+        ''      | "total not between 1 and 20"           | 0
+        ''      | 'one=xyz'                              | -1
+        ''      | 'invalid=xyz'                          | -1
+        'end'   | "one='xyz' and (total=11 or total=12)" | 2
     }
 }

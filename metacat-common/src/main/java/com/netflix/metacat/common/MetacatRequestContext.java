@@ -19,6 +19,7 @@ package com.netflix.metacat.common;
 
 import lombok.Data;
 
+import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.UUID;
 
@@ -55,4 +56,27 @@ public class MetacatRequestContext {
     private final String clientId;
     private final String jobId;
     private final String dataTypeContext;
+
+    /**
+     * Constructor.
+     *
+     * @param userName        user name
+     * @param clientAppName   client application name
+     * @param clientId        client id
+     * @param jobId           job id
+     * @param dataTypeContext data type context
+     */
+    public MetacatRequestContext(
+        @Nullable final String userName,
+        @Nullable final String clientAppName,
+        @Nullable final String clientId,
+        @Nullable final String jobId,
+        @Nullable final String dataTypeContext
+    ) {
+        this.userName = userName;
+        this.clientAppName = clientAppName;
+        this.clientId = clientId;
+        this.jobId = jobId;
+        this.dataTypeContext = dataTypeContext;
+    }
 }

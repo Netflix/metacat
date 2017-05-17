@@ -15,7 +15,6 @@
  *     limitations under the License.
  *
  */
-
 package com.netflix.metacat.common.server.converter;
 
 import com.google.common.collect.Maps;
@@ -41,29 +40,32 @@ import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import lombok.NonNull;
 import org.dozer.CustomConverter;
 import org.dozer.DozerBeanMapper;
 import org.dozer.Mapper;
 import org.dozer.loader.api.BeanMappingBuilder;
 import org.dozer.loader.api.FieldsMappingOptions;
 
-import javax.inject.Inject;
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Mapper from Dto to Connector Info.
+ *
  * @author amajumdar
+ * @since 1.0.0
  */
 public class ConverterUtil {
     private final Mapper mapper;
 
     /**
      * Constructor.
+     *
      * @param dozerTypeConverter custom dozer converter for types
      */
-    @Inject
-    public ConverterUtil(final DozerTypeConverter dozerTypeConverter) {
+    public ConverterUtil(@Nonnull @NonNull final DozerTypeConverter dozerTypeConverter) {
         final DozerBeanMapper dozerBeanMapper = new DozerBeanMapper();
         final BeanMappingBuilder builder = new BeanMappingBuilder() {
             @Override
@@ -86,39 +88,42 @@ public class ConverterUtil {
         final Map<String, CustomConverter> customConverterMap = Maps.newHashMap();
         customConverterMap.put("typeConverter", dozerTypeConverter);
         dozerBeanMapper.setCustomConvertersWithId(customConverterMap);
-        mapper = dozerBeanMapper;
+        this.mapper = dozerBeanMapper;
     }
 
     /**
      * Converts from DatabaseInfo to DatabaseDto.
+     *
      * @param databaseInfo connector table info
      * @return database dto
      */
     public DatabaseDto toDatabaseDto(final DatabaseInfo databaseInfo) {
-        return mapper.map(databaseInfo, DatabaseDto.class);
+        return this.mapper.map(databaseInfo, DatabaseDto.class);
     }
 
     /**
      * Converts from TableDto to TableInfo.
+     *
      * @param databaseDto database dto
      * @return connector database info
      */
     public DatabaseInfo fromDatabaseDto(final DatabaseDto databaseDto) {
-        return mapper.map(databaseDto, DatabaseInfo.class);
+        return this.mapper.map(databaseDto, DatabaseInfo.class);
     }
 
     /**
      * Converts from TableInfo to TableDto.
+     *
      * @param tableInfo connector table info
      * @return table dto
      */
     public TableDto toTableDto(final TableInfo tableInfo) {
-        final TableDto result =  mapper.map(tableInfo, TableDto.class);
+        final TableDto result = this.mapper.map(tableInfo, TableDto.class);
         //TODO: Add this logic in the mapping
         final List<FieldDto> fields = result.getFields();
         if (fields != null) {
             int index = 0;
-            for (final FieldDto field: fields) {
+            for (final FieldDto field : fields) {
                 field.setPos(index++);
             }
         }
@@ -127,6 +132,7 @@ public class ConverterUtil {
 
     /**
      * Converts from TableDto to TableInfo.
+     *
      * @param tableDto table dto
      * @return connector table info
      */
@@ -136,6 +142,7 @@ public class ConverterUtil {
 
     /**
      * Converts from PartitionInfo to PartitionDto.
+     *
      * @param partitionInfo connector partition info
      * @return partition dto
      */
@@ -145,6 +152,7 @@ public class ConverterUtil {
 
     /**
      * Converts from PartitionDto to PartitionInfo.
+     *
      * @param partitionDto partition dto
      * @return connector partition info
      */
@@ -154,6 +162,7 @@ public class ConverterUtil {
 
     /**
      * Creates the connector context.
+     *
      * @param metacatRequestContext request context
      * @return connector context
      */
@@ -163,13 +172,14 @@ public class ConverterUtil {
 
     /**
      * Creates the partition list connector request.
+     *
      * @param partitionsRequestDto request containing the filter and other properties used for listing
-     * @param pageable pageable info
-     * @param sort sort info
+     * @param pageable             pageable info
+     * @param sort                 sort info
      * @return connector request
      */
     public PartitionListRequest toPartitionListRequest(final GetPartitionsRequestDto partitionsRequestDto,
-        final Pageable pageable, final Sort sort) {
+                                                       final Pageable pageable, final Sort sort) {
         final PartitionListRequest result = mapper.map(partitionsRequestDto, PartitionListRequest.class);
         result.setPageable(pageable);
         result.setSort(sort);
@@ -178,6 +188,7 @@ public class ConverterUtil {
 
     /**
      * Creates the partition list connector request.
+     *
      * @param partitionsRequestDto request containing the save request information
      * @return connector request
      */
@@ -187,6 +198,7 @@ public class ConverterUtil {
 
     /**
      * Creates the partition list connector request.
+     *
      * @param partitionsSaveResponse response on saving partitions
      * @return response dto
      */

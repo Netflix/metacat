@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.main.services.impl;
 
-import com.google.inject.Inject;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
@@ -47,21 +46,27 @@ public class CatalogServiceImpl implements CatalogService {
 
     /**
      * Constructor.
-     * @param connectorManager connector manager
+     *
+     * @param connectorManager    connector manager
      * @param userMetadataService user metadata service
-     * @param eventBus Internal event bus
-     * @param converterUtil utility to convert to/from Dto to connector resources
+     * @param eventBus            Internal event bus
+     * @param converterUtil       utility to convert to/from Dto to connector resources
      */
-    @Inject
-    public CatalogServiceImpl(final ConnectorManager connectorManager,
-        final UserMetadataService userMetadataService, final MetacatEventBus eventBus,
-        final ConverterUtil converterUtil) {
+    public CatalogServiceImpl(
+        final ConnectorManager connectorManager,
+        final UserMetadataService userMetadataService,
+        final MetacatEventBus eventBus,
+        final ConverterUtil converterUtil
+    ) {
         this.connectorManager = connectorManager;
         this.userMetadataService = userMetadataService;
         this.eventBus = eventBus;
         this.converterUtil = converterUtil;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Nonnull
     @Override
     public CatalogDto get(@Nonnull final QualifiedName name) {
@@ -73,16 +78,19 @@ public class CatalogServiceImpl implements CatalogService {
         final ConnectorContext context = converterUtil.toConnectorContext(MetacatContextManager.getContext());
         result.setDatabases(
             connectorManager.getDatabaseService(name.getCatalogName()).listNames(context, name, null, null, null)
-            .stream().map(QualifiedName::getDatabaseName)
-            .filter(s -> config.getSchemaBlacklist().isEmpty() || !config.getSchemaBlacklist().contains(s))
-            .filter(s -> config.getSchemaWhitelist().isEmpty() || config.getSchemaWhitelist().contains(s))
-            .sorted(String.CASE_INSENSITIVE_ORDER)
-            .collect(Collectors.toList())
+                .stream().map(QualifiedName::getDatabaseName)
+                .filter(s -> config.getSchemaBlacklist().isEmpty() || !config.getSchemaBlacklist().contains(s))
+                .filter(s -> config.getSchemaWhitelist().isEmpty() || config.getSchemaWhitelist().contains(s))
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .collect(Collectors.toList())
         );
         userMetadataService.populateMetadata(result);
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Nonnull
     @Override
     public List<CatalogMappingDto> getCatalogNames() {
@@ -96,12 +104,15 @@ public class CatalogServiceImpl implements CatalogService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void update(@Nonnull final QualifiedName name, @Nonnull final CreateCatalogDto createCatalogDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext));
+        eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
         connectorManager.getCatalogConfig(name);
         userMetadataService.saveMetadata(metacatRequestContext.getUserName(), createCatalogDto, true);
-        eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext));
+        eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
     }
 }

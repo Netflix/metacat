@@ -13,18 +13,15 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-
 package com.netflix.metacat.connector.hive;
 
-import com.google.inject.Binder;
-import com.google.inject.Module;
+import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
-import com.netflix.metacat.common.server.ArchaiusConfigImpl;
-import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
@@ -37,7 +34,8 @@ import java.util.Map;
  * @author zhenl
  * @since 1.0.0
  */
-public class HiveConnectorModule implements Module {
+public class HiveConnectorModule extends AbstractModule {
+    private final Config config;
     private final String catalogName;
     private final HiveConnectorInfoConverter infoConverter;
     private final IMetacatHiveClient hiveMetastoreClient;
@@ -47,41 +45,50 @@ public class HiveConnectorModule implements Module {
     /**
      * Constructor.
      *
+     * @param config              The server configuration
      * @param catalogName         catalog name.
      * @param configuration       configuration properties
      * @param infoConverter       Hive info converter
      * @param hiveMetastoreClient hive metastore client
      */
-    public HiveConnectorModule(final String catalogName, final Map<String, String> configuration,
-                               final HiveConnectorInfoConverter infoConverter,
-                               final IMetacatHiveClient hiveMetastoreClient) {
+    HiveConnectorModule(
+        final Config config,
+        final String catalogName,
+        final Map<String, String> configuration,
+        final HiveConnectorInfoConverter infoConverter,
+        final IMetacatHiveClient hiveMetastoreClient
+    ) {
+        this.config = config;
         this.catalogName = catalogName;
         this.infoConverter = infoConverter;
         this.hiveMetastoreClient = hiveMetastoreClient;
-        this.fastService = Boolean
-                .parseBoolean(configuration.getOrDefault(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false"));
-        this.allowRenameTable = Boolean
-                .parseBoolean(configuration.getOrDefault(HiveConfigConstants.ALLOW_RENAME_TABLE, "false"));
+        this.fastService = Boolean.parseBoolean(
+            configuration.getOrDefault(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false")
+        );
+        this.allowRenameTable = Boolean.parseBoolean(
+            configuration.getOrDefault(HiveConfigConstants.ALLOW_RENAME_TABLE, "false")
+        );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void configure(final Binder binder) {
-        binder.bind(Config.class).toInstance(new ArchaiusConfigImpl());
-        binder.bind(ThreadServiceManager.class).asEagerSingleton();
-        binder.bind(String.class).annotatedWith(Names.named("catalogName")).toInstance(catalogName);
-        binder.bind(Boolean.class).annotatedWith(Names.named("allowRenameTable")).toInstance(allowRenameTable);
-        binder.bind(HiveConnectorInfoConverter.class).toInstance(infoConverter);
-        binder.bind(IMetacatHiveClient.class).toInstance(hiveMetastoreClient);
-        binder.bind(ConnectorDatabaseService.class).to(HiveConnectorDatabaseService.class).in(Scopes.SINGLETON);
-        if (fastService) {
-            binder.bind(ConnectorPartitionService.class).
-                    to(HiveConnectorFastPartitionService.class).in(Scopes.SINGLETON);
-            binder.bind(ConnectorTableService.class).
-                    to(HiveConnectorFastTableService.class).in(Scopes.SINGLETON);
+    public void configure() {
+        // TODO: Fix this properties binding so that it gets the proper metacat properties
+        this.bind(Config.class).toInstance(this.config);
+        this.bind(ThreadServiceManager.class).asEagerSingleton();
+        this.bind(String.class).annotatedWith(Names.named("catalogName")).toInstance(catalogName);
+        this.bind(Boolean.class).annotatedWith(Names.named("allowRenameTable")).toInstance(allowRenameTable);
+        this.bind(HiveConnectorInfoConverter.class).toInstance(infoConverter);
+        this.bind(IMetacatHiveClient.class).toInstance(hiveMetastoreClient);
+        this.bind(ConnectorDatabaseService.class).to(HiveConnectorDatabaseService.class).in(Scopes.SINGLETON);
+        if (this.fastService) {
+            this.bind(ConnectorPartitionService.class).to(HiveConnectorFastPartitionService.class).in(Scopes.SINGLETON);
+            this.bind(ConnectorTableService.class).to(HiveConnectorFastTableService.class).in(Scopes.SINGLETON);
         } else {
-            binder.bind(ConnectorPartitionService.class).to(HiveConnectorPartitionService.class).in(Scopes.SINGLETON);
-            binder.bind(ConnectorTableService.class).to(HiveConnectorTableService.class).in(Scopes.SINGLETON);
+            this.bind(ConnectorPartitionService.class).to(HiveConnectorPartitionService.class).in(Scopes.SINGLETON);
+            this.bind(ConnectorTableService.class).to(HiveConnectorTableService.class).in(Scopes.SINGLETON);
         }
     }
-
 }

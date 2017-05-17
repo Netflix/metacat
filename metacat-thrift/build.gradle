@@ -18,18 +18,20 @@
 
 dependencies {
     /*******************************
-     * Compile Dependencies
+     * API Dependencies
      *******************************/
 
+    compile(project(":metacat-common"))
     compile(project(":metacat-common-server"))
 
+    compile("org.apache.hadoop:hadoop-core")
+    compile("org.apache.hive:hive-metastore")
+
+    /*******************************
+     * Implementation Dependencies
+     *******************************/
+
     compile("com.google.guava:guava")
-    compile("com.google.inject:guice")
-    compile("com.google.inject.extensions:guice-persist:${guice_version}")
-    compile("com.google.inject.extensions:guice-multibindings:${guice_version}")
-    compile("com.google.inject.extensions:guice-servlet:${guice_version}")
-    compile("org.apache.hadoop:hadoop-core:${hadoop_core_version}")
-    compile("org.apache.hive:hive-metastore:${hive_version}")
 
     /*******************************
      * Provided Dependencies
@@ -43,6 +45,6 @@ dependencies {
      * Test Dependencies
      *******************************/
 
-    testCompile("de.danielbechler:java-object-diff:${java_object_diff_version}")
+    testCompile("de.danielbechler:java-object-diff")
 }
 

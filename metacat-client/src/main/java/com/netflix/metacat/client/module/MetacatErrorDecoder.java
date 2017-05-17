@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.client.module;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -30,11 +34,15 @@ import java.io.IOException;
 
 /**
  * Module that provides a error decoder, used to parse errors.
+ *
  * @author amajumdar
  */
 public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
     private static final MetacatJson METACAT_JSON = MetacatJsonLocator.INSTANCE;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Exception decode(final String methodKey, final Response response) {
         try {
@@ -49,22 +57,22 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                 }
             }
             switch (response.status()) {
-            case 501: //NOT IMPLEMENTED
-            case 415: //UNSUPPORTED_MEDIA_TYPE
-                return new MetacatNotSupportedException(message);
-            case 400: //BAD_REQUEST
-                return new MetacatBadRequestException(message);
-            case 404: //NOT_FOUND
-                return new MetacatNotFoundException(message);
-            case 409: //CONFLICT
-                return new MetacatAlreadyExistsException(message);
-            case 500: //INTERNAL_SERVER_ERROR
-            case 503: //SERVICE_UNAVAILABLE
-                return new RetryableException(message, null);
-            default:
-                return new MetacatException(message, javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR, null);
+                case 501: //NOT IMPLEMENTED
+                case 415: //UNSUPPORTED_MEDIA_TYPE
+                    return new MetacatNotSupportedException(message);
+                case 400: //BAD_REQUEST
+                    return new MetacatBadRequestException(message);
+                case 404: //NOT_FOUND
+                    return new MetacatNotFoundException(message);
+                case 409: //CONFLICT
+                    return new MetacatAlreadyExistsException(message);
+                case 500: //INTERNAL_SERVER_ERROR
+                case 503: //SERVICE_UNAVAILABLE
+                    return new RetryableException(message, null);
+                default:
+                    return new MetacatException(message, javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR, null);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             return super.decode(methodKey, response);
         }
     }

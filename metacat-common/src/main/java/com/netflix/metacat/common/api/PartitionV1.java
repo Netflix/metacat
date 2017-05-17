@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.api;
 
 import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
@@ -39,6 +43,7 @@ import java.util.List;
 
 /**
  * Metacat API for managing partition.
+ *
  * @author amajumdar
  */
 @Path("mds/v1/partition")
@@ -51,9 +56,10 @@ import java.util.List;
 public interface PartitionV1 {
     /**
      * Delete named partitions from a table.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
+     * @param tableName    table name
      * @param partitionIds lis of partition names
      */
     @DELETE
@@ -87,10 +93,11 @@ public interface PartitionV1 {
 
     /**
      * Delete partitions for the given view.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
-     * @param viewName metacat view name
+     * @param tableName    table name
+     * @param viewName     metacat view name
      * @param partitionIds list of partition names
      */
     @DELETE
@@ -127,14 +134,15 @@ public interface PartitionV1 {
 
     /**
      * Return list of partitions for a table.
-     * @param catalogName catalog name
-     * @param databaseName database name
-     * @param tableName table name
-     * @param filter filter expression
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
+     *
+     * @param catalogName         catalog name
+     * @param databaseName        database name
+     * @param tableName           table name
+     * @param filter              filter expression
+     * @param sortBy              sort by this name
+     * @param sortOrder           sort order to use
+     * @param offset              offset of the list
+     * @param limit               size of the list
      * @param includeUserMetadata whether to include user metadata for every partition in the list
      * @return list of partitions for a table
      */
@@ -160,22 +168,22 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the table", required = true)
         @PathParam("table-name")
             String tableName,
-        @ApiParam(value = "Filter expression string to use", required = false)
+        @ApiParam(value = "Filter expression string to use")
         @QueryParam("filter")
             String filter,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit,
-        @ApiParam(value = "Whether to include user metadata information to the response", required = false)
+        @ApiParam(value = "Whether to include user metadata information to the response")
         @DefaultValue("false")
         @QueryParam("includeUserMetadata")
             Boolean includeUserMetadata
@@ -183,15 +191,16 @@ public interface PartitionV1 {
 
     /**
      * Return list of partitions for a metacat view.
-     * @param catalogName catalog name
-     * @param databaseName database name
-     * @param tableName table name
-     * @param viewName view name
-     * @param filter filter expression
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
+     *
+     * @param catalogName         catalog name
+     * @param databaseName        database name
+     * @param tableName           table name
+     * @param viewName            view name
+     * @param filter              filter expression
+     * @param sortBy              sort by this name
+     * @param sortOrder           sort order to use
+     * @param offset              offset of the list
+     * @param limit               size of the list
      * @param includeUserMetadata whether to include user metadata for every partition in the list
      * @return list of partitions for a metacat view
      */
@@ -220,22 +229,22 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the metacat view", required = true)
         @PathParam("view-name")
             String viewName,
-        @ApiParam(value = "Filter expression string to use", required = false)
+        @ApiParam(value = "Filter expression string to use")
         @QueryParam("filter")
             String filter,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit,
-        @ApiParam(value = "Whether to include user metadata information to the response", required = false)
+        @ApiParam(value = "Whether to include user metadata information to the response")
         @DefaultValue("false")
         @QueryParam("includeUserMetadata")
             Boolean includeUserMetadata
@@ -243,14 +252,15 @@ public interface PartitionV1 {
 
     /**
      * Return list of partitions for a table.
-     * @param catalogName catalog name
-     * @param databaseName database name
-     * @param tableName table name
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
-     * @param includeUserMetadata whether to include user metadata for every partition in the list
+     *
+     * @param catalogName             catalog name
+     * @param databaseName            database name
+     * @param tableName               table name
+     * @param sortBy                  sort by this name
+     * @param sortOrder               sort order to use
+     * @param offset                  offset of the list
+     * @param limit                   size of the list
+     * @param includeUserMetadata     whether to include user metadata for every partition in the list
      * @param getPartitionsRequestDto request
      * @return list of partitions for a table
      */
@@ -276,37 +286,38 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the table", required = true)
         @PathParam("table-name")
             String tableName,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit,
-        @ApiParam(value = "Whether to include user metadata information to the response", required = false)
+        @ApiParam(value = "Whether to include user metadata information to the response")
         @DefaultValue("false")
         @QueryParam("includeUserMetadata")
             Boolean includeUserMetadata,
-        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions")
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
     /**
      * Return list of partitions for a view.
-     * @param catalogName catalog name
-     * @param databaseName database name
-     * @param tableName table name
-     * @param viewName view name
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
-     * @param includeUserMetadata whether to include user metadata for every partition in the list
+     *
+     * @param catalogName             catalog name
+     * @param databaseName            database name
+     * @param tableName               table name
+     * @param viewName                view name
+     * @param sortBy                  sort by this name
+     * @param sortOrder               sort order to use
+     * @param offset                  offset of the list
+     * @param limit                   size of the list
+     * @param includeUserMetadata     whether to include user metadata for every partition in the list
      * @param getPartitionsRequestDto request
      * @return list of partitions for a view
      */
@@ -335,36 +346,37 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the metacat view", required = true)
         @PathParam("view-name")
             String viewName,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit,
-        @ApiParam(value = "Whether to include user metadata information to the response", required = false)
+        @ApiParam(value = "Whether to include user metadata information to the response")
         @DefaultValue("false")
         @QueryParam("includeUserMetadata")
             Boolean includeUserMetadata,
-        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions")
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
     /**
      * Return list of partition names for a table.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
-     * @param filter filter expression
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
+     * @param tableName    table name
+     * @param filter       filter expression
+     * @param sortBy       sort by this name
+     * @param sortOrder    sort order to use
+     * @param offset       offset of the list
+     * @param limit        size of the list
      * @return list of partition names for a table
      */
     @GET
@@ -389,34 +401,35 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the table", required = true)
         @PathParam("table-name")
             String tableName,
-        @ApiParam(value = "Filter expression string to use", required = false)
+        @ApiParam(value = "Filter expression string to use")
         @QueryParam("filter")
             String filter,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit
     );
 
     /**
      * Return list of partition names for a view.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
-     * @param viewName view name
-     * @param filter filter expression
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
+     * @param tableName    table name
+     * @param viewName     view name
+     * @param filter       filter expression
+     * @param sortBy       sort by this name
+     * @param sortOrder    sort order to use
+     * @param offset       offset of the list
+     * @param limit        size of the list
      * @return list of partition names for a view
      */
     @GET
@@ -444,32 +457,33 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the metacat view", required = true)
         @PathParam("view-name")
             String viewName,
-        @ApiParam(value = "Filter expression string to use", required = false)
+        @ApiParam(value = "Filter expression string to use")
         @QueryParam("filter")
             String filter,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit
     );
 
     /**
      * Return list of partition names for a table.
-     * @param catalogName catalog name
-     * @param databaseName database name
-     * @param tableName table name
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
+     *
+     * @param catalogName             catalog name
+     * @param databaseName            database name
+     * @param tableName               table name
+     * @param sortBy                  sort by this name
+     * @param sortOrder               sort order to use
+     * @param offset                  offset of the list
+     * @param limit                   size of the list
      * @param getPartitionsRequestDto request
      * @return list of partition names for a table
      */
@@ -495,32 +509,33 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the table", required = true)
         @PathParam("table-name")
             String tableName,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit,
-        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions")
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
     /**
      * Return list of partition names for a view.
-     * @param catalogName catalog name
-     * @param databaseName database name
-     * @param tableName table name
-     * @param viewName view name
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
+     *
+     * @param catalogName             catalog name
+     * @param databaseName            database name
+     * @param tableName               table name
+     * @param viewName                view name
+     * @param sortBy                  sort by this name
+     * @param sortOrder               sort order to use
+     * @param offset                  offset of the list
+     * @param limit                   size of the list
      * @param getPartitionsRequestDto request
      * @return list of partition names for a view
      */
@@ -549,32 +564,33 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the metacat view", required = true)
         @PathParam("view-name")
             String viewName,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit,
-        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions")
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
     /**
      * Return list of partition uris for a table.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
-     * @param filter filter expression
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
+     * @param tableName    table name
+     * @param filter       filter expression
+     * @param sortBy       sort by this name
+     * @param sortOrder    sort order to use
+     * @param offset       offset of the list
+     * @param limit        size of the list
      * @return list of partition uris for a table
      */
     @GET
@@ -599,34 +615,35 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the table", required = true)
         @PathParam("table-name")
             String tableName,
-        @ApiParam(value = "Filter expression string to use", required = false)
+        @ApiParam(value = "Filter expression string to use")
         @QueryParam("filter")
             String filter,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit
     );
 
     /**
      * Return list of partition uris for a table.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
-     * @param viewName view name
-     * @param filter filter expression
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
+     * @param tableName    table name
+     * @param viewName     view name
+     * @param filter       filter expression
+     * @param sortBy       sort by this name
+     * @param sortOrder    sort order to use
+     * @param offset       offset of the list
+     * @param limit        size of the list
      * @return list of partition uris for a table
      */
     @GET
@@ -654,32 +671,33 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the metacat view", required = true)
         @PathParam("view-name")
             String viewName,
-        @ApiParam(value = "Filter expression string to use", required = false)
+        @ApiParam(value = "Filter expression string to use")
         @QueryParam("filter")
             String filter,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit
     );
 
     /**
      * Return list of partition uris for a table.
-     * @param catalogName catalog name
-     * @param databaseName database name
-     * @param tableName table name
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
+     *
+     * @param catalogName             catalog name
+     * @param databaseName            database name
+     * @param tableName               table name
+     * @param sortBy                  sort by this name
+     * @param sortOrder               sort order to use
+     * @param offset                  offset of the list
+     * @param limit                   size of the list
      * @param getPartitionsRequestDto request
      * @return list of partition uris for a table
      */
@@ -705,32 +723,33 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the table", required = true)
         @PathParam("table-name")
             String tableName,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit,
-        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions")
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
     /**
      * Return list of partition uris for a view.
-     * @param catalogName catalog name
-     * @param databaseName database name
-     * @param tableName table name
-     * @param viewName view name
-     * @param sortBy sort by this name
-     * @param sortOrder sort order to use
-     * @param offset offset of the list
-     * @param limit size of the list
+     *
+     * @param catalogName             catalog name
+     * @param databaseName            database name
+     * @param tableName               table name
+     * @param viewName                view name
+     * @param sortBy                  sort by this name
+     * @param sortOrder               sort order to use
+     * @param offset                  offset of the list
+     * @param limit                   size of the list
      * @param getPartitionsRequestDto request
      * @return list of partition uris for a view
      */
@@ -759,27 +778,28 @@ public interface PartitionV1 {
         @ApiParam(value = "The name of the metacat view", required = true)
         @PathParam("view-name")
             String viewName,
-        @ApiParam(value = "Sort the partition list by this value", required = false)
+        @ApiParam(value = "Sort the partition list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use", required = false)
+        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned", required = false)
+        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the partition list", required = false)
+        @ApiParam(value = "Size of the partition list")
         @QueryParam("limit")
             Integer limit,
-        @ApiParam(value = "Request containing the filter expression for the partitions", required = false)
+        @ApiParam(value = "Request containing the filter expression for the partitions")
             GetPartitionsRequestDto getPartitionsRequestDto
     );
 
     /**
      * Add/update partitions to the given table.
-     * @param catalogName catalog name
-     * @param databaseName database name
-     * @param tableName table name
+     *
+     * @param catalogName              catalog name
+     * @param databaseName             database name
+     * @param tableName                table name
      * @param partitionsSaveRequestDto partition request containing the list of partitions to be added/updated
      * @return Response with the number of partitions added/updated
      */
@@ -812,10 +832,11 @@ public interface PartitionV1 {
 
     /**
      * Add/update partitions to the given metacat view.
-     * @param catalogName catalog name
-     * @param databaseName database name
-     * @param tableName table name
-     * @param viewName view name
+     *
+     * @param catalogName              catalog name
+     * @param databaseName             database name
+     * @param tableName                table name
+     * @param viewName                 view name
      * @param partitionsSaveRequestDto partition request containing the list of partitions to be added/updated
      * @return Response with the number of partitions added/updated
      */
@@ -851,9 +872,10 @@ public interface PartitionV1 {
 
     /**
      * Get the partition count for the given table.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
+     * @param tableName    table name
      * @return partition count for the given table
      */
     @GET
@@ -883,10 +905,11 @@ public interface PartitionV1 {
 
     /**
      * Get the partition count for the given metacat view.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
-     * @param viewName view name
+     * @param tableName    table name
+     * @param viewName     view name
      * @return partition count for the given view
      */
     @GET

@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.type;
 
 import com.google.common.collect.ImmutableList;
@@ -23,18 +27,22 @@ import java.util.List;
 
 /**
  * Char type class.
+ *
  * @author zhenl
  */
 @Getter
 @EqualsAndHashCode(callSuper = true)
 public class CharType extends AbstractType implements ParametricType {
-    /** Default character type. */
+    /**
+     * Default character type.
+     */
     public static final CharType CHAR = new CharType(1);
 
     private final int length;
 
     /**
      * Constructor.
+     *
      * @param length length
      */
     public CharType(final int length) {
@@ -50,11 +58,27 @@ public class CharType extends AbstractType implements ParametricType {
         this.length = length;
     }
 
+    /**
+     * Creates the character type.
+     *
+     * @param length legnth of the type
+     * @return CharType
+     */
+    public static CharType createCharType(final int length) {
+        return new CharType(length);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TypeEnum getBaseType() {
         return TypeEnum.CHAR;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Type createType(final List<Type> types, final List<Object> literals) {
         if (literals.isEmpty()) {
@@ -70,18 +94,11 @@ public class CharType extends AbstractType implements ParametricType {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Type> getParameters() {
         return ImmutableList.of();
     }
-
-    /**
-     * Creates the character type.
-     * @param length legnth of the type
-     * @return CharType
-     */
-    public static CharType createCharType(final int length) {
-        return new CharType(length);
-    }
-
 }

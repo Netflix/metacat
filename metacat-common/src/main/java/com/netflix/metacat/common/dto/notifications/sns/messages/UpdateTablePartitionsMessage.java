@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netflix.metacat.common.dto.notifications.sns.SNSMessage;
 import com.netflix.metacat.common.dto.notifications.sns.SNSMessageType;
 import com.netflix.metacat.common.dto.notifications.sns.payloads.TablePartitionsUpdatePayload;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -32,6 +33,7 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class UpdateTablePartitionsMessage extends SNSMessage<TablePartitionsUpdatePayload> {
 
     /**

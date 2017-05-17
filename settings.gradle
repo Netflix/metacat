@@ -13,6 +13,7 @@
 
 rootProject.name = 'metacat'
 
+include 'metacat-app'
 include 'metacat-client'
 include 'metacat-common'
 include 'metacat-common-server'
@@ -26,10 +27,8 @@ include 'metacat-connector-redshift'
 include 'metacat-connector-s3'
 include 'metacat-functional-tests'
 include 'metacat-main'
-include 'metacat-server'
+include 'metacat-testdata-provider'
 include 'metacat-thrift'
 include 'metacat-user-metadata-mysql'
-include 'metacat-connector-pig'
-include 'metacat-connector-hive'
-include 'metacat-testdata-provider'
+include 'metacat-war'
 

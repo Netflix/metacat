@@ -19,7 +19,13 @@ package com.netflix.metacat.common.server.events;
 
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.ToString;
+import org.springframework.context.ApplicationEvent;
+
+import javax.annotation.Nonnull;
 
 /**
  * Event within the Metacat JVM.
@@ -27,8 +33,27 @@ import lombok.Data;
  * @author amajumdar
  * @author tgianos
  */
-@Data
-public class MetacatEvent {
+@Getter
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public class MetacatEvent extends ApplicationEvent {
     private final QualifiedName name;
     private final MetacatRequestContext requestContext;
+
+    /**
+     * Constructor.
+     *
+     * @param name           The qualified name of the resource this event pertains to
+     * @param requestContext The request context that triggered this event
+     * @param source         The source object this event was generated from
+     */
+    public MetacatEvent(
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final Object source
+    ) {
+        super(source);
+        this.name = name;
+        this.requestContext = requestContext;
+    }
 }

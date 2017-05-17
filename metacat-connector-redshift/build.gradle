@@ -23,6 +23,8 @@ dependencies {
 
     compile(project(":metacat-connector-jdbc"))
 
+    compile("com.google.inject:guice")
+
     /*******************************
      * Provided Dependencies
      *******************************/
@@ -31,7 +33,7 @@ dependencies {
      * Runtime Dependencies
      *******************************/
 
-    runtime("com.amazon.redshift:redshift-jdbc42:${redshift_driver_version}")
+    runtime("com.amazon.redshift:redshift-jdbc42")
 
     /*******************************
      * Test Dependencies

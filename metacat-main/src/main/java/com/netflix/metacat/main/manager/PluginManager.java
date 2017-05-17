@@ -13,14 +13,13 @@
 
 package com.netflix.metacat.main.manager;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Injector;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
-import com.netflix.metacat.common.server.converter.TypeConverterProvider;
+import com.netflix.metacat.common.server.converter.TypeConverterFactory;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,28 +30,27 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class PluginManager {
     private final ConnectorManager connectorManager;
-    private final TypeConverterProvider typeConverterProvider;
-    private final Injector injector;
+    private final TypeConverterFactory typeConverterFactory;
     private final AtomicBoolean pluginsLoaded = new AtomicBoolean();
     private final AtomicBoolean pluginsLoading = new AtomicBoolean();
 
     /**
      * Constructor.
-     * @param injector injector
-     * @param connectorManager manager
-     * @param typeConverterProvider provider for type converters
+     *
+     * @param connectorManager     manager
+     * @param typeConverterFactory provider for type converters
      */
-    @Inject
-    public PluginManager(final Injector injector, final ConnectorManager connectorManager,
-        final TypeConverterProvider typeConverterProvider) {
-        Preconditions.checkNotNull(injector, "injector is null");
-        this.injector = injector;
-        this.connectorManager = Preconditions.checkNotNull(connectorManager, "connectorManager is null");
-        this.typeConverterProvider = Preconditions.checkNotNull(typeConverterProvider, "typeConverterProvider is null");
+    public PluginManager(
+        @Nonnull @NonNull final ConnectorManager connectorManager,
+        @Nonnull @NonNull final TypeConverterFactory typeConverterFactory
+    ) {
+        this.connectorManager = connectorManager;
+        this.typeConverterFactory = typeConverterFactory;
     }
 
     /**
      * Returns true if plugins are loaded.
+     *
      * @return true if plugins are loaded.
      */
     public boolean arePluginsLoaded() {
@@ -60,22 +58,12 @@ public class PluginManager {
     }
 
     /**
-     * Installs the plugins.
-     * @param connectorPlugin service plugin
-     */
-    public void installPlugin(final ConnectorPlugin connectorPlugin) {
-        injector.injectMembers(connectorPlugin);
-        connectorManager.addPlugin(connectorPlugin);
-        typeConverterProvider.register(connectorPlugin.getType(), connectorPlugin.getTypeConverter());
-    }
-
-    /**
      * Loads the plugins.
+     *
      * @throws Exception error
      */
-    public void loadPlugins()
-        throws Exception {
-        if (!pluginsLoading.compareAndSet(false, true)) {
+    public void loadPlugins() throws Exception {
+        if (!this.pluginsLoading.compareAndSet(false, true)) {
             return;
         }
 
@@ -89,10 +77,20 @@ public class PluginManager {
 
         for (ConnectorPlugin connectorPlugin : connectorPlugins) {
             log.info("Installing {}", connectorPlugin.getClass().getName());
-            installPlugin(connectorPlugin);
+            this.installPlugin(connectorPlugin);
             log.info("-- Finished loading plugin {} --", connectorPlugin.getClass().getName());
         }
 
-        pluginsLoaded.set(true);
+        this.pluginsLoaded.set(true);
+    }
+
+    /**
+     * Installs the plugins.
+     *
+     * @param connectorPlugin service plugin
+     */
+    private void installPlugin(final ConnectorPlugin connectorPlugin) {
+        this.connectorManager.addPlugin(connectorPlugin);
+        this.typeConverterFactory.register(connectorPlugin.getType(), connectorPlugin.getTypeConverter());
     }
 }

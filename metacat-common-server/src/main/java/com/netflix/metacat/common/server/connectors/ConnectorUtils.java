@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.common.server.connectors;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
@@ -26,6 +27,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +37,21 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 public class ConnectorUtils {
+
+    /**
+     * The key which a user can set a value in a catalog to override the default database service class.
+     */
+    private static final String DATABASE_SERVICE_CLASS_KEY = "metacat.connector.databaseService.class";
+
+    /**
+     * The key which a user can set a value in a catalog to override the default table service class.
+     */
+    private static final String TABLE_SERVICE_CLASS_KEY = "metacat.connector.tableService.class";
+
+    /**
+     * The key which a user can set a value in a catalog to override the default partition service class.
+     */
+    private static final String PARTITION_SERVICE_CLASS_KEY = "metacat.connector.partitionService.class";
 
     /**
      * Protected constructor for utility class.
@@ -92,5 +109,73 @@ public class ConnectorUtils {
         }
 
         return results.build();
+    }
+
+    /**
+     * Get the database service class to use.
+     *
+     * @param configuration       The connector configuration
+     * @param defaultServiceClass The default class to use if an override is not found
+     * @return The database service class to use.
+     */
+    public static Class<? extends ConnectorDatabaseService> getDatabaseServiceClass(
+        @Nonnull @NonNull final Map<String, String> configuration,
+        @Nonnull @NonNull final Class<? extends ConnectorDatabaseService> defaultServiceClass
+    ) {
+        if (configuration.containsKey(DATABASE_SERVICE_CLASS_KEY)) {
+            final String className = configuration.get(DATABASE_SERVICE_CLASS_KEY);
+            return getServiceClass(className, ConnectorDatabaseService.class);
+        } else {
+            return defaultServiceClass;
+        }
+    }
+
+    /**
+     * Get the table service class to use.
+     *
+     * @param configuration       The connector configuration
+     * @param defaultServiceClass The default class to use if an override is not found
+     * @return The table service class to use.
+     */
+    public static Class<? extends ConnectorTableService> getTableServiceClass(
+        @Nonnull @NonNull final Map<String, String> configuration,
+        @Nonnull @NonNull final Class<? extends ConnectorTableService> defaultServiceClass
+    ) {
+        if (configuration.containsKey(TABLE_SERVICE_CLASS_KEY)) {
+            final String className = configuration.get(TABLE_SERVICE_CLASS_KEY);
+            return getServiceClass(className, ConnectorTableService.class);
+        } else {
+            return defaultServiceClass;
+        }
+    }
+
+    /**
+     * Get the partition service class to use.
+     *
+     * @param configuration       The connector configuration
+     * @param defaultServiceClass The default class to use if an override is not found
+     * @return The partition service class to use.
+     */
+    public static Class<? extends ConnectorPartitionService> getPartitionServiceClass(
+        @Nonnull @NonNull final Map<String, String> configuration,
+        @Nonnull @NonNull final Class<? extends ConnectorPartitionService> defaultServiceClass
+    ) {
+        if (configuration.containsKey(PARTITION_SERVICE_CLASS_KEY)) {
+            final String className = configuration.get(PARTITION_SERVICE_CLASS_KEY);
+            return getServiceClass(className, ConnectorPartitionService.class);
+        } else {
+            return defaultServiceClass;
+        }
+    }
+
+    private static <S extends ConnectorBaseService> Class<? extends S> getServiceClass(
+        @Nonnull @NonNull final String className,
+        @Nonnull @NonNull final Class<? extends S> baseClass
+    ) {
+        try {
+            return Class.forName(className).asSubclass(baseClass);
+        } catch (final ClassNotFoundException cnfe) {
+            throw Throwables.propagate(cnfe);
+        }
     }
 }

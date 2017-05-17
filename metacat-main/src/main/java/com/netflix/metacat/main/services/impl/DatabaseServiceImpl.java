@@ -22,6 +22,7 @@ import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatCreateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatCreateDatabasePreEvent;
@@ -30,7 +31,6 @@ import com.netflix.metacat.common.server.events.MetacatDeleteDatabasePreEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePreEvent;
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
@@ -40,7 +40,6 @@ import com.netflix.metacat.main.spi.MetacatCatalogConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -60,17 +59,20 @@ public class DatabaseServiceImpl implements DatabaseService {
 
     /**
      * Constructor.
-     * @param catalogService catalog service
-     * @param connectorManager connector manager
+     *
+     * @param catalogService      catalog service
+     * @param connectorManager    connector manager
      * @param userMetadataService user metadata service
-     * @param eventBus internal event bus
-     * @param converterUtil utility to convert to/from Dto to connector resources
+     * @param eventBus            internal event bus
+     * @param converterUtil       utility to convert to/from Dto to connector resources
      */
-    @Inject
-    public DatabaseServiceImpl(final CatalogService catalogService,
+    public DatabaseServiceImpl(
+        final CatalogService catalogService,
         final ConnectorManager connectorManager,
-        final UserMetadataService userMetadataService, final MetacatEventBus eventBus,
-        final ConverterUtil converterUtil) {
+        final UserMetadataService userMetadataService,
+        final MetacatEventBus eventBus,
+        final ConverterUtil converterUtil
+    ) {
         this.catalogService = catalogService;
         this.connectorManager = connectorManager;
         this.userMetadataService = userMetadataService;
@@ -83,17 +85,17 @@ public class DatabaseServiceImpl implements DatabaseService {
         validate(name);
         log.info("Creating schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatCreateDatabasePreEvent(name, metacatRequestContext));
+        eventBus.postSync(new MetacatCreateDatabasePreEvent(name, metacatRequestContext, this));
         final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
         connectorManager.getDatabaseService(name.getCatalogName()).create(connectorContext,
             converterUtil.fromDatabaseDto(dto));
         if (dto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for schema {}", name);
             userMetadataService.saveDefinitionMetadata(name, metacatRequestContext.getUserName(),
-                    Optional.of(dto.getDefinitionMetadata()), true);
+                Optional.of(dto.getDefinitionMetadata()), true);
         }
         final DatabaseDto createdDto = get(name, dto.getDefinitionMetadata() != null);
-        eventBus.postAsync(new MetacatCreateDatabasePostEvent(name, metacatRequestContext, createdDto));
+        eventBus.postAsync(new MetacatCreateDatabasePostEvent(name, metacatRequestContext, this, createdDto));
         return createdDto;
     }
 
@@ -102,18 +104,19 @@ public class DatabaseServiceImpl implements DatabaseService {
         validate(name);
         log.info("Updating schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext));
+        eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
         try {
             final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
             connectorManager.getDatabaseService(name.getCatalogName())
                 .update(connectorContext, converterUtil.fromDatabaseDto(dto));
-        } catch (UnsupportedOperationException ignored) { }
+        } catch (UnsupportedOperationException ignored) {
+        }
         if (dto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for schema {}", name);
             userMetadataService.saveDefinitionMetadata(name, metacatRequestContext.getUserName(),
                 Optional.of(dto.getDefinitionMetadata()), true);
         }
-        eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext));
+        eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
     }
 
     @Override
@@ -128,7 +131,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         log.info("Dropping schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final DatabaseDto dto = get(name, true);
-        eventBus.postSync(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, dto));
+        eventBus.postSync(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, this, dto));
         final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
         connectorManager.getDatabaseService(name.getCatalogName()).delete(connectorContext, name);
 
@@ -137,7 +140,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             log.info("Deleting user metadata for schema {}", name);
             userMetadataService.deleteDefinitionMetadatas(ImmutableList.of(name));
         }
-        eventBus.postAsync(new MetacatDeleteDatabasePostEvent(name, metacatRequestContext, dto));
+        eventBus.postAsync(new MetacatDeleteDatabasePostEvent(name, metacatRequestContext, this, dto));
     }
 
     @Override
@@ -159,7 +162,8 @@ public class DatabaseServiceImpl implements DatabaseService {
             // TODO JdbcMetadata returns ImmutableList.of() for views.  We should change it to fetch views.
             try {
                 viewNames = service.listViewNames(connectorContext, name);
-            } catch (UnsupportedOperationException ignored) { }
+            } catch (UnsupportedOperationException ignored) {
+            }
         }
 
         // Check to see if schema exists

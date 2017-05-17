@@ -42,8 +42,8 @@ public class DefaultConnectorFactory implements ConnectorFactory {
     /**
      * Constructor.
      *
-     * @param name          The catalog name
-     * @param modules The catalog configuration
+     * @param name    The connector name
+     * @param modules The connector modules to create
      */
     public DefaultConnectorFactory(
         @Nonnull @NonNull final String name,

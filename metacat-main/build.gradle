@@ -16,24 +16,40 @@
  *
  */
 
+configurations {
+    all*.exclude module: "jsr311-api"
+    all*.exclude group: "com.sun.jersey"
+}
+
 dependencies {
     /*******************************
-     * Compile Dependencies
+     * API Dependencies
      *******************************/
 
+    compile(project(":metacat-common"))
     compile(project(":metacat-common-server"))
     compile(project(":metacat-thrift"))
 
-    compile("com.amazonaws:aws-java-sdk-sns:${amazon_sns_version}")
-    compile("com.github.rholder:guava-retrying:${guava_retrying_version}") {
-        exclude module: "guava"
-    }
-    compile("com.google.inject:guice")
-    compile("com.google.inject.extensions:guice-persist:${guice_version}")
-    compile("com.google.inject.extensions:guice-multibindings:${guice_version}")
-    compile("com.google.inject.extensions:guice-servlet:${guice_version}")
+    compile("com.amazonaws:aws-java-sdk-sns")
     compile("javax.validation:validation-api")
     compile("org.elasticsearch:elasticsearch")
+
+    /*******************************
+     * Implementation Dependencies
+     *******************************/
+
+    compile(project(":metacat-user-metadata-mysql"))
+
+    compile("com.google.guava:guava")
+    compile("com.github.rholder:guava-retrying") {
+        exclude module: "guava"
+    }
+    compile("org.springframework.boot:spring-boot-starter")
+    compile("org.springframework.boot:spring-boot-starter-jersey")
+    compile("org.springframework.boot:spring-boot-starter-logging")
+    compile("org.springframework.boot:spring-boot-starter-tomcat")
+    compile("org.springframework.boot:spring-boot-starter-web")
+    compile("org.springframework.cloud:spring-cloud-starter-spectator")
 
     /*******************************
      * Provided Dependencies
@@ -55,8 +71,8 @@ dependencies {
      *******************************/
 
     testCompile(project(":metacat-testdata-provider"))
-    testCompile(project(":metacat-user-metadata-mysql"))
-    testCompile("io.airlift:testing-mysql-server:${testing_mysql_server_version}")
+
+    testCompile("io.airlift:testing-mysql-server")
 }
 
 test {

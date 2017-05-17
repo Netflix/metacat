@@ -1,21 +1,22 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *  Copyright 2017 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
  */
-
 package com.netflix.metacat.main.services;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.BaseDto;
@@ -35,6 +36,7 @@ import java.util.List;
 
 /**
  * Generic Service helper.
+ *
  * @author amajumdar
  */
 public class MetacatServiceHelper {
@@ -45,12 +47,12 @@ public class MetacatServiceHelper {
 
     /**
      * Constructor.
-     * @param databaseService database service
-     * @param tableService table service
+     *
+     * @param databaseService  database service
+     * @param tableService     table service
      * @param partitionService partition service
-     * @param eventBus event bus
+     * @param eventBus         event bus
      */
-    @Inject
     public MetacatServiceHelper(
         final DatabaseService databaseService,
         final TableService tableService,
@@ -65,11 +67,12 @@ public class MetacatServiceHelper {
 
     /**
      * Get the relevant service for the given qualified name.
+     *
      * @param name name
      * @return service
      */
     public MetacatService getService(final QualifiedName name) {
-        MetacatService result = null;
+        MetacatService result;
         if (name.isPartitionDefinition()) {
             result = partitionService;
         } else if (name.isTableDefinition()) {
@@ -84,24 +87,30 @@ public class MetacatServiceHelper {
 
     /**
      * Calls the right method of the event bus for the given qualified name.
-     * @param name name
+     *
+     * @param name                  name
      * @param metacatRequestContext context
-     * @param dto dto
+     * @param dto                   dto
      */
-    public void postPreUpdateEvent(final QualifiedName name, final MetacatRequestContext metacatRequestContext,
-        final BaseDto dto) {
+    public void postPreUpdateEvent(
+        final QualifiedName name,
+        final MetacatRequestContext metacatRequestContext,
+        final BaseDto dto
+    ) {
         if (name.isPartitionDefinition()) {
             final PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
             if (dto != null) {
                 partitionsSaveRequestDto.setPartitions(ImmutableList.of((PartitionDto) dto));
             }
-            eventBus
-                .postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, partitionsSaveRequestDto));
+            this.eventBus.postSync(
+                new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, this, partitionsSaveRequestDto)
+            );
         } else if (name.isTableDefinition()) {
-            eventBus
-                .postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, (TableDto) dto, (TableDto) dto));
+            this.eventBus.postSync(
+                new MetacatUpdateTablePreEvent(name, metacatRequestContext, this, (TableDto) dto, (TableDto) dto)
+            );
         } else if (name.isDatabaseDefinition()) {
-            eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext));
+            eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
         } else {
             throw new IllegalArgumentException(String.format("Invalid name %s", name));
         }
@@ -109,10 +118,11 @@ public class MetacatServiceHelper {
 
     /**
      * Calls the right method of the event bus for the given qualified name.
-     * @param name name
+     *
+     * @param name                  name
      * @param metacatRequestContext context
-     * @param oldDTo dto
-     * @param currentDto dto
+     * @param oldDTo                dto
+     * @param currentDto            dto
      */
     public void postPostUpdateEvent(
         final QualifiedName name,
@@ -127,10 +137,11 @@ public class MetacatServiceHelper {
             }
             // This request neither added nor updated partitions
             final PartitionsSaveResponseDto partitionsSaveResponseDto = new PartitionsSaveResponseDto();
-            eventBus.postAsync(
+            this.eventBus.postAsync(
                 new MetacatSaveTablePartitionPostEvent(
                     name,
                     metacatRequestContext,
+                    this,
                     dtos,
                     partitionsSaveResponseDto
                 )
@@ -139,12 +150,13 @@ public class MetacatServiceHelper {
             final MetacatUpdateTablePostEvent event = new MetacatUpdateTablePostEvent(
                 name,
                 metacatRequestContext,
+                this,
                 (TableDto) oldDTo,
                 (TableDto) currentDto
             );
-            eventBus.postAsync(event);
+            this.eventBus.postAsync(event);
         } else if (name.isDatabaseDefinition()) {
-            eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext));
+            this.eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
         } else {
             throw new IllegalArgumentException(String.format("Invalid name %s", name));
         }

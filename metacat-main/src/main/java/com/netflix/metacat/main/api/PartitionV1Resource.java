@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.main.api;
 
 import com.netflix.metacat.common.QualifiedName;
@@ -24,16 +28,17 @@ import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.dto.TableDto;
-import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.PartitionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
 import java.util.List;
 
 /**
  * Partition V1 API implementation.
  */
+@Component
 public class PartitionV1Resource implements PartitionV1 {
     private final MViewService mViewService;
     private final MetacatV1 v1;
@@ -41,25 +46,28 @@ public class PartitionV1Resource implements PartitionV1 {
 
     /**
      * Constructor.
-     * @param eventBus event bus
-     * @param v1 Metacat V1
-     * @param mViewService view service
+     *
+     * @param v1               Metacat V1
+     * @param mViewService     view service
      * @param partitionService partition service
      */
-    @Inject
+    @Autowired
     public PartitionV1Resource(
-        final MetacatEventBus eventBus,
         final MetacatV1 v1,
         final MViewService mViewService,
-        final PartitionService partitionService) {
+        final PartitionService partitionService
+    ) {
         this.v1 = v1;
         this.mViewService = mViewService;
         this.partitionService = partitionService;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void deletePartitions(final String catalogName, final String databaseName, final String tableName,
-        final List<String> partitionIds) {
+                                 final List<String> partitionIds) {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofTable(catalogName, databaseName, tableName));
         RequestWrapper.requestWrapper(name, "deleteTablePartition", () -> {
@@ -71,6 +79,9 @@ public class PartitionV1Resource implements PartitionV1 {
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void deletePartitions(
         final String catalogName,
@@ -89,6 +100,9 @@ public class PartitionV1Resource implements PartitionV1 {
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Integer getPartitionCount(
         final String catalogName,
@@ -99,6 +113,9 @@ public class PartitionV1Resource implements PartitionV1 {
         return RequestWrapper.requestWrapper(name, "getPartitionCount", () -> partitionService.count(name));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Integer getPartitionCount(
         final String catalogName,
@@ -110,6 +127,9 @@ public class PartitionV1Resource implements PartitionV1 {
         return RequestWrapper.requestWrapper(name, "getPartitionCount", () -> mViewService.partitionCount(name));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<PartitionDto> getPartitions(
         final String catalogName,
@@ -161,6 +181,9 @@ public class PartitionV1Resource implements PartitionV1 {
         ));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<PartitionDto> getPartitions(
         final String catalogName,
@@ -212,6 +235,9 @@ public class PartitionV1Resource implements PartitionV1 {
         ));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionKeysForRequest(
         final String catalogName,
@@ -322,6 +348,9 @@ public class PartitionV1Resource implements PartitionV1 {
         ));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionUrisForRequest(
         final String catalogName,
@@ -342,6 +371,9 @@ public class PartitionV1Resource implements PartitionV1 {
             sortOrder, offset, limit);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionKeys(
         final String catalogName,
@@ -355,6 +387,9 @@ public class PartitionV1Resource implements PartitionV1 {
         return _getPartitionKeys(catalogName, databaseName, tableName, filter, null, sortBy, sortOrder, offset, limit);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionKeys(
         final String catalogName,
@@ -370,6 +405,9 @@ public class PartitionV1Resource implements PartitionV1 {
             offset, limit);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<PartitionDto> getPartitionsForRequest(
         final String catalogName,
@@ -394,6 +432,9 @@ public class PartitionV1Resource implements PartitionV1 {
             includeUserMetadata, includePartitionDetails);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionKeysForRequest(
         final String catalogName,
@@ -415,6 +456,9 @@ public class PartitionV1Resource implements PartitionV1 {
             sortBy, sortOrder, offset, limit);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionUris(
         final String catalogName,
@@ -428,6 +472,9 @@ public class PartitionV1Resource implements PartitionV1 {
         return _getPartitionUris(catalogName, databaseName, tableName, filter, null, sortBy, sortOrder, offset, limit);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionUris(
         final String catalogName,
@@ -443,6 +490,9 @@ public class PartitionV1Resource implements PartitionV1 {
             offset, limit);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<PartitionDto> getPartitionsForRequest(
         final String catalogName,
@@ -468,6 +518,9 @@ public class PartitionV1Resource implements PartitionV1 {
             offset, limit, includeUserMetadata, includePartitionDetails);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionUrisForRequest(
         final String catalogName,
@@ -489,6 +542,9 @@ public class PartitionV1Resource implements PartitionV1 {
             sortBy, sortOrder, offset, limit);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PartitionsSaveResponseDto savePartitions(
         final String catalogName,
@@ -517,6 +573,9 @@ public class PartitionV1Resource implements PartitionV1 {
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PartitionsSaveResponseDto savePartitions(
         final String catalogName,

@@ -14,9 +14,9 @@
 package com.netflix.metacat.connector.hive.converters;
 
 import com.google.common.collect.ImmutableMap;
-import com.netflix.metacat.common.type.TypeEnum;
 import com.netflix.metacat.common.type.BaseType;
 import com.netflix.metacat.common.type.Type;
+import com.netflix.metacat.common.type.TypeEnum;
 import com.netflix.metacat.common.type.VarbinaryType;
 import lombok.Getter;
 import org.apache.hadoop.hive.serde.serdeConstants;
@@ -61,8 +61,6 @@ public class HiveTypeMapping {
         .put(PrimitiveObjectInspector.PrimitiveCategory.BINARY.name(), VarbinaryType.VARBINARY)
         .put(PrimitiveObjectInspector.PrimitiveCategory.VOID.name(), VarbinaryType.VARBINARY)
         .put(PrimitiveObjectInspector.PrimitiveCategory.STRING.name(), BaseType.STRING)
-        .put(TypeEnum.DATE.getBaseTypeDisplayName(), BaseType.DATE)
+        .put(TypeEnum.DATE.getType(), BaseType.DATE)
         .build();
-
-
 }

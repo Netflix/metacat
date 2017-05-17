@@ -14,11 +14,12 @@
  * limitations under the License.
  *
  */
-
 package com.netflix.metacat.thrift;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.server.TServer;
@@ -41,13 +42,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public abstract class AbstractThriftServer {
     protected final Config config;
-    protected final int portNumber;
-    protected final String threadPoolNameFormat;
-    protected final AtomicBoolean stopping = new AtomicBoolean(false);
-    protected final AtomicInteger serverThreadCount = new AtomicInteger(0);
-    protected TServer server;
+    @Getter
+    private final int portNumber;
+    private final String threadPoolNameFormat;
+    private final AtomicBoolean stopping = new AtomicBoolean(false);
+    private final AtomicInteger serverThreadCount = new AtomicInteger(0);
+    @Getter
+    private TServer server;
 
-    protected AbstractThriftServer(final Config config, final int portNumber, final String threadPoolNameFormat) {
+    protected AbstractThriftServer(
+        @NonNull final Config config,
+        final int portNumber,
+        @NonNull final String threadPoolNameFormat
+    ) {
         this.config = config;
         this.portNumber = portNumber;
         this.threadPoolNameFormat = threadPoolNameFormat;
@@ -55,30 +62,35 @@ public abstract class AbstractThriftServer {
 
     /**
      * Returns the thrift processor.
+     *
      * @return thrift processor
      */
     public abstract TProcessor getProcessor();
 
     /**
      * Returns the server event handler.
+     *
      * @return server event handler
      */
     public abstract TServerEventHandler getServerEventHandler();
 
     /**
      * Returns the server name.
+     *
      * @return server name
      */
     public abstract String getServerName();
 
     /**
      * Returns true, if the server event handler exists.
+     *
      * @return true, if the server event handler exists
      */
     public abstract boolean hasServerEventHandler();
 
     /**
      * Server initialization.
+     *
      * @throws Exception error
      */
     public void start() throws Exception {
@@ -137,6 +149,7 @@ public abstract class AbstractThriftServer {
 
     /**
      * Server shutdown.
+     *
      * @throws Exception error
      */
     public void stop() throws Exception {

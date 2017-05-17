@@ -35,12 +35,12 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.dto.TableDto;
-import com.netflix.metacat.common.server.monitoring.CounterWrapper;
-import com.netflix.metacat.common.server.monitoring.TimerWrapper;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
-import com.netflix.metacat.common.server.exception.DatabaseNotFoundException;
+import com.netflix.metacat.common.server.monitoring.CounterWrapper;
+import com.netflix.metacat.common.server.monitoring.TimerWrapper;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
@@ -48,10 +48,11 @@ import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.Instant;
 
-import javax.inject.Inject;
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -73,32 +74,64 @@ import java.util.stream.Collectors;
 public class ElasticSearchMetacatRefresh {
     private static final Predicate<Object> NOT_NULL = o -> o != null;
     private static AtomicBoolean isElasticSearchMetacatRefreshAlreadyRunning = new AtomicBoolean(false);
+
+    private final CatalogService catalogService;
+    private final Config config;
+    private final DatabaseService databaseService;
+    private final TableService tableService;
+    private final PartitionService partitionService;
+    private final ElasticSearchUtil elasticSearchUtil;
+    private final UserMetadataService userMetadataService;
+    private final TagService tagService;
+    private final MetacatEventBus eventBus;
+
     private Instant refreshMarker;
     private String refreshMarkerText;
-    @Inject
-    private CatalogService catalogService;
-    @Inject
-    private Config config;
-    @Inject
-    private DatabaseService databaseService;
-    @Inject
-    private TableService tableService;
-    @Inject
-    private PartitionService partitionService;
-    @Inject
-    private ElasticSearchUtil elasticSearchUtil;
-    @Inject
-    private UserMetadataService userMetadataService;
-    @Inject
-    private TagService tagService;
-    @Inject
-    private MetacatEventBus eventBus;
+
     //  Fixed thread pool
     private ListeningExecutorService service;
     private ListeningExecutorService esService;
 
-    private static ExecutorService newFixedThreadPool(final int nThreads, final String threadFactoryName,
-                                                      final int queueSize) {
+    /**
+     * Constructor.
+     *
+     * @param config              System config
+     * @param eventBus            Event bus
+     * @param catalogService      Catalog service
+     * @param databaseService     Database service
+     * @param tableService        Table service
+     * @param partitionService    Partition service
+     * @param userMetadataService User metadata service
+     * @param tagService          Tag service
+     * @param elasticSearchUtil   ElasticSearch client wrapper
+     */
+    public ElasticSearchMetacatRefresh(
+        @Nonnull @NonNull final Config config,
+        @Nonnull @NonNull final MetacatEventBus eventBus,
+        @Nonnull @NonNull final CatalogService catalogService,
+        @Nonnull @NonNull final DatabaseService databaseService,
+        @Nonnull @NonNull final TableService tableService,
+        @Nonnull @NonNull final PartitionService partitionService,
+        @Nonnull @NonNull final UserMetadataService userMetadataService,
+        @Nonnull @NonNull final TagService tagService,
+        @Nonnull @NonNull final ElasticSearchUtil elasticSearchUtil
+    ) {
+        this.config = config;
+        this.eventBus = eventBus;
+        this.catalogService = catalogService;
+        this.databaseService = databaseService;
+        this.tableService = tableService;
+        this.partitionService = partitionService;
+        this.userMetadataService = userMetadataService;
+        this.tagService = tagService;
+        this.elasticSearchUtil = elasticSearchUtil;
+    }
+
+    private static ExecutorService newFixedThreadPool(
+        final int nThreads,
+        final String threadFactoryName,
+        final int queueSize
+    ) {
         return new ThreadPoolExecutor(nThreads, nThreads,
             0L, TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<>(queueSize),
@@ -397,7 +430,7 @@ public class ElasticSearchMetacatRefresh {
                         tableDto -> {
                             tagService.delete(tableDto.getName(), false);
                             this.eventBus.postAsync(
-                                new MetacatDeleteTablePostEvent(tableDto.getName(), context, tableDto)
+                                new MetacatDeleteTablePostEvent(tableDto.getName(), context, this, tableDto)
                             );
                         }
                     );

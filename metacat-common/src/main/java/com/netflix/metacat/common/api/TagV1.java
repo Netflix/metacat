@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.common.api;
 
 import com.netflix.metacat.common.QualifiedName;
@@ -36,6 +40,7 @@ import java.util.Set;
 
 /**
  * APIs to manipulate the tags.
+ *
  * @author amajumdar
  */
 @Path("mds/v1/tag")
@@ -48,6 +53,7 @@ import java.util.Set;
 public interface TagV1 {
     /**
      * Return the list of tags.
+     *
      * @return list of tags
      */
     @GET
@@ -62,11 +68,12 @@ public interface TagV1 {
 
     /**
      * Returns the list of qualified names for the given input.
-     * @param includeTags Set of matching tags
-     * @param excludeTags Set of un-matching tags
-     * @param sourceName Prefix of the source name
+     *
+     * @param includeTags  Set of matching tags
+     * @param excludeTags  Set of un-matching tags
+     * @param sourceName   Prefix of the source name
      * @param databaseName Prefix of the database name
-     * @param tableName Prefix of the table name
+     * @param tableName    Prefix of the table name
      * @return list of qualified names
      */
     @GET
@@ -80,29 +87,30 @@ public interface TagV1 {
         notes = "Returns the list of qualified names that are tagged with the given tags."
             + " Qualified names will be excluded if the contained tags matches the excluded tags")
     List<QualifiedName> list(
-        @ApiParam(value = "Set of matching tags", required = false)
+        @ApiParam(value = "Set of matching tags")
         @QueryParam("include")
             Set<String> includeTags,
-        @ApiParam(value = "Set of un-matching tags", required = false)
+        @ApiParam(value = "Set of un-matching tags")
         @QueryParam("exclude")
             Set<String> excludeTags,
-        @ApiParam(value = "Prefix of the source name", required = false)
+        @ApiParam(value = "Prefix of the source name")
         @QueryParam("sourceName")
             String sourceName,
-        @ApiParam(value = "Prefix of the database name", required = false)
+        @ApiParam(value = "Prefix of the database name")
         @QueryParam("databaseName")
             String databaseName,
-        @ApiParam(value = "Prefix of the table name", required = false)
+        @ApiParam(value = "Prefix of the table name")
         @QueryParam("tableName")
             String tableName
     );
 
     /**
      * Returns the list of qualified names that are tagged with tags containing the given tagText.
-     * @param tag Tag partial text
-     * @param sourceName Prefix of the source name
+     *
+     * @param tag          Tag partial text
+     * @param sourceName   Prefix of the source name
      * @param databaseName Prefix of the database name
-     * @param tableName Prefix of the table name
+     * @param tableName    Prefix of the table name
      * @return list of qualified names
      */
     @GET
@@ -114,26 +122,27 @@ public interface TagV1 {
         value = "Returns the list of qualified names that are tagged with tags containing the given tagText",
         notes = "Returns the list of qualified names that are tagged with tags containing the given tagText")
     List<QualifiedName> search(
-        @ApiParam(value = "Tag partial text", required = false)
+        @ApiParam(value = "Tag partial text")
         @QueryParam("tag")
             String tag,
-        @ApiParam(value = "Prefix of the source name", required = false)
+        @ApiParam(value = "Prefix of the source name")
         @QueryParam("sourceName")
             String sourceName,
-        @ApiParam(value = "Prefix of the database name", required = false)
+        @ApiParam(value = "Prefix of the database name")
         @QueryParam("databaseName")
             String databaseName,
-        @ApiParam(value = "Prefix of the table name", required = false)
+        @ApiParam(value = "Prefix of the table name")
         @QueryParam("tableName")
             String tableName
     );
 
     /**
      * Sets the tags on the given table.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
-     * @param tags set of tags
+     * @param tableName    table name
+     * @param tags         set of tags
      * @return set of tags
      */
     @POST
@@ -165,11 +174,12 @@ public interface TagV1 {
 
     /**
      * Remove the tags from the given table.
-     * @param catalogName catalog name
+     *
+     * @param catalogName  catalog name
      * @param databaseName database name
-     * @param tableName table name
-     * @param deleteAll True if all tags need to be removed
-     * @param tags Tags to be removed from the given table
+     * @param tableName    table name
+     * @param deleteAll    True if all tags need to be removed
+     * @param tags         Tags to be removed from the given table
      */
     @DELETE
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}")
@@ -194,11 +204,11 @@ public interface TagV1 {
         @ApiParam(value = "The name of the table", required = true)
         @PathParam("table-name")
             String tableName,
-        @ApiParam(value = "True if all tags need to be removed", required = false)
+        @ApiParam(value = "True if all tags need to be removed")
         @DefaultValue("false")
         @QueryParam("all")
             Boolean deleteAll,
-        @ApiParam(value = "Tags to be removed from the given table", required = false)
+        @ApiParam(value = "Tags to be removed from the given table")
             Set<String> tags
     );
 }

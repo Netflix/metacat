@@ -23,6 +23,7 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.dto.notifications.sns.SNSMessage;
 import com.netflix.metacat.common.dto.notifications.sns.SNSMessageType;
 import com.netflix.metacat.common.dto.notifications.sns.payloads.UpdatePayload;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -34,6 +35,7 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class UpdateTableMessage extends SNSMessage<UpdatePayload<TableDto>> {
 
     /**

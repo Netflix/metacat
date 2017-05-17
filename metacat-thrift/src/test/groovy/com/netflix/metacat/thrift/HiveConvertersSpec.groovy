@@ -14,39 +14,30 @@
 package com.netflix.metacat.thrift
 
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.dto.AuditDto
-import com.netflix.metacat.common.dto.DatabaseDto
-import com.netflix.metacat.common.dto.FieldDto
-import com.netflix.metacat.common.dto.PartitionDto
-import com.netflix.metacat.common.dto.StorageDto
-import com.netflix.metacat.common.dto.TableDto
-import com.netflix.metacat.common.server.Config
+import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter
-import com.netflix.metacat.common.type.TypeManager
+import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.type.VarcharType
-import org.apache.hadoop.hive.metastore.api.FieldSchema
-import org.apache.hadoop.hive.metastore.api.Partition
-import org.apache.hadoop.hive.metastore.api.SerDeInfo
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor
-import org.apache.hadoop.hive.metastore.api.Table
+import org.apache.hadoop.hive.metastore.api.*
 import org.joda.time.Instant
 import spock.lang.Specification
 
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.util.Date
 
 class HiveConvertersSpec extends Specification {
     private static final ZoneOffset PACIFIC = LocalDateTime.now().atZone(ZoneId.of('America/Los_Angeles')).offset
     Config config = Mock(Config)
-    TypeManager typeManager = Mock(TypeManager)
+//    TypeManager typeManager = Mock(TypeManager)
     HiveConvertersImpl converter
     ConnectorTypeConverter hiveTypeConverter = Mock(ConnectorTypeConverter)
 
     def setup() {
         // Stub this to always return true
         config.isEpochInSeconds() >> true
-        DateConverters.setConfig(config)
+//        DateConverters.setConfig(config)
         converter = new HiveConvertersImpl()
     }
 

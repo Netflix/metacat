@@ -21,4 +21,7 @@
  *
  * @author amajumdar
  */
+@ParametersAreNonnullByDefault
 package com.netflix.metacat.thrift;
+
+import javax.annotation.ParametersAreNonnullByDefault;

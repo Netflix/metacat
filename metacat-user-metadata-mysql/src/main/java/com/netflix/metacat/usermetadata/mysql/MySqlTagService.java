@@ -18,12 +18,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.inject.Inject;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.model.Lookup;
 import com.netflix.metacat.common.server.model.TagItem;
-import com.netflix.metacat.common.server.Config;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
@@ -52,8 +51,10 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class MySqlTagService implements TagService {
-    /** Lookup name for tag. */
-    public static final String LOOKUP_NAME_TAG = "tag";
+    /**
+     * Lookup name for tag.
+     */
+    private static final String LOOKUP_NAME_TAG = "tag";
     private static final String NAME_TAGS = "tags";
     private static final String QUERY_SEARCH =
         "select distinct i.name from tag_item i, tag_item_tags t where i.id=t.tag_item_id"
@@ -78,8 +79,8 @@ public class MySqlTagService implements TagService {
         "delete from tag_item_tags where tag_item_id=? and tags_string in (%s)";
     private static final String SQL_GET_TAG_ITEM_TAGS =
         "select tags_string value from tag_item_tags where tag_item_id=?";
-    private static final String SQL_GET_LOOKUP_VALUES_BY_NAME =
-        "select lv.tags_string value from tag_item l, tag_item_tags lv where l.id=lv.tag_item_id and l.name=?";
+    //    private static final String SQL_GET_LOOKUP_VALUES_BY_NAME =
+//        "select lv.tags_string value from tag_item l, tag_item_tags lv where l.id=lv.tag_item_id and l.name=?";
     private final Config config;
     private final DataSourceManager dataSourceManager;
     private final LookupService lookupService;
@@ -88,19 +89,20 @@ public class MySqlTagService implements TagService {
 
     /**
      * Constructor.
-     * @param config config
-     * @param dataSourceManager manager
-     * @param lookupService lookup service
-     * @param metacatJson json util
+     *
+     * @param config              config
+     * @param dataSourceManager   manager
+     * @param lookupService       lookup service
+     * @param metacatJson         json util
      * @param userMetadataService user metadata service
      */
-    @Inject
     public MySqlTagService(
         final Config config,
         final DataSourceManager dataSourceManager,
         final LookupService lookupService,
         final MetacatJson metacatJson,
-        final UserMetadataService userMetadataService) {
+        final UserMetadataService userMetadataService
+    ) {
         this.config = Preconditions.checkNotNull(config, "config is required");
         this.dataSourceManager = Preconditions.checkNotNull(dataSourceManager, "dataSourceManager is required");
         this.lookupService = Preconditions.checkNotNull(lookupService, "lookupService is required");
@@ -125,6 +127,7 @@ public class MySqlTagService implements TagService {
 
     /**
      * Get the tag item.
+     *
      * @param name name
      * @return tag item
      */
@@ -134,6 +137,7 @@ public class MySqlTagService implements TagService {
 
     /**
      * Returns the TagItem for the given <code>name</code>.
+     *
      * @param name tag name
      * @return TagItem
      */
@@ -158,10 +162,11 @@ public class MySqlTagService implements TagService {
 
     /**
      * Returns the list of tags of the tag item id.
+     *
      * @param tagItemId tag item id
      * @return list of tags
      */
-    public Set<String> getValues(final Long tagItemId) {
+    private Set<String> getValues(final Long tagItemId) {
         final Connection connection = DBUtil.getReadConnection(getDataSource());
         try {
             return new QueryRunner().query(connection, SQL_GET_TAG_ITEM_TAGS, rs -> {
@@ -183,9 +188,9 @@ public class MySqlTagService implements TagService {
     private TagItem findOrCreateTagItemByName(final String name, final Connection conn) throws SQLException {
         TagItem result = get(name);
         if (result == null) {
-            final Object[] params = {name, config.getTagServiceUserAdmin(), config.getTagServiceUserAdmin() };
+            final Object[] params = {name, config.getTagServiceUserAdmin(), config.getTagServiceUserAdmin()};
             final Long id = new QueryRunner().insert(conn, SQL_INSERT_TAG_ITEM, new ScalarHandler<>(1), params);
-            result = new TagItem();
+            result = new TagItem(this.config);
             result.setName(name);
             result.setId(id);
         }
@@ -265,7 +270,7 @@ public class MySqlTagService implements TagService {
     }
 
     private void remove(final Connection conn, final QualifiedName name, final Set<String> tags,
-        final boolean updateUserMetadata)
+                        final boolean updateUserMetadata)
         throws SQLException {
         new QueryRunner().update(conn,
             String.format(SQL_DELETE_TAG_ITEM_TAGS_BY_NAME_TAGS, "'" + Joiner.on("','").skipNulls().join(tags) + "'"),
@@ -283,6 +288,7 @@ public class MySqlTagService implements TagService {
 
     /**
      * Returns the list of tags.
+     *
      * @return list of tag names
      */
     @Override
@@ -293,17 +299,18 @@ public class MySqlTagService implements TagService {
     /**
      * Returns the list of <code>QualifiedName</code> of items that are tagged by the
      * given <code>includeTags</code> and do not contain the given <code>excludeTags</code>.
-     * @param includeTags include items that contain tags
-     * @param excludeTags include items that do not contain tags
-     * @param sourceName catalog/source name
+     *
+     * @param includeTags  include items that contain tags
+     * @param excludeTags  include items that do not contain tags
+     * @param sourceName   catalog/source name
      * @param databaseName database name
-     * @param tableName table name
+     * @param tableName    table name
      * @return list of qualified names of the items
      */
     @Override
     public List<QualifiedName> list(final Set<String> includeTags, final Set<String> excludeTags,
-        final String sourceName,
-        final String databaseName, final String tableName) {
+                                    final String sourceName,
+                                    final String databaseName, final String tableName) {
         Set<String> includedNames = Sets.newHashSet();
         final Set<String> excludedNames = Sets.newHashSet();
         final Connection connection = DBUtil.getReadConnection(getDataSource());
@@ -312,12 +319,12 @@ public class MySqlTagService implements TagService {
             final String wildCardName = QualifiedName.toWildCardString(sourceName, databaseName, tableName);
             //Includes
             String query = String.format(QUERY_SEARCH, "in ('" + Joiner.on("','").skipNulls().join(includeTags) + "')");
-            final Object[] params = {includeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName };
+            final Object[] params = {includeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
             includedNames.addAll(runner.query(connection, query, new ColumnListHandler<>("name"), params));
             if (excludeTags != null && !excludeTags.isEmpty()) {
                 //Excludes
                 query = String.format(QUERY_SEARCH, "in ('" + Joiner.on("','").skipNulls().join(excludeTags) + "')");
-                final Object[] eParams = {excludeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName };
+                final Object[] eParams = {excludeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
                 excludedNames.addAll(runner.query(connection, query, new ColumnListHandler<>("name"), eParams));
             }
         } catch (SQLException e) {
@@ -337,21 +344,22 @@ public class MySqlTagService implements TagService {
 
     /**
      * Returns the list of <code>QualifiedName</code> of items that have tags containing the given tag text.
-     * @param tag partial text of a tag
-     * @param sourceName source/catalog name
+     *
+     * @param tag          partial text of a tag
+     * @param sourceName   source/catalog name
      * @param databaseName database name
-     * @param tableName table name
+     * @param tableName    table name
      * @return list of qualified names of the items
      */
     @Override
     public List<QualifiedName> search(final String tag, final String sourceName, final String databaseName,
-        final String tableName) {
+                                      final String tableName) {
         final Connection connection = DBUtil.getReadConnection(getDataSource());
         try {
             final String wildCardName = QualifiedName.toWildCardString(sourceName, databaseName, tableName);
             //Includes
             final String query = String.format(QUERY_SEARCH, "like ?");
-            final Object[] params = {tag == null ? 1 : 0, tag + "%", wildCardName == null ? 1 : 0, wildCardName };
+            final Object[] params = {tag == null ? 1 : 0, tag + "%", wildCardName == null ? 1 : 0, wildCardName};
             return new QueryRunner().query(connection, query, new ColumnListHandler<>("name"), params);
         } catch (SQLException e) {
             final String message = String.format("Failed getting the list of qualified names for tag %s", tag);
@@ -364,19 +372,20 @@ public class MySqlTagService implements TagService {
 
     /**
      * Tags the given table with the given <code>tags</code>.
+     *
      * @param name table name
      * @param tags list of tags
      * @return return the complete list of tags associated with the table
      */
     @Override
     public Set<String> setTableTags(final QualifiedName name, final Set<String> tags,
-        final boolean updateUserMetadata) {
+                                    final boolean updateUserMetadata) {
         addTags(tags);
         try {
             final Connection conn = getDataSource().getConnection();
             try {
                 final TagItem tagItem = findOrCreateTagItemByName(name.toString(), conn);
-                Set<String> inserts = Sets.newHashSet();
+                Set<String> inserts;
                 Set<String> deletes = Sets.newHashSet();
                 Set<String> values = tagItem.getValues();
                 if (values == null || values.isEmpty()) {
@@ -433,13 +442,14 @@ public class MySqlTagService implements TagService {
 
     /**
      * Removes the tags from the given table.
-     * @param name table name
+     *
+     * @param name      table name
      * @param deleteAll if true, will delete all tags associated with the given table
-     * @param tags list of tags to be removed for the given table
+     * @param tags      list of tags to be removed for the given table
      */
     @Override
     public Void removeTableTags(final QualifiedName name, final Boolean deleteAll,
-        final Set<String> tags, final boolean updateUserMetadata) {
+                                final Set<String> tags, final boolean updateUserMetadata) {
         if (deleteAll != null && deleteAll) {
             delete(name, updateUserMetadata);
         } else {

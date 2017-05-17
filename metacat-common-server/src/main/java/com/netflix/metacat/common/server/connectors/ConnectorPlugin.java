@@ -18,6 +18,8 @@
 
 package com.netflix.metacat.common.server.connectors;
 
+import com.netflix.metacat.common.server.properties.Config;
+
 import javax.annotation.Nonnull;
 import java.util.Map;
 
@@ -38,11 +40,17 @@ public interface ConnectorPlugin {
 
     /**
      * Returns the service implementation for the type.
+     *
+     * @param config        System config
      * @param connectorName connector name. This is also the catalog name.
      * @param configuration configuration properties
      * @return connector factory
      */
-    ConnectorFactory create(@Nonnull String connectorName, @Nonnull Map<String, String> configuration);
+    ConnectorFactory create(
+        @Nonnull Config config,
+        @Nonnull String connectorName,
+        @Nonnull Map<String, String> configuration
+    );
 
 
     /**
@@ -58,6 +66,7 @@ public interface ConnectorPlugin {
      * @return Returns the dto converter implementation of the connector.
      */
     default ConnectorInfoConverter getInfoConverter() {
-        return new ConnectorInfoConverter() { };
+        return new ConnectorInfoConverter() {
+        };
     }
 }

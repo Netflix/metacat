@@ -22,6 +22,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.TableDto;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 
 import javax.annotation.Nonnull;
@@ -39,18 +40,21 @@ public class MetacatUpdateTablePreEvent extends MetacatEvent {
 
     /**
      * Constructor.
-     * @param name name
+     *
+     * @param name           name
      * @param requestContext context
-     * @param oldTable old table info
-     * @param currentTable new table info
+     * @param source         The source object which threw this event
+     * @param oldTable       old table info
+     * @param currentTable   new table info
      */
     public MetacatUpdateTablePreEvent(
-        @Nonnull final QualifiedName name,
-        @Nonnull final MetacatRequestContext requestContext,
-        @Nonnull final TableDto oldTable,
-        @Nonnull final TableDto currentTable
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final Object source,
+        @Nonnull @NonNull final TableDto oldTable,
+        @Nonnull @NonNull final TableDto currentTable
     ) {
-        super(name, requestContext);
+        super(name, requestContext, source);
         this.oldTable = oldTable;
         this.currentTable = currentTable;
     }

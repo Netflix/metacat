@@ -18,14 +18,18 @@
 
 dependencies {
     /*******************************
-     * Compile Dependencies
+     * API Dependencies
      *******************************/
 
+    compile(project(":metacat-common"))
     compile(project(":metacat-common-server"))
 
-    compile("commons-dbutils:commons-dbutils:${commons_dbutils_version}")
+    /*******************************
+     * Implementation Dependencies
+     *******************************/
+
+    compile("commons-dbutils:commons-dbutils")
     compile("com.google.guava:guava")
-    compile("com.google.inject:guice")
     compile("org.apache.tomcat:tomcat-jdbc")
     compile("org.slf4j:slf4j-api")
 
@@ -43,6 +47,6 @@ dependencies {
      * Test Dependencies
      *******************************/
 
-    testCompile("io.airlift:testing-mysql-server:${testing_mysql_server_version}")
+    testCompile("io.airlift:testing-mysql-server")
     testCompile(project(":metacat-testdata-provider"))
 }

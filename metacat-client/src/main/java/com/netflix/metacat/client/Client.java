@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +37,7 @@ import feign.RequestTemplate;
 import feign.Retryer;
 import feign.jaxrs.JAXRSContract;
 import feign.slf4j.Slf4jLogger;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
@@ -40,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Client to communicate with Metacat.  This version depends on the Feign library.
+ *
  * @author amajumdar
  */
 @Slf4j
@@ -52,18 +58,12 @@ public final class Client {
     private final ResolverV1 resolverApi;
 
     private Client(
-        @Nonnull
-            final String host,
-        @Nonnull
-            final feign.Client client,
-        @Nonnull
-            final feign.Logger.Level logLevel,
-        @Nonnull
-            final RequestInterceptor requestInterceptor,
-        @Nonnull
-            final Retryer retryer,
-        @Nonnull
-            final Request.Options options
+        @Nonnull @NonNull final String host,
+        @Nonnull @NonNull final feign.Client client,
+        @Nonnull @NonNull final feign.Logger.Level logLevel,
+        @Nonnull @NonNull final RequestInterceptor requestInterceptor,
+        @Nonnull @NonNull final Retryer retryer,
+        @Nonnull @NonNull final Request.Options options
     ) {
         final ObjectMapper mapper = MetacatJsonLocator.INSTANCE
             .getPrettyObjectMapper()
@@ -94,10 +94,63 @@ public final class Client {
 
     /**
      * Returns the client builder.
+     *
      * @return Builder to create the metacat client
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns an API instance that conforms to the given API Type that can communicate with the Metacat server.
+     *
+     * @param apiType apiType A JAX-RS annotated Metacat interface
+     * @param <T>     API Resource instance
+     * @return An instance that implements the given interface and is wired up to communicate with the Metacat server.
+     */
+    public <T> T getApiClient(
+        @Nonnull @NonNull final Class<T> apiType
+    ) {
+        Preconditions.checkArgument(apiType.isInterface(), "apiType must be an interface");
+
+        return feignBuilder.target(apiType, host);
+    }
+
+    /**
+     * Return an API instance that can be used to interact with the metacat server.
+     *
+     * @return An instance api conforming to MetacatV1 interface
+     */
+    public MetacatV1 getApi() {
+        return api;
+    }
+
+    /**
+     * Return an API instance that can be used to interact with the metacat server for partitions.
+     *
+     * @return An instance api conforming to PartitionV1 interface
+     */
+    public PartitionV1 getPartitionApi() {
+        return partitionApi;
+    }
+
+    /**
+     * Return an API instance that can be used to interact with the metacat server for only user metadata.
+     *
+     * @return An instance api conforming to MetadataV1 interface
+     */
+    public MetadataV1 getMetadataApi() {
+        return metadataApi;
+    }
+
+    /**
+     * Return an API instance that can be used to interact with
+     * the metacat server for getting the qualified name by uri.
+     *
+     * @return An instance api conforming to ResolverV1 interface
+     */
+    public ResolverV1 getResolverApi() {
+        return resolverApi;
     }
 
     /**
@@ -117,6 +170,7 @@ public final class Client {
 
         /**
          * Sets the log level for the client.
+         *
          * @param clientLogLevel log level
          * @return Builder
          */
@@ -127,6 +181,7 @@ public final class Client {
 
         /**
          * Sets the server host name.
+         *
          * @param serverHost server host to connect
          * @return Builder
          */
@@ -137,6 +192,7 @@ public final class Client {
 
         /**
          * Sets the retryer logic for the client.
+         *
          * @param clientRetryer retry implementation
          * @return Builder
          */
@@ -147,6 +203,7 @@ public final class Client {
 
         /**
          * Sets the user name to pass in the request header.
+         *
          * @param requestUserName user name
          * @return Builder
          */
@@ -157,6 +214,7 @@ public final class Client {
 
         /**
          * Sets the application name to pass in the request header.
+         *
          * @param appName application name
          * @return Builder
          */
@@ -167,6 +225,7 @@ public final class Client {
 
         /**
          * Sets the job id to pass in the request header.
+         *
          * @param clientJobId job id
          * @return Builder
          */
@@ -177,6 +236,7 @@ public final class Client {
 
         /**
          * Sets the Client implementation to use.
+         *
          * @param feignClient Feign Client
          * @return Builder
          */
@@ -187,6 +247,7 @@ public final class Client {
 
         /**
          * Sets the data type context to pass in the request header.
+         *
          * @param requestDataTypeContext Data type conext
          * @return Builder
          */
@@ -197,6 +258,7 @@ public final class Client {
 
         /**
          * Sets the request interceptor.
+         *
          * @param clientRrequestInterceptor request interceptor
          * @return Builder
          */
@@ -207,6 +269,7 @@ public final class Client {
 
         /**
          * Sets the request options.
+         *
          * @param clientRequestOptions request options
          * @return Builder
          */
@@ -217,6 +280,7 @@ public final class Client {
 
         /**
          * Builds the Metacat client.
+         *
          * @return Client that can be used to make metacat API calls.
          */
         public Client build() {
@@ -253,52 +317,5 @@ public final class Client {
             }
             return new Client(host, client, logLevel, interceptor, retryer, requestOptions);
         }
-    }
-
-    /**
-     * Returns an API instance that conforms to the given API Type that can communicate with the Metacat server.
-     * @param apiType apiType A JAX-RS annotated Metacat interface
-     * @param <T> API Resource instance
-     * @return An instance that implements the given interface and is wired up to communicate with the Metacat server.
-     */
-    public <T> T getApiClient(
-        @Nonnull
-            final Class<T> apiType) {
-        Preconditions.checkArgument(apiType.isInterface(), "apiType must be an interface");
-
-        return feignBuilder.target(apiType, host);
-    }
-
-    /**
-     * Return an API instance that can be used to interact with the metacat server.
-     * @return An instance api conforming to MetacatV1 interface
-     */
-    public MetacatV1 getApi() {
-        return api;
-    }
-
-    /**
-     * Return an API instance that can be used to interact with the metacat server for partitions.
-     * @return An instance api conforming to PartitionV1 interface
-     */
-    public PartitionV1 getPartitionApi() {
-        return partitionApi;
-    }
-
-    /**
-     * Return an API instance that can be used to interact with the metacat server for only user metadata.
-     * @return An instance api conforming to MetadataV1 interface
-     */
-    public MetadataV1 getMetadataApi() {
-        return metadataApi;
-    }
-
-    /**
-     * Return an API instance that can be used to interact with
-     * the metacat server for getting the qualified name by uri.
-     * @return An instance api conforming to ResolverV1 interface
-     */
-    public ResolverV1 getResolverApi() {
-        return resolverApi;
     }
 }

@@ -20,19 +20,24 @@ import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
+import lombok.NonNull;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
  * Hive plugin.
+ *
  * @author zhenl
  * @since 1.0.0
  */
 public class HiveConnectorPlugin implements ConnectorPlugin {
-    /** Type of the connector. */
+    /**
+     * Type of the connector.
+     */
     public static final String CONNECTOR_TYPE = "hive";
     private static final HiveTypeConverter HIVE_TYPE_CONVERTER = new HiveTypeConverter();
     private static final ConnectorInfoConverter INFO_CONVERTER_HIVE =
@@ -44,9 +49,14 @@ public class HiveConnectorPlugin implements ConnectorPlugin {
     }
 
     @Override
-    public ConnectorFactory create(@Nonnull final String catalogName,
-                                   @Nonnull final Map<String, String> configuration) {
-        return new HiveConnectorFactory(catalogName, configuration, (HiveConnectorInfoConverter) INFO_CONVERTER_HIVE);
+    public ConnectorFactory create(
+        @Nonnull @NonNull final Config config,
+        @Nonnull final String catalogName,
+        @Nonnull final Map<String, String> configuration
+    ) {
+        return new HiveConnectorFactory(
+            config, catalogName, configuration, (HiveConnectorInfoConverter) INFO_CONVERTER_HIVE
+        );
     }
 
     @Override

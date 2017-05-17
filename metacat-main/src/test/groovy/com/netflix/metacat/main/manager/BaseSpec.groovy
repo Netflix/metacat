@@ -14,11 +14,8 @@
 package com.netflix.metacat.main.manager
 
 import com.google.inject.Inject
-import com.netflix.metacat.main.init.MetacatInitializationService
-import com.netflix.metacat.main.init.MetacatServletModule
-import com.netflix.metacat.usermetadata.mysql.MysqlUserMetadataModule
+import com.netflix.metacat.main.services.MetacatInitializationService
 import io.airlift.testing.mysql.TestingMySqlServer
-import spock.guice.UseModules
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
@@ -29,10 +26,6 @@ import java.sql.SQLException
 import java.sql.Statement
 import java.util.concurrent.atomic.AtomicBoolean
 
-@UseModules([
-        MetacatServletModule.class,
-        MysqlUserMetadataModule.class,
-])
 @Ignore
 class BaseSpec extends Specification {
     private static final AtomicBoolean initialized = new AtomicBoolean();
@@ -73,7 +66,7 @@ class BaseSpec extends Specification {
     }
 
     def runScript(Connection conn, Reader reader, String delimiter) throws IOException,
-            SQLException {
+        SQLException {
         StringBuffer command = null;
         try {
             LineNumberReader lineReader = new LineNumberReader(reader);
@@ -86,14 +79,14 @@ class BaseSpec extends Specification {
                 if (trimmedLine.startsWith("--")) {
                     println(trimmedLine);
                 } else if (trimmedLine.length() < 1
-                        || trimmedLine.startsWith("//")) {
+                    || trimmedLine.startsWith("//")) {
                     // Do nothing
                 } else if (trimmedLine.length() < 1
-                        || trimmedLine.startsWith("--")) {
+                    || trimmedLine.startsWith("--")) {
                     // Do nothing
                 } else if (trimmedLine.endsWith(delimiter)) {
                     command.append(line.substring(0, line
-                            .lastIndexOf(delimiter)));
+                        .lastIndexOf(delimiter)));
                     command.append(" ");
                     Statement statement = conn.createStatement();
 

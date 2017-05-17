@@ -17,7 +17,7 @@
  */
 package com.netflix.metacat.main.services.notifications.sns;
 
-import com.amazonaws.services.sns.AmazonSNSClient;
+import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.model.PublishResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,9 +45,11 @@ import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import com.netflix.metacat.main.services.notifications.NotificationService;
 import com.netflix.servo.monitor.DynamicCounter;
 import com.netflix.servo.tag.BasicTagList;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.util.UUID;
@@ -61,7 +63,7 @@ import java.util.UUID;
 @Slf4j
 public class SNSNotificationServiceImpl implements NotificationService {
 
-    private final AmazonSNSClient client;
+    private final AmazonSNS client;
     private final String tableTopicArn;
     private final String partitionTopicArn;
     private final ObjectMapper mapper;
@@ -75,10 +77,10 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * @param mapper            The object mapper to use to convert objects to JSON strings
      */
     public SNSNotificationServiceImpl(
-        @Nonnull final AmazonSNSClient client,
-        @Nonnull @Size(min = 1) final String tableTopicArn,
-        @Nonnull @Size(min = 1) final String partitionTopicArn,
-        @Nonnull final ObjectMapper mapper
+        @NonNull final AmazonSNS client,
+        @NonNull @Size(min = 1) final String tableTopicArn,
+        @NonNull @Size(min = 1) final String partitionTopicArn,
+        @NonNull final ObjectMapper mapper
     ) {
         this.client = client;
         this.tableTopicArn = tableTopicArn;
@@ -90,7 +92,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfPartitionAddition(@Nonnull final MetacatSaveTablePartitionPostEvent event) {
+    @EventListener
+    public void notifyOfPartitionAddition(@NonNull final MetacatSaveTablePartitionPostEvent event) {
         log.debug("Received SaveTablePartitionPostEvent {}", event);
         CounterWrapper.incrementCounter("metacat.notifications.sns.events.partitions.add");
         final String name = event.getName().toString();
@@ -111,8 +114,13 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 CounterWrapper.incrementCounter("metacat.notifications.sns.partitions.add.succeeded");
             }
         } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish partition creation notification",
-                "metacat.notifications.sns.partitions.add.failed", message, e);
+            this.handleException(
+                event.getName(),
+                "Unable to publish partition creation notification",
+                "metacat.notifications.sns.partitions.add.failed",
+                message,
+                e
+            );
         }
         UpdateTablePartitionsMessage tableMessage = null;
         try {
@@ -132,8 +140,13 @@ public class SNSNotificationServiceImpl implements NotificationService {
             //       swap out implementations etc.
             CounterWrapper.incrementCounter("metacat.notifications.sns.tables.addPartitions.succeeded");
         } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish table partition add notification",
-                "metacat.notifications.sns.tables.addPartitions.failed", tableMessage, e);
+            this.handleException(
+                event.getName(),
+                "Unable to publish table partition add notification",
+                "metacat.notifications.sns.tables.addPartitions.failed",
+                tableMessage,
+                e
+            );
         }
     }
 
@@ -141,7 +154,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfPartitionDeletion(@Nonnull final MetacatDeleteTablePartitionPostEvent event) {
+    @EventListener
+    public void notifyOfPartitionDeletion(@NonNull final MetacatDeleteTablePartitionPostEvent event) {
         log.debug("Received DeleteTablePartition event {}", event);
         CounterWrapper.incrementCounter("metacat.notifications.sns.events.partitions.delete");
         final String name = event.getName().toString();
@@ -181,8 +195,13 @@ public class SNSNotificationServiceImpl implements NotificationService {
             this.publishNotification(this.tableTopicArn, tableMessage);
             CounterWrapper.incrementCounter("metacat.notifications.sns.tables.deletePartitions.succeeded");
         } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish table partition delete notification",
-                "metacat.notifications.sns.tables.deletePartitions.failed", tableMessage, e);
+            this.handleException(
+                event.getName(),
+                "Unable to publish table partition delete notification",
+                "metacat.notifications.sns.tables.deletePartitions.failed",
+                tableMessage,
+                e
+            );
         }
     }
 
@@ -190,7 +209,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableCreation(@Nonnull final MetacatCreateTablePostEvent event) {
+    @EventListener
+    public void notifyOfTableCreation(@NonNull final MetacatCreateTablePostEvent event) {
         log.debug("Received CreateTableEvent {}", event);
         CounterWrapper.incrementCounter("metacat.notifications.sns.events.tables.create");
         CreateTableMessage message = null;
@@ -205,8 +225,13 @@ public class SNSNotificationServiceImpl implements NotificationService {
             this.publishNotification(this.tableTopicArn, message);
             CounterWrapper.incrementCounter("metacat.notifications.sns.tables.create.succeeded");
         } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish create table notification",
-                "metacat.notifications.sns.tables.create.failed", message, e);
+            this.handleException(
+                event.getName(),
+                "Unable to publish create table notification",
+                "metacat.notifications.sns.tables.create.failed",
+                message,
+                e
+            );
         }
     }
 
@@ -214,7 +239,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableDeletion(@Nonnull final MetacatDeleteTablePostEvent event) {
+    @EventListener
+    public void notifyOfTableDeletion(@NonNull final MetacatDeleteTablePostEvent event) {
         log.debug("Received DeleteTableEvent {}", event);
         CounterWrapper.incrementCounter("metacat.notifications.sns.events.tables.delete");
         DeleteTableMessage message = null;
@@ -229,8 +255,13 @@ public class SNSNotificationServiceImpl implements NotificationService {
             this.publishNotification(this.tableTopicArn, message);
             CounterWrapper.incrementCounter("metacat.notifications.sns.tables.delete.succeeded");
         } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish delete table notification",
-                "metacat.notifications.sns.tables.delete.failed", message, e);
+            this.handleException(
+                event.getName(),
+                "Unable to publish delete table notification",
+                "metacat.notifications.sns.tables.delete.failed",
+                message,
+                e
+            );
         }
     }
 
@@ -238,7 +269,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableRename(@Nonnull final MetacatRenameTablePostEvent event) {
+    @EventListener
+    public void notifyOfTableRename(@NonNull final MetacatRenameTablePostEvent event) {
         log.debug("Received RenameTableEvent {}", event);
         CounterWrapper.incrementCounter("metacat.notifications.sns.events.tables.rename");
         UpdateTableMessage message = null;
@@ -254,8 +286,13 @@ public class SNSNotificationServiceImpl implements NotificationService {
             this.publishNotification(this.tableTopicArn, message);
             CounterWrapper.incrementCounter("metacat.notifications.sns.tables.rename.succeeded");
         } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish rename table notification",
-                "metacat.notifications.sns.tables.rename.failed", message, e);
+            this.handleException(
+                event.getName(),
+                "Unable to publish rename table notification",
+                "metacat.notifications.sns.tables.rename.failed",
+                message,
+                e
+            );
         }
     }
 
@@ -263,7 +300,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * {@inheritDoc}
      */
     @Override
-    public void notifyOfTableUpdate(@Nonnull final MetacatUpdateTablePostEvent event) {
+    @EventListener
+    public void notifyOfTableUpdate(@NonNull final MetacatUpdateTablePostEvent event) {
         log.debug("Received UpdateTableEvent {}", event);
         CounterWrapper.incrementCounter("metacat.notifications.sns.events.tables.update");
         UpdateTableMessage message = null;
@@ -279,13 +317,23 @@ public class SNSNotificationServiceImpl implements NotificationService {
             this.publishNotification(this.tableTopicArn, message);
             CounterWrapper.incrementCounter("metacat.notifications.sns.tables.update.succeeded");
         } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish update table notification",
-                "metacat.notifications.sns.tables.update.failed", message, e);
+            this.handleException(
+                event.getName(),
+                "Unable to publish update table notification",
+                "metacat.notifications.sns.tables.update.failed",
+                message,
+                e
+            );
         }
     }
 
-    private void handleException(final QualifiedName name, final String message, final String counterKey,
-        final SNSMessage payload, final Exception e) {
+    private void handleException(
+        final QualifiedName name,
+        final String message,
+        final String counterKey,
+        @Nullable final SNSMessage payload,
+        final Exception e
+    ) {
         log.error("{} with payload: {}", message, payload, e);
         DynamicCounter.increment(counterKey, BasicTagList.copyOf(name.parts()));
     }
@@ -315,7 +363,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final String arn,
         final SNSMessage<?> message
     ) throws JsonProcessingException {
-        final PublishResult result = client.publish(arn, mapper.writeValueAsString(message));
+        final PublishResult result = this.client.publish(arn, this.mapper.writeValueAsString(message));
         log.debug("Successfully published message {} to topic {} with id {}", message, arn, result.getMessageId());
     }
 }

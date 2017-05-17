@@ -1,16 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-
 package com.netflix.metacat.main.api;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -24,14 +28,15 @@ import com.netflix.metacat.common.dto.DataMetadataGetRequestDto;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
 import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.SortOrder;
-import com.netflix.metacat.common.server.exception.NotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.services.MetacatService;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.MetadataService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
@@ -39,8 +44,10 @@ import java.util.Set;
 
 /**
  * Metadata V1 API implementation.
+ *
  * @author amajumdar
  */
+@Component
 public class MetadataV1Resource implements MetadataV1 {
     private final UserMetadataService userMetadataService;
     private final MetacatServiceHelper helper;
@@ -48,18 +55,25 @@ public class MetadataV1Resource implements MetadataV1 {
 
     /**
      * Constructor.
+     *
      * @param userMetadataService user metadata service
-     * @param helper helper
-     * @param metadataService metadata service
+     * @param helper              helper
+     * @param metadataService     metadata service
      */
-    @Inject
-    public MetadataV1Resource(final UserMetadataService userMetadataService,
-        final MetacatServiceHelper helper, final MetadataService metadataService) {
+    @Autowired
+    public MetadataV1Resource(
+        final UserMetadataService userMetadataService,
+        final MetacatServiceHelper helper,
+        final MetadataService metadataService
+    ) {
         this.userMetadataService = userMetadataService;
         this.helper = helper;
         this.metadataService = metadataService;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DataMetadataDto getDataMetadata(final DataMetadataGetRequestDto metadataGetRequestDto) {
         return RequestWrapper.requestWrapper("getDataMetadata", () -> {
@@ -76,6 +90,9 @@ public class MetadataV1Resource implements MetadataV1 {
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<DefinitionMetadataDto> getDefinitionMetadataList(
         final String sortBy,
@@ -94,12 +111,18 @@ public class MetadataV1Resource implements MetadataV1 {
                 sortOrder != null ? sortOrder.name() : null, offset, limit));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<QualifiedName> searchByOwners(final Set<String> owners) {
         return RequestWrapper.requestWrapper("searchByOwners",
             () -> userMetadataService.searchByOwners(owners));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void deleteDefinitionMetadata(final QualifiedName name, final Boolean force) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -124,6 +147,9 @@ public class MetadataV1Resource implements MetadataV1 {
             });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Response processDeletedDataMetadata() {
         metadataService.processDeletedDataMetadata();
