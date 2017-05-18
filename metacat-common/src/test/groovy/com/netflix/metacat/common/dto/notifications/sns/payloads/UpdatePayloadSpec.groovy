@@ -40,11 +40,10 @@ class UpdatePayloadSpec extends Specification {
         def patch = JsonDiff.asJsonPatch(this.mapper.readTree("{\"a\":\"b\"}"), this.mapper.readTree("{\"a\":\"c\"}"))
 
         when:
-        def updatePayload = new UpdatePayload<TableDto>(previous, patch, current)
+        def updatePayload = new UpdatePayload<TableDto>(previous, patch)
 
         then:
         updatePayload != null
-        updatePayload.getCurrent() == current
         updatePayload.getPatch() == patch
         updatePayload.getPrevious() == previous
     }
@@ -53,7 +52,7 @@ class UpdatePayloadSpec extends Specification {
         def previous = Lists.newArrayList("one", "three")
         def current = Lists.newArrayList("one", "two", "three")
         def patch = JsonDiff.asJsonPatch(this.mapper.valueToTree(previous), this.mapper.valueToTree(current))
-        UpdatePayload<ArrayList<String>> payload = new UpdatePayload<>(previous, patch, current)
+        UpdatePayload<ArrayList<String>> payload = new UpdatePayload<>(previous, patch)
 
         when: "Serialize to JSON and then back to a POJO and back to JSON"
         def json = this.mapper.writeValueAsString(payload)
@@ -64,7 +63,6 @@ class UpdatePayloadSpec extends Specification {
         def json2 = this.mapper.writeValueAsString(payload2)
 
         then: "Make sure all the values are still equal"
-        payload.getCurrent() == payload2.getCurrent()
         payload.getPatch().toString() == payload2.getPatch().toString()
         payload.getPrevious() == payload2.getPrevious()
         json == json2

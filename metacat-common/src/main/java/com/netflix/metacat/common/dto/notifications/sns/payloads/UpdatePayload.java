@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.fge.jsonpatch.JsonPatch;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.ToString;
 
 /**
@@ -38,23 +37,19 @@ import lombok.ToString;
 public class UpdatePayload<T> {
     private T previous;
     private JsonPatch patch;
-    private T current;
 
     /**
      * Create a new update payload.
      *
      * @param previous The previous version of the object that was updated
      * @param patch    The JSON patch to go from previous to current
-     * @param current  The current version of the object that was updated
      */
     @JsonCreator
     public UpdatePayload(
-        @JsonProperty("previous") @NonNull final T previous,
-        @JsonProperty("patch") @NonNull final JsonPatch patch,
-        @JsonProperty("current") @NonNull final T current
+            @JsonProperty("previous") final T previous,
+            @JsonProperty("patch") final JsonPatch patch
     ) {
         this.previous = previous;
         this.patch = patch;
-        this.current = current;
     }
 }
