@@ -13,8 +13,6 @@
 
 package com.netflix.metacat.main.search
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.dto.TableDto

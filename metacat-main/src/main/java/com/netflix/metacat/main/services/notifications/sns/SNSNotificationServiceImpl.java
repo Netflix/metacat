@@ -18,6 +18,8 @@
 package com.netflix.metacat.main.services.notifications.sns;
 
 import com.amazonaws.services.sns.AmazonSNSClient;
+import com.amazonaws.services.sns.model.InvalidParameterException;
+import com.amazonaws.services.sns.model.InvalidParameterValueException;
 import com.amazonaws.services.sns.model.PublishResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -307,7 +309,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
             timestamp,
             requestId,
             name,
-            new UpdatePayload<>(oldTable, patch, currentTable)
+            new UpdatePayload<>(oldTable, patch)
         );
     }
 
@@ -315,7 +317,23 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final String arn,
         final SNSMessage<?> message
     ) throws JsonProcessingException {
+        try {
+            publishNotificationNoRetry(arn, message);
+        } catch (final InvalidParameterException | InvalidParameterValueException e) {
+            log.error("SNS Publish message exceeded the size threshold", e);
+            CounterWrapper.incrementCounter("metacat.notifications.sns.publish.message.size.exceeded");
+            final SNSMessage<Void> voidMessage = new SNSMessage<>(message.getId(), message.getTimestamp(),
+                message.getRequestId(), message.getType(), message.getName(), null);
+            publishNotificationNoRetry(arn, voidMessage);
+        }
+    }
+
+    private void publishNotificationNoRetry(
+        final String arn,
+        final SNSMessage<?> message
+    ) throws JsonProcessingException {
         final PublishResult result = client.publish(arn, mapper.writeValueAsString(message));
-        log.debug("Successfully published message {} to topic {} with id {}", message, arn, result.getMessageId());
+        log.debug("Successfully published message {} to topic {} with id {}", message, arn,
+            result.getMessageId());
     }
 }
