@@ -35,23 +35,19 @@ import lombok.ToString;
 public class UpdatePayload<T> {
     private T previous;
     private JsonPatch patch;
-    private T current;
 
     /**
      * Create a new update payload.
      *
      * @param previous The previous version of the object that was updated
      * @param patch    The JSON patch to go from previous to current
-     * @param current  The current version of the object that was updated
      */
     @JsonCreator
     public UpdatePayload(
             @JsonProperty("previous") final T previous,
-            @JsonProperty("patch") final JsonPatch patch,
-            @JsonProperty("current") final T current
+            @JsonProperty("patch") final JsonPatch patch
     ) {
         this.previous = previous;
         this.patch = patch;
-        this.current = current;
     }
 }
