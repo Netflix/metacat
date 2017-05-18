@@ -239,7 +239,7 @@ public class MySqlLookupService implements LookupService {
                 config.getLookupServiceUserAdmin(),
             };
             final Long lookupId = new QueryRunner().insert(conn, SQL_INSERT_LOOKUP, new ScalarHandler<>(1), params);
-            lookup = new Lookup(this.config);
+            lookup = new Lookup();
             lookup.setName(name);
             lookup.setId(lookupId);
         }

@@ -21,7 +21,8 @@ import com.netflix.metacat.common.server.converter.ConverterUtil
 import com.netflix.metacat.common.server.converter.DozerTypeConverter
 import com.netflix.metacat.common.server.converter.TypeConverterFactory
 import com.netflix.metacat.common.server.partition.util.PartitionUtil
-import com.netflix.metacat.common.server.properties.ArchaiusConfigImpl
+import com.netflix.metacat.common.server.properties.DefaultConfigImpl
+import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.testdata.provider.DataDtoProvider
@@ -38,7 +39,6 @@ import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
-
 /**
  * Created by amajumdar on 5/12/15.
  */
@@ -60,7 +60,15 @@ class MetacatSmokeThriftSpec extends Specification {
         localConf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_embedded_hive_thrift_port']}")
         SessionState.setCurrentSessionState(new SessionState(localConf))
         clients.put('local', Hive.get(localConf))
-        converter = new ConverterUtil(new DozerTypeConverter(new TypeConverterFactory(new ArchaiusConfigImpl())))
+        converter = new ConverterUtil(
+            new DozerTypeConverter(
+                new TypeConverterFactory(
+                    new DefaultConfigImpl(
+                        new MetacatProperties()
+                    )
+                )
+            )
+        )
         hiveConverter = new HiveConnectorInfoConverter(new HiveTypeConverter())
     }
     @Shared

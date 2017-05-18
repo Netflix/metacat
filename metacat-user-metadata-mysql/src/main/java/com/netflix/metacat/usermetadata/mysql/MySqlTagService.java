@@ -190,7 +190,7 @@ public class MySqlTagService implements TagService {
         if (result == null) {
             final Object[] params = {name, config.getTagServiceUserAdmin(), config.getTagServiceUserAdmin()};
             final Long id = new QueryRunner().insert(conn, SQL_INSERT_TAG_ITEM, new ScalarHandler<>(1), params);
-            result = new TagItem(this.config);
+            result = new TagItem();
             result.setName(name);
             result.setId(id);
         }

@@ -326,7 +326,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             return result;
         } catch (NoSuchObjectException exception) {
             if (exception.getMessage() != null && exception.getMessage().startsWith("Partition doesn't exist")) {
-                throw new PartitionNotFoundException(tableName, null, exception);
+                throw new PartitionNotFoundException(tableName, "", exception);
             } else {
                 throw new TableNotFoundException(tableName, exception);
             }

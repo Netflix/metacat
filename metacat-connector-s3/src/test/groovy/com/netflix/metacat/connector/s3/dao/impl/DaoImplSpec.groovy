@@ -21,7 +21,6 @@ import com.netflix.metacat.connector.s3.dao.SourceDao
 import com.netflix.metacat.connector.s3.dao.TableDao
 import com.netflix.metacat.connector.s3.model.Database
 import com.netflix.metacat.connector.s3.model.Source
-import spock.lang.Ignore
 
 import javax.inject.Inject
 import javax.persistence.EntityManager
@@ -29,7 +28,6 @@ import javax.persistence.EntityManager
 /**
  * Created by amajumdar on 10/12/15.
  */
-@Ignore
 class DaoImplSpec extends BaseSpec {
     @Inject
     DatabaseDao databaseDao

@@ -3,12 +3,10 @@ package com.netflix.metacat.connector.s3
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.type.TypeRegistry
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter
-import spock.lang.Ignore
 
 /**
  * S3 Connector info converter tests.
  */
-@Ignore
 class S3ConnectorInfoConverterSpec extends BaseSpec {
     def converter = new S3ConnectorInfoConverter(new PigTypeConverter(), true, TypeRegistry.getTypeRegistry())
 

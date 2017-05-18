@@ -17,9 +17,7 @@
  */
 package com.netflix.metacat.common.server.model;
 
-import com.netflix.metacat.common.server.properties.Config;
 import lombok.Data;
-import lombok.NonNull;
 
 import java.util.Date;
 import java.util.Set;
@@ -29,24 +27,12 @@ import java.util.Set;
  */
 @Data
 public class Lookup {
-    private Config config;
     private Long id;
     private String name;
     private String type = "string";
     private Set<String> values;
     private Date dateCreated;
     private Date lastUpdated;
-    private String createdBy;
-    private String lastUpdatedBy;
-
-    /**
-     * Constructor.
-     *
-     * @param config The system configuration to use
-     */
-    public Lookup(@NonNull final Config config) {
-        this.config = config;
-        this.createdBy = config.getLookupServiceUserAdmin();
-        this.lastUpdatedBy = createdBy;
-    }
+    private String createdBy = "admin";
+    private String lastUpdatedBy = "admin";
 }
