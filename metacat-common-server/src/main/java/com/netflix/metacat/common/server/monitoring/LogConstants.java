@@ -96,9 +96,9 @@ public enum LogConstants {
     /**
      * Gauges.
      */
-    GaugeAddPartitions(AppPrefix + ".gauge.AddPartitions"),
-    GaugeDeletePartitions(AppPrefix + ".gauge.DeletePartitions"),
-    GaugeGetPartitionsCount(AppPrefix + ".gauge.GetPartitions"),
+    GaugeAddPartitions(AppPrefix + ".gauge.partitionAdd"),
+    GaugeDeletePartitions(AppPrefix + ".gauge.partitionDelete"),
+    GaugeGetPartitionsCount(AppPrefix + ".gauge.partitionGet"),
 
     GaugeConnectionsTotal(AppPrefix + ".connections.gauge.total"),
     GaugeConnectionsActive(AppPrefix + ".connections.gauge.active"),

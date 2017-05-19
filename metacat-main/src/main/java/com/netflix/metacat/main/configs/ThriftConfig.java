@@ -98,15 +98,13 @@ public class ThriftConfig {
      *
      * @param catalogThriftServiceFactory The factory to use
      * @param connectorManager            The connector manager to use
-     * @param registry                    registry for spectator
      * @return The service bean
      */
     @Bean
     public MetacatThriftService metacatThriftService(
         final CatalogThriftServiceFactory catalogThriftServiceFactory,
-        final ConnectorManager connectorManager,
-        final Registry registry
+        final ConnectorManager connectorManager
     ) {
-        return new MetacatThriftService(catalogThriftServiceFactory, connectorManager, registry);
+        return new MetacatThriftService(catalogThriftServiceFactory, connectorManager);
     }
 }

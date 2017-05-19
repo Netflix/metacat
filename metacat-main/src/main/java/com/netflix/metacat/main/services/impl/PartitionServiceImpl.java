@@ -54,6 +54,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -64,10 +65,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class PartitionServiceImpl implements PartitionService {
-    private static final String CATALOG_TAG = "catalog";
-    private static final String DATABASE_TAG = "database";
-    private static final String TABLE_TAG = "table";
-
     private final CatalogService catalogService;
     private final ConnectorManager connectorManager;
     private final TableService tableService;
@@ -156,7 +153,7 @@ public class PartitionServiceImpl implements PartitionService {
                 uris.add(partitionDto.getDataUri());
             });
 
-            registry.gauge(this.partitionGetCountId.withTags(createTagsFromName(name)), result.size());
+            registry.gauge(this.partitionGetCountId.withTags(new HashMap<>(name.parts())), result.size());
 
             log.info("Got {} partitions for {} using filter: {} and partition names: {}",
                     result.size(), name, filter,
@@ -209,14 +206,14 @@ public class PartitionServiceImpl implements PartitionService {
             return result;
         }
         final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
-        registry.gauge(this.partitionAddedCountId.withTags(createTagsFromName(name)), partitionDtos.size());
+        registry.gauge(this.partitionAddedCountId.withTags(new HashMap<>(name.parts())), partitionDtos.size());
         if (!tableService.exists(name)) {
             throw new TableNotFoundException(name);
         }
         List<HasMetadata> deletePartitions = Lists.newArrayList();
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
             eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
-            registry.gauge(this.partitionDeletedCountId.withTags(createTagsFromName(name)),
+            registry.gauge(this.partitionDeletedCountId.withTags(new HashMap<>(name.parts())),
                     partitionIdsForDeletes.size());
             final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
             requestDto.setIncludePartitionDetails(false);
@@ -259,7 +256,7 @@ public class PartitionServiceImpl implements PartitionService {
     @Override
     public void delete(final QualifiedName name, final List<String> partitionIds) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        registry.gauge(this.partitionDeletedCountId.withTags(createTagsFromName(name)), partitionIds.size());
+        registry.gauge(this.partitionDeletedCountId.withTags(new HashMap<>(name.parts())), partitionIds.size());
         if (!tableService.exists(name)) {
             throw new TableNotFoundException(name);
         }
@@ -439,13 +436,5 @@ public class PartitionServiceImpl implements PartitionService {
     @Override
     public boolean exists(@Nonnull final QualifiedName name) {
         return get(name) != null;
-    }
-
-    private Map<String, String> createTagsFromName(final QualifiedName name) {
-        final Map<String, String> tags = Maps.newHashMap();
-        tags.put(CATALOG_TAG, name.getCatalogName());
-        tags.put(DATABASE_TAG, name.getDatabaseName());
-        tags.put(TABLE_TAG, name.getTableName());
-        return tags;
     }
 }

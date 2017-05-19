@@ -20,10 +20,7 @@ package com.netflix.metacat.main.services;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.thrift.CatalogThriftService;
 import com.netflix.metacat.thrift.CatalogThriftServiceFactory;
-import com.netflix.spectator.api.Registry;
-import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,22 +32,18 @@ import java.util.stream.Collectors;
 public class MetacatThriftService {
     private final ConnectorManager connectorManager;
     private final CatalogThriftServiceFactory thriftServiceFactory;
-    private final Registry registry;
 
     /**
      * Constructor.
      *
      * @param catalogThriftServiceFactory factory
      * @param connectorManager            connecter manager
-     * @param registry                    registry of spectator
      */
     @Inject
     public MetacatThriftService(final CatalogThriftServiceFactory catalogThriftServiceFactory,
-                                final ConnectorManager connectorManager,
-                                @Nonnull @NonNull final Registry registry) {
+                                final ConnectorManager connectorManager) {
         this.thriftServiceFactory = catalogThriftServiceFactory;
         this.connectorManager = connectorManager;
-        this.registry = registry;
     }
 
     protected List<CatalogThriftService> getCatalogThriftServices() {

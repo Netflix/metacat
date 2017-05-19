@@ -32,7 +32,7 @@ import java.util.List;
 @Component
 @ConditionalOnProperty(value = "metacat.elasticsearch.enabled", havingValue = "true")
 public class SearchMetacatV1Resource implements SearchMetacatV1 {
-    private ElasticSearchUtil elasticSearchUtil;
+    private final ElasticSearchUtil elasticSearchUtil;
     private final RequestWrapper requestWrapper;
 
     /**
