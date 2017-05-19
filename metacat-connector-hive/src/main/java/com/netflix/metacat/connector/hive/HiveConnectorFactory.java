@@ -31,6 +31,7 @@ import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.metastore.HMSHandlerProxy;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
+import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -55,6 +56,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
     private final HiveConnectorInfoConverter infoConverter;
     private final Injector injector;
     private IMetacatHiveClient client;
+    private final Registry registry;
 
     /**
      * Constructor.
@@ -63,16 +65,19 @@ public class HiveConnectorFactory implements ConnectorFactory {
      * @param catalogName   connector name. Also the catalog name.
      * @param configuration configuration properties
      * @param infoConverter hive info converter
+     * @param registry      registry to spectator
      */
     public HiveConnectorFactory(
         @Nonnull @NonNull final Config config,
         @Nonnull @NonNull final String catalogName,
         @Nonnull @NonNull final Map<String, String> configuration,
-        final HiveConnectorInfoConverter infoConverter
+        final HiveConnectorInfoConverter infoConverter,
+        @Nonnull @NonNull final Registry registry
     ) {
         this.catalogName = catalogName;
         this.configuration = configuration;
         this.infoConverter = infoConverter;
+        this.registry = registry;
 
         try {
             final boolean useLocalMetastore = Boolean
@@ -90,8 +95,18 @@ public class HiveConnectorFactory implements ConnectorFactory {
             throw new IllegalArgumentException(
                 String.format("Failed creating the hive metastore client for catalog: %s", catalogName), e);
         }
-        final Module hiveModule = new HiveConnectorModule(config, catalogName, configuration, infoConverter, client);
+        final Module hiveModule = new HiveConnectorModule(config,
+            catalogName, configuration, infoConverter, client, registry);
         this.injector = Guice.createInjector(hiveModule);
+    }
+
+    private IMetacatHiveClient createLocalClient() throws Exception {
+        final HiveConf conf = getDefaultConf();
+        configuration.forEach(conf::set);
+        //TO DO Change the usage of DataSourceManager later
+        DataSourceManager.get().load(catalogName, configuration);
+        return new EmbeddedHiveClient(catalogName, HMSHandlerProxy.getProxy(conf), registry);
+
     }
 
     private static HiveConf getDefaultConf() {
@@ -106,15 +121,6 @@ public class HiveConnectorFactory implements ConnectorFactory {
             HiveConfigConstants.JAVAX_JDO_PERSISTENCEMANAGER_FACTORY);
         result.setBoolean(HiveConfigConstants.HIVE_STATS_AUTOGATHER, false);
         return result;
-    }
-
-    private IMetacatHiveClient createLocalClient() throws Exception {
-        final HiveConf conf = getDefaultConf();
-        configuration.forEach(conf::set);
-        //TO DO Change the usage of DataSourceManager later
-        DataSourceManager.get().load(catalogName, configuration);
-        return new EmbeddedHiveClient(catalogName, HMSHandlerProxy.getProxy(conf));
-
     }
 
     private IMetacatHiveClient createThriftClient() throws MetaException {

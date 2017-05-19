@@ -46,6 +46,7 @@ import com.netflix.metacat.main.services.impl.TableServiceImpl;
 import com.netflix.metacat.usermetadata.mysql.MySqlLookupService;
 import com.netflix.metacat.usermetadata.mysql.MySqlTagService;
 import com.netflix.metacat.usermetadata.mysql.MysqlUserMetadataService;
+import com.netflix.spectator.api.Registry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -157,12 +158,12 @@ public class ServicesConfig {
     /**
      * The table service bean.
      *
-     * @param connectorManager     connector manager
-     * @param databaseService      database service
-     * @param tagService           tag service
-     * @param userMetadataService  user metadata service
-     * @param eventBus             Internal event bus
-     * @param converterUtil        utility to convert to/from Dto to connector resources
+     * @param connectorManager    connector manager
+     * @param databaseService     database service
+     * @param tagService          tag service
+     * @param userMetadataService user metadata service
+     * @param eventBus            Internal event bus
+     * @param converterUtil       utility to convert to/from Dto to connector resources
      * @return The table service bean
      */
     @Bean
@@ -195,6 +196,7 @@ public class ServicesConfig {
      * @param config               configurations
      * @param eventBus             Internal event bus
      * @param converterUtil        utility to convert to/from Dto to connector resources
+     * @param registry             registry handle
      * @return The partition service implementation to use
      */
     @Bean
@@ -206,7 +208,8 @@ public class ServicesConfig {
         final ThreadServiceManager threadServiceManager,
         final Config config,
         final MetacatEventBus eventBus,
-        final ConverterUtil converterUtil
+        final ConverterUtil converterUtil,
+        final Registry registry
     ) {
         return new PartitionServiceImpl(
             catalogService,
@@ -216,7 +219,8 @@ public class ServicesConfig {
             threadServiceManager,
             config,
             eventBus,
-            converterUtil
+            converterUtil,
+            registry
         );
     }
 
@@ -276,6 +280,7 @@ public class ServicesConfig {
      * @param tableService        The table service to use
      * @param partitionService    The partition service to use
      * @param userMetadataService The user metadata service to use
+     * @param registry            registry for spectator
      * @return The metadata service bean
      */
     @Bean
@@ -283,9 +288,10 @@ public class ServicesConfig {
         final Config config,
         final TableService tableService,
         final PartitionService partitionService,
-        final UserMetadataService userMetadataService
+        final UserMetadataService userMetadataService,
+        final Registry registry
     ) {
-        return new MetadataService(config, tableService, partitionService, userMetadataService);
+        return new MetadataService(config, tableService, partitionService, userMetadataService, registry);
     }
 
     /**

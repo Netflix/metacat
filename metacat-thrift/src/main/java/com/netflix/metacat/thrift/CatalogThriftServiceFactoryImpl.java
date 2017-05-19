@@ -23,6 +23,7 @@ import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.PartitionV1;
 import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.spectator.api.Registry;
 
 import java.util.Objects;
 
@@ -35,35 +36,36 @@ public class CatalogThriftServiceFactoryImpl implements CatalogThriftServiceFact
     private final MetacatV1 metacatV1;
     private final PartitionV1 partitionV1;
     private final TypeConverterFactory typeConverterFactory;
-    private final LoadingCache<CacheKey, CatalogThriftService> cache = CacheBuilder.newBuilder()
-        .build(new CacheLoader<CacheKey, CatalogThriftService>() {
-            public CatalogThriftService load(final CacheKey key) {
-                return new CatalogThriftService(config, hiveConverters, metacatV1, partitionV1,
-                    key.catalogName, key.portNumber);
-            }
-        });
+    private final LoadingCache<CacheKey, CatalogThriftService> cache;
 
     /**
      * Constructor.
      *
-     * @param config               config
-     * @param typeConverterFactory type converter factory
-     * @param hiveConverters       hive converter
-     * @param metacatV1            Metacat V1
-     * @param partitionV1          Partition V1
+     * @param config                config
+     * @param typeConverterFactory type converter provider
+     * @param hiveConverters        hive converter
+     * @param metacatV1             Metacat V1
+     * @param partitionV1           Partition V1
+     * @param registry              registry for spectator
      */
-    public CatalogThriftServiceFactoryImpl(
-        final Config config,
-        final TypeConverterFactory typeConverterFactory,
-        final HiveConverters hiveConverters,
-        final MetacatV1 metacatV1,
-        final PartitionV1 partitionV1
-    ) {
+    public CatalogThriftServiceFactoryImpl(final Config config,
+                                           final TypeConverterFactory typeConverterFactory,
+                                           final HiveConverters hiveConverters,
+                                           final MetacatV1 metacatV1,
+                                           final PartitionV1 partitionV1,
+                                           final Registry registry) {
         this.config = config;
         this.typeConverterFactory = typeConverterFactory;
         this.hiveConverters = hiveConverters;
         this.metacatV1 = metacatV1;
         this.partitionV1 = partitionV1;
+        this.cache = CacheBuilder.newBuilder()
+                .build(new CacheLoader<CacheKey, CatalogThriftService>() {
+                    public CatalogThriftService load(final CacheKey key) {
+                        return new CatalogThriftService(config, hiveConverters, metacatV1, partitionV1,
+                                key.catalogName, key.portNumber, registry);
+                    }
+                });
     }
 
     /**

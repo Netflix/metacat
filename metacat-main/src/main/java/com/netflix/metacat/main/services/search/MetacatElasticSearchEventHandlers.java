@@ -27,7 +27,8 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
-import com.netflix.metacat.common.server.monitoring.CounterWrapper;
+import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 
@@ -39,16 +40,20 @@ import java.util.stream.Collectors;
  * Event handlers for elastic search indexing.
  */
 @Slf4j
-public class MetacatEventHandlers {
+public class MetacatElasticSearchEventHandlers {
     private final ElasticSearchUtil es;
+    private final Registry registry;
 
     /**
      * Constructor.
      *
      * @param es elastic search util
+     * @param registry registry to spectator
      */
-    public MetacatEventHandlers(final ElasticSearchUtil es) {
+    public MetacatElasticSearchEventHandlers(final ElasticSearchUtil es,
+                                             final Registry registry) {
         this.es = es;
+        this.registry = registry;
     }
 
     /**
@@ -59,7 +64,7 @@ public class MetacatEventHandlers {
     @EventListener
     public void metacatCreateDatabasePostEventHandler(final MetacatCreateDatabasePostEvent event) {
         log.debug("Received CreateDatabaseEvent {}", event);
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.database.create");
+        registry.counter(LogConstants.CounterElasticSearchDatabaseCreate.name()).increment();
         final DatabaseDto dto = event.getDatabase();
         final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
             event.getRequestContext().getUserName(), false);
@@ -74,7 +79,7 @@ public class MetacatEventHandlers {
     @EventListener
     public void metacatCreateTablePostEventHandler(final MetacatCreateTablePostEvent event) {
         log.debug("Received CreateTableEvent {}", event);
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.create");
+        registry.counter(LogConstants.CounterElasticSearchTableCreate.name()).increment();
         final TableDto dto = event.getTable();
         final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
             event.getRequestContext().getUserName(), false);
@@ -89,7 +94,7 @@ public class MetacatEventHandlers {
     @EventListener
     public void metacatDeleteDatabasePostEventHandler(final MetacatDeleteDatabasePostEvent event) {
         log.debug("Received DeleteDatabaseEvent {}", event);
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.database.delete");
+        registry.counter(LogConstants.CounterElasticSearchDatabaseDelete.name()).increment();
         final DatabaseDto dto = event.getDatabase();
         es.softDelete(ElasticSearchDoc.Type.database.name(), dto.getName().toString(), event.getRequestContext());
     }
@@ -102,7 +107,7 @@ public class MetacatEventHandlers {
     @EventListener
     public void metacatDeleteTablePostEventHandler(final MetacatDeleteTablePostEvent event) {
         log.debug("Received DeleteTableEvent {}", event);
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.delete");
+        registry.counter(LogConstants.CounterElasticSearchTableDelete.name()).increment();
         final TableDto dto = event.getTable();
         es.softDelete(ElasticSearchDoc.Type.table.name(), dto.getName().toString(), event.getRequestContext());
         try {
@@ -122,7 +127,7 @@ public class MetacatEventHandlers {
     @EventListener
     public void metacatDeleteTablePartitionPostEventHandler(final MetacatDeleteTablePartitionPostEvent event) {
         log.debug("Received DeleteTablePartitionEvent {}", event);
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.partition.delete");
+        registry.counter(LogConstants.CounterElasticSearchPartitionDelete.name()).increment();
         final List<String> partitionIds = event.getPartitionIds();
         final List<String> esPartitionIds = partitionIds.stream()
             .map(partitionId -> event.getName().toString() + "/" + partitionId).collect(Collectors.toList());
@@ -137,7 +142,7 @@ public class MetacatEventHandlers {
     @EventListener
     public void metacatRenameTablePostEventHandler(final MetacatRenameTablePostEvent event) {
         log.debug("Received RenameTableEvent {}", event);
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.rename");
+        registry.counter(LogConstants.CounterElasticSearchTableRename.name()).increment();
         es.delete(ElasticSearchDoc.Type.table.name(), event.getName().toString());
 
         final TableDto dto = event.getCurrentTable();
@@ -154,7 +159,7 @@ public class MetacatEventHandlers {
     @EventListener
     public void metacatUpdateTablePostEventHandler(final MetacatUpdateTablePostEvent event) {
         log.debug("Received UpdateTableEvent {}", event);
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.update");
+        registry.counter(LogConstants.CounterElasticSearchTableUpdate.name()).increment();
         final TableDto dto = event.getCurrentTable();
 
         final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
@@ -188,7 +193,7 @@ public class MetacatEventHandlers {
     @EventListener
     public void metacatSaveTablePartitionPostEventHandler(final MetacatSaveTablePartitionPostEvent event) {
         log.debug("Received SaveTablePartitionEvent {}", event);
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.partition.save");
+        registry.counter(LogConstants.CounterElasticSearchPartitionSave.name()).increment();
         final List<PartitionDto> partitionDtos = event.getPartitions();
         final MetacatRequestContext context = event.getRequestContext();
         final List<ElasticSearchDoc> docs = partitionDtos.stream()

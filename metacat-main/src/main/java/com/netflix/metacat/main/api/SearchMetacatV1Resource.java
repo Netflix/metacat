@@ -32,16 +32,20 @@ import java.util.List;
 @Component
 @ConditionalOnProperty(value = "metacat.elasticsearch.enabled", havingValue = "true")
 public class SearchMetacatV1Resource implements SearchMetacatV1 {
-    private final ElasticSearchUtil elasticSearchUtil;
+    private ElasticSearchUtil elasticSearchUtil;
+    private final RequestWrapper requestWrapper;
 
     /**
      * Constructor.
      *
      * @param elasticSearchUtil search util
+     * @param requestWrapper   request wrapper object
      */
     @Autowired
-    public SearchMetacatV1Resource(final ElasticSearchUtil elasticSearchUtil) {
+    public SearchMetacatV1Resource(final ElasticSearchUtil elasticSearchUtil,
+                                   final RequestWrapper requestWrapper) {
         this.elasticSearchUtil = elasticSearchUtil;
+        this.requestWrapper = requestWrapper;
     }
 
     /**
@@ -49,9 +53,7 @@ public class SearchMetacatV1Resource implements SearchMetacatV1 {
      */
     @Override
     public List<TableDto> searchTables(final String searchString) {
-        return RequestWrapper.requestWrapper(
-            "SearchMetacatV1Resource.searchTables",
-            () -> this.elasticSearchUtil.simpleSearch(searchString)
-        );
+        return requestWrapper.processRequest("SearchMetacatV1Resource.searchTables",
+            () -> elasticSearchUtil.simpleSearch(searchString));
     }
 }

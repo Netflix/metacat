@@ -18,10 +18,11 @@ package com.netflix.metacat.connector.hive.client.embedded;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.netflix.metacat.common.server.monitoring.CounterWrapper;
+import com.netflix.metacat.common.server.monitoring.LogConstants;
 import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.metastore.IMetacatHMSHandler;
+import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.Database;
@@ -83,17 +84,22 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
 
     private final IMetacatHMSHandler handler;
     private final String catalogName;
+    private final Registry registry;
 
     /**
      * Embedded hive client implementation.
      *
-     * @param catalogName       catalogName
-     * @param handler handler
+     * @param catalogName catalogName
+     * @param handler     handler
+     * @param registry    registry
      */
     @Inject
-    public EmbeddedHiveClient(final String catalogName, final IMetacatHMSHandler handler) {
+    public EmbeddedHiveClient(@NonNull @Nonnull final String catalogName,
+                              final IMetacatHMSHandler handler,
+                              @NonNull @Nonnull final Registry registry) {
         this.catalogName = catalogName;
         this.handler = handler;
+        this.registry = registry;
     }
 
     @Override
@@ -105,7 +111,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
         if (ex.getCause() instanceof SQLException || ex.getMessage().startsWith(EXCEPTION_JDO_PREFIX)
                 || ex.getMessage().contains(EXCEPTION_SQL_PREFIX)
                 || ex.getMessage().contains(EX_MESSAGE_RESTART_TRANSACTION)) {
-            CounterWrapper.incrementCounter("dse.metacat." + catalogName + ".sql.lock.error");
+            registry.counter(LogConstants.CounterHiveSqlLockError.name() + "." + catalogName).increment();
         }
     }
 

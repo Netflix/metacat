@@ -13,6 +13,11 @@
 
 package com.netflix.metacat.common.server.monitoring;
 
+import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
+
+//CHECKSTYLE:OFF
 /**
  * Log constants.
  */
@@ -20,88 +25,97 @@ public enum LogConstants {
     /**
      * General logging constants.
      */
-    GlobalPrefix("dse"), AppPrefix(GlobalPrefix + ".metacat"),
+    AppPrefix("metacat"),
+
     /**
-     * Counters.
+     * evnets.
      */
-    CounterCreateCatalog(AppPrefix + ".countCreateCatalog"),
-    CounterCreateTable(AppPrefix + ".countCreateTable"),
-    CounterCreateDatabase(AppPrefix + ".countCreateDatabase"),
-    CounterCreateMView(AppPrefix + ".countCreateMView"),
-    CounterDeleteDatabase(AppPrefix + ".countDeleteDatabase"),
-    CounterDeleteTablePartitions(AppPrefix + ".countDeleteTablePartitions"),
-    CounterDeleteMViewPartitions(AppPrefix + ".countDeleteMViewPartitions"),
-    CounterDeleteTable(AppPrefix + ".countDropTable"),
-    CounterDeleteMView(AppPrefix + ".countDeleteMView"),
-    CounterGetCatalog(AppPrefix + ".countGetMetadata"),
-    CounterGetCatalogNames(AppPrefix + ".countGetCatalogNames"),
-    CounterGetDatabase(AppPrefix + ".countGetDatabase"),
-    CounterGetMViewPartitions(AppPrefix + ".countGetMViewPartitions"),
-    CounterGetTablePartitions(AppPrefix + ".countGetTablePartitions"),
-    CounterGetTable(AppPrefix + ".countGetTable"),
-    CounterGetMView(AppPrefix + ".countGetMView"),
-    CounterGetCatalogMViews(AppPrefix + ".countGetCatalogMViews"),
-    CounterGetTableMViews(AppPrefix + ".countGetTableMViews"),
-    CounterRenameTable(AppPrefix + ".countRenameTable"),
-    CounterUpdateCatalog(AppPrefix + ".countUpdateCatalog"),
-    CounterUpdateTable(AppPrefix + ".countUpdateTable"),
-    CounterSaveTablePartitions(AppPrefix + ".countSaveTablePartitions"),
-    CounterSaveMViewPartitions(AppPrefix + ".countSaveMViewPartitions"),
-    CounterCreateCatalogFailure(AppPrefix + ".countCreateCatalogFailure"),
-    CounterCreateTableFailure(AppPrefix + ".countCreateTableFailure"),
-    CounterCreateDatabaseFailure(AppPrefix + ".countCreateDatabaseFailure"),
-    CounterCreateMViewFailure(AppPrefix + ".countCreateMViewFailure"),
-    CounterDeleteDatabaseFailure(AppPrefix + ".countDeleteDatabaseFailure"),
-    CounterDeleteTablePartitionsFailure(AppPrefix + ".countDeleteTablePartitionsFailure"),
-    CounterDeleteMViewPartitionsFailure(AppPrefix + ".countDeleteMViewPartitionsFailure"),
-    CounterDeleteTableFailure(AppPrefix + ".countDropTableFailure"),
-    CounterDeleteMViewFailure(AppPrefix + ".countDeleteMViewFailure"),
-    CounterGetCatalogFailure(AppPrefix + ".countGetMetadataFailure"),
-    CounterGetCatalogNamesFailure(AppPrefix + ".countGetCatalogNamesFailure"),
-    CounterGetDatabaseFailure(AppPrefix + ".countGetDatabaseFailure"),
-    CounterGetMViewPartitionsFailure(AppPrefix + ".countGetMViewPartitionsFailure"),
-    CounterGetTablePartitionsFailure(AppPrefix + ".countGetTablePartitionsFailure"),
-    CounterGetTableFailure(AppPrefix + ".countGetTableFailure"),
-    CounterGetMViewFailure(AppPrefix + ".countGetMViewFailure"),
-    CounterGetCatalogMViewsFailure(AppPrefix + ".countGetCatalogMViewsFailure"),
-    CounterGetTableMViewsFailure(AppPrefix + ".countGetTableMViewsFailure"),
-    CounterRenameTableFailure(AppPrefix + ".countRenameTableFailure"),
-    CounterUpdateCatalogFailure(AppPrefix + ".countUpdateCatalogFailure"),
-    CounterUpdateTableFailure(AppPrefix + ".countUpdateTableFailure"),
-    CounterSaveTablePartitionsFailure(AppPrefix + ".countSaveTablePartitionsFailure"),
-    CounterSaveMViewPartitionsFailure(AppPrefix + ".countSaveMViewPartitionsFailure"),
+    CounterEventAsync(AppPrefix + ".events.count.Async"),
+    CounterEventSync(AppPrefix + ".events.count.Sync"),
+
     /**
-     * Tracers.
+     * thrift request.
      */
-    TracerCreateCatalog(AppPrefix + ".traceCreateCatalog"),
-    TracerCreateTable(AppPrefix + ".traceCreateTable"),
-    TracerCreateDatabase(AppPrefix + ".traceCreateDatabase"),
-    TracerCreateMView(AppPrefix + ".traceCreateMView"),
-    TracerDeleteDatabase(AppPrefix + ".traceDeleteDatabase"),
-    TracerDeleteTablePartitions(AppPrefix + ".traceDeleteTablePartitions"),
-    TracerDeleteMViewPartitions(AppPrefix + ".traceDeleteMViewPartitions"),
-    TracerDeleteTable(AppPrefix + ".traceDropTable"),
-    TracerDeleteMView(AppPrefix + ".traceDeleteMView"),
-    TracerGetCatalog(AppPrefix + ".traceGetMetadata"),
-    TracerGetCatalogNames(AppPrefix + ".traceGetCatalogNames"),
-    TracerGetDatabase(AppPrefix + ".traceGetDatabase"),
-    TracerGetMViewPartitions(AppPrefix + ".traceGetMViewPartitions"),
-    TracerGetTablePartitions(AppPrefix + ".traceGetTablePartitions"),
-    TracerGetTable(AppPrefix + ".traceGetTable"),
-    TracerGetMView(AppPrefix + ".traceGetMView"),
-    TracerGetCatalogMViews(AppPrefix + ".traceGetCatalogMViews"),
-    TracerGetTableMViews(AppPrefix + ".traceGetTableMViews"),
-    TracerRenameTable(AppPrefix + ".traceRenameTable"),
-    TracerUpdateCatalog(AppPrefix + ".traceUpdateCatalog"),
-    TracerUpdateTable(AppPrefix + ".traceUpdateTable"),
-    TracerSaveTablePartitions(AppPrefix + ".traceSaveTablePartitions"),
-    TracerSaveMViewPartitions(AppPrefix + ".traceSaveMViewPartitions"),
+    CounterThrift(AppPrefix + ".thrift.count.request"),
+
+    /**
+     * hive sql lock error.
+     */
+    CounterHiveSqlLockError(AppPrefix + ".count.hiveSqlLockError"),
+    CounterHiveExperimentGetTablePartitionsFailure(AppPrefix + ".hive.count.experimentGetPartitionsFailure"),
+
+    /**
+     * metacat request.
+     */
+    CounterRequestCount(AppPrefix + ".count.request"),
+
+
+    /**
+     * Notifications.
+     */
+    CounterSNSNotificationPartitionAdd(AppPrefix + ".notifications.count.partitionsAdd"),
+    CounterSNSNotificationTablePartitionAdd(AppPrefix + ".notifications.count.table.partitionsAdd"),
+    CounterSNSNotificationPartitionDelete(AppPrefix + ".notifications.count.partitionsDelete"),
+    CounterSNSNotificationTablePartitionDelete(AppPrefix + ".notifications.count.table.partitionsDelete"),
+    CounterSNSNotificationTableCreate(AppPrefix + ".notifications.count.table.Create"),
+    CounterSNSNotificationTableDelete(AppPrefix + ".notifications.count.table.Delete"),
+    CounterSNSNotificationTableRename(AppPrefix + ".notifications.count.table.Rename"),
+    CounterSNSNotificationTableUpdate(AppPrefix + ".notifications.count.table.Update"),
+
+    /**
+     * ElasticSearch.
+     */
+    CounterElasticSearchDatabaseCreate(AppPrefix + ".elasticsearch.count.databaseCreate"),
+    CounterElasticSearchDatabaseDelete(AppPrefix + ".elasticsearch.count.databaseDelete"),
+    CounterElasticSearchTableCreate(AppPrefix + ".elasticsearch.count.tableCreate"),
+    CounterElasticSearchTableDelete(AppPrefix + ".elasticsearch.count.tableDelete"),
+    CounterElasticSearchTableSave(AppPrefix + ".elasticsearch.count.tableSave"),
+    CounterElasticSearchTableRename(AppPrefix + ".elasticsearch.count.tableRename"),
+    CounterElasticSearchTableUpdate(AppPrefix + ".elasticsearch.count.tableUpdate"),
+    CounterElasticSearchPartitionSave(AppPrefix + ".elasticsearch.count.partitionSave"),
+    CounterElasticSearchPartitionDelete(AppPrefix + ".elasticsearch.count.partitionDelete"),
+    CounterElasticSearchDelete(AppPrefix + ".elasticsearch.count.esDelete"),
+    CounterElasticSearchBulkDelete(AppPrefix + ".elasticsearch.count.esBulkDelete"),
+    CounterElasticSearchUpdate(AppPrefix + ".elasticsearch.count.esUpdate"),
+    CounterElasticSearchBulkUpdate(AppPrefix + ".elasticsearch.count.esBulkUpdate"),
+    CounterElasticSearchSave(AppPrefix + ".elasticsearch.count.esSave"),
+    CounterElasticSearchBulkSave(AppPrefix + ".elasticsearch.count.esBulkSave"),
+    CounterElasticSearchLog(AppPrefix + ".elasticsearch.count.esLog"),
+    CounterElasticSearchRefresh(AppPrefix + ".elasticsearch.count.esRefresh"),
+    CounterElasticSearchRefreshAlreadyRunning(AppPrefix + ".elasticsearch.count.esRefreshAlreadyRunning"),
+    CounterElasticSearchUnmarkedDatabaseThreshholdReached(
+            AppPrefix + ".elasticsearch.count.unmarkedDatabasesThresholdReached"),
+    CounterElasticSearchUnmarkedTableThreshholdReached(
+            AppPrefix + ".elasticsearch.count.unmarkedTablesThresholdReached"),
+
+    /**
+     * deleteMetadata.
+     */
+    CounterDeleteMetaData(AppPrefix + ".count.deleteMetadata"),
+
     /**
      * Gauges.
      */
-    GaugeAddPartitions(AppPrefix + ".gaugeAddPartitions"),
-    GaugeDeletePartitions(AppPrefix + ".gaugeDeletePartitions"),
-    GaugeGetPartitionsCount(AppPrefix + ".gaugeGetPartitionsCount");
+    GaugeAddPartitions(AppPrefix + ".gauge.AddPartitions"),
+    GaugeDeletePartitions(AppPrefix + ".gauge.DeletePartitions"),
+    GaugeGetPartitionsCount(AppPrefix + ".gauge.GetPartitions"),
+
+    GaugeConnectionsTotal(AppPrefix + ".connections.gauge.total"),
+    GaugeConnectionsActive(AppPrefix + ".connections.gauge.active"),
+    GaugeConnectionsIdle(AppPrefix + ".connections.gauge.idle"),
+
+    /**
+     * Timers.
+     */
+    TimerRequest(AppPrefix + ".timer.requests"),
+    TimerThriftRequest(AppPrefix + ".thrift.timer.requests."),
+    TimerHiveGetPartitions(AppPrefix + ".hive.timer.getPartitions"),
+    TimerElasticSearchRefresh(AppPrefix + ".elasticsearch.timer.esRefresh"),
+
+    /**
+     * Status.
+     */
+    Status("status"), StatusSuccess("success"), StatusFailure("failure");
 
     private final String constant;
 
@@ -112,5 +126,13 @@ public enum LogConstants {
     @Override
     public String toString() {
         return constant;
+    }
+
+    public static Map<String, String> getStatusSuccessMap() {
+        return ImmutableMap.of(LogConstants.Status.name(), LogConstants.StatusSuccess.name());
+    }
+
+    public static Map<String, String> getStatusFailureMap() {
+        return ImmutableMap.of(LogConstants.Status.name(), LogConstants.StatusFailure.name());
     }
 }

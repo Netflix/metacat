@@ -42,9 +42,9 @@ import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
-import com.netflix.metacat.common.server.monitoring.CounterWrapper;
-import com.netflix.metacat.common.server.monitoring.TimerWrapper;
+import com.netflix.metacat.common.server.monitoring.LogConstants;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.Warehouse;
@@ -123,6 +123,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -148,6 +149,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     private final Map<String, List<PrivilegeGrantInfo>> defaultRolesPrivilegeSet =
         Maps.newHashMap(ImmutableMap.of("users",
             Lists.newArrayList(new PrivilegeGrantInfo("ALL", 0, "hadoop", PrincipalType.ROLE, true))));
+    private final Registry registry;
 
     /**
      * Constructor.
@@ -157,13 +159,15 @@ public class CatalogThriftHiveMetastore extends FacebookBase
      * @param metacatV1      Metacat V1 resource
      * @param partitionV1    Partition V1 resource
      * @param catalogName    catalog name
+     * @param registry       registry of spectator
      */
     public CatalogThriftHiveMetastore(
         final Config config,
         final HiveConverters hiveConverters,
         final MetacatV1 metacatV1,
         final PartitionV1 partitionV1,
-        final String catalogName
+        final String catalogName,
+        final Registry registry
     ) {
         super("CatalogThriftHiveMetastore");
 
@@ -172,6 +176,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         this.v1 = Preconditions.checkNotNull(metacatV1, "metacat api is null");
         this.partV1 = Preconditions.checkNotNull(partitionV1, "partition api is null");
         this.catalogName = normalizeIdentifier(Preconditions.checkNotNull(catalogName, "catalog name is required"));
+        this.registry = registry;
     }
 
     private static String normalizeIdentifier(@Nullable final String s) {
@@ -1689,8 +1694,8 @@ public class CatalogThriftHiveMetastore extends FacebookBase
 
     private <R> R requestWrapper(final String methodName, final Object[] args, final ThriftSupplier<R> supplier)
         throws TException {
-        final TimerWrapper timer = TimerWrapper.createStarted("dse.metacat.thrift.timer." + methodName);
-        CounterWrapper.incrementCounter("dse.metacat.thrift.counter." + methodName);
+        final long start = registry.clock().monotonicTime();
+        registry.counter(registry.createId(LogConstants.CounterThrift.name() + "." + methodName)).increment();
         try {
             log.info("+++ Thrift({}): Calling {}({})", catalogName, methodName, args);
             return supplier.get();
@@ -1704,14 +1709,18 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             log.error(e.getMessage(), e);
             throw e;
         } catch (Exception e) {
-            CounterWrapper.incrementCounter("dse.metacat.thrift.counter.failure." + methodName);
+            registry.counter(registry.createId(LogConstants.CounterThrift.name() + "." + methodName)
+                .withTags(LogConstants.getStatusFailureMap())).increment();
             final String message = String.format("%s -- %s failed", e.getMessage(), methodName);
             log.error(message, e);
             final MetaException me = new MetaException(message);
             me.initCause(e);
             throw me;
         } finally {
-            log.info("+++ Thrift({}): Time taken to complete {} is {} ms", catalogName, methodName, timer.stop());
+            final long duration = registry.clock().monotonicTime() - start;
+             this.registry.timer(LogConstants.TimerThriftRequest.name()
+                  + "." + methodName).record(duration, TimeUnit.MILLISECONDS);
+            log.info("+++ Thrift({}): Time taken to complete {} is {} ms", catalogName, methodName, duration);
         }
     }
 
