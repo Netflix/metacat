@@ -103,7 +103,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
     private IMetacatHiveClient createLocalClient() throws Exception {
         final HiveConf conf = getDefaultConf();
         configuration.forEach(conf::set);
-        //TO DO Change the usage of DataSourceManager later
+        //TODO Change the usage of DataSourceManager later
         DataSourceManager.get().load(catalogName, configuration);
         return new EmbeddedHiveClient(catalogName, HMSHandlerProxy.getProxy(conf), registry);
 

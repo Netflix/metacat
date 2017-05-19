@@ -17,7 +17,7 @@
  */
 package com.netflix.metacat.common.server.util;
 
-import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.spectator.api.Gauge;
 import com.netflix.spectator.api.Registry;
 import com.netflix.spectator.api.Spectator;
@@ -78,11 +78,11 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
      */
     public void setMetricName(final String metricName) {
         metricNameIdleGauage = registry.gauge(
-            registry.createId(LogConstants.GaugeConnectionsIdle + "." + metricName));
+            registry.createId(Metrics.GaugeConnectionsIdle + "." + metricName));
         metricNameActiveGauage = registry.gauge(
-            registry.createId(LogConstants.GaugeConnectionsActive + "." + metricName));
+            registry.createId(Metrics.GaugeConnectionsActive + "." + metricName));
         metricNameTotalGauage = registry.gauge(
-            registry.createId(LogConstants.GaugeConnectionsTotal + "." + metricName));
+            registry.createId(Metrics.GaugeConnectionsTotal + "." + metricName));
 
     }
 

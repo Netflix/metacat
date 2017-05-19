@@ -31,7 +31,7 @@ import com.netflix.metacat.common.server.connectors.exception.InvalidMetaExcepti
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.PartitionAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExistsException;
-import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
@@ -70,8 +70,8 @@ public final class RequestWrapper {
     @Autowired
     public RequestWrapper(@NotNull @NonNull final Registry registry) {
         this.registry = registry;
-        requestCounterId = registry.createId(LogConstants.CounterRequestCount.name());
-        requestTimerId = registry.createId(LogConstants.TimerRequest.name());
+        requestCounterId = registry.createId(Metrics.CounterRequestCount.name());
+        requestTimerId = registry.createId(Metrics.TimerRequest.name());
     }
 
     /**
@@ -128,7 +128,7 @@ public final class RequestWrapper {
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                     e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
-            tags.put(LogConstants.Status.name(), LogConstants.StatusFailure.name());
+            tags.put(Metrics.Status.name(), Metrics.StatusFailure.name());
             registry.counter(requestCounterId.withTags(tags)).increment();
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } catch (UserMetadataServiceException e) {
@@ -136,7 +136,7 @@ public final class RequestWrapper {
                     e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             throw new MetacatUserMetadataException(message);
         } catch (Exception e) {
-            tags.put(LogConstants.Status.name(), LogConstants.StatusFailure.name());
+            tags.put(Metrics.Status.name(), Metrics.StatusFailure.name());
             registry.counter(requestCounterId.withTags(tags)).increment();
 
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
@@ -177,7 +177,7 @@ public final class RequestWrapper {
             throw new MetacatBadRequestException(String.format("%s.%s", e.getMessage(),
                     e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (Exception e) {
-            tags.put(LogConstants.Status.name(), LogConstants.StatusFailure.name());
+            tags.put(Metrics.Status.name(), Metrics.StatusFailure.name());
             registry.counter(requestCounterId.withTags(tags)).increment();
             final String message = String
                     .format("%s.%s -- %s failed.",

@@ -38,7 +38,7 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
-import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
@@ -315,8 +315,8 @@ public class ElasticSearchMetacatRefresh {
                 }
             } catch (Exception e) {
                 log.error("Full refresh of metacat index failed", e);
-                registry.counter(registry.createId(LogConstants.CounterElasticSearchRefresh.name())
-                        .withTags(LogConstants.getStatusFailureMap())).increment();
+                registry.counter(registry.createId(Metrics.CounterElasticSearchRefresh.name())
+                        .withTags(Metrics.getStatusFailureMap())).increment();
             } finally {
                 try {
                     shutdown(service);
@@ -324,7 +324,7 @@ public class ElasticSearchMetacatRefresh {
                 } finally {
                     isElasticSearchMetacatRefreshAlreadyRunning.set(false);
                     final long duration = registry.clock().monotonicTime() - start;
-                    this.registry.timer(LogConstants.TimerElasticSearchRefresh.name()
+                    this.registry.timer(Metrics.TimerElasticSearchRefresh.name()
                             + "." + requestName).record(duration, TimeUnit.MILLISECONDS);
                     log.info("### Time taken to complete {} is {} ms", requestName, duration);
                 }
@@ -332,7 +332,7 @@ public class ElasticSearchMetacatRefresh {
 
         } else {
             log.info("Full refresh of metacat index is already running.");
-            registry.counter(registry.createId(LogConstants.CounterElasticSearchRefreshAlreadyRunning.name()))
+            registry.counter(registry.createId(Metrics.CounterElasticSearchRefreshAlreadyRunning.name()))
                     .increment();
         }
     }
@@ -407,7 +407,7 @@ public class ElasticSearchMetacatRefresh {
                 log.info("Count of unmarked databases({}) is more than the threshold {}", unmarkedDatabaseDtos.size(),
                         config.getElasticSearchThresholdUnmarkedDatabasesDelete());
                 registry.counter(
-                        registry.createId(LogConstants.CounterElasticSearchUnmarkedDatabaseThreshholdReached.name()))
+                        registry.createId(Metrics.CounterElasticSearchUnmarkedDatabaseThreshholdReached.name()))
                         .increment();
             }
         }
@@ -455,7 +455,7 @@ public class ElasticSearchMetacatRefresh {
                 log.info("Count of unmarked tables({}) is more than the threshold {}", unmarkedTableDtos.size(),
                         config.getElasticSearchThresholdUnmarkedTablesDelete());
                 registry.counter(
-                        registry.createId(LogConstants.CounterElasticSearchUnmarkedTableThreshholdReached.name()))
+                        registry.createId(Metrics.CounterElasticSearchUnmarkedTableThreshholdReached.name()))
                         .increment();
 
             }

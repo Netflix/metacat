@@ -39,7 +39,7 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPreEv
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
-import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
@@ -111,9 +111,9 @@ public class PartitionServiceImpl implements PartitionService {
         this.eventBus = eventBus;
         this.converterUtil = converterUtil;
         this.registry = registry;
-        this.partitionGetCountId = registry.createId(LogConstants.GaugeGetPartitionsCount.toString());
-        this.partitionAddedCountId = registry.createId(LogConstants.GaugeAddPartitions.toString());
-        this.partitionDeletedCountId = registry.createId(LogConstants.GaugeDeletePartitions.toString());
+        this.partitionGetCountId = registry.createId(Metrics.GaugeGetPartitionsCount.toString());
+        this.partitionAddedCountId = registry.createId(Metrics.GaugeAddPartitions.toString());
+        this.partitionDeletedCountId = registry.createId(Metrics.GaugeDeletePartitions.toString());
     }
 
     @Override

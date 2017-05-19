@@ -18,7 +18,7 @@ package com.netflix.metacat.connector.hive.client.embedded;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.metastore.IMetacatHMSHandler;
@@ -111,7 +111,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
         if (ex.getCause() instanceof SQLException || ex.getMessage().startsWith(EXCEPTION_JDO_PREFIX)
                 || ex.getMessage().contains(EXCEPTION_SQL_PREFIX)
                 || ex.getMessage().contains(EX_MESSAGE_RESTART_TRANSACTION)) {
-            registry.counter(LogConstants.CounterHiveSqlLockError.name() + "." + catalogName).increment();
+            registry.counter(Metrics.CounterHiveSqlLockError.name() + "." + catalogName).increment();
         }
     }
 

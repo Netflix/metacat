@@ -42,7 +42,7 @@ import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
-import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
@@ -1695,7 +1695,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     private <R> R requestWrapper(final String methodName, final Object[] args, final ThriftSupplier<R> supplier)
         throws TException {
         final long start = registry.clock().monotonicTime();
-        registry.counter(registry.createId(LogConstants.CounterThrift.name() + "." + methodName)).increment();
+        registry.counter(registry.createId(Metrics.CounterThrift.name() + "." + methodName)).increment();
         try {
             log.info("+++ Thrift({}): Calling {}({})", catalogName, methodName, args);
             return supplier.get();
@@ -1709,8 +1709,8 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             log.error(e.getMessage(), e);
             throw e;
         } catch (Exception e) {
-            registry.counter(registry.createId(LogConstants.CounterThrift.name() + "." + methodName)
-                .withTags(LogConstants.getStatusFailureMap())).increment();
+            registry.counter(registry.createId(Metrics.CounterThrift.name() + "." + methodName)
+                .withTags(Metrics.getStatusFailureMap())).increment();
             final String message = String.format("%s -- %s failed", e.getMessage(), methodName);
             log.error(message, e);
             final MetaException me = new MetaException(message);
@@ -1718,7 +1718,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             throw me;
         } finally {
             final long duration = registry.clock().monotonicTime() - start;
-             this.registry.timer(LogConstants.TimerThriftRequest.name()
+             this.registry.timer(Metrics.TimerThriftRequest.name()
                   + "." + methodName).record(duration, TimeUnit.MILLISECONDS);
             log.info("+++ Thrift({}): Time taken to complete {} is {} ms", catalogName, methodName, duration);
         }

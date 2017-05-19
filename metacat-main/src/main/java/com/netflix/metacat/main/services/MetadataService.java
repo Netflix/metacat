@@ -17,7 +17,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
@@ -127,7 +127,7 @@ public class MetadataService {
                 }
             }
         } catch (Exception e) {
-            registry.counter(LogConstants.CounterDeleteMetaData.name()).increment();
+            registry.counter(Metrics.CounterDeleteMetaData.name()).increment();
             log.warn("Failed deleting data metadata", e);
         }
         log.info("End deleting data metadata");

@@ -32,7 +32,7 @@ import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
-import com.netflix.metacat.common.server.monitoring.LogConstants;
+import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
@@ -187,7 +187,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             final long duration = registry.clock().monotonicTime() - start;
             log.info("###### Time taken to complete "
                 + "HiveConnectorFastPartitionService.getPartitions is {} ms", duration);
-            this.registry.timer(LogConstants.TimerHiveGetPartitions.name()).record(duration, TimeUnit.MILLISECONDS);
+            this.registry.timer(Metrics.TimerHiveGetPartitions.name()).record(duration, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -443,7 +443,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             log.warn("Experiment: Get partitions for for table {} filter {}"
                     + " failed with error {}", tableName, filterExpression,
                 e.getMessage());
-            registry.counter(LogConstants.CounterHiveExperimentGetTablePartitionsFailure.name()).increment();
+            registry.counter(Metrics.CounterHiveExperimentGetTablePartitionsFailure.name()).increment();
 
             partitions = gethandlerresults(databaseName, tableName,
                 filterExpression, partitionIds, sql, resultSetHandler, null,

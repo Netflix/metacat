@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * Log constants.
  */
-public enum LogConstants {
+public enum Metrics {
     /**
      * General logging constants.
      */
@@ -119,7 +119,7 @@ public enum LogConstants {
 
     private final String constant;
 
-    LogConstants(final String constant) {
+    Metrics(final String constant) {
         this.constant = constant;
     }
 
@@ -129,10 +129,10 @@ public enum LogConstants {
     }
 
     public static Map<String, String> getStatusSuccessMap() {
-        return ImmutableMap.of(LogConstants.Status.name(), LogConstants.StatusSuccess.name());
+        return ImmutableMap.of(Metrics.Status.name(), Metrics.StatusSuccess.name());
     }
 
     public static Map<String, String> getStatusFailureMap() {
-        return ImmutableMap.of(LogConstants.Status.name(), LogConstants.StatusFailure.name());
+        return ImmutableMap.of(Metrics.Status.name(), Metrics.StatusFailure.name());
     }
 }
