@@ -41,6 +41,7 @@ import com.netflix.metacat.common.server.connectors.exception.CatalogNotFoundExc
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.spi.MetacatCatalogConfig;
 import lombok.NonNull;
+import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
@@ -102,8 +103,10 @@ public class ConnectorManager {
      * @param connectorType connector type
      * @param properties    properties
      */
-    synchronized void createConnection(final String catalogName, final String connectorType,
-                                       final Map<String, String> properties) {
+    synchronized void createConnection(final String catalogName,
+                                       final String connectorType,
+                                       final Map<String, String> properties,
+                                       final Registry registry) {
         Preconditions.checkState(!stopped.get(), "ConnectorManager is stopped");
         Preconditions.checkNotNull(catalogName, "catalogName is null");
         Preconditions.checkNotNull(connectorType, "connectorName is null");
@@ -113,7 +116,8 @@ public class ConnectorManager {
         if (connectorPlugin != null) {
             Preconditions
                 .checkState(!connectorFactories.containsKey(catalogName), "A connector %s already exists", catalogName);
-            final ConnectorFactory connectorFactory = connectorPlugin.create(this.config, catalogName, properties);
+            final ConnectorFactory connectorFactory =
+                connectorPlugin.create(this.config, catalogName, properties, registry);
             connectorFactories.put(catalogName, connectorFactory);
 
             final MetacatCatalogConfig catalogConfig =

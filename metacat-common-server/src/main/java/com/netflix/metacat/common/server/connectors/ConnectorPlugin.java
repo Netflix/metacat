@@ -19,6 +19,8 @@
 package com.netflix.metacat.common.server.connectors;
 
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.spectator.api.Registry;
+import lombok.NonNull;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -44,14 +46,15 @@ public interface ConnectorPlugin {
      * @param config        System config
      * @param connectorName connector name. This is also the catalog name.
      * @param configuration configuration properties
+     * @param registry      registry for spectator
      * @return connector factory
      */
     ConnectorFactory create(
         @Nonnull Config config,
         @Nonnull String connectorName,
-        @Nonnull Map<String, String> configuration
+        @Nonnull Map<String, String> configuration,
+        @Nonnull @NonNull Registry registry
     );
-
 
     /**
      * Returns the partition service implementation of the connector.

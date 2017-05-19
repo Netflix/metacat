@@ -29,6 +29,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
+import com.netflix.spectator.api.Registry;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -74,14 +75,16 @@ public class CommonServerConfig {
      *
      * @param eventPublisher   The synchronous event publisher
      * @param eventMulticaster The asynchronous event publisher
+     * @param registry         registry for spectator
      * @return The event bus to use.
      */
     @Bean
     public MetacatEventBus metacatEventBus(
         final ApplicationEventPublisher eventPublisher,
-        final ApplicationEventMulticaster eventMulticaster
+        final ApplicationEventMulticaster eventMulticaster,
+        final Registry registry
     ) {
-        return new MetacatEventBus(eventPublisher, eventMulticaster);
+        return new MetacatEventBus(eventPublisher, eventMulticaster, registry);
     }
 
     /**

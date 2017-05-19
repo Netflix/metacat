@@ -19,6 +19,7 @@ package com.netflix.metacat.thrift;
 import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.PartitionV1;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.spectator.api.Registry;
 import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.server.TServerEventHandler;
@@ -31,6 +32,7 @@ public class CatalogThriftService extends AbstractThriftServer {
     private final HiveConverters hiveConverters;
     private final MetacatV1 metacatV1;
     private final PartitionV1 partitionV1;
+    private final Registry registry;
 
     /**
      * Constructor.
@@ -41,20 +43,21 @@ public class CatalogThriftService extends AbstractThriftServer {
      * @param partitionV1    Partition V1 resource
      * @param catalogName    catalog name
      * @param portNumber     port
+     * @param registry       registry for spectator
      */
-    public CatalogThriftService(
-        final Config config,
-        final HiveConverters hiveConverters,
-        final MetacatV1 metacatV1,
-        final PartitionV1 partitionV1,
-        final String catalogName,
-        final int portNumber
-    ) {
+    public CatalogThriftService(final Config config,
+                                final HiveConverters hiveConverters,
+                                final MetacatV1 metacatV1,
+                                final PartitionV1 partitionV1,
+                                final String catalogName,
+                                final int portNumber,
+                                final Registry registry) {
         super(config, portNumber, "thrift-pool-" + catalogName + "-" + portNumber + "-%d");
         this.hiveConverters = hiveConverters;
         this.metacatV1 = metacatV1;
         this.partitionV1 = partitionV1;
         this.catalogName = catalogName;
+        this.registry = registry;
     }
 
     /**
@@ -63,7 +66,7 @@ public class CatalogThriftService extends AbstractThriftServer {
     @Override
     public TProcessor getProcessor() {
         return new ThriftHiveMetastore.Processor<>(
-            new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName));
+                new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry));
     }
 
     /**

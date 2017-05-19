@@ -101,6 +101,10 @@ configure(javaProjects) {
             dependency("com.amazon.redshift:redshift-jdbc42:1.2.1.1001")
             dependency("com.github.fge:json-patch:1.9")
             dependency("com.github.rholder:guava-retrying:2.0.0")
+            dependencySet(group: "com.netflix.spectator", version: "0.55.0") {
+                entry "spectator-api"
+                entry "spectator-reg-servo"
+            }
             // Guava even with guava.version set to 19.0 in properties keeps going back to 18.0 without this.
             dependency("com.google.guava:guava:19.0")
             dependencySet(group: "com.google.inject.extensions", version: "4.0") {

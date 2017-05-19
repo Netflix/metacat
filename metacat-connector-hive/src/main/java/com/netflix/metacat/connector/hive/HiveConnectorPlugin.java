@@ -23,6 +23,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
+import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
@@ -41,29 +42,41 @@ public class HiveConnectorPlugin implements ConnectorPlugin {
     public static final String CONNECTOR_TYPE = "hive";
     private static final HiveTypeConverter HIVE_TYPE_CONVERTER = new HiveTypeConverter();
     private static final ConnectorInfoConverter INFO_CONVERTER_HIVE =
-        new HiveConnectorInfoConverter(HIVE_TYPE_CONVERTER);
-
+            new HiveConnectorInfoConverter(HIVE_TYPE_CONVERTER);
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getType() {
         return CONNECTOR_TYPE;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConnectorFactory create(
         @Nonnull @NonNull final Config config,
         @Nonnull final String catalogName,
-        @Nonnull final Map<String, String> configuration
+        @Nonnull final Map<String, String> configuration,
+        @Nonnull @NonNull final Registry registry
     ) {
         return new HiveConnectorFactory(
-            config, catalogName, configuration, (HiveConnectorInfoConverter) INFO_CONVERTER_HIVE
+            config, catalogName, configuration, (HiveConnectorInfoConverter) INFO_CONVERTER_HIVE, registry
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConnectorTypeConverter getTypeConverter() {
         return HIVE_TYPE_CONVERTER;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConnectorInfoConverter getInfoConverter() {
         return INFO_CONVERTER_HIVE;

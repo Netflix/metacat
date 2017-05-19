@@ -21,6 +21,7 @@ import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.thrift.CatalogThriftService;
 import com.netflix.metacat.thrift.CatalogThriftServiceFactory;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,12 +36,23 @@ public class MetacatThriftService {
     /**
      * Constructor.
      *
-     * @param c factory
-     * @param m connector manager
+     * @param catalogThriftServiceFactory factory
+     * @param connectorManager            connecter manager
      */
-    public MetacatThriftService(final CatalogThriftServiceFactory c, final ConnectorManager m) {
-        this.thriftServiceFactory = c;
-        this.connectorManager = m;
+    @Inject
+    public MetacatThriftService(final CatalogThriftServiceFactory catalogThriftServiceFactory,
+                                final ConnectorManager connectorManager) {
+        this.thriftServiceFactory = catalogThriftServiceFactory;
+        this.connectorManager = connectorManager;
+    }
+
+    protected List<CatalogThriftService> getCatalogThriftServices() {
+        return connectorManager.getCatalogs()
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getValue().isThriftInterfaceRequested())
+            .map(entry -> thriftServiceFactory.create(entry.getKey(), entry.getValue().getThriftPort()))
+            .collect(Collectors.toList());
     }
 
     /**
@@ -65,12 +77,4 @@ public class MetacatThriftService {
         }
     }
 
-    private List<CatalogThriftService> getCatalogThriftServices() {
-        return connectorManager.getCatalogs()
-            .entrySet()
-            .stream()
-            .filter(entry -> entry.getValue().isThriftInterfaceRequested())
-            .map(entry -> thriftServiceFactory.create(entry.getKey(), entry.getValue().getThriftPort()))
-            .collect(Collectors.toList());
-    }
 }

@@ -17,7 +17,8 @@
  */
 package com.netflix.metacat.common.server.events;
 
-import com.netflix.metacat.common.server.monitoring.CounterWrapper;
+import com.netflix.metacat.common.server.monitoring.Metrics;
+import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEvent;
@@ -38,19 +39,23 @@ public class MetacatEventBus {
 
     private final ApplicationEventPublisher eventPublisher;
     private final ApplicationEventMulticaster eventMulticaster;
+    private final Registry registry;
 
     /**
      * Constructor.
      *
      * @param eventPublisher   The synchronous event publisher to use
      * @param eventMulticaster The asynchronous event multicaster to use
+     * @param registry         The registry to spectator
      */
     public MetacatEventBus(
-        @Nonnull @NonNull final ApplicationEventPublisher eventPublisher,
-        @Nonnull @NonNull final ApplicationEventMulticaster eventMulticaster
+            @Nonnull @NonNull final ApplicationEventPublisher eventPublisher,
+            @Nonnull @NonNull final ApplicationEventMulticaster eventMulticaster,
+            @Nonnull @NonNull final Registry registry
     ) {
         this.eventPublisher = eventPublisher;
         this.eventMulticaster = eventMulticaster;
+        this.registry = registry;
     }
 
     /**
@@ -60,7 +65,7 @@ public class MetacatEventBus {
      */
     public void postAsync(final ApplicationEvent event) {
         log.debug("Received request to post an event {} asynchronously", event);
-        CounterWrapper.incrementCounter("metacat.events.async");
+        registry.counter(Metrics.CounterEventAsync.name()).increment();
         this.eventMulticaster.multicastEvent(event);
     }
 
@@ -71,7 +76,7 @@ public class MetacatEventBus {
      */
     public void postSync(final ApplicationEvent event) {
         log.debug("Received request to post an event {} synchronously", event);
-        CounterWrapper.incrementCounter("metacat.events.sync");
+        registry.counter(Metrics.CounterEventSync.name()).increment();
         this.eventPublisher.publishEvent(event);
     }
 

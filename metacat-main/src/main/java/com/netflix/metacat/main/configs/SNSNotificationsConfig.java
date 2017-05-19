@@ -22,6 +22,7 @@ import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.services.notifications.sns.SNSNotificationServiceImpl;
+import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -70,13 +71,15 @@ public class SNSNotificationsConfig {
      * @param amazonSNS    The SNS client to use
      * @param config       The system configuration abstraction to use
      * @param objectMapper The object mapper to use
+     * @param registry     registry for spectator
      * @return Configured Notification Service bean
      */
     @Bean
     public SNSNotificationServiceImpl snsNotificationService(
         final AmazonSNS amazonSNS,
         final Config config,
-        final ObjectMapper objectMapper
+        final ObjectMapper objectMapper,
+        final Registry registry
     ) {
         final String tableArn = config.getSnsTopicTableArn();
         if (StringUtils.isEmpty(tableArn)) {
@@ -92,6 +95,6 @@ public class SNSNotificationsConfig {
         }
 
         log.info("SNS notifications are enabled. Creating SNSNotificationServiceImpl bean.");
-        return new SNSNotificationServiceImpl(amazonSNS, tableArn, partitionArn, objectMapper);
+        return new SNSNotificationServiceImpl(amazonSNS, tableArn, partitionArn, objectMapper, registry);
     }
 }

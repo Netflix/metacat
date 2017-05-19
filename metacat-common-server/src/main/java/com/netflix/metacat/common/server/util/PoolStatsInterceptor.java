@@ -17,7 +17,10 @@
  */
 package com.netflix.metacat.common.server.util;
 
-import com.netflix.metacat.common.server.monitoring.DynamicGauge;
+import com.netflix.metacat.common.server.monitoring.Metrics;
+import com.netflix.spectator.api.Gauge;
+import com.netflix.spectator.api.Registry;
+import com.netflix.spectator.api.Spectator;
 import org.apache.tomcat.jdbc.pool.ConnectionPool;
 import org.apache.tomcat.jdbc.pool.JdbcInterceptor;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
@@ -35,9 +38,10 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
      * Metric name.
      */
     public static final String PROP_METRIC_NAME = "name";
-    private String metricNameTotal;
-    private String metricNameActive;
-    private String metricNameIdle;
+    private Gauge metricNameTotalGauage;
+    private Gauge metricNameActiveGauage;
+    private Gauge metricNameIdleGauage;
+    private final Registry registry = Spectator.globalRegistry();
 
     /**
      * Constructor.
@@ -57,10 +61,13 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
     }
 
     private void publishMetric(final ConnectionPool parent) {
-        if (parent != null && metricNameTotal != null) {
-            DynamicGauge.set(metricNameTotal, parent.getSize());
-            DynamicGauge.set(metricNameActive, parent.getActive());
-            DynamicGauge.set(metricNameIdle, parent.getIdle());
+        if (parent != null
+            && metricNameTotalGauage != null
+            && metricNameActiveGauage != null
+            && metricNameIdleGauage != null) {
+            metricNameTotalGauage.set(parent.getSize());
+            metricNameActiveGauage.set(parent.getActive());
+            metricNameIdleGauage.set(parent.getIdle());
         }
     }
 
@@ -70,9 +77,12 @@ public class PoolStatsInterceptor extends JdbcInterceptor {
      * @param metricName metric name
      */
     public void setMetricName(final String metricName) {
-        this.metricNameTotal = "dse.metacat.gauge." + metricName + ".connections.total";
-        this.metricNameActive = "dse.metacat.gauge." + metricName + ".connections.active";
-        this.metricNameIdle = "dse.metacat.gauge." + metricName + ".connections.idle";
+        metricNameIdleGauage = registry.gauge(
+            registry.createId(Metrics.GaugeConnectionsIdle + "." + metricName));
+        metricNameActiveGauage = registry.gauge(
+            registry.createId(Metrics.GaugeConnectionsActive + "." + metricName));
+        metricNameTotalGauage = registry.gauge(
+            registry.createId(Metrics.GaugeConnectionsTotal + "." + metricName));
 
     }
 

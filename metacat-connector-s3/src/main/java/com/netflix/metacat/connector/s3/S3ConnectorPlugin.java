@@ -20,6 +20,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter;
+import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
@@ -37,25 +38,37 @@ public class S3ConnectorPlugin implements ConnectorPlugin {
     private static final ConnectorInfoConverter INFO_CONVERTER_S3 =
         new S3ConnectorInfoConverter(PIG_TYPE_CONVERTER, true, TypeRegistry.getTypeRegistry());
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getType() {
         return CONNECTOR_TYPE;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConnectorFactory create(
         @Nonnull @NonNull final Config config,
         @Nonnull final String connectorName,
-        @Nonnull final Map<String, String> configuration
-    ) {
+        @Nonnull final Map<String, String> configuration,
+        @Nonnull @NonNull final Registry registry) {
         return new S3ConnectorFactory(connectorName, configuration, (S3ConnectorInfoConverter) getInfoConverter());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConnectorTypeConverter getTypeConverter() {
         return PIG_TYPE_CONVERTER;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConnectorInfoConverter getInfoConverter() {
         return INFO_CONVERTER_S3;

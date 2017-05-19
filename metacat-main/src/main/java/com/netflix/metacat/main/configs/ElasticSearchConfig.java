@@ -30,7 +30,8 @@ import com.netflix.metacat.main.services.TableService;
 import com.netflix.metacat.main.services.search.ElasticSearchMetacatRefresh;
 import com.netflix.metacat.main.services.search.ElasticSearchUtil;
 import com.netflix.metacat.main.services.search.ElasticSearchUtilImpl;
-import com.netflix.metacat.main.services.search.MetacatEventHandlers;
+import com.netflix.metacat.main.services.search.MetacatElasticSearchEventHandlers;
+import com.netflix.spectator.api.Registry;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
@@ -83,7 +84,6 @@ public class ElasticSearchConfig {
                         )
                 );
         }
-
         return client;
     }
 
@@ -93,26 +93,30 @@ public class ElasticSearchConfig {
      * @param client      The configured ElasticSearch client
      * @param config      System config
      * @param metacatJson JSON utilities
+     * @param registry    registry of spectator
      * @return The ElasticSearch utility instance
      */
     @Bean
     public ElasticSearchUtil elasticSearchUtil(
         final Client client,
         final Config config,
-        final MetacatJson metacatJson
+        final MetacatJson metacatJson,
+        final Registry registry
     ) {
-        return new ElasticSearchUtilImpl(client, config, metacatJson);
+        return new ElasticSearchUtilImpl(client, config, metacatJson, registry);
     }
 
     /**
      * Event handler instance to publish event payloads to ElasticSearch.
      *
      * @param elasticSearchUtil The client wrapper utility to use
+     * @param registry          registry of spectator
      * @return The event handler instance
      */
     @Bean
-    public MetacatEventHandlers metacatEventHandlers(final ElasticSearchUtil elasticSearchUtil) {
-        return new MetacatEventHandlers(elasticSearchUtil);
+    public MetacatElasticSearchEventHandlers metacatEventHandlers(final ElasticSearchUtil elasticSearchUtil,
+                                                                  final Registry registry) {
+        return new MetacatElasticSearchEventHandlers(elasticSearchUtil, registry);
     }
 
     /**
@@ -127,6 +131,7 @@ public class ElasticSearchConfig {
      * @param userMetadataService User metadata service
      * @param tagService          Tag service
      * @param elasticSearchUtil   ElasticSearch client wrapper
+     * @param registry            registry of spectator
      * @return The refresh bean
      */
     @Bean
@@ -139,7 +144,8 @@ public class ElasticSearchConfig {
         final PartitionService partitionService,
         final UserMetadataService userMetadataService,
         final TagService tagService,
-        final ElasticSearchUtil elasticSearchUtil
+        final ElasticSearchUtil elasticSearchUtil,
+        final Registry registry
     ) {
         return new ElasticSearchMetacatRefresh(
             config,
@@ -150,7 +156,8 @@ public class ElasticSearchConfig {
             partitionService,
             userMetadataService,
             tagService,
-            elasticSearchUtil
+            elasticSearchUtil,
+            registry
         );
     }
 }

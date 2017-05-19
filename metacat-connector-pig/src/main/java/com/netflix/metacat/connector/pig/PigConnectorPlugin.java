@@ -23,6 +23,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter;
+import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
@@ -47,7 +48,8 @@ public class PigConnectorPlugin implements ConnectorPlugin {
     public ConnectorFactory create(
         @Nonnull @NonNull final Config config,
         @Nonnull final String connectorName,
-        @Nonnull final Map<String, String> configuration
+        @Nonnull final Map<String, String> configuration,
+        @Nonnull @NonNull final Registry registry
     ) {
         return null;
     }

@@ -25,6 +25,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
+import com.netflix.spectator.api.Registry;
 
 import java.util.Map;
 
@@ -41,6 +42,7 @@ public class HiveConnectorModule extends AbstractModule {
     private final IMetacatHiveClient hiveMetastoreClient;
     private final boolean fastService;
     private final boolean allowRenameTable;
+    private final Registry registry;
 
     /**
      * Constructor.
@@ -50,13 +52,15 @@ public class HiveConnectorModule extends AbstractModule {
      * @param configuration       configuration properties
      * @param infoConverter       Hive info converter
      * @param hiveMetastoreClient hive metastore client
+     * @param registry            registry of spectator
      */
     HiveConnectorModule(
         final Config config,
         final String catalogName,
         final Map<String, String> configuration,
         final HiveConnectorInfoConverter infoConverter,
-        final IMetacatHiveClient hiveMetastoreClient
+        final IMetacatHiveClient hiveMetastoreClient,
+        final Registry registry
     ) {
         this.config = config;
         this.catalogName = catalogName;
@@ -68,6 +72,7 @@ public class HiveConnectorModule extends AbstractModule {
         this.allowRenameTable = Boolean.parseBoolean(
             configuration.getOrDefault(HiveConfigConstants.ALLOW_RENAME_TABLE, "false")
         );
+        this.registry = registry;
     }
 
     /**
@@ -82,6 +87,7 @@ public class HiveConnectorModule extends AbstractModule {
         this.bind(Boolean.class).annotatedWith(Names.named("allowRenameTable")).toInstance(allowRenameTable);
         this.bind(HiveConnectorInfoConverter.class).toInstance(infoConverter);
         this.bind(IMetacatHiveClient.class).toInstance(hiveMetastoreClient);
+        this.bind(Registry.class).toInstance(registry);
         this.bind(ConnectorDatabaseService.class).to(HiveConnectorDatabaseService.class).in(Scopes.SINGLETON);
         if (this.fastService) {
             this.bind(ConnectorPartitionService.class).to(HiveConnectorFastPartitionService.class).in(Scopes.SINGLETON);

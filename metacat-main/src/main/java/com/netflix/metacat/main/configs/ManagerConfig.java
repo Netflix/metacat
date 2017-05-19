@@ -24,6 +24,7 @@ import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.main.manager.CatalogManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.manager.PluginManager;
+import com.netflix.spectator.api.Registry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -78,13 +79,15 @@ public class ManagerConfig {
      *
      * @param connectorManager The connector manager to use
      * @param config           The system configuration to use
+     * @param registry         registry for spectator
      * @return Configured catalog manager
      */
     @Bean
     public CatalogManager catalogManager(
         final ConnectorManager connectorManager,
-        final Config config
+        final Config config,
+        final Registry registry
     ) {
-        return new CatalogManager(connectorManager, config);
+        return new CatalogManager(connectorManager, config, registry);
     }
 }
