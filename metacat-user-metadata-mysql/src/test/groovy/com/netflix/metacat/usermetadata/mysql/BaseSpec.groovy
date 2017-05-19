@@ -13,7 +13,10 @@
 
 package com.netflix.metacat.usermetadata.mysql
 
-import com.google.inject.Inject
+import com.netflix.metacat.common.json.MetacatJsonLocator
+import com.netflix.metacat.common.server.properties.DefaultConfigImpl
+import com.netflix.metacat.common.server.properties.MetacatProperties
+import com.netflix.metacat.common.server.util.DataSourceManager
 import io.airlift.testing.mysql.TestingMySqlServer
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -34,16 +37,24 @@ import static java.lang.String.format
 class BaseSpec extends Specification {
     private static final AtomicBoolean initialized = new AtomicBoolean();
     @Shared
-    TestingMySqlServer mysqlServer;
-    @Inject
+    TestingMySqlServer mysqlServer
     @Shared
-    MysqlUserMetadataService mysqlUserMetadataService;
+    MysqlUserMetadataService mysqlUserMetadataService
 
     def setupSpec() {
         if (!initialized.compareAndSet(false, true)) {
-            return;
+            return
         }
         setupMysql()
+
+        // TODO: Perhaps this should be mocked?
+        mysqlUserMetadataService = new MysqlUserMetadataService(
+            DataSourceManager.get(),
+            MetacatJsonLocator.INSTANCE,
+            new DefaultConfigImpl(
+                new MetacatProperties()
+            )
+        )
         mysqlUserMetadataService.start()
     }
 

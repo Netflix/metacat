@@ -82,7 +82,7 @@ dependencies {
 }
 
 task expandWar(type: Copy) {
-    dependsOn ':metacat-server:war'
+    dependsOn ':metacat-war:war'
 
     from { configurations.warproject.collect { zipTree(it) } }
     into file("${buildDir}/metacat-war-expanded/ROOT")
@@ -143,30 +143,30 @@ task metacatPorts {
 }
 
 task functionalTest(type: Test) {
-//    testClassesDir = sourceSets.functionalTest.output.classesDir
-//    classpath = sourceSets.functionalTest.runtimeClasspath
-//    outputs.upToDateWhen { false }
-//
-//    doFirst {
-//        def properties = [
-//                'metacat_http_port'                     : metacatPorts.http_port as String,
-//                'metacat_hive_thrift_port'              : metacatPorts.metacat_hive_thrift_port as String,
-//                'hive_thrift_port'                      : metacatPorts.hive_thrift_port as String,
-//                'metacat_embedded_hive_thrift_port'     : metacatPorts.metacat_embedded_hive_thrift_port as String,
-//                'org.slf4j.simpleLogger.defaultLogLevel': 'debug'
-//        ]
-//        System.properties.stringPropertyNames().findAll { it?.toLowerCase()?.contains("metacat") }.each {
-//            properties[it] = System.getProperty(it)
-//        }
-//        systemProperties = properties
-//    }
-//
-//    testLogging {
-//        showStandardStreams = true
-//    }
-//
-//    dependsOn 'expandWar', 'startMetacatCluster', 'metacatPorts'
-//    finalizedBy 'stopMetacatCluster'
+    testClassesDir = sourceSets.functionalTest.output.classesDir
+    classpath = sourceSets.functionalTest.runtimeClasspath
+    outputs.upToDateWhen { false }
+
+    doFirst {
+        def properties = [
+                'metacat_http_port'                     : metacatPorts.http_port as String,
+                'metacat_hive_thrift_port'              : metacatPorts.metacat_hive_thrift_port as String,
+                'hive_thrift_port'                      : metacatPorts.hive_thrift_port as String,
+                'metacat_embedded_hive_thrift_port'     : metacatPorts.metacat_embedded_hive_thrift_port as String,
+                'org.slf4j.simpleLogger.defaultLogLevel': 'debug'
+        ]
+        System.properties.stringPropertyNames().findAll { it?.toLowerCase()?.contains("metacat") }.each {
+            properties[it] = System.getProperty(it)
+        }
+        systemProperties = properties
+    }
+
+    testLogging {
+        showStandardStreams = true
+    }
+
+    dependsOn 'expandWar', 'startMetacatCluster', 'metacatPorts'
+    finalizedBy 'stopMetacatCluster'
 }
 
 clean {

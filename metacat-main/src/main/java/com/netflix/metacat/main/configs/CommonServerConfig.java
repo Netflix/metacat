@@ -23,8 +23,6 @@ import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.converter.DozerTypeConverter;
 import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
-import com.netflix.metacat.common.server.model.Lookup;
-import com.netflix.metacat.common.server.model.TagItem;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.common.server.util.DataSourceManager;
@@ -145,28 +143,6 @@ public class CommonServerConfig {
     @Bean
     public ConverterUtil converterUtil(final DozerTypeConverter dozerTypeConverter) {
         return new ConverterUtil(dozerTypeConverter);
-    }
-
-    /**
-     * The Lookup model object.
-     *
-     * @param config System configuration
-     * @return Lookup bean
-     */
-    @Bean
-    public Lookup lookup(final Config config) {
-        return new Lookup(config);
-    }
-
-    /**
-     * The tag item bean.
-     *
-     * @param config System configuration
-     * @return The tag item bean
-     */
-    @Bean
-    public TagItem tagItem(final Config config) {
-        return new TagItem(config);
     }
 
     /**

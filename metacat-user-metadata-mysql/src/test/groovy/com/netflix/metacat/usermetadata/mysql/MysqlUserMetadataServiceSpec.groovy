@@ -16,12 +16,10 @@ package com.netflix.metacat.usermetadata.mysql
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.testdata.provider.DataDtoProvider
-import spock.lang.Ignore
 
 /**
  * Created by amajumdar on 9/11/15.
  */
-@Ignore
 class MysqlUserMetadataServiceSpec extends BaseSpec {
     def testAll() {
         given:

@@ -24,11 +24,11 @@ import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
-import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import lombok.NonNull;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
@@ -88,7 +88,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             throw new InvalidMetaException(databaseName, exception);
         } catch (TException exception) {
             throw new ConnectorException(
-                    String.format("Failed creating hive database %s", databaseName), exception);
+                String.format("Failed creating hive database %s", databaseName), exception);
         }
     }
 
@@ -121,14 +121,14 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
         final QualifiedName databaseName = databaseInfo.getName();
         try {
             this.metacatHiveClient.alterDatabase(databaseName.getDatabaseName(),
-                    hiveMetacatConverters.fromDatabaseInfo(databaseInfo));
+                hiveMetacatConverters.fromDatabaseInfo(databaseInfo));
         } catch (NoSuchObjectException exception) {
             throw new DatabaseNotFoundException(databaseName, exception);
         } catch (MetaException | InvalidObjectException exception) {
             throw new InvalidMetaException(databaseName, exception);
         } catch (TException exception) {
             throw new ConnectorException(
-                    String.format("Failed updating hive database %s", databaseName), exception);
+                String.format("Failed updating hive database %s", databaseName), exception);
         }
     }
 
@@ -136,11 +136,17 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}.
      */
     @Override
-    public DatabaseInfo get(@Nonnull @NonNull final ConnectorContext requestContext,
-                            @Nonnull @NonNull final QualifiedName name) {
+    public DatabaseInfo get(
+        @Nonnull @NonNull final ConnectorContext requestContext,
+        @Nonnull @NonNull final QualifiedName name
+    ) {
         try {
             final Database database = metacatHiveClient.getDatabase(name.getDatabaseName());
-            return hiveMetacatConverters.toDatabaseInfo(name, database);
+            if (database != null) {
+                return hiveMetacatConverters.toDatabaseInfo(name, database);
+            } else {
+                throw new DatabaseNotFoundException(name);
+            }
         } catch (NoSuchObjectException exception) {
             throw new DatabaseNotFoundException(name, exception);
         } catch (MetaException exception) {
@@ -172,11 +178,11 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Override
     public List<QualifiedName> listNames(
-            @Nonnull @NonNull final ConnectorContext requestContext,
-            @Nonnull @NonNull final QualifiedName name,
-            @Nullable final QualifiedName prefix,
-            @Nullable final Sort sort,
-            @Nullable final Pageable pageable
+        @Nonnull @NonNull final ConnectorContext requestContext,
+        @Nonnull @NonNull final QualifiedName name,
+        @Nullable final QualifiedName prefix,
+        @Nullable final Sort sort,
+        @Nullable final Pageable pageable
     ) {
         try {
             final List<QualifiedName> qualifiedNames = Lists.newArrayList();
@@ -205,11 +211,11 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Override
     public List<DatabaseInfo> list(
-            @Nonnull @NonNull final ConnectorContext requestContext,
-            @Nonnull @NonNull final QualifiedName name,
-            @Nullable final QualifiedName prefix,
-            @Nullable final Sort sort,
-            @Nullable final Pageable pageable
+        @Nonnull @NonNull final ConnectorContext requestContext,
+        @Nonnull @NonNull final QualifiedName name,
+        @Nullable final QualifiedName prefix,
+        @Nullable final Sort sort,
+        @Nullable final Pageable pageable
     ) {
 
         try {

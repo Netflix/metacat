@@ -39,7 +39,6 @@ import org.apache.commons.dbutils.handlers.ColumnListHandler;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.io.Reader;
 import java.net.URL;
@@ -83,7 +82,6 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param metacatJson       json utility
      * @param config            config
      */
-    @Inject
     public MysqlUserMetadataService(
         final DataSourceManager dataSourceManager,
         final MetacatJson metacatJson,
@@ -95,8 +93,10 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
-    public void softDeleteDataMetadatas(final String user,
-                                        @Nonnull final List<String> uris) {
+    public void softDeleteDataMetadatas(
+        final String user,
+        @Nonnull final List<String> uris
+    ) {
         try {
             final Connection conn = poolingDataSource.getConnection();
             try {
@@ -119,13 +119,15 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public void deleteDataMetadatas(
-        @Nonnull final List<String> uris) {
+        @Nonnull final List<String> uris
+    ) {
         deleteDataMetadatasWithBatch(uris, true);
     }
 
     @Override
     public void deleteDataMetadataDeletes(
-        @Nonnull final List<String> uris) {
+        @Nonnull final List<String> uris
+    ) {
         deleteDataMetadatasWithBatch(uris, false);
     }
 
@@ -152,7 +154,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public void deleteDefinitionMetadatas(
-        @Nonnull final List<QualifiedName> names) {
+        @Nonnull final List<QualifiedName> names
+    ) {
         try {
             final Connection conn = poolingDataSource.getConnection();
             try {
@@ -213,8 +216,10 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @SuppressWarnings("checkstyle:methodname")
-    private Void _deleteDefinitionMetadatas(final Connection conn, @Nullable final List<QualifiedName> names)
-        throws SQLException {
+    private Void _deleteDefinitionMetadatas(
+        final Connection conn,
+        @Nullable final List<QualifiedName> names
+    ) throws SQLException {
         if (names != null && !names.isEmpty()) {
             final List<String> paramVariables = names.stream().map(s -> "?").collect(Collectors.toList());
             final String[] aNames = names.stream().map(QualifiedName::toString).toArray(String[]::new);
@@ -226,8 +231,10 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @SuppressWarnings("checkstyle:methodname")
-    private Void _softDeleteDataMetadatas(final Connection conn, final String userId, @Nullable final List<String> uris)
-        throws SQLException {
+    private Void _softDeleteDataMetadatas(
+        final Connection conn, final String userId,
+        @Nullable final List<String> uris
+    ) throws SQLException {
         if (uris != null && !uris.isEmpty()) {
             final List<String> paramVariables = uris.stream().map(s -> "?").collect(Collectors.toList());
             final String[] aUris = uris.stream().toArray(String[]::new);

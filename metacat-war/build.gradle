@@ -19,11 +19,7 @@
 apply plugin: "war"
 
 configurations {
-    all*.exclude module: "slf4j-jdk14"
-    all*.exclude module: "log4j-over-slf4j"
     all*.exclude module: "jsr311-api"
-    all*.exclude module: "logback-classic"
-    all*.exclude module: "logback-core"
     all*.exclude group: "com.sun.jersey"
 }
 
@@ -33,6 +29,8 @@ dependencies {
      *******************************/
 
     // TODO: Fix dependencies
+    compile(project(":metacat-common"))
+    compile(project(":metacat-common-server"))
     compile(project(":metacat-main"))
     compile(project(":metacat-user-metadata-mysql"))
 

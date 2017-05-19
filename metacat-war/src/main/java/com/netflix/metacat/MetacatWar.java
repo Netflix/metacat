@@ -33,7 +33,7 @@ public class MetacatWar extends SpringBootServletInitializer {
     /**
      * Constructor.
      */
-    protected MetacatWar() {
+    public MetacatWar() {
     }
 
     /**

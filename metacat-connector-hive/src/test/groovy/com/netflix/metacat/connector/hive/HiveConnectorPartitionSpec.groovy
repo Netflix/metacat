@@ -37,7 +37,6 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.hadoop.hive.metastore.api.Partition
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor
 import org.apache.thrift.TException
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -251,7 +250,6 @@ class HiveConnectorPartitionSpec extends Specification{
         noExceptionThrown()
     }
 
-    @Ignore
     @Unroll
     def "Test for savePartition exceptions" (){
         def client = Mock(MetacatHiveClient)
