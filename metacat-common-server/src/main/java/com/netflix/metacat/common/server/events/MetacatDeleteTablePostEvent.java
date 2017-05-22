@@ -36,6 +36,7 @@ import javax.annotation.Nonnull;
 public class MetacatDeleteTablePostEvent extends MetacatEvent {
 
     private final TableDto table;
+    private final boolean isMView;
 
     /**
      * Constructor.
@@ -51,7 +52,27 @@ public class MetacatDeleteTablePostEvent extends MetacatEvent {
         @Nonnull @NonNull final Object source,
         @Nonnull @NonNull final TableDto table
     ) {
+        this(name, requestContext, source, table, false);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param name           name
+     * @param requestContext context
+     * @param source         The source object which threw this event
+     * @param table          table info
+     * @param isMView        true, if the table is a materialized view
+     */
+    public MetacatDeleteTablePostEvent(
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final Object source,
+        @Nonnull @NonNull final TableDto table,
+        final boolean isMView
+    ) {
         super(name, requestContext, source);
         this.table = table;
+        this.isMView = isMView;
     }
 }
