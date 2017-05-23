@@ -31,6 +31,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
+import org.apache.commons.dbutils.handlers.ScalarHandler;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -54,6 +55,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private static final String SQL_GET_TABLE_NAMES_BY_URI =
         "select d.name schema_name, t.tbl_name table_name, s.location"
             + " from DBS d, TBLS t, SDS s where d.DB_ID=t.DB_ID and t.sd_id=s.sd_id";
+    private static final String SQL_EXIST_TABLE_BY_NAME =
+        "select 1 from DBS d join TBLS t on d.DB_ID=t.DB_ID where d.name=? and t.tbl_name=?";
     private final boolean allowRenameTable;
     private final ThreadServiceManager threadServiceManager;
     private final Registry registry;
@@ -85,6 +88,26 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         this.threadServiceManager = threadServiceManager;
         this.registry = registry;
         this.requestTimerId = registry.createId(Metrics.TimerFastHiveRequest.name());
+    }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public boolean exists(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
+        boolean result = false;
+        // Get data source
+        final DataSource dataSource = DataSourceManager.get().get(catalogName);
+        try (Connection conn = dataSource.getConnection()) {
+            final Object qResult = new QueryRunner().query(conn, SQL_EXIST_TABLE_BY_NAME,
+                new ScalarHandler(1), name.getDatabaseName(), name.getTableName());
+            if (qResult != null) {
+                result = true;
+            }
+        } catch (SQLException e) {
+            throw Throwables.propagate(e);
+        }
+        return result;
     }
 
     @Override
