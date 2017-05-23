@@ -17,9 +17,13 @@
  */
 package com.netflix.metacat.main.configs;
 
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.api.IndexResource;
 import com.netflix.metacat.main.api.MetacatJsonProvider;
 import com.netflix.metacat.main.api.MetacatRestFilter;
+import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.jaxrs.listing.ApiListingResource;
+import io.swagger.jaxrs.listing.SwaggerSerializers;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -60,5 +64,43 @@ public class ApiConfig {
     @Bean
     public MetacatJsonProvider metacatJsonProvider() {
         return new MetacatJsonProvider();
+    }
+
+    /**
+     * Swagger configuration.
+     *
+     * @param config The application configuration abstraction
+     * @return Swagger bean configuration
+     */
+    @Bean
+    public BeanConfig swaggerBeanConfig(final Config config) {
+        final BeanConfig beanConfig = new BeanConfig();
+        // TODO: put this back and remove hard coding
+//        beanConfig.setVersion(config.getMetacatVersion());
+        beanConfig.setVersion("1.1.0");
+        beanConfig.setBasePath("/");
+        beanConfig.setResourcePackage("com.netflix.metacat");
+        beanConfig.setScan(true);
+        return beanConfig;
+    }
+
+    /**
+     * Swagger API listing resource for Jersey.
+     *
+     * @return The API listing resource bean
+     */
+    @Bean
+    public ApiListingResource apiListingResource() {
+        return new ApiListingResource();
+    }
+
+    /**
+     * Swagger Serializers bean.
+     *
+     * @return The swagger serializers instance.
+     */
+    @Bean
+    public SwaggerSerializers swaggerSerializers() {
+        return new SwaggerSerializers();
     }
 }

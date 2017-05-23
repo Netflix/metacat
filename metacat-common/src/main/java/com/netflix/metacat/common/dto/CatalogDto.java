@@ -21,8 +21,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
-import com.wordnik.swagger.annotations.ApiModel;
-import com.wordnik.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Information about a catalog.
  */
-@ApiModel("Information about a catalog")
+@ApiModel(description = "Information about a catalog")
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)

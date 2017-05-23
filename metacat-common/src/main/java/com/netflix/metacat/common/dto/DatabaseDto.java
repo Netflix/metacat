@@ -21,8 +21,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
-import com.wordnik.swagger.annotations.ApiModel;
-import com.wordnik.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * Database information.
  */
-@ApiModel("Tables and other information about the given database")
+@ApiModel(description = "Tables and other information about the given database")
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)

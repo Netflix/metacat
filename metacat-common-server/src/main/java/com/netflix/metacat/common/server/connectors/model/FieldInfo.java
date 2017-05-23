@@ -18,7 +18,7 @@
 package com.netflix.metacat.common.server.connectors.model;
 
 import com.netflix.metacat.common.type.Type;
-import com.wordnik.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

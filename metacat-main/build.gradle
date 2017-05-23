@@ -44,6 +44,7 @@ dependencies {
     compile("com.github.rholder:guava-retrying") {
         exclude module: "guava"
     }
+    compile("io.swagger:swagger-jersey2-jaxrs")
     compile("org.springframework.boot:spring-boot-starter")
     compile("org.springframework.boot:spring-boot-starter-jersey")
     compile("org.springframework.boot:spring-boot-starter-logging")
