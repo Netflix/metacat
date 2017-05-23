@@ -22,6 +22,7 @@ import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.metastore.IMetacatHMSHandler;
+import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -35,9 +36,12 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Embedded hive metastore client implementation.
@@ -74,7 +78,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * DEFAULT_PRIVILEGES.
      */
     private static final Set<HivePrivilege> DEFAULT_PRIVILEGES =
-            Sets.newHashSet(HivePrivilege.DELETE, HivePrivilege.INSERT, HivePrivilege.SELECT, HivePrivilege.UPDATE);
+        Sets.newHashSet(HivePrivilege.DELETE, HivePrivilege.INSERT, HivePrivilege.SELECT, HivePrivilege.UPDATE);
 
 
     /**
@@ -85,6 +89,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     private final IMetacatHMSHandler handler;
     private final String catalogName;
     private final Registry registry;
+
+    private final Id requestTimerId;
 
     /**
      * Embedded hive client implementation.
@@ -100,6 +106,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
         this.catalogName = catalogName;
         this.handler = handler;
         this.registry = registry;
+        this.requestTimerId = registry.createId(Metrics.TimerHiveRequest.name());
     }
 
     @Override
@@ -109,8 +116,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
 
     private void handleSqlException(final TException ex) {
         if (ex.getCause() instanceof SQLException || ex.getMessage().startsWith(EXCEPTION_JDO_PREFIX)
-                || ex.getMessage().contains(EXCEPTION_SQL_PREFIX)
-                || ex.getMessage().contains(EX_MESSAGE_RESTART_TRANSACTION)) {
+            || ex.getMessage().contains(EXCEPTION_SQL_PREFIX)
+            || ex.getMessage().contains(EX_MESSAGE_RESTART_TRANSACTION)) {
             registry.counter(Metrics.CounterHiveSqlLockError.name() + "." + catalogName).increment();
         }
     }
@@ -120,7 +127,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void createDatabase(@Nonnull @NonNull final Database database) throws TException {
-        callWrap(() -> {
+        callWrap("createDatabase", () -> {
             handler.create_database(database);
             return null;
         });
@@ -131,7 +138,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void createTable(@Nonnull @NonNull final Table table) throws TException {
-        callWrap(() -> {
+        callWrap("createTable", () -> {
             handler.create_table(table);
             return null;
         });
@@ -142,7 +149,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void dropDatabase(@Nonnull @NonNull final String dbName) throws TException {
-        callWrap(() -> {
+        callWrap("dropDatabase", () -> {
             handler.drop_database(dbName, false, false);
             return null;
         });
@@ -155,14 +162,14 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public void dropPartitions(@Nonnull @NonNull final String databaseName,
                                @Nonnull @NonNull final String tableName,
                                @Nonnull @NonNull final List<String> partitionNames) throws
-            TException {
+        TException {
         dropHivePartitions(databaseName, tableName, partitionNames);
     }
 
     private void dropHivePartitions(final String dbName, final String tableName,
                                     final List<String> partitionNames)
-            throws TException {
-        callWrap(() -> {
+        throws TException {
+        callWrap("dropHivePartitions", () -> {
             final List<List<String>> dropParts = new ArrayList<>();
             for (String partName : partitionNames) {
                 dropParts.add(new ArrayList<>(PartitionUtil.getPartitionKeyValues(partName).values()));
@@ -178,7 +185,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     @Override
     public void alterDatabase(@Nonnull @NonNull final String databaseName,
                               @Nonnull @NonNull final Database database) throws TException {
-        callWrap(() -> {
+        callWrap("alterDatabase", () -> {
             handler.alter_database(databaseName, database);
             return null;
         });
@@ -189,7 +196,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public List<String> getAllDatabases() throws TException {
-        return callWrap(handler::get_all_databases);
+        return callWrap("getAllDatabases", handler::get_all_databases);
     }
 
     /**
@@ -205,7 +212,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public Database getDatabase(@Nonnull @NonNull final String databaseName) throws TException {
-        return callWrap(() -> handler.get_database(databaseName));
+        return callWrap("getDatabase", () -> handler.get_database(databaseName));
     }
 
     /**
@@ -213,7 +220,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public List<String> getAllTables(@Nonnull @NonNull final String databaseName) throws TException {
-        return callWrap(() -> {
+        return callWrap("getAllTables", () -> {
             final List<String> tables = handler.get_all_tables(databaseName);
             if (tables.isEmpty()) {
                 handler.get_database(databaseName);
@@ -228,11 +235,11 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     @Override
     public Table getTableByName(@Nonnull @NonNull final String databaseName,
                                 @Nonnull @NonNull final String tableName) throws TException {
-        return callWrap(() -> loadTable(databaseName, tableName));
+        return callWrap("getTableByName", () -> loadTable(databaseName, tableName));
     }
 
     private Table loadTable(final String dbName, final String tableName) throws TException {
-        return callWrap(() -> handler.get_table(dbName, tableName));
+        return callWrap("loadTable", () -> handler.get_table(dbName, tableName));
     }
 
     /**
@@ -242,7 +249,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public void alterTable(@Nonnull @NonNull final String databaseName,
                            @Nonnull @NonNull final String tableName,
                            @Nonnull @NonNull final Table table) throws TException {
-        callWrap(() -> {
+        callWrap("alterTable", () -> {
             handler.alter_table(databaseName, tableName, table);
             return null;
         });
@@ -255,7 +262,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public void alterPartitions(@Nonnull @NonNull final String dbName,
                                 @Nonnull @NonNull final String tableName,
                                 @Nonnull @NonNull final List<Partition> partitions) throws TException {
-        callWrap(() -> {
+        callWrap("alterPartitions", () -> {
             handler.alter_partitions(dbName, tableName, partitions);
             return null;
         });
@@ -269,7 +276,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
                                   @Nonnull @NonNull final String tableName,
                                   @Nonnull @NonNull final List<Partition> addParts,
                                   @Nonnull @NonNull final List<String> dropPartNames) throws TException {
-        callWrap(() -> {
+        callWrap("addDropPartitions", () -> {
             final List<List<String>> dropParts = new ArrayList<>();
             for (String partName : dropPartNames) {
                 dropParts.add(new ArrayList<>(PartitionUtil.getPartitionKeyValues(partName).values()));
@@ -285,7 +292,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     @Override
     public void dropTable(@Nonnull @NonNull final String databaseName,
                           @Nonnull @NonNull final String tableName) throws TException {
-        callWrap(() -> {
+        callWrap("dropTable", () -> {
             handler.drop_table(databaseName, tableName, false);
             return null;
         });
@@ -300,7 +307,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
                        @Nonnull @NonNull final String oldTableName,
                        @Nonnull @NonNull final String newdatabadeName,
                        @Nonnull @NonNull final String newTableName) throws TException {
-        callWrap(() -> {
+        callWrap("rename", () -> {
             final Table table = new Table(loadTable(databaseName, oldTableName));
             table.setDbName(newdatabadeName);
             table.setTableName(newTableName);
@@ -317,7 +324,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public List<Partition> getPartitions(@Nonnull @NonNull final String databaseName,
                                          @Nonnull @NonNull final String tableName,
                                          @Nullable final List<String> partitionNames) throws TException {
-        return callWrap(() -> {
+        return callWrap("getPartitions", () -> {
             if (partitionNames != null && !partitionNames.isEmpty()) {
                 return handler.get_partitions_by_names(databaseName, tableName, partitionNames);
             }
@@ -332,7 +339,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public int getPartitionCount(@Nonnull @NonNull final String databaseName,
                                  @Nonnull @NonNull final String tableName) throws TException {
 
-        return callWrap(() -> getPartitions(databaseName, tableName, null).size());
+        return callWrap("getPartitionCount",
+            () -> getPartitions(databaseName, tableName, null).size());
     }
 
     /**
@@ -342,8 +350,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     @SuppressWarnings("unchecked")
     public List<String> getPartitionNames(@Nonnull @NonNull final String databaseName,
                                           @Nonnull @NonNull final String tableName)
-            throws TException {
-        return callWrap(() -> handler.get_partition_names(databaseName, tableName, ALL_RESULTS));
+        throws TException {
+        return callWrap("getPartitionNames",
+            () -> handler.get_partition_names(databaseName, tableName, ALL_RESULTS));
     }
 
     /**
@@ -355,10 +364,15 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
                                                   @Nonnull @NonNull final String tableName,
                                                   @Nonnull @NonNull final String filter
     ) throws TException {
-        return callWrap(() -> handler.get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS));
+        return callWrap("listPartitionsByFilter",
+            () -> handler.get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS));
     }
 
-    private <R> R callWrap(final Callable<R> supplier) throws TException {
+    private <R> R callWrap(final String requestName, final Callable<R> supplier) throws TException {
+        final long start = registry.clock().monotonicTime();
+        final Map<String, String> tags = new HashMap<String, String>();
+        tags.put("request", requestName);
+
         try {
             return supplier.call();
         } catch (TException e) {
@@ -366,6 +380,11 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
             throw e;
         } catch (Exception e) {
             throw new TException(e.getMessage(), e.getCause());
+        } finally {
+            final long duration = registry.clock().monotonicTime() - start;
+            log.debug("### Time taken to complete {} is {} ms", requestName,
+                duration);
+            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
         }
     }
 }

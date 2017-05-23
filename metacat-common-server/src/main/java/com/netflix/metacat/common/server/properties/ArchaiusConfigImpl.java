@@ -20,6 +20,7 @@ public class ArchaiusConfigImpl /* implements Config */ {
 //    private final DynamicStringProperty defaultTypeConverter;
 //    private final DynamicBooleanProperty isElasticSearchEnabled;
 //    private final DynamicStringProperty elasticSearchIndexName;
+    /* THIS IS USED IN TEST*/
 //    private final DynamicStringProperty elasticSearchMergeIndexName;
 //    private final DynamicStringProperty elasticSearchClusterName;
 //    private final DynamicStringProperty elasticSearchClusterNodes;
@@ -32,6 +33,7 @@ public class ArchaiusConfigImpl /* implements Config */ {
 //    private final DynamicIntProperty elasticSearchScrollTimeout;
 //    private final DynamicIntProperty elasticSearchThresholdUnmarkedDatabasesDelete;
 //    private final DynamicIntProperty elasticSearchThresholdUnmarkedTablesDelete;
+
 //    private final DynamicBooleanProperty epochInSeconds;
 //    private final DynamicIntProperty eventBusExecutorThreadCount;
 //    private final DynamicIntProperty eventBusThreadCount;
@@ -44,6 +46,7 @@ public class ArchaiusConfigImpl /* implements Config */ {
 //    private final DynamicStringProperty metacatVersion;
 //    private final DynamicBooleanProperty usePigTypes;
 //    private final DynamicIntProperty serviceMaxNumberOfThreads;
+    /* THIS IS USED IN PRODUCTION*/
 //    private final DynamicStringProperty tableNamesToThrowErrorWhenNoFilterOnListPartitions;
 //    private final DynamicIntProperty dataMetadataDeleteMarkerLifetimeInDays;
 //    private final DynamicBooleanProperty canSoftDeleteDataMetadata;

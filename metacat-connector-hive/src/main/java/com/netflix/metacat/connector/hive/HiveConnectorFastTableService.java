@@ -21,10 +21,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.spectator.api.Id;
+import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
 
@@ -34,8 +38,10 @@ import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * HiveConnectorFastTableService.
@@ -43,12 +49,15 @@ import java.util.Map;
  * @author zhenl
  * @since 1.0.0
  */
+@Slf4j
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private static final String SQL_GET_TABLE_NAMES_BY_URI =
         "select d.name schema_name, t.tbl_name table_name, s.location"
             + " from DBS d, TBLS t, SDS s where d.DB_ID=t.DB_ID and t.sd_id=s.sd_id";
     private final boolean allowRenameTable;
     private final ThreadServiceManager threadServiceManager;
+    private final Registry registry;
+    private final Id requestTimerId;
 
     /**
      * Constructor.
@@ -59,6 +68,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param hiveMetacatConverters        hive converter
      * @param threadServiceManager         threadservicemanager
      * @param allowRenameTable             allow rename table
+     * @param registry                     registry for spectator
      */
     @Inject
     public HiveConnectorFastTableService(
@@ -67,11 +77,14 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         @Nonnull @NonNull final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters,
         final ThreadServiceManager threadServiceManager,
-        @Named("allowRenameTable") final boolean allowRenameTable
+        @Named("allowRenameTable") final boolean allowRenameTable,
+        @Nonnull @NonNull final Registry registry
     ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, allowRenameTable);
         this.allowRenameTable = allowRenameTable;
         this.threadServiceManager = threadServiceManager;
+        this.registry = registry;
+        this.requestTimerId = registry.createId(Metrics.TimerFastHiveRequest.name());
     }
 
     @Override
@@ -80,6 +93,9 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         @Nonnull final List<String> uris,
         final boolean prefixSearch
     ) {
+        final long start = registry.clock().monotonicTime();
+        final Map<String, String> tags = new HashMap<String, String>();
+        tags.put("request", "getTableNames");
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
         // Get data source
         final DataSource dataSource = DataSourceManager.get().get(catalogName);
@@ -121,6 +137,10 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
                 .query(conn, queryBuilder.toString(), handler, params.toArray());
         } catch (SQLException e) {
             throw Throwables.propagate(e);
+        } finally {
+            final long duration = registry.clock().monotonicTime() - start;
+            log.debug("### Time taken to complete getTableNames is {} ms", duration);
+            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
         }
         return result;
     }
