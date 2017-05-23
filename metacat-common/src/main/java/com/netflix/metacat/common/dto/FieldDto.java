@@ -17,8 +17,8 @@
  */
 package com.netflix.metacat.common.dto;
 
-import com.wordnik.swagger.annotations.ApiModel;
-import com.wordnik.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 /**
  * Field DTO.
  */
-@ApiModel(value = "Table field/column metadata")
+@ApiModel(description = "Table field/column metadata")
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)
