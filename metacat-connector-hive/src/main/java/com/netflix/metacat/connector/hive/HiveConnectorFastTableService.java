@@ -95,6 +95,9 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      */
     @Override
     public boolean exists(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
+        final long start = registry.clock().monotonicTime();
+        final Map<String, String> tags = new HashMap<String, String>();
+        tags.put("request", "exists");
         boolean result = false;
         // Get data source
         final DataSource dataSource = DataSourceManager.get().get(catalogName);
@@ -106,6 +109,10 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             }
         } catch (SQLException e) {
             throw Throwables.propagate(e);
+        } finally {
+            final long duration = registry.clock().monotonicTime() - start;
+            log.debug("### Time taken to complete exists is {} ms", duration);
+            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
         }
         return result;
     }
