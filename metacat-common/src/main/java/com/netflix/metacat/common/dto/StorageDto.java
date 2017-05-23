@@ -17,8 +17,8 @@
  */
 package com.netflix.metacat.common.dto;
 
-import com.wordnik.swagger.annotations.ApiModel;
-import com.wordnik.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -41,7 +41,7 @@ import java.util.Map;
  * }
  * </pre>
  */
-@ApiModel("Serialization/Deserialization metadata of the table data")
+@ApiModel(description = "Serialization/Deserialization metadata of the table data")
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)

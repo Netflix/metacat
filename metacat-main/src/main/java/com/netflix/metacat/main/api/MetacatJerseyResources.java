@@ -18,6 +18,8 @@
 package com.netflix.metacat.main.api;
 
 import com.netflix.metacat.common.server.properties.Config;
+import io.swagger.jaxrs.listing.ApiListingResource;
+import io.swagger.jaxrs.listing.SwaggerSerializers;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletProperties;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,5 +54,9 @@ public class MetacatJerseyResources extends ResourceConfig {
         if (config.isElasticSearchEnabled()) {
             this.register(SearchMetacatV1Resource.class);
         }
+
+        // Swagger
+        this.register(ApiListingResource.class);
+        this.register(SwaggerSerializers.class);
     }
 }

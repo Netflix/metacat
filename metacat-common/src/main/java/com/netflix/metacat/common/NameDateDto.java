@@ -18,7 +18,7 @@
 package com.netflix.metacat.common;
 
 import com.netflix.metacat.common.dto.BaseDto;
-import com.wordnik.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
