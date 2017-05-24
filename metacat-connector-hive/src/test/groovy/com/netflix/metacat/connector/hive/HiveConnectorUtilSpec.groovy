@@ -1,5 +1,6 @@
 package com.netflix.metacat.connector.hive
 
+import com.netflix.metacat.connector.hive.monitoring.HiveMetrics
 import spock.lang.Specification
 import spock.lang.Unroll
 

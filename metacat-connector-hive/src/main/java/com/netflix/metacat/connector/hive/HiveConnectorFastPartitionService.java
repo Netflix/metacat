@@ -32,7 +32,6 @@ import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
-import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
@@ -40,6 +39,7 @@ import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserE
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.PartitionDetail;
 import com.netflix.metacat.connector.hive.util.PartitionFilterGenerator;
 import com.netflix.spectator.api.Id;
@@ -136,7 +136,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         super(catalogName, metacatHiveClient, hiveMetacatConverters);
         this.threadServiceManager = threadServiceManager;
         this.registry = registry;
-        this.requestTimerId = registry.createId(Metrics.TimerFastHiveRequest.name());
+        this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
     }
 
     /**
@@ -152,7 +152,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     ) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
-        tags.put("request", "getPartitionCount");
+        tags.put("request", HiveMetrics.getPartitionCount.name());
         final Integer result;
         final DataSource dataSource = DataSourceManager.get().get(catalogName);
         try (Connection conn = dataSource.getConnection()) {
@@ -189,7 +189,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     ) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
-        tags.put("request", "getPartitions");
+        tags.put("request", HiveMetrics.getPartitions.name());
         try {
             return getpartitions(tableName.getDatabaseName(), tableName.getTableName(),
                 partitionsRequest.getPartitionNames(),
@@ -282,7 +282,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final boolean prefixSearch) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
-        tags.put("request", "getPartitionNames");
+        tags.put("request", HiveMetrics.getPartitionNames.name());
 
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
         // Get data source
@@ -471,7 +471,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             log.warn("Experiment: Get partitions for for table {} filter {}"
                     + " failed with error {}", tableName, filterExpression,
                 e.getMessage());
-            registry.counter(Metrics.CounterHiveExperimentGetTablePartitionsFailure.name()).increment();
+            registry.counter(HiveMetrics.CounterHiveExperimentGetTablePartitionsFailure.name()).increment();
 
             partitions = gethandlerresults(databaseName, tableName,
                 filterExpression, partitionIds, sql, resultSetHandler, null,

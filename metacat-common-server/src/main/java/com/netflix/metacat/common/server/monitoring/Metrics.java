@@ -19,7 +19,9 @@ import java.util.Map;
 
 //CHECKSTYLE:OFF
 /**
- * Log constants.
+ * Metric measures.
+ * @author zhenl
+ * @since 1.0.0
  */
 public enum Metrics {
     /**
@@ -48,11 +50,12 @@ public enum Metrics {
     CounterThrift(Name(Thrift, Count,   "request")),
 
     /**
-     * hive sql lock error.
+     * Gauge.
      */
-    Hive("hive"),
-    CounterHiveSqlLockError(Name(Hive, Count,"hiveSqlLockError")),
-    CounterHiveExperimentGetTablePartitionsFailure(Name(Hive, Count,"experimentGetPartitionsFailure")),
+    PartionService("partitionservice"),
+    GaugeAddPartitions(Name(PartionService, Metrics.Gauge, "partitionAdd")),
+    GaugeDeletePartitions(Name(PartionService, Metrics.Gauge, "partitionDelete")),
+    GaugeGetPartitionsCount(Name(PartionService, Metrics.Gauge, "partitionGet")),
 
     /**
      * metacat request.
@@ -100,13 +103,6 @@ public enum Metrics {
     CounterElasticSearchUnmarkedTableThreshholdReached(Name(ElasticSearch,Count,"unmarkedTablesThresholdReached")),
 
     /**
-     * Gauges.
-     */
-    GaugeAddPartitions(Name(Hive, Gauge,"partitionAdd")),
-    GaugeDeletePartitions(Name(Hive, Gauge,"partitionDelete")),
-    GaugeGetPartitionsCount(Name(Hive, Gauge,"partitionGet")),
-
-    /**
      * Jdbc Interceptor
      */
     JdbcInterceptor("jdbcinterceptor"),
@@ -118,8 +114,7 @@ public enum Metrics {
      * Timers.
      */
     TimerRequest(Name(Server, Timer,"requests")),
-    TimerHiveRequest(Name(Hive, Timer,"embeddedclient.requests")),
-    TimerFastHiveRequest(Name(Hive, Timer,"fast.requests")),
+
     TimerThriftRequest(Name(Thrift, Timer,"requests")),
     TimerElasticSearchRefresh(Name(ElasticSearch, Timer,"esRefresh")),
 

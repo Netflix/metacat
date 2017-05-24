@@ -21,10 +21,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
-import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
@@ -87,7 +87,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         this.allowRenameTable = allowRenameTable;
         this.threadServiceManager = threadServiceManager;
         this.registry = registry;
-        this.requestTimerId = registry.createId(Metrics.TimerFastHiveRequest.name());
+        this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
     }
 
     /**
@@ -97,7 +97,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     public boolean exists(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
-        tags.put("request", "exists");
+        tags.put("request", HiveMetrics.exists.name());
         boolean result = false;
         // Get data source
         final DataSource dataSource = DataSourceManager.get().get(catalogName);
@@ -125,7 +125,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     ) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
-        tags.put("request", "getTableNames");
+        tags.put("request", HiveMetrics.getTableNames.name());
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
         // Get data source
         final DataSource dataSource = DataSourceManager.get().get(catalogName);
