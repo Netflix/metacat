@@ -20,6 +20,13 @@ metacat:
   plugin:
     config:
       location: /etc/catalog
+  elasticsearch:
+    enabled: true
+    cluster:
+      name: es_dpa
+      nodes: 100.67.79.200
+    index:
+      name: metacatdev
 
 netflix:
   appinfo:
@@ -31,3 +38,5 @@ spring:
     name: metacat
   jersey:
     type: filter
+
+

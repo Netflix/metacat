@@ -147,7 +147,7 @@ public final class RequestWrapper {
             final long duration = registry.clock().monotonicTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
                     duration);
-            this.registry.timer(requestTimerId).record(duration, TimeUnit.MILLISECONDS);
+            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -189,7 +189,7 @@ public final class RequestWrapper {
             final long duration = registry.clock().monotonicTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
                     duration);
-            this.registry.timer(requestTimerId).record(duration, TimeUnit.MILLISECONDS);
+            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
         }
     }
 }
