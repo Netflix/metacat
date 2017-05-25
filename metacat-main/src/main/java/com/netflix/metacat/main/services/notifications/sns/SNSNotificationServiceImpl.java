@@ -45,7 +45,10 @@ import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import com.netflix.metacat.main.services.notifications.NotificationService;
+import com.netflix.servo.monitor.BasicTimer;
 import com.netflix.servo.monitor.DynamicCounter;
+import com.netflix.servo.monitor.MonitorConfig;
+import com.netflix.servo.monitor.Timer;
 import com.netflix.servo.tag.BasicTagList;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,6 +56,7 @@ import javax.annotation.Nonnull;
 import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of the NotificationService using Amazon SNS.
@@ -287,7 +291,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
     }
 
     private void handleException(final QualifiedName name, final String message, final String counterKey,
-        final SNSMessage payload, final Exception e) {
+                                 final SNSMessage payload, final Exception e) {
         log.error("{} with payload: {}", message, payload, e);
         DynamicCounter.increment(counterKey, BasicTagList.copyOf(name.parts()));
     }
@@ -332,8 +336,17 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final String arn,
         final SNSMessage<?> message
     ) throws JsonProcessingException {
-        final PublishResult result = client.publish(arn, mapper.writeValueAsString(message));
-        log.debug("Successfully published message {} to topic {} with id {}", message, arn,
-            result.getMessageId());
+        final Timer timer = new BasicTimer(
+            MonitorConfig
+                .builder("metacat.notifications.publish.delay")
+                .withTag("type", message.getClass().getSimpleName())
+                .build()
+        );
+        try {
+            final PublishResult result = client.publish(arn, mapper.writeValueAsString(message));
+            log.debug("Successfully published message {} to topic {} with id {}", message, arn, result.getMessageId());
+        } finally {
+            timer.record(System.currentTimeMillis() - message.getTimestamp(), TimeUnit.MILLISECONDS);
+        }
     }
 }
