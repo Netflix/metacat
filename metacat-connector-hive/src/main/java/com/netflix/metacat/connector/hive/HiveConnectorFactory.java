@@ -24,6 +24,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.util.DataSourceManager;
+import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;
 import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClientFactory;
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient;
@@ -87,6 +88,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
         }
         final Module hiveModule = new HiveConnectorModule(catalogName, configuration, infoConverter, client);
         this.injector = Guice.createInjector(hiveModule);
+        injector.getInstance(ThreadServiceManager.class).start();
     }
 
     private IMetacatHiveClient createLocalClient() throws Exception {
@@ -154,6 +156,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
     public void stop() {
         try {
             client.shutdown();
+            injector.getInstance(ThreadServiceManager.class).stop();
         } catch (TException e) {
             log.warn("Failed shutting down the catalog: {}", catalogName, e);
         }

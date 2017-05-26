@@ -132,7 +132,6 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                                              final ThreadServiceManager threadServiceManager) {
         super(catalogName, metacatHiveClient, hiveMetacatConverters);
         this.threadServiceManager = threadServiceManager;
-        this.threadServiceManager.start();
     }
 
     /**

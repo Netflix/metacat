@@ -46,6 +46,10 @@ public final class HiveConfigConstants {
      * USE_FASTPARTITION_SERVICE.
      */
     public static final String USE_FASTHIVE_SERVICE = "hive.use.embedded.fastservice";
+    /**
+     * USE_FASTPARTITION_SERVICE.
+     */
+    public static final String THREAD_POOL_SIZE = "hive.thread.pool.size";
 
     /**
      * USE_METASTORE_LOCAL.
