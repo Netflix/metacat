@@ -30,15 +30,14 @@ import com.netflix.metacat.common.dto.PartitionsSaveResponseDto
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.dto.notifications.sns.messages.*
 import com.netflix.metacat.common.server.events.*
+import com.netflix.metacat.common.server.monitoring.Metrics
 import com.netflix.spectator.api.Counter
-import com.netflix.spectator.api.DefaultId
-import com.netflix.spectator.api.DefaultRegistry
 import com.netflix.spectator.api.Id
-import com.netflix.spectator.api.NoopId
 import com.netflix.spectator.api.Registry
-import spock.lang.Shared
+import com.netflix.spectator.api.Timer
 import spock.lang.Specification
-import sun.security.krb5.internal.ccache.Tag
+
+import java.util.concurrent.TimeUnit
 
 /**
  * Tests for the SNSNotificationServiceImpl.
@@ -47,12 +46,6 @@ import sun.security.krb5.internal.ccache.Tag
  * @since 0.1.47
  */
 class SNSNotificationServiceImplSpec extends Specification {
-    @Shared
-    registry = Mock(Registry)
-    @Shared
-    id = Mock(Id)
-    @Shared
-    counter = Mock(Counter)
     def client = Mock(AmazonSNSClient)
     def qName = QualifiedName.fromString(
         UUID.randomUUID().toString()
@@ -68,15 +61,18 @@ class SNSNotificationServiceImplSpec extends Specification {
     def mapper = Mock(ObjectMapper)
     def partitionArn = UUID.randomUUID().toString()
     def tableArn = UUID.randomUUID().toString()
+    def registry = Mock(Registry)
+    def id = Mock(Id)
+    def counter = Mock(Counter)
+    def timer = Mock(Timer)
 
-    def service= new SNSNotificationServiceImpl(this.client, this.tableArn, this.partitionArn, this.mapper, this.registry)
-
-    def setupSpec(){
-        registry.createId(_ as String) >> id
-        id.withTags(_) >> id
-        registry.counter(_) >> counter
-        counter.increment()
-    }
+    def service = new SNSNotificationServiceImpl(
+        this.client,
+        this.tableArn,
+        this.partitionArn,
+        this.mapper,
+        this.registry
+    )
 
     def requestContext = new MetacatRequestContext(
         UUID.randomUUID().toString(),
@@ -105,6 +101,17 @@ class SNSNotificationServiceImplSpec extends Specification {
         1 * this.mapper.writeValueAsString(_ as UpdateTablePartitionsMessage) >> UUID.randomUUID().toString()
         3 * this.client.publish(this.partitionArn, _ as String) >> new PublishResult()
         1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        3 * this.registry.createId(Metrics.CounterSNSNotificationPartitionAdd.name()) >> this.id
+        1 * this.registry.createId(Metrics.CounterSNSNotificationTablePartitionAdd.name()) >> this.id
+        4 * this.id.withTags(Metrics.statusSuccessMap) >> this.id
+        4 * this.registry.counter(this.id) >> this.counter
+        4 * this.counter.increment()
+        4 * this.registry.timer(
+            Metrics.TimerNotificationsPublishDelay.name(),
+            "type",
+            _ as String
+        ) >> this.timer
+        4 * this.timer.record(_ as Long, _ as TimeUnit)
     }
 
     def "Will Notify On Partition Deletion"() {
@@ -131,6 +138,17 @@ class SNSNotificationServiceImplSpec extends Specification {
         1 * this.mapper.writeValueAsString(_ as UpdateTablePartitionsMessage) >> UUID.randomUUID().toString()
         5 * this.client.publish(this.partitionArn, _ as String) >> new PublishResult()
         1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        5 * this.registry.createId(Metrics.CounterSNSNotificationPartitionDelete.name()) >> this.id
+        1 * this.registry.createId(Metrics.CounterSNSNotificationTablePartitionDelete.name()) >> this.id
+        6 * this.id.withTags(Metrics.statusSuccessMap) >> this.id
+        6 * this.registry.counter(this.id) >> this.counter
+        6 * this.counter.increment()
+        6 * this.registry.timer(
+            Metrics.TimerNotificationsPublishDelay.name(),
+            "type",
+            _ as String
+        ) >> this.timer
+        6 * this.timer.record(_ as Long, _ as TimeUnit)
     }
 
     def "Will Notify On Table Creation"() {
@@ -147,6 +165,15 @@ class SNSNotificationServiceImplSpec extends Specification {
         then:
         1 * this.mapper.writeValueAsString(_ as CreateTableMessage) >> UUID.randomUUID().toString()
         1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        1 * this.registry.createId(Metrics.CounterSNSNotificationTableCreate.name()) >> this.id
+        1 * this.id.withTags(Metrics.statusSuccessMap) >> this.id
+        1 * this.registry.counter(this.id) >> this.counter
+        1 * this.registry.timer(
+            Metrics.TimerNotificationsPublishDelay.name(),
+            "type",
+            _ as String
+        ) >> this.timer
+        1 * this.timer.record(_ as Long, _ as TimeUnit)
     }
 
     def "Will Notify On Table Deletion"() {
@@ -163,6 +190,15 @@ class SNSNotificationServiceImplSpec extends Specification {
         then:
         1 * this.mapper.writeValueAsString(_ as DeleteTableMessage) >> UUID.randomUUID().toString()
         1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        1 * this.registry.createId(Metrics.CounterSNSNotificationTableDelete.name()) >> this.id
+        1 * this.id.withTags(Metrics.statusSuccessMap) >> this.id
+        1 * this.registry.counter(this.id) >> this.counter
+        1 * this.registry.timer(
+            Metrics.TimerNotificationsPublishDelay.name(),
+            "type",
+            _ as String
+        ) >> this.timer
+        1 * this.timer.record(_ as Long, _ as TimeUnit)
     }
 
     def "Will Notify On Table Rename"() {
@@ -181,6 +217,15 @@ class SNSNotificationServiceImplSpec extends Specification {
         2 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
         1 * this.mapper.writeValueAsString(_ as UpdateTableMessage) >> UUID.randomUUID().toString()
         1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        1 * this.registry.createId(Metrics.CounterSNSNotificationTableRename.name()) >> this.id
+        1 * this.id.withTags(Metrics.statusSuccessMap) >> this.id
+        1 * this.registry.counter(this.id) >> this.counter
+        1 * this.registry.timer(
+            Metrics.TimerNotificationsPublishDelay.name(),
+            "type",
+            _ as String
+        ) >> this.timer
+        1 * this.timer.record(_ as Long, _ as TimeUnit)
     }
 
     def "Will Notify On Table Update"() {
@@ -199,6 +244,15 @@ class SNSNotificationServiceImplSpec extends Specification {
         2 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
         1 * this.mapper.writeValueAsString(_ as UpdateTableMessage) >> UUID.randomUUID().toString()
         1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        1 * this.registry.createId(Metrics.CounterSNSNotificationTableUpdate.name()) >> this.id
+        1 * this.id.withTags(Metrics.statusSuccessMap) >> this.id
+        1 * this.registry.counter(this.id) >> this.counter
+        1 * this.registry.timer(
+            Metrics.TimerNotificationsPublishDelay.name(),
+            "type",
+            _ as String
+        ) >> this.timer
+        1 * this.timer.record(_ as Long, _ as TimeUnit)
     }
 
     def "Won't retry on Other Exception"() {
@@ -208,6 +262,8 @@ class SNSNotificationServiceImplSpec extends Specification {
             this,
             new TableDto()
         )
+        def tags = this.qName.parts()
+        tags.putAll(Metrics.statusFailureMap)
 
         when:
         this.service.notifyOfTableCreation(event)
@@ -215,5 +271,14 @@ class SNSNotificationServiceImplSpec extends Specification {
         then:
         1 * this.mapper.writeValueAsString(_ as CreateTableMessage) >> UUID.randomUUID().toString()
         1 * this.client.publish(this.tableArn, _ as String) >> { throw new NotFoundException("Exception") }
+        1 * this.registry.createId(Metrics.CounterSNSNotificationTableCreate.name()) >> this.id
+        1 * this.id.withTags(tags) >> this.id
+        1 * this.registry.counter(this.id) >> this.counter
+        1 * this.registry.timer(
+            Metrics.TimerNotificationsPublishDelay.name(),
+            "type",
+            _ as String
+        ) >> this.timer
+        1 * this.timer.record(_ as Long, _ as TimeUnit)
     }
 }
