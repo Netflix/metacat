@@ -31,7 +31,7 @@ public final class HiveConnectorUtil {
     /**
      * unitFor.
      *
-     * @param inputUnit        inputUnit
+     * @param inputUnit   inputUnit
      * @param defaultUnit defaultUnit
      * @return TimeUnit
      */
@@ -81,4 +81,6 @@ public final class HiveConnectorUtil {
         }
         return new String[]{value.substring(0, i), value.substring(i)};
     }
+
+
 }
