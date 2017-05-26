@@ -31,7 +31,7 @@ import java.util.List;
  * Search APIs for metacat that queries the search store.
  * @author amajumdar
  */
-@Path("mds/v1/search")
+@Path("v1/search")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface SearchMetacatV1 {

@@ -78,7 +78,7 @@ public class ApiConfig {
         // TODO: put this back and remove hard coding
 //        beanConfig.setVersion(config.getMetacatVersion());
         beanConfig.setVersion("1.1.0");
-        beanConfig.setBasePath("/");
+        beanConfig.setBasePath("/mds");
         beanConfig.setResourcePackage("com.netflix.metacat");
         beanConfig.setScan(true);
         return beanConfig;

@@ -39,7 +39,7 @@ import javax.ws.rs.core.Response;
  * @author zhenl
  * @since 1.0.0
  */
-@Path("mds/v1/resolver")
+@Path("v1/resolver")
 @Api(value = "ResolverV1",
         description = "Metadata resolver operations",
         produces = MediaType.APPLICATION_JSON,
