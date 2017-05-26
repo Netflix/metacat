@@ -43,6 +43,7 @@ public class HiveConnectorModule implements Module {
     private final IMetacatHiveClient hiveMetastoreClient;
     private final boolean fastService;
     private final boolean allowRenameTable;
+    private final int threadPoolSize;
 
     /**
      * Constructor.
@@ -62,12 +63,13 @@ public class HiveConnectorModule implements Module {
                 .parseBoolean(configuration.getOrDefault(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false"));
         this.allowRenameTable = Boolean
                 .parseBoolean(configuration.getOrDefault(HiveConfigConstants.ALLOW_RENAME_TABLE, "false"));
+        this.threadPoolSize = Integer.parseInt(configuration.getOrDefault(HiveConfigConstants.THREAD_POOL_SIZE, "20"));
     }
 
     @Override
     public void configure(final Binder binder) {
         binder.bind(Config.class).toInstance(new ArchaiusConfigImpl());
-        binder.bind(ThreadServiceManager.class).asEagerSingleton();
+        binder.bind(ThreadServiceManager.class).toInstance(new ThreadServiceManager(threadPoolSize, 1000, catalogName));
         binder.bind(String.class).annotatedWith(Names.named("catalogName")).toInstance(catalogName);
         binder.bind(Boolean.class).annotatedWith(Names.named("allowRenameTable")).toInstance(allowRenameTable);
         binder.bind(HiveConnectorInfoConverter.class).toInstance(infoConverter);

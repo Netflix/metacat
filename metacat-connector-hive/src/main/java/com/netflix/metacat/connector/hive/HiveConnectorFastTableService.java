@@ -22,7 +22,6 @@ import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.util.DataSourceManager;
-import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import lombok.NonNull;
 import org.apache.commons.dbutils.QueryRunner;
@@ -50,8 +49,6 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             + "from DBS d, TBLS t, SDS s where d.DB_ID=t.DB_ID and t.sd_id=s.sd_id";
     private static final String SQL_EXIST_TABLE_BY_NAME =
         "select 1 from DBS d join TBLS t on d.DB_ID=t.DB_ID where d.name=? and t.tbl_name=?";
-    private final boolean allowRenameTable;
-    private final ThreadServiceManager threadServiceManager;
 
     /**
      * Constructor.
@@ -60,7 +57,6 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param metacatHiveClient            hive client
      * @param hiveConnectorDatabaseService databaseService
      * @param hiveMetacatConverters        hive converter
-     * @param threadServiceManager         threadservicemanager
      * @param allowRenameTable             allow rename table
      */
     @Inject
@@ -68,12 +64,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
                                          @Nonnull @NonNull final IMetacatHiveClient metacatHiveClient,
     @Nonnull @NonNull final HiveConnectorDatabaseService hiveConnectorDatabaseService,
                                          @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters,
-                                         final ThreadServiceManager threadServiceManager,
                                          @Named("allowRenameTable") final boolean allowRenameTable) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, allowRenameTable);
-        this.allowRenameTable = allowRenameTable;
-        this.threadServiceManager = threadServiceManager;
-        this.threadServiceManager.start();
     }
 
     /**

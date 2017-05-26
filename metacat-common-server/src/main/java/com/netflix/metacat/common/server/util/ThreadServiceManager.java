@@ -35,16 +35,40 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class ThreadServiceManager {
     private ListeningExecutorService executor;
+    private final int maxThreads;
+    private final int maxQueueSize;
+    private final String usage;
+
+    /**
+     * Constructor taking in the config.
+     * @param config configurations
+     */
     @Inject
-    private Config config;
+    public ThreadServiceManager(final Config config) {
+        this.maxThreads = config.getServiceMaxNumberOfThreads();
+        this.maxQueueSize = 1000;
+        this.usage = "service";
+    }
+
+    /**
+     * Constructor.
+     * @param maxThreads maximum number of threads
+     * @param maxQueueSize maximum queue size
+     * @param usage an identifier where this pool is used
+     */
+    public ThreadServiceManager(final int maxThreads, final int maxQueueSize, final String usage) {
+        this.maxThreads = maxThreads;
+        this.maxQueueSize = maxQueueSize;
+        this.usage = usage;
+    }
 
     /**
      * Starts the manager.
      */
     @PostConstruct
     public void start() {
-        final ExecutorService executorService = newFixedThreadPool(config.getServiceMaxNumberOfThreads(),
-            "metacat-service-pool-%d", 1000);
+        final ExecutorService executorService = newFixedThreadPool(maxThreads,
+            "metacat-" + usage + "-pool-%d", maxQueueSize);
         executor = MoreExecutors.listeningDecorator(executorService);
     }
 
