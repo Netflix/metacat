@@ -56,6 +56,21 @@ public class ThreadServiceManager {
     }
 
     /**
+     * Constructor.
+     * @param maxThreads maximum number of threads
+     * @param maxQueueSize maximum queue size
+     * @param usage an identifier where this pool is used
+     */
+    public ThreadServiceManager(final int maxThreads, final int maxQueueSize, final String usage) {
+        final ExecutorService executorService = newFixedThreadPool(
+            maxThreads,
+            "metacat-" + usage + "-pool-%d",
+            maxQueueSize
+        );
+        this.executor = MoreExecutors.listeningDecorator(executorService);
+    }
+
+    /**
      * Stops this manager.
      */
     @PreDestroy
