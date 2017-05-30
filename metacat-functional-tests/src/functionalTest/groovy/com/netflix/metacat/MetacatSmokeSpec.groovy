@@ -368,9 +368,11 @@ class MetacatSmokeSpec extends Specification {
 
     @Unroll
     def "Test save 0 partitions for #catalogName/#databaseName/#tableName"() {
-        expect:
+        when:
         createTable(catalogName, databaseName, tableName)
         partitionApi.savePartitions(catalogName, databaseName, tableName, new PartitionsSaveRequestDto())
+        then:
+        noExceptionThrown()
         where:
         catalogName                | databaseName      | tableName
         'embedded-hive-metastore'  | 'smoke_db'        | 'part'
