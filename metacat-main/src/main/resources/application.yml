@@ -21,6 +21,14 @@ metacat:
     config:
       location: /etc/catalog
 
+management:
+  context-path: /actuator
+  health:
+    elasticsearch:
+      enabled: false # This is needed for now as we're using a very out of date ES client that throws runtime errors
+  security:
+    enabled: false
+
 netflix:
   appinfo:
     name: metacat
@@ -29,5 +37,3 @@ netflix:
 spring:
   application:
     name: metacat
-  jersey:
-    type: filter

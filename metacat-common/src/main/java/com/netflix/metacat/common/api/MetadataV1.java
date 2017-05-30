@@ -44,7 +44,7 @@ import java.util.Set;
  *
  * @author amajumdar
  */
-@Path("mds/v1/metadata")
+@Path("v1/metadata")
 @Api(value = "MetadataV1",
     description = "Federated user metadata operations",
     produces = MediaType.APPLICATION_JSON,

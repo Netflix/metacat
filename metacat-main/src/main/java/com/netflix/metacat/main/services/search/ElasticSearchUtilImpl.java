@@ -131,7 +131,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
         } catch (Exception e) {
             log.error(String.format("Failed deleting metadata of type %s with id %s.", type, id), e);
             registry.counter(registry.createId(Metrics.CounterElasticSearchDelete.name())
-                    .withTags(Metrics.getStatusFailureMap())).increment();
+                    .withTags(Metrics.statusFailureMap)).increment();
             log("ElasticSearchUtil.delete", type, id, null, e.getMessage(), e, true);
         }
     }
@@ -168,7 +168,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                             log.error("Failed deleting metadata of type {} with id {}. Message: {}",
                                     type, item.getId(), item.getFailureMessage());
                             registry.counter(registry.createId(Metrics.CounterElasticSearchDelete.name())
-                                    .withTags(Metrics.getStatusFailureMap())).increment();
+                                    .withTags(Metrics.statusFailureMap)).increment();
                             log("ElasticSearchUtil.bulkDelete.item", type, item.getId(), null, item.getFailureMessage(),
                                     null, true);
                         }
@@ -179,7 +179,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
         } catch (Exception e) {
             log.error(String.format("Failed deleting metadata of type %s with ids %s", type, ids), e);
             registry.counter(registry.createId(Metrics.CounterElasticSearchBulkDelete.name())
-                    .withTags(Metrics.getStatusFailureMap())).increment();
+                    .withTags(Metrics.statusFailureMap)).increment();
             log("ElasticSearchUtil.bulkDelete", type, ids.toString(), null, e.getMessage(), e, true);
         }
     }
@@ -205,7 +205,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
         } catch (Exception e) {
             log.error(String.format("Failed deleting metadata of type %s with id %s", type, id), e);
             registry.counter(registry.createId(Metrics.CounterElasticSearchDelete.name())
-                    .withTags(Metrics.getStatusFailureMap())).increment();
+                    .withTags(Metrics.statusFailureMap)).increment();
             log("ElasticSearchUtil.softDelete", type, id, null, e.getMessage(), e, true);
         }
     }
@@ -247,7 +247,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                             log.error("Failed soft deleting metadata of type {} with id {}. Message: {}",
                                     type, item.getId(), item.getFailureMessage());
                             registry.counter(registry.createId(Metrics.CounterElasticSearchDelete.name())
-                                    .withTags(Metrics.getStatusFailureMap())).increment();
+                                    .withTags(Metrics.statusFailureMap)).increment();
                             log("ElasticSearchUtil.bulkSoftDelete.item",
                                     type, item.getId(), null, item.getFailureMessage(), null, true);
                         }
@@ -258,7 +258,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
         } catch (Exception e) {
             log.error(String.format("Failed soft deleting metadata of type %s with ids %s", type, ids), e);
             registry.counter(registry.createId(Metrics.CounterElasticSearchBulkDelete.name())
-                    .withTags(Metrics.getStatusFailureMap())).increment();
+                    .withTags(Metrics.statusFailureMap)).increment();
             log("ElasticSearchUtil.bulkSoftDelete", type, ids.toString(), null, e.getMessage(), e, true);
         }
     }
@@ -306,7 +306,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                             log.error("Failed updating metadata of type {} with id {}. Message: {}", type, item.getId(),
                                     item.getFailureMessage());
                             registry.counter(registry.createId(Metrics.CounterElasticSearchUpdate.name())
-                                    .withTags(Metrics.getStatusFailureMap())).increment();
+                                    .withTags(Metrics.statusFailureMap)).increment();
                             log("ElasticSearchUtil.updateDocs.item",
                                     type, item.getId(), null, item.getFailureMessage(), null, true);
                         }
@@ -317,7 +317,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
         } catch (Exception e) {
             log.error(String.format("Failed updating metadata of type %s with ids %s", type, ids), e);
             registry.counter(registry.createId(Metrics.CounterElasticSearchBulkUpdate.name())
-                    .withTags(Metrics.getStatusFailureMap())).increment();
+                    .withTags(Metrics.statusFailureMap)).increment();
             log("ElasticSearchUtil.updatDocs", type, ids.toString(), null, e.getMessage(), e, true);
         }
     }
@@ -353,7 +353,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                     String.format("Failed saving metadata of"
                             + " index %s type %s with id %s: %s", index, type, id, body), e);
             registry.counter(registry.createId(Metrics.CounterElasticSearchSave.name())
-                    .withTags(Metrics.getStatusFailureMap())).increment();
+                    .withTags(Metrics.statusFailureMap)).increment();
             log("ElasticSearchUtil.saveToIndex", type, id, null, e.getMessage(), e, true, index);
         }
     }
@@ -395,7 +395,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                                     log.error("Failed saving metadata of {} index type {} with id {}. Message: {}",
                                             index, type, item.getId(), item.getFailureMessage());
                                     registry.counter(registry.createId(Metrics.CounterElasticSearchSave.name())
-                                            .withTags(Metrics.getStatusFailureMap())).increment();
+                                            .withTags(Metrics.statusFailureMap)).increment();
                                     log("ElasticSearchUtil.bulkSaveToIndex.index", type, item.getId(), null,
                                             item.getFailureMessage(), null, true, index);
                                 }
@@ -407,7 +407,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             } catch (Exception e) {
                 log.error(String.format("Failed saving metadatas of index %s type %s", index, type), e);
                 registry.counter(registry.createId(Metrics.CounterElasticSearchBulkSave.name())
-                        .withTags(Metrics.getStatusFailureMap())).increment();
+                        .withTags(Metrics.statusFailureMap)).increment();
                 final List<String> docIds = docs.stream().map(ElasticSearchDoc::getId).collect(Collectors.toList());
                 log("ElasticSearchUtil.bulkSaveToIndex", type, docIds.toString(), null, e.getMessage(), e, true, index);
             }
@@ -670,7 +670,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             client.prepareIndex(index, "metacat-log").setSource(source).execute().actionGet();
         } catch (Exception e) {
             registry.counter(registry.createId(Metrics.CounterElasticSearchLog.name())
-                    .withTags(Metrics.getStatusFailureMap())).increment();
+                    .withTags(Metrics.statusFailureMap)).increment();
             log.warn("Failed saving the log message in elastic search for index{} method {}, name {}. Message: {}",
                     index, method, name, e.getMessage());
         }

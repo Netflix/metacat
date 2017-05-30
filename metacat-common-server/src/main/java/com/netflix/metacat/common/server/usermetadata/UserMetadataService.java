@@ -22,7 +22,9 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
 import com.netflix.metacat.common.dto.HasMetadata;
 
+import javax.annotation.Nullable;
 import javax.annotation.Nonnull;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -45,14 +47,16 @@ public interface UserMetadataService {
      *
      * @param uris list of uris.
      */
-    void deleteDataMetadatas(@Nonnull List<String> uris);
+    default void deleteDataMetadatas(List<String> uris) {
+    }
 
     /**
      * Delete the delete markers for data metadata for the given uris.
      *
      * @param uris list of uris.
      */
-    void deleteDataMetadataDeletes(@Nonnull List<String> uris);
+    default void deleteDataMetadataDeletes(List<String> uris) {
+    }
 
     /**
      * Mark data metadatas for the given uris for deletion.
@@ -60,14 +64,16 @@ public interface UserMetadataService {
      * @param userId user name
      * @param uris   list of uris
      */
-    void softDeleteDataMetadatas(String userId, @Nonnull List<String> uris);
+    default void softDeleteDataMetadatas(String userId, List<String> uris) {
+    }
 
     /**
      * Delete definition metadatas for the given names.
      *
      * @param names list of names
      */
-    void deleteDefinitionMetadatas(@Nonnull List<QualifiedName> names);
+    default void deleteDefinitionMetadatas(List<QualifiedName> names) {
+    }
 
     /**
      * Delete definition metadata and soft delete data metadata.
@@ -75,7 +81,8 @@ public interface UserMetadataService {
      * @param userId  username
      * @param holders metadatas
      */
-    void deleteMetadatas(String userId, List<HasMetadata> holders);
+    default void deleteMetadatas(String userId, List<HasMetadata> holders) {
+    }
 
     /**
      * Returns data metadata for the given uri.
@@ -83,8 +90,9 @@ public interface UserMetadataService {
      * @param uri uri.
      * @return data metadata for the given uri.
      */
-    @Nonnull
-    Optional<ObjectNode> getDataMetadata(@Nonnull String uri);
+    default Optional<ObjectNode> getDataMetadata(String uri) {
+        return Optional.empty();
+    }
 
     /**
      * Returns the map of uri to data metadata.
@@ -93,7 +101,9 @@ public interface UserMetadataService {
      * @return map of uri to data metadata.
      */
     @Nonnull
-    Map<String, ObjectNode> getDataMetadataMap(@Nonnull List<String> uris);
+    default Map<String, ObjectNode> getDataMetadataMap(List<String> uris) {
+        return Collections.emptyMap();
+    }
 
     /**
      * Returns the definition metadata for the given name.
@@ -101,7 +111,9 @@ public interface UserMetadataService {
      * @param name name
      * @return definition metadata for the given name
      */
-    Optional<ObjectNode> getDefinitionMetadata(@Nonnull QualifiedName name);
+    default Optional<ObjectNode> getDefinitionMetadata(QualifiedName name) {
+        return Optional.empty();
+    }
 
     /**
      * Returns the descendants for the given name.
@@ -109,7 +121,9 @@ public interface UserMetadataService {
      * @param name name
      * @return list of qualified names
      */
-    List<QualifiedName> getDescendantDefinitionNames(@Nonnull QualifiedName name);
+    default List<QualifiedName> getDescendantDefinitionNames(QualifiedName name) {
+        return Collections.emptyList();
+    }
 
     /**
      * Returns the descendant uris.
@@ -117,7 +131,9 @@ public interface UserMetadataService {
      * @param uri uri
      * @return list of descendant uris.
      */
-    List<String> getDescendantDataUris(@Nonnull String uri);
+    default List<String> getDescendantDataUris(String uri) {
+        return Collections.emptyList();
+    }
 
     /**
      * Returns a map of name to definition metadata.
@@ -126,7 +142,9 @@ public interface UserMetadataService {
      * @return map of name to definition metadata
      */
     @Nonnull
-    Map<String, ObjectNode> getDefinitionMetadataMap(@Nonnull List<QualifiedName> names);
+    default Map<String, ObjectNode> getDefinitionMetadataMap(List<QualifiedName> names) {
+        return Collections.emptyMap();
+    }
 
     /**
      * Save data metadata.
@@ -136,12 +154,13 @@ public interface UserMetadataService {
      * @param metadata metadata
      * @param merge    if true, will merge with existing metadata
      */
-    void saveDataMetadata(
-        @Nonnull String uri,
-        @Nonnull String userId,
-        @Nonnull Optional<ObjectNode> metadata,
+    default void saveDataMetadata(
+        String uri,
+        String userId,
+        Optional<ObjectNode> metadata,
         boolean merge
-    );
+    ) {
+    }
 
     /**
      * Saves definition metadata.
@@ -151,12 +170,13 @@ public interface UserMetadataService {
      * @param metadata metadata
      * @param merge    if true, will merge with existing metadata
      */
-    void saveDefinitionMetadata(
-        @Nonnull QualifiedName name,
-        @Nonnull String userId,
-        @Nonnull Optional<ObjectNode> metadata,
+    default void saveDefinitionMetadata(
+        QualifiedName name,
+        String userId,
+        Optional<ObjectNode> metadata,
         boolean merge
-    );
+    ) {
+    }
 
     /**
      * Save metadata.
@@ -165,14 +185,16 @@ public interface UserMetadataService {
      * @param holder metadata
      * @param merge  if true, will merge with existing metadata
      */
-    void saveMetadata(String userId, HasMetadata holder, boolean merge);
+    default void saveMetadata(String userId, HasMetadata holder, boolean merge) {
+    }
 
     /**
      * Populate the metadata.
      *
      * @param holder metadata
      */
-    void populateMetadata(HasMetadata holder);
+    default void populateMetadata(HasMetadata holder) {
+    }
 
     /**
      * Populate the metadata.
@@ -181,7 +203,9 @@ public interface UserMetadataService {
      * @param definitionMetadata definition metadata
      * @param dataMetadata       data metadata
      */
-    void populateMetadata(HasMetadata holder, ObjectNode definitionMetadata, ObjectNode dataMetadata);
+    default void populateMetadata(HasMetadata holder,
+                                  ObjectNode definitionMetadata, @Nullable ObjectNode dataMetadata) {
+    }
 
     /**
      * Rename data metadata uri.
@@ -190,7 +214,9 @@ public interface UserMetadataService {
      * @param newUri new uri
      * @return number of records updated
      */
-    int renameDataMetadataKey(@Nonnull String oldUri, @Nonnull String newUri);
+    default int renameDataMetadataKey(String oldUri, String newUri) {
+        return 0;
+    }
 
     /**
      * Rename definition metadata name.
@@ -199,21 +225,25 @@ public interface UserMetadataService {
      * @param newName new name
      * @return number of records updated
      */
-    int renameDefinitionMetadataKey(@Nonnull QualifiedName oldName, @Nonnull QualifiedName newName);
+    default int renameDefinitionMetadataKey(QualifiedName oldName, QualifiedName newName) {
+        return 0;
+    }
 
     /**
      * Start the user metadata service.
      *
      * @throws Exception error
      */
-    void start() throws Exception;
+    default void start() throws Exception {
+    }
 
     /**
      * Stop the user metadata service.
      *
      * @throws Exception error
      */
-    void stop() throws Exception;
+    default void stop() throws Exception {
+    }
 
     /**
      * Saves metadata.
@@ -222,7 +252,8 @@ public interface UserMetadataService {
      * @param holders metadatas
      * @param merge   if true, will merge with existing metadata
      */
-    void saveMetadatas(String user, List<? extends HasMetadata> holders, boolean merge);
+    default void saveMetadatas(String user, List<? extends HasMetadata> holders, boolean merge) {
+    }
 
     /**
      * Return the list of definition metadata for the given property names.
@@ -236,7 +267,7 @@ public interface UserMetadataService {
      * @param limit         size of the list
      * @return list of definition metadata
      */
-    List<DefinitionMetadataDto> searchDefinitionMetadatas(
+    default List<DefinitionMetadataDto> searchDefinitionMetadatas(
         Set<String> propertyNames,
         String type,
         String name,
@@ -244,7 +275,10 @@ public interface UserMetadataService {
         String sortOrder,
         Integer offset,
         Integer limit
-    );
+    ) {
+        return Collections.emptyList();
+    }
+
 
     /**
      * List the names for the given owners.
@@ -252,7 +286,9 @@ public interface UserMetadataService {
      * @param owners list of owner names.
      * @return list of qualified names
      */
-    List<QualifiedName> searchByOwners(Set<String> owners);
+    default List<QualifiedName> searchByOwners(Set<String> owners) {
+        return Collections.emptyList();
+    }
 
     /**
      * List of uris marked for deletion.
@@ -262,5 +298,7 @@ public interface UserMetadataService {
      * @param limit          size of the list
      * @return list of uris.
      */
-    List<String> getDeletedDataMetadataUris(Date deletedPriorTo, Integer offset, Integer limit);
+    default List<String> getDeletedDataMetadataUris(Date deletedPriorTo, Integer offset, Integer limit) {
+        return Collections.emptyList();
+    }
 }

@@ -59,19 +59,19 @@ class MetacatSmokeSpec extends Specification {
     public static MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
 
     def setupSpec() {
-        String url = "http://localhost:${System.properties['metacat_http_port']}"
+        String url = "http://localhost:${System.properties['metacat_http_port']}/mds"
         assert url, 'Required system property "metacat_url" is not set'
 
         ObjectMapper mapper = metacatJson.getPrettyObjectMapper().copy()
             .registerModule(new GuavaModule())
-            .registerModule(new JaxbAnnotationModule());
+            .registerModule(new JaxbAnnotationModule())
         RequestInterceptor interceptor = new RequestInterceptor() {
             @Override
-            public void apply(RequestTemplate template) {
-                template.header(MetacatRequestContext.HEADER_KEY_USER_NAME, "metacat-test");
-                template.header(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME, "metacat-test");
+            void apply(RequestTemplate template) {
+                template.header(MetacatRequestContext.HEADER_KEY_USER_NAME, "metacat-test")
+                template.header(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME, "metacat-test")
             }
-        };
+        }
         api = Feign.builder()
             .logger(new Slf4jLogger())
             .logLevel(Logger.Level.FULL)
@@ -82,7 +82,7 @@ class MetacatSmokeSpec extends Specification {
             .requestInterceptor(interceptor)
             .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
             .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-            .target(MetacatV1.class, url);
+            .target(MetacatV1.class, url)
         partitionApi = Feign.builder()
             .logger(new Slf4jLogger())
             .logLevel(Logger.Level.FULL)
@@ -93,7 +93,7 @@ class MetacatSmokeSpec extends Specification {
             .requestInterceptor(interceptor)
             .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
             .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-            .target(PartitionV1.class, url);
+            .target(PartitionV1.class, url)
         tagApi = Feign.builder()
             .logger(new Slf4jLogger())
             .logLevel(Logger.Level.FULL)
@@ -104,7 +104,7 @@ class MetacatSmokeSpec extends Specification {
             .requestInterceptor(interceptor)
             .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
             .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-            .target(TagV1.class, url);
+            .target(TagV1.class, url)
         metadataApi = Feign.builder()
             .logger(new Slf4jLogger())
             .logLevel(Logger.Level.FULL)
@@ -115,7 +115,7 @@ class MetacatSmokeSpec extends Specification {
             .requestInterceptor(interceptor)
             .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
             .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-            .target(MetadataV1.class, url);
+            .target(MetadataV1.class, url)
     }
 
     @Shared
@@ -133,7 +133,7 @@ class MetacatSmokeSpec extends Specification {
             uri = String.format('file:/tmp/%s/%s', databaseName, tableName)
         }
         if (!database.getTables().contains(tableName)) {
-            def newTable;
+            def newTable
             if ('part' == tableName) {
                 newTable = PigDataDtoProvider.getPartTable(catalogName, databaseName, owner, uri)
             } else if ('parts' == tableName) {
@@ -209,7 +209,7 @@ class MetacatSmokeSpec extends Specification {
     @Unroll
     def "Test create database for #catalogName/#databaseName"() {
         given:
-        def definitionMetadata = (ObjectNode) metacatJson.emptyObjectNode().set("owner", metacatJson.emptyObjectNode());
+        def definitionMetadata = (ObjectNode) metacatJson.emptyObjectNode().set("owner", metacatJson.emptyObjectNode())
         expect:
         try {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto(definitionMetadata: definitionMetadata))
@@ -336,9 +336,9 @@ class MetacatSmokeSpec extends Specification {
             } catch (Exception ignored) {
             }
             createTable(catalogName, databaseName, tableName)
-            api.createMView(catalogName, databaseName, tableName, viewName, true, null);
+            api.createMView(catalogName, databaseName, tableName, viewName, true, null)
             if (repeat) {
-                api.createMView(catalogName, databaseName, tableName, viewName, true, null);
+                api.createMView(catalogName, databaseName, tableName, viewName, true, null)
             }
             error == null
         } catch (Exception e) {

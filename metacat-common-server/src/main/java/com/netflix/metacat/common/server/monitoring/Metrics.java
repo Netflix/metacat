@@ -18,8 +18,12 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 //CHECKSTYLE:OFF
+
 /**
- * Log constants.
+ * Metric measures.
+ *
+ * @author zhenl
+ * @since 1.0.0
  */
 public enum Metrics {
     /**
@@ -28,94 +32,104 @@ public enum Metrics {
     AppPrefix("metacat"),
 
     /**
-     * evnets.
+     * Measure types
      */
-    CounterEventAsync(AppPrefix + ".events.count.Async"),
-    CounterEventSync(AppPrefix + ".events.count.Sync"),
+    Count("count"),
+    Gauge("gauge"),
+    Timer("timer"),
+
+    /**
+     * events.
+     */
+    Events("events"),
+    CounterEventAsync(Name(Events, Count, "async")),
+    CounterEventSync(Name(Events, Count, "sync")),
 
     /**
      * thrift request.
      */
-    CounterThrift(AppPrefix + ".thrift.count.request"),
+    Thrift("thrift"),
+    CounterThrift(Name(Thrift, Count, "request")),
 
     /**
-     * hive sql lock error.
+     * Gauge.
      */
-    CounterHiveSqlLockError(AppPrefix + ".count.hiveSqlLockError"),
-    CounterHiveExperimentGetTablePartitionsFailure(AppPrefix + ".hive.count.experimentGetPartitionsFailure"),
+    PartionService("partitionservice"),
+    GaugeAddPartitions(Name(PartionService, Metrics.Gauge, "partitionAdd")),
+    GaugeDeletePartitions(Name(PartionService, Metrics.Gauge, "partitionDelete")),
+    GaugeGetPartitionsCount(Name(PartionService, Metrics.Gauge, "partitionGet")),
 
     /**
      * metacat request.
      */
-    CounterRequestCount(AppPrefix + ".count.request"),
-
+    Server("server"),
+    CounterRequestCount(Name(Server,Count,"request")),
+    CounterRequestFailureCount(Name(Server,Count,"requestfailure")),
+    CounterDeleteMetaData(Name(Server,Count,"deleteMetadata")),
 
     /**
      * Notifications.
      */
-    CounterSNSNotificationPartitionAdd(AppPrefix + ".notifications.count.partitionsAdd"),
-    CounterSNSNotificationTablePartitionAdd(AppPrefix + ".notifications.count.table.partitionsAdd"),
-    CounterSNSNotificationPartitionDelete(AppPrefix + ".notifications.count.partitionsDelete"),
-    CounterSNSNotificationTablePartitionDelete(AppPrefix + ".notifications.count.table.partitionsDelete"),
-    CounterSNSNotificationTableCreate(AppPrefix + ".notifications.count.table.Create"),
-    CounterSNSNotificationTableDelete(AppPrefix + ".notifications.count.table.Delete"),
-    CounterSNSNotificationTableRename(AppPrefix + ".notifications.count.table.Rename"),
-    CounterSNSNotificationTableUpdate(AppPrefix + ".notifications.count.table.Update"),
+    Notifications("notifications"),
+    CounterSNSNotificationPartitionAdd(Name(Notifications, Count, "partitionsAdd")),
+    CounterSNSNotificationTablePartitionAdd(Name(Notifications, Count, "table.partitionsAdd")),
+    CounterSNSNotificationPartitionDelete(Name(Notifications, Count, "partitionsDelete")),
+    CounterSNSNotificationTablePartitionDelete(Name(Notifications, Count, "table.partitionsDelete")),
+    CounterSNSNotificationTableCreate(Name(Notifications, Count, "table.Create")),
+    CounterSNSNotificationTableDelete(Name(Notifications, Count, "table.Delete")),
+    CounterSNSNotificationTableRename(Name(Notifications, Count, "table.Rename")),
+    CounterSNSNotificationTableUpdate(Name(Notifications, Count, "table.Update")),
 
     /**
      * ElasticSearch.
      */
-    CounterElasticSearchDatabaseCreate(AppPrefix + ".elasticsearch.count.databaseCreate"),
-    CounterElasticSearchDatabaseDelete(AppPrefix + ".elasticsearch.count.databaseDelete"),
-    CounterElasticSearchTableCreate(AppPrefix + ".elasticsearch.count.tableCreate"),
-    CounterElasticSearchTableDelete(AppPrefix + ".elasticsearch.count.tableDelete"),
-    CounterElasticSearchTableSave(AppPrefix + ".elasticsearch.count.tableSave"),
-    CounterElasticSearchTableRename(AppPrefix + ".elasticsearch.count.tableRename"),
-    CounterElasticSearchTableUpdate(AppPrefix + ".elasticsearch.count.tableUpdate"),
-    CounterElasticSearchPartitionSave(AppPrefix + ".elasticsearch.count.partitionSave"),
-    CounterElasticSearchPartitionDelete(AppPrefix + ".elasticsearch.count.partitionDelete"),
-    CounterElasticSearchDelete(AppPrefix + ".elasticsearch.count.esDelete"),
-    CounterElasticSearchBulkDelete(AppPrefix + ".elasticsearch.count.esBulkDelete"),
-    CounterElasticSearchUpdate(AppPrefix + ".elasticsearch.count.esUpdate"),
-    CounterElasticSearchBulkUpdate(AppPrefix + ".elasticsearch.count.esBulkUpdate"),
-    CounterElasticSearchSave(AppPrefix + ".elasticsearch.count.esSave"),
-    CounterElasticSearchBulkSave(AppPrefix + ".elasticsearch.count.esBulkSave"),
-    CounterElasticSearchLog(AppPrefix + ".elasticsearch.count.esLog"),
-    CounterElasticSearchRefresh(AppPrefix + ".elasticsearch.count.esRefresh"),
-    CounterElasticSearchRefreshAlreadyRunning(AppPrefix + ".elasticsearch.count.esRefreshAlreadyRunning"),
-    CounterElasticSearchUnmarkedDatabaseThreshholdReached(
-            AppPrefix + ".elasticsearch.count.unmarkedDatabasesThresholdReached"),
-    CounterElasticSearchUnmarkedTableThreshholdReached(
-            AppPrefix + ".elasticsearch.count.unmarkedTablesThresholdReached"),
+    ElasticSearch("elasticsearch"),
+    CounterElasticSearchDatabaseCreate(Name(ElasticSearch, Count, "databaseCreate")),
+    CounterElasticSearchDatabaseDelete(Name(ElasticSearch, Count, "databaseDelete")),
+    CounterElasticSearchTableCreate(Name(ElasticSearch, Count, "tableCreate")),
+    CounterElasticSearchTableDelete(Name(ElasticSearch, Count, "tableDelete")),
+    CounterElasticSearchTableSave(Name(ElasticSearch, Count, "tableSave")),
+    CounterElasticSearchTableRename(Name(ElasticSearch, Count, "tableRename")),
+    CounterElasticSearchTableUpdate(Name(ElasticSearch, Count, "tableUpdate")),
+    CounterElasticSearchPartitionSave(Name(ElasticSearch, Count, "partitionSave")),
+    CounterElasticSearchPartitionDelete(Name(ElasticSearch, Count, "partitionDelete")),
+    CounterElasticSearchDelete(Name(ElasticSearch, Count, "esDelete")),
+    CounterElasticSearchBulkDelete(Name(ElasticSearch, Count, "esBulkDelete")),
+    CounterElasticSearchUpdate(Name(ElasticSearch, Count, "esUpdate")),
+    CounterElasticSearchBulkUpdate(Name(ElasticSearch, Count, "esBulkUpdate")),
+    CounterElasticSearchSave(Name(ElasticSearch, Count, "esSave")),
+    CounterElasticSearchBulkSave(Name(ElasticSearch, Count, "esBulkSave")),
+    CounterElasticSearchLog(Name(ElasticSearch, Count, "esLog")),
+    CounterElasticSearchRefresh(Name(ElasticSearch, Count, "esRefresh")),
+    CounterElasticSearchRefreshAlreadyRunning(Name(ElasticSearch, Count, "esRefreshAlreadyRunning")),
+    CounterElasticSearchUnmarkedDatabaseThreshholdReached(Name(ElasticSearch, Count, "unmarkedDatabasesThresholdReached")),
+    CounterElasticSearchUnmarkedTableThreshholdReached(Name(ElasticSearch, Count, "unmarkedTablesThresholdReached")),
 
     /**
-     * deleteMetadata.
+     * Jdbc Interceptor
      */
-    CounterDeleteMetaData(AppPrefix + ".count.deleteMetadata"),
-
-    /**
-     * Gauges.
-     */
-    GaugeAddPartitions(AppPrefix + ".gauge.partitionAdd"),
-    GaugeDeletePartitions(AppPrefix + ".gauge.partitionDelete"),
-    GaugeGetPartitionsCount(AppPrefix + ".gauge.partitionGet"),
-
-    GaugeConnectionsTotal(AppPrefix + ".connections.gauge.total"),
-    GaugeConnectionsActive(AppPrefix + ".connections.gauge.active"),
-    GaugeConnectionsIdle(AppPrefix + ".connections.gauge.idle"),
+    JdbcInterceptor("jdbcinterceptor"),
+    GaugeConnectionsTotal(Name(JdbcInterceptor, Gauge, "connections.total")),
+    GaugeConnectionsActive(Name(JdbcInterceptor, Gauge, "connections.active")),
+    GaugeConnectionsIdle(Name(JdbcInterceptor, Gauge, "connections.idle")),
 
     /**
      * Timers.
      */
-    TimerRequest(AppPrefix + ".timer.requests"),
-    TimerThriftRequest(AppPrefix + ".thrift.timer.requests."),
-    TimerHiveGetPartitions(AppPrefix + ".hive.timer.getPartitions"),
-    TimerElasticSearchRefresh(AppPrefix + ".elasticsearch.timer.esRefresh"),
+    TimerRequest(Name(Server, Timer, "requests")),
+    TimerThriftRequest(Name(Thrift, Timer, "requests")),
+    TimerElasticSearchRefresh(Name(ElasticSearch, Timer, "esRefresh")),
+    TimerNotificationsPublishDelay(Name(Notifications, Timer, "publish.delay")),
 
     /**
      * Status.
      */
     Status("status"), StatusSuccess("success"), StatusFailure("failure");
+
+    public static Map<String, String> statusSuccessMap
+        = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusSuccess.name());
+    public static Map<String, String> statusFailureMap
+        = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusFailure.name());
 
     private final String constant;
 
@@ -123,16 +137,12 @@ public enum Metrics {
         this.constant = constant;
     }
 
+    private static String Name(final Metrics component, final Metrics type, final String measure) {
+        return AppPrefix + "." + component.name() + "." + type.name() + "." + measure;
+    }
+
     @Override
     public String toString() {
         return constant;
-    }
-
-    public static Map<String, String> getStatusSuccessMap() {
-        return ImmutableMap.of(Metrics.Status.name(), Metrics.StatusSuccess.name());
-    }
-
-    public static Map<String, String> getStatusFailureMap() {
-        return ImmutableMap.of(Metrics.Status.name(), Metrics.StatusFailure.name());
     }
 }

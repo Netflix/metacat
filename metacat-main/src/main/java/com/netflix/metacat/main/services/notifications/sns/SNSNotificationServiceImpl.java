@@ -44,6 +44,7 @@ import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.main.services.notifications.NotificationService;
 import com.netflix.spectator.api.Registry;
+import com.netflix.spectator.api.Timer;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -54,6 +55,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of the NotificationService using Amazon SNS.
@@ -101,7 +103,6 @@ public class SNSNotificationServiceImpl implements NotificationService {
     @EventListener
     public void notifyOfPartitionAddition(@NonNull final MetacatSaveTablePartitionPostEvent event) {
         log.debug("Received SaveTablePartitionPostEvent {}", event);
-        registry.counter(registry.createId(Metrics.CounterSNSNotificationPartitionAdd.name())).increment();
         final String name = event.getName().toString();
         final long timestamp = event.getRequestContext().getTimestamp();
         final String requestId = event.getRequestContext().getId();
@@ -109,51 +110,52 @@ public class SNSNotificationServiceImpl implements NotificationService {
         try {
             for (final PartitionDto partition : event.getPartitions()) {
                 message = new AddPartitionMessage(
-                        UUID.randomUUID().toString(),
-                        timestamp,
-                        requestId,
-                        name,
-                        partition
+                    UUID.randomUUID().toString(),
+                    timestamp,
+                    requestId,
+                    name,
+                    partition
                 );
                 this.publishNotification(this.partitionTopicArn, message);
                 log.debug("Published create partition message {} on {}", message, this.partitionTopicArn);
-                registry.counter(registry.createId(Metrics.CounterSNSNotificationPartitionAdd.name())
-                        .withTags(Metrics.getStatusSuccessMap())).increment();
+                this.registry.counter(
+                    this.registry
+                        .createId(Metrics.CounterSNSNotificationPartitionAdd.name())
+                        .withTags(Metrics.statusSuccessMap)
+                ).increment();
             }
         } catch (final Exception e) {
             this.handleException(
-                    event.getName(),
-                    "Unable to publish partition creation notification",
-                    Metrics.CounterSNSNotificationPartitionAdd.name(),
-                    message,
-                    e
+                event.getName(),
+                "Unable to publish partition creation notification",
+                Metrics.CounterSNSNotificationPartitionAdd.name(),
+                message,
+                e
             );
         }
         UpdateTablePartitionsMessage tableMessage = null;
         try {
             // Publish a global message stating how many partitions were updated for the table to the table topic
             tableMessage = new UpdateTablePartitionsMessage(
-                    UUID.randomUUID().toString(),
-                    timestamp,
-                    requestId,
-                    name,
-                    new TablePartitionsUpdatePayload(
-                            event.getPartitions().size(),
-                            0
-                    )
+                UUID.randomUUID().toString(),
+                timestamp,
+                requestId,
+                name,
+                new TablePartitionsUpdatePayload(event.getPartitions().size(), 0)
             );
             this.publishNotification(this.tableTopicArn, tableMessage);
-            // TODO: In ideal world this this be an injected object to the class so we can mock for tests
-            //       swap out implementations etc.
-            registry.counter(registry.createId(Metrics.CounterSNSNotificationTablePartitionAdd.name())
-                    .withTags(Metrics.getStatusSuccessMap())).increment();
+            this.registry.counter(
+                this.registry
+                    .createId(Metrics.CounterSNSNotificationTablePartitionAdd.name())
+                    .withTags(Metrics.statusSuccessMap)
+            ).increment();
         } catch (final Exception e) {
             this.handleException(
-                    event.getName(),
-                    "Unable to publish table partition add notification",
-                    Metrics.CounterSNSNotificationTablePartitionAdd.name(),
-                    tableMessage,
-                    e
+                event.getName(),
+                "Unable to publish table partition add notification",
+                Metrics.CounterSNSNotificationTablePartitionAdd.name(),
+                tableMessage,
+                e
             );
         }
     }
@@ -165,7 +167,6 @@ public class SNSNotificationServiceImpl implements NotificationService {
     @EventListener
     public void notifyOfPartitionDeletion(@NonNull final MetacatDeleteTablePartitionPostEvent event) {
         log.debug("Received DeleteTablePartition event {}", event);
-        registry.counter(registry.createId(Metrics.CounterSNSNotificationPartitionDelete.name())).increment();
         final String name = event.getName().toString();
         final long timestamp = event.getRequestContext().getTimestamp();
         final String requestId = event.getRequestContext().getId();
@@ -173,44 +174,52 @@ public class SNSNotificationServiceImpl implements NotificationService {
         try {
             for (final String partitionId : event.getPartitionIds()) {
                 message = new DeletePartitionMessage(
-                        UUID.randomUUID().toString(),
-                        timestamp,
-                        requestId,
-                        name,
-                        partitionId
+                    UUID.randomUUID().toString(),
+                    timestamp,
+                    requestId,
+                    name,
+                    partitionId
                 );
                 this.publishNotification(this.partitionTopicArn, message);
-                registry.counter(registry.createId(Metrics.CounterSNSNotificationPartitionDelete.name())
-                        .withTags(Metrics.getStatusSuccessMap())).increment();
+                this.registry.counter(
+                    this.registry
+                        .createId(Metrics.CounterSNSNotificationPartitionDelete.name())
+                        .withTags(Metrics.statusSuccessMap)
+                ).increment();
                 log.debug("Published delete partition message {} on {}", message, this.partitionTopicArn);
             }
         } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish partition deletion notification",
-                Metrics.CounterSNSNotificationPartitionDelete.name(), message, e);
+            handleException(
+                event.getName(),
+                "Unable to publish partition deletion notification",
+                Metrics.CounterSNSNotificationPartitionDelete.name(),
+                message,
+                e
+            );
         }
         UpdateTablePartitionsMessage tableMessage = null;
         try {
             // Publish a global message stating how many partitions were updated for the table to the table topic
             tableMessage = new UpdateTablePartitionsMessage(
-                    UUID.randomUUID().toString(),
-                    timestamp,
-                    requestId,
-                    name,
-                    new TablePartitionsUpdatePayload(
-                            0,
-                            event.getPartitionIds().size()
-                    )
+                UUID.randomUUID().toString(),
+                timestamp,
+                requestId,
+                name,
+                new TablePartitionsUpdatePayload(0, event.getPartitionIds().size())
             );
             this.publishNotification(this.tableTopicArn, tableMessage);
-            registry.counter(registry.createId(Metrics.CounterSNSNotificationTablePartitionDelete.name())
-                    .withTags(Metrics.getStatusSuccessMap())).increment();
+            this.registry.counter(
+                this.registry
+                    .createId(Metrics.CounterSNSNotificationTablePartitionDelete.name())
+                    .withTags(Metrics.statusSuccessMap)
+            ).increment();
         } catch (final Exception e) {
             this.handleException(
-                    event.getName(),
-                    "Unable to publish table partition delete notification",
+                event.getName(),
+                "Unable to publish table partition delete notification",
                 Metrics.CounterSNSNotificationTablePartitionDelete.name(),
-                    tableMessage,
-                    e
+                tableMessage,
+                e
             );
         }
     }
@@ -222,26 +231,28 @@ public class SNSNotificationServiceImpl implements NotificationService {
     @EventListener
     public void notifyOfTableCreation(@NonNull final MetacatCreateTablePostEvent event) {
         log.debug("Received CreateTableEvent {}", event);
-        registry.counter(registry.createId(Metrics.CounterSNSNotificationTableCreate.name())).increment();
         CreateTableMessage message = null;
         try {
             message = new CreateTableMessage(
-                    UUID.randomUUID().toString(),
-                    event.getRequestContext().getTimestamp(),
-                    event.getRequestContext().getId(),
-                    event.getName().toString(),
-                    event.getTable()
+                UUID.randomUUID().toString(),
+                event.getRequestContext().getTimestamp(),
+                event.getRequestContext().getId(),
+                event.getName().toString(),
+                event.getTable()
             );
             this.publishNotification(this.tableTopicArn, message);
-            registry.counter(registry.createId(Metrics.CounterSNSNotificationTableCreate.name())
-                    .withTags(Metrics.getStatusSuccessMap())).increment();
+            this.registry.counter(
+                this.registry
+                    .createId(Metrics.CounterSNSNotificationTableCreate.name())
+                    .withTags(Metrics.statusSuccessMap)
+            ).increment();
         } catch (final Exception e) {
             this.handleException(
-                    event.getName(),
-                    "Unable to publish create table notification",
-                    Metrics.CounterSNSNotificationTableCreate.name(),
-                    message,
-                    e
+                event.getName(),
+                "Unable to publish create table notification",
+                Metrics.CounterSNSNotificationTableCreate.name(),
+                message,
+                e
             );
         }
     }
@@ -253,26 +264,28 @@ public class SNSNotificationServiceImpl implements NotificationService {
     @EventListener
     public void notifyOfTableDeletion(@NonNull final MetacatDeleteTablePostEvent event) {
         log.debug("Received DeleteTableEvent {}", event);
-        registry.counter(registry.createId(Metrics.CounterSNSNotificationTableDelete.name())).increment();
         DeleteTableMessage message = null;
         try {
             message = new DeleteTableMessage(
-                    UUID.randomUUID().toString(),
-                    event.getRequestContext().getTimestamp(),
-                    event.getRequestContext().getId(),
-                    event.getName().toString(),
-                    event.getTable()
+                UUID.randomUUID().toString(),
+                event.getRequestContext().getTimestamp(),
+                event.getRequestContext().getId(),
+                event.getName().toString(),
+                event.getTable()
             );
             this.publishNotification(this.tableTopicArn, message);
-            registry.counter(registry.createId(Metrics.CounterSNSNotificationTableDelete.name())
-                    .withTags(Metrics.getStatusSuccessMap())).increment();
+            this.registry.counter(
+                this.registry
+                    .createId(Metrics.CounterSNSNotificationTableDelete.name())
+                    .withTags(Metrics.statusSuccessMap)
+            ).increment();
         } catch (final Exception e) {
             this.handleException(
-                    event.getName(),
-                    "Unable to publish delete table notification",
-                    Metrics.CounterSNSNotificationTableDelete.name(),
-                    message,
-                    e
+                event.getName(),
+                "Unable to publish delete table notification",
+                Metrics.CounterSNSNotificationTableDelete.name(),
+                message,
+                e
             );
         }
     }
@@ -284,28 +297,29 @@ public class SNSNotificationServiceImpl implements NotificationService {
     @EventListener
     public void notifyOfTableRename(@NonNull final MetacatRenameTablePostEvent event) {
         log.debug("Received RenameTableEvent {}", event);
-        registry.counter(registry.createId(Metrics.CounterSNSNotificationTableRename.name())).increment();
         UpdateTableMessage message = null;
         try {
             message = this.createUpdateTableMessage(
-                    UUID.randomUUID().toString(),
-                    event.getRequestContext().getTimestamp(),
-                    event.getRequestContext().getId(),
-                    event.getName().toString(),
-                    event.getOldTable(),
-                    event.getCurrentTable()
+                UUID.randomUUID().toString(),
+                event.getRequestContext().getTimestamp(),
+                event.getRequestContext().getId(),
+                event.getName().toString(),
+                event.getOldTable(),
+                event.getCurrentTable()
             );
             this.publishNotification(this.tableTopicArn, message);
-            registry.counter(registry.createId(Metrics.CounterSNSNotificationTableRename.name())
-                    .withTags(Metrics.getStatusSuccessMap())).increment();
-
+            this.registry.counter(
+                this.registry
+                    .createId(Metrics.CounterSNSNotificationTableRename.name())
+                    .withTags(Metrics.statusSuccessMap)
+            ).increment();
         } catch (final Exception e) {
             this.handleException(
-                    event.getName(),
-                    "Unable to publish rename table notification",
-                    Metrics.CounterSNSNotificationTableRename.name(),
-                    message,
-                    e
+                event.getName(),
+                "Unable to publish rename table notification",
+                Metrics.CounterSNSNotificationTableRename.name(),
+                message,
+                e
             );
         }
     }
@@ -317,27 +331,29 @@ public class SNSNotificationServiceImpl implements NotificationService {
     @EventListener
     public void notifyOfTableUpdate(@NonNull final MetacatUpdateTablePostEvent event) {
         log.debug("Received UpdateTableEvent {}", event);
-        registry.counter(registry.createId(Metrics.CounterSNSNotificationTableUpdate.name())).increment();
         UpdateTableMessage message = null;
         try {
             message = this.createUpdateTableMessage(
-                    UUID.randomUUID().toString(),
-                    event.getRequestContext().getTimestamp(),
-                    event.getRequestContext().getId(),
-                    event.getName().toString(),
-                    event.getOldTable(),
-                    event.getCurrentTable()
+                UUID.randomUUID().toString(),
+                event.getRequestContext().getTimestamp(),
+                event.getRequestContext().getId(),
+                event.getName().toString(),
+                event.getOldTable(),
+                event.getCurrentTable()
             );
             this.publishNotification(this.tableTopicArn, message);
-            registry.counter(registry.createId(Metrics.CounterSNSNotificationTableUpdate.name())
-                    .withTags(Metrics.getStatusSuccessMap())).increment();
+            this.registry.counter(
+                this.registry
+                    .createId(Metrics.CounterSNSNotificationTableUpdate.name())
+                    .withTags(Metrics.statusSuccessMap)
+            ).increment();
         } catch (final Exception e) {
             this.handleException(
-                    event.getName(),
-                    "Unable to publish update table notification",
-                    Metrics.CounterSNSNotificationTableUpdate.name(),
-                    message,
-                    e
+                event.getName(),
+                "Unable to publish update table notification",
+                Metrics.CounterSNSNotificationTableUpdate.name(),
+                message,
+                e
             );
         }
     }
@@ -351,36 +367,45 @@ public class SNSNotificationServiceImpl implements NotificationService {
     ) {
         log.error("{} with payload: {}", message, payload, e);
         final Map<String, String> tags = new HashMap<>(name.parts());
-        tags.put(Metrics.Status.name(), Metrics.StatusFailure.name());
-        registry.counter(registry.createId(counterKey).withTags(tags)).increment();
+        tags.putAll(Metrics.statusFailureMap);
+        this.registry.counter(this.registry.createId(counterKey).withTags(tags)).increment();
     }
 
     private UpdateTableMessage createUpdateTableMessage(
-            final String id,
-            final long timestamp,
-            final String requestId,
-            final String name,
-            final TableDto oldTable,
-            final TableDto currentTable
+        final String id,
+        final long timestamp,
+        final String requestId,
+        final String name,
+        final TableDto oldTable,
+        final TableDto currentTable
     ) throws IOException {
         final JsonPatch patch = JsonDiff.asJsonPatch(
-                this.mapper.valueToTree(oldTable),
-                this.mapper.valueToTree(currentTable)
+            this.mapper.valueToTree(oldTable),
+            this.mapper.valueToTree(currentTable)
         );
         return new UpdateTableMessage(
-                id,
-                timestamp,
-                requestId,
-                name,
-                new UpdatePayload<>(oldTable, patch, currentTable)
+            id,
+            timestamp,
+            requestId,
+            name,
+            new UpdatePayload<>(oldTable, patch, currentTable)
         );
     }
 
     private void publishNotification(
-            final String arn,
-            final SNSMessage<?> message
+        final String arn,
+        final SNSMessage<?> message
     ) throws JsonProcessingException {
-        final PublishResult result = this.client.publish(arn, this.mapper.writeValueAsString(message));
-        log.debug("Successfully published message {} to topic {} with id {}", message, arn, result.getMessageId());
+        try {
+            final PublishResult result = this.client.publish(arn, this.mapper.writeValueAsString(message));
+            log.debug("Successfully published message {} to topic {} with id {}", message, arn, result.getMessageId());
+        } finally {
+            final Timer timer = this.registry.timer(
+                Metrics.TimerNotificationsPublishDelay.name(),
+                "type",
+                message.getClass().getName()
+            );
+            timer.record(System.currentTimeMillis() - message.getTimestamp(), TimeUnit.MILLISECONDS);
+        }
     }
 }

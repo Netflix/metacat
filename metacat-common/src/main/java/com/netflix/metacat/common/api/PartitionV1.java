@@ -46,7 +46,7 @@ import java.util.List;
  *
  * @author amajumdar
  */
-@Path("mds/v1/partition")
+@Path("v1/partition")
 @Api(value = "PartitionV1",
     description = "Federated partition metadata operations",
     produces = MediaType.APPLICATION_JSON,
