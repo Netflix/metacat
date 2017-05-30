@@ -37,6 +37,7 @@ public abstract class BaseUserMetadataService implements UserMetadataService {
      * @param holder metadata
      * @param merge  true if the metadata should be merged with existing metadata
      */
+    @Override
     public void saveMetadata(final String userId, final HasMetadata holder, final boolean merge) {
         if (holder instanceof HasDefinitionMetadata) {
             final HasDefinitionMetadata defDto = (HasDefinitionMetadata) holder;
@@ -65,6 +66,7 @@ public abstract class BaseUserMetadataService implements UserMetadataService {
      *
      * @param holder metadata
      */
+    @Override
     public void populateMetadata(final HasMetadata holder) {
         Optional<ObjectNode> metadata = Optional.empty();
         if (holder instanceof HasDataMetadata) {
@@ -88,6 +90,7 @@ public abstract class BaseUserMetadataService implements UserMetadataService {
      * @param definitionMetadata definition metadata
      * @param dataMetadata       data metadata
      */
+    @Override
     public void populateMetadata(
         final HasMetadata holder,
         final ObjectNode definitionMetadata,

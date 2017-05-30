@@ -63,8 +63,9 @@ public enum Metrics {
      * metacat request.
      */
     Server("server"),
-    CounterRequestCount(Name(Server, Count, "request")),
-    CounterDeleteMetaData(Name(Server, Count, "deleteMetadata")),
+    CounterRequestCount(Name(Server,Count,"request")),
+    CounterRequestFailureCount(Name(Server,Count,"requestfailure")),
+    CounterDeleteMetaData(Name(Server,Count,"deleteMetadata")),
 
     /**
      * Notifications.
@@ -129,6 +130,7 @@ public enum Metrics {
         = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusSuccess.name());
     public static Map<String, String> statusFailureMap
         = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusFailure.name());
+
     private final String constant;
 
     Metrics(final String constant) {

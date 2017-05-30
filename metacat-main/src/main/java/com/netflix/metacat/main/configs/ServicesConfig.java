@@ -21,6 +21,7 @@ import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.usermetadata.DefaultUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
@@ -45,8 +46,8 @@ import com.netflix.metacat.main.services.impl.PartitionServiceImpl;
 import com.netflix.metacat.main.services.impl.TableServiceImpl;
 import com.netflix.metacat.usermetadata.mysql.MySqlLookupService;
 import com.netflix.metacat.usermetadata.mysql.MySqlTagService;
-import com.netflix.metacat.usermetadata.mysql.MysqlUserMetadataService;
 import com.netflix.spectator.api.Registry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -68,12 +69,13 @@ public class ServicesConfig {
      * @return User metadata service based on MySql
      */
     @Bean
+    @ConditionalOnMissingBean
     public UserMetadataService userMetadataService(
         final DataSourceManager dataSourceManager,
         final Config config,
         final MetacatJson metacatJson
     ) {
-        return new MysqlUserMetadataService(dataSourceManager, metacatJson, config);
+        return new DefaultUserMetadataService();
     }
 
     /**

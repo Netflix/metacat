@@ -321,7 +321,7 @@ public class MySqlTagService implements TagService {
             String query = String.format(QUERY_SEARCH, "in ('" + Joiner.on("','").skipNulls().join(includeTags) + "')");
             final Object[] params = {includeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
             includedNames.addAll(runner.query(connection, query, new ColumnListHandler<>("name"), params));
-            if (excludeTags != null && !excludeTags.isEmpty()) {
+            if (!excludeTags.isEmpty()) {
                 //Excludes
                 query = String.format(QUERY_SEARCH, "in ('" + Joiner.on("','").skipNulls().join(excludeTags) + "')");
                 final Object[] eParams = {excludeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
@@ -335,7 +335,7 @@ public class MySqlTagService implements TagService {
             DBUtil.closeReadConnection(connection);
         }
 
-        if (excludeTags != null && !excludeTags.isEmpty()) {
+        if (!excludeTags.isEmpty()) {
             includedNames = Sets.difference(includedNames, excludedNames);
         }
 
@@ -385,7 +385,7 @@ public class MySqlTagService implements TagService {
             final Connection conn = getDataSource().getConnection();
             try {
                 final TagItem tagItem = findOrCreateTagItemByName(name.toString(), conn);
-                Set<String> inserts;
+                final Set<String> inserts;
                 Set<String> deletes = Sets.newHashSet();
                 Set<String> values = tagItem.getValues();
                 if (values == null || values.isEmpty()) {
