@@ -28,6 +28,9 @@ metacat:
     index:
       name: metacatdev
 
+management:
+  context-path: /actuator
+
 netflix:
   appinfo:
     name: metacat
@@ -36,7 +39,3 @@ netflix:
 spring:
   application:
     name: metacat
-  jersey:
-    type: filter
-
-

@@ -21,9 +21,10 @@ import com.netflix.metacat.common.server.properties.Config;
 import io.swagger.jaxrs.listing.ApiListingResource;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import javax.ws.rs.ApplicationPath;
 
 /**
  * Jersey resource registrations for Metacat to configure Spring.
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Component;
  * @since 1.1.0
  */
 @Component
+@ApplicationPath("/mds")
 public class MetacatJerseyResources extends ResourceConfig {
 
     /**
@@ -49,7 +51,6 @@ public class MetacatJerseyResources extends ResourceConfig {
         this.register(TagV1Resource.class);
         this.register(MetacatRestFilter.class);
         this.register(MetacatJsonProvider.class);
-        this.property(ServletProperties.FILTER_STATIC_CONTENT_REGEX, "/(web|docs)/.*|/favicon.ico");
 
         if (config.isElasticSearchEnabled()) {
             this.register(SearchMetacatV1Resource.class);

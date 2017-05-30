@@ -108,9 +108,7 @@ public final class Client {
      * @param <T>     API Resource instance
      * @return An instance that implements the given interface and is wired up to communicate with the Metacat server.
      */
-    public <T> T getApiClient(
-        @Nonnull @NonNull final Class<T> apiType
-    ) {
+    public <T> T getApiClient(@Nonnull @NonNull final Class<T> apiType) {
         Preconditions.checkArgument(apiType.isInterface(), "apiType must be an interface");
 
         return feignBuilder.target(apiType, host);
@@ -187,6 +185,9 @@ public final class Client {
          */
         public Builder withHost(final String serverHost) {
             this.host = serverHost;
+            if (!this.host.endsWith("/mds") && !this.host.endsWith("/mds/")) {
+                this.host = this.host + "/mds";
+            }
             return this;
         }
 

@@ -43,7 +43,7 @@ import java.util.Set;
  *
  * @author amajumdar
  */
-@Path("mds/v1/tag")
+@Path("v1/tag")
 @Api(value = "TagV1",
     description = "Federated metadata tag operations",
     produces = MediaType.APPLICATION_JSON,

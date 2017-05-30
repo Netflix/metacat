@@ -49,8 +49,7 @@ import java.util.List;
  *
  * @author amajumdar
  */
-//TODO: Don't think this kind of API definition should be in common
-@Path("mds/v1")
+@Path("v1")
 @Api(
     value = "MetacatV1",
     description = "Federated metadata operations",
