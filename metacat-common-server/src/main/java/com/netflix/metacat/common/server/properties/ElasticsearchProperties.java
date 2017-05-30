@@ -32,7 +32,7 @@ import java.util.List;
 @Data
 public class ElasticsearchProperties {
 
-    private boolean enabled = true;
+    private boolean enabled;
     @NonNull
     private Index index = new Index();
     @NonNull
