@@ -20,7 +20,6 @@ apply plugin: "war"
 
 configurations {
     all*.exclude module: "jsr311-api"
-    all*.exclude group: "com.sun.jersey"
 }
 
 dependencies {

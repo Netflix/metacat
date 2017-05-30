@@ -16,18 +16,28 @@
 #
 #
 
-metacat:
-  plugin:
-    config:
-      location: /etc/catalog
+eureka:
+  client:
+    enabled: false
+    healthcheck:
+      enabled: true # See EurekaDiscoverClientConfiguration as it's not auto found by IDE
+    fetchRegistry: false
+  instance:
+    healthCheckUrlPath: ${management.contextPath}/health
+    statusPageUrlPath: ${management.contextPath}/info
 
 management:
-  context-path: /actuator
+  contextPath: /actuator
   health:
     elasticsearch:
       enabled: false # This is needed for now as we're using a very out of date ES client that throws runtime errors
   security:
     enabled: false
+
+metacat:
+  plugin:
+    config:
+      location: /etc/catalog
 
 netflix:
   appinfo:
