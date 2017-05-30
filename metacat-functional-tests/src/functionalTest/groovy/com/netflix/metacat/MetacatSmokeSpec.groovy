@@ -367,6 +367,20 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
+    def "Test save 0 partitions for #catalogName/#databaseName/#tableName"() {
+        when:
+        createTable(catalogName, databaseName, tableName)
+        partitionApi.savePartitions(catalogName, databaseName, tableName, new PartitionsSaveRequestDto())
+        then:
+        noExceptionThrown()
+        where:
+        catalogName                | databaseName      | tableName
+        'embedded-hive-metastore'  | 'smoke_db'        | 'part'
+        'hive-metastore'           | 'hsmoke_db'       | 'part'
+        's3-mysql-db'              | 'smoke_db'        | 'part'
+    }
+
+    @Unroll
     def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
         expect:
         try {
@@ -380,6 +394,7 @@ class MetacatSmokeSpec extends Specification {
                     partition.getSerde().setUri(partition.getSerde().getUri() + 0)
                     request.setAlterIfExists(true)
                 }
+                request.setDefinitionMetadata((ObjectNode) metacatJson.emptyObjectNode().set('savePartitions', metacatJson.emptyObjectNode()))
                 partitionApi.savePartitions(catalogName, databaseName, tableName, request)
             }
             error == null
@@ -392,6 +407,9 @@ class MetacatSmokeSpec extends Specification {
             assert partitions != null && partitions.size() == 1 && partitions.find {it.name.partitionName == partitionName} != null
             def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: partitionName.replace('=', '="') + '"', includePartitionDetails: true))
             assert partitionDetails != null && partitionDetails.size() == 1 && partitionDetails.find {it.name.partitionName == partitionName} != null && partitionDetails.size() == partitions.size() && partitionDetails.find {it.name.partitionName == partitionName}.getSerde().getSerdeInfoParameters().size() >= 1
+            if (repeat) {
+                assert api.getTable(catalogName, databaseName, tableName, false, true, false).getDefinitionMetadata().get('savePartitions') != null
+            }
         }
         cleanup:
         if (!error) {
