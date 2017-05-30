@@ -21,7 +21,6 @@ metacat:
     config:
       location: /etc/catalog
   elasticsearch:
-    enabled: true
     cluster:
       name: es_dpa
       nodes: 100.67.79.200
@@ -30,6 +29,11 @@ metacat:
 
 management:
   context-path: /actuator
+  health:
+    elasticsearch:
+      enabled: false # This is needed for now as we're using a very out of date ES client that throws runtime errors
+  security:
+    enabled: false
 
 netflix:
   appinfo:
