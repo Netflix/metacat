@@ -73,8 +73,8 @@ import java.util.stream.Collectors;
  */
 public class HiveConnectorPartitionService implements ConnectorPartitionService {
     protected final String catalogName;
+    protected final HiveConnectorInfoConverter hiveMetacatConverters;
     private final IMetacatHiveClient metacatHiveClient;
-    private final HiveConnectorInfoConverter hiveMetacatConverters;
 
 
     /**

@@ -32,6 +32,7 @@ import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
@@ -49,6 +50,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.thrift.TException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -696,5 +700,17 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             }
         }
         return partitions;
+    }
+
+    @Override
+    protected Map<String, Partition> getPartitionsByNames(final Table table, final List<String> partitionNames)
+        throws TException {
+        final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(
+            QualifiedName.ofTable(catalogName, table.getDbName(), table.getTableName()), table);
+        return getpartitions(table.getDbName(), table.getTableName(),
+            partitionNames, null, null, null, false)
+            .stream()
+            .collect(Collectors.toMap(partitionInfo -> partitionInfo.getName().getPartitionName(),
+                partitionInfo -> hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo)));
     }
 }
