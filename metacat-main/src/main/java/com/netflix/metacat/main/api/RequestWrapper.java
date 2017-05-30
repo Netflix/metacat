@@ -60,6 +60,7 @@ public final class RequestWrapper {
     private final Registry registry;
     //Metrics
     private final Id requestCounterId;
+    private final Id requestFaillureCounterId;
     private final Id requestTimerId;
 
     /**
@@ -71,6 +72,7 @@ public final class RequestWrapper {
     public RequestWrapper(@NotNull @NonNull final Registry registry) {
         this.registry = registry;
         requestCounterId = registry.createId(Metrics.CounterRequestCount.name());
+        requestFaillureCounterId = registry.createId(Metrics.CounterRequestFailureCount.name());
         requestTimerId = registry.createId(Metrics.TimerRequest.name());
     }
 
@@ -128,16 +130,14 @@ public final class RequestWrapper {
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                     e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
-            tags.put(Metrics.Status.name(), Metrics.StatusFailure.name());
-            registry.counter(requestCounterId.withTags(tags)).increment();
+            registry.counter(requestFaillureCounterId.withTags(tags)).increment();
             throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
         } catch (UserMetadataServiceException e) {
             final String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(),
                     e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             throw new MetacatUserMetadataException(message);
         } catch (Exception e) {
-            tags.put(Metrics.Status.name(), Metrics.StatusFailure.name());
-            registry.counter(requestCounterId.withTags(tags)).increment();
+            registry.counter(requestFaillureCounterId.withTags(tags)).increment();
 
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                     e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
@@ -177,8 +177,7 @@ public final class RequestWrapper {
             throw new MetacatBadRequestException(String.format("%s.%s", e.getMessage(),
                     e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (Exception e) {
-            tags.put(Metrics.Status.name(), Metrics.StatusFailure.name());
-            registry.counter(requestCounterId.withTags(tags)).increment();
+            registry.counter(requestFaillureCounterId.withTags(tags)).increment();
             final String message = String
                     .format("%s.%s -- %s failed.",
                             e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage(),
