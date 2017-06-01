@@ -74,7 +74,7 @@ public class ThreadServiceManager {
             "metacat-" + usage + "-pool-%d", maxQueueSize);
         executor = MoreExecutors.listeningDecorator(executorService);
         final CompositeMonitor<?> newThreadPoolMonitor =
-            Monitors.newThreadPoolMonitor("metacat." + usage + ".pool", (ThreadPoolExecutor) executor);
+            Monitors.newThreadPoolMonitor("metacat." + usage + ".pool", (ThreadPoolExecutor) executorService);
         DefaultMonitorRegistry.getInstance().register(newThreadPoolMonitor);
     }
 
