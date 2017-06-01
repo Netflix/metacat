@@ -55,6 +55,7 @@ class SNSNotificationServiceImplProviderSpec extends Specification {
 
         then: "Should return a SNSNotificationServiceImpl implementation"
         service instanceof SNSNotificationServiceImpl
+        1 * config.getSNSClientThreadCount() >> 1
         1 * this.config.isSnsNotificationEnabled() >> true
         1 * this.config.getSnsTopicPartitionArn() >> UUID.randomUUID().toString()
         1 * this.config.getSnsTopicTableArn() >> UUID.randomUUID().toString()

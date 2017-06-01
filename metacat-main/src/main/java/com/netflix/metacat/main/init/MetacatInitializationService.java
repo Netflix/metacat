@@ -71,7 +71,6 @@ public class MetacatInitializationService {
         injector.getInstance(ThreadServiceManager.class).start();
         // Start the thrift services
         injector.getInstance(MetacatThriftService.class).start();
-
         // Initialize elastic search client
         final Client client = injector.getInstance(Client.class);
         if (client != null) {

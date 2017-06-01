@@ -64,9 +64,11 @@ public class ArchaiusConfigImpl implements Config {
     private final DynamicBooleanProperty canSoftDeleteDataMetadata;
     private final DynamicBooleanProperty canCascadeViewsMetadataOnTableDelete;
     private final DynamicIntProperty userMetadataMaxInClauseItems;
+    private final DynamicIntProperty snsClientThreadCount;
     private final DynamicBooleanProperty snsEnabled;
     private final DynamicStringProperty snsTopicTableArn;
     private final DynamicStringProperty snsTopicPartitionArn;
+    private final DynamicBooleanProperty snsNotificationTopicPartitionEnabled;
 
     /**
      * Default constructor.
@@ -102,7 +104,7 @@ public class ArchaiusConfigImpl implements Config {
             .getIntProperty("metacat.elacticsearch.refresh.threshold.unmarked.tables.delete", 1000);
         this.epochInSeconds = factory.getBooleanProperty("metacat.type.epoch_in_seconds", true);
         this.eventBusExecutorThreadCount = factory.getIntProperty("metacat.event.bus.executor.thread.count", 20);
-        this.eventBusThreadCount = factory.getIntProperty("metacat.event.thread.count", 20);
+        this.eventBusThreadCount = factory.getIntProperty("metacat.event.thread.count", 50);
         this.hivePartitionWhitelistPattern = factory
             .getStringProperty("metacat.hive.metastore.partition.name.whitelist.pattern", "");
         this.lookupServiceUserAdmin = factory.getStringProperty("metacat.lookup_service.user_admin", "admin");
@@ -137,6 +139,9 @@ public class ArchaiusConfigImpl implements Config {
             = factory.getStringProperty("metacat.notifications.sns.topic.table.arn", null);
         this.snsTopicPartitionArn
             = factory.getStringProperty("metacat.notifications.sns.topic.partition.arn", null);
+        this.snsClientThreadCount = factory.getIntProperty("metacat.notifications.sns.client.thread.count", 50);
+        this.snsNotificationTopicPartitionEnabled =
+            factory.getBooleanProperty("metacat.notifications.sns.topic.partition.enabled", true);
     }
 
     private void setQualifiedNamesToElasticSearchRefreshExcludeQualifiedNames() {
@@ -354,5 +359,15 @@ public class ArchaiusConfigImpl implements Config {
     @Override
     public String getSnsTopicPartitionArn() {
         return this.snsTopicPartitionArn.get();
+    }
+
+    @Override
+    public int getSNSClientThreadCount() {
+        return this.snsClientThreadCount.get();
+    }
+
+    @Override
+    public boolean isSnsNotificationTopicPartitionEnabled() {
+        return this.snsNotificationTopicPartitionEnabled.get();
     }
 }

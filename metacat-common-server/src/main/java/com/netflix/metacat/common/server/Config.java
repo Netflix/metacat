@@ -203,4 +203,18 @@ public interface Config {
      * @return The partition topic ARN or null if no property set
      */
     String getSnsTopicPartitionArn();
+
+    /**
+     * Get the size of the thread pool used by SNS client.
+     * @return size of the thread pool used by SNS client
+     */
+    int getSNSClientThreadCount();
+
+    /**
+     * Whether or not notifications should be published to SNS Partition topic. If this is enabled, the
+     * partition topic arn must also exist or SNS won't be enabled.
+     *
+     * @return Whether SNS notifications to partitions topic should be enabled
+     */
+    boolean isSnsNotificationTopicPartitionEnabled();
 }
