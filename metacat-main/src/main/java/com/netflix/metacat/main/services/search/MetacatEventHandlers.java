@@ -30,6 +30,9 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
+import com.netflix.metacat.common.server.monitoring.TimerWrapper;
+import com.netflix.servo.monitor.DynamicTimer;
+import com.netflix.servo.monitor.MonitorConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -61,11 +64,19 @@ public class MetacatEventHandlers {
     @AllowConcurrentEvents
     public void metacatCreateDatabasePostEventHandler(final MetacatCreateDatabasePostEvent event) {
         log.debug("Received CreateDatabaseEvent {}", event);
+        DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
+                .withTag("metacat.event.type", "database.create").build(),
+            System.currentTimeMillis() - event.getRequestContext().getTimestamp());
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.database.create");
-        final DatabaseDto dto = event.getDatabase();
-        final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
-            event.getRequestContext().getUserName(), false);
-        es.save(ElasticSearchDoc.Type.database.name(), doc.getId(), doc.toJsonString());
+        final TimerWrapper timer = TimerWrapper.createStarted("metacat.timer.elasticsearch.events.database.create");
+        try {
+            final DatabaseDto dto = event.getDatabase();
+            final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
+                event.getRequestContext().getUserName(), false);
+            es.save(ElasticSearchDoc.Type.database.name(), doc.getId(), doc.toJsonString());
+        } finally {
+            log.info("*** ES Time taken to complete {} is {} ms", "database.create", timer.stop());
+        }
     }
 
     /**
@@ -76,11 +87,19 @@ public class MetacatEventHandlers {
     @AllowConcurrentEvents
     public void metacatCreateTablePostEventHandler(final MetacatCreateTablePostEvent event) {
         log.debug("Received CreateTableEvent {}", event);
+        DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
+                .withTag("metacat.event.type", "table.create").build(),
+            System.currentTimeMillis() - event.getRequestContext().getTimestamp());
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.create");
-        final TableDto dto = event.getTable();
-        final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
-            event.getRequestContext().getUserName(), false);
-        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc.toJsonString());
+        final TimerWrapper timer = TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.create");
+        try {
+            final TableDto dto = event.getTable();
+            final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
+                event.getRequestContext().getUserName(), false);
+            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc.toJsonString());
+        } finally {
+            log.info("*** ES Time taken to complete {} is {} ms", "table.create", timer.stop());
+        }
     }
 
     /**
@@ -91,9 +110,17 @@ public class MetacatEventHandlers {
     @AllowConcurrentEvents
     public void metacatDeleteDatabasePostEventHandler(final MetacatDeleteDatabasePostEvent event) {
         log.debug("Received DeleteDatabaseEvent {}", event);
+        DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
+                .withTag("metacat.event.type", "database.delete").build(),
+            System.currentTimeMillis() - event.getRequestContext().getTimestamp());
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.database.delete");
-        final DatabaseDto dto = event.getDatabase();
-        es.softDelete(ElasticSearchDoc.Type.database.name(), dto.getName().toString(), event.getRequestContext());
+        final TimerWrapper timer = TimerWrapper.createStarted("metacat.timer.elasticsearch.events.database.delete");
+        try {
+            final DatabaseDto dto = event.getDatabase();
+            es.softDelete(ElasticSearchDoc.Type.database.name(), dto.getName().toString(), event.getRequestContext());
+        } finally {
+            log.info("*** ES Time taken to complete {} is {} ms", "database.delete", timer.stop());
+        }
     }
 
     /**
@@ -104,15 +131,23 @@ public class MetacatEventHandlers {
     @AllowConcurrentEvents
     public void metacatDeleteTablePostEventHandler(final MetacatDeleteTablePostEvent event) {
         log.debug("Received DeleteTableEvent {}", event);
+        DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
+                .withTag("metacat.event.type", "table.delete").build(),
+            System.currentTimeMillis() - event.getRequestContext().getTimestamp());
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.delete");
-        final TableDto dto = event.getTable();
-        es.softDelete(ElasticSearchDoc.Type.table.name(), dto.getName().toString(), event.getRequestContext());
+        final TimerWrapper timer = TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.delete");
         try {
-            final List<String> partitionIdsToBeDeleted =
-                es.getIdsByQualifiedName(ElasticSearchDoc.Type.partition.name(), dto.getName());
-            es.delete(ElasticSearchDoc.Type.partition.name(), partitionIdsToBeDeleted);
-        } catch (Exception e) {
-            log.warn("Failed deleting the partitions for the dropped table/view:{}", dto.getName().toString());
+            final TableDto dto = event.getTable();
+            es.softDelete(ElasticSearchDoc.Type.table.name(), dto.getName().toString(), event.getRequestContext());
+            try {
+                final List<String> partitionIdsToBeDeleted =
+                    es.getIdsByQualifiedName(ElasticSearchDoc.Type.partition.name(), dto.getName());
+                es.delete(ElasticSearchDoc.Type.partition.name(), partitionIdsToBeDeleted);
+            } catch (Exception e) {
+                log.warn("Failed deleting the partitions for the dropped table/view:{}", dto.getName().toString());
+            }
+        } finally {
+            log.info("*** ES Time taken to complete {} is {} ms", "table.delete", timer.stop());
         }
     }
 
@@ -124,11 +159,20 @@ public class MetacatEventHandlers {
     @AllowConcurrentEvents
     public void metacatDeleteTablePartitionPostEventHandler(final MetacatDeleteTablePartitionPostEvent event) {
         log.debug("Received DeleteTablePartitionEvent {}", event);
+        DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
+                .withTag("metacat.event.type", "partition.delete").build(),
+            System.currentTimeMillis() - event.getRequestContext().getTimestamp());
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.partition.delete");
-        final List<String> partitionIds = event.getPartitionIds();
-        final List<String> esPartitionIds = partitionIds.stream()
-            .map(partitionId -> event.getName().toString() + "/" + partitionId).collect(Collectors.toList());
-        es.softDelete(ElasticSearchDoc.Type.partition.name(), esPartitionIds, event.getRequestContext());
+        final TimerWrapper timer =
+            TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.partition.delete");
+        try {
+            final List<String> partitionIds = event.getPartitionIds();
+            final List<String> esPartitionIds = partitionIds.stream()
+                .map(partitionId -> event.getName().toString() + "/" + partitionId).collect(Collectors.toList());
+            es.softDelete(ElasticSearchDoc.Type.partition.name(), esPartitionIds, event.getRequestContext());
+        } finally {
+            log.info("*** ES Time taken to complete {} is {} ms", "partition.delete", timer.stop());
+        }
     }
 
     /**
@@ -139,13 +183,22 @@ public class MetacatEventHandlers {
     @AllowConcurrentEvents
     public void metacatRenameTablePostEventHandler(final MetacatRenameTablePostEvent event) {
         log.debug("Received RenameTableEvent {}", event);
+        DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
+                .withTag("metacat.event.type", "table.rename").build(),
+            System.currentTimeMillis() - event.getRequestContext().getTimestamp());
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.rename");
-        es.delete(ElasticSearchDoc.Type.table.name(), event.getName().toString());
+        final TimerWrapper timer =
+            TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.rename");
+        try {
+            es.delete(ElasticSearchDoc.Type.table.name(), event.getName().toString());
 
-        final TableDto dto = event.getCurrentTable();
-        final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
-            event.getRequestContext().getUserName(), false);
-        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc.toJsonString());
+            final TableDto dto = event.getCurrentTable();
+            final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
+                event.getRequestContext().getUserName(), false);
+            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc.toJsonString());
+        } finally {
+            log.info("*** ES Time taken to complete {} is {} ms", "table.rename", timer.stop());
+        }
     }
 
     /**
@@ -156,16 +209,25 @@ public class MetacatEventHandlers {
     @AllowConcurrentEvents
     public void metacatUpdateTablePostEventHandler(final MetacatUpdateTablePostEvent event) {
         log.debug("Received UpdateTableEvent {}", event);
+        DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
+                .withTag("metacat.event.type", "table.update").build(),
+            System.currentTimeMillis() - event.getRequestContext().getTimestamp());
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.update");
-        final TableDto dto = event.getCurrentTable();
+        final TimerWrapper timer =
+            TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.update");
+        try {
+            final TableDto dto = event.getCurrentTable();
 
-        final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
-            event.getRequestContext().getUserName(), false);
-        final ElasticSearchDoc oldDoc = es.get(ElasticSearchDoc.Type.table.name(), doc.getId());
-        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc.toJsonString());
-        if (oldDoc == null || oldDoc.getDto() == null
-            || !Objects.equals(((TableDto) oldDoc.getDto()).getDataMetadata(), dto.getDataMetadata())) {
-            updateEntitiesWithSameUri(ElasticSearchDoc.Type.table.name(), dto, event.getRequestContext());
+            final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
+                event.getRequestContext().getUserName(), false);
+            final ElasticSearchDoc oldDoc = es.get(ElasticSearchDoc.Type.table.name(), doc.getId());
+            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc.toJsonString());
+            if (oldDoc == null || oldDoc.getDto() == null
+                || !Objects.equals(((TableDto) oldDoc.getDto()).getDataMetadata(), dto.getDataMetadata())) {
+                updateEntitiesWithSameUri(ElasticSearchDoc.Type.table.name(), dto, event.getRequestContext());
+            }
+        } finally {
+            log.info("*** ES Time taken to complete {} is {} ms", "table.update", timer.stop());
         }
     }
 
@@ -190,12 +252,21 @@ public class MetacatEventHandlers {
     @AllowConcurrentEvents
     public void metacatSaveTablePartitionPostEventHandler(final MetacatSaveTablePartitionPostEvent event) {
         log.debug("Received SaveTablePartitionEvent {}", event);
+        DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
+                .withTag("metacat.event.type", "table.partition.save").build(),
+            System.currentTimeMillis() - event.getRequestContext().getTimestamp());
         CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.partition.save");
-        final List<PartitionDto> partitionDtos = event.getPartitions();
-        final MetacatRequestContext context = event.getRequestContext();
-        final List<ElasticSearchDoc> docs = partitionDtos.stream()
-            .map(dto -> new ElasticSearchDoc(dto.getName().toString(), dto, context.getUserName(), false))
-            .collect(Collectors.toList());
-        es.save(ElasticSearchDoc.Type.partition.name(), docs);
+        final TimerWrapper timer =
+            TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.partition.save");
+        try {
+            final List<PartitionDto> partitionDtos = event.getPartitions();
+            final MetacatRequestContext context = event.getRequestContext();
+            final List<ElasticSearchDoc> docs = partitionDtos.stream()
+                .map(dto -> new ElasticSearchDoc(dto.getName().toString(), dto, context.getUserName(), false))
+                .collect(Collectors.toList());
+            es.save(ElasticSearchDoc.Type.partition.name(), docs);
+        } finally {
+            log.info("*** ES Time taken to complete {} is {} ms", "table.partition.save", timer.stop());
+        }
     }
 }

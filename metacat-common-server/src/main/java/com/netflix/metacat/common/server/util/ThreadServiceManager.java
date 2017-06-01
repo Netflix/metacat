@@ -19,6 +19,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.netflix.metacat.common.server.Config;
+import com.netflix.servo.DefaultMonitorRegistry;
+import com.netflix.servo.monitor.CompositeMonitor;
+import com.netflix.servo.monitor.Monitors;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
@@ -70,6 +73,9 @@ public class ThreadServiceManager {
         final ExecutorService executorService = newFixedThreadPool(maxThreads,
             "metacat-" + usage + "-pool-%d", maxQueueSize);
         executor = MoreExecutors.listeningDecorator(executorService);
+        final CompositeMonitor<?> newThreadPoolMonitor =
+            Monitors.newThreadPoolMonitor("metacat." + usage + ".pool", (ThreadPoolExecutor) executor);
+        DefaultMonitorRegistry.getInstance().register(newThreadPoolMonitor);
     }
 
     @SuppressWarnings("checkstyle:hiddenfield")

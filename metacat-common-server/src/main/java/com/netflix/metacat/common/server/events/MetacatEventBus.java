@@ -23,12 +23,16 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.monitoring.CounterWrapper;
+import com.netflix.servo.DefaultMonitorRegistry;
+import com.netflix.servo.monitor.CompositeMonitor;
+import com.netflix.servo.monitor.Monitors;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,6 +54,9 @@ public class MetacatEventBus {
         final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("metacat-event-pool-%d").build();
         final int threadCount = config.getEventBusThreadCount();
         this.executor = Executors.newFixedThreadPool(threadCount, threadFactory);
+        final CompositeMonitor<?> newThreadPoolMonitor =
+            Monitors.newThreadPoolMonitor("metacat.event.pool", (ThreadPoolExecutor) executor);
+        DefaultMonitorRegistry.getInstance().register(newThreadPoolMonitor);
         this.asyncEventBus = new AsyncEventBus(
             "metacat-async-event-bus",
             this.executor

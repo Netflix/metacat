@@ -17,16 +17,12 @@
  */
 package com.netflix.metacat.main.services.notifications.sns
 
-import com.amazonaws.services.sns.AmazonSNSClient
-import com.amazonaws.services.sns.model.InternalErrorException
+import com.amazonaws.handlers.AsyncHandler
+import com.amazonaws.services.sns.AmazonSNSAsyncClient
 import com.amazonaws.services.sns.model.NotFoundException
 import com.amazonaws.services.sns.model.PublishResult
-import com.amazonaws.services.sns.model.ThrottledException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.TextNode
-import com.github.rholder.retry.RetryerBuilder
-import com.github.rholder.retry.StopStrategies
-import com.github.rholder.retry.WaitStrategies
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
@@ -39,6 +35,7 @@ import com.netflix.metacat.common.dto.notifications.sns.messages.DeletePartition
 import com.netflix.metacat.common.dto.notifications.sns.messages.DeleteTableMessage
 import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTableMessage
 import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTablePartitionsMessage
+import com.netflix.metacat.common.server.Config
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent
@@ -46,8 +43,6 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent
 import spock.lang.Specification
-
-import java.util.concurrent.TimeUnit
 
 /**
  * Tests for the SNSNotificationServiceImpl.
@@ -57,7 +52,7 @@ import java.util.concurrent.TimeUnit
  */
 class SNSNotificationServiceImplSpec extends Specification {
 
-    def client = Mock(AmazonSNSClient)
+    def client = Mock(AmazonSNSAsyncClient)
     def qName = QualifiedName.fromString(
         UUID.randomUUID().toString()
             + "/"
@@ -70,9 +65,11 @@ class SNSNotificationServiceImplSpec extends Specification {
             + UUID.randomUUID().toString()
     )
     def mapper = Mock(ObjectMapper)
+    def config = Mock(Config)
     def partitionArn = UUID.randomUUID().toString()
     def tableArn = UUID.randomUUID().toString()
-    def service = new SNSNotificationServiceImpl(this.client, this.tableArn, this.partitionArn, this.mapper)
+    def service =
+        new SNSNotificationServiceImpl(this.client, this.tableArn, this.partitionArn, this.mapper, this.config)
 
     def "Will Notify On Partition Creation"() {
         def partitions = Lists.newArrayList(new PartitionDto(), new PartitionDto(), new PartitionDto())
@@ -88,10 +85,11 @@ class SNSNotificationServiceImplSpec extends Specification {
         this.service.notifyOfPartitionAddition(event)
 
         then:
+        1 * this.config.isSnsNotificationTopicPartitionEnabled() >> true
         3 * this.mapper.writeValueAsString(_ as AddPartitionMessage) >> UUID.randomUUID().toString()
         1 * this.mapper.writeValueAsString(_ as UpdateTablePartitionsMessage) >> UUID.randomUUID().toString()
-        3 * this.client.publish(this.partitionArn, _ as String) >> new PublishResult()
-        1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        3 * this.client.publishAsync(this.partitionArn, _ as String, _ as AsyncHandler) >> new PublishResult()
+        1 * this.client.publishAsync(this.tableArn, _ as String, _ as AsyncHandler) >> new PublishResult()
     }
 
     def "Will Notify On Partition Deletion"() {
@@ -113,10 +111,11 @@ class SNSNotificationServiceImplSpec extends Specification {
         this.service.notifyOfPartitionDeletion(event)
 
         then:
+        1 * this.config.isSnsNotificationTopicPartitionEnabled() >> true
         5 * this.mapper.writeValueAsString(_ as DeletePartitionMessage) >> UUID.randomUUID().toString()
         1 * this.mapper.writeValueAsString(_ as UpdateTablePartitionsMessage) >> UUID.randomUUID().toString()
-        5 * this.client.publish(this.partitionArn, _ as String) >> new PublishResult()
-        1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        5 * this.client.publishAsync(this.partitionArn, _ as String, _ as AsyncHandler) >> new PublishResult()
+        1 * this.client.publishAsync(this.tableArn, _ as String, _ as AsyncHandler) >> new PublishResult()
     }
 
     def "Will Notify On Table Creation"() {
@@ -131,7 +130,7 @@ class SNSNotificationServiceImplSpec extends Specification {
 
         then:
         1 * this.mapper.writeValueAsString(_ as CreateTableMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        1 * this.client.publishAsync(this.tableArn, _ as String, _ as AsyncHandler) >> new PublishResult()
     }
 
     def "Will Notify On Table Deletion"() {
@@ -146,7 +145,7 @@ class SNSNotificationServiceImplSpec extends Specification {
 
         then:
         1 * this.mapper.writeValueAsString(_ as DeleteTableMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        1 * this.client.publishAsync(this.tableArn, _ as String, _ as AsyncHandler) >> new PublishResult()
     }
 
     def "Will Notify On Table Rename"() {
@@ -163,7 +162,7 @@ class SNSNotificationServiceImplSpec extends Specification {
         then:
         2 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
         1 * this.mapper.writeValueAsString(_ as UpdateTableMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        1 * this.client.publishAsync(this.tableArn, _ as String, _ as AsyncHandler) >> new PublishResult()
     }
 
     def "Will Notify On Table Update"() {
@@ -180,7 +179,7 @@ class SNSNotificationServiceImplSpec extends Specification {
         then:
         2 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
         1 * this.mapper.writeValueAsString(_ as UpdateTableMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> new PublishResult()
+        1 * this.client.publishAsync(this.tableArn, _ as String, _ as AsyncHandler) >> new PublishResult()
     }
 
     def "Won't retry on Other Exception"() {
@@ -195,6 +194,6 @@ class SNSNotificationServiceImplSpec extends Specification {
 
         then:
         1 * this.mapper.writeValueAsString(_ as CreateTableMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> { throw new NotFoundException("Exception") }
+        1 * this.client.publishAsync(this.tableArn, _ as String, _ as AsyncHandler) >> { throw new NotFoundException("Exception") }
     }
 }

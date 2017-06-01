@@ -17,11 +17,12 @@
  */
 package com.netflix.metacat.main.services.notifications.sns;
 
-import com.amazonaws.services.sns.AmazonSNSClient;
+import com.amazonaws.handlers.AsyncHandler;
+import com.amazonaws.services.sns.AmazonSNSAsyncClient;
 import com.amazonaws.services.sns.model.InvalidParameterException;
 import com.amazonaws.services.sns.model.InvalidParameterValueException;
+import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.diff.JsonDiff;
@@ -37,6 +38,7 @@ import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTableMess
 import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTablePartitionsMessage;
 import com.netflix.metacat.common.dto.notifications.sns.payloads.TablePartitionsUpdatePayload;
 import com.netflix.metacat.common.dto.notifications.sns.payloads.UpdatePayload;
+import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
@@ -65,10 +67,11 @@ import java.util.UUID;
 @Slf4j
 public class SNSNotificationServiceImpl implements NotificationService {
 
-    private final AmazonSNSClient client;
+    private final AmazonSNSAsyncClient client;
     private final String tableTopicArn;
     private final String partitionTopicArn;
     private final ObjectMapper mapper;
+    private final Config config;
 
     /**
      * Constructor.
@@ -77,17 +80,20 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * @param tableTopicArn     The topic to publish table related notifications to
      * @param partitionTopicArn The topic to publish partition related notifications to
      * @param mapper            The object mapper to use to convert objects to JSON strings
+     * @param config            Server configuration
      */
     public SNSNotificationServiceImpl(
-        @Nonnull final AmazonSNSClient client,
+        @Nonnull final AmazonSNSAsyncClient client,
         @Nonnull @Size(min = 1) final String tableTopicArn,
         @Nonnull @Size(min = 1) final String partitionTopicArn,
-        @Nonnull final ObjectMapper mapper
+        @Nonnull final ObjectMapper mapper,
+        @Nonnull final Config config
     ) {
         this.client = client;
         this.tableTopicArn = tableTopicArn;
         this.partitionTopicArn = partitionTopicArn;
         this.mapper = mapper;
+        this.config = config;
     }
 
     /**
@@ -100,8 +106,24 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final String name = event.getName().toString();
         final long timestamp = event.getRequestContext().getTimestamp();
         final String requestId = event.getRequestContext().getId();
-        AddPartitionMessage message = null;
-        try {
+        final UpdateTablePartitionsMessage tableMessage = new UpdateTablePartitionsMessage(
+            UUID.randomUUID().toString(),
+            timestamp,
+            requestId,
+            name,
+            new TablePartitionsUpdatePayload(
+                event.getPartitions().size(),
+                0
+            )
+        );
+        this.publishNotification(this.tableTopicArn, tableMessage, event.getName(),
+            "Unable to publish table partition add notification",
+            "metacat.notifications.sns.tables.addPartitions.failed", true);
+        // TODO: In ideal world this this be an injected object to the class so we can mock for tests
+        //       swap out implementations etc.
+        CounterWrapper.incrementCounter("metacat.notifications.sns.tables.addPartitions.succeeded");
+        if (config.isSnsNotificationTopicPartitionEnabled()) {
+            AddPartitionMessage message = null;
             for (final PartitionDto partition : event.getPartitions()) {
                 message = new AddPartitionMessage(
                     UUID.randomUUID().toString(),
@@ -110,34 +132,12 @@ public class SNSNotificationServiceImpl implements NotificationService {
                     name,
                     partition
                 );
-                this.publishNotification(this.partitionTopicArn, message);
+                this.publishNotification(this.partitionTopicArn, message, event.getName(),
+                    "Unable to publish partition creation notification",
+                    "metacat.notifications.sns.partitions.add.failed", true);
                 log.debug("Published create partition message {} on {}", message, this.partitionTopicArn);
                 CounterWrapper.incrementCounter("metacat.notifications.sns.partitions.add.succeeded");
             }
-        } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish partition creation notification",
-                "metacat.notifications.sns.partitions.add.failed", message, e);
-        }
-        UpdateTablePartitionsMessage tableMessage = null;
-        try {
-            // Publish a global message stating how many partitions were updated for the table to the table topic
-            tableMessage = new UpdateTablePartitionsMessage(
-                UUID.randomUUID().toString(),
-                timestamp,
-                requestId,
-                name,
-                new TablePartitionsUpdatePayload(
-                    event.getPartitions().size(),
-                    0
-                )
-            );
-            this.publishNotification(this.tableTopicArn, tableMessage);
-            // TODO: In ideal world this this be an injected object to the class so we can mock for tests
-            //       swap out implementations etc.
-            CounterWrapper.incrementCounter("metacat.notifications.sns.tables.addPartitions.succeeded");
-        } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish table partition add notification",
-                "metacat.notifications.sns.tables.addPartitions.failed", tableMessage, e);
         }
     }
 
@@ -151,8 +151,22 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final String name = event.getName().toString();
         final long timestamp = event.getRequestContext().getTimestamp();
         final String requestId = event.getRequestContext().getId();
-        DeletePartitionMessage message = null;
-        try {
+        final UpdateTablePartitionsMessage tableMessage = new UpdateTablePartitionsMessage(
+            UUID.randomUUID().toString(),
+            timestamp,
+            requestId,
+            name,
+            new TablePartitionsUpdatePayload(
+                0,
+                event.getPartitionIds().size()
+            )
+        );
+        this.publishNotification(this.tableTopicArn, tableMessage, event.getName(),
+            "Unable to publish table partition delete notification",
+            "metacat.notifications.sns.tables.deletePartitions.failed", true);
+        CounterWrapper.incrementCounter("metacat.notifications.sns.tables.deletePartitions.succeeded");
+        if (config.isSnsNotificationTopicPartitionEnabled()) {
+            DeletePartitionMessage message = null;
             for (final String partitionId : event.getPartitionIds()) {
                 message = new DeletePartitionMessage(
                     UUID.randomUUID().toString(),
@@ -161,32 +175,12 @@ public class SNSNotificationServiceImpl implements NotificationService {
                     name,
                     partitionId
                 );
-                this.publishNotification(this.partitionTopicArn, message);
+                this.publishNotification(this.partitionTopicArn, message, event.getName(),
+                    "Unable to publish partition deletion notification",
+                    "metacat.notifications.sns.partitions.delete.failed", true);
                 CounterWrapper.incrementCounter("metacat.notifications.sns.partitions.delete.succeeded");
                 log.debug("Published delete partition message {} on {}", message, this.partitionTopicArn);
             }
-        } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish partition deletion notification",
-                "metacat.notifications.sns.partitions.delete.failed", message, e);
-        }
-        UpdateTablePartitionsMessage tableMessage = null;
-        try {
-            // Publish a global message stating how many partitions were updated for the table to the table topic
-            tableMessage = new UpdateTablePartitionsMessage(
-                UUID.randomUUID().toString(),
-                timestamp,
-                requestId,
-                name,
-                new TablePartitionsUpdatePayload(
-                    0,
-                    event.getPartitionIds().size()
-                )
-            );
-            this.publishNotification(this.tableTopicArn, tableMessage);
-            CounterWrapper.incrementCounter("metacat.notifications.sns.tables.deletePartitions.succeeded");
-        } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish table partition delete notification",
-                "metacat.notifications.sns.tables.deletePartitions.failed", tableMessage, e);
         }
     }
 
@@ -197,21 +191,17 @@ public class SNSNotificationServiceImpl implements NotificationService {
     public void notifyOfTableCreation(@Nonnull final MetacatCreateTablePostEvent event) {
         log.debug("Received CreateTableEvent {}", event);
         CounterWrapper.incrementCounter("metacat.notifications.sns.events.tables.create");
-        CreateTableMessage message = null;
-        try {
-            message = new CreateTableMessage(
-                UUID.randomUUID().toString(),
-                event.getRequestContext().getTimestamp(),
-                event.getRequestContext().getId(),
-                event.getName().toString(),
-                event.getTable()
-            );
-            this.publishNotification(this.tableTopicArn, message);
-            CounterWrapper.incrementCounter("metacat.notifications.sns.tables.create.succeeded");
-        } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish create table notification",
-                "metacat.notifications.sns.tables.create.failed", message, e);
-        }
+        final CreateTableMessage message = new CreateTableMessage(
+            UUID.randomUUID().toString(),
+            event.getRequestContext().getTimestamp(),
+            event.getRequestContext().getId(),
+            event.getName().toString(),
+            event.getTable()
+        );
+        this.publishNotification(this.tableTopicArn, message, event.getName(),
+            "Unable to publish create table notification",
+            "metacat.notifications.sns.tables.create.failed", true);
+        CounterWrapper.incrementCounter("metacat.notifications.sns.tables.create.succeeded");
     }
 
     /**
@@ -221,21 +211,17 @@ public class SNSNotificationServiceImpl implements NotificationService {
     public void notifyOfTableDeletion(@Nonnull final MetacatDeleteTablePostEvent event) {
         log.debug("Received DeleteTableEvent {}", event);
         CounterWrapper.incrementCounter("metacat.notifications.sns.events.tables.delete");
-        DeleteTableMessage message = null;
-        try {
-            message = new DeleteTableMessage(
-                UUID.randomUUID().toString(),
-                event.getRequestContext().getTimestamp(),
-                event.getRequestContext().getId(),
-                event.getName().toString(),
-                event.getTable()
-            );
-            this.publishNotification(this.tableTopicArn, message);
-            CounterWrapper.incrementCounter("metacat.notifications.sns.tables.delete.succeeded");
-        } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish delete table notification",
-                "metacat.notifications.sns.tables.delete.failed", message, e);
-        }
+        final DeleteTableMessage message = new DeleteTableMessage(
+            UUID.randomUUID().toString(),
+            event.getRequestContext().getTimestamp(),
+            event.getRequestContext().getId(),
+            event.getName().toString(),
+            event.getTable()
+        );
+        this.publishNotification(this.tableTopicArn, message, event.getName(),
+            "Unable to publish delete table notification",
+            "metacat.notifications.sns.tables.delete.failed", true);
+        CounterWrapper.incrementCounter("metacat.notifications.sns.tables.delete.succeeded");
     }
 
     /**
@@ -245,7 +231,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
     public void notifyOfTableRename(@Nonnull final MetacatRenameTablePostEvent event) {
         log.debug("Received RenameTableEvent {}", event);
         CounterWrapper.incrementCounter("metacat.notifications.sns.events.tables.rename");
-        UpdateTableMessage message = null;
+        final UpdateTableMessage message;
         try {
             message = this.createUpdateTableMessage(
                 UUID.randomUUID().toString(),
@@ -255,11 +241,13 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 event.getOldTable(),
                 event.getCurrentTable()
             );
-            this.publishNotification(this.tableTopicArn, message);
+            this.publishNotification(this.tableTopicArn, message, event.getName(),
+                "Unable to publish rename table notification",
+                "metacat.notifications.sns.tables.rename.failed", true);
             CounterWrapper.incrementCounter("metacat.notifications.sns.tables.rename.succeeded");
-        } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish rename table notification",
-                "metacat.notifications.sns.tables.rename.failed", message, e);
+        } catch (IOException e) {
+            handleException(event.getName(), "Unable to create json patch for rename table notification",
+                "metacat.notifications.sns.tables.rename.json.failed", null, e);
         }
     }
 
@@ -280,11 +268,13 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 event.getOldTable(),
                 event.getCurrentTable()
             );
-            this.publishNotification(this.tableTopicArn, message);
+            this.publishNotification(this.tableTopicArn, message, event.getName(),
+                "Unable to publish update table notification",
+                "metacat.notifications.sns.tables.update.failed", true);
             CounterWrapper.incrementCounter("metacat.notifications.sns.tables.update.succeeded");
         } catch (final Exception e) {
-            handleException(event.getName(), "Unable to publish update table notification",
-                "metacat.notifications.sns.tables.update.failed", message, e);
+            handleException(event.getName(), "Unable to create json patch for update table notification",
+                "metacat.notifications.sns.tables.update.json.failed", message, e);
         }
     }
 
@@ -317,30 +307,45 @@ public class SNSNotificationServiceImpl implements NotificationService {
 
     private void publishNotification(
         final String arn,
-        final SNSMessage<?> message
-    ) throws JsonProcessingException {
+        final SNSMessage<?> message,
+        final QualifiedName name,
+        final String errorMessage,
+        final String counterKey,
+        final boolean retryOnLongMessage
+    ) {
+        DynamicTimer.record(MonitorConfig.builder("metacat.notifications.sns.before.publish.delay")
+                .withTag("metacat.event.type", message.getType().name()).build(),
+            System.currentTimeMillis() - message.getTimestamp());
         try {
-            publishNotificationNoRetry(arn, message);
-        } catch (final InvalidParameterException | InvalidParameterValueException e) {
-            log.error("SNS Publish message exceeded the size threshold", e);
-            CounterWrapper.incrementCounter("metacat.notifications.sns.publish.message.size.exceeded");
-            final SNSMessage<Void> voidMessage = new SNSMessage<>(message.getId(), message.getTimestamp(),
-                message.getRequestId(), message.getType(), message.getName(), null);
-            publishNotificationNoRetry(arn, voidMessage);
-        }
-    }
+            final AsyncHandler<PublishRequest, PublishResult> handler =
+                new AsyncHandler<PublishRequest, PublishResult>() {
+                    @Override
+                    public void onError(final Exception exception) {
+                        if (retryOnLongMessage && (exception instanceof InvalidParameterException
+                            || exception instanceof InvalidParameterValueException)) {
+                            log.error("SNS Publish message exceeded the size threshold", exception);
+                            CounterWrapper.incrementCounter("metacat.notifications.sns.publish.message.size.exceeded");
+                            final SNSMessage<Void> voidMessage = new SNSMessage<>(message.getId(),
+                                message.getTimestamp(), message.getRequestId(), message.getType(), message.getName(),
+                                null);
+                            publishNotification(arn, voidMessage, name, errorMessage, counterKey, false);
+                        } else {
+                            handleException(name, errorMessage, counterKey, message, exception);
+                        }
+                    }
 
-    private void publishNotificationNoRetry(
-        final String arn,
-        final SNSMessage<?> message
-    ) throws JsonProcessingException {
-        try {
-            final PublishResult result = client.publish(arn, mapper.writeValueAsString(message));
-            log.debug("Successfully published message {} to topic {} with id {}", message, arn, result.getMessageId());
-        } finally {
-            DynamicTimer.record(MonitorConfig.builder("metacat.notifications.sns.publish.delay")
-                    .withTag("type", message.getClass().getSimpleName()).build(),
-                System.currentTimeMillis() - message.getTimestamp());
+                    @Override
+                    public void onSuccess(final PublishRequest request, final PublishResult publishResult) {
+                        log.info("Successfully published message {} to topic {} with id {}",
+                            message, arn, publishResult.getMessageId());
+                        DynamicTimer.record(MonitorConfig.builder("metacat.notifications.sns.publish.delay")
+                                .withTag("metacat.event.type", message.getType().name()).build(),
+                            System.currentTimeMillis() - message.getTimestamp());
+                    }
+                };
+            client.publishAsync(arn, mapper.writeValueAsString(message), handler);
+        } catch (final Exception e) {
+            handleException(name, errorMessage, counterKey, message, e);
         }
     }
 }

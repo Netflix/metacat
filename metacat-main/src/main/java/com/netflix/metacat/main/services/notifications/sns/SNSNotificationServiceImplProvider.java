@@ -17,18 +17,26 @@
  */
 package com.netflix.metacat.main.services.notifications.sns;
 
-import com.amazonaws.services.sns.AmazonSNSClient;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.services.sns.AmazonSNSAsyncClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.main.services.notifications.DefaultNotificationServiceImpl;
 import com.netflix.metacat.main.services.notifications.NotificationService;
+import com.netflix.servo.DefaultMonitorRegistry;
+import com.netflix.servo.monitor.CompositeMonitor;
+import com.netflix.servo.monitor.Monitors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.inject.Inject;
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Provides an instance of SNSNotificationServiceImpl if conditions are right.
@@ -72,9 +80,15 @@ public class SNSNotificationServiceImplProvider implements Provider<Notification
                     "SNS Notifications are enabled but no partition ARN provided. Unable to configure."
                 );
             }
-
+            final ExecutorService executor = Executors.newFixedThreadPool(config.getSNSClientThreadCount(),
+                new ThreadFactoryBuilder().setNameFormat("metacat-sns-pool-%d").build());
+            final CompositeMonitor<?> newThreadPoolMonitor =
+                Monitors.newThreadPoolMonitor("metacat.sns.pool", (ThreadPoolExecutor) executor);
+            DefaultMonitorRegistry.getInstance().register(newThreadPoolMonitor);
             log.info("SNS notifications are enabled. Providing SNSNotificationServiceImpl implementation.");
-            return new SNSNotificationServiceImpl(new AmazonSNSClient(), tableArn, partitionArn, this.mapper);
+            return new SNSNotificationServiceImpl(
+                new AmazonSNSAsyncClient(DefaultAWSCredentialsProviderChain.getInstance(), executor), tableArn,
+                partitionArn, this.mapper, config);
         } else {
             log.info("SNS notifications are not enabled. Ignoring and providing default implementation.");
             return new DefaultNotificationServiceImpl();
