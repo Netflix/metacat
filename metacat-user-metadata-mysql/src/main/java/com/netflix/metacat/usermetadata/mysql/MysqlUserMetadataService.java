@@ -647,13 +647,13 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public List<DefinitionMetadataDto> searchDefinitionMetadatas(
-        final Set<String> propertyNames,
-        final String type,
-        final String name,
-        final String sortBy,
-        final String sortOrder,
-        final Integer offset,
-        final Integer limit
+        @Nullable final Set<String> propertyNames,
+        @Nullable final String type,
+        @Nullable final String name,
+        @Nullable final String sortBy,
+        @Nullable final String sortOrder,
+        @Nullable final Integer offset,
+        @Nullable final Integer limit
     ) {
         final List<DefinitionMetadataDto> result = Lists.newArrayList();
         final StringBuilder query = new StringBuilder(SQL.SEARCH_DEFINITION_METADATAS);

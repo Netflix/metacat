@@ -17,22 +17,24 @@
  */
 package com.netflix.metacat.main.api;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Default resource.
+ * Default controller.
  */
-@Path("/")
-public class IndexResource {
+@RestController
+@RequestMapping("/mds")
+public class IndexController {
     /**
      * Index API.
-     *
-     * @return ok.
      */
-    @GET
-    public Response index() {
-        return Response.ok().build();
+    @RequestMapping(method = RequestMethod.GET)
+    @ResponseStatus(HttpStatus.OK)
+    public void index() {
+        // TODO: Great place for hypermedia
     }
 }

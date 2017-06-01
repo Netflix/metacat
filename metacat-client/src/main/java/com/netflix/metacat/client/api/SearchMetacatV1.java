@@ -15,7 +15,7 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.common.api;
+package com.netflix.metacat.client.api;
 
 import com.netflix.metacat.common.dto.TableDto;
 
@@ -31,7 +31,7 @@ import java.util.List;
  * Search APIs for metacat that queries the search store.
  * @author amajumdar
  */
-@Path("v1/search")
+@Path("mds/v1/search")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface SearchMetacatV1 {

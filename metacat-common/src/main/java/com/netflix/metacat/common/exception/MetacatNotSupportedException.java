@@ -21,12 +21,6 @@ package com.netflix.metacat.common.exception;
  * Metacat not supported exception.
  */
 public class MetacatNotSupportedException extends MetacatException {
-    /**
-     * Constructor.
-     */
-    public MetacatNotSupportedException() {
-        this(null);
-    }
 
     /**
      * Constructor.
@@ -34,6 +28,6 @@ public class MetacatNotSupportedException extends MetacatException {
      * @param message exception message
      */
     public MetacatNotSupportedException(final String message) {
-        super(message, 501, null);
+        super(message);
     }
 }

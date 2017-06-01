@@ -31,8 +31,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.api.MetacatV1;
-import com.netflix.metacat.common.api.PartitionV1;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.FieldDto;
 import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
@@ -42,6 +40,8 @@ import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
+import com.netflix.metacat.common.server.api.v1.MetacatV1;
+import com.netflix.metacat.common.server.api.v1.PartitionV1;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.spectator.api.Registry;
@@ -1718,8 +1718,8 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             throw me;
         } finally {
             final long duration = registry.clock().monotonicTime() - start;
-             this.registry.timer(Metrics.TimerThriftRequest.name()
-                  + "." + methodName).record(duration, TimeUnit.MILLISECONDS);
+            this.registry.timer(Metrics.TimerThriftRequest.name()
+                + "." + methodName).record(duration, TimeUnit.MILLISECONDS);
             log.info("+++ Thrift({}): Time taken to complete {} is {} ms", catalogName, methodName, duration);
         }
     }

@@ -18,9 +18,9 @@ import com.google.common.collect.ImmutableMap
 import com.google.common.collect.Lists
 import com.google.common.collect.Maps
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.api.MetacatV1
-import com.netflix.metacat.common.api.PartitionV1
 import com.netflix.metacat.common.dto.*
+import com.netflix.metacat.common.server.api.v1.MetacatV1
+import com.netflix.metacat.common.server.api.v1.PartitionV1
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.util.MetacatContextManager
 import com.netflix.spectator.api.Clock

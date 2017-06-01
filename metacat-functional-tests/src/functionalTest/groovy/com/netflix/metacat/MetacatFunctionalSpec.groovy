@@ -20,9 +20,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.base.Throwables
 import com.netflix.metacat.client.Client
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.api.MetacatV1
-import com.netflix.metacat.common.api.PartitionV1
-import com.netflix.metacat.common.api.ResolverV1
+import com.netflix.metacat.client.api.MetacatV1
+import com.netflix.metacat.client.api.PartitionV1
+import com.netflix.metacat.client.api.ResolverV1
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
 import com.netflix.metacat.common.exception.MetacatBadRequestException
@@ -50,7 +50,7 @@ class MetacatFunctionalSpec extends Specification {
     public static final int timediff = 24 * 3600
 
     def setupSpec() {
-        String httpPort = System.properties['metacat_http_port']?.toString()?.trim()
+        def httpPort = System.properties['metacat_http_port']?.toString()?.trim()
         assert httpPort, 'Required system property "metacat_http_port" is not set'
         def client = Client.builder()
             .withHost("http://localhost:$httpPort")

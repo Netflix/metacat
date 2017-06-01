@@ -44,11 +44,11 @@ dependencies {
     compile("com.github.rholder:guava-retrying") {
         exclude module: "guava"
     }
-    compile("io.swagger:swagger-jersey2-jaxrs")
+    compile("io.springfox:springfox-swagger2")
+    compile("io.springfox:springfox-bean-validators")
     compile("org.springframework.boot:spring-boot-starter")
     compile("org.springframework.boot:spring-boot-starter-actuator")
     compile("org.springframework.boot:spring-boot-starter-hateoas")
-    compile("org.springframework.boot:spring-boot-starter-jersey")
     compile("org.springframework.boot:spring-boot-starter-logging")
     compile("org.springframework.boot:spring-boot-starter-tomcat")
     compile("org.springframework.boot:spring-boot-starter-web")
@@ -69,6 +69,7 @@ dependencies {
     runtime(project(":metacat-connector-redshift"))
     runtime(project(":metacat-connector-s3"))
 
+    runtime("io.springfox:springfox-swagger-ui")
     runtime("org.webjars:hal-browser")
 
     /*******************************

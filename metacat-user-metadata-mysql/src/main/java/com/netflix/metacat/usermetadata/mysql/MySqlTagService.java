@@ -36,6 +36,7 @@ import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.ColumnListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 
+import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -308,9 +309,13 @@ public class MySqlTagService implements TagService {
      * @return list of qualified names of the items
      */
     @Override
-    public List<QualifiedName> list(final Set<String> includeTags, final Set<String> excludeTags,
-                                    final String sourceName,
-                                    final String databaseName, final String tableName) {
+    public List<QualifiedName> list(
+        @Nullable final Set<String> includeTags,
+        @Nullable final Set<String> excludeTags,
+        @Nullable final String sourceName,
+        @Nullable final String databaseName,
+        @Nullable final String tableName
+    ) {
         Set<String> includedNames = Sets.newHashSet();
         final Set<String> excludedNames = Sets.newHashSet();
         final Connection connection = DBUtil.getReadConnection(getDataSource());
@@ -318,10 +323,12 @@ public class MySqlTagService implements TagService {
             final QueryRunner runner = new QueryRunner();
             final String wildCardName = QualifiedName.toWildCardString(sourceName, databaseName, tableName);
             //Includes
-            String query = String.format(QUERY_SEARCH, "in ('" + Joiner.on("','").skipNulls().join(includeTags) + "')");
-            final Object[] params = {includeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
+            final Set<String> localIncludes = includeTags != null ? includeTags : Sets.newHashSet();
+            String query
+                = String.format(QUERY_SEARCH, "in ('" + Joiner.on("','").skipNulls().join(localIncludes) + "')");
+            final Object[] params = {localIncludes.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
             includedNames.addAll(runner.query(connection, query, new ColumnListHandler<>("name"), params));
-            if (!excludeTags.isEmpty()) {
+            if (excludeTags != null && !excludeTags.isEmpty()) {
                 //Excludes
                 query = String.format(QUERY_SEARCH, "in ('" + Joiner.on("','").skipNulls().join(excludeTags) + "')");
                 final Object[] eParams = {excludeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
@@ -335,7 +342,7 @@ public class MySqlTagService implements TagService {
             DBUtil.closeReadConnection(connection);
         }
 
-        if (!excludeTags.isEmpty()) {
+        if (excludeTags != null && !excludeTags.isEmpty()) {
             includedNames = Sets.difference(includedNames, excludedNames);
         }
 
@@ -352,8 +359,12 @@ public class MySqlTagService implements TagService {
      * @return list of qualified names of the items
      */
     @Override
-    public List<QualifiedName> search(final String tag, final String sourceName, final String databaseName,
-                                      final String tableName) {
+    public List<QualifiedName> search(
+        @Nullable final String tag,
+        @Nullable final String sourceName,
+        @Nullable final String databaseName,
+        @Nullable final String tableName
+    ) {
         final Connection connection = DBUtil.getReadConnection(getDataSource());
         try {
             final String wildCardName = QualifiedName.toWildCardString(sourceName, databaseName, tableName);
@@ -405,7 +416,7 @@ public class MySqlTagService implements TagService {
                     // Set the tags in user metadata
                     final Map<String, Set<String>> data = Maps.newHashMap();
                     data.put(NAME_TAGS, values);
-                    userMetadataService
+                    this.userMetadataService
                         .saveDefinitionMetadata(name, "admin", Optional.of(metacatJson.toJsonObject(data)),
                             true);
                 }

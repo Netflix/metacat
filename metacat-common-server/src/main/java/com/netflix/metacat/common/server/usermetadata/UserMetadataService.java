@@ -268,13 +268,13 @@ public interface UserMetadataService {
      * @return list of definition metadata
      */
     default List<DefinitionMetadataDto> searchDefinitionMetadatas(
-        Set<String> propertyNames,
-        String type,
-        String name,
-        String sortBy,
-        String sortOrder,
-        Integer offset,
-        Integer limit
+        @Nullable Set<String> propertyNames,
+        @Nullable String type,
+        @Nullable String name,
+        @Nullable String sortBy,
+        @Nullable String sortOrder,
+        @Nullable Integer offset,
+        @Nullable Integer limit
     ) {
         return Collections.emptyList();
     }

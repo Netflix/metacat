@@ -13,15 +13,10 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-
-
-package com.netflix.metacat.common.api;
+package com.netflix.metacat.client.api;
 
 import com.netflix.metacat.common.dto.ResolveByUriRequestDto;
 import com.netflix.metacat.common.dto.ResolveByUriResponseDto;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -39,11 +34,7 @@ import javax.ws.rs.core.Response;
  * @author zhenl
  * @since 1.0.0
  */
-@Path("v1/resolver")
-@Api(value = "ResolverV1",
-        description = "Metadata resolver operations",
-        produces = MediaType.APPLICATION_JSON,
-        consumes = MediaType.APPLICATION_JSON)
+@Path("mds/v1/resolver")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface ResolverV1 {
@@ -55,16 +46,11 @@ public interface ResolverV1 {
      * @return response from uri search
      */
     @POST
-    @ApiOperation(
-            position = 0,
-            value = "Returns the list of qualified names of tables and partitions containing the given URI path",
-            notes = "Returns the list of qualified names of tables and partitions containing the given URI path")
     ResolveByUriResponseDto resolveByUri(
-            @ApiParam(value = "do prefix search for URI", required = false)
-            @DefaultValue("false")
-            @QueryParam("prefixSearch")
-                    Boolean prefixSearch,
-            ResolveByUriRequestDto resolveByUriRequestDto);
+        @DefaultValue("false")
+        @QueryParam("prefixSearch")
+            Boolean prefixSearch,
+        ResolveByUriRequestDto resolveByUriRequestDto);
 
     /**
      * isUriUsedMoreThanOnce.
@@ -75,16 +61,9 @@ public interface ResolverV1 {
      */
     @POST
     @Path("isUriUsedMoreThanOnce")
-    @ApiOperation(
-            position = 1,
-            value = "Returns status 200 if the given URI is being referred more than once."
-                    + " Returns status 404 if the given URI is not found or not being referred more than once.",
-            notes = "Returns status 200 if the given URI is being referred more than once."
-                    + " Returns status 404 if the given URI is not found or not being referred more than once.")
     Response isUriUsedMoreThanOnce(
-            @ApiParam(value = "do prefix search for URI", required = false)
-            @DefaultValue("false")
-            @QueryParam("prefixSearch")
-                    Boolean prefixSearch,
-            ResolveByUriRequestDto resolveByUriRequestDto);
+        @DefaultValue("false")
+        @QueryParam("prefixSearch")
+            Boolean prefixSearch,
+        ResolveByUriRequestDto resolveByUriRequestDto);
 }

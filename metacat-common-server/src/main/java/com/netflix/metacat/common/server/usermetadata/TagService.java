@@ -19,6 +19,7 @@ package com.netflix.metacat.common.server.usermetadata;
 
 import com.netflix.metacat.common.QualifiedName;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Set;
 
@@ -47,11 +48,11 @@ public interface TagService {
      * @return list of qualified names of the items
      */
     List<QualifiedName> list(
-        Set<String> includeTags,
-        Set<String> excludeTags,
-        String sourceName,
-        String databaseName,
-        String tableName
+        @Nullable Set<String> includeTags,
+        @Nullable Set<String> excludeTags,
+        @Nullable String sourceName,
+        @Nullable String databaseName,
+        @Nullable String tableName
     );
 
     /**
@@ -64,10 +65,10 @@ public interface TagService {
      * @return list of qualified names of the items
      */
     List<QualifiedName> search(
-        String tag,
-        String sourceName,
-        String databaseName,
-        String tableName
+        @Nullable String tag,
+        @Nullable String sourceName,
+        @Nullable String databaseName,
+        @Nullable String tableName
     );
 
     /**

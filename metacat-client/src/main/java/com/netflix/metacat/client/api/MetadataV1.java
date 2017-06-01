@@ -15,16 +15,13 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.common.api;
+package com.netflix.metacat.client.api;
 
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DataMetadataDto;
 import com.netflix.metacat.common.dto.DataMetadataGetRequestDto;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
 import com.netflix.metacat.common.dto.SortOrder;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -44,11 +41,7 @@ import java.util.Set;
  *
  * @author amajumdar
  */
-@Path("v1/metadata")
-@Api(value = "MetadataV1",
-    description = "Federated user metadata operations",
-    produces = MediaType.APPLICATION_JSON,
-    consumes = MediaType.APPLICATION_JSON)
+@Path("mds/v1/metadata")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface MetadataV1 {
@@ -60,11 +53,6 @@ public interface MetadataV1 {
      */
     @POST
     @Path("data")
-    @ApiOperation(
-        position = 1,
-        value = "Returns the data metadata",
-        notes = "Returns the data metadata"
-    )
     DataMetadataDto getDataMetadata(DataMetadataGetRequestDto metadataGetRequestDto);
 
     /**
@@ -83,36 +71,22 @@ public interface MetadataV1 {
      */
     @GET
     @Path("definition/list")
-    @ApiOperation(
-        position = 2,
-        value = "Returns the definition metadata",
-        notes = "Returns the definition metadata"
-    )
     List<DefinitionMetadataDto> getDefinitionMetadataList(
-        @ApiParam(value = "Sort the list by this value")
         @QueryParam("sortBy")
             String sortBy,
-        @ApiParam(value = "Sorting order to use")
         @QueryParam("sortOrder")
             SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned")
         @QueryParam("offset")
             Integer offset,
-        @ApiParam(value = "Size of the list")
         @QueryParam("limit")
             Integer limit,
-        @ApiParam(value = "has lifetime set")
         @DefaultValue("false")
         @QueryParam("lifetime")
             Boolean lifetime,
-        @ApiParam(value = "Type of the metadata item. Values: database, table, partition")
         @QueryParam("type")
             String type,
-        @ApiParam(value = "Text that matches the name of the metadata (accepts sql wildcards)")
         @QueryParam("name")
             String name,
-        @ApiParam(value = "Set of data property names. "
-            + "Filters the returned list that only contains the given property names")
         @QueryParam("data-property")
             Set<String> dataProperties
     );
@@ -125,13 +99,7 @@ public interface MetadataV1 {
      */
     @GET
     @Path("searchByOwners")
-    @ApiOperation(
-        position = 3,
-        value = "Returns the qualified names owned by the given owners",
-        notes = "Returns the qualified names owned by the given owners"
-    )
     List<QualifiedName> searchByOwners(
-        @ApiParam(value = "Set of owners", required = true)
         @QueryParam("owner")
             Set<String> owners
     );
@@ -146,14 +114,9 @@ public interface MetadataV1 {
     @Path("definition")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-        position = 4,
-        value = "Deletes the given definition metadata")
     void deleteDefinitionMetadata(
-        @ApiParam(value = "Name of definition metadata to be deleted", required = true)
         @QueryParam("name")
             QualifiedName name,
-        @ApiParam(value = "If true, deletes the metadata without checking if the database/table/partition exists")
         @DefaultValue("false")
         @QueryParam("force")
             Boolean force

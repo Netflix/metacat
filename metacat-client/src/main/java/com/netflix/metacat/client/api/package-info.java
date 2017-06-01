@@ -15,19 +15,10 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.common.exception;
 
 /**
- * Exception from user metadata service.
- * TODO: This should be replaced by a BadRequestException from JAX-RS 2.x once we support the newer JAX-RS version.
+ * API package for Metacat.
+ *
+ * @author amajumdar
  */
-public class MetacatUserMetadataException extends MetacatException {
-    /**
-     * Constructor.
-     *
-     * @param message exception message
-     */
-    public MetacatUserMetadataException(final String message) {
-        super(message);
-    }
-}
+package com.netflix.metacat.client.api;

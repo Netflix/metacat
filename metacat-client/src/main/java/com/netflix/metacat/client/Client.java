@@ -25,10 +25,10 @@ import com.netflix.metacat.client.module.JacksonDecoder;
 import com.netflix.metacat.client.module.JacksonEncoder;
 import com.netflix.metacat.client.module.MetacatErrorDecoder;
 import com.netflix.metacat.common.MetacatRequestContext;
-import com.netflix.metacat.common.api.MetacatV1;
-import com.netflix.metacat.common.api.MetadataV1;
-import com.netflix.metacat.common.api.PartitionV1;
-import com.netflix.metacat.common.api.ResolverV1;
+import com.netflix.metacat.client.api.MetacatV1;
+import com.netflix.metacat.client.api.MetadataV1;
+import com.netflix.metacat.client.api.PartitionV1;
+import com.netflix.metacat.client.api.ResolverV1;
 import com.netflix.metacat.common.json.MetacatJsonLocator;
 import feign.Feign;
 import feign.Request;
@@ -37,10 +37,8 @@ import feign.RequestTemplate;
 import feign.Retryer;
 import feign.jaxrs.JAXRSContract;
 import feign.slf4j.Slf4jLogger;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nonnull;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,12 +56,12 @@ public final class Client {
     private final ResolverV1 resolverApi;
 
     private Client(
-        @Nonnull @NonNull final String host,
-        @Nonnull @NonNull final feign.Client client,
-        @Nonnull @NonNull final feign.Logger.Level logLevel,
-        @Nonnull @NonNull final RequestInterceptor requestInterceptor,
-        @Nonnull @NonNull final Retryer retryer,
-        @Nonnull @NonNull final Request.Options options
+        final String host,
+        final feign.Client client,
+        final feign.Logger.Level logLevel,
+        final RequestInterceptor requestInterceptor,
+        final Retryer retryer,
+        final Request.Options options
     ) {
         final ObjectMapper mapper = MetacatJsonLocator.INSTANCE
             .getPrettyObjectMapper()
@@ -108,7 +106,7 @@ public final class Client {
      * @param <T>     API Resource instance
      * @return An instance that implements the given interface and is wired up to communicate with the Metacat server.
      */
-    public <T> T getApiClient(@Nonnull @NonNull final Class<T> apiType) {
+    public <T> T getApiClient(final Class<T> apiType) {
         Preconditions.checkArgument(apiType.isInterface(), "apiType must be an interface");
 
         return feignBuilder.target(apiType, host);
@@ -185,9 +183,6 @@ public final class Client {
          */
         public Builder withHost(final String serverHost) {
             this.host = serverHost;
-            if (!this.host.endsWith("/mds") && !this.host.endsWith("/mds/")) {
-                this.host = this.host + "/mds";
-            }
             return this;
         }
 
