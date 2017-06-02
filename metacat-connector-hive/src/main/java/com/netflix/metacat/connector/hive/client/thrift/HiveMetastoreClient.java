@@ -18,7 +18,6 @@ package com.netflix.metacat.connector.hive.client.thrift;
 
 import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;
 
 import java.io.Closeable;
@@ -30,8 +29,8 @@ import java.io.Closeable;
  * @since 1.0.0
  */
 public class HiveMetastoreClient
-        extends ThriftHiveMetastore.Client
-        implements Closeable {
+    extends ThriftHiveMetastore.Client
+    implements Closeable {
     private final TTransport transport;
 
     /**
@@ -42,16 +41,6 @@ public class HiveMetastoreClient
     public HiveMetastoreClient(final TTransport transport) {
         super(new TBinaryProtocol(transport));
         this.transport = transport;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param protocol protocol
-     */
-    public HiveMetastoreClient(final TProtocol protocol) {
-        super(protocol);
-        this.transport = protocol.getTransport();
     }
 
     @Override

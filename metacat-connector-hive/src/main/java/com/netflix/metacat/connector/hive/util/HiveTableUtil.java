@@ -17,7 +17,6 @@ package com.netflix.metacat.connector.hive.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import lombok.NonNull;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
@@ -75,7 +74,7 @@ public final class HiveTableUtil {
         }
     }
 
-    private static Class<? extends Deserializer> getDeserializerClass(@NonNull final String name) {
+    private static Class<? extends Deserializer> getDeserializerClass(final String name) {
         // CDH uses different names for Parquet
         if (PARQUET_HIVE_SERDE.equals(name)) {
             return ParquetHiveSerDe.class;

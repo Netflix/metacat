@@ -24,16 +24,13 @@ import com.netflix.metacat.connector.hive.metastore.IMetacatHMSHandler;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -99,10 +96,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * @param handler     handler
      * @param registry    registry
      */
-    @Inject
-    public EmbeddedHiveClient(@NonNull @Nonnull final String catalogName,
-                              final IMetacatHMSHandler handler,
-                              @NonNull @Nonnull final Registry registry) {
+    public EmbeddedHiveClient(final String catalogName,
+                              @Nullable final IMetacatHMSHandler handler,
+                              final Registry registry) {
         this.catalogName = catalogName;
         this.handler = handler;
         this.registry = registry;
@@ -126,7 +122,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void createDatabase(@Nonnull @NonNull final Database database) throws TException {
+    public void createDatabase(final Database database) throws TException {
         callWrap(HiveMetrics.createDatabase.name(), () -> {
             handler.create_database(database);
             return null;
@@ -137,7 +133,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void createTable(@Nonnull @NonNull final Table table) throws TException {
+    public void createTable(final Table table) throws TException {
         callWrap(HiveMetrics.createTable.name(), () -> {
             handler.create_table(table);
             return null;
@@ -148,7 +144,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void dropDatabase(@Nonnull @NonNull final String dbName) throws TException {
+    public void dropDatabase(final String dbName) throws TException {
         callWrap(HiveMetrics.dropDatabase.name(), () -> {
             handler.drop_database(dbName, false, false);
             return null;
@@ -159,9 +155,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void dropPartitions(@Nonnull @NonNull final String databaseName,
-                               @Nonnull @NonNull final String tableName,
-                               @Nonnull @NonNull final List<String> partitionNames) throws
+    public void dropPartitions(final String databaseName,
+                               final String tableName,
+                               final List<String> partitionNames) throws
         TException {
         dropHivePartitions(databaseName, tableName, partitionNames);
     }
@@ -183,8 +179,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void alterDatabase(@Nonnull @NonNull final String databaseName,
-                              @Nonnull @NonNull final Database database) throws TException {
+    public void alterDatabase(final String databaseName,
+                              final Database database) throws TException {
         callWrap(HiveMetrics.alterDatabase.name(), () -> {
             handler.alter_database(databaseName, database);
             return null;
@@ -211,7 +207,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public Database getDatabase(@Nonnull @NonNull final String databaseName) throws TException {
+    public Database getDatabase(final String databaseName) throws TException {
         return callWrap(HiveMetrics.getDatabase.name(), () -> handler.get_database(databaseName));
     }
 
@@ -219,7 +215,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public List<String> getAllTables(@Nonnull @NonNull final String databaseName) throws TException {
+    public List<String> getAllTables(final String databaseName) throws TException {
         return callWrap(HiveMetrics.getAllTables.name(), () -> {
             final List<String> tables = handler.get_all_tables(databaseName);
             if (tables.isEmpty()) {
@@ -233,8 +229,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public Table getTableByName(@Nonnull @NonNull final String databaseName,
-                                @Nonnull @NonNull final String tableName) throws TException {
+    public Table getTableByName(final String databaseName,
+                                final String tableName) throws TException {
         return callWrap(HiveMetrics.getTableByName.name(), () -> loadTable(databaseName, tableName));
     }
 
@@ -246,9 +242,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void alterTable(@Nonnull @NonNull final String databaseName,
-                           @Nonnull @NonNull final String tableName,
-                           @Nonnull @NonNull final Table table) throws TException {
+    public void alterTable(final String databaseName,
+                           final String tableName,
+                           final Table table) throws TException {
         callWrap(HiveMetrics.alterTable.name(), () -> {
             handler.alter_table(databaseName, tableName, table);
             return null;
@@ -259,9 +255,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void alterPartitions(@Nonnull @NonNull final String dbName,
-                                @Nonnull @NonNull final String tableName,
-                                @Nonnull @NonNull final List<Partition> partitions) throws TException {
+    public void alterPartitions(final String dbName,
+                                final String tableName,
+                                final List<Partition> partitions) throws TException {
         callWrap(HiveMetrics.alterPartitions.name(), () -> {
             handler.alter_partitions(dbName, tableName, partitions);
             return null;
@@ -272,10 +268,10 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void addDropPartitions(@Nonnull @NonNull final String dbName,
-                                  @Nonnull @NonNull final String tableName,
-                                  @Nonnull @NonNull final List<Partition> addParts,
-                                  @Nonnull @NonNull final List<String> dropPartNames) throws TException {
+    public void addDropPartitions(final String dbName,
+                                  final String tableName,
+                                  final List<Partition> addParts,
+                                  final List<String> dropPartNames) throws TException {
         callWrap(HiveMetrics.addDropPartitions.name(), () -> {
             final List<List<String>> dropParts = new ArrayList<>();
             for (String partName : dropPartNames) {
@@ -290,8 +286,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public void dropTable(@Nonnull @NonNull final String databaseName,
-                          @Nonnull @NonNull final String tableName) throws TException {
+    public void dropTable(final String databaseName,
+                          final String tableName) throws TException {
         callWrap(HiveMetrics.dropTable.name(), () -> {
             handler.drop_table(databaseName, tableName, false);
             return null;
@@ -303,10 +299,10 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public void rename(@Nonnull @NonNull final String databaseName,
-                       @Nonnull @NonNull final String oldTableName,
-                       @Nonnull @NonNull final String newdatabadeName,
-                       @Nonnull @NonNull final String newTableName) throws TException {
+    public void rename(final String databaseName,
+                       final String oldTableName,
+                       final String newdatabadeName,
+                       final String newTableName) throws TException {
         callWrap(HiveMetrics.rename.name(), () -> {
             final Table table = new Table(loadTable(databaseName, oldTableName));
             table.setDbName(newdatabadeName);
@@ -321,8 +317,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public List<Partition> getPartitions(@Nonnull @NonNull final String databaseName,
-                                         @Nonnull @NonNull final String tableName,
+    public List<Partition> getPartitions(final String databaseName,
+                                         final String tableName,
                                          @Nullable final List<String> partitionNames) throws TException {
         return callWrap(HiveMetrics.getPartitions.name(), () -> {
             if (partitionNames != null && !partitionNames.isEmpty()) {
@@ -336,8 +332,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
-    public int getPartitionCount(@Nonnull @NonNull final String databaseName,
-                                 @Nonnull @NonNull final String tableName) throws TException {
+    public int getPartitionCount(final String databaseName,
+                                 final String tableName) throws TException {
 
         return callWrap(HiveMetrics.getPartitionCount.name(),
             () -> getPartitions(databaseName, tableName, null).size());
@@ -348,8 +344,8 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public List<String> getPartitionNames(@Nonnull @NonNull final String databaseName,
-                                          @Nonnull @NonNull final String tableName)
+    public List<String> getPartitionNames(final String databaseName,
+                                          final String tableName)
         throws TException {
         return callWrap(HiveMetrics.getPartitionNames.name(),
             () -> handler.get_partition_names(databaseName, tableName, ALL_RESULTS));
@@ -360,9 +356,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public List<Partition> listPartitionsByFilter(@Nonnull @NonNull final String databaseName,
-                                                  @Nonnull @NonNull final String tableName,
-                                                  @Nonnull @NonNull final String filter
+    public List<Partition> listPartitionsByFilter(final String databaseName,
+                                                  final String tableName,
+                                                  final String filter
     ) throws TException {
         return callWrap(HiveMetrics.listPartitionsByFilter.name(),
             () -> handler.get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS));

@@ -38,6 +38,7 @@ import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserEval;
 import com.netflix.metacat.common.server.util.DataSourceManager;
+import com.netflix.metacat.common.server.util.ServerContext;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
@@ -45,7 +46,6 @@ import com.netflix.metacat.connector.hive.util.PartitionDetail;
 import com.netflix.metacat.connector.hive.util.PartitionFilterGenerator;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
@@ -56,8 +56,6 @@ import org.apache.thrift.TException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.StringReader;
 import java.sql.Connection;
@@ -127,19 +125,18 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @param metacatHiveClient     hive client
      * @param hiveMetacatConverters hive converter
      * @param threadServiceManager  serviceManager
-     * @param registry              registry for spectator
+     * @param serverContext         server context
      */
-    @Inject
     public HiveConnectorFastPartitionService(
-        @Named("catalogName") final String catalogName,
-        @Nonnull @NonNull final IMetacatHiveClient metacatHiveClient,
-        @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters,
+        final String catalogName,
+        final IMetacatHiveClient metacatHiveClient,
+        final HiveConnectorInfoConverter hiveMetacatConverters,
         final ThreadServiceManager threadServiceManager,
-        @Nonnull @NonNull final Registry registry
+        final ServerContext serverContext
     ) {
         super(catalogName, metacatHiveClient, hiveMetacatConverters);
         this.threadServiceManager = threadServiceManager;
-        this.registry = registry;
+        this.registry = serverContext.getRegistry();
         this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
     }
 
@@ -151,8 +148,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      */
     @Override
     public int getPartitionCount(
-        @Nonnull @NonNull final ConnectorContext requestContext,
-        @Nonnull @NonNull final QualifiedName tableName
+        final ConnectorContext requestContext,
+        final QualifiedName tableName
     ) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
@@ -187,9 +184,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      */
     @Override
     public List<PartitionInfo> getPartitions(
-        @Nonnull @NonNull final ConnectorContext requestContext,
-        @Nonnull @NonNull final QualifiedName tableName,
-        @Nonnull @NonNull final PartitionListRequest partitionsRequest
+        final ConnectorContext requestContext,
+        final QualifiedName tableName,
+        final PartitionListRequest partitionsRequest
     ) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
@@ -212,9 +209,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * {@inheritDoc}.
      */
     @Override
-    public List<String> getPartitionKeys(@Nonnull @NonNull final ConnectorContext requestContext,
-                                         @Nonnull @NonNull final QualifiedName tableName,
-                                         @Nonnull @NonNull final PartitionListRequest partitionsRequest) {
+    public List<String> getPartitionKeys(final ConnectorContext requestContext,
+                                         final QualifiedName tableName,
+                                         final PartitionListRequest partitionsRequest) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
         tags.put("request", "getPartitionKeys");
@@ -337,12 +334,12 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         return result;
     }
 
-    private List<PartitionInfo> getpartitions(@Nonnull @NonNull final String databaseName,
-                                              @Nonnull @NonNull final String tableName,
+    private List<PartitionInfo> getpartitions(final String databaseName,
+                                              final String tableName,
                                               @Nullable final List<String> partitionIds,
-                                              final String filterExpression,
-                                              final Sort sort,
-                                              final Pageable pageable,
+                                              @Nullable final String filterExpression,
+                                              @Nullable final Sort sort,
+                                              @Nullable final Pageable pageable,
                                               final boolean includePartitionDetails) {
         final FilterPartition filter = new FilterPartition();
         // batch exists
