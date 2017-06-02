@@ -54,7 +54,7 @@ public class MetacatInitializationService {
         this.injector = injector;
 
         // Register all the services to listen for events
-        notificationServices.forEach(eventBus::register);
+        notificationServices.forEach((object) -> eventBus.register(object, "sns"));
     }
 
     /**
@@ -77,7 +77,7 @@ public class MetacatInitializationService {
             final MetacatEventBus eventBus = injector.getInstance(MetacatEventBus.class);
             // Only register the elastic search event handlers if the client is registered
             final MetacatEventHandlers handlers = injector.getInstance(MetacatEventHandlers.class);
-            eventBus.register(handlers);
+            eventBus.register(handlers, "es");
         }
     }
 

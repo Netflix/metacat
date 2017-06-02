@@ -336,7 +336,9 @@ public class SNSNotificationServiceImpl implements NotificationService {
 
                     @Override
                     public void onSuccess(final PublishRequest request, final PublishResult publishResult) {
-                        log.info("Successfully published message {} to topic {} with id {}",
+                        log.info("Successfully published message to topic {} with id {}",
+                            arn, publishResult.getMessageId());
+                        log.debug("Successfully published message {} to topic {} with id {}",
                             message, arn, publishResult.getMessageId());
                         DynamicTimer.record(MonitorConfig.builder("metacat.notifications.sns.publish.delay")
                                 .withTag("metacat.event.type", message.getType().name()).build(),
