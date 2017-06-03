@@ -29,7 +29,6 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
-import com.netflix.metacat.common.server.monitoring.CounterWrapper;
 import com.netflix.metacat.common.server.monitoring.TimerWrapper;
 import com.netflix.servo.monitor.DynamicTimer;
 import com.netflix.servo.monitor.MonitorConfig;
@@ -67,7 +66,6 @@ public class MetacatEventHandlers {
         DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
                 .withTag("metacat.event.type", "database.create").build(),
             System.currentTimeMillis() - event.getRequestContext().getTimestamp());
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.database.create");
         final TimerWrapper timer = TimerWrapper.createStarted("metacat.timer.elasticsearch.events.database.create");
         try {
             final DatabaseDto dto = event.getDatabase();
@@ -90,7 +88,6 @@ public class MetacatEventHandlers {
         DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
                 .withTag("metacat.event.type", "table.create").build(),
             System.currentTimeMillis() - event.getRequestContext().getTimestamp());
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.create");
         final TimerWrapper timer = TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.create");
         try {
             final TableDto dto = event.getTable();
@@ -113,7 +110,6 @@ public class MetacatEventHandlers {
         DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
                 .withTag("metacat.event.type", "database.delete").build(),
             System.currentTimeMillis() - event.getRequestContext().getTimestamp());
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.database.delete");
         final TimerWrapper timer = TimerWrapper.createStarted("metacat.timer.elasticsearch.events.database.delete");
         try {
             final DatabaseDto dto = event.getDatabase();
@@ -134,7 +130,6 @@ public class MetacatEventHandlers {
         DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
                 .withTag("metacat.event.type", "table.delete").build(),
             System.currentTimeMillis() - event.getRequestContext().getTimestamp());
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.delete");
         final TimerWrapper timer = TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.delete");
         try {
             final TableDto dto = event.getTable();
@@ -162,7 +157,6 @@ public class MetacatEventHandlers {
         DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
                 .withTag("metacat.event.type", "partition.delete").build(),
             System.currentTimeMillis() - event.getRequestContext().getTimestamp());
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.partition.delete");
         final TimerWrapper timer =
             TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.partition.delete");
         try {
@@ -186,7 +180,6 @@ public class MetacatEventHandlers {
         DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
                 .withTag("metacat.event.type", "table.rename").build(),
             System.currentTimeMillis() - event.getRequestContext().getTimestamp());
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.rename");
         final TimerWrapper timer =
             TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.rename");
         try {
@@ -212,7 +205,6 @@ public class MetacatEventHandlers {
         DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
                 .withTag("metacat.event.type", "table.update").build(),
             System.currentTimeMillis() - event.getRequestContext().getTimestamp());
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.update");
         final TimerWrapper timer =
             TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.update");
         try {
@@ -255,7 +247,6 @@ public class MetacatEventHandlers {
         DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
                 .withTag("metacat.event.type", "table.partition.save").build(),
             System.currentTimeMillis() - event.getRequestContext().getTimestamp());
-        CounterWrapper.incrementCounter("metacat.elasticsearch.events.table.partition.save");
         final TimerWrapper timer =
             TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.partition.save");
         try {

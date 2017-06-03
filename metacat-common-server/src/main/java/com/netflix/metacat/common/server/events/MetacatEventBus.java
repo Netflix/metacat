@@ -17,6 +17,8 @@
  */
 package com.netflix.metacat.common.server.events;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -29,9 +31,10 @@ import com.netflix.servo.monitor.Monitors;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PreDestroy;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -40,9 +43,10 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class MetacatEventBus {
-    private final AsyncEventBus asyncEventBus;
+    private final Map<String, EventBus> asyncEventBusMap;
     private final EventBus syncEventBus;
-    private final ExecutorService executor;
+    private final List<ExecutorService> executors;
+    private final Config config;
 
     /**
      * Constructor.
@@ -51,17 +55,10 @@ public class MetacatEventBus {
      */
     @Inject
     public MetacatEventBus(final Config config) {
-        final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("metacat-event-pool-%d").build();
-        final int threadCount = config.getEventBusThreadCount();
-        this.executor = Executors.newFixedThreadPool(threadCount, threadFactory);
-        final CompositeMonitor<?> newThreadPoolMonitor =
-            Monitors.newThreadPoolMonitor("metacat.event.pool", (ThreadPoolExecutor) executor);
-        DefaultMonitorRegistry.getInstance().register(newThreadPoolMonitor);
-        this.asyncEventBus = new AsyncEventBus(
-            "metacat-async-event-bus",
-            this.executor
-        );
+        this.config = config;
         this.syncEventBus = new EventBus("metacat-sync-event-bus");
+        this.asyncEventBusMap = Maps.newHashMap();
+        this.executors = Lists.newArrayList();
     }
 
     /**
@@ -72,7 +69,7 @@ public class MetacatEventBus {
     public void postAsync(final Object event) {
         log.debug("Received request to post an event {} asynchronously", event);
         CounterWrapper.incrementCounter("metacat.events.async");
-        this.asyncEventBus.post(event);
+        this.asyncEventBusMap.values().forEach(eventBus -> eventBus.post(event));
     }
 
     /**
@@ -90,20 +87,27 @@ public class MetacatEventBus {
      * Registers an object.
      *
      * @param object object
+     * @param identifier identifier of the async event bus. If an event bus with the given identifier does not exist,
+     *                   it is created.
      */
-    public void register(final Object object) {
-        asyncEventBus.register(object);
+    public void register(final Object object, final String identifier) {
+        getAsyncEventBus(identifier).register(object);
         syncEventBus.register(object);
     }
 
-    /**
-     * De-registers an object.
-     *
-     * @param object object
-     */
-    public void unregister(final Object object) {
-        asyncEventBus.unregister(object);
-        syncEventBus.unregister(object);
+    private EventBus getAsyncEventBus(final String identifier) {
+        EventBus result = asyncEventBusMap.get(identifier);
+        if (result == null) {
+            final ExecutorService executor = Executors.newFixedThreadPool(config.getEventBusThreadCount(),
+                new ThreadFactoryBuilder().setNameFormat("metacat-" + identifier + "-event-pool-%d").build());
+            final CompositeMonitor<?> newThreadPoolMonitor =
+                Monitors.newThreadPoolMonitor("metacat." + identifier + ".event.pool", (ThreadPoolExecutor) executor);
+            DefaultMonitorRegistry.getInstance().register(newThreadPoolMonitor);
+            executors.add(executor);
+            result = new AsyncEventBus("metacat-" + identifier + "-async-event-bus", executor);
+            asyncEventBusMap.put(identifier, result);
+        }
+        return result;
     }
 
     /**
@@ -113,21 +117,23 @@ public class MetacatEventBus {
      */
     @PreDestroy
     public void shutdown() {
-        this.executor.shutdown();
-        try {
-            // Wait a while for existing tasks to terminate
-            if (!this.executor.awaitTermination(60, TimeUnit.SECONDS)) {
-                this.executor.shutdownNow(); // Cancel currently executing tasks
-                // Wait a while for tasks to respond to being cancelled
-                if (!this.executor.awaitTermination(60, TimeUnit.SECONDS)) {
-                    System.err.println("Event bus async thread executor did not terminate");
+        this.executors.forEach(executor -> {
+            executor.shutdown();
+            try {
+                // Wait a while for existing tasks to terminate
+                if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+                    executor.shutdownNow(); // Cancel currently executing tasks
+                    // Wait a while for tasks to respond to being cancelled
+                    if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+                        System.err.println("Event bus async thread executor did not terminate");
+                    }
                 }
+            } catch (final InterruptedException ie) {
+                // (Re-)Cancel if current thread also interrupted
+                executor.shutdownNow();
+                // Preserve interrupt status
+                Thread.currentThread().interrupt();
             }
-        } catch (final InterruptedException ie) {
-            // (Re-)Cancel if current thread also interrupted
-            this.executor.shutdownNow();
-            // Preserve interrupt status
-            Thread.currentThread().interrupt();
-        }
+        });
     }
 }
