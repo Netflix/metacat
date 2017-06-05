@@ -19,15 +19,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.datatype.guava.GuavaModule
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule
+import com.netflix.metacat.client.api.MetacatV1
+import com.netflix.metacat.client.api.MetadataV1
+import com.netflix.metacat.client.api.PartitionV1
+import com.netflix.metacat.client.api.TagV1
 import com.netflix.metacat.client.module.JacksonDecoder
 import com.netflix.metacat.client.module.JacksonEncoder
 import com.netflix.metacat.client.module.MetacatErrorDecoder
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.api.MetacatV1
-import com.netflix.metacat.common.api.MetadataV1
-import com.netflix.metacat.common.api.PartitionV1
-import com.netflix.metacat.common.api.TagV1
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
 import com.netflix.metacat.common.exception.MetacatBadRequestException
@@ -59,7 +59,7 @@ class MetacatSmokeSpec extends Specification {
     public static MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
 
     def setupSpec() {
-        String url = "http://localhost:${System.properties['metacat_http_port']}/mds"
+        String url = "http://localhost:${System.properties['metacat_http_port']}"
         assert url, 'Required system property "metacat_url" is not set'
 
         ObjectMapper mapper = metacatJson.getPrettyObjectMapper().copy()

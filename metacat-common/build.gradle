@@ -29,7 +29,6 @@ dependencies {
     compile("com.fasterxml.jackson.core:jackson-databind")
     compile("com.github.fge:json-patch")
     compile("io.swagger:swagger-annotations")
-    compile("javax.ws.rs:jsr311-api")
 
     /*******************************
      * Implementation Dependencies

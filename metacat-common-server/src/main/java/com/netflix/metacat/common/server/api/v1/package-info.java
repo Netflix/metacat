@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright 2016 Netflix, Inc.
+ *  Copyright 2017 Netflix, Inc.
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -17,8 +17,12 @@
  */
 
 /**
- * API package for Metacat.
+ * V1 API interfaces.
  *
- * @author amajumdar
+ * @author tgianos
+ * @since 1.1.0
  */
-package com.netflix.metacat.common.api;
+@ParametersAreNonnullByDefault
+package com.netflix.metacat.common.server.api.v1;
+
+import javax.annotation.ParametersAreNonnullByDefault;

@@ -15,14 +15,9 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.common.api;
+package com.netflix.metacat.client.api;
 
 import com.netflix.metacat.common.QualifiedName;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -34,7 +29,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Set;
 
@@ -43,11 +37,7 @@ import java.util.Set;
  *
  * @author amajumdar
  */
-@Path("v1/tag")
-@Api(value = "TagV1",
-    description = "Federated metadata tag operations",
-    produces = MediaType.APPLICATION_JSON,
-    consumes = MediaType.APPLICATION_JSON)
+@Path("mds/v1/tag")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface TagV1 {
@@ -60,10 +50,6 @@ public interface TagV1 {
     @Path("tags")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-        position = 1,
-        value = "Returns the tags",
-        notes = "Returns the tags")
     Set<String> getTags();
 
     /**
@@ -80,26 +66,15 @@ public interface TagV1 {
     @Path("list")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-        position = 1,
-        value = "Returns the list of qualified names that are tagged with the given tags."
-            + " Qualified names will be excluded if the contained tags matches the excluded tags",
-        notes = "Returns the list of qualified names that are tagged with the given tags."
-            + " Qualified names will be excluded if the contained tags matches the excluded tags")
     List<QualifiedName> list(
-        @ApiParam(value = "Set of matching tags")
         @QueryParam("include")
             Set<String> includeTags,
-        @ApiParam(value = "Set of un-matching tags")
         @QueryParam("exclude")
             Set<String> excludeTags,
-        @ApiParam(value = "Prefix of the source name")
         @QueryParam("sourceName")
             String sourceName,
-        @ApiParam(value = "Prefix of the database name")
         @QueryParam("databaseName")
             String databaseName,
-        @ApiParam(value = "Prefix of the table name")
         @QueryParam("tableName")
             String tableName
     );
@@ -117,21 +92,13 @@ public interface TagV1 {
     @Path("search")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-        position = 1,
-        value = "Returns the list of qualified names that are tagged with tags containing the given tagText",
-        notes = "Returns the list of qualified names that are tagged with tags containing the given tagText")
     List<QualifiedName> search(
-        @ApiParam(value = "Tag partial text")
         @QueryParam("tag")
             String tag,
-        @ApiParam(value = "Prefix of the source name")
         @QueryParam("sourceName")
             String sourceName,
-        @ApiParam(value = "Prefix of the database name")
         @QueryParam("databaseName")
             String databaseName,
-        @ApiParam(value = "Prefix of the table name")
         @QueryParam("tableName")
             String tableName
     );
@@ -149,27 +116,14 @@ public interface TagV1 {
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-        position = 2,
-        value = "Sets the tags on the given table",
-        notes = "Sets the tags on the given table")
-    @ApiResponses(value = {
-        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-            message = "The requested catalog or database or table cannot be located"
-        )
-    })
     Set<String> setTableTags(
-        @ApiParam(value = "The name of the catalog", required = true)
         @PathParam("catalog-name")
             String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
         @PathParam("database-name")
             String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
         @PathParam("table-name")
             String tableName,
-        @ApiParam(value = "Set of tags", required = true)
-            Set<String> tags
+        Set<String> tags
     );
 
     /**
@@ -185,30 +139,16 @@ public interface TagV1 {
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-        position = 4,
-        value = "Remove the tags from the given table",
-        notes = "Remove the tags from the given table")
-    @ApiResponses(value = {
-        @ApiResponse(code = HttpURLConnection.HTTP_NOT_FOUND,
-            message = "The requested catalog or database or table cannot be located"
-        )
-    })
     void removeTableTags(
-        @ApiParam(value = "The name of the catalog", required = true)
         @PathParam("catalog-name")
             String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
         @PathParam("database-name")
             String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
         @PathParam("table-name")
             String tableName,
-        @ApiParam(value = "True if all tags need to be removed")
         @DefaultValue("false")
         @QueryParam("all")
             Boolean deleteAll,
-        @ApiParam(value = "Tags to be removed from the given table")
             Set<String> tags
     );
 }

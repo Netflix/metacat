@@ -114,6 +114,11 @@ configure(javaProjects) {
             }
             dependency("com.sun.jersey:jersey-client:1.19.1")
             dependency("com.squarespace.jersey2-guice:jersey2-guice:0.5")
+            dependencySet(group: "io.springfox", version: "2.7.0") {
+                entry "springfox-swagger2"
+                entry "springfox-swagger-ui"
+                entry "springfox-bean-validators"
+            }
             dependencySet(group: "io.swagger", version: "1.5.13") {
                 entry "swagger-annotations"
                 entry "swagger-jersey2-jaxrs"

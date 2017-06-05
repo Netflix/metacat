@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright 2016 Netflix, Inc.
+ *  Copyright 2017 Netflix, Inc.
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -15,19 +15,16 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.common.exception;
 
 /**
- * Exception from user metadata service.
- * TODO: This should be replaced by a BadRequestException from JAX-RS 2.x once we support the newer JAX-RS version.
+ * Interfaces the API controllers extend.
+ *
+ * TODO: Remove all these.
+ *
+ * @author tgianos
+ * @since 1.1.0
  */
-public class MetacatUserMetadataException extends MetacatException {
-    /**
-     * Constructor.
-     *
-     * @param message exception message
-     */
-    public MetacatUserMetadataException(final String message) {
-        super(message);
-    }
-}
+@ParametersAreNonnullByDefault
+package com.netflix.metacat.common.server.api;
+
+import javax.annotation.ParametersAreNonnullByDefault;

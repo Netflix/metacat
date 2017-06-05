@@ -41,12 +41,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-
 
 /**
  * Request wrapper.
@@ -60,7 +58,7 @@ public final class RequestWrapper {
     private final Registry registry;
     //Metrics
     private final Id requestCounterId;
-    private final Id requestFaillureCounterId;
+    private final Id requestFailureCounterId;
     private final Id requestTimerId;
 
     /**
@@ -72,7 +70,7 @@ public final class RequestWrapper {
     public RequestWrapper(@NotNull @NonNull final Registry registry) {
         this.registry = registry;
         requestCounterId = registry.createId(Metrics.CounterRequestCount.name());
-        requestFaillureCounterId = registry.createId(Metrics.CounterRequestFailureCount.name());
+        requestFailureCounterId = registry.createId(Metrics.CounterRequestFailureCount.name());
         requestTimerId = registry.createId(Metrics.TimerRequest.name());
     }
 
@@ -101,11 +99,11 @@ public final class RequestWrapper {
      * @return response of supplier
      */
     public <R> R processRequest(
-            final QualifiedName name,
-            final String resourceRequestName,
-            final Supplier<R> supplier) {
+        final QualifiedName name,
+        final String resourceRequestName,
+        final Supplier<R> supplier) {
         final long start = registry.clock().monotonicTime();
-        final Map<String, String> tags = new HashMap<String, String>(name.parts());
+        final Map<String, String> tags = new HashMap<>(name.parts());
         tags.put("request", resourceRequestName);
         registry.counter(requestCounterId.withTags(tags)).increment();
 
@@ -121,32 +119,32 @@ public final class RequestWrapper {
         } catch (NotFoundException | MetacatNotFoundException e) {
             log.error(e.getMessage(), e);
             throw new MetacatNotFoundException(
-                    String.format("Unable to locate for %s. Details: %s", name, e.getMessage()));
+                String.format("Unable to locate for %s. Details: %s", name, e.getMessage()));
         } catch (InvalidMetaException | IllegalArgumentException e) {
             log.error(e.getMessage(), e);
             throw new MetacatBadRequestException(
-                    String.format("%s.%s", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage()));
+                String.format("%s.%s", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (ConnectorException e) {
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
-                    e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
+                e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
-            registry.counter(requestFaillureCounterId.withTags(tags)).increment();
-            throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
+            registry.counter(requestFailureCounterId.withTags(tags)).increment();
+            throw new MetacatException(message, e);
         } catch (UserMetadataServiceException e) {
             final String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(),
-                    e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
+                e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             throw new MetacatUserMetadataException(message);
         } catch (Exception e) {
-            registry.counter(requestFaillureCounterId.withTags(tags)).increment();
+            registry.counter(requestFailureCounterId.withTags(tags)).increment();
 
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
-                    e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
+                e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
-            throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
+            throw new MetacatException(message, e);
         } finally {
             final long duration = registry.clock().monotonicTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
-                    duration);
+                duration);
             this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
         }
     }
@@ -160,8 +158,8 @@ public final class RequestWrapper {
      * @return response of the supplier
      */
     public <R> R processRequest(
-            final String resourceRequestName,
-            final Supplier<R> supplier) {
+        final String resourceRequestName,
+        final Supplier<R> supplier) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = Maps.newHashMap();
         tags.put("request", resourceRequestName);
@@ -175,19 +173,19 @@ public final class RequestWrapper {
         } catch (IllegalArgumentException e) {
             log.error(e.getMessage(), e);
             throw new MetacatBadRequestException(String.format("%s.%s", e.getMessage(),
-                    e.getCause() == null ? "" : e.getCause().getMessage()));
+                e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (Exception e) {
-            registry.counter(requestFaillureCounterId.withTags(tags)).increment();
+            registry.counter(requestFailureCounterId.withTags(tags)).increment();
             final String message = String
-                    .format("%s.%s -- %s failed.",
-                            e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage(),
-                            resourceRequestName);
+                .format("%s.%s -- %s failed.",
+                    e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage(),
+                    resourceRequestName);
             log.error(message, e);
-            throw new MetacatException(message, Response.Status.INTERNAL_SERVER_ERROR, e);
+            throw new MetacatException(message, e);
         } finally {
             final long duration = registry.clock().monotonicTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
-                    duration);
+                duration);
             this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
         }
     }

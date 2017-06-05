@@ -51,9 +51,8 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                 message = Util.toString(response.body().asReader());
                 try {
                     final ObjectNode body = METACAT_JSON.parseJsonObject(message);
-                    message = body.path("error").asText();
-                } catch (MetacatJsonException ignored) {
-
+                    message = body.path("message").asText("No error message supplied.");
+                } catch (final MetacatJsonException ignored) {
                 }
             }
             switch (response.status()) {
@@ -70,7 +69,7 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                 case 503: //SERVICE_UNAVAILABLE
                     return new RetryableException(message, null);
                 default:
-                    return new MetacatException(message, javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR, null);
+                    return new MetacatException(message);
             }
         } catch (final IOException e) {
             return super.decode(methodKey, response);
