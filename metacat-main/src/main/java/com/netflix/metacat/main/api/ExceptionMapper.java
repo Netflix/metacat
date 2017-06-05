@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * Exception mapper for Genie Exceptions.
+ * Exception mapper for converting exceptions in application to web status error messages.
  *
  * @author tgianos
  * @since 1.1.0
@@ -42,14 +42,14 @@ import java.io.IOException;
 public class ExceptionMapper {
 
     /**
-     * Handle Genie Exceptions.
+     * Handle Metacat Exceptions.
      *
      * @param response The HTTP response
      * @param e        The exception to handle
      * @throws IOException on error in sending error
      */
     @ExceptionHandler(MetacatException.class)
-    public void handleGenieException(
+    public void handleMetacatException(
         final HttpServletResponse response,
         final MetacatException e
     ) throws IOException {

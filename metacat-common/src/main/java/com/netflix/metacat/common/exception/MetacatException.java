@@ -17,10 +17,6 @@
  */
 package com.netflix.metacat.common.exception;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.netflix.metacat.common.json.MetacatJson;
-import com.netflix.metacat.common.json.MetacatJsonLocator;
-
 /**
  * Base exception for Metacat errors exposed externally.
  *
@@ -28,8 +24,6 @@ import com.netflix.metacat.common.json.MetacatJsonLocator;
  * @author tgianos
  */
 public class MetacatException extends RuntimeException {
-    private static final MetacatJson METACAT_JSON = MetacatJsonLocator.INSTANCE;
-    private static final ObjectNode EMPTY_ERROR = METACAT_JSON.emptyObjectNode().put("error", "");
 
     /**
      * Constructor.

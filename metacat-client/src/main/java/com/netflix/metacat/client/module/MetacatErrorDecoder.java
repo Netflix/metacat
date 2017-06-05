@@ -51,9 +51,8 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                 message = Util.toString(response.body().asReader());
                 try {
                     final ObjectNode body = METACAT_JSON.parseJsonObject(message);
-                    message = body.path("message").asText();
-                } catch (MetacatJsonException ignored) {
-
+                    message = body.path("message").asText("No error message supplied.");
+                } catch (final MetacatJsonException ignored) {
                 }
             }
             switch (response.status()) {
