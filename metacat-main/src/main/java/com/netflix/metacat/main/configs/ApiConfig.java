@@ -18,9 +18,14 @@
 package com.netflix.metacat.main.configs;
 
 import com.netflix.metacat.main.api.ApiFilter;
+import org.springframework.boot.autoconfigure.web.DefaultErrorAttributes;
+import org.springframework.boot.autoconfigure.web.ErrorAttributes;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.context.request.RequestAttributes;
+
+import java.util.Map;
 
 /**
  * Spring configuration for the API tier.
@@ -45,41 +50,27 @@ public class ApiConfig {
         return registrationBean;
     }
 
-//    /**
-//     * Swagger configuration.
-//     *
-//     * @param config The application configuration abstraction
-//     * @return Swagger bean configuration
-//     */
-//    @Bean
-//    public BeanConfig swaggerBeanConfig(final Config config) {
-//        final BeanConfig beanConfig = new BeanConfig();
-//        // TODO: put this back and remove hard coding
-////        beanConfig.setVersion(config.getMetacatVersion());
-//        beanConfig.setVersion("1.1.0");
-//        beanConfig.setBasePath("/mds");
-//        beanConfig.setResourcePackage("com.netflix.metacat");
-//        beanConfig.setScan(true);
-//        return beanConfig;
-//    }
-//
-//    /**
-//     * Swagger API listing resource for Jersey.
-//     *
-//     * @return The API listing resource bean
-//     */
-//    @Bean
-//    public ApiListingResource apiListingResource() {
-//        return new ApiListingResource();
-//    }
-//
-//    /**
-//     * Swagger Serializers bean.
-//     *
-//     * @return The swagger serializers instance.
-//     */
-//    @Bean
-//    public SwaggerSerializers swaggerSerializers() {
-//        return new SwaggerSerializers();
-//    }
+    /**
+     * Override the default error attributes for backwards compatibility with older clients.
+     *
+     * @return New set of error attributes with 'message' copied into 'error'
+     */
+    @Bean
+    public ErrorAttributes errorAttributes() {
+        return new DefaultErrorAttributes() {
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public Map<String, Object> getErrorAttributes(
+                final RequestAttributes requestAttributes,
+                final boolean includeStackTrace
+            ) {
+                final Map<String, Object> errorAttributes
+                    = super.getErrorAttributes(requestAttributes, includeStackTrace);
+                errorAttributes.put("error", errorAttributes.get("message"));
+                return errorAttributes;
+            }
+        };
+    }
 }
