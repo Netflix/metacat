@@ -289,16 +289,22 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                     addedPartitionIds.add(partitionName);
                     hivePartitions.add(hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo));
                 } else {
-                    //the partition exists, we should not do anything for the partition exists
-                    //unless we alterifExists
-                    if (partitionsSaveRequest.getAlterIfExists()) {
+                    final String partitionUri = getUri(partitionInfo);
+                    final String hivePartitionUri = getUri(hivePartition);
+                    if (partitionUri == null || !partitionUri.equals(hivePartitionUri)) {
+                        existingPartitionIds.add(partitionName);
+                        //the partition exists, we should not do anything for the partition exists
+                        //unless we alterifExists
                         final Partition existingPartition =
                             hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo);
-                        existingPartitionIds.add(partitionName);
-                        existingPartition.setParameters(hivePartition.getParameters());
-                        existingPartition.setCreateTime(hivePartition.getCreateTime());
-                        existingPartition.setLastAccessTime(hivePartition.getLastAccessTime());
-                        existingHivePartitions.add(existingPartition);
+                        if (partitionsSaveRequest.getAlterIfExists()) {
+                            existingPartition.setParameters(hivePartition.getParameters());
+                            existingPartition.setCreateTime(hivePartition.getCreateTime());
+                            existingPartition.setLastAccessTime(hivePartition.getLastAccessTime());
+                            existingHivePartitions.add(existingPartition);
+                        } else {
+                            hivePartitions.add(existingPartition);
+                        }
                     }
                 }
             }
@@ -339,6 +345,22 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
         } catch (TException exception) {
             throw new ConnectorException(String.format("Failed savePartitions hive table %s", tableName), exception);
         }
+    }
+
+    private String getUri(final Partition hivePartition) {
+        String result = null;
+        if (hivePartition.getSd() != null) {
+            result = hivePartition.getSd().getLocation();
+        }
+        return result;
+    }
+
+    private String getUri(final PartitionInfo partitionInfo) {
+        String result = null;
+        if (partitionInfo.getSerde() != null) {
+            result = partitionInfo.getSerde().getUri();
+        }
+        return result;
     }
 
     /**
