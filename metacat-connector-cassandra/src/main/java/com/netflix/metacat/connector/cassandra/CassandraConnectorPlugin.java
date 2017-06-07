@@ -21,11 +21,10 @@ import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.spectator.api.Registry;
+import com.netflix.metacat.common.server.util.ServerContext;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
-import java.util.Map;
 
 /**
  * Cassandra Connector Plugin.
@@ -53,10 +52,9 @@ public class CassandraConnectorPlugin implements ConnectorPlugin {
     public ConnectorFactory create(
         @Nonnull @NonNull final Config config,
         @Nonnull @NonNull final String connectorName,
-        @Nonnull @NonNull final Map<String, String> configuration,
-        @Nonnull @NonNull final Registry registry
+        @Nonnull @NonNull final ServerContext serverContext
     ) {
-        return new CassandraConnectorFactory(connectorName, configuration);
+        return new CassandraConnectorFactory(connectorName, serverContext.getConfiguration());
     }
 
     /**

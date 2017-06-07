@@ -21,5 +21,6 @@
  * @since 1.0.0
  */
 
+@ParametersAreNonnullByDefault
 package com.netflix.metacat.connector.hive;
-
+import javax.annotation.ParametersAreNonnullByDefault;

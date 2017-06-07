@@ -22,20 +22,20 @@ import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.util.DataSourceManager;
+import com.netflix.metacat.common.server.util.ServerContext;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -51,6 +51,8 @@ import java.util.concurrent.TimeUnit;
  * @since 1.0.0
  */
 @Slf4j
+@Component
+@Scope("prototype")
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private static final String SQL_GET_TABLE_NAMES_BY_URI =
         "select d.name schema_name, t.tbl_name table_name, s.location"
@@ -71,22 +73,21 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param hiveMetacatConverters        hive converter
      * @param threadServiceManager         threadservicemanager
      * @param allowRenameTable             allow rename table
-     * @param registry                     registry for spectator
+     * @param serverContext                     serverContext
      */
-    @Inject
     public HiveConnectorFastTableService(
-        @Named("catalogName") final String catalogName,
-        @Nonnull @NonNull final IMetacatHiveClient metacatHiveClient,
-        @Nonnull @NonNull final HiveConnectorDatabaseService hiveConnectorDatabaseService,
-        @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters,
+        final String catalogName,
+        final IMetacatHiveClient metacatHiveClient,
+        final HiveConnectorDatabaseService hiveConnectorDatabaseService,
+        final HiveConnectorInfoConverter hiveMetacatConverters,
         final ThreadServiceManager threadServiceManager,
-        @Named("allowRenameTable") final boolean allowRenameTable,
-        @Nonnull @NonNull final Registry registry
+        final boolean allowRenameTable,
+        final ServerContext serverContext
     ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, allowRenameTable);
         this.allowRenameTable = allowRenameTable;
         this.threadServiceManager = threadServiceManager;
-        this.registry = registry;
+        this.registry = serverContext.getRegistry();
         this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
     }
 
@@ -119,8 +120,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
 
     @Override
     public Map<String, List<QualifiedName>> getTableNames(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final List<String> uris,
+        final ConnectorContext context,
+        final List<String> uris,
         final boolean prefixSearch
     ) {
         final long start = registry.clock().monotonicTime();

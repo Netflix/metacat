@@ -39,9 +39,9 @@ import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.connectors.exception.CatalogNotFoundException;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.ServerContext;
 import com.netflix.metacat.main.spi.MetacatCatalogConfig;
 import lombok.NonNull;
-import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
@@ -101,27 +101,26 @@ public class ConnectorManager {
      *
      * @param catalogName   catalog name
      * @param connectorType connector type
-     * @param properties    properties
+     * @param serverContext serverContext
      */
     synchronized void createConnection(final String catalogName,
                                        final String connectorType,
-                                       final Map<String, String> properties,
-                                       final Registry registry) {
+                                       final ServerContext serverContext) {
         Preconditions.checkState(!stopped.get(), "ConnectorManager is stopped");
         Preconditions.checkNotNull(catalogName, "catalogName is null");
         Preconditions.checkNotNull(connectorType, "connectorName is null");
-        Preconditions.checkNotNull(properties, "properties is null");
+        Preconditions.checkNotNull(serverContext, "serverContext is null");
 
         final ConnectorPlugin connectorPlugin = plugins.get(connectorType);
         if (connectorPlugin != null) {
             Preconditions
                 .checkState(!connectorFactories.containsKey(catalogName), "A connector %s already exists", catalogName);
             final ConnectorFactory connectorFactory =
-                connectorPlugin.create(this.config, catalogName, properties, registry);
+                connectorPlugin.create(this.config, catalogName, serverContext);
             connectorFactories.put(catalogName, connectorFactory);
 
             final MetacatCatalogConfig catalogConfig =
-                MetacatCatalogConfig.createFromMapAndRemoveProperties(connectorType, properties);
+                MetacatCatalogConfig.createFromMapAndRemoveProperties(connectorType, serverContext.getConfiguration());
             catalogs.put(catalogName, catalogConfig);
         } else {
             log.warn("No plugin for connector with type %s", connectorType);

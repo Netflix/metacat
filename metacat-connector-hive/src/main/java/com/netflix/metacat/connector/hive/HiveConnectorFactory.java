@@ -16,31 +16,28 @@
 
 package com.netflix.metacat.connector.hive;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.DataSourceManager;
+import com.netflix.metacat.common.server.util.ServerContext;
+import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;
 import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClientFactory;
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.metastore.HMSHandlerProxy;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
-import com.netflix.spectator.api.Registry;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.thrift.TException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import javax.annotation.Nonnull;
 import java.net.URI;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,41 +49,45 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class HiveConnectorFactory implements ConnectorFactory {
     private final String catalogName;
-    private final Map<String, String> configuration;
     private final HiveConnectorInfoConverter infoConverter;
-    private final Injector injector;
+    private final Config config;
     private IMetacatHiveClient client;
-    private final Registry registry;
+    private ServerContext serverContext;
+    private HiveConnectorPartitionService partitionService;
+    private HiveConnectorTableService tableService;
+    private HiveConnectorDatabaseService databaseService;
 
     /**
      * Constructor.
      *
      * @param config        The system config
      * @param catalogName   connector name. Also the catalog name.
-     * @param configuration configuration properties
      * @param infoConverter hive info converter
-     * @param registry      registry to spectator
+     * @param context       context
      */
     public HiveConnectorFactory(
-        @Nonnull @NonNull final Config config,
-        @Nonnull @NonNull final String catalogName,
-        @Nonnull @NonNull final Map<String, String> configuration,
-        final HiveConnectorInfoConverter infoConverter,
-        @Nonnull @NonNull final Registry registry
+         final Config config,
+         final String catalogName,
+         final HiveConnectorInfoConverter infoConverter,
+         final ServerContext context
     ) {
+        this.config = config;
         this.catalogName = catalogName;
-        this.configuration = configuration;
         this.infoConverter = infoConverter;
-        this.registry = registry;
+        this.serverContext = context;
+        initHiveServices();
+    }
 
+    private void initHiveServices() {
         try {
             final boolean useLocalMetastore = Boolean
-                .parseBoolean(configuration.getOrDefault(HiveConfigConstants.USE_EMBEDDED_METASTORE, "false"));
+                .parseBoolean(serverContext.getConfiguration().getOrDefault(
+                    HiveConfigConstants.USE_EMBEDDED_METASTORE, "false"));
             if (!useLocalMetastore) {
                 client = createThriftClient();
-                if (configuration.containsKey(HiveConfigConstants.USE_FASTHIVE_SERVICE)) {
-                    configuration.replace(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false");
-                    log.info("Always not use HiveConnectorFastService in thrift client mode");
+                if (serverContext.getConfiguration().containsKey(HiveConfigConstants.USE_FASTHIVE_SERVICE)) {
+                    serverContext.getConfiguration().replace(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false");
+                    log.info("HiveConnectorFastService is not used in thrift client mode");
                 }
             } else {
                 client = createLocalClient();
@@ -95,17 +96,33 @@ public class HiveConnectorFactory implements ConnectorFactory {
             throw new IllegalArgumentException(
                 String.format("Failed creating the hive metastore client for catalog: %s", catalogName), e);
         }
-        final Module hiveModule = new HiveConnectorModule(config,
-            catalogName, configuration, infoConverter, client, registry);
-        this.injector = Guice.createInjector(hiveModule);
+        final ApplicationContext ctx = new AnnotationConfigApplicationContext(HiveConnectorConfig.class);
+        final ThreadServiceManager manager = ctx.getBean(ThreadServiceManager.class, this.config);
+        this.databaseService = ctx.getBean(HiveConnectorDatabaseService.class, catalogName, client, infoConverter);
+        final boolean allowRenameTable = Boolean.parseBoolean(
+            serverContext.getConfiguration().getOrDefault(HiveConfigConstants.ALLOW_RENAME_TABLE, "false"));
+
+        if (Boolean.parseBoolean(
+            serverContext.getConfiguration().getOrDefault(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false"))) {
+            this.partitionService = (HiveConnectorFastPartitionService) ctx.getBean("fast-hive-partitionservice",
+                catalogName, client, infoConverter, manager, serverContext);
+            this.tableService = (HiveConnectorFastTableService) ctx.getBean("fast-hive-tableservice",
+                catalogName, client, infoConverter, this.databaseService,
+                manager, allowRenameTable, this.serverContext);
+        } else {
+            this.partitionService = (HiveConnectorPartitionService) ctx.getBean("hive-partitionservice",
+                catalogName, client, infoConverter);
+            this.tableService = (HiveConnectorTableService) ctx.getBean("hive-tableservice",
+                catalogName, client, infoConverter, this.databaseService, allowRenameTable);
+        }
     }
 
     private IMetacatHiveClient createLocalClient() throws Exception {
         final HiveConf conf = getDefaultConf();
-        configuration.forEach(conf::set);
+        serverContext.getConfiguration().forEach(conf::set);
         //TODO Change the usage of DataSourceManager later
-        DataSourceManager.get().load(catalogName, configuration);
-        return new EmbeddedHiveClient(catalogName, HMSHandlerProxy.getProxy(conf), registry);
+        DataSourceManager.get().load(catalogName, serverContext.getConfiguration());
+        return new EmbeddedHiveClient(catalogName, HMSHandlerProxy.getProxy(conf), this.serverContext.getRegistry());
 
     }
 
@@ -127,9 +144,9 @@ public class HiveConnectorFactory implements ConnectorFactory {
         final HiveMetastoreClientFactory factory =
             new HiveMetastoreClientFactory(null,
                 (int) HiveConnectorUtil.toTime(
-                    configuration.getOrDefault(HiveConfigConstants.HIVE_METASTORE_TIMEOUT, "20s"),
+                    serverContext.getConfiguration().getOrDefault(HiveConfigConstants.HIVE_METASTORE_TIMEOUT, "20s"),
                     TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
-        final String metastoreUri = configuration.get(HiveConfigConstants.THRIFT_URI);
+        final String metastoreUri = serverContext.getConfiguration().get(HiveConfigConstants.THRIFT_URI);
         URI uri = null;
         try {
             uri = new URI(metastoreUri);
@@ -143,17 +160,17 @@ public class HiveConnectorFactory implements ConnectorFactory {
 
     @Override
     public ConnectorDatabaseService getDatabaseService() {
-        return this.injector.getInstance(ConnectorDatabaseService.class);
+        return this.databaseService;
     }
 
     @Override
     public ConnectorTableService getTableService() {
-        return this.injector.getInstance(ConnectorTableService.class);
+        return this.tableService;
     }
 
     @Override
     public ConnectorPartitionService getPartitionService() {
-        return this.injector.getInstance(ConnectorPartitionService.class);
+        return this.partitionService;
     }
 
     @Override
