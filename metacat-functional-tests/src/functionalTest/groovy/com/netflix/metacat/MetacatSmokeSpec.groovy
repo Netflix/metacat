@@ -69,7 +69,7 @@ class MetacatSmokeSpec extends Specification {
     public static MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
 
     def setupSpec() {
-        String url = "http://localhost:${System.properties['metacat_http_port']}"
+        String url = "http://localhost:32778"
         assert url, 'Required system property "metacat_url" is not set'
 
         ObjectMapper mapper = metacatJson.getPrettyObjectMapper().copy()
@@ -383,15 +383,15 @@ class MetacatSmokeSpec extends Specification {
     @Unroll
     def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
         expect:
+        def uri = isLocalEnv?'file:/tmp/abc':null
         try {
-            def uri = isLocalEnv?'file:/tmp/abc':null
             createTable(catalogName, databaseName, tableName)
             def partition = PigDataDtoProvider.getPartition(catalogName, databaseName, tableName, partitionName, uri)
             def request = new PartitionsSaveRequestDto(partitions: [partition])
             partitionApi.savePartitions(catalogName, databaseName, tableName, request)
             if (repeat) {
+                partition.getSerde().setUri(partition.getSerde().getUri() + 0)
                 if (alter) {
-                    partition.getSerde().setUri(partition.getSerde().getUri() + 0)
                     request.setAlterIfExists(true)
                 }
                 request.setDefinitionMetadata((ObjectNode) metacatJson.emptyObjectNode().set('savePartitions', metacatJson.emptyObjectNode()))
@@ -409,6 +409,9 @@ class MetacatSmokeSpec extends Specification {
             assert partitionDetails != null && partitionDetails.size() == 1 && partitionDetails.find {it.name.partitionName == partitionName} != null && partitionDetails.size() == partitions.size() && partitionDetails.find {it.name.partitionName == partitionName}.getSerde().getSerdeInfoParameters().size() >= 1
             if (repeat) {
                 assert api.getTable(catalogName, databaseName, tableName, false, true, false).getDefinitionMetadata().get('savePartitions') != null
+                assert partitions.get(0).dataUri == uri + 0
+            } else {
+                assert partitions.get(0).dataUri == uri
             }
         }
         cleanup:
