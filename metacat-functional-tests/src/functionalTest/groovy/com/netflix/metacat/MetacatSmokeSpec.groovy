@@ -69,7 +69,7 @@ class MetacatSmokeSpec extends Specification {
     public static MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
 
     def setupSpec() {
-        String url = "http://localhost:32778"
+        String url = "http://localhost:${System.properties['metacat_http_port']}"
         assert url, 'Required system property "metacat_url" is not set'
 
         ObjectMapper mapper = metacatJson.getPrettyObjectMapper().copy()
