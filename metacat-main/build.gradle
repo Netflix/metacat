@@ -18,7 +18,6 @@
 
 configurations {
     all*.exclude module: "jsr311-api"
-    all*.exclude group: "com.sun.jersey"
 }
 
 dependencies {
@@ -52,6 +51,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-logging")
     compile("org.springframework.boot:spring-boot-starter-tomcat")
     compile("org.springframework.boot:spring-boot-starter-web")
+    compile("org.springframework.cloud:spring-cloud-starter-eureka")
     compile("org.springframework.cloud:spring-cloud-starter-spectator")
 
     /*******************************
