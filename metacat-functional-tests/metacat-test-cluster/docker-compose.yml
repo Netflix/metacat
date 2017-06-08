@@ -39,7 +39,7 @@ services:
         environment:
             VIRTUAL_HOST: metacat.docker
             JAVA_OPTS: '-ea
-                -Xmx1G
+                -Xmx2G
                 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
                 -noverify
                 -Dnetflix.environment=test

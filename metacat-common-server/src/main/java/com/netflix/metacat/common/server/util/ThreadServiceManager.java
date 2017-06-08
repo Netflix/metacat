@@ -21,6 +21,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
 import javax.annotation.PreDestroy;
@@ -38,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 @Getter
 @Slf4j
 // TODO: Move to Hive connector
+@Component
 public class ThreadServiceManager {
     private ListeningExecutorService executor;
 

@@ -21,11 +21,10 @@ import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.spectator.api.Registry;
+import com.netflix.metacat.common.server.util.MetacatConnectorProperties;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
-import java.util.Map;
 
 /**
  * Redshift Connector Plugin.
@@ -53,10 +52,9 @@ public class RedshiftConnectorPlugin implements ConnectorPlugin {
     public ConnectorFactory create(
         @Nonnull @NonNull final Config config,
         @Nonnull @NonNull final String connectorName,
-        @Nonnull @NonNull final Map<String, String> configuration,
-        @Nonnull @NonNull final Registry registry
+        @Nonnull @NonNull final MetacatConnectorProperties metacatConnectorProperties
     ) {
-        return new RedshiftConnectorFactory(connectorName, configuration);
+        return new RedshiftConnectorFactory(connectorName, metacatConnectorProperties.getConfiguration());
     }
 
     /**

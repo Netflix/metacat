@@ -26,14 +26,11 @@ dependencies {
     compile("org.apache.hive:hive-metastore")
     compile("org.apache.hive:hive-exec:${hive_version}:core@jar")
     compile("org.apache.hadoop:hadoop-core")
-    compile("com.google.inject:guice")
-    compile("com.google.inject.extensions:guice-persist")
-    compile("com.google.inject.extensions:guice-multibindings")
     compile("com.github.rholder:guava-retrying") {
         exclude module: "guava"
     }
     compile("commons-dbutils:commons-dbutils")
-
+    compile("org.springframework:spring-jdbc")
     /*******************************
      * Provided Dependencies
      *******************************/

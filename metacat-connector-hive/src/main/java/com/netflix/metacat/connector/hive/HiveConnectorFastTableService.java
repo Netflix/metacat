@@ -21,24 +21,18 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
-import com.netflix.metacat.common.server.util.DataSourceManager;
-import com.netflix.metacat.common.server.util.ThreadServiceManager;
+import com.netflix.metacat.common.server.util.MetacatConnectorProperties;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
+import com.netflix.metacat.connector.hive.util.JdbcUtil;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.dbutils.QueryRunner;
-import org.apache.commons.dbutils.ResultSetHandler;
-import org.apache.commons.dbutils.handlers.ScalarHandler;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.ResultSetExtractor;
 
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,9 +52,9 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private static final String SQL_EXIST_TABLE_BY_NAME =
         "select 1 from DBS d join TBLS t on d.DB_ID=t.DB_ID where d.name=? and t.tbl_name=?";
     private final boolean allowRenameTable;
-    private final ThreadServiceManager threadServiceManager;
     private final Registry registry;
     private final Id requestTimerId;
+    private final JdbcUtil jdbcUtil;
 
     /**
      * Constructor.
@@ -69,25 +63,24 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param metacatHiveClient            hive client
      * @param hiveConnectorDatabaseService databaseService
      * @param hiveMetacatConverters        hive converter
-     * @param threadServiceManager         threadservicemanager
+     * @param jdbcUtil                     jdbc util
      * @param allowRenameTable             allow rename table
-     * @param registry                     registry for spectator
+     * @param metacatConnectorProperties                serverContext
      */
-    @Inject
     public HiveConnectorFastTableService(
-        @Named("catalogName") final String catalogName,
-        @Nonnull @NonNull final IMetacatHiveClient metacatHiveClient,
-        @Nonnull @NonNull final HiveConnectorDatabaseService hiveConnectorDatabaseService,
-        @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters,
-        final ThreadServiceManager threadServiceManager,
-        @Named("allowRenameTable") final boolean allowRenameTable,
-        @Nonnull @NonNull final Registry registry
+        final String catalogName,
+        final IMetacatHiveClient metacatHiveClient,
+        final HiveConnectorDatabaseService hiveConnectorDatabaseService,
+        final HiveConnectorInfoConverter hiveMetacatConverters,
+        final JdbcUtil jdbcUtil,
+        final boolean allowRenameTable,
+        final MetacatConnectorProperties metacatConnectorProperties
     ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, allowRenameTable);
         this.allowRenameTable = allowRenameTable;
-        this.threadServiceManager = threadServiceManager;
-        this.registry = registry;
+        this.registry = metacatConnectorProperties.getRegistry();
         this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
+        this.jdbcUtil = jdbcUtil;
     }
 
     /**
@@ -99,15 +92,15 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final Map<String, String> tags = new HashMap<String, String>();
         tags.put("request", HiveMetrics.exists.name());
         boolean result = false;
-        // Get data source
-        final DataSource dataSource = DataSourceManager.get().get(catalogName);
-        try (Connection conn = dataSource.getConnection()) {
-            final Object qResult = new QueryRunner().query(conn, SQL_EXIST_TABLE_BY_NAME,
-                new ScalarHandler(1), name.getDatabaseName(), name.getTableName());
+        try {
+            final Object qResult = jdbcUtil.getJdbcTemplate().queryForObject(SQL_EXIST_TABLE_BY_NAME, Integer.class,
+                name.getDatabaseName(), name.getTableName());
             if (qResult != null) {
                 result = true;
             }
-        } catch (SQLException e) {
+        } catch (EmptyResultDataAccessException e) {
+            return false;
+        } catch (DataAccessException e) {
             throw Throwables.propagate(e);
         } finally {
             final long duration = registry.clock().monotonicTime() - start;
@@ -119,16 +112,13 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
 
     @Override
     public Map<String, List<QualifiedName>> getTableNames(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final List<String> uris,
+        final ConnectorContext context,
+        final List<String> uris,
         final boolean prefixSearch
     ) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
         tags.put("request", HiveMetrics.getTableNames.name());
-        final Map<String, List<QualifiedName>> result = Maps.newHashMap();
-        // Get data source
-        final DataSource dataSource = DataSourceManager.get().get(catalogName);
         // Create the sql
         final StringBuilder queryBuilder = new StringBuilder(SQL_GET_TABLE_NAMES_BY_URI);
         final List<String> params = Lists.newArrayList();
@@ -147,8 +137,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             });
             queryBuilder.deleteCharAt(queryBuilder.length() - 1).append(")");
         }
-        // Handler for reading the result set
-        ResultSetHandler<Map<String, List<QualifiedName>>> handler = rs -> {
+        final Map<String, List<QualifiedName>> result = Maps.newHashMap();
+        ResultSetExtractor<Map<String, List<QualifiedName>>> handler = rs -> {
             while (rs.next()) {
                 final String schemaName = rs.getString("schema_name");
                 final String tableName = rs.getString("table_name");
@@ -162,10 +152,9 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             }
             return result;
         };
-        try (Connection conn = dataSource.getConnection()) {
-            new QueryRunner()
-                .query(conn, queryBuilder.toString(), handler, params.toArray());
-        } catch (SQLException e) {
+        try {
+            jdbcUtil.getJdbcTemplate().query(queryBuilder.toString(), params.toArray(), handler);
+        } catch (DataAccessException e) {
             throw Throwables.propagate(e);
         } finally {
             final long duration = registry.clock().monotonicTime() - start;
