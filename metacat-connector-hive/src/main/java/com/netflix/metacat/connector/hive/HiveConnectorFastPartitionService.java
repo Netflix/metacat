@@ -32,28 +32,31 @@ import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserEval;
 import com.netflix.metacat.common.server.util.DataSourceManager;
+import com.netflix.metacat.common.server.util.MetacatConnectorProperties;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
+import com.netflix.metacat.connector.hive.util.JdbcUtil;
 import com.netflix.metacat.connector.hive.util.PartitionDetail;
 import com.netflix.metacat.connector.hive.util.PartitionFilterGenerator;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.dbutils.QueryRunner;
-import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.thrift.TException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ResultSetExtractor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.StringReader;
 import java.sql.Connection;
@@ -115,6 +118,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     private final ThreadServiceManager threadServiceManager;
     private final Registry registry;
     private final Id requestTimerId;
+    private final JdbcUtil jdbcUtil;
 
     /**
      * Constructor.
@@ -122,21 +126,21 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @param catalogName           catalogname
      * @param metacatHiveClient     hive client
      * @param hiveMetacatConverters hive converter
-     * @param threadServiceManager  serviceManager
-     * @param registry              registry for spectator
+     * @param jdbcUtil              jdbc util
+     * @param metacatConnectorProperties         server context
      */
-    @Inject
     public HiveConnectorFastPartitionService(
-        @Named("catalogName") final String catalogName,
-        @Nonnull @NonNull final IMetacatHiveClient metacatHiveClient,
-        @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters,
-        final ThreadServiceManager threadServiceManager,
-        @Nonnull @NonNull final Registry registry
+        final String catalogName,
+        final IMetacatHiveClient metacatHiveClient,
+        final HiveConnectorInfoConverter hiveMetacatConverters,
+        final JdbcUtil jdbcUtil,
+        final MetacatConnectorProperties metacatConnectorProperties
     ) {
         super(catalogName, metacatHiveClient, hiveMetacatConverters);
-        this.threadServiceManager = threadServiceManager;
-        this.registry = registry;
+        this.threadServiceManager = new ThreadServiceManager(metacatConnectorProperties.getConfig());
+        this.registry = metacatConnectorProperties.getRegistry();
         this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
+        this.jdbcUtil = jdbcUtil;
     }
 
     /**
@@ -147,34 +151,31 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      */
     @Override
     public int getPartitionCount(
-        @Nonnull @NonNull final ConnectorContext requestContext,
-        @Nonnull @NonNull final QualifiedName tableName
+        final ConnectorContext requestContext,
+        final QualifiedName tableName
     ) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
         tags.put("request", HiveMetrics.getPartitionCount.name());
         final Integer result;
-        final DataSource dataSource = DataSourceManager.get().get(catalogName);
-        try (Connection conn = dataSource.getConnection()) {
-            // Handler for reading the result set
-            final ResultSetHandler<Integer> handler = rs -> {
-                int count = 0;
-                while (rs.next()) {
-                    count = rs.getInt("count");
-                }
-                return count;
-            };
-            result = new QueryRunner()
-                .query(conn, SQL_GET_PARTITION_COUNT,
-                    handler, tableName.getDatabaseName(), tableName.getTableName());
-        } catch (SQLException e) {
+        // Handler for reading the result set
+        final ResultSetExtractor<Integer> handler = rs -> {
+            int count = 0;
+            while (rs.next()) {
+                count = rs.getInt("count");
+            }
+            return count;
+        };
+        try {
+            result = jdbcUtil.getJdbcTemplate().query(SQL_GET_PARTITION_COUNT, handler,
+                tableName.getDatabaseName(), tableName.getTableName());
+        } catch (DataAccessException e) {
             throw new ConnectorException("getPartitionCount", e);
         } finally {
             final long duration = registry.clock().monotonicTime() - start;
             log.debug("### Time taken to complete getPartitionCount is {} ms", duration);
             this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
         }
-
         return result;
     }
 
@@ -183,9 +184,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      */
     @Override
     public List<PartitionInfo> getPartitions(
-        @Nonnull @NonNull final ConnectorContext requestContext,
-        @Nonnull @NonNull final QualifiedName tableName,
-        @Nonnull @NonNull final PartitionListRequest partitionsRequest
+        final ConnectorContext requestContext,
+        final QualifiedName tableName,
+        final PartitionListRequest partitionsRequest
     ) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
@@ -208,9 +209,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * {@inheritDoc}.
      */
     @Override
-    public List<String> getPartitionKeys(@Nonnull @NonNull final ConnectorContext requestContext,
-                                         @Nonnull @NonNull final QualifiedName tableName,
-                                         @Nonnull @NonNull final PartitionListRequest partitionsRequest) {
+    public List<String> getPartitionKeys(final ConnectorContext requestContext,
+                                         final QualifiedName tableName,
+                                         final PartitionListRequest partitionsRequest) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
         tags.put("request", "getPartitionKeys");
@@ -227,8 +228,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                 !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_BATCHID);
             final boolean hasDateCreated =
                 !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_DATE_CREATED);
-            // Handler for reading the result set
-            final ResultSetHandler<List<String>> handler = rs -> {
+
+            ResultSetExtractor<List<String>> handler = rs -> {
                 final List<String> names = Lists.newArrayList();
                 while (rs.next()) {
                     final String name = rs.getString("name");
@@ -250,8 +251,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                 tableName.getTableName(), filterExpression, partitionNames,
                 SQL_GET_PARTITIONS_WITH_KEY_URI, handler, sort, pageable);
         } else {
-            // Handler for reading the result set
-            final ResultSetHandler<List<String>> handler = rs -> {
+            final ResultSetExtractor<List<String>> handler = rs -> {
                 final List<String> names = Lists.newArrayList();
                 while (rs.next()) {
                     names.add(rs.getString("name"));
@@ -285,8 +285,6 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         tags.put("request", HiveMetrics.getPartitionNames.name());
 
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
-        // Get data source
-        final DataSource dataSource = DataSourceManager.get().get(catalogName);
         // Create the sql
         final StringBuilder queryBuilder = new StringBuilder(SQL_GET_PARTITION_NAMES_BY_URI);
         final List<String> params = Lists.newArrayList();
@@ -302,8 +300,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             queryBuilder.append(")");
             params.addAll(uris);
         }
-        // Handler for reading the result set
-        final ResultSetHandler<Map<String, List<QualifiedName>>> handler = rs -> {
+
+        final ResultSetExtractor<Map<String, List<QualifiedName>>> handler = rs -> {
             while (rs.next()) {
                 final String schemaName = rs.getString("schema_name");
                 final String tableName = rs.getString("table_name");
@@ -320,10 +318,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             }
             return result;
         };
-        try (Connection conn = dataSource.getConnection()) {
-            new QueryRunner()
-                .query(conn, queryBuilder.toString(), handler, params.toArray());
-        } catch (SQLException e) {
+        try {
+            jdbcUtil.getJdbcTemplate().query(queryBuilder.toString(), params.toArray(), handler);
+        } catch (DataAccessException e) {
             Throwables.propagate(e);
         } finally {
             final long duration = registry.clock().monotonicTime() - start;
@@ -333,12 +330,12 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         return result;
     }
 
-    private List<PartitionInfo> getpartitions(@Nonnull @NonNull final String databaseName,
-                                              @Nonnull @NonNull final String tableName,
+    private List<PartitionInfo> getpartitions(final String databaseName,
+                                              final String tableName,
                                               @Nullable final List<String> partitionIds,
-                                              final String filterExpression,
-                                              final Sort sort,
-                                              final Pageable pageable,
+                                              @Nullable final String filterExpression,
+                                              @Nullable final Sort sort,
+                                              @Nullable final Pageable pageable,
                                               final boolean includePartitionDetails) {
         final FilterPartition filter = new FilterPartition();
         // batch exists
@@ -346,7 +343,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final boolean hasDateCreated =
             !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_DATE_CREATED);
         // Handler for reading the result set
-        final ResultSetHandler<List<PartitionDetail>> handler = rs -> {
+        final ResultSetExtractor<List<PartitionDetail>> handler = rs -> {
             final List<PartitionDetail> result = Lists.newArrayList();
             while (rs.next()) {
                 final String name = rs.getString("name");
@@ -440,7 +437,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final String filterExpression,
         final List<String> partitionIds,
         final String sql,
-        final ResultSetHandler<List<T>> resultSetHandler,
+        final ResultSetExtractor<List<T>> resultSetExtractor,
         final Sort sort,
         final Pageable pageable
     ) {
@@ -458,12 +455,12 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                     filterSql = " and (" + filterSql + ")";
                 }
                 partitions = gethandlerresults(databaseName, tableName, filterExpression, partitionIds,
-                    sql, resultSetHandler,
+                    sql, resultSetExtractor,
                     generator.joinSql(), filterSql,
                     generator.getParams(), sort, pageable);
             } else {
                 partitions = gethandlerresults(databaseName, tableName, null, partitionIds,
-                    sql, resultSetHandler,
+                    sql, resultSetExtractor,
                     null, null,
                     null, sort, pageable);
             }
@@ -474,17 +471,15 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             registry.counter(HiveMetrics.CounterHiveExperimentGetTablePartitionsFailure.name()).increment();
 
             partitions = gethandlerresults(databaseName, tableName,
-                filterExpression, partitionIds, sql, resultSetHandler, null,
+                filterExpression, partitionIds, sql, resultSetExtractor, null,
                 prepareFilterSql(filterExpression), Lists.newArrayList(), sort, pageable);
         }
         return partitions;
     }
 
     private List<FieldSchema> getPartitionKeys(final String databaseName, final String tableName) {
-        // Get data source
-        final DataSource dataSource = DataSourceManager.get().get(catalogName);
-        final ResultSetHandler<List<FieldSchema>> handler = rs -> {
-            final List<FieldSchema> result = Lists.newArrayList();
+        final List<FieldSchema> result = Lists.newArrayList();
+        final ResultSetExtractor<List<FieldSchema>> handler = rs -> {
             while (rs.next()) {
                 final String name = rs.getString("pkey_name");
                 final String type = rs.getString("pkey_type");
@@ -492,9 +487,10 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             }
             return result;
         };
-        try (Connection conn = dataSource.getConnection()) {
-            return new QueryRunner().query(conn, SQL_GET_PARTITION_KEYS, handler, databaseName, tableName);
-        } catch (SQLException e) {
+        try {
+            return jdbcUtil.getJdbcTemplate()
+                .query(SQL_GET_PARTITION_KEYS, new Object[]{databaseName, tableName}, handler);
+        } catch (DataAccessException e) {
             throw Throwables.propagate(e);
         }
     }
@@ -534,15 +530,13 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     }
 
     private Map<Long, Map<String, String>> getparameters(final List<Long> ids, final String sql, final String idName) {
-        // Get data source
-        final DataSource dataSource = DataSourceManager.get().get(catalogName);
         // Create the sql
         final StringBuilder queryBuilder = new StringBuilder(sql);
         if (!ids.isEmpty()) {
             queryBuilder.append(" and ").append(idName)
                 .append(" in ('").append(Joiner.on("','").skipNulls().join(ids)).append("')");
         }
-        final ResultSetHandler<Map<Long, Map<String, String>>> handler = rs -> {
+        final ResultSetExtractor<Map<Long, Map<String, String>>> handler = rs -> {
             final Map<Long, Map<String, String>> result = Maps.newHashMap();
             while (rs.next()) {
                 final Long id = rs.getLong(idName);
@@ -557,10 +551,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             }
             return result;
         };
-        try (Connection conn = dataSource.getConnection()) {
-            return new QueryRunner()
-                .query(conn, queryBuilder.toString(), handler);
-        } catch (SQLException e) {
+        try {
+            return jdbcUtil.getJdbcTemplate().query(queryBuilder.toString(), handler);
+        } catch (DataAccessException e) {
             Throwables.propagate(e);
         }
         return Maps.newHashMap();
@@ -607,7 +600,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                                           final String filterExpression,
                                           final List<String> partitionIds,
                                           final String sql,
-                                          final ResultSetHandler<List<T>> resultSetHandler,
+                                          final ResultSetExtractor resultSetExtractor,
                                           final String joinSql,
                                           final String filterSql,
                                           final List<Object> filterParams,
@@ -624,11 +617,11 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             subFilterPartitionNamesList.forEach(
                 subPartitionIds -> finalPartitions.addAll(
                     getsubhandlerresults(databaseName, tableName, filterExpression,
-                        subPartitionIds, sql, resultSetHandler,
+                        subPartitionIds, sql, resultSetExtractor,
                         joinSql, filterSql, filterParams, sort, pageable)));
         } else {
             partitions = getsubhandlerresults(databaseName, tableName, filterExpression,
-                partitionIds, sql, resultSetHandler,
+                partitionIds, sql, resultSetExtractor,
                 joinSql, filterSql, filterParams,
                 sort, pageable);
         }
@@ -640,7 +633,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                                              final String filterExpression,
                                              final List<String> partitionIds,
                                              final String sql,
-                                             final ResultSetHandler<List<T>> resultSetHandler,
+                                             final ResultSetExtractor resultSetExtractor,
                                              final String joinSql,
                                              final String filterSql,
                                              final List<Object> filterParams,
@@ -678,8 +671,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                 params.addAll(filterParams);
             }
             final Object[] oParams = new Object[params.size()];
-            partitions = new QueryRunner()
-                .query(conn, queryBuilder.toString(), resultSetHandler, params.toArray(oParams));
+            partitions = (List) jdbcUtil.getJdbcTemplate().query(
+                queryBuilder.toString(), params.toArray(oParams), resultSetExtractor);
         } catch (SQLException e) {
             Throwables.propagate(e);
         }
@@ -696,5 +689,17 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             }
         }
         return partitions;
+    }
+
+    @Override
+    protected Map<String, Partition> getPartitionsByNames(final Table table, final List<String> partitionNames)
+        throws TException {
+        final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(
+            QualifiedName.ofTable(catalogName, table.getDbName(), table.getTableName()), table);
+        return getpartitions(table.getDbName(), table.getTableName(),
+            partitionNames, null, null, null, false)
+            .stream()
+            .collect(Collectors.toMap(partitionInfo -> partitionInfo.getName().getPartitionName(),
+                partitionInfo -> hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo)));
     }
 }

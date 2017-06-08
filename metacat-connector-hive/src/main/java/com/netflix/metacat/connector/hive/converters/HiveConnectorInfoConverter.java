@@ -68,7 +68,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      *
      * @param hiveTypeConverter typeconverter
      */
-    public HiveConnectorInfoConverter(@Nonnull @NonNull final HiveTypeConverter hiveTypeConverter) {
+    public HiveConnectorInfoConverter(final HiveTypeConverter hiveTypeConverter) {
         this.hiveTypeConverter = hiveTypeConverter;
     }
 
@@ -84,8 +84,8 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      */
     @Override
     public DatabaseInfo toDatabaseInfo(
-        @Nonnull @NonNull final QualifiedName qualifiedName,
-        @Nonnull @NonNull final Database database
+        final QualifiedName qualifiedName,
+        final Database database
     ) {
         return DatabaseInfo.builder()
             .name(qualifiedName)
@@ -101,7 +101,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @return connector database
      */
     @Override
-    public Database fromDatabaseInfo(@Nonnull @NonNull final DatabaseInfo databaseInfo) {
+    public Database fromDatabaseInfo(final DatabaseInfo databaseInfo) {
         final QualifiedName databaseName = databaseInfo.getName();
         final String name = (databaseName == null) ? "" : databaseName.getDatabaseName();
         //this is a temp hack to resolve the uri = null issue
@@ -118,7 +118,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @return Metacat table Info
      */
     @Override
-    public TableInfo toTableInfo(@Nonnull @NonNull final QualifiedName name, @Nonnull @NonNull final Table table) {
+    public TableInfo toTableInfo(final QualifiedName name, final Table table) {
         final List<FieldSchema> nonPartitionColumns =
             (table.getSd() != null) ? table.getSd().getCols() : Collections.emptyList();
         // add the data fields to the nonPartitionColumns
@@ -160,7 +160,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @return connector table
      */
     @Override
-    public Table fromTableInfo(@Nonnull @NonNull final TableInfo tableInfo) {
+    public Table fromTableInfo(final TableInfo tableInfo) {
         final QualifiedName name = tableInfo.getName();
         final String tableName = (name != null) ? name.getTableName() : "";
         final String databaseName = (name != null) ? name.getDatabaseName() : "";
@@ -214,8 +214,8 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      */
     @Override
     public PartitionInfo toPartitionInfo(
-        @Nonnull @NonNull final TableInfo tableInfo,
-        @Nonnull @NonNull final Partition partition
+        final TableInfo tableInfo,
+        final Partition partition
     ) {
         final QualifiedName tableName = tableInfo.getName();
         final QualifiedName partitionName = QualifiedName.ofPartition(tableName.getCatalogName(),
@@ -245,8 +245,8 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      */
     @Override
     public Partition fromPartitionInfo(
-        @Nonnull @NonNull final TableInfo tableInfo,
-        @Nonnull @NonNull final PartitionInfo partition
+        final TableInfo tableInfo,
+        final PartitionInfo partition
     ) {
         final QualifiedName name = partition.getName();
         final List<String> values = Lists.newArrayListWithCapacity(16);
@@ -311,7 +311,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @param fieldInfo fieldInfo
      * @return FieldSchema
      */
-    public FieldSchema metacatToHiveField(@Nonnull @NonNull final FieldInfo fieldInfo) {
+    public FieldSchema metacatToHiveField(final FieldInfo fieldInfo) {
         final FieldSchema result = new FieldSchema();
         result.setName(fieldInfo.getName());
         result.setType(hiveTypeConverter.fromMetacatType(fieldInfo.getType()));
@@ -326,7 +326,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @param isPartitionKey boolean
      * @return field info obj
      */
-    private FieldInfo hiveToMetacatField(@Nonnull @NonNull final FieldSchema field, final boolean isPartitionKey) {
+    private FieldInfo hiveToMetacatField(final FieldSchema field, final boolean isPartitionKey) {
         return FieldInfo.builder().name(field.getName())
             .type(hiveTypeConverter.toMetacatType(field.getType()))
             .sourceType(field.getType())

@@ -22,7 +22,6 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -46,7 +45,6 @@ public class HiveMetastoreClientFactory {
      * @param socksProxy address
      * @param timeoutMillis timeoutMillis
      */
-    @Inject
     public HiveMetastoreClientFactory(@Nullable final HostAndPort socksProxy,
                                       final int timeoutMillis) {
         this.socksProxy = socksProxy;

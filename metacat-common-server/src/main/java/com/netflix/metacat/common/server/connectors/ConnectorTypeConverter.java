@@ -18,9 +18,6 @@
 package com.netflix.metacat.common.server.connectors;
 
 import com.netflix.metacat.common.type.Type;
-import lombok.NonNull;
-
-import javax.annotation.Nonnull;
 
 /**
  * Canonical type converter class.
@@ -37,7 +34,7 @@ public interface ConnectorTypeConverter {
      * @param type type
      * @return metacat type
      */
-    Type toMetacatType(@Nonnull @NonNull final String type);
+    Type toMetacatType(String type);
 
     /**
      * Converts from metacat type.
@@ -45,5 +42,5 @@ public interface ConnectorTypeConverter {
      * @param type type
      * @return connector type
      */
-    String fromMetacatType(@Nonnull @NonNull final Type type);
+    String fromMetacatType(Type type);
 }

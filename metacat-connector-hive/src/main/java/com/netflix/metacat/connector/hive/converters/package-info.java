@@ -13,7 +13,11 @@
 
 /**
  * hive connector converters.
+ *
  * @author zhenl
  * @since 1.0.0
  */
+
+@ParametersAreNonnullByDefault
 package com.netflix.metacat.connector.hive.converters;
+import javax.annotation.ParametersAreNonnullByDefault;

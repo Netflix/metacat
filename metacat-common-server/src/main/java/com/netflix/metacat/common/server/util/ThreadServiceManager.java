@@ -19,10 +19,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.netflix.metacat.common.server.properties.Config;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
-import javax.annotation.Nonnull;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import java.util.concurrent.ExecutorService;
@@ -37,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Getter
 @Slf4j
-// TODO: Move to Hive connector
+@Component
 public class ThreadServiceManager {
     private ListeningExecutorService executor;
 
@@ -47,7 +46,7 @@ public class ThreadServiceManager {
      * @param config Program configuration
      */
     @Inject
-    public ThreadServiceManager(@Nonnull @NonNull final Config config) {
+    public ThreadServiceManager(final Config config) {
         final ExecutorService executorService = newFixedThreadPool(
             config.getServiceMaxNumberOfThreads(),
             "metacat-service-pool-%d",

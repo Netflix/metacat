@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.MetacatConnectorProperties;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,6 +54,7 @@ public class CatalogManager {
     private final AtomicBoolean catalogsLoading = new AtomicBoolean();
     private final AtomicBoolean catalogsLoaded = new AtomicBoolean();
     private final Registry registry;
+    private final Config config;
 
     /**
      * Constructor.
@@ -66,6 +68,7 @@ public class CatalogManager {
                           final Config config,
                           final Registry registry) {
         this.connectorManager = connectorManager;
+        this.config = config;
         this.catalogConfigurationDir = new File(config.getPluginConfigLocation());
         this.registry = registry;
     }
@@ -85,7 +88,7 @@ public class CatalogManager {
      * @throws Exception error
      */
     public void loadCatalogs()
-            throws Exception {
+        throws Exception {
         if (!catalogsLoading.compareAndSet(false, true)) {
             return;
         }
@@ -100,17 +103,19 @@ public class CatalogManager {
     }
 
     private void loadCatalog(final File file)
-            throws Exception {
+        throws Exception {
         log.info("-- Loading catalog {} --", file);
         final Map<String, String> properties = new HashMap<>(loadProperties(file));
 
         final String connectorType = properties.remove("connector.name");
         Preconditions.checkState(connectorType != null, "Catalog configuration %s does not contain conector.name",
-                file.getAbsoluteFile());
+            file.getAbsoluteFile());
 
         final String catalogName = Files.getNameWithoutExtension(file.getName());
-
-        connectorManager.createConnection(catalogName, connectorType, properties, registry);
+        final MetacatConnectorProperties metacatConnectorProperties =
+            new MetacatConnectorProperties(config, registry, properties);
+        connectorManager.createConnection(catalogName,
+            connectorType, metacatConnectorProperties);
         log.info("-- Added catalog {} using connector {} --", catalogName, connectorType);
     }
 
@@ -125,7 +130,7 @@ public class CatalogManager {
     }
 
     private static Map<String, String> loadProperties(final File file)
-            throws Exception {
+        throws Exception {
         Preconditions.checkNotNull(file, "file is null");
 
         final Properties properties = new Properties();

@@ -16,7 +16,10 @@
 
 /**
  * hive thrift client implementation.
+ *
  * @author zhenl
  * @since 1.0.0
  */
+@ParametersAreNonnullByDefault
 package com.netflix.metacat.connector.hive.client.thrift;
+import javax.annotation.ParametersAreNonnullByDefault;

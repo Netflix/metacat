@@ -16,10 +16,8 @@ package com.netflix.metacat.main.manager;
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.converter.TypeConverterFactory;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,8 +39,8 @@ public class PluginManager {
      * @param typeConverterFactory provider for type converters
      */
     public PluginManager(
-        @Nonnull @NonNull final ConnectorManager connectorManager,
-        @Nonnull @NonNull final TypeConverterFactory typeConverterFactory
+        final ConnectorManager connectorManager,
+        final TypeConverterFactory typeConverterFactory
     ) {
         this.connectorManager = connectorManager;
         this.typeConverterFactory = typeConverterFactory;

@@ -21,6 +21,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -51,7 +52,7 @@ public class PartitionAlreadyExistsException extends AlreadyExistsException {
     public PartitionAlreadyExistsException(
         final QualifiedName tableName,
         final String partitionName,
-        final Throwable cause
+        @Nullable final Throwable cause
     ) {
         this(tableName, Lists.newArrayList(partitionName), cause);
     }
@@ -66,7 +67,7 @@ public class PartitionAlreadyExistsException extends AlreadyExistsException {
     public PartitionAlreadyExistsException(
         final QualifiedName tableName,
         final List<String> partitionNames,
-        final Throwable cause
+        @Nullable final Throwable cause
     ) {
         super(tableName,
             String.format("One or more of the partitions '%s' already exists for table '%s'",

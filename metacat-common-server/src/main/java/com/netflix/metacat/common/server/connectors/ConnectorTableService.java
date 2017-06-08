@@ -20,7 +20,6 @@ package com.netflix.metacat.common.server.connectors;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 
@@ -42,8 +41,8 @@ public interface ConnectorTableService extends ConnectorBaseService<TableInfo> {
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default Map<String, List<QualifiedName>> getTableNames(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final List<String> uris,
+        final ConnectorContext context,
+        final List<String> uris,
         final boolean prefixSearch
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
