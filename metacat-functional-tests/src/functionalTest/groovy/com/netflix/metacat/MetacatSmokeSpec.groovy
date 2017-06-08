@@ -367,6 +367,41 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
+    def "Test create view without snapshot for #catalogName/#databaseName/#tableName/#viewName"() {
+        expect:
+        try {
+            try {
+                api.createDatabase(catalogName, 'franklinviews', new DatabaseCreateRequestDto())
+            } catch (Exception ignored){}
+            createTable(catalogName, databaseName, tableName)
+            api.createMView(catalogName, databaseName, tableName, viewName, null, null);
+            if (repeat) {
+                api.createMView(catalogName, databaseName, tableName, viewName, null, null);
+            }
+            error == null
+        } catch (Exception e) {
+            e.class == error
+        }
+        if (!error) {
+            def view = api.getMView(catalogName, databaseName, tableName, viewName)
+            assert view != null && view.name.tableName == tableName
+        }
+        cleanup:
+        if (!error) {
+            api.deleteMView(catalogName, databaseName, tableName, viewName)
+        }
+        where:
+        catalogName                | databaseName   | tableName           | viewName    | error                          | repeat
+        'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
+        'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | true
+        'hive-metastore'           | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | false
+        'hive-metastore'           | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | true
+        'embedded-hive-metastore'  | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
+        's3-mysql-db'              | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
+        'xyz'                      | 'smoke_db4'    | 'z'                 | 'part_view' | MetacatNotFoundException.class | false
+    }
+
+    @Unroll
     def "Test save 0 partitions for #catalogName/#databaseName/#tableName"() {
         when:
         createTable(catalogName, databaseName, tableName)
