@@ -97,8 +97,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
                 connection.setSchema(databaseName);
             }
             final String finalTableName = upperCase ? tableName.toUpperCase(Locale.ENGLISH) : tableName;
-            final String sql = "DROP TABLE " + finalTableName + ";";
-            JdbcConnectorUtils.executeUpdate(connection, sql);
+            JdbcConnectorUtils.executeUpdate(connection, this.getDropTableSql(name, finalTableName));
             log.debug("Deleted table {} from database {} for request {}", tableName, databaseName, context);
         } catch (final SQLException se) {
             throw this.exceptionMapper.toConnectorException(se, name);
@@ -241,8 +240,10 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             }
             final String finalOldTableName = upperCase ? oldTableName.toUpperCase(Locale.ENGLISH) : oldTableName;
             final String finalNewTableName = upperCase ? newTableName.toUpperCase(Locale.ENGLISH) : newTableName;
-            final String sql = "ALTER TABLE " + finalOldTableName + " RENAME " + finalNewTableName + ";";
-            JdbcConnectorUtils.executeUpdate(connection, sql);
+            JdbcConnectorUtils.executeUpdate(
+                connection,
+                this.getRenameTableSql(oldName, finalOldTableName, finalNewTableName)
+            );
             log.debug(
                 "Renamed table {}/{} to {}/{} for request {}",
                 oldDatabaseName,
@@ -347,5 +348,32 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         } else {
             return type;
         }
+    }
+
+    /**
+     * Build the SQL for renaming a table out of the components provided. SQL will be executed.
+     *
+     * @param oldName           The fully qualified name for the current table
+     * @param finalOldTableName The string for what the current table should be called in the sql
+     * @param finalNewTableName The string for what the new name fo the table should be in the sql
+     * @return The rename table sql to execute
+     */
+    protected String getRenameTableSql(
+        final QualifiedName oldName,
+        final String finalOldTableName,
+        final String finalNewTableName
+    ) {
+        return "ALTER TABLE " + finalOldTableName + " RENAME TO " + finalNewTableName;
+    }
+
+    /**
+     * Get the SQL for dropping the given table.
+     *
+     * @param name The fully qualified name of the table
+     * @param finalTableName The final table name that should be dropped
+     * @return The SQL to execute to drop the table
+     */
+    protected String getDropTableSql(final QualifiedName name, final String finalTableName) {
+        return "DROP TABLE " + finalTableName;
     }
 }
