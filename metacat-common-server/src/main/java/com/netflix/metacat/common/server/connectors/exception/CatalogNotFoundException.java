@@ -19,6 +19,8 @@ package com.netflix.metacat.common.server.connectors.exception;
 
 import com.netflix.metacat.common.QualifiedName;
 
+import javax.annotation.Nullable;
+
 /**
  * Exception when a catalog is not found.
  *
@@ -41,7 +43,7 @@ public class CatalogNotFoundException extends NotFoundException {
      * @param catalogName catalog name
      * @param cause       error cause
      */
-    public CatalogNotFoundException(final String catalogName, final Throwable cause) {
+    public CatalogNotFoundException(final String catalogName, @Nullable final Throwable cause) {
         super(QualifiedName.ofCatalog(catalogName), cause);
     }
 }

@@ -48,7 +48,6 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Comparator;
 import java.util.List;
@@ -375,7 +374,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
      * {@inheritDoc}.
      */
     @Override
-    public boolean exists(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
+    public boolean exists(final ConnectorContext requestContext, final QualifiedName name) {
         boolean result;
         try {
             result = metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName()) != null;

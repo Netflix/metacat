@@ -21,9 +21,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Comparator;
 import java.util.List;
@@ -68,9 +66,9 @@ public class ConnectorUtils {
      * @param comparator The comparator to use
      */
     public static <T> void sort(
-        @Nonnull @NonNull final List<T> elements,
-        @Nonnull @NonNull final Sort sort,
-        @Nonnull @NonNull final Comparator<T> comparator
+        final List<T> elements,
+        final Sort sort,
+        final Comparator<T> comparator
     ) {
         switch (sort.getOrder()) {
             case DESC:
@@ -92,7 +90,7 @@ public class ConnectorUtils {
      * @return The final list of qualified names
      */
     public static <T> List<T> paginate(
-        @Nonnull @NonNull final List<T> elements,
+        final List<T> elements,
         @Nullable final Pageable pageable
     ) {
         final ImmutableList.Builder<T> results = ImmutableList.builder();
@@ -119,8 +117,8 @@ public class ConnectorUtils {
      * @return The database service class to use.
      */
     public static Class<? extends ConnectorDatabaseService> getDatabaseServiceClass(
-        @Nonnull @NonNull final Map<String, String> configuration,
-        @Nonnull @NonNull final Class<? extends ConnectorDatabaseService> defaultServiceClass
+        final Map<String, String> configuration,
+        final Class<? extends ConnectorDatabaseService> defaultServiceClass
     ) {
         if (configuration.containsKey(DATABASE_SERVICE_CLASS_KEY)) {
             final String className = configuration.get(DATABASE_SERVICE_CLASS_KEY);
@@ -138,8 +136,8 @@ public class ConnectorUtils {
      * @return The table service class to use.
      */
     public static Class<? extends ConnectorTableService> getTableServiceClass(
-        @Nonnull @NonNull final Map<String, String> configuration,
-        @Nonnull @NonNull final Class<? extends ConnectorTableService> defaultServiceClass
+        final Map<String, String> configuration,
+        final Class<? extends ConnectorTableService> defaultServiceClass
     ) {
         if (configuration.containsKey(TABLE_SERVICE_CLASS_KEY)) {
             final String className = configuration.get(TABLE_SERVICE_CLASS_KEY);
@@ -157,8 +155,8 @@ public class ConnectorUtils {
      * @return The partition service class to use.
      */
     public static Class<? extends ConnectorPartitionService> getPartitionServiceClass(
-        @Nonnull @NonNull final Map<String, String> configuration,
-        @Nonnull @NonNull final Class<? extends ConnectorPartitionService> defaultServiceClass
+        final Map<String, String> configuration,
+        final Class<? extends ConnectorPartitionService> defaultServiceClass
     ) {
         if (configuration.containsKey(PARTITION_SERVICE_CLASS_KEY)) {
             final String className = configuration.get(PARTITION_SERVICE_CLASS_KEY);
@@ -169,8 +167,8 @@ public class ConnectorUtils {
     }
 
     private static <S extends ConnectorBaseService> Class<? extends S> getServiceClass(
-        @Nonnull @NonNull final String className,
-        @Nonnull @NonNull final Class<? extends S> baseClass
+        final String className,
+        final Class<? extends S> baseClass
     ) {
         try {
             return Class.forName(className).asSubclass(baseClass);

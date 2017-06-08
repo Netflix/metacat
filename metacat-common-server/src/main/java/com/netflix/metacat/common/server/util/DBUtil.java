@@ -19,6 +19,7 @@ package com.netflix.metacat.common.server.util;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -26,6 +27,7 @@ import java.sql.SQLException;
 /**
  * DB utility.
  */
+//TODO change to spring jdbc template
 @Slf4j
 public final class DBUtil {
     private DBUtil() {
@@ -54,7 +56,7 @@ public final class DBUtil {
      * Closes the connection.
      * @param conn connection
      */
-    public static void closeReadConnection(final Connection conn) {
+    public static void closeReadConnection(@Nullable final Connection conn) {
         if (conn != null) {
             try {
                 conn.setAutoCommit(false);

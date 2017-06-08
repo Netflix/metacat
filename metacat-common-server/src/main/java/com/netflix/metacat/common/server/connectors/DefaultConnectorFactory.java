@@ -21,10 +21,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Nonnull;
 
 /**
  * Common connector factory with repeatable functionality.
@@ -46,8 +43,8 @@ public class DefaultConnectorFactory implements ConnectorFactory {
      * @param modules The connector modules to create
      */
     public DefaultConnectorFactory(
-        @Nonnull @NonNull final String name,
-        @Nonnull @NonNull final Iterable<? extends Module> modules
+        final String name,
+        final Iterable<? extends Module> modules
     ) {
         log.info("Creating connector factory for catalog {}", name);
         this.name = name;
@@ -93,7 +90,7 @@ public class DefaultConnectorFactory implements ConnectorFactory {
     public void stop() {
     }
 
-    private <T extends ConnectorBaseService> T getService(@Nonnull @NonNull final Class<T> serviceClass) {
+    private <T extends ConnectorBaseService> T getService(final Class<T> serviceClass) {
         final T service = this.injector.getInstance(serviceClass);
         if (service != null) {
             return service;

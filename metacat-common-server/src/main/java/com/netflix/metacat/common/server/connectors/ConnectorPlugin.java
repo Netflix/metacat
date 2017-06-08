@@ -21,8 +21,6 @@ package com.netflix.metacat.common.server.connectors;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.MetacatConnectorProperties;
 
-import javax.annotation.Nonnull;
-
 /**
  * Plugin interface implemented by Connectors.
  *
@@ -47,8 +45,8 @@ public interface ConnectorPlugin {
      * @return connector factory
      */
     ConnectorFactory create(
-        @Nonnull Config config,
-        @Nonnull String connectorName,
+        Config config,
+        String connectorName,
         MetacatConnectorProperties metacatConnectorProperties
     );
 

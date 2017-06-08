@@ -17,6 +17,8 @@
  */
 package com.netflix.metacat.common.server.connectors.exception;
 
+import javax.annotation.Nullable;
+
 /**
  * Connector exception class.
  *
@@ -30,7 +32,7 @@ public class ConnectorException extends RuntimeException {
      * @param message message
      * @param cause   cause
      */
-    public ConnectorException(final String message, final Throwable cause) {
+    public ConnectorException(final String message, @Nullable final Throwable cause) {
         super(message, cause);
     }
 
@@ -44,7 +46,7 @@ public class ConnectorException extends RuntimeException {
      */
     public ConnectorException(
         final String message,
-        final Throwable cause,
+        @Nullable final Throwable cause,
         final boolean enableSuppression,
         final boolean writableStackTrace
     ) {

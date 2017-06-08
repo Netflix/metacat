@@ -84,7 +84,7 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
     }
 
     @Override
-    public Type toMetacatType(@Nonnull @NonNull final String type) {
+    public Type toMetacatType(final String type) {
         // Hack to fix presto "varchar" type coming in with no length which is required by Hive.
         final TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(
             "varchar".equals(type.toLowerCase()) ? serdeConstants.STRING_TYPE_NAME : type);
@@ -102,7 +102,7 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
     }
 
     @Override
-    public String fromMetacatType(@Nonnull @NonNull final Type type) {
+    public String fromMetacatType(final Type type) {
         if (HiveTypeMapping.getCANONICAL_TO_HIVE().containsKey(type)) {
             return HiveTypeMapping.getCANONICAL_TO_HIVE().get(type);
         }

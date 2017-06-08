@@ -22,7 +22,6 @@ import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.model.BaseInfo;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 
@@ -46,7 +45,7 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * @param resource The resource metadata
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
-    default void create(@Nonnull final ConnectorContext context, @Nonnull final T resource) {
+    default void create(final ConnectorContext context, final T resource) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -57,7 +56,7 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * @param resource resource metadata
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
-    default void update(@Nonnull final ConnectorContext context, @Nonnull final T resource) {
+    default void update(final ConnectorContext context, final T resource) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -68,7 +67,7 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * @param name    The qualified name of the resource to delete
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
-    default void delete(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    default void delete(final ConnectorContext context, final QualifiedName name) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -80,7 +79,7 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * @return The resource metadata.
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
-    default T get(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    default T get(final ConnectorContext context, final QualifiedName name) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -92,7 +91,7 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * @return Return true, if the resource exists.
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
-    default boolean exists(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    default boolean exists(final ConnectorContext context, final QualifiedName name) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -109,8 +108,8 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<T> list(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName name,
+        final ConnectorContext context,
+        final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,
         @Nullable final Pageable pageable
@@ -130,8 +129,8 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<QualifiedName> listNames(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName name,
+        final ConnectorContext context,
+        final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,
         @Nullable final Pageable pageable
@@ -148,9 +147,9 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default void rename(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName oldName,
-        @Nonnull final QualifiedName newName
+        final ConnectorContext context,
+        final QualifiedName oldName,
+        final QualifiedName newName
     ) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }

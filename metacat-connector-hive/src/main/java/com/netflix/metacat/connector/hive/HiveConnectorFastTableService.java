@@ -32,7 +32,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
-import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +86,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * {@inheritDoc}.
      */
     @Override
-    public boolean exists(@Nonnull final ConnectorContext requestContext, @Nonnull final QualifiedName name) {
+    public boolean exists(final ConnectorContext requestContext, final QualifiedName name) {
         final long start = registry.clock().monotonicTime();
         final Map<String, String> tags = new HashMap<String, String>();
         tags.put("request", HiveMetrics.exists.name());
