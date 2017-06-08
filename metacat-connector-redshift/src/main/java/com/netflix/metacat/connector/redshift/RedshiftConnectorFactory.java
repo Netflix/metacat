@@ -19,9 +19,7 @@ package com.netflix.metacat.connector.redshift;
 
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.server.connectors.DefaultConnectorFactory;
-import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
@@ -39,8 +37,8 @@ class RedshiftConnectorFactory extends DefaultConnectorFactory {
      * @param configuration The catalog configuration
      */
     RedshiftConnectorFactory(
-        @Nonnull @NonNull final String name,
-        @Nonnull @NonNull final Map<String, String> configuration
+        final String name,
+        final Map<String, String> configuration
     ) {
         super(name, Lists.newArrayList(new RedshiftConnectorModule(name, configuration)));
     }

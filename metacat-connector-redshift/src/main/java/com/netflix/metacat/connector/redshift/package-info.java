@@ -22,4 +22,7 @@
  * @author tgianos
  * @since 1.0.0
  */
+@ParametersAreNonnullByDefault
 package com.netflix.metacat.connector.redshift;
+
+import javax.annotation.ParametersAreNonnullByDefault;
