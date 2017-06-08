@@ -70,7 +70,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
         1 * connection.getMetaData() >> metadata
         1 * metadata.storesUpperCaseIdentifiers() >> true
         1 * connection.setSchema(database.toUpperCase())
-        1 * statement.executeUpdate("DROP TABLE " + table.toUpperCase() + ";")
+        1 * statement.executeUpdate("DROP TABLE " + table.toUpperCase())
     }
 
     def "Can delete a mixed case table"() {
@@ -91,7 +91,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
         1 * connection.getMetaData() >> metadata
         1 * metadata.storesUpperCaseIdentifiers() >> false
         1 * connection.setSchema(database)
-        1 * statement.executeUpdate("DROP TABLE " + table + ";")
+        1 * statement.executeUpdate("DROP TABLE " + table)
     }
 
     def "Can get table metadata"() {
@@ -274,7 +274,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
         1 * connection.createStatement() >> statement
         1 * connection.getMetaData() >> metadata
         1 * metadata.storesUpperCaseIdentifiers() >> true
-        1 * statement.executeUpdate("ALTER TABLE C RENAME D;")
+        1 * statement.executeUpdate("ALTER TABLE C RENAME TO D")
     }
 
     def "Can rename lowercase table"() {
@@ -292,7 +292,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
         1 * connection.createStatement() >> statement
         1 * connection.getMetaData() >> metadata
         1 * metadata.storesUpperCaseIdentifiers() >> false
-        1 * statement.executeUpdate("ALTER TABLE c RENAME d;")
+        1 * statement.executeUpdate("ALTER TABLE c RENAME TO d")
     }
 
     @Unroll
