@@ -95,7 +95,7 @@ public class MetacatV1Resource implements MetacatV1 {
         final QualifiedName name =
             RequestWrapper.qualifyName(() -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName));
         return RequestWrapper.requestWrapper(name, "createMView",
-            () -> mViewService.createAndSnapshotPartitions(name, snapshot, filter));
+            () -> mViewService.createAndSnapshotPartitions(name, snapshot != null && snapshot, filter));
     }
 
     @Override
