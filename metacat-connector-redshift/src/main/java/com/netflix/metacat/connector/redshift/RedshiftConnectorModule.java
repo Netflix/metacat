@@ -28,10 +28,7 @@ import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorDatabaseService;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorPartitionService;
-import com.netflix.metacat.connector.jdbc.services.JdbcConnectorTableService;
-import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import javax.sql.DataSource;
 import java.util.Map;
 
@@ -53,8 +50,8 @@ public class RedshiftConnectorModule extends AbstractModule {
      * @param configuration The connector configuration
      */
     RedshiftConnectorModule(
-        @Nonnull @NonNull final String name,
-        @Nonnull @NonNull final Map<String, String> configuration
+        final String name,
+        final Map<String, String> configuration
     ) {
         this.name = name;
         this.configuration = configuration;
@@ -73,7 +70,7 @@ public class RedshiftConnectorModule extends AbstractModule {
             .to(ConnectorUtils.getDatabaseServiceClass(this.configuration, JdbcConnectorDatabaseService.class))
             .in(Scopes.SINGLETON);
         this.bind(ConnectorTableService.class)
-            .to(ConnectorUtils.getTableServiceClass(this.configuration, JdbcConnectorTableService.class))
+            .to(ConnectorUtils.getTableServiceClass(this.configuration, RedshiftConnectorTableService.class))
             .in(Scopes.SINGLETON);
         this.bind(ConnectorPartitionService.class)
             .to(ConnectorUtils.getPartitionServiceClass(this.configuration, JdbcConnectorPartitionService.class))

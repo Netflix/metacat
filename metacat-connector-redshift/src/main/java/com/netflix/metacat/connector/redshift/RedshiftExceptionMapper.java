@@ -24,9 +24,7 @@ import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundEx
 import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
-import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import java.sql.SQLException;
 
 /**
@@ -46,8 +44,8 @@ public class RedshiftExceptionMapper implements JdbcExceptionMapper {
      */
     @Override
     public ConnectorException toConnectorException(
-        @Nonnull @NonNull final SQLException se,
-        @Nonnull @NonNull final QualifiedName name
+        final SQLException se,
+        final QualifiedName name
     ) {
         // TODO: For now as can't find documentation stating contrary this is a copy of PostgreSQL implementation.
         //       Source code looks pretty unclear too at cursory glance

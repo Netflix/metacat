@@ -23,10 +23,7 @@ import com.netflix.metacat.common.type.DecimalType;
 import com.netflix.metacat.common.type.Type;
 import com.netflix.metacat.common.type.VarcharType;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Nonnull;
 
 /**
  * Type converter for Redshift.
@@ -49,7 +46,7 @@ public class RedshiftTypeConverter extends JdbcTypeConverter {
      *     </a>
      */
     @Override
-    public Type toMetacatType(@Nonnull @NonNull final String type) {
+    public Type toMetacatType(final String type) {
         // See: https://www.postgresql.org/docs/current/static/datatype.html
         final String lowerType = type.toLowerCase();
 
@@ -126,7 +123,7 @@ public class RedshiftTypeConverter extends JdbcTypeConverter {
      * {@inheritDoc}
      */
     @Override
-    public String fromMetacatType(@Nonnull @NonNull final Type type) {
+    public String fromMetacatType(final Type type) {
         switch (type.getTypeSignature().getBase()) {
             case ARRAY:
                 throw new UnsupportedOperationException("Redshift doesn't support array types");
