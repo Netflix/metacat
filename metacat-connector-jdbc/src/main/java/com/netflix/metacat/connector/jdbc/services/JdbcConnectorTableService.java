@@ -57,8 +57,13 @@ import java.util.Locale;
 public class JdbcConnectorTableService implements ConnectorTableService {
 
     static final String[] TABLE_TYPES = {"TABLE", "VIEW"};
+    private static final String EMPTY = "";
+    private static final String COMMA_SPACE = ", ";
+    private static final String UNSIGNED = "unsigned";
     private static final String ZERO = "0";
-
+    private static final char LEFT_PAREN = '(';
+    private static final char RIGHT_PAREN = ')';
+    private static final char SPACE = ' ';
     private final DataSource dataSource;
     private final JdbcTypeConverter typeConverter;
     private final JdbcExceptionMapper exceptionMapper;
@@ -323,28 +328,46 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         @Nullable final String size,
         @Nullable final String precision
     ) throws SQLDataException {
-        Integer sizeInt;
-        Integer precisionInt;
-        try {
-            sizeInt = size != null ? Integer.parseInt(size) : null;
-            if (sizeInt != null && sizeInt < 1) {
-                sizeInt = null;
+        if (size != null) {
+            final int sizeInt;
+            try {
+                sizeInt = Integer.parseInt(size);
+            } catch (final NumberFormatException nfe) {
+                throw new SQLDataException("Size field could not be converted to integer", nfe);
             }
-        } catch (final NumberFormatException nfe) {
-            throw new SQLDataException("Size field could not be converted to integer", nfe);
-        }
-        try {
-            precisionInt = precision != null ? Integer.parseInt(precision) : null;
-            if (precisionInt != null && precisionInt < 1) {
-                precisionInt = null;
+            // Make sure if the type is unsigned it's created correctly
+            final String baseType;
+            final String afterMagnitude;
+            final int unsignedIndex = StringUtils.indexOfIgnoreCase(type, UNSIGNED);
+            if (unsignedIndex != -1) {
+                baseType = StringUtils.trim(type.substring(0, unsignedIndex));
+                afterMagnitude = type.substring(unsignedIndex);
+            } else {
+                baseType = type;
+                afterMagnitude = null;
             }
-        } catch (final NumberFormatException nfe) {
-            throw new SQLDataException("Precision field could not be converted to integer", nfe);
-        }
-        if (sizeInt != null && precisionInt != null) {
-            return type + "(" + sizeInt + ", " + precisionInt + ")";
-        } else if (sizeInt != null) {
-            return type + "(" + sizeInt + ")";
+
+            if (precision != null) {
+                final int precisionInt;
+                try {
+                    precisionInt = Integer.parseInt(precision);
+                } catch (final NumberFormatException nfe) {
+                    throw new SQLDataException("Precision field could not be converted to integer", nfe);
+                }
+                return baseType
+                    + LEFT_PAREN
+                    + sizeInt
+                    + COMMA_SPACE
+                    + precisionInt
+                    + RIGHT_PAREN
+                    + (afterMagnitude != null ? SPACE + afterMagnitude : EMPTY);
+            } else {
+                return baseType
+                    + LEFT_PAREN
+                    + sizeInt
+                    + RIGHT_PAREN
+                    + (afterMagnitude != null ? SPACE + afterMagnitude : EMPTY);
+            }
         } else {
             return type;
         }
@@ -369,7 +392,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     /**
      * Get the SQL for dropping the given table.
      *
-     * @param name The fully qualified name of the table
+     * @param name           The fully qualified name of the table
      * @param finalTableName The final table name that should be dropped
      * @return The SQL to execute to drop the table
      */

@@ -370,6 +370,22 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.ALL)
     }
 
+    def "getTable: Test get table for #name"() {
+        given:
+        def catalogName = name.catalogName
+        def databaseName = name.databaseName
+        def tableName = name.tableName
+
+        when:
+        def table = api.getTable(catalogName, databaseName, tableName, true, true, true)
+
+        then:
+        table != null
+
+        where:
+        name << TestCatalogs.getAllTables(TestCatalogs.ALL)
+    }
+
     def 'createTable: should fail for #catalog where it is not supported'() {
         given:
         def databaseName = (catalog.preExistingDatabases + catalog.createdDatabases).first().databaseName
