@@ -16,7 +16,6 @@
  */
 package com.netflix.metacat
 
-import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.base.Throwables
 import com.netflix.metacat.client.Client
@@ -35,7 +34,6 @@ import feign.Logger
 import feign.RetryableException
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.joda.time.Instant
-import org.mortbay.util.ajax.JSON
 import org.skyscreamer.jsonassert.JSONAssert
 import spock.lang.Specification
 import spock.lang.Stepwise
@@ -372,6 +370,22 @@ class MetacatFunctionalSpec extends Specification {
 
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.ALL)
+    }
+
+    def "getTable: Test get table for #name"() {
+        given:
+        def catalogName = name.catalogName
+        def databaseName = name.databaseName
+        def tableName = name.tableName
+
+        when:
+        def table = api.getTable(catalogName, databaseName, tableName, true, true, true)
+
+        then:
+        table != null
+
+        where:
+        name << TestCatalogs.getAllTables(TestCatalogs.ALL)
     }
 
     def 'createTable: should fail for #catalog where it is not supported'() {

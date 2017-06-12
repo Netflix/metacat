@@ -347,4 +347,18 @@ class JdbcConnectorTableServiceSpec extends Specification {
             }
         )      | "exists"        | UnsupportedOperationException
     }
+
+    @Unroll
+    "Can build sourceType #expected from #type, #size, #precision"() {
+        expect:
+        this.service.buildSourceType(type, size, precision) == expected
+
+        where:
+        type                | size | precision | expected
+        "int"               | null | null      | "int"
+        "int unsigned"      | null | null      | "int unsigned"
+        "smallint unsigned" | "5"  | null      | "smallint(5) unsigned"
+        "double precision"  | "6"  | "10"      | "double precision(6, 10)"
+        "INT Unsigned"      | "7"  | null      | "INT(7) Unsigned"
+    }
 }
