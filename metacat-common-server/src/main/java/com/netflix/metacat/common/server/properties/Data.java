@@ -52,6 +52,7 @@ public class Data {
         @lombok.Data
         public static class Delete {
 
+            private boolean enable;
             @NonNull
             private Marker marker = new Marker();
 
