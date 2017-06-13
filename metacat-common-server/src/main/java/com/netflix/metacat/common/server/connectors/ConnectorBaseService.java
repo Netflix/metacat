@@ -21,6 +21,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.model.BaseInfo;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -92,8 +93,9 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      * @return Return true, if the resource exists.
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
+    @SuppressFBWarnings
     default boolean exists(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
-        throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
+        return get(context, name) != null;
     }
 
     /**

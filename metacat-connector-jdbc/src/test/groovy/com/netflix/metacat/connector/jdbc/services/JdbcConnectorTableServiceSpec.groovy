@@ -67,10 +67,8 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> true
-        1 * connection.setSchema(database.toUpperCase())
-        1 * statement.executeUpdate("DROP TABLE " + table.toUpperCase())
+        1 * connection.setSchema(database)
+        1 * statement.executeUpdate("DROP TABLE " + table)
     }
 
     def "Can delete a mixed case table"() {
@@ -88,8 +86,6 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> false
         1 * connection.setSchema(database)
         1 * statement.executeUpdate("DROP TABLE " + table)
     }
@@ -102,13 +98,16 @@ class JdbcConnectorTableServiceSpec extends Specification {
         def connection = Mock(Connection)
         def metadata = Mock(DatabaseMetaData)
         def columnResultSet = Mock(ResultSet)
+        def tablesResultSet = Mock(ResultSet)
 
         when:
         def tableInfo = this.service.get(this.context, qName)
 
         then:
-        1 * this.dataSource.getConnection() >> connection
-        1 * connection.getMetaData() >> metadata
+        2 * this.dataSource.getConnection() >> connection
+        2 * connection.getMetaData() >> metadata
+        1 * metadata.getTables(database, database, table,_) >> tablesResultSet
+        1 * tablesResultSet.next() >> true
         1 * metadata.getColumns(database, database, table, JdbcConnectorUtils.MULTI_CHARACTER_SEARCH) >> columnResultSet
         4 * columnResultSet.next() >>> [true, true, true, false]
         3 * columnResultSet.getString("REMARKS") >>> ["comment1", "comment2", "comment3"]
@@ -272,9 +271,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> true
-        1 * statement.executeUpdate("ALTER TABLE C RENAME TO D")
+        1 * statement.executeUpdate("ALTER TABLE c RENAME TO d")
     }
 
     def "Can rename lowercase table"() {
@@ -290,8 +287,6 @@ class JdbcConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> false
         1 * statement.executeUpdate("ALTER TABLE c RENAME TO d")
     }
 
@@ -336,16 +331,6 @@ class JdbcConnectorTableServiceSpec extends Specification {
                 )
             }
         )      | "update"        | UnsupportedOperationException
-        (
-            {
-                new JdbcConnectorTableService(
-                    Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
-                ).exists(
-                    Mock(ConnectorContext),
-                    QualifiedName.ofTable("catalog", "database", "table")
-                )
-            }
-        )      | "exists"        | UnsupportedOperationException
     }
 
     @Unroll

@@ -100,9 +100,9 @@ class TestCatalogs {
                 QualifiedName.ofDatabase('postgresql-96-db', 'pg_catalog'),
             ],
             preExistingTables: [
-                QualifiedName.ofTable('postgresql-96-db', 'world', 'City'),
-                QualifiedName.ofTable('postgresql-96-db', 'world', 'Country'),
-                QualifiedName.ofTable('postgresql-96-db', 'world', 'countrylanguage'),
+                QualifiedName.ofTable('postgresql-96-db', 'public', 'City'),
+                QualifiedName.ofTable('postgresql-96-db', 'public', 'Country'),
+                QualifiedName.ofTable('postgresql-96-db', 'public', 'countrylanguage'),
             ],
             type: 'postgresql',
         ),

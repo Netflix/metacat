@@ -23,6 +23,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.api.MetacatV1
 import com.netflix.metacat.common.api.PartitionV1
 import com.netflix.metacat.common.api.ResolverV1
+import com.netflix.metacat.common.api.TagV1
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
 import com.netflix.metacat.common.exception.MetacatBadRequestException
@@ -47,6 +48,7 @@ class MetacatFunctionalSpec extends Specification {
     public static MetacatV1 api
     public static PartitionV1 partitionApi
     public static ResolverV1 resolverApi
+    public static TagV1 tagApi
     public static final MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
     public static final long BATCH_ID = System.currentTimeSeconds()
     public static final int timediff = 24 * 3600
@@ -64,6 +66,7 @@ class MetacatFunctionalSpec extends Specification {
         api = client.api
         partitionApi = client.partitionApi
         resolverApi = client.resolverApi
+        tagApi = client.tagApi
         TestCatalogs.resetAll()
     }
 
@@ -370,22 +373,6 @@ class MetacatFunctionalSpec extends Specification {
 
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.ALL)
-    }
-
-    def "getTable: Test get table for #name"() {
-        given:
-        def catalogName = name.catalogName
-        def databaseName = name.databaseName
-        def tableName = name.tableName
-
-        when:
-        def table = api.getTable(catalogName, databaseName, tableName, true, true, true)
-
-        then:
-        table != null
-
-        where:
-        name << TestCatalogs.getAllTables(TestCatalogs.ALL)
     }
 
     def 'createTable: should fail for #catalog where it is not supported'() {
@@ -1155,6 +1142,54 @@ class MetacatFunctionalSpec extends Specification {
 
         where:
         name << TestCatalogs.getCreatedTables(TestCatalogs.getCanDeleteTable(TestCatalogs.ALL))
+    }
+
+    def "getTable: Test get table for #name"() {
+        given:
+        def catalogName = name.catalogName
+        def databaseName = name.databaseName
+        def tableName = name.tableName
+
+        when:
+        def table = api.getTable(catalogName, databaseName, tableName, true, true, true)
+
+        then:
+        table != null
+
+        where:
+        name << TestCatalogs.getAllTables(TestCatalogs.ALL)
+    }
+
+    def "getTable: Test get non-existing table #name should throw NotFoundException"() {
+        given:
+        def catalogName = name.catalogName
+        def databaseName = name.databaseName
+        def tableName = name.tableName + UUID.randomUUID()
+
+        when:
+        api.getTable(catalogName, databaseName, tableName, true, true, true)
+
+        then:
+        thrown(MetacatNotFoundException)
+
+        where:
+        name << TestCatalogs.getAllTables(TestCatalogs.ALL)
+    }
+
+    def "setTableTags: Test tag table for #name"() {
+        given:
+        def catalogName = name.catalogName
+        def databaseName = name.databaseName
+        def tableName = name.tableName
+        def tags = ['test', 'unused'] as Set<String>
+        when:
+        tagApi.setTableTags(catalogName, databaseName, tableName, tags)
+        then:
+        metacatJson.convertValue(api.getTable(catalogName, databaseName, tableName, false, true, true).getDefinitionMetadata().get('tags'), Set.class) == tags
+        cleanup:
+        tagApi.removeTableTags(catalogName, databaseName, tableName, true, [] as Set<String>)
+        where:
+        name << TestCatalogs.getAllTables(TestCatalogs.ALL)
     }
 
     def 'deletePartition: #name'() {
