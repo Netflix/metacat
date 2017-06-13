@@ -25,6 +25,7 @@ import com.netflix.metacat.common.api.MetacatV1;
 import com.netflix.metacat.common.api.MetadataV1;
 import com.netflix.metacat.common.api.PartitionV1;
 import com.netflix.metacat.common.api.ResolverV1;
+import com.netflix.metacat.common.api.TagV1;
 import com.netflix.metacat.common.json.MetacatJsonLocator;
 import feign.Feign;
 import feign.Request;
@@ -50,6 +51,7 @@ public final class Client {
     private final PartitionV1 partitionApi;
     private final MetadataV1 metadataApi;
     private final ResolverV1 resolverApi;
+    private final TagV1 tagApi;
 
     private Client(
         @Nonnull
@@ -90,6 +92,7 @@ public final class Client {
         partitionApi = getApiClient(PartitionV1.class);
         metadataApi = getApiClient(MetadataV1.class);
         resolverApi = getApiClient(ResolverV1.class);
+        tagApi = getApiClient(TagV1.class);
     }
 
     /**
@@ -300,5 +303,14 @@ public final class Client {
      */
     public ResolverV1 getResolverApi() {
         return resolverApi;
+    }
+
+    /**
+     * Return an API instance that can be used to interact with
+     * the metacat server for tagging metadata.
+     * @return An instance api conforming to TagV1 interface
+     */
+    public TagV1 getTagApi() {
+        return tagApi;
     }
 }
