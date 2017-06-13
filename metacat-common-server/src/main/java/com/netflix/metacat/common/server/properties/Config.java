@@ -36,6 +36,16 @@ public interface Config {
     boolean isElasticSearchEnabled();
 
     /**
+     * Enable publishing partitions to elastic search.
+     * @return true if publishing partitions to elastic search is enabled
+     */
+    boolean isElasticSearchPublishPartitionEnabled();
+    /**
+     * Enable publishing metacat es error logs to elastic search.
+     * @return true if publishing metacat es error logs to elastic search is enabled
+     */
+    boolean isElasticSearchPublishMetacatLogEnabled();
+    /**
      * Elastic search cluster name.
      *
      * @return cluster name
