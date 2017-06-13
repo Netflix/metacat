@@ -21,6 +21,7 @@ import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.json.MetacatJsonLocator;
+import com.netflix.metacat.common.server.Config;
 import com.netflix.metacat.common.server.events.MetacatCreateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteDatabasePostEvent;
@@ -45,14 +46,17 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MetacatEventHandlers {
     private final ElasticSearchUtil es;
+    private final Config config;
 
     /**
      * Constructor.
      * @param es elastic search util
+     * @param config configurations
      */
     @Inject
-    public MetacatEventHandlers(final ElasticSearchUtil es) {
+    public MetacatEventHandlers(final ElasticSearchUtil es, final Config config) {
         this.es = es;
+        this.config = config;
     }
 
     /**
@@ -134,12 +138,14 @@ public class MetacatEventHandlers {
         try {
             final TableDto dto = event.getTable();
             es.softDelete(ElasticSearchDoc.Type.table.name(), dto.getName().toString(), event.getRequestContext());
-            try {
-                final List<String> partitionIdsToBeDeleted =
-                    es.getIdsByQualifiedName(ElasticSearchDoc.Type.partition.name(), dto.getName());
-                es.delete(ElasticSearchDoc.Type.partition.name(), partitionIdsToBeDeleted);
-            } catch (Exception e) {
-                log.warn("Failed deleting the partitions for the dropped table/view:{}", dto.getName().toString());
+            if (config.isElasticSearchPublishPartitionEnabled()) {
+                try {
+                    final List<String> partitionIdsToBeDeleted =
+                        es.getIdsByQualifiedName(ElasticSearchDoc.Type.partition.name(), dto.getName());
+                    es.delete(ElasticSearchDoc.Type.partition.name(), partitionIdsToBeDeleted);
+                } catch (Exception e) {
+                    log.warn("Failed deleting the partitions for the dropped table/view:{}", dto.getName().toString());
+                }
             }
         } finally {
             log.info("*** ES Time taken to complete {} is {} ms", "table.delete", timer.stop());
@@ -153,19 +159,21 @@ public class MetacatEventHandlers {
     @Subscribe
     @AllowConcurrentEvents
     public void metacatDeleteTablePartitionPostEventHandler(final MetacatDeleteTablePartitionPostEvent event) {
-        log.debug("Received DeleteTablePartitionEvent {}", event);
-        DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
-                .withTag("metacat.event.type", "partition.delete").build(),
-            System.currentTimeMillis() - event.getRequestContext().getTimestamp());
-        final TimerWrapper timer =
-            TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.partition.delete");
-        try {
-            final List<String> partitionIds = event.getPartitionIds();
-            final List<String> esPartitionIds = partitionIds.stream()
-                .map(partitionId -> event.getName().toString() + "/" + partitionId).collect(Collectors.toList());
-            es.softDelete(ElasticSearchDoc.Type.partition.name(), esPartitionIds, event.getRequestContext());
-        } finally {
-            log.info("*** ES Time taken to complete {} is {} ms", "partition.delete", timer.stop());
+        if (config.isElasticSearchPublishPartitionEnabled()) {
+            log.debug("Received DeleteTablePartitionEvent {}", event);
+            DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
+                    .withTag("metacat.event.type", "partition.delete").build(),
+                System.currentTimeMillis() - event.getRequestContext().getTimestamp());
+            final TimerWrapper timer =
+                TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.partition.delete");
+            try {
+                final List<String> partitionIds = event.getPartitionIds();
+                final List<String> esPartitionIds = partitionIds.stream()
+                    .map(partitionId -> event.getName().toString() + "/" + partitionId).collect(Collectors.toList());
+                es.softDelete(ElasticSearchDoc.Type.partition.name(), esPartitionIds, event.getRequestContext());
+            } finally {
+                log.info("*** ES Time taken to complete {} is {} ms", "partition.delete", timer.stop());
+            }
         }
     }
 
@@ -243,21 +251,23 @@ public class MetacatEventHandlers {
     @Subscribe
     @AllowConcurrentEvents
     public void metacatSaveTablePartitionPostEventHandler(final MetacatSaveTablePartitionPostEvent event) {
-        log.debug("Received SaveTablePartitionEvent {}", event);
-        DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
-                .withTag("metacat.event.type", "table.partition.save").build(),
-            System.currentTimeMillis() - event.getRequestContext().getTimestamp());
-        final TimerWrapper timer =
-            TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.partition.save");
-        try {
-            final List<PartitionDto> partitionDtos = event.getPartitions();
-            final MetacatRequestContext context = event.getRequestContext();
-            final List<ElasticSearchDoc> docs = partitionDtos.stream()
-                .map(dto -> new ElasticSearchDoc(dto.getName().toString(), dto, context.getUserName(), false))
-                .collect(Collectors.toList());
-            es.save(ElasticSearchDoc.Type.partition.name(), docs);
-        } finally {
-            log.info("*** ES Time taken to complete {} is {} ms", "table.partition.save", timer.stop());
+        if (config.isElasticSearchPublishPartitionEnabled()) {
+            log.debug("Received SaveTablePartitionEvent {}", event);
+            DynamicTimer.record(MonitorConfig.builder("metacat.elasticsearch.events.delay")
+                    .withTag("metacat.event.type", "table.partition.save").build(),
+                System.currentTimeMillis() - event.getRequestContext().getTimestamp());
+            final TimerWrapper timer =
+                TimerWrapper.createStarted("metacat.timer.elasticsearch.events.table.partition.save");
+            try {
+                final List<PartitionDto> partitionDtos = event.getPartitions();
+                final MetacatRequestContext context = event.getRequestContext();
+                final List<ElasticSearchDoc> docs = partitionDtos.stream()
+                    .map(dto -> new ElasticSearchDoc(dto.getName().toString(), dto, context.getUserName(), false))
+                    .collect(Collectors.toList());
+                es.save(ElasticSearchDoc.Type.partition.name(), docs);
+            } finally {
+                log.info("*** ES Time taken to complete {} is {} ms", "table.partition.save", timer.stop());
+            }
         }
     }
 }

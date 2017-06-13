@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 public class ArchaiusConfigImpl implements Config {
     private final DynamicStringProperty defaultTypeConverter;
     private final DynamicBooleanProperty isElasticSearchEnabled;
+    private final DynamicBooleanProperty isElasticSearchPublishPartitionEnabled;
+    private final DynamicBooleanProperty isElasticSearchPublishMetacatLogEnabled;
     private final DynamicStringProperty elasticSearchIndexName;
     private final DynamicStringProperty elasticSearchMergeIndexName;
     private final DynamicStringProperty elasticSearchClusterName;
@@ -85,6 +87,10 @@ public class ArchaiusConfigImpl implements Config {
         this.defaultTypeConverter = factory.getStringProperty("metacat.type.converter",
             "com.netflix.metacat.common.server.converter.DefaultTypeConverter");
         this.isElasticSearchEnabled = factory.getBooleanProperty("metacat.elacticsearch.enabled", true);
+        this.isElasticSearchPublishPartitionEnabled =
+            factory.getBooleanProperty("metacat.elacticsearch.publish.partition.enabled", false);
+        this.isElasticSearchPublishMetacatLogEnabled =
+            factory.getBooleanProperty("metacat.elacticsearch.publish.metacat-log.enabled", false);
         this.elasticSearchIndexName = factory.getStringProperty("metacat.elacticsearch.index.name", "metacat");
         this.elasticSearchMergeIndexName =
             factory.getStringProperty("metacat.elacticsearch.mergeindex.name", null);
@@ -185,6 +191,16 @@ public class ArchaiusConfigImpl implements Config {
     @Override
     public boolean isElasticSearchEnabled() {
         return isElasticSearchEnabled.get();
+    }
+
+    @Override
+    public boolean isElasticSearchPublishPartitionEnabled() {
+        return isElasticSearchPublishPartitionEnabled.get();
+    }
+
+    @Override
+    public boolean isElasticSearchPublishMetacatLogEnabled() {
+        return isElasticSearchPublishMetacatLogEnabled.get();
     }
 
     @Override
