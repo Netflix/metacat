@@ -16,16 +16,6 @@
 #
 #
 
-eureka:
-  client:
-    enabled: false
-    healthcheck:
-      enabled: true # See EurekaDiscoverClientConfiguration as it's not auto found by IDE
-    fetchRegistry: false
-  instance:
-    healthCheckUrlPath: ${management.contextPath}/health
-    statusPageUrlPath: ${management.contextPath}/info
-
 management:
   contextPath: /actuator
   health:

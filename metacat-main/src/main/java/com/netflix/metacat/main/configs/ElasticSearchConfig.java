@@ -38,6 +38,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -60,6 +61,7 @@ public class ElasticSearchConfig {
      * @return Configured client or error
      */
     @Bean
+    @ConditionalOnMissingBean(Client.class)
     public Client elasticSearchClient(final Config config) {
         final String clusterName = config.getElasticSearchClusterName();
         if (StringUtils.isBlank(clusterName)) {
@@ -114,8 +116,10 @@ public class ElasticSearchConfig {
      * @return The event handler instance
      */
     @Bean
-    public MetacatElasticSearchEventHandlers metacatEventHandlers(final ElasticSearchUtil elasticSearchUtil,
-                                                                  final Registry registry) {
+    public MetacatElasticSearchEventHandlers metacatEventHandlers(
+        final ElasticSearchUtil elasticSearchUtil,
+        final Registry registry
+    ) {
         return new MetacatElasticSearchEventHandlers(elasticSearchUtil, registry);
     }
 
