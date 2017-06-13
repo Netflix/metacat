@@ -24,6 +24,7 @@ import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.TableInfo
+import com.netflix.metacat.common.server.exception.TableNotFoundException
 import com.netflix.metacat.common.type.BaseType
 import com.netflix.metacat.common.type.DecimalType
 import com.netflix.metacat.common.type.VarcharType
@@ -98,16 +99,13 @@ class JdbcConnectorTableServiceSpec extends Specification {
         def connection = Mock(Connection)
         def metadata = Mock(DatabaseMetaData)
         def columnResultSet = Mock(ResultSet)
-        def tablesResultSet = Mock(ResultSet)
 
         when:
         def tableInfo = this.service.get(this.context, qName)
 
         then:
-        2 * this.dataSource.getConnection() >> connection
-        2 * connection.getMetaData() >> metadata
-        1 * metadata.getTables(database, database, table,_) >> tablesResultSet
-        1 * tablesResultSet.next() >> true
+        1 * this.dataSource.getConnection() >> connection
+        1 * connection.getMetaData() >> metadata
         1 * metadata.getColumns(database, database, table, JdbcConnectorUtils.MULTI_CHARACTER_SEARCH) >> columnResultSet
         4 * columnResultSet.next() >>> [true, true, true, false]
         3 * columnResultSet.getString("REMARKS") >>> ["comment1", "comment2", "comment3"]
@@ -127,6 +125,30 @@ class JdbcConnectorTableServiceSpec extends Specification {
         tableInfo.getFields().get(0).getName() == "column1"
         tableInfo.getFields().get(1).getName() == "column2"
         tableInfo.getFields().get(2).getName() == "column3"
+    }
+
+
+    def "Cannot get table metadata"() {
+        def catalog = UUID.randomUUID().toString()
+        def database = UUID.randomUUID().toString()
+        def table = UUID.randomUUID().toString()
+        def qName = QualifiedName.ofTable(catalog, database, table)
+        def connection = Mock(Connection)
+        def metadata = Mock(DatabaseMetaData)
+        def columnResultSet = Mock(ResultSet)
+        def tablesResultSet = Mock(ResultSet)
+
+        when:
+        this.service.get(this.context, qName)
+
+        then:
+        thrown(TableNotFoundException)
+        2 * this.dataSource.getConnection() >> connection
+        2 * connection.getMetaData() >> metadata
+        1 * metadata.getTables(database, database, table,_) >> tablesResultSet
+        1 * tablesResultSet.next() >> false
+        1 * metadata.getColumns(database, database, table, JdbcConnectorUtils.MULTI_CHARACTER_SEARCH) >> columnResultSet
+        1 * columnResultSet.next() >> false
     }
 
     def "Can list table names without prefix, sort or pagination"() {

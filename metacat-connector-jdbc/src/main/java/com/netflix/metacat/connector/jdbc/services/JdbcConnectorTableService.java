@@ -110,10 +110,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     @Override
     public TableInfo get(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
         log.debug("Beginning to get table metadata for qualified name {} for request {}", name, context);
-        // If table does not exist, throw TableNotFoundException.
-        if (!exists(context, name)) {
-            throw new TableNotFoundException(name);
-        }
+
         try (Connection connection = this.dataSource.getConnection()) {
             final String database = name.getDatabaseName();
             connection.setSchema(database);
@@ -138,6 +135,11 @@ public class JdbcConnectorTableService implements ConnectorTableService {
 
                     fields.add(fieldInfo.build());
                 }
+            }
+            final List<FieldInfo> fieldInfos = fields.build();
+            // If table does not exist, throw TableNotFoundException.
+            if (fieldInfos.isEmpty() && !exists(context, name)) {
+                throw new TableNotFoundException(name);
             }
             log.debug("Finished getting table metadata for qualified name {} for request {}", name, context);
             return TableInfo.builder().name(name).fields(fields.build()).build();
