@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import com.google.common.base.Preconditions;
+import com.netflix.metacat.client.api.TagV1;
 import com.netflix.metacat.client.module.JacksonDecoder;
 import com.netflix.metacat.client.module.JacksonEncoder;
 import com.netflix.metacat.client.module.MetacatErrorDecoder;
@@ -54,6 +55,7 @@ public final class Client {
     private final PartitionV1 partitionApi;
     private final MetadataV1 metadataApi;
     private final ResolverV1 resolverApi;
+    private final TagV1 tagApi;
 
     private Client(
         final String host,
@@ -89,6 +91,7 @@ public final class Client {
         partitionApi = getApiClient(PartitionV1.class);
         metadataApi = getApiClient(MetadataV1.class);
         resolverApi = getApiClient(ResolverV1.class);
+        tagApi = getApiClient(TagV1.class);
     }
 
     /**
@@ -148,6 +151,15 @@ public final class Client {
      */
     public ResolverV1 getResolverApi() {
         return resolverApi;
+    }
+
+    /**
+     * Return an API instance that can be used to interact with
+     * the metacat server for tagging metadata.
+     * @return An instance api conforming to TagV1 interface
+     */
+    public TagV1 getTagApi() {
+        return tagApi;
     }
 
     /**

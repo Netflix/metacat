@@ -61,11 +61,9 @@ class RedshiftConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> true
-        1 * connection.setSchema(database.toUpperCase())
+        1 * connection.setSchema(database)
         1 * statement.executeUpdate(
-            "DROP TABLE " + qName.getCatalogName() + "." + qName.getDatabaseName() + "." + table.toUpperCase()
+            "DROP TABLE " + qName.getCatalogName() + "." + qName.getDatabaseName() + "." + table
         )
     }
 
@@ -84,8 +82,6 @@ class RedshiftConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> false
         1 * connection.setSchema(database)
         1 * statement.executeUpdate(
             "DROP TABLE " + qName.getCatalogName() + "." + qName.getDatabaseName() + "." + table
@@ -116,10 +112,8 @@ class RedshiftConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> true
         1 * statement.executeUpdate(
-            "ALTER TABLE " + oldName.getDatabaseName() + ".C RENAME TO D"
+            "ALTER TABLE " + oldName.getDatabaseName() + ".c RENAME TO d"
         )
     }
 
@@ -136,8 +130,6 @@ class RedshiftConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> false
         1 * statement.executeUpdate(
             "ALTER TABLE " + oldName.getDatabaseName() + ".c RENAME TO d"
         )
@@ -184,15 +176,5 @@ class RedshiftConnectorTableServiceSpec extends Specification {
                 )
             }
         )      | "update"        | UnsupportedOperationException
-        (
-            {
-                new JdbcConnectorTableService(
-                    Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
-                ).exists(
-                    Mock(ConnectorRequestContext),
-                    QualifiedName.ofTable("catalog", "database", "table")
-                )
-            }
-        )      | "exists"        | UnsupportedOperationException
     }
 }
