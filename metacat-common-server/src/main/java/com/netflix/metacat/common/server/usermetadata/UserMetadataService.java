@@ -235,14 +235,6 @@ public interface UserMetadataService {
     }
 
     /**
-     * Init the user metadata service.
-     *
-     * @throws Exception error
-     */
-    default void init() throws Exception {
-    }
-
-    /**
      * Stop the user metadata service.
      *
      * @throws Exception error

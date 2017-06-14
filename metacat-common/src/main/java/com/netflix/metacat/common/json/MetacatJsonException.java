@@ -23,9 +23,9 @@ import lombok.Setter;
 /**
  * Metacat JSON utility related exception.
  */
+@Getter
+@Setter
 public class MetacatJsonException extends RuntimeException {
-    @Getter
-    @Setter
     private String inputJson;
 
     /**
@@ -46,11 +46,6 @@ public class MetacatJsonException extends RuntimeException {
      */
     public MetacatJsonException(final String s) {
         super(s);
-    }
-
-    protected MetacatJsonException(final String message, final Throwable cause, final boolean enableSuppression,
-                                   final boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
     }
 
     /**

@@ -11,21 +11,11 @@
  *          limitations under the License.
  */
 
-package com.netflix.metacat.common.server.util;
-
 /**
- * Profile Constants.
+ * This package includes user metadata service classes.
  *
- * @author zhenl
- * @since 1.1.0
+ * @author amajumdar
  */
-public final class ProfileConstants {
-    /**
-     * mysql based user metadata service profile.
-     */
-    public static final String MYSQL_USERMETADATA = "mysql-usermetadata";
-
-    private ProfileConstants() {
-    }
-
-}
+@ParametersAreNonnullByDefault
+package com.netflix.metacat.metadata.mysql;
+import javax.annotation.ParametersAreNonnullByDefault;

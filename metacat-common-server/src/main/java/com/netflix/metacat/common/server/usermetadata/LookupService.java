@@ -106,11 +106,4 @@ public interface LookupService {
         return null;
     }
 
-    /**
-     * Init look up service.
-     *
-     * @throws Exception error
-     */
-    default void init() throws Exception {
-    }
 }

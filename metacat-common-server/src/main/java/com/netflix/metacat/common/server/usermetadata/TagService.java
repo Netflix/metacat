@@ -127,12 +127,4 @@ public interface TagService {
      */
     default void rename(final QualifiedName name, final String newTableName) {
     }
-
-    /**
-     * Init tag service.
-     *
-     * @throws Exception error
-     */
-    default void init() throws Exception {
-    }
 }

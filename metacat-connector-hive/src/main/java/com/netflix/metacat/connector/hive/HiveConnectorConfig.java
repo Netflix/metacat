@@ -167,7 +167,7 @@ public class HiveConnectorConfig {
      */
 
     @Bean
-    @ConditionalOnProperty(value = "useLocalMetastore", havingValue = "true")
+    @ConditionalOnProperty(value = "useHiveFastService", havingValue = "true")
     public IMetacatHiveClient createLocalClient(
         final MetacatConnectorConfig metacatConnectorConfig) throws Exception {
         try {

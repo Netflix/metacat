@@ -16,7 +16,6 @@
 
 package com.netflix.metacat.connector.hive;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -83,8 +82,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         this.allowRenameTable = allowRenameTable;
         this.registry = metacatConnectorConfig.getRegistry();
         this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
-        this.jdbcUtil = Preconditions.checkNotNull(new JdbcUtil(dataSource),
-            "HiveConnectorFastTableService datasource is null");
+        this.jdbcUtil = new JdbcUtil(dataSource);
     }
 
     /**

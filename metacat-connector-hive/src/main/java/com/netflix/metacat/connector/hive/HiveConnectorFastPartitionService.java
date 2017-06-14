@@ -17,7 +17,6 @@ package com.netflix.metacat.connector.hive;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -142,8 +141,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         this.threadServiceManager = threadServiceManager;
         this.registry = metacatConnectorConfig.getRegistry();
         this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
-        this.jdbcUtil = Preconditions.checkNotNull(new JdbcUtil(dataSource),
-            "HiveConnectorFastPartitionService datasource is null");
+        this.jdbcUtil = new JdbcUtil(dataSource);
     }
 
     /**
