@@ -20,6 +20,8 @@ package com.netflix.metacat.common.server.connectors.exception;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.Getter;
 
+import javax.annotation.Nullable;
+
 /**
  * Abstract not found error exception class.
  *
@@ -33,13 +35,13 @@ public abstract class NotFoundException extends ConnectorException {
         this(name, null);
     }
 
-    protected NotFoundException(final QualifiedName name, final Throwable cause) {
+    protected NotFoundException(final QualifiedName name, @Nullable final Throwable cause) {
         this(name, cause, false, false);
     }
 
     protected NotFoundException(
         final QualifiedName name,
-        final Throwable cause,
+        @Nullable final Throwable cause,
         final boolean enableSuppression,
         final boolean writableStackTrace
     ) {
@@ -50,7 +52,7 @@ public abstract class NotFoundException extends ConnectorException {
     protected NotFoundException(
         final QualifiedName name,
         final String message,
-        final Throwable cause,
+        @Nullable final Throwable cause,
         final boolean enableSuppression,
         final boolean writableStackTrace
     ) {

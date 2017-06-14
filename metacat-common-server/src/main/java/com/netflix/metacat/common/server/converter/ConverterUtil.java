@@ -30,7 +30,7 @@ import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
@@ -166,8 +166,8 @@ public class ConverterUtil {
      * @param metacatRequestContext request context
      * @return connector context
      */
-    public ConnectorContext toConnectorContext(final MetacatRequestContext metacatRequestContext) {
-        return mapper.map(metacatRequestContext, ConnectorContext.class);
+    public ConnectorRequestContext toConnectorContext(final MetacatRequestContext metacatRequestContext) {
+        return mapper.map(metacatRequestContext, ConnectorRequestContext.class);
     }
 
     /**

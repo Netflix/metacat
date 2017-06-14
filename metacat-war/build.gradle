@@ -31,7 +31,7 @@ dependencies {
     compile(project(":metacat-common"))
     compile(project(":metacat-common-server"))
     compile(project(":metacat-main"))
-    compile(project(":metacat-user-metadata-mysql"))
+    compile(project(":metacat-metadata-mysql"))
 
     /*******************************
      * Provided Dependencies

@@ -22,7 +22,7 @@ import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
@@ -75,7 +75,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}
      */
     @Override
-    public void create(@Nonnull final ConnectorContext context, @Nonnull final DatabaseInfo resource) {
+    public void create(@Nonnull final ConnectorRequestContext context, @Nonnull final DatabaseInfo resource) {
         final String databaseName = resource.getName().getDatabaseName();
         log.debug("Beginning to create database {} for request {}", databaseName, context);
         try (final Connection connection = this.dataSource.getConnection()) {
@@ -90,7 +90,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}
      */
     @Override
-    public void delete(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public void delete(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         final String databaseName = name.getDatabaseName();
         log.debug("Beginning to drop database {} for request {}", databaseName, context);
         try (final Connection connection = this.dataSource.getConnection()) {
@@ -105,7 +105,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}
      */
     @Override
-    public DatabaseInfo get(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public DatabaseInfo get(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         final String databaseName = name.getDatabaseName();
         log.debug("Beginning to get database metadata for {} for request {}", databaseName, context);
         return DatabaseInfo.builder().name(name).build();
@@ -116,7 +116,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Override
     public List<DatabaseInfo> list(
-        @Nonnull final ConnectorContext context,
+        @Nonnull final ConnectorRequestContext context,
         @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,
@@ -138,7 +138,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Override
     public List<QualifiedName> listNames(
-        @Nonnull final ConnectorContext context,
+        @Nonnull final ConnectorRequestContext context,
         @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,

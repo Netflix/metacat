@@ -1,7 +1,7 @@
 package com.netflix.metacat.connector.s3
 
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.AuditInfo
 import com.netflix.metacat.common.server.connectors.model.FieldInfo
 import com.netflix.metacat.common.server.connectors.model.StorageInfo
@@ -26,7 +26,7 @@ class S3ConnectorTableServiceSpec extends Specification {
         new S3ConnectorInfoConverter(new PigTypeConverter(), true, TypeRegistry.getTypeRegistry());
     S3ConnectorTableService service =
         new S3ConnectorTableService('s3', databaseDao, tableDao, fieldDao, converter)
-    ConnectorContext context = new ConnectorContext(0, 'test')
+    ConnectorRequestContext context = new ConnectorRequestContext(0, 'test')
     QualifiedName name = QualifiedName.ofTable('s3', 'd3', 't3')
     TableInfo info = TableInfo.builder().name(name)
             .fields([FieldInfo.builder().name('f1').type(BaseType.STRING).build(), FieldInfo.builder().name('f2').type(BaseType.DATE).build()])

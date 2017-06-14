@@ -20,13 +20,10 @@ package com.netflix.metacat.connector.mysql;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-
-import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.spectator.api.Registry;
+import com.netflix.metacat.common.server.util.MetacatConnectorConfig;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
-import java.util.Map;
 
 /**
  * Implementation of the ConnectorPlugin interface for MySQL.
@@ -52,12 +49,10 @@ public class MySqlConnectorPlugin implements ConnectorPlugin {
      */
     @Override
     public ConnectorFactory create(
-        @Nonnull @NonNull final Config config,
         @Nonnull @NonNull final String connectorName,
-        @Nonnull @NonNull final Map<String, String> configuration,
-        @Nonnull @NonNull final Registry registry
+        @Nonnull @NonNull final MetacatConnectorConfig metacatConnectorConfig
     ) {
-        return new MySqlConnectorFactory(connectorName, configuration);
+        return new MySqlConnectorFactory(connectorName, metacatConnectorConfig.getConfiguration());
     }
 
     /**

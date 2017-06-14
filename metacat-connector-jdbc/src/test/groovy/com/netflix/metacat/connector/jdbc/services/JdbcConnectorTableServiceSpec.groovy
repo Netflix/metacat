@@ -22,7 +22,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.type.BaseType
 import com.netflix.metacat.common.type.DecimalType
@@ -46,7 +46,7 @@ import java.sql.Statement
  */
 class JdbcConnectorTableServiceSpec extends Specification {
 
-    def context = Mock(ConnectorContext)
+    def context = Mock(ConnectorRequestContext)
     def dataSource = Mock(DataSource)
     def typeConverter = Mock(JdbcTypeConverter)
     def exceptionMapper = Mock(JdbcExceptionMapper)
@@ -310,7 +310,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
                 new JdbcConnectorTableService(
                     Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
                 ).getTableNames(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     Lists.newArrayList(),
                     false
                 )
@@ -321,7 +321,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
                 new JdbcConnectorTableService(
                     Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
                 ).create(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     TableInfo.builder().name(QualifiedName.ofTable("catalog", "database", "table")).build()
                 )
             }
@@ -331,7 +331,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
                 new JdbcConnectorTableService(
                     Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
                 ).update(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     TableInfo.builder().name(QualifiedName.ofTable("catalog", "database", "table")).build()
                 )
             }
@@ -341,7 +341,7 @@ class JdbcConnectorTableServiceSpec extends Specification {
                 new JdbcConnectorTableService(
                     Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
                 ).exists(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     QualifiedName.ofTable("catalog", "database", "table")
                 )
             }

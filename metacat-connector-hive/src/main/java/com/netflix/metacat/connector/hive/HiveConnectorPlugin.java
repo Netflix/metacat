@@ -20,14 +20,9 @@ import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.MetacatConnectorConfig;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
-import com.netflix.spectator.api.Registry;
-import lombok.NonNull;
-
-import javax.annotation.Nonnull;
-import java.util.Map;
 
 /**
  * Hive plugin.
@@ -56,13 +51,11 @@ public class HiveConnectorPlugin implements ConnectorPlugin {
      */
     @Override
     public ConnectorFactory create(
-        @Nonnull @NonNull final Config config,
-        @Nonnull final String catalogName,
-        @Nonnull final Map<String, String> configuration,
-        @Nonnull @NonNull final Registry registry
+        final String catalogName,
+        final MetacatConnectorConfig metacatConnectorConfig
     ) {
         return new HiveConnectorFactory(
-            config, catalogName, configuration, (HiveConnectorInfoConverter) INFO_CONVERTER_HIVE, registry
+            catalogName, (HiveConnectorInfoConverter) INFO_CONVERTER_HIVE, metacatConnectorConfig
         );
     }
 

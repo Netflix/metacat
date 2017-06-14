@@ -20,7 +20,6 @@ package com.netflix.metacat.common.server.connectors;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 
 /**
@@ -39,8 +38,8 @@ public interface ConnectorDatabaseService extends ConnectorBaseService<DatabaseI
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<QualifiedName> listViewNames(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName databaseName
+        final ConnectorRequestContext context,
+        final QualifiedName databaseName
     ) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }

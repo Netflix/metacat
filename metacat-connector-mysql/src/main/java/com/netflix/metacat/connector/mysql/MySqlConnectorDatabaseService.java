@@ -22,7 +22,7 @@ import com.google.inject.Inject;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorDatabaseService;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorUtils;
@@ -68,7 +68,7 @@ public class MySqlConnectorDatabaseService extends JdbcConnectorDatabaseService 
      */
     @Override
     public List<QualifiedName> listNames(
-        @Nonnull final ConnectorContext context,
+        @Nonnull final ConnectorRequestContext context,
         @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,

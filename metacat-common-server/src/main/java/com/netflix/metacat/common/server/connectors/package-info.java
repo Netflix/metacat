@@ -15,10 +15,15 @@
  *     limitations under the License.
  *
  */
+
 /**
  * Classes and interfaces related to SPI (Service Provider Interface) for catalog connectors.
  *
  * @author tgianos
  * @since 1.0.0
  */
+
+@ParametersAreNonnullByDefault
 package com.netflix.metacat.common.server.connectors;
+
+import javax.annotation.ParametersAreNonnullByDefault;

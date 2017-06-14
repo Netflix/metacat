@@ -18,7 +18,7 @@
 package com.netflix.metacat.connector.postgresql;
 
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorDatabaseService;
@@ -55,7 +55,7 @@ public class PostgreSqlConnectorDatabaseService extends JdbcConnectorDatabaseSer
      * {@inheritDoc}
      */
     @Override
-    public void create(@Nonnull final ConnectorContext context, @Nonnull final DatabaseInfo resource) {
+    public void create(@Nonnull final ConnectorRequestContext context, @Nonnull final DatabaseInfo resource) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 
@@ -63,7 +63,7 @@ public class PostgreSqlConnectorDatabaseService extends JdbcConnectorDatabaseSer
      * {@inheritDoc}
      */
     @Override
-    public void delete(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public void delete(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
     }
 }

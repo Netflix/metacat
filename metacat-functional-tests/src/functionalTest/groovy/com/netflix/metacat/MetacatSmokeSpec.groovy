@@ -39,6 +39,7 @@ import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.*
 import feign.jaxrs.JAXRSContract
 import feign.slf4j.Slf4jLogger
+import jdk.nashorn.internal.ir.annotations.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll

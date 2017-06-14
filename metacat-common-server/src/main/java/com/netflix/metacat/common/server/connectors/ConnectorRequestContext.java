@@ -15,13 +15,23 @@
  *     limitations under the License.
  *
  */
+package com.netflix.metacat.common.server.connectors;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * This package includes user metadata service classes.
+ * The context of the request to Metacat.
  *
  * @author amajumdar
+ * @author tgianos
+ * @since 1.0.0
  */
-@ParametersAreNonnullByDefault
-package com.netflix.metacat.usermetadata.mysql;
-
-import javax.annotation.ParametersAreNonnullByDefault;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ConnectorRequestContext {
+    private long timestamp;
+    private String userName;
+}

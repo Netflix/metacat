@@ -20,6 +20,7 @@ package com.netflix.metacat.common.server.usermetadata;
 import com.netflix.metacat.common.QualifiedName;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -34,7 +35,9 @@ public interface TagService {
      *
      * @return list of tag names
      */
-    Set<String> getTags();
+    default Set<String> getTags() {
+        return Collections.emptySet();
+    }
 
     /**
      * Returns the list of <code>QualifiedName</code> of items that are tagged by the given <code>includeTags</code> and
@@ -47,13 +50,15 @@ public interface TagService {
      * @param tableName    table name
      * @return list of qualified names of the items
      */
-    List<QualifiedName> list(
+    default List<QualifiedName> list(
         @Nullable Set<String> includeTags,
         @Nullable Set<String> excludeTags,
         @Nullable String sourceName,
         @Nullable String databaseName,
         @Nullable String tableName
-    );
+    ) {
+        return Collections.emptyList();
+    }
 
     /**
      * Returns the list of <code>QualifiedName</code> of items that have tags containing the given tag text.
@@ -64,12 +69,14 @@ public interface TagService {
      * @param tableName    table name
      * @return list of qualified names of the items
      */
-    List<QualifiedName> search(
+    default List<QualifiedName> search(
         @Nullable String tag,
         @Nullable String sourceName,
         @Nullable String databaseName,
         @Nullable String tableName
-    );
+    ) {
+        return Collections.emptyList();
+    }
 
     /**
      * Tags the given table with the given <code>tags</code>.
@@ -79,11 +86,13 @@ public interface TagService {
      * @param updateUserMetadata if true, updates the tags in the user metadata
      * @return return the complete list of tags associated with the table
      */
-    Set<String> setTableTags(
-        QualifiedName qualifiedName,
-        Set<String> tags,
-        boolean updateUserMetadata
-    );
+    default Set<String> setTableTags(
+        final QualifiedName qualifiedName,
+        final Set<String> tags,
+        final boolean updateUserMetadata
+    ) {
+        return Collections.emptySet();
+    }
 
     /**
      * Removes the tags from the given table.
@@ -92,31 +101,38 @@ public interface TagService {
      * @param deleteAll          if true, will delete all tags associated with the given table
      * @param tags               list of tags to be removed for the given table
      * @param updateUserMetadata if true, updates the tags in the user metadata
-     * @return null
      */
-    // TODO: Why is this returning Void wrapper?
-    Void removeTableTags(
-        QualifiedName qualifiedName,
-        Boolean deleteAll,
-        Set<String> tags,
-        boolean updateUserMetadata
-    );
+    default void removeTableTags(
+        final QualifiedName qualifiedName,
+        final Boolean deleteAll,
+        @Nullable final Set<String> tags,
+        final boolean updateUserMetadata
+    ) {
+    }
 
     /**
      * Delete the tag item along with its associated tags.
      *
      * @param name               table name
      * @param updateUserMetadata if true, updates the tags in the user metadata
-     * @return null
      */
-    Void delete(QualifiedName name, boolean updateUserMetadata);
+    default void delete(final QualifiedName name, final boolean updateUserMetadata) {
+    }
 
     /**
      * Renames the tag item name with the new table name.
      *
      * @param name         table qualified name
      * @param newTableName new table name
-     * @return null
      */
-    Void rename(QualifiedName name, String newTableName);
+    default void rename(final QualifiedName name, final String newTableName) {
+    }
+
+    /**
+     * Init tag service.
+     *
+     * @throws Exception error
+     */
+    default void init() throws Exception {
+    }
 }

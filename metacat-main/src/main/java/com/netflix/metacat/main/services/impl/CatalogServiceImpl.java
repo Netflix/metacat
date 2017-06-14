@@ -19,7 +19,7 @@ import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.CatalogMappingDto;
 import com.netflix.metacat.common.dto.CreateCatalogDto;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
@@ -75,7 +75,7 @@ public class CatalogServiceImpl implements CatalogService {
         final CatalogDto result = new CatalogDto();
         result.setName(name);
         result.setType(config.getType());
-        final ConnectorContext context = converterUtil.toConnectorContext(MetacatContextManager.getContext());
+        final ConnectorRequestContext context = converterUtil.toConnectorContext(MetacatContextManager.getContext());
         result.setDatabases(
             connectorManager.getDatabaseService(name.getCatalogName()).listNames(context, name, null, null, null)
                 .stream().map(QualifiedName::getDatabaseName)

@@ -19,6 +19,8 @@ package com.netflix.metacat.common.server.connectors.exception;
 
 import com.netflix.metacat.common.QualifiedName;
 
+import javax.annotation.Nullable;
+
 /**
  * Exception when table is not found.
  *
@@ -40,7 +42,7 @@ public class TableNotFoundException extends NotFoundException {
      * @param name  qualified name of the table
      * @param cause error cause
      */
-    public TableNotFoundException(final QualifiedName name, final Throwable cause) {
+    public TableNotFoundException(final QualifiedName name, @Nullable final Throwable cause) {
         super(name, cause);
     }
 

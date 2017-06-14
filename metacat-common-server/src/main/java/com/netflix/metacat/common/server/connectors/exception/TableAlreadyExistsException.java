@@ -19,6 +19,8 @@ package com.netflix.metacat.common.server.connectors.exception;
 
 import com.netflix.metacat.common.QualifiedName;
 
+import javax.annotation.Nullable;
+
 /**
  * Exception when schema already exists.
  *
@@ -41,7 +43,7 @@ public class TableAlreadyExistsException extends AlreadyExistsException {
      * @param tableName table name
      * @param cause     error cause
      */
-    public TableAlreadyExistsException(final QualifiedName tableName, final Throwable cause) {
+    public TableAlreadyExistsException(final QualifiedName tableName, @Nullable final Throwable cause) {
         super(tableName, cause);
     }
 }

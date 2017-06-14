@@ -20,7 +20,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException
@@ -46,7 +46,7 @@ class HiveConnectorDatabaseSpec extends Specification {
     @Shared
     HiveConnectorDatabaseService hiveConnectorDatabaseService = new HiveConnectorDatabaseService("testhive", metacatHiveClient, new HiveConnectorInfoConverter(new HiveTypeConverter()))
     @Shared
-    ConnectorContext connectorContext = new ConnectorContext(1, null);
+    ConnectorRequestContext connectorContext = new ConnectorRequestContext(1, null);
 
     def setupSpec() {
         metacatHiveClient.getAllDatabases() >> ["test1", "test2", "dev1", "dev2"]

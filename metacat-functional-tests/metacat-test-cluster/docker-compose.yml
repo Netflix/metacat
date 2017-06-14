@@ -39,7 +39,7 @@ services:
         environment:
             VIRTUAL_HOST: metacat.docker
             JAVA_OPTS: '-ea
-                -Xmx1G
+                -Xmx2G
                 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
                 -noverify
                 -Dnetflix.environment=test
@@ -49,8 +49,7 @@ services:
                 -Dnetflix.appinfo.metadata.route53NamePrefix=
                 -Dnetflix.appinfo.metadata.enableRoute53=false
                 -Dmetacat.plugin.config.location=/etc/metacat/catalog
-                -Dmetacat.elacticsearch.enabled=false
-                -Dspring.profiles.active=mysql-usermetadata
+                -Dmetacat.mysqlmetadataservice.enabled=true
                 -Dmetacat.type.converter=com.netflix.metacat.connector.pig.converters.PigTypeConverter
                 -Dmetacat.usermetadata.config.location=/etc/metacat/usermetadata.properties'
         labels:

@@ -19,6 +19,9 @@ package com.netflix.metacat;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.ComponentScan.Filter;
+import org.springframework.context.annotation.FilterType;
 
 /**
  * Spring Boot Metacat application entry point.
@@ -27,6 +30,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @since 1.1.0
  */
 @SpringBootApplication
+@ComponentScan(excludeFilters = @Filter(type = FilterType.REGEX, pattern = "com.netflix.metacat.connector.hive.*"))
 public class MetacatApplication {
 
     /**

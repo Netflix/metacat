@@ -29,7 +29,7 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
@@ -139,9 +139,9 @@ public class PartitionServiceImpl implements PartitionService {
         requestDto.setFilter(filter);
         requestDto.setIncludePartitionDetails(includePartitionDetails);
         requestDto.setPartitionNames(partitionNames);
-        final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         final List<PartitionInfo> resultInfo = service
-                .getPartitions(connectorContext, name,
+                .getPartitions(connectorRequestContext, name,
                         converterUtil.toPartitionListRequest(requestDto, pageable, sort));
         List<PartitionDto> result = Lists.newArrayList();
         if (resultInfo != null && !resultInfo.isEmpty()) {
@@ -188,8 +188,9 @@ public class PartitionServiceImpl implements PartitionService {
         if (tableService.exists(name)) {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
             final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
-            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-            result = service.getPartitionCount(connectorContext, name);
+            final ConnectorRequestContext connectorRequestContext
+                = converterUtil.toConnectorContext(metacatRequestContext);
+            result = service.getPartitionCount(connectorRequestContext, name);
         }
         return result;
     }
@@ -198,7 +199,7 @@ public class PartitionServiceImpl implements PartitionService {
     public PartitionsSaveResponseDto save(@Nonnull final QualifiedName name, final PartitionsSaveRequestDto dto) {
         PartitionsSaveResponseDto result = new PartitionsSaveResponseDto();
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
         final List<PartitionDto> partitionDtos = dto.getPartitions();
         // If no partitions are passed, then return
@@ -218,7 +219,7 @@ public class PartitionServiceImpl implements PartitionService {
             final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
             requestDto.setIncludePartitionDetails(false);
             requestDto.setPartitionNames(partitionIdsForDeletes);
-            final List<PartitionInfo> deletePartitionInfos = service.getPartitions(connectorContext, name,
+            final List<PartitionInfo> deletePartitionInfos = service.getPartitions(connectorRequestContext, name,
                     converterUtil.toPartitionListRequest(requestDto, null, null));
             if (deletePartitionInfos != null) {
                 deletePartitions = deletePartitionInfos.stream().map(converterUtil::toPartitionDto)
@@ -232,7 +233,7 @@ public class PartitionServiceImpl implements PartitionService {
                 .postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, this, dto));
         log.info("Saving partitions({}) for {}", partitionDtos.size(), name);
         result = converterUtil.toPartitionsSaveResponseDto(
-                service.savePartitions(connectorContext, name, converterUtil.toPartitionsSaveRequest(dto)));
+                service.savePartitions(connectorRequestContext, name, converterUtil.toPartitionsSaveRequest(dto)));
 
         // Save metadata
         log.info("Saving user metadata for partitions for {}", name);
@@ -269,15 +270,16 @@ public class PartitionServiceImpl implements PartitionService {
             final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
             requestDto.setIncludePartitionDetails(false);
             requestDto.setPartitionNames(partitionIds);
-            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-            final List<PartitionInfo> partitionInfos = service.getPartitions(connectorContext, name,
+            final ConnectorRequestContext connectorRequestContext
+                = converterUtil.toConnectorContext(metacatRequestContext);
+            final List<PartitionInfo> partitionInfos = service.getPartitions(connectorRequestContext, name,
                     converterUtil.toPartitionListRequest(requestDto, null, null));
             List<HasMetadata> partitions = Lists.newArrayList();
             if (partitionInfos != null) {
                 partitions = partitionInfos.stream().map(converterUtil::toPartitionDto).collect(Collectors.toList());
             }
             log.info("Deleting partitions with names {} for {}", partitionIds, name);
-            service.deletePartitions(connectorContext, name, partitionIds);
+            service.deletePartitions(connectorRequestContext, name, partitionIds);
 
             // delete metadata
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIds, name);
@@ -310,10 +312,11 @@ public class PartitionServiceImpl implements PartitionService {
             futures.add(threadServiceManager.getExecutor().submit(() -> {
                 final ConnectorPartitionService service =
                         connectorManager.getPartitionService(catalog.getCatalogName());
-                final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+                final ConnectorRequestContext connectorRequestContext
+                    = converterUtil.toConnectorContext(metacatRequestContext);
                 try {
                     final Map<String, List<QualifiedName>> partitionNames = service
-                            .getPartitionNames(connectorContext, uris, prefixSearch);
+                            .getPartitionNames(connectorRequestContext, uris, prefixSearch);
                     partitionNames.forEach((uri, subPartitionNames) -> {
                         final List<QualifiedName> existingPartitionNames = result.get(uri);
                         if (existingPartitionNames == null) {
@@ -351,10 +354,11 @@ public class PartitionServiceImpl implements PartitionService {
             final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
             requestDto.setFilter(filter);
             requestDto.setPartitionNames(partitionNames);
-            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+            final ConnectorRequestContext connectorRequestContext
+                = converterUtil.toConnectorContext(metacatRequestContext);
             try {
                 result = service.getPartitionKeys(
-                        connectorContext,
+                    connectorRequestContext,
                         name,
                         converterUtil.toPartitionListRequest(requestDto, pageable, sort)
                 );
@@ -380,9 +384,10 @@ public class PartitionServiceImpl implements PartitionService {
             final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
             requestDto.setFilter(filter);
             requestDto.setPartitionNames(partitionNames);
-            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+            final ConnectorRequestContext connectorRequestContext
+                = converterUtil.toConnectorContext(metacatRequestContext);
             try {
-                result = service.getPartitionUris(connectorContext, name,
+                result = service.getPartitionUris(connectorRequestContext, name,
                         converterUtil.toPartitionListRequest(requestDto, pageable, sort));
             } catch (final UnsupportedOperationException uoe) {
                 log.info("Catalog {} doesn't support getPartitionUris. Ignoring.", name.getCatalogName());

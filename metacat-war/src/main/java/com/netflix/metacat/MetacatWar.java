@@ -20,6 +20,8 @@ package com.netflix.metacat;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 
 /**
  * Servlet entry point for Spring when deployed as a WAR file.
@@ -28,6 +30,8 @@ import org.springframework.boot.web.support.SpringBootServletInitializer;
  * @since 1.1.0
  */
 @SpringBootApplication
+@ComponentScan(excludeFilters = @ComponentScan.Filter(
+    type = FilterType.REGEX, pattern = "com.netflix.metacat.connector.hive.*"))
 public class MetacatWar extends SpringBootServletInitializer {
 
     /**

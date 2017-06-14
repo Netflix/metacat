@@ -21,13 +21,11 @@ package com.netflix.metacat.connector.pig;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.MetacatConnectorConfig;
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter;
-import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
-import java.util.Map;
 
 /**
  * S3 plugin.
@@ -46,10 +44,8 @@ public class PigConnectorPlugin implements ConnectorPlugin {
 
     @Override
     public ConnectorFactory create(
-        @Nonnull @NonNull final Config config,
         @Nonnull final String connectorName,
-        @Nonnull final Map<String, String> configuration,
-        @Nonnull @NonNull final Registry registry
+        @Nonnull @NonNull final MetacatConnectorConfig metacatConnectorConfig
     ) {
         return null;
     }

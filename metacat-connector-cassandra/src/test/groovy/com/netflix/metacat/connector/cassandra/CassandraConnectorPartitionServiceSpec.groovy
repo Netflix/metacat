@@ -19,7 +19,7 @@ package com.netflix.metacat.connector.cassandra
 
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest
@@ -38,7 +38,7 @@ class CassandraConnectorPartitionServiceSpec extends Specification {
     @Shared
         service = new CassandraConnectorPartitionService()
     @Shared
-        context = Mock(ConnectorContext)
+        context = Mock(ConnectorRequestContext)
     @Shared
         name = QualifiedName.ofTable("catalog", "database", "table")
 

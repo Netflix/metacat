@@ -64,7 +64,6 @@ public class CommonServerConfig {
      */
     @Bean
     public DataSourceManager dataSourceManager() {
-        // TODO: Static reference boo
         return DataSourceManager.get();
     }
 

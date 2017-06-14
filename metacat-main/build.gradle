@@ -37,7 +37,7 @@ dependencies {
      * Implementation Dependencies
      *******************************/
 
-    compile(project(":metacat-user-metadata-mysql"))
+    compile(project(":metacat-metadata-mysql"))
 
     compile("com.google.guava:guava")
     compile("com.github.rholder:guava-retrying") {

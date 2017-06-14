@@ -20,7 +20,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.AuditInfo
 import com.netflix.metacat.common.server.connectors.model.StorageInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
@@ -60,7 +60,7 @@ class HiveConnectorTableSpec extends Specification {
     HiveConnectorTableService hiveConnectorTableService = new HiveConnectorTableService("testhive", metacatHiveClient,
             hiveConnectorDatabaseService, new HiveConnectorInfoConverter(new HiveTypeConverter()), true )
     @Shared
-    ConnectorContext connectorContext = new ConnectorContext(1, null);
+    ConnectorRequestContext connectorContext = new ConnectorRequestContext(1, null);
     @Shared
     HiveConnectorInfoConverter hiveConnectorInfoConverter = new HiveConnectorInfoConverter(new HiveTypeConverter())
 

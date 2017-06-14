@@ -19,7 +19,7 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
@@ -86,8 +86,8 @@ public class DatabaseServiceImpl implements DatabaseService {
         log.info("Creating schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.postSync(new MetacatCreateDatabasePreEvent(name, metacatRequestContext, this));
-        final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-        connectorManager.getDatabaseService(name.getCatalogName()).create(connectorContext,
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
+        connectorManager.getDatabaseService(name.getCatalogName()).create(connectorRequestContext,
             converterUtil.fromDatabaseDto(dto));
         if (dto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for schema {}", name);
@@ -106,9 +106,10 @@ public class DatabaseServiceImpl implements DatabaseService {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
         try {
-            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+            final ConnectorRequestContext connectorRequestContext
+                = converterUtil.toConnectorContext(metacatRequestContext);
             connectorManager.getDatabaseService(name.getCatalogName())
-                .update(connectorContext, converterUtil.fromDatabaseDto(dto));
+                .update(connectorRequestContext, converterUtil.fromDatabaseDto(dto));
         } catch (UnsupportedOperationException ignored) {
         }
         if (dto.getDefinitionMetadata() != null) {
@@ -132,8 +133,8 @@ public class DatabaseServiceImpl implements DatabaseService {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final DatabaseDto dto = get(name, true);
         eventBus.postSync(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, this, dto));
-        final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-        connectorManager.getDatabaseService(name.getCatalogName()).delete(connectorContext, name);
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
+        connectorManager.getDatabaseService(name.getCatalogName()).delete(connectorRequestContext, name);
 
         // Delete definition metadata if it exists
         if (userMetadataService.getDefinitionMetadata(name).isPresent()) {
@@ -155,13 +156,13 @@ public class DatabaseServiceImpl implements DatabaseService {
         final MetacatCatalogConfig config = connectorManager.getCatalogConfig(name.getCatalogName());
         final ConnectorDatabaseService service = connectorManager.getDatabaseService(name.getCatalogName());
         final ConnectorTableService tableService = connectorManager.getTableService(name.getCatalogName());
-        final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-        final List<QualifiedName> tableNames = tableService.listNames(connectorContext, name, null, null, null);
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
+        final List<QualifiedName> tableNames = tableService.listNames(connectorRequestContext, name, null, null, null);
         List<QualifiedName> viewNames = Collections.emptyList();
         if (config.isIncludeViewsWithTables()) {
             // TODO JdbcMetadata returns ImmutableList.of() for views.  We should change it to fetch views.
             try {
-                viewNames = service.listViewNames(connectorContext, name);
+                viewNames = service.listViewNames(connectorRequestContext, name);
             } catch (UnsupportedOperationException ignored) {
             }
         }
@@ -171,7 +172,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             throw new DatabaseNotFoundException(name);
         }
 
-        final DatabaseDto dto = converterUtil.toDatabaseDto(service.get(connectorContext, name));
+        final DatabaseDto dto = converterUtil.toDatabaseDto(service.get(connectorRequestContext, name));
         dto.setType(connectorManager.getCatalogConfig(name).getType());
         dto.setTables(
             Stream.concat(tableNames.stream(), viewNames.stream())

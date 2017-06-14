@@ -14,7 +14,7 @@
 package com.netflix.metacat.main.services;
 
 import com.google.common.base.Throwables;
-import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.main.manager.CatalogManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
@@ -39,11 +39,11 @@ public class MetacatInitializationService {
     @NonNull
     private final ConnectorManager connectorManager;
     @NonNull
-    private final UserMetadataService userMetadataService;
-    @NonNull
     private final ThreadServiceManager threadServiceManager;
     @NonNull
     private final MetacatThriftService metacatThriftService;
+    @NonNull
+    private final DataSourceManager dataSourceManager;
 
     /**
      * Metacat service initialization.
@@ -56,10 +56,9 @@ public class MetacatInitializationService {
         try {
             this.pluginManager.loadPlugins();
             this.catalogManager.loadCatalogs();
-            this.userMetadataService.start();
             this.metacatThriftService.start();
         } catch (final Exception e) {
-            log.error("Unable to start services due to {}", e.getMessage(), e);
+            log.error("Unable to init services due to {}", e.getMessage(), e);
             Throwables.propagate(e);
         }
         log.info("Finished starting services.");
@@ -75,9 +74,9 @@ public class MetacatInitializationService {
         log.info("Metacat application is stopped per {}. Stopping services.", event);
         try {
             this.connectorManager.stop();
-            this.userMetadataService.stop();
             this.threadServiceManager.stop();
             this.metacatThriftService.stop();
+            this.dataSourceManager.close();
         } catch (final Exception e) {
             // Just log it since we're shutting down anyway shouldn't matter to propagate it
             log.error("Unable to properly shutdown services due to {}", e.getMessage(), e);
