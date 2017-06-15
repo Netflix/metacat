@@ -77,6 +77,19 @@ public class ElasticsearchProperties {
         private String name;
         private String nodes;
         private int port = 7102;
+        @NonNull
+        private Discovery discovery = new Discovery();
+
+        /**
+         * Whether to use discovery or the lookup service to find Elasticsearch nodes.
+         *
+         * @author tgianos
+         * @since 1.1.0
+         */
+        @Data
+        public static class Discovery {
+            private boolean useLookup;
+        }
     }
 
     /**

@@ -72,7 +72,7 @@ public class ElasticSearchConfig {
             .put("cluster.name", clusterName)
             .put("transport.tcp.connect_timeout", "60s")
             .build();
-        final Client client = new TransportClient(settings);
+        final TransportClient client = new TransportClient(settings);
         // Add the transport address if exists
         final String clusterNodesStr = config.getElasticSearchClusterNodes();
         if (StringUtils.isNotBlank(clusterNodesStr)) {
@@ -81,10 +81,14 @@ public class ElasticSearchConfig {
             clusterNodes.
                 forEach(
                     clusterNode ->
-                        ((TransportClient) client).addTransportAddress(
+                        client.addTransportAddress(
                             new InetSocketTransportAddress(clusterNode, port)
                         )
                 );
+        }
+
+        if (client.transportAddresses().isEmpty()) {
+            throw new IllegalStateException("No Elasticsearch cluster nodes added. Unable to create client.");
         }
         return client;
     }
