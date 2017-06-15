@@ -57,6 +57,8 @@ dependencies {
      * Provided Dependencies
      *******************************/
 
+    compileOnly("org.springframework.boot:spring-boot-configuration-processor")
+
     /*******************************
      * Runtime Dependencies
      *******************************/
