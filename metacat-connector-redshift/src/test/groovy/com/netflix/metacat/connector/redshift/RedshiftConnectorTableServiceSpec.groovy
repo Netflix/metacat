@@ -29,7 +29,6 @@ import spock.lang.Unroll
 
 import javax.sql.DataSource
 import java.sql.Connection
-import java.sql.DatabaseMetaData
 import java.sql.Statement
 
 /**
@@ -49,7 +48,6 @@ class RedshiftConnectorTableServiceSpec extends Specification {
     def "Can delete an uppercase table"() {
         def connection = Mock(Connection)
         def statement = Mock(Statement)
-        def metadata = Mock(DatabaseMetaData)
 
         def database = UUID.randomUUID().toString().toLowerCase()
         def table = UUID.randomUUID().toString().toLowerCase()
@@ -70,7 +68,6 @@ class RedshiftConnectorTableServiceSpec extends Specification {
     def "Can delete a mixed case table"() {
         def connection = Mock(Connection)
         def statement = Mock(Statement)
-        def metadata = Mock(DatabaseMetaData)
 
         def database = UUID.randomUUID().toString()
         def table = UUID.randomUUID().toString()
@@ -102,7 +99,6 @@ class RedshiftConnectorTableServiceSpec extends Specification {
     def "Can rename uppercase table"() {
         def connection = Mock(Connection)
         def statement = Mock(Statement)
-        def metadata = Mock(DatabaseMetaData)
         def oldName = QualifiedName.ofTable("a", "b", "c")
         def newName = QualifiedName.ofTable("a", "b", "d")
 
@@ -120,7 +116,6 @@ class RedshiftConnectorTableServiceSpec extends Specification {
     def "Can rename lowercase table"() {
         def connection = Mock(Connection)
         def statement = Mock(Statement)
-        def metadata = Mock(DatabaseMetaData)
         def oldName = QualifiedName.ofTable("a", "b", "c")
         def newName = QualifiedName.ofTable("a", "b", "d")
 

@@ -1206,6 +1206,22 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getAllTables(TestCatalogs.ALL)
     }
 
+    def "renameTable: Test rename table for #name"() {
+        given:
+        def catalogName = name.catalogName
+        def databaseName = name.databaseName
+        def tableName = name.tableName
+        def newTableName = tableName + "new"
+        when:
+        api.renameTable(catalogName, databaseName, tableName, newTableName)
+        then:
+        api.getTable(catalogName, databaseName, newTableName, false, false, false).getName().getTableName() == newTableName
+        cleanup:
+        api.renameTable(catalogName, databaseName, newTableName, tableName)
+        where:
+        name << TestCatalogs.getAllTables([TestCatalogs.findByCatalogName("postgresql-96-db")])
+    }
+
     def 'deletePartition: #name'() {
         given:
         def spec = Warehouse.makeSpecFromName(name.partitionName)
