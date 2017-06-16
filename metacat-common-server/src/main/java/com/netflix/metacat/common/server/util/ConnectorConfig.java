@@ -25,13 +25,13 @@ import java.util.Map;
  */
 @AllArgsConstructor
 @Data
-public class MetacatConnectorConfig {
+public class ConnectorConfig {
     /**
-     * catalog name.
+     * Catalog name.
      */
     private final String catalogName;
     /**
-     * metacata config.
+     * Metacat config.
      */
     private final Config config;
     /**

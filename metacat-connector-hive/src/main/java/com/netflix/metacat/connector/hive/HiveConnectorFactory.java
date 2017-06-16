@@ -20,7 +20,10 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
-import com.netflix.metacat.common.server.util.MetacatConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorConfig;
+import com.netflix.metacat.connector.hive.configs.HiveConnectorClientConfig;
+import com.netflix.metacat.connector.hive.configs.HiveConnectorConfig;
+import com.netflix.metacat.connector.hive.configs.HiveConnectorFastServiceConfig;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import lombok.extern.slf4j.Slf4j;
@@ -53,35 +56,37 @@ public class HiveConnectorFactory implements ConnectorFactory {
      *
      * @param catalogName            connector name. Also the catalog name.
      * @param infoConverter          hive info converter
-     * @param metacatConnectorConfig connector config
+     * @param connectorConfig connector config
      */
     public HiveConnectorFactory(
         final String catalogName,
         final HiveConnectorInfoConverter infoConverter,
-        final MetacatConnectorConfig metacatConnectorConfig
+        final ConnectorConfig connectorConfig
     ) {
         this.catalogName = catalogName;
-
         final boolean useLocalMetastore = Boolean
-            .parseBoolean(metacatConnectorConfig.getConfiguration().getOrDefault(
+            .parseBoolean(connectorConfig.getConfiguration().getOrDefault(
                 HiveConfigConstants.USE_EMBEDDED_METASTORE, "false"));
         boolean useFastHiveService = false;
         if (useLocalMetastore) {
             useFastHiveService = Boolean.parseBoolean(
-                metacatConnectorConfig.getConfiguration()
+                connectorConfig.getConfiguration()
                     .getOrDefault(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false"));
         }
 
         ctx = new AnnotationConfigApplicationContext();
-        ctx.getBeanFactory().registerSingleton("MetacatConnectorConfig", metacatConnectorConfig);
+        ctx.getBeanFactory().registerSingleton("ConnectorConfig", connectorConfig);
         ctx.getBeanFactory().registerSingleton("HiveConnectorInfoConverter", infoConverter);
         final StandardEnvironment standardEnvironment = new StandardEnvironment();
         final MutablePropertySources propertySources = standardEnvironment.getPropertySources();
         final Map<String, Object> properties = new HashMap<>();
-        properties.put("useHiveFastService", String.valueOf(useFastHiveService));
-        properties.put("useLocalMetastore", String.valueOf(useLocalMetastore));
+        properties.put("useHiveFastService", useFastHiveService);
+        properties.put("useThriftClient", !useLocalMetastore);
         propertySources.addFirst(new MapPropertySource("HIVE_CONNECTOR", properties));
         ctx.setEnvironment(standardEnvironment);
+        //TODO scan the package, which is not working
+        ctx.register(HiveConnectorFastServiceConfig.class);
+        ctx.register(HiveConnectorClientConfig.class);
         ctx.register(HiveConnectorConfig.class);
         ctx.refresh();
 

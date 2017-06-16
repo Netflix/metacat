@@ -72,7 +72,7 @@ dependencies {
 
     runtime("io.springfox:springfox-swagger-ui")
     runtime("org.webjars:hal-browser")
-
+    runtime("org.springframework:spring-aspects")
     /*******************************
      * Test Dependencies
      *******************************/

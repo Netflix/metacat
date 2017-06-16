@@ -17,8 +17,6 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jdbc.pool.DataSourceFactory;
 import org.apache.tomcat.jdbc.pool.DataSourceProxy;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 
 import javax.annotation.PreDestroy;
 import javax.sql.DataSource;
@@ -35,19 +33,8 @@ public final class DataSourceManager {
     private static final String JDO_PREFIX = "javax.jdo.option.";
     private static DataSourceManager instance = new DataSourceManager();
     private Map<String, DataSource> dataSources = Maps.newConcurrentMap();
-    private Environment environment;
 
     private DataSourceManager() {
-    }
-
-    /**
-     * Set the environment instance.
-     *
-     * @param environment environment
-     */
-    @Autowired
-    public void setEnvironment(final Environment environment) {
-        this.environment = environment;
     }
 
     /**

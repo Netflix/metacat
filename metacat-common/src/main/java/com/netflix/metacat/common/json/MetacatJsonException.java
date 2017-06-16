@@ -17,27 +17,10 @@
  */
 package com.netflix.metacat.common.json;
 
-import lombok.Getter;
-import lombok.Setter;
-
 /**
  * Metacat JSON utility related exception.
  */
-@Getter
-@Setter
 public class MetacatJsonException extends RuntimeException {
-    private String inputJson;
-
-    /**
-     * Constructor.
-     *
-     * @param inputJson input string
-     * @param message   exception message
-     */
-    public MetacatJsonException(final String inputJson, final String message) {
-        super(message);
-        this.inputJson = inputJson;
-    }
 
     /**
      * Constructor.

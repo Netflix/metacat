@@ -18,7 +18,7 @@
 
 package com.netflix.metacat.common.server.connectors;
 
-import com.netflix.metacat.common.server.util.MetacatConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorConfig;
 
 /**
  * Plugin interface implemented by Connectors.
@@ -39,12 +39,12 @@ public interface ConnectorPlugin {
      * Returns the service implementation for the type.
      *
      * @param connectorName connector name. This is also the catalog name.
-     * @param metacatConnectorConfig      registry for spectator
+     * @param connectorConfig      registry for spectator
      * @return connector factory
      */
     ConnectorFactory create(
         String connectorName,
-        MetacatConnectorConfig metacatConnectorConfig
+        ConnectorConfig connectorConfig
     );
 
     /**

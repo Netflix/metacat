@@ -31,7 +31,7 @@ import org.springframework.context.annotation.FilterType;
  */
 @SpringBootApplication
 @ComponentScan(excludeFilters = @ComponentScan.Filter(
-    type = FilterType.REGEX, pattern = "com.netflix.metacat.connector.hive.*"))
+    type = FilterType.ASPECTJ, pattern = "com.netflix.metacat.connector..*"))
 public class MetacatWar extends SpringBootServletInitializer {
 
     /**

@@ -42,6 +42,7 @@ dependencies {
     /*******************************
      * Runtime Dependencies
      *******************************/
+    runtime("org.springframework:spring-aspects")
 
     /*******************************
      * Test Dependencies

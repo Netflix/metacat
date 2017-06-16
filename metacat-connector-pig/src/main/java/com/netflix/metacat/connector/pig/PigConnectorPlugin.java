@@ -21,7 +21,7 @@ package com.netflix.metacat.connector.pig;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.common.server.util.MetacatConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorConfig;
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter;
 import lombok.NonNull;
 
@@ -45,7 +45,7 @@ public class PigConnectorPlugin implements ConnectorPlugin {
     @Override
     public ConnectorFactory create(
         @Nonnull final String connectorName,
-        @Nonnull @NonNull final MetacatConnectorConfig metacatConnectorConfig
+        @Nonnull @NonNull final ConnectorConfig connectorConfig
     ) {
         return null;
     }

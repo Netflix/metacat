@@ -21,8 +21,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
+import com.netflix.metacat.common.server.util.ConnectorConfig;
 import com.netflix.metacat.common.server.util.JdbcUtil;
-import com.netflix.metacat.common.server.util.MetacatConnectorConfig;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.spectator.api.Id;
@@ -66,7 +66,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param hiveConnectorDatabaseService databaseService
      * @param hiveMetacatConverters        hive converter
      * @param allowRenameTable             allow rename table
-     * @param metacatConnectorConfig       serverContext
+     * @param connectorConfig       serverContext
      * @param dataSource                   data source
      */
     public HiveConnectorFastTableService(
@@ -75,12 +75,12 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final boolean allowRenameTable,
-        final MetacatConnectorConfig metacatConnectorConfig,
+        final ConnectorConfig connectorConfig,
         final DataSource dataSource
     ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, allowRenameTable);
         this.allowRenameTable = allowRenameTable;
-        this.registry = metacatConnectorConfig.getRegistry();
+        this.registry = connectorConfig.getRegistry();
         this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
         this.jdbcUtil = new JdbcUtil(dataSource);
     }

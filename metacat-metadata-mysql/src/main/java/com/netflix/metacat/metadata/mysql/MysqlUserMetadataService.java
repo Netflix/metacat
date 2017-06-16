@@ -25,6 +25,7 @@ import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.HasMetadata;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonException;
+import com.netflix.metacat.common.json.MetacatJsonParseException;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
@@ -436,7 +437,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         } catch (DataAccessException e) {
             log.error("Sql exception", e);
             throw new UserMetadataServiceException(String.format("Failed to get data for %s", keyValue), e);
-        } catch (MetacatJsonException e) {
+        } catch (MetacatJsonParseException e) {
             log.error("Invalid json '{}' for keyValue '{}'", e.getInputJson(), keyValue, e);
             throw new UserMetadataServiceException(
                 String.format("Invalid json %s for name %s", e.getInputJson(), keyValue), e);

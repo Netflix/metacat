@@ -30,7 +30,7 @@ import org.springframework.context.annotation.FilterType;
  * @since 1.1.0
  */
 @SpringBootApplication
-@ComponentScan(excludeFilters = @Filter(type = FilterType.REGEX, pattern = "com.netflix.metacat.connector.hive.*"))
+@ComponentScan(excludeFilters = @Filter(type = FilterType.ASPECTJ, pattern = "com.netflix.metacat.connector..*"))
 public class MetacatApplication {
 
     /**

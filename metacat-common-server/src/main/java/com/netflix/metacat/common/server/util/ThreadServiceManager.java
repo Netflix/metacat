@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.netflix.metacat.common.server.properties.Config;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
@@ -44,6 +45,7 @@ public class ThreadServiceManager {
      *
      * @param config Program configuration
      */
+    @Autowired
     public ThreadServiceManager(final Config config) {
         final ExecutorService executorService = newFixedThreadPool(
             config.getServiceMaxNumberOfThreads(),

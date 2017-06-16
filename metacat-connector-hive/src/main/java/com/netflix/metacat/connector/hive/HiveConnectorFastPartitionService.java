@@ -37,8 +37,8 @@ import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserEval;
+import com.netflix.metacat.common.server.util.ConnectorConfig;
 import com.netflix.metacat.common.server.util.JdbcUtil;
-import com.netflix.metacat.common.server.util.MetacatConnectorConfig;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
@@ -125,7 +125,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @param catalogName            catalogname
      * @param metacatHiveClient      hive client
      * @param hiveMetacatConverters  hive converter
-     * @param metacatConnectorConfig server context
+     * @param connectorConfig server context
      * @param threadServiceManager   thread service manager
      * @param dataSource             data source
      */
@@ -133,13 +133,13 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final String catalogName,
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorInfoConverter hiveMetacatConverters,
-        final MetacatConnectorConfig metacatConnectorConfig,
+        final ConnectorConfig connectorConfig,
         final ThreadServiceManager threadServiceManager,
         final DataSource dataSource
     ) {
         super(catalogName, metacatHiveClient, hiveMetacatConverters);
         this.threadServiceManager = threadServiceManager;
-        this.registry = metacatConnectorConfig.getRegistry();
+        this.registry = connectorConfig.getRegistry();
         this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
         this.jdbcUtil = new JdbcUtil(dataSource);
     }

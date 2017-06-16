@@ -113,7 +113,7 @@ public enum MetacatJsonLocator implements MetacatJson {
         } else if (node.isObject()) {
             return (ObjectNode) node;
         } else {
-            throw new MetacatJsonException(s, "Cannot convert '" + s + "' to a json object");
+            throw new MetacatJsonParseException(s, "Cannot convert '" + s + "' to a json object");
         }
     }
 

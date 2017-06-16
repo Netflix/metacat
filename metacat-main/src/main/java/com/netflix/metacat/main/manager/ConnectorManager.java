@@ -39,7 +39,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.connectors.exception.CatalogNotFoundException;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.common.server.util.MetacatConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorConfig;
 import com.netflix.metacat.main.spi.MetacatCatalogConfig;
 import lombok.extern.slf4j.Slf4j;
 
@@ -100,23 +100,23 @@ public class ConnectorManager {
      *
      * @param catalogName                catalog name
      * @param connectorType              connector type
-     * @param metacatConnectorConfig metacat connector properties
+     * @param connectorConfig metacat connector properties
      */
     synchronized void createConnection(final String catalogName,
                                        final String connectorType,
-                                       final MetacatConnectorConfig metacatConnectorConfig) {
+                                       final ConnectorConfig connectorConfig) {
         Preconditions.checkState(!stopped.get(), "ConnectorManager is stopped");
         final ConnectorPlugin connectorPlugin = plugins.get(connectorType);
         if (connectorPlugin != null) {
             Preconditions
                 .checkState(!connectorFactories.containsKey(catalogName), "A connector %s already exists", catalogName);
             final ConnectorFactory connectorFactory =
-                connectorPlugin.create(catalogName, metacatConnectorConfig);
+                connectorPlugin.create(catalogName, connectorConfig);
             connectorFactories.put(catalogName, connectorFactory);
 
             final MetacatCatalogConfig catalogConfig =
                 MetacatCatalogConfig.createFromMapAndRemoveProperties(connectorType,
-                    metacatConnectorConfig.getConfiguration());
+                    connectorConfig.getConfiguration());
             catalogs.put(catalogName, catalogConfig);
         } else {
             log.warn("No plugin for connector with type %s", connectorType);

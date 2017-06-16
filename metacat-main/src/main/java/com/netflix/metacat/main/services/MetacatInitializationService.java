@@ -14,7 +14,6 @@
 package com.netflix.metacat.main.services;
 
 import com.google.common.base.Throwables;
-import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.main.manager.CatalogManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
@@ -42,8 +41,6 @@ public class MetacatInitializationService {
     private final ThreadServiceManager threadServiceManager;
     @NonNull
     private final MetacatThriftService metacatThriftService;
-    @NonNull
-    private final DataSourceManager dataSourceManager;
 
     /**
      * Metacat service initialization.
@@ -76,7 +73,6 @@ public class MetacatInitializationService {
             this.connectorManager.stop();
             this.threadServiceManager.stop();
             this.metacatThriftService.stop();
-            this.dataSourceManager.close();
         } catch (final Exception e) {
             // Just log it since we're shutting down anyway shouldn't matter to propagate it
             log.error("Unable to properly shutdown services due to {}", e.getMessage(), e);

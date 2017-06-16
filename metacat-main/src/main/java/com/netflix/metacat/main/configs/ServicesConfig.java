@@ -307,7 +307,6 @@ public class ServicesConfig {
      * @param connectorManager     Connector manager to use
      * @param threadServiceManager Thread service manager to use
      * @param metacatThriftService Thrift service to use
-     * @param dataSourceManager    data source manager to use
      * @return The initialization service bean
      */
     @Bean
@@ -316,16 +315,14 @@ public class ServicesConfig {
         final CatalogManager catalogManager,
         final ConnectorManager connectorManager,
         final ThreadServiceManager threadServiceManager,
-        final MetacatThriftService metacatThriftService,
-        final DataSourceManager dataSourceManager
+        final MetacatThriftService metacatThriftService
     ) {
         return new MetacatInitializationService(
             pluginManager,
             catalogManager,
             connectorManager,
             threadServiceManager,
-            metacatThriftService,
-            dataSourceManager
+            metacatThriftService
         );
     }
 }
