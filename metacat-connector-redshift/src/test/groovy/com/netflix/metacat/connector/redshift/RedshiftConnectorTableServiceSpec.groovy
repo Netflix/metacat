@@ -31,6 +31,7 @@ import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.Statement
+
 /**
  * Tests for the JdbcConnectorTableService APIs.
  *
@@ -118,7 +119,7 @@ class RedshiftConnectorTableServiceSpec extends Specification {
         1 * connection.getMetaData() >> metadata
         1 * metadata.storesUpperCaseIdentifiers() >> true
         1 * statement.executeUpdate(
-            "ALTER TABLE " + oldName.getCatalogName() + "." + oldName.getDatabaseName() + ".C RENAME TO D"
+            "ALTER TABLE " + oldName.getDatabaseName() + ".C RENAME TO D"
         )
     }
 
@@ -138,7 +139,7 @@ class RedshiftConnectorTableServiceSpec extends Specification {
         1 * connection.getMetaData() >> metadata
         1 * metadata.storesUpperCaseIdentifiers() >> false
         1 * statement.executeUpdate(
-            "ALTER TABLE " + oldName.getCatalogName() + "." + oldName.getDatabaseName() + ".c RENAME TO d"
+            "ALTER TABLE " + oldName.getDatabaseName() + ".c RENAME TO d"
         )
     }
 

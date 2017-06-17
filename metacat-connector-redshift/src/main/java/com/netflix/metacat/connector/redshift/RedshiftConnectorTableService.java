@@ -59,8 +59,6 @@ public class RedshiftConnectorTableService extends JdbcConnectorTableService {
         final String finalNewTableName
     ) {
         return "ALTER TABLE "
-            + oldName.getCatalogName()
-            + "."
             + oldName.getDatabaseName()
             + "."
             + finalOldTableName
