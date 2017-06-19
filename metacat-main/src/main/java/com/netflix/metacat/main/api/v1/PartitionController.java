@@ -339,7 +339,7 @@ public class PartitionController implements PartitionV1 {
         @ApiParam(value = "The name of the metacat view", required = true)
         @PathVariable("view-name") final String viewName,
         @ApiParam(value = "Filter expression string to use")
-        @RequestParam(name = "filter", required = false) final String filter,
+        @Nullable @RequestParam(name = "filter", required = false) final String filter,
         @ApiParam(value = "Sort the partition list by this value")
         @Nullable @RequestParam(name = "sortBy", required = false) final String sortBy,
         @ApiParam(value = "Sorting order to use")
