@@ -19,6 +19,8 @@ package com.netflix.metacat.common.server.connectors.exception;
 
 import com.netflix.metacat.common.QualifiedName;
 
+import javax.annotation.Nullable;
+
 /**
  * Exception when database is not found.
  *
@@ -40,7 +42,7 @@ public class DatabaseNotFoundException extends NotFoundException {
      * @param name  qualified name of the database
      * @param cause error cause
      */
-    public DatabaseNotFoundException(final QualifiedName name, final Throwable cause) {
+    public DatabaseNotFoundException(final QualifiedName name, @Nullable final Throwable cause) {
         super(name, cause);
     }
 
@@ -54,7 +56,7 @@ public class DatabaseNotFoundException extends NotFoundException {
      */
     public DatabaseNotFoundException(
         final QualifiedName name,
-        final Throwable cause,
+        @Nullable final Throwable cause,
         final boolean enableSuppression,
         final boolean writableStackTrace
     ) {

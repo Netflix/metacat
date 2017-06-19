@@ -20,6 +20,8 @@ package com.netflix.metacat.common.server.connectors.exception;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.Getter;
 
+import javax.annotation.Nullable;
+
 /**
  * Exception when partition is not found.
  *
@@ -50,7 +52,7 @@ public class PartitionNotFoundException extends NotFoundException {
     public PartitionNotFoundException(
         final QualifiedName tableName,
         final String partitionName,
-        final Throwable cause
+        @Nullable final Throwable cause
     ) {
         super(QualifiedName.ofPartition(tableName.getCatalogName(),
             tableName.getDatabaseName(), tableName.getTableName(), partitionName),

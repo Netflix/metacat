@@ -26,7 +26,7 @@ import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
@@ -106,8 +106,8 @@ public class TableServiceImpl implements TableService {
         log.info("Creating table {}", name);
         eventBus.postSync(new MetacatCreateTablePreEvent(name, metacatRequestContext, this, tableDto));
         final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
-        final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-        service.create(connectorContext, converterUtil.fromTableDto(tableDto));
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
+        service.create(connectorRequestContext, converterUtil.fromTableDto(tableDto));
 
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for table {}", name);
@@ -141,7 +141,7 @@ public class TableServiceImpl implements TableService {
                     tags.add(tagNode.textValue());
                 }
                 log.info("Setting tags {} for table {}", tags, name);
-                tagService.setTableTags(name, tags, false);
+                final Set<String> result = tagService.setTableTags(name, tags, false);
             }
         }
     }
@@ -155,8 +155,9 @@ public class TableServiceImpl implements TableService {
         final Optional<TableDto> oTable = get(name, true);
         if (oTable.isPresent()) {
             log.info("Drop table {}", name);
-            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-            service.delete(connectorContext, name);
+            final ConnectorRequestContext connectorRequestContext
+                = converterUtil.toConnectorContext(metacatRequestContext);
+            service.delete(connectorRequestContext, name);
         }
 
         final TableDto tableDto = oTable.orElseGet(() -> {
@@ -185,12 +186,12 @@ public class TableServiceImpl implements TableService {
                                   final boolean includeDefinitionMetadata, final boolean includeDataMetadata) {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
         final TableDto table;
         if (includeInfo) {
             try {
-                table = converterUtil.toTableDto(service.get(connectorContext, name));
+                table = converterUtil.toTableDto(service.get(connectorRequestContext, name));
             } catch (NotFoundException ignored) {
                 return Optional.empty();
             }
@@ -210,7 +211,7 @@ public class TableServiceImpl implements TableService {
             TableDto dto = table;
             if (!includeInfo) {
                 try {
-                    dto = converterUtil.toTableDto(service.get(connectorContext, name));
+                    dto = converterUtil.toTableDto(service.get(connectorRequestContext, name));
                 } catch (NotFoundException ignored) {
                 }
             }
@@ -242,8 +243,9 @@ public class TableServiceImpl implements TableService {
             eventBus.postSync(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, this, newName));
             try {
                 log.info("Renaming {} {} to {}", isMView ? "view" : "table", oldName, newName);
-                final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-                service.rename(connectorContext, oldName, newName);
+                final ConnectorRequestContext connectorRequestContext
+                    = converterUtil.toConnectorContext(metacatRequestContext);
+                service.rename(connectorRequestContext, oldName, newName);
             } catch (UnsupportedOperationException ignored) {
             }
             userMetadataService.renameDefinitionMetadataKey(oldName, newName);
@@ -270,8 +272,9 @@ public class TableServiceImpl implements TableService {
         if (isTableInfoProvided(tableDto)) {
             try {
                 log.info("Updating table {}", name);
-                final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-                service.update(connectorContext, converterUtil.fromTableDto(tableDto));
+                final ConnectorRequestContext connectorRequestContext
+                    = converterUtil.toConnectorContext(metacatRequestContext);
+                service.update(connectorRequestContext, converterUtil.fromTableDto(tableDto));
             } catch (UnsupportedOperationException ignored) {
             }
         }
@@ -378,10 +381,11 @@ public class TableServiceImpl implements TableService {
         connectorManager.getCatalogs().keySet().forEach(catalogName -> {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
             final ConnectorTableService service = connectorManager.getTableService(catalogName);
-            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+            final ConnectorRequestContext connectorRequestContext
+                = converterUtil.toConnectorContext(metacatRequestContext);
             try {
                 final Map<String, List<QualifiedName>> names =
-                    service.getTableNames(connectorContext, Lists.newArrayList(uri), prefixSearch);
+                    service.getTableNames(connectorRequestContext, Lists.newArrayList(uri), prefixSearch);
                 final List<QualifiedName> qualifiedNames = names.values().stream().flatMap(Collection::stream)
                     .collect(Collectors.toList());
                 result.addAll(qualifiedNames);
@@ -399,10 +403,11 @@ public class TableServiceImpl implements TableService {
         connectorManager.getCatalogs().keySet().forEach(catalogName -> {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
             final ConnectorTableService service = connectorManager.getTableService(catalogName);
-            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
+            final ConnectorRequestContext connectorRequestContext
+                = converterUtil.toConnectorContext(metacatRequestContext);
             try {
                 final Map<String, List<QualifiedName>> names =
-                    service.getTableNames(connectorContext, uris, prefixSearch);
+                    service.getTableNames(connectorRequestContext, uris, prefixSearch);
                 names.forEach((uri, qNames) -> {
                     final List<QualifiedName> existingNames = result.get(uri);
                     if (existingNames == null) {
@@ -422,8 +427,8 @@ public class TableServiceImpl implements TableService {
     public boolean exists(@Nonnull final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
-        final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-        return service.exists(connectorContext, name);
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
+        return service.exists(connectorRequestContext, name);
     }
 
     private void validate(final QualifiedName name) {

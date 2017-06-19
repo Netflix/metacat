@@ -1,22 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *       Copyright 2017 Netflix, Inc.
+ *          Licensed under the Apache License, Version 2.0 (the "License");
+ *          you may not use this file except in compliance with the License.
+ *          You may obtain a copy of the License at
+ *              http://www.apache.org/licenses/LICENSE-2.0
+ *          Unless required by applicable law or agreed to in writing, software
+ *          distributed under the License is distributed on an "AS IS" BASIS,
+ *          WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *          See the License for the specific language governing permissions and
+ *          limitations under the License.
  */
 
-package com.netflix.metacat.usermetadata.mysql;
+package com.netflix.metacat.metadata.mysql;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -30,25 +28,22 @@ import com.netflix.metacat.common.json.MetacatJsonException;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
-import com.netflix.metacat.common.server.util.DBUtil;
-import com.netflix.metacat.common.server.util.DataSourceManager;
+import com.netflix.metacat.common.server.util.JdbcUtil;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.dbutils.QueryRunner;
-import org.apache.commons.dbutils.ResultSetHandler;
-import org.apache.commons.dbutils.handlers.ColumnListHandler;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
-import java.io.Reader;
-import java.net.URL;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,7 +51,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -64,32 +58,30 @@ import java.util.stream.Collectors;
  * User metadata service.
  */
 @Slf4j
+@SuppressFBWarnings
 public class MysqlUserMetadataService extends BaseUserMetadataService {
     /**
      * Data source name used by user metadata service.
      */
-    public static final String NAME_DATASOURCE = "metacat-usermetadata";
-    private final DataSourceManager dataSourceManager;
     private final MetacatJson metacatJson;
     private final Config config;
-    private Properties connectionProperties;
-    private DataSource poolingDataSource;
+    private JdbcUtil jdbcUtil;
 
     /**
      * Constructor.
      *
-     * @param dataSourceManager data source manager
-     * @param metacatJson       json utility
-     * @param config            config
+     * @param dataSource  data source
+     * @param metacatJson json utility
+     * @param config      config
      */
     public MysqlUserMetadataService(
-        final DataSourceManager dataSourceManager,
+        final DataSource dataSource,
         final MetacatJson metacatJson,
         final Config config
     ) {
-        this.dataSourceManager = dataSourceManager;
         this.metacatJson = metacatJson;
         this.config = config;
+        this.jdbcUtil = new JdbcUtil(dataSource);
     }
 
     @Override
@@ -98,21 +90,12 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         @Nonnull final List<String> uris
     ) {
         try {
-            final Connection conn = poolingDataSource.getConnection();
-            try {
-                final List<List<String>> subLists = Lists.partition(uris, config.getUserMetadataMaxInClauseItems());
-                for (List<String> subUris : subLists) {
-                    _softDeleteDataMetadatas(conn, user, subUris);
-                }
-                conn.commit();
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.close();
+            final List<List<String>> subLists = Lists.partition(uris, config.getUserMetadataMaxInClauseItems());
+            for (List<String> subUris : subLists) {
+                _softDeleteDataMetadatas(user, subUris);
             }
-        } catch (SQLException e) {
-            log.error("Sql exception", e);
+        } catch (DataAccessException e) {
+            log.error("DataAccessException exception", e);
             throw new UserMetadataServiceException(String.format("Failed deleting the data metadata for %s", uris), e);
         }
     }
@@ -133,21 +116,12 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     private void deleteDataMetadatasWithBatch(final List<String> uris, final boolean removeDataMetadata) {
         try {
-            final Connection conn = poolingDataSource.getConnection();
-            try {
-                final List<List<String>> subLists = Lists.partition(uris, config.getUserMetadataMaxInClauseItems());
-                for (List<String> subUris : subLists) {
-                    _deleteDataMetadatas(conn, subUris, removeDataMetadata);
-                }
-                conn.commit();
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.close();
+            final List<List<String>> subLists = Lists.partition(uris, config.getUserMetadataMaxInClauseItems());
+            for (List<String> subUris : subLists) {
+                _deleteDataMetadatas(subUris, removeDataMetadata);
             }
-        } catch (SQLException e) {
-            log.error("Sql exception", e);
+        } catch (DataAccessException e) {
+            log.error("DataAccessException exception", e);
             throw new UserMetadataServiceException(String.format("Failed deleting the data metadata for %s", uris), e);
         }
     }
@@ -157,22 +131,13 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         @Nonnull final List<QualifiedName> names
     ) {
         try {
-            final Connection conn = poolingDataSource.getConnection();
-            try {
-                final List<List<QualifiedName>> subLists =
-                    Lists.partition(names, config.getUserMetadataMaxInClauseItems());
-                for (List<QualifiedName> subNames : subLists) {
-                    _deleteDefinitionMetadatas(conn, subNames);
-                }
-                conn.commit();
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.close();
+            final List<List<QualifiedName>> subLists =
+                Lists.partition(names, config.getUserMetadataMaxInClauseItems());
+            for (List<QualifiedName> subNames : subLists) {
+                _deleteDefinitionMetadatas(subNames);
             }
-        } catch (SQLException e) {
-            log.error("Sql exception", e);
+        } catch (DataAccessException e) {
+            log.error("DataAccessException exception", e);
             throw new UserMetadataServiceException(
                 String.format("Failed deleting the definition metadata for %s", names), e);
         }
@@ -181,109 +146,140 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @Override
     public void deleteMetadatas(final String userId, final List<HasMetadata> holders) {
         try {
-            final Connection conn = poolingDataSource.getConnection();
-            try {
-                final List<List<HasMetadata>> subLists =
-                    Lists.partition(holders, config.getUserMetadataMaxInClauseItems());
-                for (List<HasMetadata> hasMetadatas : subLists) {
-                    final List<QualifiedName> names = hasMetadatas.stream()
-                        .filter(m -> m instanceof HasDefinitionMetadata)
-                        .map(m -> ((HasDefinitionMetadata) m).getDefinitionName())
-                        .collect(Collectors.toList());
-                    if (!names.isEmpty()) {
-                        _deleteDefinitionMetadatas(conn, names);
-                    }
-                    if (config.canSoftDeleteDataMetadata()) {
-                        final List<String> uris = hasMetadatas.stream()
-                            .filter(m -> m instanceof HasDataMetadata && ((HasDataMetadata) m).isDataExternal())
-                            .map(m -> ((HasDataMetadata) m).getDataUri()).collect(Collectors.toList());
-                        if (!uris.isEmpty()) {
-                            _softDeleteDataMetadatas(conn, userId, uris);
+            jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                protected void doInTransactionWithoutResult(final TransactionStatus status) {
+                    final List<List<HasMetadata>> subLists =
+                        Lists.partition(holders, config.getUserMetadataMaxInClauseItems());
+                    for (List<HasMetadata> hasMetadatas : subLists) {
+                        final List<QualifiedName> names = hasMetadatas.stream()
+                            .filter(m -> m instanceof HasDefinitionMetadata)
+                            .map(m -> ((HasDefinitionMetadata) m).getDefinitionName())
+                            .collect(Collectors.toList());
+                        if (!names.isEmpty()) {
+                            _deleteDefinitionMetadatas(names);
+                        }
+                        if (config.canSoftDeleteDataMetadata()) {
+                            final List<String> uris = hasMetadatas.stream()
+                                .filter(m -> m instanceof HasDataMetadata && ((HasDataMetadata) m).isDataExternal())
+                                .map(m -> ((HasDataMetadata) m).getDataUri()).collect(Collectors.toList());
+                            if (!uris.isEmpty()) {
+                                _softDeleteDataMetadatas(userId, uris);
+                            }
                         }
                     }
                 }
-                conn.commit();
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.close();
-            }
-        } catch (SQLException e) {
-            log.error("Sql exception", e);
+            });
+        } catch (DataAccessException e) {
+            log.error("DataAccessException exception", e);
             throw new UserMetadataServiceException("Failed deleting data metadata", e);
         }
     }
 
+    /**
+     * delete Definition Metadatas.
+     *
+     * @param names names to delete
+     * @return null or void
+     */
     @SuppressWarnings("checkstyle:methodname")
-    private Void _deleteDefinitionMetadatas(
-        final Connection conn,
+    @Transactional
+    public Void _deleteDefinitionMetadatas(
         @Nullable final List<QualifiedName> names
-    ) throws SQLException {
+    ) {
         if (names != null && !names.isEmpty()) {
             final List<String> paramVariables = names.stream().map(s -> "?").collect(Collectors.toList());
             final String[] aNames = names.stream().map(QualifiedName::toString).toArray(String[]::new);
-            new QueryRunner().update(conn,
-                String.format(SQL.DELETE_DEFINITION_METADATA, Joiner.on(",").skipNulls().join(paramVariables)),
-                (Object[]) aNames);
+            jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                protected void doInTransactionWithoutResult(final TransactionStatus status) {
+                    jdbcUtil.getJdbcTemplate().update(
+                        String.format(SQL.DELETE_DEFINITION_METADATA, Joiner.on(",").skipNulls().join(paramVariables)),
+                        (Object[]) aNames);
+                }
+            });
         }
         return null;
     }
 
+    /**
+     * soft Delete Data Metadatas.
+     *
+     * @param userId user id
+     * @param uris   uri list
+     * @return null or void
+     * @throws DataAccessException data access exception
+     */
+
     @SuppressWarnings("checkstyle:methodname")
-    private Void _softDeleteDataMetadatas(
-        final Connection conn, final String userId,
-        @Nullable final List<String> uris
-    ) throws SQLException {
+    @Transactional
+    public Void _softDeleteDataMetadatas(final String userId,
+                                         @Nullable final List<String> uris
+    ) throws DataAccessException {
         if (uris != null && !uris.isEmpty()) {
             final List<String> paramVariables = uris.stream().map(s -> "?").collect(Collectors.toList());
             final String[] aUris = uris.stream().toArray(String[]::new);
             final String paramString = Joiner.on(",").skipNulls().join(paramVariables);
-            final ColumnListHandler<Long> handler = new ColumnListHandler<>("id");
-            final List<Long> ids = new QueryRunner().query(conn,
-                String.format(SQL.GET_DATA_METADATA_IDS, paramString), handler, (Object[]) aUris);
+            final List<Long> ids = jdbcUtil.getJdbcTemplate()
+                .query(String.format(SQL.GET_DATA_METADATA_IDS, paramString), aUris, (rs, rowNum) -> rs.getLong("id"));
             if (!ids.isEmpty()) {
                 final List<String> idParamVariables = ids.stream().map(s -> "?").collect(Collectors.toList());
                 final Long[] aIds = ids.stream().toArray(Long[]::new);
                 final String idParamString = Joiner.on(",").skipNulls().join(idParamVariables);
-                final List<Long> dupIds = new QueryRunner().query(conn,
-                    String.format(SQL.GET_DATA_METADATA_DELETE_BY_IDS, idParamString), handler, (Object[]) aIds);
+                final List<Long> dupIds = jdbcUtil.getJdbcTemplate()
+                    .query(String.format(SQL.GET_DATA_METADATA_DELETE_BY_IDS, idParamString), aIds,
+                        (rs, rowNum) -> rs.getLong("id"));
                 if (!dupIds.isEmpty()) {
                     ids.removeAll(dupIds);
                 }
                 final List<Object[]> deleteDataMetadatas = Lists.newArrayList();
                 ids.forEach(id -> deleteDataMetadatas.add(new Object[]{id, userId}));
-                new QueryRunner().batch(conn, SQL.SOFT_DELETE_DATA_METADATA,
-                    deleteDataMetadatas.toArray(new Object[deleteDataMetadatas.size()][2]));
+                jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
+                    @Override
+                    protected void doInTransactionWithoutResult(final TransactionStatus status) {
+                        jdbcUtil.getJdbcTemplate().batchUpdate(SQL.SOFT_DELETE_DATA_METADATA,
+                            deleteDataMetadatas);
+                    }
+                });
             }
         }
         return null;
     }
 
+    /**
+     * delete Data Metadatas.
+     *
+     * @param uris               uri list
+     * @param removeDataMetadata flag to remove data meta data
+     * @return void or null
+     */
     @SuppressWarnings("checkstyle:methodname")
-    private Void _deleteDataMetadatas(
-        final Connection conn,
+    @Transactional
+    public Void _deleteDataMetadatas(
         @Nullable final List<String> uris,
         final boolean removeDataMetadata
-    )
-        throws SQLException {
+    ) {
         if (uris != null && !uris.isEmpty()) {
             final List<String> paramVariables = uris.stream().map(s -> "?").collect(Collectors.toList());
             final String[] aUris = uris.stream().toArray(String[]::new);
             final String paramString = Joiner.on(",").skipNulls().join(paramVariables);
-            final ColumnListHandler<Long> handler = new ColumnListHandler<>("id");
-            final List<Long> ids = new QueryRunner().query(conn,
-                String.format(SQL.GET_DATA_METADATA_IDS, paramString), handler, (Object[]) aUris);
+            final List<Long> ids = jdbcUtil.getJdbcTemplate()
+                .query(String.format(SQL.GET_DATA_METADATA_IDS, paramString), aUris, (rs, rowNum) -> rs.getLong("id"));
             if (!ids.isEmpty()) {
-                final List<String> idParamVariables = ids.stream().map(s -> "?").collect(Collectors.toList());
-                final Long[] aIds = ids.stream().toArray(Long[]::new);
-                final String idParamString = Joiner.on(",").skipNulls().join(idParamVariables);
-                new QueryRunner().update(conn,
-                    String.format(SQL.DELETE_DATA_METADATA_DELETE, idParamString), (Object[]) aIds);
-                if (removeDataMetadata) {
-                    new QueryRunner().update(conn,
-                        String.format(SQL.DELETE_DATA_METADATA, idParamString), (Object[]) aIds);
-                }
+                jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
+                    @Override
+                    protected void doInTransactionWithoutResult(final TransactionStatus status) {
+                        final List<String> idParamVariables = ids.stream().map(s -> "?").collect(Collectors.toList());
+                        final Long[] aIds = ids.stream().toArray(Long[]::new);
+                        final String idParamString = Joiner.on(",").skipNulls().join(idParamVariables);
+                        jdbcUtil.getJdbcTemplate()
+                            .update(String.format(SQL.DELETE_DATA_METADATA_DELETE, idParamString), (Object[]) aIds);
+                        if (removeDataMetadata) {
+                            jdbcUtil.getJdbcTemplate()
+                                .update(String.format(SQL.DELETE_DATA_METADATA, idParamString), (Object[]) aIds);
+                        }
+                    }
+                });
             }
         }
         return null;
@@ -316,34 +312,30 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<QualifiedName> getDescendantDefinitionNames(@Nonnull final QualifiedName name) {
-        List<String> result;
-        final Connection connection = DBUtil.getReadConnection(poolingDataSource);
+        final List<String> result;
         try {
-            final ColumnListHandler<String> handler = new ColumnListHandler<>("name");
-            result = new QueryRunner()
-                .query(connection, SQL.GET_DESCENDANT_DEFINITION_NAMES, handler, name.toString() + "/%");
-        } catch (SQLException e) {
-            log.error("Sql exception", e);
+            result = jdbcUtil.getJdbcTemplate()
+                .query(SQL.GET_DESCENDANT_DEFINITION_NAMES, new Object[]{name.toString() + "/%"},
+                    (rs, rowNum) -> rs.getString("name"));
+        } catch (DataAccessException e) {
+            log.error("DataAccessException exception", e);
             throw new UserMetadataServiceException(String.format("Failed to get descendant names for %s", name), e);
-        } finally {
-            DBUtil.closeReadConnection(connection);
         }
         return result.stream().map(QualifiedName::fromString).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<String> getDescendantDataUris(@Nonnull final String uri) {
-        List<String> result;
-        final Connection connection = DBUtil.getReadConnection(poolingDataSource);
+        final List<String> result;
         try {
-            final ColumnListHandler<String> handler = new ColumnListHandler<>("uri");
-            result = new QueryRunner().query(connection, SQL.GET_DESCENDANT_DATA_URIS, handler, uri + "/%");
-        } catch (SQLException e) {
-            log.error("Sql exception", e);
+            result = jdbcUtil.getJdbcTemplate().query(SQL.GET_DESCENDANT_DATA_URIS, new Object[]{uri + "/%"},
+                (rs, rowNum) -> rs.getString("uri"));
+        } catch (DataAccessException e) {
+            log.error("DataAccessException exception", e);
             throw new UserMetadataServiceException(String.format("Failed to get descendant uris for %s", uri), e);
-        } finally {
-            DBUtil.closeReadConnection(connection);
         }
         return result;
     }
@@ -364,8 +356,16 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
+    /**
+     * get Metadata Map.
+     *
+     * @param keys list of keys
+     * @param sql  query string
+     * @return map of the metadata
+     */
     @SuppressWarnings("checkstyle:methodname")
-    private Map<String, ObjectNode> _getMetadataMap(@Nullable final List<?> keys, final String sql) {
+    @Transactional(readOnly = true)
+    public Map<String, ObjectNode> _getMetadataMap(@Nullable final List<?> keys, final String sql) {
         final Map<String, ObjectNode> result = Maps.newHashMap();
         if (keys == null || keys.isEmpty()) {
             return result;
@@ -373,9 +373,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         final List<String> paramVariables = keys.stream().map(s -> "?").collect(Collectors.toList());
         final String[] aKeys = keys.stream().map(Object::toString).toArray(String[]::new);
         final String query = String.format(sql, Joiner.on(",").join(paramVariables));
-        final Connection connection = DBUtil.getReadConnection(poolingDataSource);
         try {
-            final ResultSetHandler<Void> handler = resultSet -> {
+            final ResultSetExtractor<Void> handler = resultSet -> {
                 while (resultSet.next()) {
                     final String json = resultSet.getString("data");
                     final String name = resultSet.getString("name");
@@ -391,27 +390,31 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 }
                 return null;
             };
-            new QueryRunner().query(connection, query, handler, (Object[]) aKeys);
-        } catch (SQLException e) {
-            log.error("Sql exception", e);
+            jdbcUtil.getJdbcTemplate().query(query, aKeys, handler);
+        } catch (DataAccessException e) {
+            log.error("DataAccessException exception", e);
             throw new UserMetadataServiceException(String.format("Failed to get data for %s", keys), e);
-        } finally {
-            DBUtil.closeReadConnection(connection);
         }
         return result;
     }
 
-    private Optional<ObjectNode> getJsonForKey(final String query, final String keyValue) {
-        Optional<ObjectNode> result = Optional.empty();
-        String json = null;
-        final Connection connection = DBUtil.getReadConnection(poolingDataSource);
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, keyValue);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    final String key = resultSet.getString(1);
+    /**
+     * get Json for key.
+     *
+     * @param query    query string
+     * @param keyValue parameters
+     * @return result object node
+     */
+    @Transactional(readOnly = true)
+    public Optional<ObjectNode> getJsonForKey(final String query, final String keyValue) {
+        try {
+            ResultSetExtractor<Optional<ObjectNode>> handler = rs -> {
+                final String json;
+                Optional<ObjectNode> result = Optional.empty();
+                while (rs.next()) {
+                    final String key = rs.getString(1);
                     if (keyValue.equalsIgnoreCase(key)) {
-                        json = resultSet.getString(2);
+                        json = rs.getString(2);
                         if (Strings.isNullOrEmpty(json)) {
                             return Optional.empty();
                         }
@@ -419,38 +422,48 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                         break;
                     }
                 }
-            }
-        } catch (SQLException e) {
+                return result;
+            };
+            return jdbcUtil.getJdbcTemplate().query(new PreparedStatementCreator() {
+                @Override
+                public PreparedStatement createPreparedStatement(final Connection connection)
+                    throws SQLException {
+                    final PreparedStatement ps = connection.prepareStatement(query);
+                    ps.setString(1, keyValue);
+                    return ps;
+                }
+            }, handler);
+        } catch (DataAccessException e) {
             log.error("Sql exception", e);
             throw new UserMetadataServiceException(String.format("Failed to get data for %s", keyValue), e);
         } catch (MetacatJsonException e) {
-            log.error("Invalid json '{}' for keyValue '{}'", json, keyValue, e);
-            throw new UserMetadataServiceException(String.format("Invalid json %s for name %s", json, keyValue), e);
-        } finally {
-            DBUtil.closeReadConnection(connection);
+            log.error("Invalid json '{}' for keyValue '{}'", e.getInputJson(), keyValue, e);
+            throw new UserMetadataServiceException(
+                String.format("Invalid json %s for name %s", e.getInputJson(), keyValue), e);
         }
-        return result;
     }
 
-    private int executeUpdateForKey(final String query, final String... keyValues) {
-        int result;
+    /**
+     * executeUpdateForKey.
+     *
+     * @param query     sql query string
+     * @param keyValues parameters
+     * @return number of updated rows
+     */
+    @Transactional
+    public int executeUpdateForKey(final String query, final String... keyValues) {
         try {
-            final Connection conn = poolingDataSource.getConnection();
-            try {
-                result = new QueryRunner().update(conn, query, (Object[]) keyValues);
-                conn.commit();
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.close();
-            }
-        } catch (SQLException e) {
-            log.error("Sql exception", e);
+            return jdbcUtil.getTransactionTemplate().execute(new TransactionCallback<Integer>() {
+                @Override
+                public Integer doInTransaction(final TransactionStatus status) {
+                    return jdbcUtil.getJdbcTemplate().update(query, (Object[]) keyValues);
+                }
+            });
+        } catch (DataAccessException e) {
+            log.error("DataAccessException exception", e);
             throw new UserMetadataServiceException(
                 String.format("Failed to save data for %s", Arrays.toString(keyValues)), e);
         }
-        return result;
     }
 
     @Override
@@ -524,122 +537,123 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
+    @Transactional
     public void saveMetadatas(final String user, final List<? extends HasMetadata> metadatas, final boolean merge) {
+        jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            protected void doInTransactionWithoutResult(final TransactionStatus status) {
+                executeSaveMetadatas(user, metadatas, merge);
+            }
+        });
+    }
+
+    private void executeSaveMetadatas(final String user,
+                                      final List<? extends HasMetadata> metadatas,
+                                      final boolean merge) {
         try {
-            final Connection conn = poolingDataSource.getConnection();
-            try {
-                @SuppressWarnings("unchecked") final List<List<HasMetadata>> subLists = Lists.partition(
-                    (List<HasMetadata>) metadatas,
-                    config.getUserMetadataMaxInClauseItems()
-                );
-                for (List<HasMetadata> hasMetadatas : subLists) {
-                    final List<String> uris = Lists.newArrayList();
-                    final List<QualifiedName> names = Lists.newArrayList();
-                    // Get the names and uris
-                    final List<HasDefinitionMetadata> definitionMetadatas = Lists.newArrayList();
-                    final List<HasDataMetadata> dataMetadatas = Lists.newArrayList();
-                    hasMetadatas.stream().forEach(hasMetadata -> {
-                        if (hasMetadata instanceof HasDefinitionMetadata) {
-                            final HasDefinitionMetadata oDef = (HasDefinitionMetadata) hasMetadata;
-                            names.add(oDef.getDefinitionName());
-                            if (oDef.getDefinitionMetadata() != null) {
-                                definitionMetadatas.add(oDef);
-                            }
+            @SuppressWarnings("unchecked") final List<List<HasMetadata>> subLists = Lists.partition(
+                (List<HasMetadata>) metadatas,
+                config.getUserMetadataMaxInClauseItems()
+            );
+            for (List<HasMetadata> hasMetadatas : subLists) {
+                final List<String> uris = Lists.newArrayList();
+                final List<QualifiedName> names = Lists.newArrayList();
+                // Get the names and uris
+                final List<HasDefinitionMetadata> definitionMetadatas = Lists.newArrayList();
+                final List<HasDataMetadata> dataMetadatas = Lists.newArrayList();
+                hasMetadatas.stream().forEach(hasMetadata -> {
+                    if (hasMetadata instanceof HasDefinitionMetadata) {
+                        final HasDefinitionMetadata oDef = (HasDefinitionMetadata) hasMetadata;
+                        names.add(oDef.getDefinitionName());
+                        if (oDef.getDefinitionMetadata() != null) {
+                            definitionMetadatas.add(oDef);
                         }
-                        if (hasMetadata instanceof HasDataMetadata) {
-                            final HasDataMetadata oData = (HasDataMetadata) hasMetadata;
-                            if (oData.isDataExternal() && oData.getDataMetadata() != null
-                                && oData.getDataMetadata().size() > 0) {
-                                uris.add(oData.getDataUri());
-                                dataMetadatas.add(oData);
+                    }
+                    if (hasMetadata instanceof HasDataMetadata) {
+                        final HasDataMetadata oData = (HasDataMetadata) hasMetadata;
+                        if (oData.isDataExternal() && oData.getDataMetadata() != null
+                            && oData.getDataMetadata().size() > 0) {
+                            uris.add(oData.getDataUri());
+                            dataMetadatas.add(oData);
+                        }
+                    }
+                });
+                if (!definitionMetadatas.isEmpty() || !dataMetadatas.isEmpty()) {
+                    // Get the existing metadata based on the names and uris
+                    final Map<String, ObjectNode> definitionMap = getDefinitionMetadataMap(names);
+                    final Map<String, ObjectNode> dataMap = getDataMetadataMap(uris);
+                    // Curate the list of existing and new metadatas
+                    final List<Object[]> insertDefinitionMetadatas = Lists.newArrayList();
+                    final List<Object[]> updateDefinitionMetadatas = Lists.newArrayList();
+                    final List<Object[]> insertDataMetadatas = Lists.newArrayList();
+                    final List<Object[]> updateDataMetadatas = Lists.newArrayList();
+                    definitionMetadatas.stream().forEach(oDef -> {
+                        final QualifiedName qualifiedName = oDef.getDefinitionName();
+                        if (qualifiedName != null && oDef.getDefinitionMetadata() != null
+                            && oDef.getDefinitionMetadata().size() != 0) {
+                            final String name = qualifiedName.toString();
+                            final ObjectNode oNode = definitionMap.get(name);
+                            if (oNode == null) {
+                                insertDefinitionMetadatas
+                                    .add(
+                                        new Object[]{
+                                            metacatJson.toJsonString(oDef.getDefinitionMetadata()),
+                                            user,
+                                            user,
+                                            name,
+                                        }
+                                    );
+                            } else {
+                                metacatJson.mergeIntoPrimary(oNode, oDef.getDefinitionMetadata());
+                                updateDefinitionMetadatas
+                                    .add(new Object[]{
+                                            metacatJson.toJsonString(oNode),
+                                            user,
+                                            name,
+                                        }
+                                    );
                             }
                         }
                     });
-                    if (!definitionMetadatas.isEmpty() || !dataMetadatas.isEmpty()) {
-                        // Get the existing metadata based on the names and uris
-                        final Map<String, ObjectNode> definitionMap = getDefinitionMetadataMap(names);
-                        final Map<String, ObjectNode> dataMap = getDataMetadataMap(uris);
-                        // Curate the list of existing and new metadatas
-                        final List<Object[]> insertDefinitionMetadatas = Lists.newArrayList();
-                        final List<Object[]> updateDefinitionMetadatas = Lists.newArrayList();
-                        final List<Object[]> insertDataMetadatas = Lists.newArrayList();
-                        final List<Object[]> updateDataMetadatas = Lists.newArrayList();
-                        definitionMetadatas.stream().forEach(oDef -> {
-                            final QualifiedName qualifiedName = oDef.getDefinitionName();
-                            if (qualifiedName != null && oDef.getDefinitionMetadata() != null
-                                && oDef.getDefinitionMetadata().size() != 0) {
-                                final String name = qualifiedName.toString();
-                                final ObjectNode oNode = definitionMap.get(name);
-                                if (oNode == null) {
-                                    insertDefinitionMetadatas
-                                        .add(
-                                            new Object[]{
-                                                metacatJson.toJsonString(oDef.getDefinitionMetadata()),
-                                                user,
-                                                user,
-                                                name,
-                                            }
-                                        );
-                                } else {
-                                    metacatJson.mergeIntoPrimary(oNode, oDef.getDefinitionMetadata());
-                                    updateDefinitionMetadatas
-                                        .add(new Object[]{
-                                                metacatJson.toJsonString(oNode),
-                                                user,
-                                                name,
-                                            }
-                                        );
-                                }
+                    dataMetadatas.stream().forEach(oData -> {
+                        final String uri = oData.getDataUri();
+                        final ObjectNode oNode = dataMap.get(uri);
+                        if (oData.getDataMetadata() != null && oData.getDataMetadata().size() != 0) {
+                            if (oNode == null) {
+                                insertDataMetadatas.add(
+                                    new Object[]{
+                                        metacatJson.toJsonString(oData.getDataMetadata()),
+                                        user,
+                                        user,
+                                        uri,
+                                    }
+                                );
+                            } else {
+                                metacatJson.mergeIntoPrimary(oNode, oData.getDataMetadata());
+                                updateDataMetadatas
+                                    .add(new Object[]{metacatJson.toJsonString(oNode), user, uri});
                             }
-                        });
-                        dataMetadatas.stream().forEach(oData -> {
-                            final String uri = oData.getDataUri();
-                            final ObjectNode oNode = dataMap.get(uri);
-                            if (oData.getDataMetadata() != null && oData.getDataMetadata().size() != 0) {
-                                if (oNode == null) {
-                                    insertDataMetadatas.add(
-                                        new Object[]{
-                                            metacatJson.toJsonString(oData.getDataMetadata()),
-                                            user,
-                                            user,
-                                            uri,
-                                        }
-                                    );
-                                } else {
-                                    metacatJson.mergeIntoPrimary(oNode, oData.getDataMetadata());
-                                    updateDataMetadatas
-                                        .add(new Object[]{metacatJson.toJsonString(oNode), user, uri});
-                                }
-                            }
-                        });
-                        //Now run the queries
-                        final QueryRunner runner = new QueryRunner();
-                        if (!insertDefinitionMetadatas.isEmpty()) {
-                            runner.batch(conn, SQL.INSERT_DEFINITION_METADATA, insertDefinitionMetadatas
-                                .toArray(new Object[insertDefinitionMetadatas.size()][4]));
                         }
-                        if (!updateDefinitionMetadatas.isEmpty()) {
-                            runner.batch(conn, SQL.UPDATE_DEFINITION_METADATA, updateDefinitionMetadatas
-                                .toArray(new Object[updateDefinitionMetadatas.size()][3]));
-                        }
-                        if (!insertDataMetadatas.isEmpty()) {
-                            runner.batch(conn, SQL.INSERT_DATA_METADATA,
-                                insertDataMetadatas.toArray(new Object[insertDataMetadatas.size()][4]));
-                        }
-                        if (!updateDataMetadatas.isEmpty()) {
-                            runner.batch(conn, SQL.UPDATE_DATA_METADATA,
-                                updateDataMetadatas.toArray(new Object[updateDataMetadatas.size()][3]));
-                        }
+                    });
+                    if (!insertDefinitionMetadatas.isEmpty()) {
+                        MySqlServiceUtil.batchUpdateValues(jdbcUtil,
+                            SQL.INSERT_DEFINITION_METADATA, insertDefinitionMetadatas);
+                    }
+                    if (!updateDefinitionMetadatas.isEmpty()) {
+                        MySqlServiceUtil.batchUpdateValues(jdbcUtil,
+                            SQL.UPDATE_DEFINITION_METADATA, updateDefinitionMetadatas);
+                    }
+                    if (!insertDataMetadatas.isEmpty()) {
+                        MySqlServiceUtil.batchUpdateValues(jdbcUtil,
+                            SQL.INSERT_DATA_METADATA, insertDataMetadatas);
+                    }
+                    if (!updateDataMetadatas.isEmpty()) {
+                        MySqlServiceUtil.batchUpdateValues(jdbcUtil,
+                            SQL.UPDATE_DATA_METADATA, updateDataMetadatas);
                     }
                 }
-                conn.commit();
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.close();
             }
-        } catch (SQLException e) {
+        } catch (DataAccessException e) {
             log.error("Sql exception", e);
             throw new UserMetadataServiceException("Failed to save metadata", e);
         }
@@ -701,10 +715,9 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             query.append(limit);
         }
         final Object[] params = new Object[paramList.size()];
-        final Connection connection = DBUtil.getReadConnection(poolingDataSource);
         try {
             // Handler for reading the result set
-            final ResultSetHandler<Void> handler = rs -> {
+            final ResultSetExtractor<Void> handler = rs -> {
                 while (rs.next()) {
                     final String definitionName = rs.getString("name");
                     final String data = rs.getString("data");
@@ -715,17 +728,16 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 }
                 return null;
             };
-            new QueryRunner().query(connection, query.toString(), handler, paramList.toArray(params));
-        } catch (SQLException e) {
-            log.error("Sql exception", e);
+            jdbcUtil.getJdbcTemplate().query(query.toString(), paramList.toArray(params), handler);
+        } catch (DataAccessException e) {
+            log.error("DataAccessException exception", e);
             throw new UserMetadataServiceException("Failed to get definition data", e);
-        } finally {
-            DBUtil.closeReadConnection(connection);
         }
         return result;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<QualifiedName> searchByOwners(final Set<String> owners) {
         final List<QualifiedName> result = Lists.newArrayList();
         final StringBuilder query = new StringBuilder(SQL.SEARCH_DEFINITION_METADATA_NAMES);
@@ -736,83 +748,36 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             paramList.add("%\"userId\":\"" + s.trim() + "\"%");
         });
         final Object[] params = new Object[paramList.size()];
-        final Connection connection = DBUtil.getReadConnection(poolingDataSource);
         try {
             // Handler for reading the result set
-            final ResultSetHandler<Void> handler = rs -> {
+            final ResultSetExtractor<Void> handler = rs -> {
                 while (rs.next()) {
                     final String definitionName = rs.getString("name");
                     result.add(QualifiedName.fromString(definitionName, false));
                 }
                 return null;
             };
-            new QueryRunner().query(connection, query.toString(), handler, paramList.toArray(params));
-        } catch (SQLException e) {
+            jdbcUtil.getJdbcTemplate().query(query.toString(), paramList.toArray(params), handler);
+        } catch (DataAccessException e) {
             log.error("Sql exception", e);
             throw new UserMetadataServiceException("Failed to get definition data", e);
-        } finally {
-            DBUtil.closeReadConnection(connection);
         }
         return result;
 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<String> getDeletedDataMetadataUris(final Date deletedPriorTo, final Integer offset,
                                                    final Integer limit) {
-        List<String> result;
-        final Connection connection = DBUtil.getReadConnection(poolingDataSource);
         try {
-            final ColumnListHandler<String> handler = new ColumnListHandler<>("uri");
-            result = new QueryRunner().query(connection,
-                String.format(SQL.GET_DELETED_DATA_METADATA_URI, offset, limit),
-                handler, deletedPriorTo);
-        } catch (SQLException e) {
-            log.error("Sql exception", e);
+            return jdbcUtil.getJdbcTemplate().query(String.format(SQL.GET_DELETED_DATA_METADATA_URI, offset, limit),
+                new Object[]{deletedPriorTo}, (rs, rowNum) -> rs.getString("uri"));
+        } catch (DataAccessException e) {
+            log.error("DataAccessException exception", e);
             throw new UserMetadataServiceException(
                 String.format("Failed to get deleted data metadata uris deleted prior to %s", deletedPriorTo), e);
-        } finally {
-            DBUtil.closeReadConnection(connection);
         }
-        return result;
-    }
-
-    @Override
-    public void start() throws Exception {
-        //
-        //Initialize properties
-        initProperties();
-
-        //
-        // Finally, we create the PoolingDriver itself,
-        // passing in the object pool we created.
-        //
-        dataSourceManager.load(NAME_DATASOURCE, connectionProperties);
-        poolingDataSource = dataSourceManager.get(NAME_DATASOURCE);
-    }
-
-    private void initProperties() throws Exception {
-        final String configLocation =
-            System.getProperty(METACAT_USERMETADATA_CONFIG_LOCATION, "usermetadata.properties");
-        final URL url = Thread.currentThread().getContextClassLoader().getResource(configLocation);
-        final Path filePath;
-        if (url != null) {
-            filePath = Paths.get(url.toURI());
-        } else {
-            filePath = FileSystems.getDefault().getPath(configLocation);
-        }
-        Preconditions
-            .checkState(filePath != null, "Unable to read from user metadata config file '%s'", configLocation);
-
-        connectionProperties = new Properties();
-        try (Reader reader = Files.newBufferedReader(filePath, Charsets.UTF_8)) {
-            connectionProperties.load(reader);
-        }
-    }
-
-    @Override
-    public void stop() throws Exception {
-        dataSourceManager.close();
     }
 
     private static class SQL {

@@ -19,9 +19,7 @@ package com.netflix.metacat.common.server.connectors.exception;
 
 import com.netflix.metacat.common.QualifiedName;
 import lombok.Getter;
-import lombok.NonNull;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -33,17 +31,17 @@ import javax.annotation.Nullable;
 public abstract class AlreadyExistsException extends ConnectorException {
     private QualifiedName name;
 
-    protected AlreadyExistsException(@Nonnull @NonNull final QualifiedName name) {
+    protected AlreadyExistsException(final QualifiedName name) {
         this(name, null);
     }
 
-    protected AlreadyExistsException(@Nonnull @NonNull final QualifiedName name, @Nullable final Throwable cause) {
+    protected AlreadyExistsException(final QualifiedName name, @Nullable final Throwable cause) {
         this(name, cause, false, false);
     }
 
     protected AlreadyExistsException(
         final QualifiedName name,
-        final Throwable cause,
+        @Nullable final Throwable cause,
         final boolean enableSuppression,
         final boolean writableStackTrace
     ) {
@@ -54,7 +52,7 @@ public abstract class AlreadyExistsException extends ConnectorException {
     protected AlreadyExistsException(
         final QualifiedName name,
         final String message,
-        final Throwable cause,
+        @Nullable final Throwable cause,
         final boolean enableSuppression,
         final boolean writableStackTrace
     ) {

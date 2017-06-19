@@ -18,12 +18,7 @@
 
 package com.netflix.metacat.common.server.connectors;
 
-import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.spectator.api.Registry;
-import lombok.NonNull;
-
-import javax.annotation.Nonnull;
-import java.util.Map;
+import com.netflix.metacat.common.server.util.ConnectorContext;
 
 /**
  * Plugin interface implemented by Connectors.
@@ -43,17 +38,13 @@ public interface ConnectorPlugin {
     /**
      * Returns the service implementation for the type.
      *
-     * @param config        System config
      * @param connectorName connector name. This is also the catalog name.
-     * @param configuration configuration properties
-     * @param registry      registry for spectator
+     * @param connectorContext      registry for spectator
      * @return connector factory
      */
     ConnectorFactory create(
-        @Nonnull Config config,
-        @Nonnull String connectorName,
-        @Nonnull Map<String, String> configuration,
-        @Nonnull @NonNull Registry registry
+        String connectorName,
+        ConnectorContext connectorContext
     );
 
     /**

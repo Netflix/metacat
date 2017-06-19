@@ -19,6 +19,8 @@ package com.netflix.metacat.common.server.usermetadata;
 
 import com.netflix.metacat.common.server.model.Lookup;
 
+import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -33,7 +35,10 @@ public interface LookupService {
      * @param name lookup name
      * @return lookup
      */
-    Lookup get(String name);
+    @Nullable
+    default Lookup get(final String name) {
+        return null;
+    }
 
     /**
      * Returns the value of the lookup name.
@@ -41,7 +46,9 @@ public interface LookupService {
      * @param name lookup name
      * @return scalar lookup value
      */
-    String getValue(String name);
+    default String getValue(final String name) {
+        return null;
+    }
 
     /**
      * Returns the list of values of the lookup name.
@@ -49,7 +56,9 @@ public interface LookupService {
      * @param name lookup name
      * @return list of lookup values
      */
-    Set<String> getValues(String name);
+    default Set<String> getValues(final String name) {
+        return Collections.emptySet();
+    }
 
     /**
      * Returns the list of values of the lookup name.
@@ -57,7 +66,9 @@ public interface LookupService {
      * @param lookupId lookup id
      * @return list of lookup values
      */
-    Set<String> getValues(Long lookupId);
+    default Set<String> getValues(final Long lookupId) {
+        return Collections.emptySet();
+    }
 
     /**
      * Saves the lookup value.
@@ -66,7 +77,10 @@ public interface LookupService {
      * @param values multiple values
      * @return updated lookup
      */
-    Lookup setValues(String name, Set<String> values);
+    @Nullable
+    default Lookup setValues(final String name, final Set<String> values) {
+        return null;
+    }
 
     /**
      * Saves the lookup value.
@@ -75,7 +89,10 @@ public interface LookupService {
      * @param values multiple values
      * @return updated lookup
      */
-    Lookup addValues(String name, Set<String> values);
+    @Nullable
+    default Lookup addValues(final String name, final Set<String> values) {
+        return null;
+    }
 
     /**
      * Saves the lookup value.
@@ -84,5 +101,9 @@ public interface LookupService {
      * @param value lookup value
      * @return updated lookup
      */
-    Lookup setValue(String name, String value);
+    @Nullable
+    default Lookup setValue(final String name, final String value) {
+        return null;
+    }
+
 }

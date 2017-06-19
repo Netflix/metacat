@@ -23,7 +23,6 @@ import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 
@@ -44,9 +43,9 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<PartitionInfo> getPartitions(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName table,
-        @Nonnull final PartitionListRequest partitionsRequest
+        final ConnectorRequestContext context,
+        final QualifiedName table,
+        final PartitionListRequest partitionsRequest
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
@@ -61,9 +60,9 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default PartitionsSaveResponse savePartitions(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName table,
-        @Nonnull final PartitionsSaveRequest partitionsSaveRequest
+        final ConnectorRequestContext context,
+        final QualifiedName table,
+        final PartitionsSaveRequest partitionsSaveRequest
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
@@ -77,9 +76,9 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default void deletePartitions(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName tableName,
-        @Nonnull final List<String> partitionNames
+        final ConnectorRequestContext context,
+        final QualifiedName tableName,
+        final List<String> partitionNames
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
@@ -93,8 +92,8 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default int getPartitionCount(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName table
+        final ConnectorRequestContext context,
+        final QualifiedName table
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
@@ -109,8 +108,8 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default Map<String, List<QualifiedName>> getPartitionNames(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final List<String> uris,
+        final ConnectorRequestContext context,
+        final List<String> uris,
         final boolean prefixSearch
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
@@ -126,9 +125,9 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<String> getPartitionKeys(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName table,
-        @Nonnull final PartitionListRequest partitionsRequest
+        final ConnectorRequestContext context,
+        final QualifiedName table,
+        final PartitionListRequest partitionsRequest
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
@@ -143,9 +142,9 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<String> getPartitionUris(
-        @Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName table,
-        @Nonnull final PartitionListRequest partitionsRequest
+        final ConnectorRequestContext context,
+        final QualifiedName table,
+        final PartitionListRequest partitionsRequest
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }

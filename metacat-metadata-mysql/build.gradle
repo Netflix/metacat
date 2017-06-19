@@ -32,7 +32,6 @@ dependencies {
     compile("com.google.guava:guava")
     compile("org.apache.tomcat:tomcat-jdbc")
     compile("org.slf4j:slf4j-api")
-
     /*******************************
      * Provided Dependencies
      *******************************/
@@ -49,4 +48,5 @@ dependencies {
 
     testCompile("io.airlift:testing-mysql-server")
     testCompile(project(":metacat-testdata-provider"))
+    testRuntime("commons-logging:commons-logging")
 }

@@ -1,7 +1,7 @@
 package com.netflix.metacat.connector.s3
 
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException
@@ -24,7 +24,7 @@ class S3ConnectorDatabaseServiceSpec extends Specification {
         new S3ConnectorInfoConverter(new PigTypeConverter(), true, TypeRegistry.getTypeRegistry());
     S3ConnectorDatabaseService service =
         new S3ConnectorDatabaseService('s3', databaseDao, sourceDao, converter)
-    ConnectorContext context = new ConnectorContext(0, 'test')
+    ConnectorRequestContext context = new ConnectorRequestContext(0, 'test')
     QualifiedName databaseName = QualifiedName.ofDatabase('s3', 'd3')
 
     def testListViewNames(){

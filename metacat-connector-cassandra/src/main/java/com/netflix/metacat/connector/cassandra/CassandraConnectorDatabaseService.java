@@ -26,7 +26,7 @@ import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
@@ -70,7 +70,7 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
      */
     @Override
     public void create(
-        @Nonnull @NonNull final ConnectorContext context,
+        @Nonnull @NonNull final ConnectorRequestContext context,
         @Nonnull @NonNull final DatabaseInfo resource
     ) {
         final String keyspace = resource.getName().getDatabaseName();
@@ -93,7 +93,8 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
      * {@inheritDoc}
      */
     @Override
-    public void delete(@Nonnull @NonNull final ConnectorContext context, @Nonnull @NonNull final QualifiedName name) {
+    public void delete(@Nonnull @NonNull final ConnectorRequestContext context,
+                       @Nonnull @NonNull final QualifiedName name) {
         final String keyspace = name.getDatabaseName();
         log.debug("Attempting to drop Cassandra keyspace {} for request {}", keyspace, context);
         try {
@@ -110,7 +111,7 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
      */
     @Override
     public DatabaseInfo get(
-        @Nonnull @NonNull final ConnectorContext context,
+        @Nonnull @NonNull final ConnectorRequestContext context,
         @Nonnull @NonNull final QualifiedName name
     ) {
         final String keyspace = name.getDatabaseName();
@@ -134,7 +135,7 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
      */
     @Override
     public List<QualifiedName> listViewNames(
-        @Nonnull @NonNull final ConnectorContext context,
+        @Nonnull @NonNull final ConnectorRequestContext context,
         @Nonnull @NonNull final QualifiedName databaseName
     ) {
         final String catalogName = databaseName.getCatalogName();
@@ -167,7 +168,7 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
      */
     @Override
     public boolean exists(
-        @Nonnull @NonNull final ConnectorContext context,
+        @Nonnull @NonNull final ConnectorRequestContext context,
         @Nonnull @NonNull final QualifiedName name
     ) {
         final String keyspace = name.getDatabaseName();
@@ -187,7 +188,7 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
      */
     @Override
     public List<DatabaseInfo> list(
-        @Nonnull @NonNull final ConnectorContext context,
+        @Nonnull @NonNull final ConnectorRequestContext context,
         @Nonnull @NonNull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,
@@ -208,7 +209,7 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
      */
     @Override
     public List<QualifiedName> listNames(
-        @Nonnull @NonNull final ConnectorContext context,
+        @Nonnull @NonNull final ConnectorRequestContext context,
         @Nonnull @NonNull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,

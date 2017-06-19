@@ -22,8 +22,8 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
 import com.netflix.metacat.common.dto.HasMetadata;
 
-import javax.annotation.Nullable;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -41,6 +41,11 @@ public interface UserMetadataService {
      * Config location.
      */
     String METACAT_USERMETADATA_CONFIG_LOCATION = "metacat.usermetadata.config.location";
+
+    /**
+     * Datasource key.
+     */
+    String NAME_DATASOURCE = "metacat-usermetadata";
 
     /**
      * Delete data metadata for the given uris.
@@ -227,14 +232,6 @@ public interface UserMetadataService {
      */
     default int renameDefinitionMetadataKey(QualifiedName oldName, QualifiedName newName) {
         return 0;
-    }
-
-    /**
-     * Start the user metadata service.
-     *
-     * @throws Exception error
-     */
-    default void start() throws Exception {
     }
 
     /**

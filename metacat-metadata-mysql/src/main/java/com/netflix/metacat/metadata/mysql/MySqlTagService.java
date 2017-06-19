@@ -1,21 +1,20 @@
 /*
- * Copyright 2016 Netflix, Inc.
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *        http://www.apache.org/licenses/LICENSE-2.0
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *       Copyright 2017 Netflix, Inc.
+ *          Licensed under the Apache License, Version 2.0 (the "License");
+ *          you may not use this file except in compliance with the License.
+ *          You may obtain a copy of the License at
+ *              http://www.apache.org/licenses/LICENSE-2.0
+ *          Unless required by applicable law or agreed to in writing, software
+ *          distributed under the License is distributed on an "AS IS" BASIS,
+ *          WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *          See the License for the specific language governing permissions and
+ *          limitations under the License.
  */
 
-package com.netflix.metacat.usermetadata.mysql;
+package com.netflix.metacat.metadata.mysql;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.QualifiedName;
@@ -27,20 +26,25 @@ import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
-import com.netflix.metacat.common.server.util.DBUtil;
-import com.netflix.metacat.common.server.util.DataSourceManager;
+import com.netflix.metacat.common.server.util.JdbcUtil;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.dbutils.QueryRunner;
-import org.apache.commons.dbutils.ResultSetHandler;
-import org.apache.commons.dbutils.handlers.BeanHandler;
-import org.apache.commons.dbutils.handlers.ColumnListHandler;
-import org.apache.commons.dbutils.handlers.ScalarHandler;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.transaction.CannotCreateTransactionException;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Iterator;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,6 +55,7 @@ import java.util.stream.Collectors;
  * Tag service implementation.
  */
 @Slf4j
+@SuppressFBWarnings
 public class MySqlTagService implements TagService {
     /**
      * Lookup name for tag.
@@ -83,36 +88,32 @@ public class MySqlTagService implements TagService {
     //    private static final String SQL_GET_LOOKUP_VALUES_BY_NAME =
 //        "select lv.tags_string value from tag_item l, tag_item_tags lv where l.id=lv.tag_item_id and l.name=?";
     private final Config config;
-    private final DataSourceManager dataSourceManager;
     private final LookupService lookupService;
     private final MetacatJson metacatJson;
     private final UserMetadataService userMetadataService;
+    private JdbcUtil jdbcUtil;
 
     /**
      * Constructor.
      *
      * @param config              config
-     * @param dataSourceManager   manager
+     * @param dataSource          data source
      * @param lookupService       lookup service
      * @param metacatJson         json util
      * @param userMetadataService user metadata service
      */
     public MySqlTagService(
         final Config config,
-        final DataSourceManager dataSourceManager,
+        final DataSource dataSource,
         final LookupService lookupService,
         final MetacatJson metacatJson,
         final UserMetadataService userMetadataService
     ) {
         this.config = Preconditions.checkNotNull(config, "config is required");
-        this.dataSourceManager = Preconditions.checkNotNull(dataSourceManager, "dataSourceManager is required");
+        this.jdbcUtil = new JdbcUtil(dataSource);
         this.lookupService = Preconditions.checkNotNull(lookupService, "lookupService is required");
         this.metacatJson = Preconditions.checkNotNull(metacatJson, "metacatJson is required");
         this.userMetadataService = Preconditions.checkNotNull(userMetadataService, "userMetadataService is required");
-    }
-
-    private DataSource getDataSource() {
-        return dataSourceManager.get(MysqlUserMetadataService.NAME_DATASOURCE);
     }
 
     private Lookup addTags(final Set<String> tags) {
@@ -142,23 +143,32 @@ public class MySqlTagService implements TagService {
      * @param name tag name
      * @return TagItem
      */
+    @Transactional(readOnly = true)
     public TagItem get(final String name) {
-        TagItem result = null;
-        final Connection connection = DBUtil.getReadConnection(getDataSource());
         try {
-            final ResultSetHandler<TagItem> handler = new BeanHandler<>(TagItem.class);
-            result = new QueryRunner().query(connection, SQL_GET_TAG_ITEM, handler, name);
-            if (result != null) {
-                result.setValues(getValues(result.getId()));
-            }
-        } catch (Exception e) {
-            final String message = String.format("Failed to get the tag item for name %s", name);
+            return jdbcUtil.getJdbcTemplate().queryForObject(
+                SQL_GET_TAG_ITEM,
+                new Object[]{name},
+                (rs, rowNum) -> {
+                    final TagItem tagItem = new TagItem();
+                    tagItem.setId(rs.getLong("id"));
+                    tagItem.setName(rs.getString("name"));
+                    tagItem.setCreatedBy(rs.getString("createdBy"));
+                    tagItem.setLastUpdated(rs.getDate("lastUpdated"));
+                    tagItem.setLastUpdatedBy(rs.getString("lastUpdatedBy"));
+                    tagItem.setDateCreated(rs.getDate("dateCreated"));
+                    tagItem.setValues(getValues(rs.getLong("id")));
+                    return tagItem;
+
+                });
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        } catch (DataAccessException e) {
+            final String message = String.format("Failed to get the tag for name %s", name);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
-        } finally {
-            DBUtil.closeReadConnection(connection);
         }
-        return result;
+
     }
 
     /**
@@ -168,29 +178,47 @@ public class MySqlTagService implements TagService {
      * @return list of tags
      */
     private Set<String> getValues(final Long tagItemId) {
-        final Connection connection = DBUtil.getReadConnection(getDataSource());
         try {
-            return new QueryRunner().query(connection, SQL_GET_TAG_ITEM_TAGS, rs -> {
-                final Set<String> result = Sets.newHashSet();
-                while (rs.next()) {
-                    result.add(rs.getString("value"));
-                }
-                return result;
-            }, tagItemId);
-        } catch (Exception e) {
+            return MySqlServiceUtil.getValues(jdbcUtil, SQL_GET_TAG_ITEM_TAGS, tagItemId);
+        } catch (EmptyResultDataAccessException e) {
+            return Sets.newHashSet();
+        } catch (DataAccessException e) {
             final String message = String.format("Failed to get the tags for id %s", tagItemId);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
-        } finally {
-            DBUtil.closeReadConnection(connection);
         }
     }
 
-    private TagItem findOrCreateTagItemByName(final String name, final Connection conn) throws SQLException {
+    /**
+     * findOrCreateTagItemByName.
+     *
+     * @param name name to find or create
+     * @return Tag Item
+     * @throws SQLException sql exception
+     */
+    @Transactional
+    public TagItem findOrCreateTagItemByName(final String name) throws SQLException {
         TagItem result = get(name);
         if (result == null) {
-            final Object[] params = {name, config.getTagServiceUserAdmin(), config.getTagServiceUserAdmin()};
-            final Long id = new QueryRunner().insert(conn, SQL_INSERT_TAG_ITEM, new ScalarHandler<>(1), params);
+            final KeyHolder holder = new GeneratedKeyHolder();
+            jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                protected void doInTransactionWithoutResult(final TransactionStatus status) {
+                    jdbcUtil.getJdbcTemplate().update(new PreparedStatementCreator() {
+                        @Override
+                        public PreparedStatement createPreparedStatement(final Connection connection)
+                            throws SQLException {
+                            final PreparedStatement ps = connection.prepareStatement(SQL_INSERT_TAG_ITEM,
+                                Statement.RETURN_GENERATED_KEYS);
+                            ps.setString(1, name);
+                            ps.setString(2, config.getTagServiceUserAdmin());
+                            ps.setString(3, config.getTagServiceUserAdmin());
+                            return ps;
+                        }
+                    }, holder);
+                }
+            });
+            final Long id = holder.getKey().longValue();
             result = new TagItem();
             result.setName(name);
             result.setId(id);
@@ -199,91 +227,84 @@ public class MySqlTagService implements TagService {
     }
 
     @Override
-    public Void rename(final QualifiedName name, final String newTableName) {
+    @Transactional
+    public void rename(final QualifiedName name, final String newTableName) {
         try {
-            final Connection conn = getDataSource().getConnection();
-            try {
-                final QualifiedName newName = QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(),
-                    newTableName);
-                new QueryRunner().update(conn, SQL_UPDATE_TAG_ITEM, newName.toString(), name.toString());
-                conn.commit();
-            } catch (Exception e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.close();
-            }
-        } catch (SQLException e) {
+            final QualifiedName newName = QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(),
+                newTableName);
+            jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                protected void doInTransactionWithoutResult(final TransactionStatus status) {
+                    jdbcUtil.getJdbcTemplate().update(SQL_UPDATE_TAG_ITEM, newName.toString(), name.toString());
+                }
+            });
+
+        } catch (DataAccessException e) {
             final String message = String.format("Failed to rename item name %s", name);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
         }
-        return null;
     }
 
     @Override
-    public Void delete(final QualifiedName name, final boolean updateUserMetadata) {
+    @Transactional
+    public void delete(final QualifiedName name, final boolean updateUserMetadata) {
         try {
-            final Connection conn = getDataSource().getConnection();
-            try {
-                new QueryRunner().update(conn, SQL_DELETE_TAG_ITEM_TAGS_BY_NAME, name.toString());
-                new QueryRunner().update(conn, SQL_DELETE_TAG_ITEM, name.toString());
-                if (updateUserMetadata) {
-                    // Set the tags in user metadata
-                    final Map<String, Set<String>> data = Maps.newHashMap();
-                    data.put(NAME_TAGS, Sets.newHashSet());
-                    userMetadataService
-                        .saveDefinitionMetadata(name, "admin", Optional.of(metacatJson.toJsonObject(data)),
-                            true);
+            jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                protected void doInTransactionWithoutResult(final TransactionStatus status) {
+                    jdbcUtil.getJdbcTemplate().update(SQL_DELETE_TAG_ITEM_TAGS_BY_NAME, name.toString());
+                    jdbcUtil.getJdbcTemplate().update(SQL_DELETE_TAG_ITEM, name.toString());
+                    if (updateUserMetadata) {
+                        // Set the tags in user metadata
+                        final Map<String, Set<String>> data = Maps.newHashMap();
+                        data.put(NAME_TAGS, Sets.newHashSet());
+                        userMetadataService
+                            .saveDefinitionMetadata(name, "admin", Optional.of(metacatJson.toJsonObject(data)),
+                                true);
+                    }
                 }
-                conn.commit();
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.close();
-            }
-        } catch (SQLException e) {
+            });
+
+        } catch (DataAccessException e) {
             final String message = String.format("Failed to delete all tags for name %s", name);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
         }
-        return null;
     }
 
-    private void remove(final QualifiedName name, final Set<String> tags, final boolean updateUserMetadata) {
+    /**
+     * remove.
+     *
+     * @param name               qualifiedName
+     * @param tags               tags
+     * @param updateUserMetadata flag to update user metadata
+     */
+    @Transactional
+    public void remove(final QualifiedName name, final Set<String> tags, final boolean updateUserMetadata) {
         try {
-            final Connection conn = getDataSource().getConnection();
-            try {
-                remove(conn, name, tags, updateUserMetadata);
-                conn.commit();
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.close();
-            }
-        } catch (SQLException e) {
+            jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                protected void doInTransactionWithoutResult(final TransactionStatus status) {
+                    jdbcUtil.getJdbcTemplate()
+                        .update(String.format(SQL_DELETE_TAG_ITEM_TAGS_BY_NAME_TAGS,
+                            "'" + Joiner.on("','").skipNulls().join(tags) + "'"),
+                            name.toString());
+                    if (updateUserMetadata) {
+                        final TagItem tagItem = get(name);
+                        tagItem.getValues().removeAll(tags);
+                        final Map<String, Set<String>> data = Maps.newHashMap();
+                        data.put(NAME_TAGS, tagItem.getValues());
+                        userMetadataService
+                            .saveDefinitionMetadata(name, "admin", Optional.of(metacatJson.toJsonObject(data)),
+                                true);
+                    }
+                }
+            });
+        } catch (DataAccessException e) {
             final String message = String.format("Failed to remove tags for name %s", name);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
-        }
-    }
-
-    private void remove(final Connection conn, final QualifiedName name, final Set<String> tags,
-                        final boolean updateUserMetadata)
-        throws SQLException {
-        new QueryRunner().update(conn,
-            String.format(SQL_DELETE_TAG_ITEM_TAGS_BY_NAME_TAGS, "'" + Joiner.on("','").skipNulls().join(tags) + "'"),
-            name.toString());
-        if (updateUserMetadata) {
-            final TagItem tagItem = get(name);
-            tagItem.getValues().removeAll(tags);
-            final Map<String, Set<String>> data = Maps.newHashMap();
-            data.put(NAME_TAGS, tagItem.getValues());
-            userMetadataService
-                .saveDefinitionMetadata(name, "admin", Optional.of(metacatJson.toJsonObject(data)),
-                    true);
         }
     }
 
@@ -309,6 +330,7 @@ public class MySqlTagService implements TagService {
      * @return list of qualified names of the items
      */
     @Override
+    @Transactional(readOnly = true)
     public List<QualifiedName> list(
         @Nullable final Set<String> includeTags,
         @Nullable final Set<String> excludeTags,
@@ -318,34 +340,30 @@ public class MySqlTagService implements TagService {
     ) {
         Set<String> includedNames = Sets.newHashSet();
         final Set<String> excludedNames = Sets.newHashSet();
-        final Connection connection = DBUtil.getReadConnection(getDataSource());
+        final String wildCardName = QualifiedName.toWildCardString(sourceName, databaseName, tableName);
+        //Includes
+        final Set<String> localIncludes = includeTags != null ? includeTags : Sets.newHashSet();
         try {
-            final QueryRunner runner = new QueryRunner();
-            final String wildCardName = QualifiedName.toWildCardString(sourceName, databaseName, tableName);
-            //Includes
-            final Set<String> localIncludes = includeTags != null ? includeTags : Sets.newHashSet();
             String query
                 = String.format(QUERY_SEARCH, "in ('" + Joiner.on("','").skipNulls().join(localIncludes) + "')");
             final Object[] params = {localIncludes.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
-            includedNames.addAll(runner.query(connection, query, new ColumnListHandler<>("name"), params));
+            includedNames.addAll(jdbcUtil.getJdbcTemplate().query(query, params, (rs, rowNum) -> rs.getString("name")));
             if (excludeTags != null && !excludeTags.isEmpty()) {
                 //Excludes
                 query = String.format(QUERY_SEARCH, "in ('" + Joiner.on("','").skipNulls().join(excludeTags) + "')");
                 final Object[] eParams = {excludeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
-                excludedNames.addAll(runner.query(connection, query, new ColumnListHandler<>("name"), eParams));
+                excludedNames.addAll(jdbcUtil.getJdbcTemplate()
+                    .query(query, eParams, (rs, rowNum) -> rs.getString("name")));
             }
-        } catch (SQLException e) {
+        } catch (DataAccessException e) {
             final String message = String.format("Failed getting the list of qualified names for tags %s", includeTags);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
-        } finally {
-            DBUtil.closeReadConnection(connection);
         }
 
         if (excludeTags != null && !excludeTags.isEmpty()) {
             includedNames = Sets.difference(includedNames, excludedNames);
         }
-
         return includedNames.stream().map(s -> QualifiedName.fromString(s, false)).collect(Collectors.toList());
     }
 
@@ -359,26 +377,26 @@ public class MySqlTagService implements TagService {
      * @return list of qualified names of the items
      */
     @Override
+    @Transactional(readOnly = true)
     public List<QualifiedName> search(
         @Nullable final String tag,
         @Nullable final String sourceName,
         @Nullable final String databaseName,
         @Nullable final String tableName
     ) {
-        final Connection connection = DBUtil.getReadConnection(getDataSource());
+        final Set<String> result = Sets.newHashSet();
         try {
             final String wildCardName = QualifiedName.toWildCardString(sourceName, databaseName, tableName);
             //Includes
             final String query = String.format(QUERY_SEARCH, "like ?");
             final Object[] params = {tag == null ? 1 : 0, tag + "%", wildCardName == null ? 1 : 0, wildCardName};
-            return new QueryRunner().query(connection, query, new ColumnListHandler<>("name"), params);
-        } catch (SQLException e) {
+            result.addAll(jdbcUtil.getJdbcTemplate().query(query, params, (rs, rowNum) -> rs.getString("name")));
+        } catch (DataAccessException e) {
             final String message = String.format("Failed getting the list of qualified names for tag %s", tag);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
-        } finally {
-            DBUtil.closeReadConnection(connection);
         }
+        return result.stream().map(s -> QualifiedName.fromString(s)).collect(Collectors.toList());
     }
 
     /**
@@ -389,45 +407,50 @@ public class MySqlTagService implements TagService {
      * @return return the complete list of tags associated with the table
      */
     @Override
+    @Transactional
     public Set<String> setTableTags(final QualifiedName name, final Set<String> tags,
                                     final boolean updateUserMetadata) {
         addTags(tags);
         try {
-            final Connection conn = getDataSource().getConnection();
-            try {
-                final TagItem tagItem = findOrCreateTagItemByName(name.toString(), conn);
-                final Set<String> inserts;
-                Set<String> deletes = Sets.newHashSet();
-                Set<String> values = tagItem.getValues();
-                if (values == null || values.isEmpty()) {
-                    inserts = tags;
-                } else {
-                    inserts = Sets.difference(tags, values).immutableCopy();
-                    deletes = Sets.difference(values, tags).immutableCopy();
+            jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                protected void doInTransactionWithoutResult(final TransactionStatus status) {
+                    TagItem tagItem = null;
+                    try {
+                        tagItem = findOrCreateTagItemByName(name.toString());
+                    } catch (SQLException e) {
+                        throw new CannotCreateTransactionException(
+                            "findOrCreateTagItemByName failed " + name.toString(), e);
+                    }
+                    final Set<String> inserts;
+                    Set<String> deletes = Sets.newHashSet();
+                    Set<String> values = tagItem.getValues();
+                    if (values == null || values.isEmpty()) {
+                        inserts = tags;
+                    } else {
+                        inserts = Sets.difference(tags, values).immutableCopy();
+                        deletes = Sets.difference(values, tags).immutableCopy();
+                    }
+                    values = tags;
+                    if (!inserts.isEmpty()) {
+                        insertTagItemTags(tagItem.getId(), inserts);
+                    }
+                    if (!deletes.isEmpty()) {
+                        removeTagItemTags(tagItem.getId(), deletes);
+                    }
+                    if (updateUserMetadata) {
+                        // Set the tags in user metadata
+                        final Map<String, Set<String>> data = Maps.newHashMap();
+                        data.put(NAME_TAGS, values);
+                        userMetadataService
+                            .saveDefinitionMetadata(name, "admin", Optional.of(metacatJson.toJsonObject(data)),
+                                true);
+                    }
                 }
-                values = tags;
-                if (!inserts.isEmpty()) {
-                    insertTagItemTags(tagItem.getId(), inserts, conn);
-                }
-                if (!deletes.isEmpty()) {
-                    removeTagItemTags(tagItem.getId(), deletes, conn);
-                }
-                if (updateUserMetadata) {
-                    // Set the tags in user metadata
-                    final Map<String, Set<String>> data = Maps.newHashMap();
-                    data.put(NAME_TAGS, values);
-                    this.userMetadataService
-                        .saveDefinitionMetadata(name, "admin", Optional.of(metacatJson.toJsonObject(data)),
-                            true);
-                }
-                conn.commit();
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.close();
-            }
-        } catch (SQLException e) {
+            });
+
+
+        } catch (CannotCreateTransactionException | DataAccessException e) {
             final String message = String.format("Failed to remove tags for name %s", name);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
@@ -435,20 +458,12 @@ public class MySqlTagService implements TagService {
         return tags;
     }
 
-    private void removeTagItemTags(final Long id, final Set<String> tags, final Connection conn) throws SQLException {
-        new QueryRunner()
-            .update(conn, String.format(SQL_DELETE_TAG_ITEM_TAGS, "'" + Joiner.on("','").skipNulls().join(tags) + "'"),
-                id);
+    private void removeTagItemTags(final Long id, final Set<String> tags) throws DataAccessException {
+        MySqlServiceUtil.batchDeleteValues(jdbcUtil, SQL_DELETE_TAG_ITEM_TAGS, id, tags);
     }
 
-    private void insertTagItemTags(final Long id, final Set<String> tags, final Connection conn) throws SQLException {
-        final Object[][] params = new Object[tags.size()][];
-        final Iterator<String> iter = tags.iterator();
-        int index = 0;
-        while (iter.hasNext()) {
-            params[index++] = ImmutableList.of(id, iter.next()).toArray();
-        }
-        new QueryRunner().batch(conn, SQL_INSERT_TAG_ITEM_TAGS, params);
+    private void insertTagItemTags(final Long id, final Set<String> tags) throws DataAccessException {
+        MySqlServiceUtil.batchInsertValues(jdbcUtil, SQL_INSERT_TAG_ITEM_TAGS, id, tags);
     }
 
     /**
@@ -459,13 +474,12 @@ public class MySqlTagService implements TagService {
      * @param tags      list of tags to be removed for the given table
      */
     @Override
-    public Void removeTableTags(final QualifiedName name, final Boolean deleteAll,
+    public void removeTableTags(final QualifiedName name, final Boolean deleteAll,
                                 final Set<String> tags, final boolean updateUserMetadata) {
         if (deleteAll != null && deleteAll) {
             delete(name, updateUserMetadata);
         } else {
             remove(name, tags, updateUserMetadata);
         }
-        return null;
     }
 }

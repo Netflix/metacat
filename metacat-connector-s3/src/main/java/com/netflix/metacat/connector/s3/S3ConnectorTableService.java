@@ -23,7 +23,7 @@ import com.google.inject.persist.Transactional;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
@@ -64,23 +64,28 @@ public class S3ConnectorTableService implements ConnectorTableService {
 
     /**
      * Constructor.
-     * @param catalogName catalog name
-     * @param databaseDao database DAO impl
-     * @param tableDao table DAO impl
-     * @param fieldDao field DAO impl
+     *
+     * @param catalogName   catalog name
+     * @param databaseDao   database DAO impl
+     * @param tableDao      table DAO impl
+     * @param fieldDao      field DAO impl
      * @param infoConverter Converter for the S3 resources
      */
     @Inject
-    public S3ConnectorTableService(@Named("catalogName") final String catalogName, final DatabaseDao databaseDao,
-        final TableDao tableDao, final FieldDao fieldDao, final S3ConnectorInfoConverter infoConverter) {
+    public S3ConnectorTableService(@Named("catalogName") final String catalogName,
+                                   final DatabaseDao databaseDao,
+                                   final TableDao tableDao,
+                                   final FieldDao fieldDao,
+                                   final S3ConnectorInfoConverter infoConverter) {
         this.catalogName = catalogName;
         this.databaseDao = databaseDao;
         this.tableDao = tableDao;
         this.fieldDao = fieldDao;
         this.infoConverter = infoConverter;
     }
+
     @Override
-    public void create(@Nonnull final ConnectorContext context, @Nonnull final TableInfo tableInfo) {
+    public void create(@Nonnull final ConnectorRequestContext context, @Nonnull final TableInfo tableInfo) {
         log.debug("Start: Create table {}", tableInfo.getName());
         Preconditions.checkArgument(tableInfo.getSerde() == null
             || !Strings.isNullOrEmpty(tableInfo.getSerde().getOwner()), "Table owner is null or empty");
@@ -100,7 +105,7 @@ public class S3ConnectorTableService implements ConnectorTableService {
     }
 
     @Override
-    public void update(@Nonnull final ConnectorContext context, @Nonnull final TableInfo tableInfo) {
+    public void update(@Nonnull final ConnectorRequestContext context, @Nonnull final TableInfo tableInfo) {
         log.debug("Start: Update table {}", tableInfo.getName());
         final QualifiedName tableName = tableInfo.getName();
         final Table table = tableDao
@@ -179,7 +184,7 @@ public class S3ConnectorTableService implements ConnectorTableService {
     }
 
     @Override
-    public void delete(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public void delete(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         log.debug("Start: Delete table {}", name);
         final Table table = tableDao.getBySourceDatabaseTableName(catalogName,
             name.getDatabaseName(), name.getTableName());
@@ -191,7 +196,7 @@ public class S3ConnectorTableService implements ConnectorTableService {
     }
 
     @Override
-    public TableInfo get(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public TableInfo get(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         final Table table = tableDao.getBySourceDatabaseTableName(catalogName,
             name.getDatabaseName(), name.getTableName());
         if (table == null) {
@@ -202,13 +207,16 @@ public class S3ConnectorTableService implements ConnectorTableService {
     }
 
     @Override
-    public boolean exists(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public boolean exists(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         return tableDao.getBySourceDatabaseTableName(catalogName, name.getDatabaseName(), name.getTableName()) != null;
     }
 
     @Override
-    public List<TableInfo> list(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name,
-        @Nullable final QualifiedName prefix, @Nullable final Sort sort, @Nullable final Pageable pageable) {
+    public List<TableInfo> list(@Nonnull final ConnectorRequestContext context,
+                                @Nonnull final QualifiedName name,
+                                @Nullable final QualifiedName prefix,
+                                @Nullable final Sort sort,
+                                @Nullable final Pageable pageable) {
         log.debug("List tables for database {} with table name prefix {}", name, prefix);
         return tableDao.searchBySourceDatabaseTableName(catalogName, name.getDatabaseName(),
             prefix == null ? null : prefix.getTableName(), sort, pageable).stream()
@@ -217,8 +225,11 @@ public class S3ConnectorTableService implements ConnectorTableService {
     }
 
     @Override
-    public List<QualifiedName> listNames(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name,
-        @Nullable final QualifiedName prefix, @Nullable final Sort sort, @Nullable final Pageable pageable) {
+    public List<QualifiedName> listNames(@Nonnull final ConnectorRequestContext context,
+                                         @Nonnull final QualifiedName name,
+                                         @Nullable final QualifiedName prefix,
+                                         @Nullable final Sort sort,
+                                         @Nullable final Pageable pageable) {
         log.debug("List table names for database {} with table name prefix {}", name, prefix);
         return tableDao.searchBySourceDatabaseTableName(catalogName, name.getDatabaseName(),
             prefix == null ? null : prefix.getTableName(), sort, pageable).stream()
@@ -227,8 +238,9 @@ public class S3ConnectorTableService implements ConnectorTableService {
     }
 
     @Override
-    public void rename(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName oldName,
-        @Nonnull final QualifiedName newName) {
+    public void rename(@Nonnull final ConnectorRequestContext context,
+                       @Nonnull final QualifiedName oldName,
+                       @Nonnull final QualifiedName newName) {
         log.debug("Start: Rename table {} with {}", oldName, newName);
         final Table oldTable = tableDao.getBySourceDatabaseTableName(catalogName,
             oldName.getDatabaseName(), oldName.getTableName());
@@ -247,8 +259,9 @@ public class S3ConnectorTableService implements ConnectorTableService {
     }
 
     @Override
-    public Map<String, List<QualifiedName>> getTableNames(@Nonnull final ConnectorContext context,
-        @Nonnull final List<String> uris, final boolean prefixSearch) {
+    public Map<String, List<QualifiedName>> getTableNames(@Nonnull final ConnectorRequestContext context,
+                                                          @Nonnull final List<String> uris,
+                                                          final boolean prefixSearch) {
         return tableDao.getByUris(catalogName, uris, prefixSearch);
     }
 }

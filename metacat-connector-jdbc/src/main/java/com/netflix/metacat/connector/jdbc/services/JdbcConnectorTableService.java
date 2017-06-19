@@ -23,7 +23,7 @@ import com.google.inject.Inject;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
@@ -90,7 +90,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
      * {@inheritDoc}
      */
     @Override
-    public void delete(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public void delete(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         final String databaseName = name.getDatabaseName();
         final String tableName = name.getTableName();
         log.debug("Attempting to delete table {} from database {} for request {}", tableName, databaseName, context);
@@ -113,7 +113,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
      * {@inheritDoc}
      */
     @Override
-    public TableInfo get(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public TableInfo get(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         log.debug("Beginning to get table metadata for qualified name {} for request {}", name, context);
 
         try (final Connection connection = this.dataSource.getConnection()) {
@@ -153,7 +153,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
      */
     @Override
     public List<TableInfo> list(
-        @Nonnull final ConnectorContext context,
+        @Nonnull final ConnectorRequestContext context,
         @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,
@@ -174,7 +174,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
      */
     @Override
     public List<QualifiedName> listNames(
-        @Nonnull final ConnectorContext context,
+        @Nonnull final ConnectorRequestContext context,
         @Nonnull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,
@@ -214,7 +214,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
      */
     @Override
     public void rename(
-        @Nonnull final ConnectorContext context,
+        @Nonnull final ConnectorRequestContext context,
         @Nonnull final QualifiedName oldName,
         @Nonnull final QualifiedName newName
     ) {

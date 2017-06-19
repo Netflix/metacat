@@ -21,7 +21,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
@@ -30,7 +30,6 @@ import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundEx
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import lombok.NonNull;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
@@ -39,10 +38,7 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.thrift.TException;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.Comparator;
 import java.util.List;
 
@@ -64,10 +60,9 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * @param metacatHiveClient     hiveclient
      * @param hiveMetacatConverters hive converter
      */
-    @Inject
-    public HiveConnectorDatabaseService(@Named("catalogName") final String catalogName,
-                                        @Nonnull @NonNull final IMetacatHiveClient metacatHiveClient,
-                                        @Nonnull @NonNull final HiveConnectorInfoConverter hiveMetacatConverters) {
+    public HiveConnectorDatabaseService(final String catalogName,
+                                        final IMetacatHiveClient metacatHiveClient,
+                                        final HiveConnectorInfoConverter hiveMetacatConverters) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
         this.catalogName = catalogName;
@@ -77,8 +72,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}.
      */
     @Override
-    public void create(@Nonnull @NonNull final ConnectorContext requestContext,
-                       @Nonnull @NonNull final DatabaseInfo databaseInfo) {
+    public void create(final ConnectorRequestContext requestContext,
+                       final DatabaseInfo databaseInfo) {
         final QualifiedName databaseName = databaseInfo.getName();
         try {
             this.metacatHiveClient.createDatabase(hiveMetacatConverters.fromDatabaseInfo(databaseInfo));
@@ -96,8 +91,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}.
      */
     @Override
-    public void delete(@Nonnull @NonNull final ConnectorContext requestContext,
-                       @Nonnull @NonNull final QualifiedName name) {
+    public void delete(final ConnectorRequestContext requestContext,
+                       final QualifiedName name) {
 
         try {
             this.metacatHiveClient.dropDatabase(name.getDatabaseName());
@@ -116,8 +111,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}.
      */
     @Override
-    public void update(@Nonnull @NonNull final ConnectorContext context,
-                       @Nonnull @NonNull final DatabaseInfo databaseInfo) {
+    public void update(final ConnectorRequestContext context,
+                       final DatabaseInfo databaseInfo) {
         final QualifiedName databaseName = databaseInfo.getName();
         try {
             this.metacatHiveClient.alterDatabase(databaseName.getDatabaseName(),
@@ -137,8 +132,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Override
     public DatabaseInfo get(
-        @Nonnull @NonNull final ConnectorContext requestContext,
-        @Nonnull @NonNull final QualifiedName name
+        final ConnectorRequestContext requestContext,
+        final QualifiedName name
     ) {
         try {
             final Database database = metacatHiveClient.getDatabase(name.getDatabaseName());
@@ -160,8 +155,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}.
      */
     @Override
-    public boolean exists(@Nonnull @NonNull final ConnectorContext requestContext,
-                          @Nonnull @NonNull final QualifiedName name) {
+    public boolean exists(final ConnectorRequestContext requestContext,
+                          final QualifiedName name) {
         boolean result;
         try {
             result = metacatHiveClient.getDatabase(name.getDatabaseName()) != null;
@@ -178,8 +173,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Override
     public List<QualifiedName> listNames(
-        @Nonnull @NonNull final ConnectorContext requestContext,
-        @Nonnull @NonNull final QualifiedName name,
+        final ConnectorRequestContext requestContext,
+        final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,
         @Nullable final Pageable pageable
@@ -211,8 +206,8 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      */
     @Override
     public List<DatabaseInfo> list(
-        @Nonnull @NonNull final ConnectorContext requestContext,
-        @Nonnull @NonNull final QualifiedName name,
+        final ConnectorRequestContext requestContext,
+        final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,
         @Nullable final Pageable pageable

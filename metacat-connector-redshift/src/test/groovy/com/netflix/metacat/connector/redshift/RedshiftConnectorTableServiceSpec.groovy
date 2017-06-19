@@ -19,7 +19,7 @@ package com.netflix.metacat.connector.redshift
 
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter
@@ -40,7 +40,7 @@ import java.sql.Statement
  */
 class RedshiftConnectorTableServiceSpec extends Specification {
 
-    def context = Mock(ConnectorContext)
+    def context = Mock(ConnectorRequestContext)
     def dataSource = Mock(DataSource)
     def typeConverter = Mock(JdbcTypeConverter)
     def exceptionMapper = Mock(JdbcExceptionMapper)
@@ -158,7 +158,7 @@ class RedshiftConnectorTableServiceSpec extends Specification {
                 new JdbcConnectorTableService(
                     Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
                 ).getTableNames(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     Lists.newArrayList(),
                     false
                 )
@@ -169,7 +169,7 @@ class RedshiftConnectorTableServiceSpec extends Specification {
                 new JdbcConnectorTableService(
                     Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
                 ).create(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     TableInfo.builder().name(QualifiedName.ofTable("catalog", "database", "table")).build()
                 )
             }
@@ -179,7 +179,7 @@ class RedshiftConnectorTableServiceSpec extends Specification {
                 new JdbcConnectorTableService(
                     Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
                 ).update(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     TableInfo.builder().name(QualifiedName.ofTable("catalog", "database", "table")).build()
                 )
             }
@@ -189,7 +189,7 @@ class RedshiftConnectorTableServiceSpec extends Specification {
                 new JdbcConnectorTableService(
                     Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
                 ).exists(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     QualifiedName.ofTable("catalog", "database", "table")
                 )
             }

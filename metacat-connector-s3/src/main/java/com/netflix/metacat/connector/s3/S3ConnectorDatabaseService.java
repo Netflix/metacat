@@ -23,7 +23,7 @@ import com.google.inject.persist.Transactional;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 
 /**
  * S3 Connector Database Service implementation.
+ *
  * @author amajumdar
  */
 @Transactional
@@ -55,14 +56,15 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
 
     /**
      * Constructor.
-     * @param catalogName catalog name
-     * @param databaseDao database DAO impl
-     * @param sourceDao catalog/source DAO impl
+     *
+     * @param catalogName   catalog name
+     * @param databaseDao   database DAO impl
+     * @param sourceDao     catalog/source DAO impl
      * @param infoConverter Converter for the S3 resources
      */
     @Inject
     public S3ConnectorDatabaseService(@Named("catalogName") final String catalogName, final DatabaseDao databaseDao,
-        final SourceDao sourceDao, final S3ConnectorInfoConverter infoConverter) {
+                                      final SourceDao sourceDao, final S3ConnectorInfoConverter infoConverter) {
         this.databaseDao = databaseDao;
         this.sourceDao = sourceDao;
         this.infoConverter = infoConverter;
@@ -70,13 +72,13 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     }
 
     @Override
-    public List<QualifiedName> listViewNames(@Nonnull final ConnectorContext context,
-        @Nonnull final QualifiedName databaseName) {
+    public List<QualifiedName> listViewNames(@Nonnull final ConnectorRequestContext context,
+                                             @Nonnull final QualifiedName databaseName) {
         return Lists.newArrayList();
     }
 
     @Override
-    public void create(@Nonnull final ConnectorContext context, @Nonnull final DatabaseInfo databaseInfo) {
+    public void create(@Nonnull final ConnectorRequestContext context, @Nonnull final DatabaseInfo databaseInfo) {
         final String databaseName = databaseInfo.getName().getDatabaseName();
         log.debug("Start: Create database {}", databaseInfo.getName());
         Preconditions.checkNotNull(databaseName, "Database name is null");
@@ -92,12 +94,12 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     }
 
     @Override
-    public void update(@Nonnull final ConnectorContext context, @Nonnull final DatabaseInfo databaseInfo) {
+    public void update(@Nonnull final ConnectorRequestContext context, @Nonnull final DatabaseInfo databaseInfo) {
         // no op
     }
 
     @Override
-    public void delete(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public void delete(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         log.debug("Start: Delete database {}", name);
         final String databaseName = name.getDatabaseName();
         Preconditions.checkNotNull(databaseName, "Database name is null");
@@ -112,7 +114,7 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     }
 
     @Override
-    public DatabaseInfo get(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public DatabaseInfo get(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         final String databaseName = name.getDatabaseName();
         Preconditions.checkNotNull(databaseName, "Database name is null");
         log.debug("Get database {}", name);
@@ -124,13 +126,16 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     }
 
     @Override
-    public boolean exists(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public boolean exists(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         return databaseDao.getBySourceDatabaseName(catalogName, name.getDatabaseName()) != null;
     }
 
     @Override
-    public List<DatabaseInfo> list(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name,
-        @Nullable final QualifiedName prefix, @Nullable final Sort sort, @Nullable final Pageable pageable) {
+    public List<DatabaseInfo> list(@Nonnull final ConnectorRequestContext context,
+                                   @Nonnull final QualifiedName name,
+                                   @Nullable final QualifiedName prefix,
+                                   @Nullable final Sort sort,
+                                   @Nullable final Pageable pageable) {
         log.debug("List databases for catalog {} and database with prefix {}", name, prefix);
         return databaseDao.searchBySourceDatabaseName(catalogName, prefix == null ? "" : prefix.getTableName(),
             sort, pageable).stream().map(d -> infoConverter.toDatabaseInfo(name, d)).collect(
@@ -138,8 +143,11 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     }
 
     @Override
-    public List<QualifiedName> listNames(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name,
-        @Nullable final QualifiedName prefix, @Nullable final Sort sort, @Nullable final Pageable pageable) {
+    public List<QualifiedName> listNames(@Nonnull final ConnectorRequestContext context,
+                                         @Nonnull final QualifiedName name,
+                                         @Nullable final QualifiedName prefix,
+                                         @Nullable final Sort sort,
+                                         @Nullable final Pageable pageable) {
         log.debug("List database names for catalog {} and database with prefix {}", name, prefix);
         return databaseDao.searchBySourceDatabaseName(catalogName, prefix == null ? "" : prefix.getTableName(),
             sort, pageable).stream().map(d -> QualifiedName.ofDatabase(catalogName, d.getName())).collect(
@@ -147,8 +155,8 @@ public class S3ConnectorDatabaseService implements ConnectorDatabaseService {
     }
 
     @Override
-    public void rename(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName oldName,
-        @Nonnull final QualifiedName newName) {
+    public void rename(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName oldName,
+                       @Nonnull final QualifiedName newName) {
         log.debug("Start: Rename database {} with {}", oldName, newName);
         final String newDatabaseName = newName.getDatabaseName();
         Preconditions.checkNotNull(newDatabaseName, "Database name is null");

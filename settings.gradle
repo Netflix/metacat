@@ -29,6 +29,6 @@ include 'metacat-functional-tests'
 include 'metacat-main'
 include 'metacat-testdata-provider'
 include 'metacat-thrift'
-include 'metacat-user-metadata-mysql'
+include 'metacat-metadata-mysql'
 include 'metacat-war'
 

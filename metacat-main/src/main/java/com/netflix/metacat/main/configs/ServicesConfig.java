@@ -21,6 +21,8 @@ import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.usermetadata.DefaultLookupService;
+import com.netflix.metacat.common.server.usermetadata.DefaultTagService;
 import com.netflix.metacat.common.server.usermetadata.DefaultUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
@@ -44,8 +46,6 @@ import com.netflix.metacat.main.services.impl.DatabaseServiceImpl;
 import com.netflix.metacat.main.services.impl.MViewServiceImpl;
 import com.netflix.metacat.main.services.impl.PartitionServiceImpl;
 import com.netflix.metacat.main.services.impl.TableServiceImpl;
-import com.netflix.metacat.usermetadata.mysql.MySqlLookupService;
-import com.netflix.metacat.usermetadata.mysql.MySqlTagService;
 import com.netflix.spectator.api.Registry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -79,36 +79,39 @@ public class ServicesConfig {
     }
 
     /**
-     * Lookup service.
+     * Tag service.
      *
-     * @param dataSourceManager Datasource manager to use
-     * @param config            System configuration to use
-     * @return Lookup service backed by MySQL
+     * @param dataSourceManager The datasource manager to use
+     * @param config            System config to use
+     * @param metacatJson       Json Utilities to use
+     * @return User metadata service based on MySql
      */
     @Bean
-    public LookupService lookupService(final DataSourceManager dataSourceManager, final Config config) {
-        return new MySqlLookupService(config, dataSourceManager);
-    }
-
-    /**
-     * The tag service to use.
-     *
-     * @param dataSourceManager   The datasource manager to use
-     * @param config              System config to use
-     * @param metacatJson         Json Utilities to use
-     * @param lookupService       Look up service implementation to use
-     * @param userMetadataService User metadata service implementation to use
-     * @return The tag service implementation backed by MySQL
-     */
-    @Bean
+    @ConditionalOnMissingBean
     public TagService tagService(
         final DataSourceManager dataSourceManager,
         final Config config,
-        final MetacatJson metacatJson,
-        final LookupService lookupService,
-        final UserMetadataService userMetadataService
+        final MetacatJson metacatJson
     ) {
-        return new MySqlTagService(config, dataSourceManager, lookupService, metacatJson, userMetadataService);
+        return new DefaultTagService();
+    }
+
+    /**
+     * Look up service.
+     *
+     * @param dataSourceManager The datasource manager to use
+     * @param config            System config to use
+     * @param metacatJson       Json Utilities to use
+     * @return User metadata service based on MySql
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public LookupService lookupService(
+        final DataSourceManager dataSourceManager,
+        final Config config,
+        final MetacatJson metacatJson
+    ) {
+        return new DefaultLookupService();
     }
 
     /**
@@ -302,7 +305,6 @@ public class ServicesConfig {
      * @param pluginManager        Plugin manager to use
      * @param catalogManager       Catalog manager to use
      * @param connectorManager     Connector manager to use
-     * @param userMetadataService  User metadata service to use
      * @param threadServiceManager Thread service manager to use
      * @param metacatThriftService Thrift service to use
      * @return The initialization service bean
@@ -312,7 +314,6 @@ public class ServicesConfig {
         final PluginManager pluginManager,
         final CatalogManager catalogManager,
         final ConnectorManager connectorManager,
-        final UserMetadataService userMetadataService,
         final ThreadServiceManager threadServiceManager,
         final MetacatThriftService metacatThriftService
     ) {
@@ -320,7 +321,6 @@ public class ServicesConfig {
             pluginManager,
             catalogManager,
             connectorManager,
-            userMetadataService,
             threadServiceManager,
             metacatThriftService
         );

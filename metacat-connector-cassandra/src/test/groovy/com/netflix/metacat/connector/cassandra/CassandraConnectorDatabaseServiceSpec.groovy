@@ -22,7 +22,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException
 import spock.lang.Shared
@@ -52,7 +52,7 @@ class CassandraConnectorDatabaseServiceSpec extends Specification {
     @Shared
         cQName = QualifiedName.ofDatabase(this.catalogName, this.c)
 
-    def context = Mock(ConnectorContext)
+    def context = Mock(ConnectorRequestContext)
     def cluster = Mock(Cluster)
     def session = Mock(Session)
     def service = new CassandraConnectorDatabaseService(this.cluster, new CassandraExceptionMapper())
@@ -213,13 +213,13 @@ class CassandraConnectorDatabaseServiceSpec extends Specification {
         (
             {
                 new CassandraConnectorDatabaseService(Mock(Cluster), new CassandraExceptionMapper())
-                    .rename(Mock(ConnectorContext), QualifiedName.ofCatalog("blah"), QualifiedName.ofCatalog("junk"))
+                    .rename(Mock(ConnectorRequestContext), QualifiedName.ofCatalog("blah"), QualifiedName.ofCatalog("junk"))
             }
         )      | "rename"   | UnsupportedOperationException
         (
             {
                 new CassandraConnectorDatabaseService(Mock(Cluster), new CassandraExceptionMapper()).update(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     DatabaseInfo.builder().name(QualifiedName.ofCatalog("blah")).build()
                 )
             }

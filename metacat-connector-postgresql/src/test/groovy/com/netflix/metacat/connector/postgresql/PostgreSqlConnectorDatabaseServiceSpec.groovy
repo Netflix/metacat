@@ -18,7 +18,7 @@
 package com.netflix.metacat.connector.postgresql
 
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper
 import spock.lang.Specification
@@ -48,7 +48,7 @@ class PostgreSqlConnectorDatabaseServiceSpec extends Specification {
         (
             {
                 new PostgreSqlConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).create(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     DatabaseInfo.builder().name(QualifiedName.ofDatabase("blah", "db")).build()
                 )
             }
@@ -56,7 +56,7 @@ class PostgreSqlConnectorDatabaseServiceSpec extends Specification {
         (
             {
                 new PostgreSqlConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).delete(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     QualifiedName.ofDatabase("blah", "db")
                 )
             }

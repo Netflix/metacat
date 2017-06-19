@@ -16,7 +16,9 @@
 
 /**
  * Embedded hive metastore client implementation.
- * @author amajumdar
- * @since 1.0.0
+ * @author zhenl
+ * @since 1.1.0
  */
+@ParametersAreNonnullByDefault
 package com.netflix.metacat.connector.hive.client.embedded;
+import javax.annotation.ParametersAreNonnullByDefault;

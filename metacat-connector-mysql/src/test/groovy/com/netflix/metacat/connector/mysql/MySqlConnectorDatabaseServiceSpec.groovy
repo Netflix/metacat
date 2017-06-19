@@ -21,7 +21,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper
 import spock.lang.Specification
 
@@ -39,7 +39,7 @@ class MySqlConnectorDatabaseServiceSpec extends Specification {
 
     def dataSource = Mock(DataSource)
     def connection = Mock(Connection)
-    def context = Mock(ConnectorContext)
+    def context = Mock(ConnectorRequestContext)
     def exceptionMapper = Mock(JdbcExceptionMapper)
 
     def service = new MySqlConnectorDatabaseService(this.dataSource, this.exceptionMapper)

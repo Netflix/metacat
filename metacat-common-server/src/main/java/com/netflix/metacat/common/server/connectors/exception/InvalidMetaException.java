@@ -19,6 +19,8 @@ package com.netflix.metacat.common.server.connectors.exception;
 
 import com.netflix.metacat.common.QualifiedName;
 
+import javax.annotation.Nullable;
+
 /**
  * Exception when the given information about an entity is invalid.
  *
@@ -34,7 +36,7 @@ public class InvalidMetaException extends ConnectorException {
      * @param tableName table name
      * @param cause     error cause
      */
-    public InvalidMetaException(final QualifiedName tableName, final Throwable cause) {
+    public InvalidMetaException(final QualifiedName tableName, @Nullable final Throwable cause) {
         super(String.format("Invalid metadata for %s.", tableName), cause);
         this.tableName = tableName;
     }
@@ -46,7 +48,8 @@ public class InvalidMetaException extends ConnectorException {
      * @param partitionId partition name
      * @param cause       error cause
      */
-    public InvalidMetaException(final QualifiedName tableName, final String partitionId, final Throwable cause) {
+    public InvalidMetaException(final QualifiedName tableName,
+                                final String partitionId, @Nullable final Throwable cause) {
         super(String.format("Invalid metadata for %s for partition %s.", tableName, partitionId), cause);
         this.tableName = tableName;
         this.partitionId = partitionId;
@@ -58,7 +61,7 @@ public class InvalidMetaException extends ConnectorException {
      * @param message error message
      * @param cause   error cause
      */
-    public InvalidMetaException(final String message, final Throwable cause) {
+    public InvalidMetaException(final String message, @Nullable final Throwable cause) {
         super(message, cause);
     }
 }

@@ -53,7 +53,6 @@ public class CommonServerConfig {
      */
     @Bean
     public MetacatJson metacatJson() {
-        // TODO: Static reference boo
         return MetacatJsonLocator.INSTANCE;
     }
 
@@ -64,7 +63,6 @@ public class CommonServerConfig {
      */
     @Bean
     public DataSourceManager dataSourceManager() {
-        // TODO: Static reference boo
         return DataSourceManager.get();
     }
 

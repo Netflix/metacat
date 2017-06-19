@@ -19,6 +19,7 @@ package com.netflix.metacat.connector.hive.client.embedded;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
+import lombok.extern.slf4j.Slf4j;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 
 import javax.jdo.PersistenceManagerFactory;
@@ -31,6 +32,7 @@ import java.util.Map;
  * @author zhenl
  * @since 1.0.0
  */
+@Slf4j
 public final class HivePersistenceManagerFactory {
     /**
      * metacat.jdo.timeout.
@@ -47,6 +49,7 @@ public final class HivePersistenceManagerFactory {
 
     /**
      * getPersistenceManagerFactory.
+     *
      * @param props props
      * @return PersistenceManagerFactory
      */
@@ -67,15 +70,15 @@ public final class HivePersistenceManagerFactory {
 //            final String jdoTimeout = JDO_TIMEOUT.get();
             final Map<String, Object> properties = Maps.newHashMap();
             properties.put(HiveConfigConstants.DATANUCLEUS_FIXEDDATASTORE,
-                    props.get(HiveConfigConstants.DATANUCLEUS_FIXEDDATASTORE));
+                props.get(HiveConfigConstants.DATANUCLEUS_FIXEDDATASTORE));
             properties.put(HiveConfigConstants.DATANUCLEUS_AUTOCREATESCHEMA,
-                    props.get(HiveConfigConstants.DATANUCLEUS_AUTOCREATESCHEMA));
+                props.get(HiveConfigConstants.DATANUCLEUS_AUTOCREATESCHEMA));
             properties.put(HiveConfigConstants.DATANUCLEUS_IDENTIFIERFACTORY,
-                    HiveConfigConstants.DATANUCLEUS_DATANUCLEU1);
+                HiveConfigConstants.DATANUCLEUS_DATANUCLEU1);
             properties.put(HiveConfigConstants.DATANUCLEUS_CONNECTIONFACTORY, dataSource);
             properties.put(HiveConfigConstants.DATANUCLEUS_RDBMS_USELEGACYNATIVEVALUESTRATEGY, true);
             properties.put(HiveConfigConstants.DATANUCLEUS_TRANSACTIONISOLATION,
-                    HiveConfigConstants.DATANUCLEUS_READCOMMITTED);
+                HiveConfigConstants.DATANUCLEUS_READCOMMITTED);
             properties.put(HiveConfigConstants.DATANUCLEUS_VALIDATETABLE, false);
             properties.put(HiveConfigConstants.DATANUCLEUS_VALIDATECONSTRAINTS, false);
             properties.put(HiveConfigConstants.DATANUCLEUS_VALIDATECOLUMNS, false);

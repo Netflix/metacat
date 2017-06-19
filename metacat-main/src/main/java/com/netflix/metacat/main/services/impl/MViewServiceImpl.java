@@ -26,7 +26,7 @@ import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
@@ -117,7 +117,7 @@ public class MViewServiceImpl implements MViewService {
     public TableDto createAndSnapshotPartitions(@Nonnull final QualifiedName name,
                                                 final boolean snapshot,
                                                 final String filter) {
-        TableDto result;
+        final TableDto result;
         // Get the table
         log.info("Get the table {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -243,7 +243,7 @@ public class MViewServiceImpl implements MViewService {
         final PartitionsSaveRequestDto dto,
         final boolean merge
     ) {
-        PartitionsSaveResponseDto result;
+        final PartitionsSaveResponseDto result;
         final List<PartitionDto> partitionDtos = dto.getPartitions();
         if (partitionDtos == null || partitionDtos.isEmpty()) {
             return new PartitionsSaveResponseDto();
@@ -378,8 +378,9 @@ public class MViewServiceImpl implements MViewService {
 
         List<QualifiedName> tableNames = Lists.newArrayList();
         try {
-            final ConnectorContext connectorContext = converterUtil.toConnectorContext(metacatRequestContext);
-            tableNames = service.listNames(connectorContext, viewDbName, null, null, null);
+            final ConnectorRequestContext connectorRequestContext
+                = converterUtil.toConnectorContext(metacatRequestContext);
+            tableNames = service.listNames(connectorRequestContext, viewDbName, null, null, null);
         } catch (Exception ignored) {
             // ignore. Return an empty list if database 'franklinviews' does not exist
         }

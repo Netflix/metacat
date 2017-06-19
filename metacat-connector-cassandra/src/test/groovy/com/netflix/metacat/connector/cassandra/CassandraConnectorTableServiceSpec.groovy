@@ -23,7 +23,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.FieldInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException
@@ -50,7 +50,7 @@ class CassandraConnectorTableServiceSpec extends Specification {
     @Shared
         keyspace = UUID.randomUUID().toString()
 
-    def context = Mock(ConnectorContext)
+    def context = Mock(ConnectorRequestContext)
     def cluster = Mock(Cluster)
     def service = new CassandraConnectorTableService(
         this.cluster,
@@ -410,7 +410,7 @@ class CassandraConnectorTableServiceSpec extends Specification {
                     new CassandraExceptionMapper(),
                     new CassandraTypeConverter()
                 ).create(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     TableInfo.builder().name(QualifiedName.ofTable("blah", "blah", "blah")).build()
                 )
             }
@@ -422,7 +422,7 @@ class CassandraConnectorTableServiceSpec extends Specification {
                     new CassandraExceptionMapper(),
                     new CassandraTypeConverter()
                 ).update(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     TableInfo.builder().name(QualifiedName.ofTable("blah", "blah", "blah")).build()
                 )
             }
@@ -434,7 +434,7 @@ class CassandraConnectorTableServiceSpec extends Specification {
                     new CassandraExceptionMapper(),
                     new CassandraTypeConverter()
                 ).rename(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     QualifiedName.ofTable("blah", "blah", "blah"),
                     QualifiedName.ofTable("blah", "blah", "blah2")
                 )
@@ -447,7 +447,7 @@ class CassandraConnectorTableServiceSpec extends Specification {
                     new CassandraExceptionMapper(),
                     new CassandraTypeConverter()
                 ).getTableNames(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     Lists.newArrayList(),
                     false
                 )

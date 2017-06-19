@@ -20,10 +20,10 @@ package com.netflix.metacat.connector.redshift;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.spectator.api.Registry;
+import com.netflix.metacat.common.server.util.ConnectorContext;
+import lombok.NonNull;
 
-import java.util.Map;
+import javax.annotation.Nonnull;
 
 /**
  * Redshift Connector Plugin.
@@ -49,12 +49,10 @@ public class RedshiftConnectorPlugin implements ConnectorPlugin {
      */
     @Override
     public ConnectorFactory create(
-        final Config config,
-        final String connectorName,
-        final Map<String, String> configuration,
-        final Registry registry
+        @Nonnull @NonNull final String connectorName,
+        @Nonnull @NonNull final ConnectorContext connectorContext
     ) {
-        return new RedshiftConnectorFactory(connectorName, configuration);
+        return new RedshiftConnectorFactory(connectorName, connectorContext.getConfiguration());
     }
 
     /**

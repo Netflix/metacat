@@ -27,7 +27,7 @@ import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
@@ -76,7 +76,8 @@ public class CassandraConnectorTableService extends CassandraService implements 
      * {@inheritDoc}
      */
     @Override
-    public void delete(@Nonnull @NonNull final ConnectorContext context, @Nonnull @NonNull final QualifiedName name) {
+    public void delete(@Nonnull @NonNull final ConnectorRequestContext context,
+                       @Nonnull @NonNull final QualifiedName name) {
         final String keyspace = name.getDatabaseName();
         final String table = name.getTableName();
         log.debug("Attempting to delete Cassandra table {}.{} for request {}", keyspace, table, context);
@@ -93,7 +94,8 @@ public class CassandraConnectorTableService extends CassandraService implements 
      * {@inheritDoc}
      */
     @Override
-    public TableInfo get(@Nonnull @NonNull final ConnectorContext context, @Nonnull @NonNull final QualifiedName name) {
+    public TableInfo get(@Nonnull @NonNull final ConnectorRequestContext context,
+                         @Nonnull @NonNull final QualifiedName name) {
         final String keyspace = name.getDatabaseName();
         final String table = name.getTableName();
         log.debug("Attempting to get metadata for Cassandra table {}.{} for request {}", keyspace, table, context);
@@ -121,7 +123,7 @@ public class CassandraConnectorTableService extends CassandraService implements 
      */
     @Override
     public boolean exists(
-        @Nonnull @NonNull final ConnectorContext context,
+        @Nonnull @NonNull final ConnectorRequestContext context,
         @Nonnull @NonNull final QualifiedName name
     ) {
         final String keyspace = name.getDatabaseName();
@@ -154,7 +156,7 @@ public class CassandraConnectorTableService extends CassandraService implements 
      */
     @Override
     public List<TableInfo> list(
-        @Nonnull @NonNull final ConnectorContext context,
+        @Nonnull @NonNull final ConnectorRequestContext context,
         @Nonnull @NonNull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,
@@ -204,7 +206,7 @@ public class CassandraConnectorTableService extends CassandraService implements 
      */
     @Override
     public List<QualifiedName> listNames(
-        @Nonnull @NonNull final ConnectorContext context,
+        @Nonnull @NonNull final ConnectorRequestContext context,
         @Nonnull @NonNull final QualifiedName name,
         @Nullable final QualifiedName prefix,
         @Nullable final Sort sort,

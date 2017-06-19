@@ -19,4 +19,7 @@
  * @author zhenl
  * @since 1.0.0
  */
+
+@ParametersAreNonnullByDefault
 package com.netflix.metacat.connector.hive.monitoring;
+import javax.annotation.ParametersAreNonnullByDefault;

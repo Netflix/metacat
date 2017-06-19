@@ -21,7 +21,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
-import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper
@@ -41,7 +41,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
     def dataSource = Mock(DataSource)
     def connection = Mock(Connection)
     def statement = Mock(Statement)
-    def context = Mock(ConnectorContext)
+    def context = Mock(ConnectorRequestContext)
     def exceptionMapper = Mock(JdbcExceptionMapper)
 
     def service = new JdbcConnectorDatabaseService(this.dataSource, this.exceptionMapper)
@@ -261,7 +261,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         (
             {
                 new JdbcConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).listViewNames(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     QualifiedName.ofDatabase("catalog", "database")
                 )
             }
@@ -269,7 +269,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         (
             {
                 new JdbcConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).update(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     DatabaseInfo.builder().name(QualifiedName.ofCatalog("blah")).build()
                 )
             }
@@ -277,7 +277,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         (
             {
                 new JdbcConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).exists(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     QualifiedName.ofDatabase("catalog", "database")
                 )
             }
@@ -285,7 +285,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         (
             {
                 new JdbcConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).rename(
-                    Mock(ConnectorContext),
+                    Mock(ConnectorRequestContext),
                     QualifiedName.ofDatabase("catalog", "database"),
                     QualifiedName.ofDatabase("catalog", "new")
                 )

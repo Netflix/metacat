@@ -37,7 +37,7 @@ dependencies {
      * Implementation Dependencies
      *******************************/
 
-    compile(project(":metacat-user-metadata-mysql"))
+    compile(project(":metacat-metadata-mysql"))
 
     compile("com.google.guava:guava")
     compile("com.github.rholder:guava-retrying") {
@@ -72,7 +72,7 @@ dependencies {
 
     runtime("io.springfox:springfox-swagger-ui")
     runtime("org.webjars:hal-browser")
-
+    runtime("org.springframework:spring-aspects")
     /*******************************
      * Test Dependencies
      *******************************/
