@@ -13,7 +13,7 @@
 
 package com.netflix.metacat.connector.hive.configs;
 
-import com.netflix.metacat.common.server.util.ConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorContext;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
 import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
@@ -47,15 +47,15 @@ public class HiveConnectorConfig {
      *
      * @param metacatHiveClient    hive client
      * @param hiveMetacatConverter metacat converter
-     * @param connectorConfig      connector config
+     * @param connectorContext      connector config
      * @return HiveConnectorDatabaseService
      */
     @Bean
     public HiveConnectorDatabaseService hiveDatabaseService(
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorInfoConverter hiveMetacatConverter,
-        final ConnectorConfig connectorConfig) {
-        return new HiveConnectorDatabaseService(connectorConfig.getCatalogName(),
+        final ConnectorContext connectorContext) {
+        return new HiveConnectorDatabaseService(connectorContext.getCatalogName(),
             metacatHiveClient, hiveMetacatConverter);
     }
 
@@ -64,7 +64,7 @@ public class HiveConnectorConfig {
      *
      * @param metacatHiveClient    hive client
      * @param hiveMetacatConverter metacat converter
-     * @param connectorConfig      connector config
+     * @param connectorContext      connector config
      * @return HiveConnectorPartitionService
      */
     @Bean
@@ -72,10 +72,10 @@ public class HiveConnectorConfig {
     public HiveConnectorPartitionService partitionService(
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorInfoConverter hiveMetacatConverter,
-        final ConnectorConfig connectorConfig
+        final ConnectorContext connectorContext
     ) {
         return new HiveConnectorPartitionService(
-            connectorConfig.getCatalogName(), metacatHiveClient, hiveMetacatConverter);
+            connectorContext.getCatalogName(), metacatHiveClient, hiveMetacatConverter);
     }
 
     /**
@@ -84,7 +84,7 @@ public class HiveConnectorConfig {
      * @param metacatHiveClient            metacat hive client
      * @param hiveMetacatConverters        hive metacat converters
      * @param hiveConnectorDatabaseService hive database service
-     * @param connectorConfig              connector config
+     * @param connectorContext              connector config
      * @return HiveConnectorTableService
      */
     @Bean
@@ -93,10 +93,10 @@ public class HiveConnectorConfig {
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
-        final ConnectorConfig connectorConfig) {
-        return new HiveConnectorTableService(connectorConfig.getCatalogName(), metacatHiveClient,
+        final ConnectorContext connectorContext) {
+        return new HiveConnectorTableService(connectorContext.getCatalogName(), metacatHiveClient,
             hiveConnectorDatabaseService, hiveMetacatConverters, Boolean.parseBoolean(
-            connectorConfig.getConfiguration()
+            connectorContext.getConfiguration()
                 .getOrDefault(HiveConfigConstants.ALLOW_RENAME_TABLE, "false")));
     }
 
@@ -104,7 +104,7 @@ public class HiveConnectorConfig {
     /**
      * create thrift hive client.
      *
-     * @param connectorConfig connector config.
+     * @param connectorContext connector config.
      * @return data source
      * @throws MetaException meta exception
      */
@@ -112,14 +112,14 @@ public class HiveConnectorConfig {
   //  @ConditionalOnProperty(value = "useThriftClient", havingValue = "true")
     @ConditionalOnMissingBean(IMetacatHiveClient.class)
     public IMetacatHiveClient createThriftClient(
-        final ConnectorConfig connectorConfig) throws MetaException {
+        final ConnectorContext connectorContext) throws MetaException {
         final HiveMetastoreClientFactory factory =
             new HiveMetastoreClientFactory(null,
                 (int) HiveConnectorUtil.toTime(
-                    connectorConfig.getConfiguration()
+                    connectorContext.getConfiguration()
                         .getOrDefault(HiveConfigConstants.HIVE_METASTORE_TIMEOUT, "20s"),
                     TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
-        final String metastoreUri = connectorConfig.getConfiguration().get(HiveConfigConstants.THRIFT_URI);
+        final String metastoreUri = connectorContext.getConfiguration().get(HiveConfigConstants.THRIFT_URI);
         URI uri = null;
         try {
             uri = new URI(metastoreUri);
@@ -136,13 +136,13 @@ public class HiveConnectorConfig {
     /**
      * thread Service Manager.
      *
-     * @param connectorConfig connector config
+     * @param connectorContext connector config
      * @return threadServiceManager
      */
     @Bean
     public ThreadServiceManager threadServiceManager(
-        final ConnectorConfig connectorConfig
+        final ConnectorContext connectorContext
     ) {
-        return new ThreadServiceManager(connectorConfig.getConfig());
+        return new ThreadServiceManager(connectorContext.getConfig());
     }
 }

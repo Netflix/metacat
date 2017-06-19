@@ -17,7 +17,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.common.server.util.ConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorContext;
 import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter;
 import lombok.NonNull;
@@ -50,9 +50,9 @@ public class S3ConnectorPlugin implements ConnectorPlugin {
     @Override
     public ConnectorFactory create(
         @Nonnull final String connectorName,
-        @Nonnull @NonNull final ConnectorConfig connectorConfig) {
+        @Nonnull @NonNull final ConnectorContext connectorContext) {
         return new S3ConnectorFactory(connectorName,
-            connectorConfig.getConfiguration(), (S3ConnectorInfoConverter) getInfoConverter());
+            connectorContext.getConfiguration(), (S3ConnectorInfoConverter) getInfoConverter());
     }
 
     /**

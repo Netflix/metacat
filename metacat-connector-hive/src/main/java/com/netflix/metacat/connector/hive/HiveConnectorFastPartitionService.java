@@ -37,7 +37,7 @@ import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserEval;
-import com.netflix.metacat.common.server.util.ConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorContext;
 import com.netflix.metacat.common.server.util.JdbcUtil;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
@@ -125,7 +125,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @param catalogName            catalogname
      * @param metacatHiveClient      hive client
      * @param hiveMetacatConverters  hive converter
-     * @param connectorConfig server context
+     * @param connectorContext server context
      * @param threadServiceManager   thread service manager
      * @param dataSource             data source
      */
@@ -133,13 +133,13 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final String catalogName,
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorInfoConverter hiveMetacatConverters,
-        final ConnectorConfig connectorConfig,
+        final ConnectorContext connectorContext,
         final ThreadServiceManager threadServiceManager,
         final DataSource dataSource
     ) {
         super(catalogName, metacatHiveClient, hiveMetacatConverters);
         this.threadServiceManager = threadServiceManager;
-        this.registry = connectorConfig.getRegistry();
+        this.registry = connectorContext.getRegistry();
         this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
         this.jdbcUtil = new JdbcUtil(dataSource);
     }

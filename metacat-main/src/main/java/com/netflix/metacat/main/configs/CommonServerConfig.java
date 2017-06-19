@@ -53,7 +53,6 @@ public class CommonServerConfig {
      */
     @Bean
     public MetacatJson metacatJson() {
-        // TODO: Static reference boo
         return MetacatJsonLocator.INSTANCE;
     }
 

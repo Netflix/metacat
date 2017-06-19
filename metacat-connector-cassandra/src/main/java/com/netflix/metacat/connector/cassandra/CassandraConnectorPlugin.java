@@ -20,7 +20,7 @@ package com.netflix.metacat.connector.cassandra;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.common.server.util.ConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorContext;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
@@ -50,9 +50,9 @@ public class CassandraConnectorPlugin implements ConnectorPlugin {
     @Override
     public ConnectorFactory create(
         @Nonnull @NonNull final String connectorName,
-        @Nonnull @NonNull final ConnectorConfig connectorConfig
+        @Nonnull @NonNull final ConnectorContext connectorContext
     ) {
-        return new CassandraConnectorFactory(connectorName, connectorConfig.getConfiguration());
+        return new CassandraConnectorFactory(connectorName, connectorContext.getConfiguration());
     }
 
     /**

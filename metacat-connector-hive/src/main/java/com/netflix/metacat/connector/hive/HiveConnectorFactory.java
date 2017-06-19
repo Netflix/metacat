@@ -20,7 +20,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
-import com.netflix.metacat.common.server.util.ConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorContext;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorClientConfig;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorConfig;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorFastServiceConfig;
@@ -56,26 +56,26 @@ public class HiveConnectorFactory implements ConnectorFactory {
      *
      * @param catalogName            connector name. Also the catalog name.
      * @param infoConverter          hive info converter
-     * @param connectorConfig connector config
+     * @param connectorContext connector config
      */
     public HiveConnectorFactory(
         final String catalogName,
         final HiveConnectorInfoConverter infoConverter,
-        final ConnectorConfig connectorConfig
+        final ConnectorContext connectorContext
     ) {
         this.catalogName = catalogName;
         final boolean useLocalMetastore = Boolean
-            .parseBoolean(connectorConfig.getConfiguration().getOrDefault(
+            .parseBoolean(connectorContext.getConfiguration().getOrDefault(
                 HiveConfigConstants.USE_EMBEDDED_METASTORE, "false"));
         boolean useFastHiveService = false;
         if (useLocalMetastore) {
             useFastHiveService = Boolean.parseBoolean(
-                connectorConfig.getConfiguration()
+                connectorContext.getConfiguration()
                     .getOrDefault(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false"));
         }
 
         ctx = new AnnotationConfigApplicationContext();
-        ctx.getBeanFactory().registerSingleton("ConnectorConfig", connectorConfig);
+        ctx.getBeanFactory().registerSingleton("ConnectorContext", connectorContext);
         ctx.getBeanFactory().registerSingleton("HiveConnectorInfoConverter", infoConverter);
         final StandardEnvironment standardEnvironment = new StandardEnvironment();
         final MutablePropertySources propertySources = standardEnvironment.getPropertySources();

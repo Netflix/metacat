@@ -31,7 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.common.server.util.ConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorContext;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 
@@ -112,10 +112,10 @@ public class CatalogManager {
             file.getAbsoluteFile());
 
         final String catalogName = Files.getNameWithoutExtension(file.getName());
-        final ConnectorConfig connectorConfig =
-            new ConnectorConfig(catalogName, config, registry, properties);
+        final ConnectorContext connectorContext =
+            new ConnectorContext(catalogName, config, registry, properties);
         connectorManager.createConnection(catalogName,
-            connectorType, connectorConfig);
+            connectorType, connectorContext);
         log.info("-- Added catalog {} using connector {} --", catalogName, connectorType);
     }
 

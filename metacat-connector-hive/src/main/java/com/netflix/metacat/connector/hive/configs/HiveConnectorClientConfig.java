@@ -13,7 +13,7 @@
 
 package com.netflix.metacat.connector.hive.configs;
 
-import com.netflix.metacat.common.server.util.ConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorContext;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;
@@ -37,42 +37,42 @@ public class HiveConnectorClientConfig {
     /**
      * create local hive client.
      *
-     * @param connectorConfig connector config context
+     * @param connectorContext connector config context
      * @return IMetacatHiveClient
      * @throws Exception exception
      */
 
     @Bean
     public IMetacatHiveClient createLocalClient(
-        final ConnectorConfig connectorConfig) throws Exception {
+        final ConnectorContext connectorContext) throws Exception {
         try {
             final HiveConf conf = getDefaultConf();
-            connectorConfig.getConfiguration().forEach(conf::set);
-            DataSourceManager.get().load(connectorConfig.getCatalogName(),
-                connectorConfig.getConfiguration());
-            return new EmbeddedHiveClient(connectorConfig.getCatalogName(),
-                HMSHandlerProxy.getProxy(conf), connectorConfig.getRegistry());
+            connectorContext.getConfiguration().forEach(conf::set);
+            DataSourceManager.get().load(connectorContext.getCatalogName(),
+                connectorContext.getConfiguration());
+            return new EmbeddedHiveClient(connectorContext.getCatalogName(),
+                HMSHandlerProxy.getProxy(conf), connectorContext.getRegistry());
         } catch (Exception e) {
             throw new IllegalArgumentException(
                 String.format("Failed creating the hive metastore client for catalog: %s",
-                    connectorConfig.getCatalogName()), e);
+                    connectorContext.getCatalogName()), e);
         }
     }
 
     /**
      * hive DataSource.
      *
-     * @param connectorConfig connector config.
+     * @param connectorContext connector config.
      * @return data source
      */
     @Bean
     //@ConditionalOnProperty(value = "useThriftClient", havingValue = "false")
-    public DataSource hiveDataSource(final ConnectorConfig connectorConfig) {
+    public DataSource hiveDataSource(final ConnectorContext connectorContext) {
         final HiveConf conf = getDefaultConf();
-        connectorConfig.getConfiguration().forEach(conf::set);
-        DataSourceManager.get().load(connectorConfig.getCatalogName(),
-            connectorConfig.getConfiguration());
-        return DataSourceManager.get().get(connectorConfig.getCatalogName());
+        connectorContext.getConfiguration().forEach(conf::set);
+        DataSourceManager.get().load(connectorContext.getCatalogName(),
+            connectorContext.getConfiguration());
+        return DataSourceManager.get().get(connectorContext.getCatalogName());
     }
 
     private static HiveConf getDefaultConf() {

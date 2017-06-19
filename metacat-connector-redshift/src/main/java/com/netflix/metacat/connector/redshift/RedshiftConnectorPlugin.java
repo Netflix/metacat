@@ -20,7 +20,7 @@ package com.netflix.metacat.connector.redshift;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.common.server.util.ConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorContext;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
@@ -50,9 +50,9 @@ public class RedshiftConnectorPlugin implements ConnectorPlugin {
     @Override
     public ConnectorFactory create(
         @Nonnull @NonNull final String connectorName,
-        @Nonnull @NonNull final ConnectorConfig connectorConfig
+        @Nonnull @NonNull final ConnectorContext connectorContext
     ) {
-        return new RedshiftConnectorFactory(connectorName, connectorConfig.getConfiguration());
+        return new RedshiftConnectorFactory(connectorName, connectorContext.getConfiguration());
     }
 
     /**

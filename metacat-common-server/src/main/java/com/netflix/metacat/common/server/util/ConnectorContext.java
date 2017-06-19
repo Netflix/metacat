@@ -25,7 +25,7 @@ import java.util.Map;
  */
 @AllArgsConstructor
 @Data
-public class ConnectorConfig {
+public class ConnectorContext {
     /**
      * Catalog name.
      */

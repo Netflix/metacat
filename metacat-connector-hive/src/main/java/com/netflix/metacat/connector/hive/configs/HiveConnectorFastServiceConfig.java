@@ -13,7 +13,7 @@
 
 package com.netflix.metacat.connector.hive.configs;
 
-import com.netflix.metacat.common.server.util.ConnectorConfig;
+import com.netflix.metacat.common.server.util.ConnectorContext;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
 import com.netflix.metacat.connector.hive.HiveConnectorFastPartitionService;
@@ -44,7 +44,7 @@ public class HiveConnectorFastServiceConfig {
      * @param metacatHiveClient    hive client
      * @param hiveMetacatConverter metacat converter
      * @param threadServiceManager thread service manager
-     * @param connectorConfig      connector config
+     * @param connectorContext      connector config
      * @param dataSource           data source
      * @return HiveConnectorPartitionService
      */
@@ -53,12 +53,12 @@ public class HiveConnectorFastServiceConfig {
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorInfoConverter hiveMetacatConverter,
         final ThreadServiceManager threadServiceManager,
-        final ConnectorConfig connectorConfig,
+        final ConnectorContext connectorContext,
         @Qualifier("hiveDataSource") final DataSource dataSource
     ) {
-        return new HiveConnectorFastPartitionService(connectorConfig.getCatalogName(),
+        return new HiveConnectorFastPartitionService(connectorContext.getCatalogName(),
             metacatHiveClient, hiveMetacatConverter,
-            connectorConfig, threadServiceManager,
+            connectorContext, threadServiceManager,
             dataSource);
     }
 
@@ -68,7 +68,7 @@ public class HiveConnectorFastServiceConfig {
      * @param metacatHiveClient            metacat hive client
      * @param hiveMetacatConverters        hive metacat converters
      * @param hiveConnectorDatabaseService hive database service
-     * @param connectorConfig              server context
+     * @param connectorContext              server context
      * @param dataSource                   data source
      * @return HiveConnectorFastTableService
      */
@@ -77,17 +77,17 @@ public class HiveConnectorFastServiceConfig {
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
-        final ConnectorConfig connectorConfig,
+        final ConnectorContext connectorContext,
         @Qualifier("hiveDataSource") final DataSource dataSource
 
     ) {
         return new HiveConnectorFastTableService(
-            connectorConfig.getCatalogName(), metacatHiveClient,
+            connectorContext.getCatalogName(), metacatHiveClient,
             hiveConnectorDatabaseService, hiveMetacatConverters,
             Boolean.parseBoolean(
-                connectorConfig.getConfiguration()
+                connectorContext.getConfiguration()
                     .getOrDefault(HiveConfigConstants.ALLOW_RENAME_TABLE, "false")),
-            connectorConfig,
+            connectorContext,
             dataSource);
     }
 
