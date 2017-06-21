@@ -18,6 +18,7 @@
 
 configurations {
     all*.exclude module: "jsr311-api"
+    all*.exclude module: "slf4j-log4j12"
 }
 
 dependencies {
@@ -73,6 +74,7 @@ dependencies {
     runtime("io.springfox:springfox-swagger-ui")
     runtime("org.webjars:hal-browser")
     runtime("org.springframework:spring-aspects")
+    
     /*******************************
      * Test Dependencies
      *******************************/
