@@ -20,6 +20,7 @@ apply plugin: "war"
 
 configurations {
     all*.exclude module: "jsr311-api"
+    all*.exclude module: "slf4j-log4j12"
 }
 
 dependencies {
@@ -42,6 +43,7 @@ dependencies {
     /*******************************
      * Runtime Dependencies
      *******************************/
+
     runtime("org.springframework:spring-aspects")
 
     /*******************************
