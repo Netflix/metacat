@@ -18,8 +18,8 @@
 package com.netflix.metacat.main.api.v1;
 
 import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.elasticsearch.search.ElasticSearchUtil;
 import com.netflix.metacat.main.api.RequestWrapper;
-import com.netflix.metacat.main.services.search.ElasticSearchUtil;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

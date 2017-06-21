@@ -29,10 +29,7 @@ dependencies {
     compile(project(":metacat-common"))
     compile(project(":metacat-common-server"))
     compile(project(":metacat-thrift"))
-
-    compile("com.amazonaws:aws-java-sdk-sns")
-    compile("javax.validation:validation-api")
-    compile("org.elasticsearch:elasticsearch")
+    compile(project(":metacat-elasticsearch"))
 
     /*******************************
      * Implementation Dependencies
@@ -70,6 +67,7 @@ dependencies {
     runtime(project(":metacat-connector-postgresql"))
     runtime(project(":metacat-connector-redshift"))
     runtime(project(":metacat-connector-s3"))
+
 
     runtime("io.springfox:springfox-swagger-ui")
     runtime("org.webjars:hal-browser")

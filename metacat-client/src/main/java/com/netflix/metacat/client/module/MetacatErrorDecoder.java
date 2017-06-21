@@ -38,7 +38,7 @@ import java.io.IOException;
  * @author amajumdar
  */
 public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
-    private static final MetacatJson METACAT_JSON = MetacatJsonLocator.INSTANCE;
+    private static final MetacatJson METACAT_JSON = new MetacatJsonLocator();
 
     /**
      * {@inheritDoc}

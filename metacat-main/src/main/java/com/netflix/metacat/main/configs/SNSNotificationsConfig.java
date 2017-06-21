@@ -21,7 +21,7 @@ import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.main.services.notifications.sns.SNSNotificationServiceImpl;
+import com.netflix.metacat.common.server.services.notifications.sns.SNSNotificationServiceImpl;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

@@ -32,7 +32,7 @@ import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.api.RequestWrapper;
-import com.netflix.metacat.main.services.MetacatService;
+import com.netflix.metacat.common.server.services.MetacatService;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.MetadataService;
 import io.swagger.annotations.Api;

@@ -23,9 +23,9 @@ import spock.lang.Unroll
 
 class QualifiedNameSpec extends Specification {
     @Shared
-    MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
+    MetacatJson metacatJson = new MetacatJsonLocator()
 
-    def 'expect exceptions if missing required params at construction time'() {
+    def 'Test expect exceptions if missing required params at construction time'() {
         when:
         new QualifiedName(catalogName, databaseName, tableName, partitionName, null)
 
@@ -44,7 +44,7 @@ class QualifiedNameSpec extends Specification {
     }
 
     @Unroll
-    def "expect an exception trying to parse '#input'"() {
+    def "Test expect an exception trying to parse '#input'"() {
         when:
         QualifiedName.fromString(input)
 
@@ -62,7 +62,7 @@ class QualifiedNameSpec extends Specification {
     }
 
     @Unroll
-    def 'expect to be able to convert #input into #name'() {
+    def 'Test expect to be able to convert #input into #name'() {
         expect:
         QualifiedName.fromString(input) == name
 
@@ -83,7 +83,7 @@ class QualifiedNameSpec extends Specification {
     }
 
     @Unroll
-    def 'expect to be able to convert #name into #json'() {
+    def 'Test expect to be able to convert #name into #json'() {
         expect:
         QualifiedName qualifiedName = QualifiedName.fromString(name)
         ObjectNode node = metacatJson.parseJsonObject(json)
@@ -98,7 +98,7 @@ class QualifiedNameSpec extends Specification {
         'c/d/t/p=1' | """{"qualifiedName": "c/d/t/p=1", "catalogName": "c", "databaseName": "d", "tableName": "t", "partitionName": "p=1"}"""
     }
 
-    def 'expect exceptions when requesting parameters that a catalog does not have'() {
+    def 'Test expect exceptions when requesting parameters that a catalog does not have'() {
         given:
         def name = QualifiedName.ofCatalog('c')
 
@@ -133,7 +133,7 @@ class QualifiedNameSpec extends Specification {
         thrown(IllegalStateException)
     }
 
-    def 'expect exceptions when requesting parameters that a database does not have'() {
+    def 'Test expect exceptions when requesting parameters that a database does not have'() {
         given:
         def name = QualifiedName.ofDatabase('c', 'd')
 
@@ -168,7 +168,7 @@ class QualifiedNameSpec extends Specification {
         thrown(IllegalStateException)
     }
 
-    def 'expect exceptions when requesting parameters that a table does not have'() {
+    def 'Test expect exceptions when requesting parameters that a table does not have'() {
         given:
         def name = QualifiedName.ofTable('c', 'd', 't')
 
@@ -203,7 +203,7 @@ class QualifiedNameSpec extends Specification {
         thrown(IllegalStateException)
     }
 
-    def 'expect exceptions when requesting parameters that a partition does not have'() {
+    def 'Test expect exceptions when requesting parameters that a partition does not have'() {
         given:
         def name = QualifiedName.ofPartition('c', 'd', 't', 'p')
 

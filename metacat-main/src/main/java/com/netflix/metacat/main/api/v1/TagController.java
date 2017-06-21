@@ -24,7 +24,7 @@ import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.api.RequestWrapper;
-import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.common.server.services.TableService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;

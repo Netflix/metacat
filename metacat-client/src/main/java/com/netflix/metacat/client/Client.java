@@ -63,7 +63,7 @@ public final class Client {
         final Retryer retryer,
         final Request.Options options
     ) {
-        final ObjectMapper mapper = MetacatJsonLocator.INSTANCE
+        final ObjectMapper mapper = new MetacatJsonLocator()
             .getPrettyObjectMapper()
             .copy()
             .registerModule(new GuavaModule())

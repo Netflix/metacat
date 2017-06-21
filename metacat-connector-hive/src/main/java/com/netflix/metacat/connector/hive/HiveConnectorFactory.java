@@ -20,7 +20,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
-import com.netflix.metacat.common.server.util.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorClientConfig;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorConfig;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorFastServiceConfig;

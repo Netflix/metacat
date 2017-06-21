@@ -19,6 +19,8 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.services.PartitionService;
+import com.netflix.metacat.common.server.services.TableService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.spectator.api.Registry;

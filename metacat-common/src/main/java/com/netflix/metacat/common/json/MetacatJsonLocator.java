@@ -24,6 +24,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -36,22 +38,24 @@ import java.util.Map;
 /**
  * MetacatJson implementation.
  */
-public enum MetacatJsonLocator implements MetacatJson {
-    /**
-     * default metacat JSON instance.
-     */
-    INSTANCE;
+@AllArgsConstructor
+@Getter
+public class MetacatJsonLocator implements MetacatJson {
 
     private final ObjectMapper objectMapper;
     private final ObjectMapper prettyObjectMapper;
 
-    MetacatJsonLocator() {
+    /**
+     * Constructor.
+     */
+    public MetacatJsonLocator() {
         objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setSerializationInclusion(JsonInclude.Include.ALWAYS);
 
         prettyObjectMapper = objectMapper.copy().configure(SerializationFeature.INDENT_OUTPUT, true);
     }
+
 
     @Override
     public <T> T convertValue(final Object fromValue, final Class<T> toValueType) throws IllegalArgumentException {
@@ -79,16 +83,6 @@ public enum MetacatJsonLocator implements MetacatJson {
     }
 
     @Override
-    public ObjectMapper getObjectMapper() {
-        return objectMapper;
-    }
-
-    @Override
-    public ObjectMapper getPrettyObjectMapper() {
-        return prettyObjectMapper;
-    }
-
-    @Override
     public void mergeIntoPrimary(
         @Nonnull final ObjectNode primary,
         @Nonnull final ObjectNode additional) {
@@ -99,22 +93,16 @@ public enum MetacatJsonLocator implements MetacatJson {
         }
     }
 
+    @Nullable
     @Override
     public ObjectNode parseJsonObject(final String s) {
         final JsonNode node;
         try {
             node = objectMapper.readTree(s);
-        } catch (IOException e) {
-            throw new MetacatJsonException(e);
+        } catch (Exception e) {
+            throw new MetacatJsonException(s, "Cannot convert '" + s + "' to a json object", e);
         }
-
-        if (node == null || node.isNull()) {
-            return null;
-        } else if (node.isObject()) {
-            return (ObjectNode) node;
-        } else {
-            throw new MetacatJsonException("Cannot convert '" + s + "' to a json object");
-        }
+        return node.isObject() ? (ObjectNode) node : null;
     }
 
     @Override

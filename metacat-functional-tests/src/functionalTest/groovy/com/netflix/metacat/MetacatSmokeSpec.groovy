@@ -56,7 +56,7 @@ class MetacatSmokeSpec extends Specification {
     public static PartitionV1 partitionApi
     public static MetadataV1 metadataApi
     public static TagV1 tagApi
-    public static MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
+    public static MetacatJson metacatJson = new MetacatJsonLocator()
 
     def setupSpec() {
         String url = "http://localhost:${System.properties['metacat_http_port']}"

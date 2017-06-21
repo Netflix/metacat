@@ -29,6 +29,7 @@ include 'metacat-functional-tests'
 include 'metacat-main'
 include 'metacat-testdata-provider'
 include 'metacat-thrift'
+include 'metacat-elasticsearch'
 include 'metacat-metadata-mysql'
 include 'metacat-war'
 

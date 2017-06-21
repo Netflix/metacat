@@ -14,10 +14,11 @@
 package com.netflix.metacat.main.services;
 
 import com.google.common.base.Throwables;
+import com.netflix.metacat.thrift.MetacatThriftService;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
-import com.netflix.metacat.main.manager.CatalogManager;
-import com.netflix.metacat.main.manager.ConnectorManager;
-import com.netflix.metacat.main.manager.PluginManager;
+import com.netflix.metacat.common.server.manager.CatalogManager;
+import com.netflix.metacat.common.server.manager.ConnectorManager;
+import com.netflix.metacat.common.server.manager.PluginManager;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;

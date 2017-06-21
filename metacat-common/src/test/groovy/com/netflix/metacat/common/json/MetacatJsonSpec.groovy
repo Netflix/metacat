@@ -13,16 +13,18 @@
 
 package com.netflix.metacat.common.json
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.netflix.metacat.common.dto.DtoVerificationSpec
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class MetacatJsonSpec extends Specification {
-    MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
+    MetacatJson metacatJson = new MetacatJsonLocator()
 
     @Unroll
-    def 'can convert #clazz to json and back'() {
+    def 'Test can convert #clazz to json and back'() {
         given:
         def randomInstance = DtoVerificationSpec.getRandomDtoInstance(clazz)
 
@@ -36,7 +38,7 @@ class MetacatJsonSpec extends Specification {
     }
 
     @Unroll
-    def 'dataExternal should be included with #clazz which implements HasDataMetadata'() {
+    def 'Test dataExternal should be included with #clazz which implements HasDataMetadata'() {
         given:
         def randomInstance = DtoVerificationSpec.getRandomDtoInstance(clazz)
 
@@ -49,7 +51,7 @@ class MetacatJsonSpec extends Specification {
     }
 
     @Unroll
-    def 'name should be included with #clazz which has a qualified name instance'() {
+    def 'Test name should be included with #clazz which has a qualified name instance'() {
         given:
         def randomInstance = DtoVerificationSpec.getRandomDtoInstance(clazz)
 
@@ -62,7 +64,7 @@ class MetacatJsonSpec extends Specification {
     }
 
     @Unroll
-    def 'when merging #secondaryString into #primaryString expect #expectedString'() {
+    def 'Test when merging #secondaryString into #primaryString expect #expectedString'() {
         when:
         ObjectNode primary = metacatJson.parseJsonObject(primaryString)
         ObjectNode secondary = metacatJson.parseJsonObject(secondaryString)
@@ -83,5 +85,19 @@ class MetacatJsonSpec extends Specification {
         """{"field": {"overwrite_nested": false}}""" | """{"field": {"overwrite_nested": true}}"""                              | """{"field": {"overwrite_nested": true}}"""
         """{"field": {"old_nested_field": 1}}"""     | """{"field": {"new_nested_field": 2}}"""                                 | """{"field": {"old_nested_field": 1, "new_nested_field": 2}}"""
         """{"field": {"old_nested_field": 1}}"""     | """{"field": {"new_nested_field": {"new_nested_nested_field": true}}}""" | """{"field":{"old_nested_field":1,"new_nested_field":{"new_nested_nested_field":true}}}"""
+    }
+
+    @Unroll
+    def 'Test parse json string return null for NullNode'() {
+        given:
+        ObjectMapper objectMapper = Mock(ObjectMapper)
+        MetacatJsonLocator metacatJson = new MetacatJsonLocator(objectMapper, objectMapper)
+
+        when:
+        ObjectNode result = metacatJson.parseJsonObject("""{"field": "old_value"}""")
+
+        then:
+        objectMapper.readTree(_) >> NullNode.instance
+        result == null
     }
 }

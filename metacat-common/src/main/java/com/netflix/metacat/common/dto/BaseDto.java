@@ -46,7 +46,7 @@ public abstract class BaseDto implements Serializable {
     public static ObjectNode deserializeObjectNode(
         @Nonnull @NonNull final ObjectInputStream inputStream
     ) throws IOException {
-        return MetacatJsonLocator.INSTANCE.deserializeObjectNode(inputStream);
+        return new MetacatJsonLocator().deserializeObjectNode(inputStream);
     }
 
     /**
@@ -60,7 +60,7 @@ public abstract class BaseDto implements Serializable {
         @Nonnull @NonNull final ObjectOutputStream outputStream,
         @Nullable final ObjectNode json
     ) throws IOException {
-        MetacatJsonLocator.INSTANCE.serializeObjectNode(outputStream, json);
+        new MetacatJsonLocator().serializeObjectNode(outputStream, json);
     }
 
     /**
@@ -68,6 +68,6 @@ public abstract class BaseDto implements Serializable {
      */
     @Override
     public String toString() {
-        return MetacatJsonLocator.INSTANCE.toJsonString(this);
+        return new MetacatJsonLocator().toJsonString(this);
     }
 }

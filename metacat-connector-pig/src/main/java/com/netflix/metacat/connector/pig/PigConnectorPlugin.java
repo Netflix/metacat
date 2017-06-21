@@ -21,7 +21,7 @@ package com.netflix.metacat.connector.pig;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.common.server.util.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.connector.pig.converters.PigTypeConverter;
 import lombok.NonNull;
 
