@@ -1,14 +1,14 @@
 /*
- *       Copyright 2017 Netflix, Inc.
- *          Licensed under the Apache License, Version 2.0 (the "License");
- *          you may not use this file except in compliance with the License.
- *          You may obtain a copy of the License at
- *              http://www.apache.org/licenses/LICENSE-2.0
- *          Unless required by applicable law or agreed to in writing, software
- *          distributed under the License is distributed on an "AS IS" BASIS,
- *          WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *          See the License for the specific language governing permissions and
- *          limitations under the License.
+ * Copyright 2016 Netflix, Inc.
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 
 package com.netflix.metacat.common.server.services;
@@ -31,7 +31,7 @@ public interface CatalogService {
      * @return the information about the given catalog
      */
     @Nonnull
-    CatalogDto get(@Nonnull QualifiedName name);
+    CatalogDto get(QualifiedName name);
 
     /**
      * List of registered catalogs.
@@ -45,5 +45,5 @@ public interface CatalogService {
      * @param name             Qualified name of the catalog
      * @param createCatalogDto catalog
      */
-    void update(@Nonnull QualifiedName name, @Nonnull CreateCatalogDto createCatalogDto);
+    void update(QualifiedName name, CreateCatalogDto createCatalogDto);
 }

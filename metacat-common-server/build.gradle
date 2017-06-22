@@ -29,7 +29,6 @@ dependencies {
     compile("com.google.inject:guice")
     compile("net.sf.dozer:dozer")
     compile("org.apache.tomcat:tomcat-jdbc")
-    compile("com.amazonaws:aws-java-sdk-sns")
     compile("javax.validation:validation-api")
 
     /*******************************
@@ -42,6 +41,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-logging")
     compile("org.springframework.cloud:spring-cloud-starter-spectator")
     compile("org.springframework:spring-jdbc")
+
 
     /*******************************
      * Provided Dependencies

@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.common.server.services.impl;
+package com.netflix.metacat.main.services.impl;
 
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
@@ -69,7 +69,7 @@ public class CatalogServiceImpl implements CatalogService {
      */
     @Nonnull
     @Override
-    public CatalogDto get(@Nonnull final QualifiedName name) {
+    public CatalogDto get(final QualifiedName name) {
         final MetacatCatalogConfig config = connectorManager.getCatalogConfig(name);
 
         final CatalogDto result = new CatalogDto();
@@ -108,7 +108,7 @@ public class CatalogServiceImpl implements CatalogService {
      * {@inheritDoc}
      */
     @Override
-    public void update(@Nonnull final QualifiedName name, @Nonnull final CreateCatalogDto createCatalogDto) {
+    public void update(final QualifiedName name, final CreateCatalogDto createCatalogDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
         connectorManager.getCatalogConfig(name);

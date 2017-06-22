@@ -25,7 +25,6 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.spectator.api.Registry;
 import lombok.AllArgsConstructor;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
@@ -42,15 +41,10 @@ import java.util.stream.Stream;
 @Slf4j
 @AllArgsConstructor
 public class MetadataService {
-    @NonNull
     private final Config config;
-    @NonNull
     private final TableService tableService;
-    @NonNull
     private final PartitionService partitionService;
-    @NonNull
     private final UserMetadataService userMetadataService;
-    @NonNull
     private final Registry registry;
 
     /**

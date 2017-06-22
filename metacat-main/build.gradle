@@ -30,6 +30,7 @@ dependencies {
     compile(project(":metacat-common-server"))
     compile(project(":metacat-thrift"))
     compile(project(":metacat-elasticsearch"))
+    compile("com.amazonaws:aws-java-sdk-sns")
 
     /*******************************
      * Implementation Dependencies
@@ -72,7 +73,7 @@ dependencies {
     runtime("io.springfox:springfox-swagger-ui")
     runtime("org.webjars:hal-browser")
     runtime("org.springframework:spring-aspects")
-    
+
     /*******************************
      * Test Dependencies
      *******************************/

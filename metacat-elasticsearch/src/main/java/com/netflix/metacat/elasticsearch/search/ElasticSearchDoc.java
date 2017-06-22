@@ -20,8 +20,6 @@ import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.TableDto;
-import com.netflix.metacat.common.json.MetacatJson;
-import com.netflix.metacat.common.json.MetacatJsonLocator;
 import lombok.Getter;
 
 /**
@@ -35,20 +33,20 @@ public class ElasticSearchDoc {
      * Definition Metadata pull out fields.
      */
     private static final String[] DEFINITION_METADATA_FIELDS = {
-            ElasticSearchDocConstants.DEFINITION_METADATA_OWNER,
-            ElasticSearchDocConstants.DEFINITION_METADATA_TAGS,
-            ElasticSearchDocConstants.DEFINITION_METADATA_DATA_HYGIENE,
-            ElasticSearchDocConstants.DEFINITION_METADATA_LIFETIME,
-            ElasticSearchDocConstants.DEFINITION_METADATA_EXTENDED_SCHEMA,
-            ElasticSearchDocConstants.DEFINITION_METADATA_DATA_DEPENDENCY,
-            ElasticSearchDocConstants.DEFINITION_METADATA_TABLE_COST,
-            ElasticSearchDocConstants.DEFINITION_METADATA_LIFECYCLE,
-            ElasticSearchDocConstants.DEFINITION_METADATA_AUDIENCE,
-            ElasticSearchDocConstants.DEFINITION_METADATA_MODEL,
-            ElasticSearchDocConstants.DEFINITION_METADATA_SUBJECT_AREA,
-            ElasticSearchDocConstants.DEFINITION_METADATA_DATA_CATEGORY,
-            ElasticSearchDocConstants.DEFINITION_METADATA_JOB,
-            ElasticSearchDocConstants.DEFINITION_METADATA_TABLE_DESCRIPTION,
+        ElasticSearchDocConstants.DEFINITION_METADATA_OWNER,
+        ElasticSearchDocConstants.DEFINITION_METADATA_TAGS,
+        ElasticSearchDocConstants.DEFINITION_METADATA_DATA_HYGIENE,
+        ElasticSearchDocConstants.DEFINITION_METADATA_LIFETIME,
+        ElasticSearchDocConstants.DEFINITION_METADATA_EXTENDED_SCHEMA,
+        ElasticSearchDocConstants.DEFINITION_METADATA_DATA_DEPENDENCY,
+        ElasticSearchDocConstants.DEFINITION_METADATA_TABLE_COST,
+        ElasticSearchDocConstants.DEFINITION_METADATA_LIFECYCLE,
+        ElasticSearchDocConstants.DEFINITION_METADATA_AUDIENCE,
+        ElasticSearchDocConstants.DEFINITION_METADATA_MODEL,
+        ElasticSearchDocConstants.DEFINITION_METADATA_SUBJECT_AREA,
+        ElasticSearchDocConstants.DEFINITION_METADATA_DATA_CATEGORY,
+        ElasticSearchDocConstants.DEFINITION_METADATA_JOB,
+        ElasticSearchDocConstants.DEFINITION_METADATA_TABLE_DESCRIPTION,
     };
 
     private String id;
@@ -57,7 +55,6 @@ public class ElasticSearchDoc {
     private boolean deleted;
     private String refreshMarker;
     private boolean addSearchableDefinitionMetadataEnabled = true;
-    private MetacatJson metacatJson = new MetacatJsonLocator();
 
     /**
      * Constructor.
@@ -92,21 +89,6 @@ public class ElasticSearchDoc {
         this.refreshMarker = refreshMarker;
     }
 
-    private ObjectNode toJsonObject() {
-        final ObjectNode oMetadata = metacatJson.toJsonObject(dto);
-        if (addSearchableDefinitionMetadataEnabled) {
-            //add the searchable definition metadata
-            addSearchableDefinitionMetadata(oMetadata);
-        }
-        //True if this entity has been deleted
-        oMetadata.put(Field.DELETED, deleted);
-        //True if this entity has been deleted
-        oMetadata.put(Field.USER, user);
-        if (refreshMarker != null) {
-            oMetadata.put(Field.REFRESH_MARKER, refreshMarker);
-        }
-        return oMetadata;
-    }
 
     /**
      * addSearchableDefinitionMetadataEnabled.
@@ -122,10 +104,6 @@ public class ElasticSearchDoc {
         objectNode.set(Field.SEARCHABLE_DEFINITION_METADATA, node);
     }
 
-    String toJsonString() {
-        final String result = metacatJson.toJsonString(toJsonObject());
-        return result.replace("{}", "null");
-    }
 
     /**
      * Document types.

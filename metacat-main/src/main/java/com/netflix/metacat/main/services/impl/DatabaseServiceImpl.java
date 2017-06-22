@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.common.server.services.impl;
+package com.netflix.metacat.main.services.impl;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -19,8 +19,8 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
-import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
@@ -31,15 +31,14 @@ import com.netflix.metacat.common.server.events.MetacatDeleteDatabasePreEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePreEvent;
-import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
-import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.common.server.manager.ConnectorManager;
 import com.netflix.metacat.common.server.services.CatalogService;
 import com.netflix.metacat.common.server.services.DatabaseService;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
+import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -81,7 +80,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
-    public DatabaseDto create(@Nonnull final QualifiedName name, @Nonnull final DatabaseDto dto) {
+    public DatabaseDto create(final QualifiedName name, final DatabaseDto dto) {
         validate(name);
         log.info("Creating schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -100,7 +99,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
-    public void update(@Nonnull final QualifiedName name, @Nonnull final DatabaseDto dto) {
+    public void update(final QualifiedName name, final DatabaseDto dto) {
         validate(name);
         log.info("Updating schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -121,13 +120,13 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
-    public DatabaseDto updateAndReturn(@Nonnull final QualifiedName name, @Nonnull final DatabaseDto dto) {
+    public DatabaseDto updateAndReturn(final QualifiedName name, final DatabaseDto dto) {
         update(name, dto);
         return get(name);
     }
 
     @Override
-    public void delete(@Nonnull final QualifiedName name) {
+    public void delete(final QualifiedName name) {
         validate(name);
         log.info("Dropping schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -145,12 +144,12 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
-    public DatabaseDto get(@Nonnull final QualifiedName name) {
+    public DatabaseDto get(final QualifiedName name) {
         return get(name, true);
     }
 
     @Override
-    public DatabaseDto get(@Nonnull final QualifiedName name, final boolean includeUserMetadata) {
+    public DatabaseDto get(final QualifiedName name, final boolean includeUserMetadata) {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final MetacatCatalogConfig config = connectorManager.getCatalogConfig(name.getCatalogName());
@@ -189,7 +188,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
-    public boolean exists(@Nonnull final QualifiedName name) {
+    public boolean exists(final QualifiedName name) {
         final CatalogDto catalogDto = catalogService.get(QualifiedName.ofCatalog(name.getCatalogName()));
         return catalogDto.getDatabases().contains(name.getDatabaseName());
     }

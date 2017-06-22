@@ -17,4 +17,6 @@
  * @author tgianos
  * @since 0.1.46
  */
-package com.netflix.metacat.common.server.services.notifications;
+@ParametersAreNonnullByDefault
+package com.netflix.metacat.main.services.notifications;
+import javax.annotation.ParametersAreNonnullByDefault;

@@ -1,15 +1,16 @@
 /*
- *       Copyright 2017 Netflix, Inc.
- *          Licensed under the Apache License, Version 2.0 (the "License");
- *          you may not use this file except in compliance with the License.
- *          You may obtain a copy of the License at
- *              http://www.apache.org/licenses/LICENSE-2.0
- *          Unless required by applicable law or agreed to in writing, software
- *          distributed under the License is distributed on an "AS IS" BASIS,
- *          WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *          See the License for the specific language governing permissions and
- *          limitations under the License.
+ * Copyright 2016 Netflix, Inc.
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
+
 
 package com.netflix.metacat.common.server.services;
 
@@ -20,7 +21,6 @@ import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +68,7 @@ public interface PartitionService extends MetacatService<PartitionDto> {
      * @param partitionsSaveRequestDto request dto containing the partitions to be added and deleted
      * @return no. of partitions added and updated.
      */
-    PartitionsSaveResponseDto save(@Nonnull QualifiedName name, PartitionsSaveRequestDto partitionsSaveRequestDto);
+    PartitionsSaveResponseDto save(QualifiedName name, PartitionsSaveRequestDto partitionsSaveRequestDto);
 
     /**
      * Deletes the partitions with the given <code>partitionIds</code> for the given table name.

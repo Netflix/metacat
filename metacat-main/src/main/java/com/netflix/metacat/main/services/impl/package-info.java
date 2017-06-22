@@ -21,4 +21,6 @@
  *
  * @author amajumdar
  */
-package com.netflix.metacat.common.server.services.impl;
+@ParametersAreNonnullByDefault
+package com.netflix.metacat.main.services.impl;
+import javax.annotation.ParametersAreNonnullByDefault;

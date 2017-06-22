@@ -1,15 +1,16 @@
 /*
- *       Copyright 2017 Netflix, Inc.
- *          Licensed under the Apache License, Version 2.0 (the "License");
- *          you may not use this file except in compliance with the License.
- *          You may obtain a copy of the License at
- *              http://www.apache.org/licenses/LICENSE-2.0
- *          Unless required by applicable law or agreed to in writing, software
- *          distributed under the License is distributed on an "AS IS" BASIS,
- *          WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *          See the License for the specific language governing permissions and
- *          limitations under the License.
+ * Copyright 2016 Netflix, Inc.
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
+
 
 package com.netflix.metacat.common.server.services;
 
@@ -17,7 +18,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.TableDto;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,7 +32,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param isMView true if this table is created for a mview
      * @return Returns the deleted table
      */
-    TableDto deleteAndReturn(@Nonnull QualifiedName name, boolean isMView);
+    TableDto deleteAndReturn(QualifiedName name, boolean isMView);
 
     /**
      * Returns the table with the given name.
@@ -40,7 +40,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param includeUserMetadata if true, the table will include the user metadata
      * @return Returns the table with the given name
      */
-    Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeUserMetadata);
+    Optional<TableDto> get(QualifiedName name, boolean includeUserMetadata);
 
     /**
      * Returns the table with the given name.
@@ -50,7 +50,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param includeDataMetadata if true, the table will include the user data metadata
      * @return Returns the table with the given name
      */
-    Optional<TableDto> get(@Nonnull QualifiedName name, boolean includeInfo,
+    Optional<TableDto> get(QualifiedName name, boolean includeInfo,
         boolean includeDefinitionMetadata, boolean includeDataMetadata);
 
     /**
@@ -59,7 +59,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param newName new qualified name of the table
      * @param isMView true, if the object is a view
      */
-    void rename(@Nonnull QualifiedName oldName, @Nonnull QualifiedName newName, boolean isMView);
+    void rename(QualifiedName oldName, QualifiedName newName, boolean isMView);
 
     /**
      * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>.
@@ -67,7 +67,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param targetName qualified name of the target table
      * @return Returns the copied table
      */
-    TableDto copy(@Nonnull QualifiedName name, @Nonnull QualifiedName targetName);
+    TableDto copy(QualifiedName name, QualifiedName targetName);
 
     /**
      * Copies the table metadata from source table <code>name</code> to target table <code>targetName</code>.
@@ -75,7 +75,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param targetName qualified name of the target table
      * @return Returns the copied table
      */
-    TableDto copy(@Nonnull TableDto tableDto, @Nonnull QualifiedName targetName);
+    TableDto copy(TableDto tableDto, QualifiedName targetName);
 
     /**
      * Saves the user metadata for the given table.
@@ -83,7 +83,7 @@ public interface TableService extends MetacatService<TableDto> {
      * @param definitionMetadata user definition metadata json
      * @param dataMetadata user data metadata json
      */
-    void saveMetadata(@Nonnull QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
+    void saveMetadata(QualifiedName name, ObjectNode definitionMetadata, ObjectNode dataMetadata);
 
     /**
      * Returns a list of qualified names of tables that refers to the given <code>uri</code>. If prefixSearch is true,

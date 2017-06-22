@@ -1,31 +1,34 @@
 /*
- *       Copyright 2017 Netflix, Inc.
- *          Licensed under the Apache License, Version 2.0 (the "License");
- *          you may not use this file except in compliance with the License.
- *          You may obtain a copy of the License at
- *              http://www.apache.org/licenses/LICENSE-2.0
- *          Unless required by applicable law or agreed to in writing, software
- *          distributed under the License is distributed on an "AS IS" BASIS,
- *          WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *          See the License for the specific language governing permissions and
- *          limitations under the License.
+ *
+ *  Copyright 2016 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
  */
-package com.netflix.metacat.common.server.services.notifications.sns;
+package com.netflix.metacat.main.services.notifications.sns;
 
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.common.server.services.notifications.DefaultNotificationServiceImpl;
 import com.netflix.metacat.common.server.services.NotificationService;
+import com.netflix.metacat.main.services.notifications.DefaultNotificationServiceImpl;
 import com.netflix.spectator.api.Registry;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
-import javax.annotation.Nonnull;
 
 /**
  * Provides an instance of SNSNotificationServiceImpl if conditions are right.
@@ -48,9 +51,9 @@ public class SNSNotificationServiceImplProvider implements Provider<Notification
      * @param registry The registry of spectator
      */
     @Inject
-    public SNSNotificationServiceImplProvider(@Nonnull @NonNull final Config config,
-                                              @Nonnull @NonNull final ObjectMapper mapper,
-                                              @Nonnull @NonNull final Registry registry) {
+    public SNSNotificationServiceImplProvider(final Config config,
+                                              final ObjectMapper mapper,
+                                              final Registry registry) {
         this.config = config;
         this.mapper = mapper;
         this.registry = registry;
