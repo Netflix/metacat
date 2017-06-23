@@ -15,6 +15,7 @@
 package com.netflix.metacat.common.server.manager;
 
 import com.google.common.collect.ImmutableList;
+import com.netflix.metacat.common.server.connectors.ConnectorManager;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import lombok.extern.slf4j.Slf4j;

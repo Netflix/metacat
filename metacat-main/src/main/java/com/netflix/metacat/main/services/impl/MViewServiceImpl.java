@@ -42,7 +42,7 @@ import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPreEvent;
-import com.netflix.metacat.common.server.manager.ConnectorManager;
+import com.netflix.metacat.common.server.connectors.ConnectorManager;
 import com.netflix.metacat.common.server.services.MViewService;
 import com.netflix.metacat.common.server.services.PartitionService;
 import com.netflix.metacat.common.server.services.TableService;
@@ -153,12 +153,18 @@ public class MViewServiceImpl implements MViewService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TableDto create(final QualifiedName name, final TableDto dto) {
         // Ignore the dto passed
         return create(name);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TableDto deleteAndReturn(final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -171,6 +177,9 @@ public class MViewServiceImpl implements MViewService {
         return deletedDto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(final QualifiedName name) {
         final QualifiedName viewQName =
@@ -178,11 +187,17 @@ public class MViewServiceImpl implements MViewService {
         tableService.deleteAndReturn(viewQName, true);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void update(final QualifiedName name, final TableDto tableDto) {
         updateAndReturn(name, tableDto);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TableDto updateAndReturn(final QualifiedName name, final TableDto tableDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -196,6 +211,9 @@ public class MViewServiceImpl implements MViewService {
         return updatedDto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TableDto get(final QualifiedName name) {
         final QualifiedName viewQName =
@@ -203,6 +221,9 @@ public class MViewServiceImpl implements MViewService {
         return tableService.get(viewQName);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Optional<TableDto> getOpt(final QualifiedName name) {
         final QualifiedName viewQName =
@@ -218,13 +239,14 @@ public class MViewServiceImpl implements MViewService {
             final QualifiedName tableName = QualifiedName
                 .ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
             final Optional<ObjectNode> definitionMetadata = userMetadataService.getDefinitionMetadata(tableName);
-            if (definitionMetadata.isPresent()) {
-                userMetadataService.populateMetadata(table, definitionMetadata.get(), null);
-            }
+            definitionMetadata.ifPresent(jsonNodes -> userMetadataService.populateMetadata(table, jsonNodes, null));
         }
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void snapshotPartitions(final QualifiedName name, final String filter) {
         //TODO check why the partitionNames passin null
@@ -238,6 +260,9 @@ public class MViewServiceImpl implements MViewService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PartitionsSaveResponseDto savePartitions(
         final QualifiedName name,
@@ -291,7 +316,8 @@ public class MViewServiceImpl implements MViewService {
         return result;
     }
 
-    private PartitionDto mergePartition(final PartitionDto partitionDto, final PartitionDto existingPartition) {
+    private PartitionDto mergePartition(final PartitionDto partitionDto,
+                                        @Nullable final PartitionDto existingPartition) {
         if (existingPartition != null) {
             final StorageDto existingSerde = existingPartition.getSerde();
             if (existingSerde != null) {
@@ -317,6 +343,9 @@ public class MViewServiceImpl implements MViewService {
         return partitionDto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void deletePartitions(final QualifiedName name, final List<String> partitionIds) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -331,6 +360,9 @@ public class MViewServiceImpl implements MViewService {
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<PartitionDto> listPartitions(
         final QualifiedName name,
@@ -338,8 +370,8 @@ public class MViewServiceImpl implements MViewService {
         @Nullable final List<String> partitionNames,
         @Nullable final Sort sort,
         @Nullable final Pageable pageable,
-        @Nullable final boolean includeUserMetadata,
-        @Nullable final boolean includePartitionDetails
+        final boolean includeUserMetadata,
+        final boolean includePartitionDetails
     ) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
@@ -348,27 +380,38 @@ public class MViewServiceImpl implements MViewService {
                 includePartitionDetails);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public List<String> getPartitionKeys(final QualifiedName name, @Nullable final String filter,
-                                         final List<String> partitionNames,
-                                         @Nullable final Sort sort,
-                                         @Nullable final Pageable pageable) {
+    public List<String> getPartitionKeys(
+         final QualifiedName name,
+         @Nullable final String filter,
+         final List<String> partitionNames,
+         @Nullable final Sort sort,
+         @Nullable final Pageable pageable) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return partitionService.getPartitionKeys(viewQName, filter, partitionNames, sort, pageable);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionUris(final QualifiedName name,
-                                         final String filter,
-                                         final List<String> partitionNames,
-                                         final Sort sort,
-                                         final Pageable pageable) {
+                                         @Nullable final String filter,
+                                         @Nullable final List<String> partitionNames,
+                                         @Nullable final Sort sort,
+                                         @Nullable final Pageable pageable) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return partitionService.getPartitionUris(viewQName, filter, partitionNames, sort, pageable);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Integer partitionCount(final QualifiedName name) {
         final QualifiedName viewQName =
@@ -376,6 +419,9 @@ public class MViewServiceImpl implements MViewService {
         return partitionService.count(viewQName);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<NameDateDto> list(final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -414,6 +460,9 @@ public class MViewServiceImpl implements MViewService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void saveMetadata(final QualifiedName name,
                              final ObjectNode definitionMetadata,
@@ -423,6 +472,9 @@ public class MViewServiceImpl implements MViewService {
         tableService.saveMetadata(viewQName, definitionMetadata, dataMetadata);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void rename(final QualifiedName name, final QualifiedName newViewName) {
         final QualifiedName oldViewQName =
@@ -432,6 +484,9 @@ public class MViewServiceImpl implements MViewService {
         tableService.rename(oldViewQName, newViewQName, true);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean exists(final QualifiedName name) {
         final QualifiedName viewQName =

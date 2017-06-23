@@ -17,7 +17,7 @@ import com.google.common.base.Throwables;
 import com.netflix.metacat.thrift.MetacatThriftService;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.common.server.manager.CatalogManager;
-import com.netflix.metacat.common.server.manager.ConnectorManager;
+import com.netflix.metacat.common.server.connectors.ConnectorManager;
 import com.netflix.metacat.common.server.manager.PluginManager;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;

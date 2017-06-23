@@ -48,7 +48,7 @@ public interface MViewService extends MetacatService<TableDto> {
      * @param filter   Filter expression string to use
      * @return view
      */
-    TableDto createAndSnapshotPartitions(QualifiedName name, boolean snapshot, String filter);
+    TableDto createAndSnapshotPartitions(QualifiedName name, boolean snapshot, @Nullable String filter);
 
     /**
      * Deletes the view and returns the deleted view.
@@ -105,10 +105,14 @@ public interface MViewService extends MetacatService<TableDto> {
      * @param includePartitionDetails if true, includes parameter details
      * @return list of partitions
      */
-    List<PartitionDto> listPartitions(QualifiedName name, String filter,
-                                      @Nullable List<String> partitionNames,
-                                      Sort sort, Pageable pageable,
-                                      boolean includeUserMetadata, boolean includePartitionDetails);
+    List<PartitionDto> listPartitions(
+        QualifiedName name,
+        @Nullable String filter,
+        @Nullable List<String> partitionNames,
+        @Nullable Sort sort,
+        @Nullable Pageable pageable,
+        boolean includeUserMetadata,
+        boolean includePartitionDetails);
 
     /**
      * Returns a list of partition names.
@@ -120,9 +124,12 @@ public interface MViewService extends MetacatService<TableDto> {
      * @param pageable       pagination info
      * @return list of partition names
      */
-    List<String> getPartitionKeys(QualifiedName name, @Nullable String filter,
-                                  List<String> partitionNames, @Nullable Sort sort,
-                                  @Nullable Pageable pageable);
+    List<String> getPartitionKeys(
+        QualifiedName name,
+        @Nullable String filter,
+        List<String> partitionNames,
+        @Nullable Sort sort,
+        @Nullable Pageable pageable);
 
     /**
      * Returns a list of partition uris.
@@ -134,9 +141,12 @@ public interface MViewService extends MetacatService<TableDto> {
      * @param pageable       pagination info
      * @return list of partition uris
      */
-    List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames,
-                                  Sort sort,
-                                  Pageable pageable);
+    List<String> getPartitionUris(
+        QualifiedName name,
+        @Nullable String filter,
+        @Nullable List<String> partitionNames,
+        @Nullable Sort sort,
+        @Nullable Pageable pageable);
 
     /**
      * Partition count for the given view name.

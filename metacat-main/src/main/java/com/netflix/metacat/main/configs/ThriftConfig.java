@@ -21,7 +21,7 @@ import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.api.v1.PartitionV1;
 import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.common.server.manager.ConnectorManager;
+import com.netflix.metacat.common.server.connectors.ConnectorManager;
 import com.netflix.metacat.thrift.MetacatThriftService;
 import com.netflix.metacat.thrift.CatalogThriftServiceFactory;
 import com.netflix.metacat.thrift.CatalogThriftServiceFactoryImpl;

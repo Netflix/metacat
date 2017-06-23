@@ -39,7 +39,7 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPreEv
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
-import com.netflix.metacat.common.server.manager.ConnectorManager;
+import com.netflix.metacat.common.server.connectors.ConnectorManager;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.services.CatalogService;
@@ -116,6 +116,9 @@ public class PartitionServiceImpl implements PartitionService {
         this.partitionDeletedCountId = registry.createId(Metrics.GaugeDeletePartitions.toString());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<PartitionDto> list(
             final QualifiedName name,
@@ -182,6 +185,9 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Integer count(final QualifiedName name) {
         Integer result = 0;
@@ -195,6 +201,9 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PartitionsSaveResponseDto save(final QualifiedName name, final PartitionsSaveRequestDto dto) {
         PartitionsSaveResponseDto result = new PartitionsSaveResponseDto();
@@ -254,6 +263,9 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(final QualifiedName name, final List<String> partitionIds) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -297,12 +309,18 @@ public class PartitionServiceImpl implements PartitionService {
         threadServiceManager.getExecutor().submit(() -> userMetadataService.deleteMetadatas(userId, partitions));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<QualifiedName> getQualifiedNames(final String uri, final boolean prefixSearch) {
         return getQualifiedNames(Lists.newArrayList(uri), prefixSearch).values().stream().flatMap(Collection::stream)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Map<String, List<QualifiedName>> getQualifiedNames(final List<String> uris, final boolean prefixSearch) {
         final Map<String, List<QualifiedName>> result = Maps.newConcurrentMap();
@@ -339,6 +357,9 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionKeys(
             final QualifiedName name,
@@ -369,6 +390,9 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionUris(
             final QualifiedName name,
@@ -396,6 +420,9 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PartitionDto create(final QualifiedName name, final PartitionDto partitionDto) {
         final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
@@ -405,6 +432,9 @@ public class PartitionServiceImpl implements PartitionService {
         return partitionDto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void update(final QualifiedName name, final PartitionDto partitionDto) {
         final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
@@ -412,12 +442,18 @@ public class PartitionServiceImpl implements PartitionService {
         save(name, dto);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PartitionDto updateAndReturn(final QualifiedName name, final PartitionDto dto) {
         update(name, dto);
         return dto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(final QualifiedName name) {
         final QualifiedName tableName = QualifiedName
@@ -425,6 +461,9 @@ public class PartitionServiceImpl implements PartitionService {
         delete(tableName, Lists.newArrayList(name.getPartitionName()));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PartitionDto get(final QualifiedName name) {
         PartitionDto result = null;
@@ -438,6 +477,9 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean exists(final QualifiedName name) {
         return get(name) != null;

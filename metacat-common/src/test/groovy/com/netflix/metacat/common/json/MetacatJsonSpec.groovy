@@ -24,7 +24,7 @@ class MetacatJsonSpec extends Specification {
     MetacatJson metacatJson = new MetacatJsonLocator()
 
     @Unroll
-    def 'Test can convert #clazz to json and back'() {
+    def 'can convert #clazz to json and back'() {
         given:
         def randomInstance = DtoVerificationSpec.getRandomDtoInstance(clazz)
 
@@ -38,7 +38,7 @@ class MetacatJsonSpec extends Specification {
     }
 
     @Unroll
-    def 'Test dataExternal should be included with #clazz which implements HasDataMetadata'() {
+    def 'dataExternal should be included with #clazz which implements HasDataMetadata'() {
         given:
         def randomInstance = DtoVerificationSpec.getRandomDtoInstance(clazz)
 
@@ -51,7 +51,7 @@ class MetacatJsonSpec extends Specification {
     }
 
     @Unroll
-    def 'Test name should be included with #clazz which has a qualified name instance'() {
+    def 'name should be included with #clazz which has a qualified name instance'() {
         given:
         def randomInstance = DtoVerificationSpec.getRandomDtoInstance(clazz)
 
@@ -64,7 +64,7 @@ class MetacatJsonSpec extends Specification {
     }
 
     @Unroll
-    def 'Test when merging #secondaryString into #primaryString expect #expectedString'() {
+    def 'when merging #secondaryString into #primaryString expect #expectedString'() {
         when:
         ObjectNode primary = metacatJson.parseJsonObject(primaryString)
         ObjectNode secondary = metacatJson.parseJsonObject(secondaryString)
@@ -88,7 +88,7 @@ class MetacatJsonSpec extends Specification {
     }
 
     @Unroll
-    def 'Test parse json string return null for NullNode'() {
+    def 'parse json string return null for NullNode'() {
         given:
         ObjectMapper objectMapper = Mock(ObjectMapper)
         MetacatJsonLocator metacatJson = new MetacatJsonLocator(objectMapper, objectMapper)

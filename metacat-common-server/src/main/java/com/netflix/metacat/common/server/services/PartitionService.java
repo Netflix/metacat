@@ -109,7 +109,7 @@ public interface PartitionService extends MetacatService<PartitionDto> {
     List<String> getPartitionKeys(
         QualifiedName name,
         @Nullable String filter,
-        List<String> partitionNames,
+        @Nullable List<String> partitionNames,
         @Nullable Sort sort,
         @Nullable Pageable pageable);
 
@@ -123,6 +123,10 @@ public interface PartitionService extends MetacatService<PartitionDto> {
      * @param pageable       pagination info
      * @return list of partition uris
      */
-    List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
-                                  Pageable pageable);
+    List<String> getPartitionUris(
+        QualifiedName name,
+        @Nullable String filter,
+        @Nullable List<String> partitionNames,
+        @Nullable Sort sort,
+        @Nullable Pageable pageable);
 }

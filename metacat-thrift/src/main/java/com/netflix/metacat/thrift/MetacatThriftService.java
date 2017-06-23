@@ -12,7 +12,7 @@
  */
 package com.netflix.metacat.thrift;
 
-import com.netflix.metacat.common.server.manager.ConnectorManager;
+import com.netflix.metacat.common.server.connectors.ConnectorManager;
 
 import javax.inject.Inject;
 import java.util.List;

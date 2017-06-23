@@ -40,7 +40,7 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
-import com.netflix.metacat.common.server.manager.ConnectorManager;
+import com.netflix.metacat.common.server.connectors.ConnectorManager;
 import com.netflix.metacat.common.server.services.DatabaseService;
 import com.netflix.metacat.common.server.services.TableService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
@@ -94,6 +94,9 @@ public class TableServiceImpl implements TableService {
         this.converterUtil = converterUtil;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TableDto create(final QualifiedName name, final TableDto tableDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -145,6 +148,9 @@ public class TableServiceImpl implements TableService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TableDto deleteAndReturn(final QualifiedName name, final boolean isMView) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -175,11 +181,17 @@ public class TableServiceImpl implements TableService {
         return tableDto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Optional<TableDto> get(final QualifiedName name, final boolean includeUserMetadata) {
         return get(name, true, includeUserMetadata, includeUserMetadata);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Optional<TableDto> get(final QualifiedName name, final boolean includeInfo,
                                   final boolean includeDefinitionMetadata, final boolean includeDataMetadata) {
@@ -226,6 +238,9 @@ public class TableServiceImpl implements TableService {
         return Optional.of(table);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void rename(
         final QualifiedName oldName,
@@ -255,11 +270,17 @@ public class TableServiceImpl implements TableService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void update(final QualifiedName name, final TableDto tableDto) {
         updateAndReturn(name, tableDto);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TableDto updateAndReturn(final QualifiedName name, final TableDto tableDto) {
         validate(name);
@@ -299,17 +320,26 @@ public class TableServiceImpl implements TableService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(final QualifiedName name) {
         deleteAndReturn(name, false);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TableDto get(final QualifiedName name) {
         final Optional<TableDto> dto = get(name, true);
         return dto.orElse(null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TableDto copy(final QualifiedName sourceName, final QualifiedName targetName) {
         // Source should be same
@@ -329,6 +359,9 @@ public class TableServiceImpl implements TableService {
         return copy(oTable.get(), targetName);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TableDto copy(final TableDto tableDto, final QualifiedName targetName) {
         final QualifiedName databaseName =
@@ -357,6 +390,9 @@ public class TableServiceImpl implements TableService {
         return targetTableDto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void saveMetadata(final QualifiedName name, final ObjectNode definitionMetadata,
                              final ObjectNode dataMetadata) {
@@ -373,6 +409,9 @@ public class TableServiceImpl implements TableService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<QualifiedName> getQualifiedNames(final String uri, final boolean prefixSearch) {
         final List<QualifiedName> result = Lists.newArrayList();
@@ -395,6 +434,9 @@ public class TableServiceImpl implements TableService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Map<String, List<QualifiedName>> getQualifiedNames(final List<String> uris, final boolean prefixSearch) {
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
@@ -422,6 +464,9 @@ public class TableServiceImpl implements TableService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean exists(final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();

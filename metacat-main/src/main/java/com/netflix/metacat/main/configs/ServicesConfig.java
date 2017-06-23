@@ -30,7 +30,7 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.common.server.manager.CatalogManager;
-import com.netflix.metacat.common.server.manager.ConnectorManager;
+import com.netflix.metacat.common.server.connectors.ConnectorManager;
 import com.netflix.metacat.common.server.manager.PluginManager;
 import com.netflix.metacat.common.server.services.CatalogService;
 import com.netflix.metacat.common.server.services.DatabaseService;

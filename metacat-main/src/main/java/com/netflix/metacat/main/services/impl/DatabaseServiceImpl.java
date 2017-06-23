@@ -31,7 +31,7 @@ import com.netflix.metacat.common.server.events.MetacatDeleteDatabasePreEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePreEvent;
-import com.netflix.metacat.common.server.manager.ConnectorManager;
+import com.netflix.metacat.common.server.connectors.ConnectorManager;
 import com.netflix.metacat.common.server.services.CatalogService;
 import com.netflix.metacat.common.server.services.DatabaseService;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
@@ -79,6 +79,9 @@ public class DatabaseServiceImpl implements DatabaseService {
         this.converterUtil = converterUtil;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DatabaseDto create(final QualifiedName name, final DatabaseDto dto) {
         validate(name);
@@ -98,6 +101,9 @@ public class DatabaseServiceImpl implements DatabaseService {
         return createdDto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void update(final QualifiedName name, final DatabaseDto dto) {
         validate(name);
@@ -119,12 +125,18 @@ public class DatabaseServiceImpl implements DatabaseService {
         eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DatabaseDto updateAndReturn(final QualifiedName name, final DatabaseDto dto) {
         update(name, dto);
         return get(name);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(final QualifiedName name) {
         validate(name);
@@ -143,11 +155,17 @@ public class DatabaseServiceImpl implements DatabaseService {
         eventBus.postAsync(new MetacatDeleteDatabasePostEvent(name, metacatRequestContext, this, dto));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DatabaseDto get(final QualifiedName name) {
         return get(name, true);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DatabaseDto get(final QualifiedName name, final boolean includeUserMetadata) {
         validate(name);
@@ -187,6 +205,9 @@ public class DatabaseServiceImpl implements DatabaseService {
         return dto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean exists(final QualifiedName name) {
         final CatalogDto catalogDto = catalogService.get(QualifiedName.ofCatalog(name.getCatalogName()));
