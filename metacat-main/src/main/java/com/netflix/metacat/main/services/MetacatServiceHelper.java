@@ -31,10 +31,6 @@ import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
-import com.netflix.metacat.common.server.services.DatabaseService;
-import com.netflix.metacat.common.server.services.MetacatService;
-import com.netflix.metacat.common.server.services.PartitionService;
-import com.netflix.metacat.common.server.services.TableService;
 
 import java.util.List;
 

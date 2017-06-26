@@ -42,7 +42,7 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
-import com.netflix.metacat.common.server.services.NotificationService;
+import com.netflix.metacat.main.services.notifications.NotificationService;
 import com.netflix.spectator.api.Registry;
 import com.netflix.spectator.api.Timer;
 import lombok.extern.slf4j.Slf4j;

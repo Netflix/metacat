@@ -12,7 +12,7 @@
  */
 
 
-package com.netflix.metacat.elasticsearch.search;
+package com.netflix.metacat.main.services.search;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Splitter;
@@ -41,10 +41,10 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.common.server.services.CatalogService;
-import com.netflix.metacat.common.server.services.DatabaseService;
-import com.netflix.metacat.common.server.services.PartitionService;
-import com.netflix.metacat.common.server.services.TableService;
+import com.netflix.metacat.main.services.CatalogService;
+import com.netflix.metacat.main.services.DatabaseService;
+import com.netflix.metacat.main.services.PartitionService;
+import com.netflix.metacat.main.services.TableService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;

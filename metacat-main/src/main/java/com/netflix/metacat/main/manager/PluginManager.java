@@ -12,7 +12,7 @@
  */
 
 
-package com.netflix.metacat.common.server.manager;
+package com.netflix.metacat.main.manager;
 
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.common.server.connectors.ConnectorManager;

@@ -43,9 +43,9 @@ import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPreEven
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPreEvent;
 import com.netflix.metacat.common.server.connectors.ConnectorManager;
-import com.netflix.metacat.common.server.services.MViewService;
-import com.netflix.metacat.common.server.services.PartitionService;
-import com.netflix.metacat.common.server.services.TableService;
+import com.netflix.metacat.main.services.MViewService;
+import com.netflix.metacat.main.services.PartitionService;
+import com.netflix.metacat.main.services.TableService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import lombok.extern.slf4j.Slf4j;

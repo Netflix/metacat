@@ -18,10 +18,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.json.MetacatJsonLocator
+import com.netflix.metacat.main.services.search.ElasticSearchDoc
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import spock.lang.Unroll
 
-import static com.netflix.metacat.elasticsearch.search.ElasticSearchDoc.Type
+import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Type
 
 /**
  * Testing suit for elastic search util

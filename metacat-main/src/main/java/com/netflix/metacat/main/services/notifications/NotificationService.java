@@ -15,7 +15,7 @@
  *     limitations under the License.
  *
  */
-package com.netflix.metacat.common.server.services;
+package com.netflix.metacat.main.services.notifications;
 
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;

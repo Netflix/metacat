@@ -23,7 +23,6 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
-import com.netflix.metacat.common.server.services.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 
 

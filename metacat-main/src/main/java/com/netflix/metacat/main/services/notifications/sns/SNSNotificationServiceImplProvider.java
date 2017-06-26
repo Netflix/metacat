@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.common.server.services.NotificationService;
+import com.netflix.metacat.main.services.notifications.NotificationService;
 import com.netflix.metacat.main.services.notifications.DefaultNotificationServiceImpl;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;

@@ -29,8 +29,9 @@ dependencies {
     compile(project(":metacat-common"))
     compile(project(":metacat-common-server"))
     compile(project(":metacat-thrift"))
-    compile(project(":metacat-elasticsearch"))
+    compile("org.elasticsearch:elasticsearch")
     compile("com.amazonaws:aws-java-sdk-sns")
+    compile("joda-time:joda-time")
 
     /*******************************
      * Implementation Dependencies

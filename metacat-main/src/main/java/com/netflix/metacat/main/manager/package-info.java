@@ -12,13 +12,11 @@
  */
 
 /**
- * Common server interfaces.
+ * This package includes initialization classes.
  *
- * @author zhenl
- * @since 1.1.0
+ * @author amajumdar
  */
-
 @ParametersAreNonnullByDefault
-package com.netflix.metacat.common.server.services;
-import javax.annotation.ParametersAreNonnullByDefault;
+package com.netflix.metacat.main.manager;
 
+import javax.annotation.ParametersAreNonnullByDefault;

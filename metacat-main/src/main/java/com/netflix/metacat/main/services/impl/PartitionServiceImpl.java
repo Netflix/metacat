@@ -42,9 +42,9 @@ import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEven
 import com.netflix.metacat.common.server.connectors.ConnectorManager;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.common.server.services.CatalogService;
-import com.netflix.metacat.common.server.services.PartitionService;
-import com.netflix.metacat.common.server.services.TableService;
+import com.netflix.metacat.main.services.CatalogService;
+import com.netflix.metacat.main.services.PartitionService;
+import com.netflix.metacat.main.services.TableService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;

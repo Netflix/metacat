@@ -12,7 +12,7 @@
  */
 
 
-package com.netflix.metacat.common.server.services;
+package com.netflix.metacat.main.services;
 
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;

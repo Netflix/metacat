@@ -12,7 +12,7 @@
  */
 
 
-package com.netflix.metacat.common.server.services;
+package com.netflix.metacat.main.services;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;

@@ -11,7 +11,7 @@
  *          limitations under the License.
  */
 
-package com.netflix.metacat.elasticsearch.search;
+package com.netflix.metacat.main.services.search;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;

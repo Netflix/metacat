@@ -24,7 +24,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.netflix.metacat.common.server.manager;
+package com.netflix.metacat.main.manager;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
