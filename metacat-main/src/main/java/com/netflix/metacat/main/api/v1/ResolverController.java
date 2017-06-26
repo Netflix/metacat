@@ -103,12 +103,12 @@ public class ResolverController {
         path = "/isUriUsedMoreThanOnce",
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiOperation(
         position = 1,
-        value = "Returns status 200 if the given URI is being referred more than once."
+        value = "Returns status 204 if the given URI is being referred more than once."
             + " Returns status 404 if the given URI is not found or not being referred more than once.",
-        notes = "Returns status 200 if the given URI is being referred more than once."
+        notes = "Returns status 204 if the given URI is being referred more than once."
             + " Returns status 404 if the given URI is not found or not being referred more than once.")
     public void isUriUsedMoreThanOnce(
         @ApiParam(value = "do prefix search for URI", defaultValue = "false")

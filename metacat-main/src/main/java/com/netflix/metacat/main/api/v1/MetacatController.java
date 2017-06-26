@@ -103,7 +103,7 @@ public class MetacatController implements MetacatV1 {
      * Simple get on / to show API is up and available.
      */
     @RequestMapping(method = RequestMethod.GET)
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void index() {
         // TODO: Hypermedia
     }
@@ -118,6 +118,7 @@ public class MetacatController implements MetacatV1 {
         path = "/catalog",
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
+    @ResponseStatus(HttpStatus.CREATED)
     @ApiOperation(
         position = 3,
         value = "Creates a new catalog",
@@ -326,7 +327,7 @@ public class MetacatController implements MetacatV1 {
      * @param databaseName database name
      */
     @RequestMapping(method = RequestMethod.DELETE, path = "/catalog/{catalog-name}/database/{database-name}")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiOperation(
         position = 4,
         value = "Deletes the given database from the given catalog",
@@ -800,7 +801,7 @@ public class MetacatController implements MetacatV1 {
         method = RequestMethod.POST,
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/rename"
     )
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiOperation(
         position = 3,
         value = "Rename table",
@@ -855,7 +856,7 @@ public class MetacatController implements MetacatV1 {
         path = "/catalog/{catalog-name}",
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiOperation(
         position = 4,
         value = "Updates an existing catalog",
@@ -903,7 +904,7 @@ public class MetacatController implements MetacatV1 {
         path = "/catalog/{catalog-name}/database/{database-name}",
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiOperation(
         position = 3,
         value = "Updates the given database in the given catalog",
