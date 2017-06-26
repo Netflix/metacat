@@ -36,6 +36,7 @@ import javax.annotation.Nonnull;
 public class MetacatRenameTablePostEvent extends MetacatEvent {
     private final TableDto currentTable;
     private final TableDto oldTable;
+    private final boolean isMView;
 
     /**
      * Constructor.
@@ -52,9 +53,31 @@ public class MetacatRenameTablePostEvent extends MetacatEvent {
         @Nonnull @NonNull final Object source,
         @Nonnull @NonNull final TableDto oldTable,
         @Nonnull @NonNull final TableDto currentTable
+        ) {
+        this(name, requestContext, source, oldTable, currentTable, false);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param name           The old name of the table
+     * @param requestContext The metacat request context
+     * @param source         The source object which threw this event
+     * @param oldTable       The old dto of the table
+     * @param currentTable   The new representation of the table
+     * @param isMView        true, if the table is a materialized view
+     */
+    public MetacatRenameTablePostEvent(
+        @Nonnull @NonNull final QualifiedName name,
+        @Nonnull @NonNull final MetacatRequestContext requestContext,
+        @Nonnull @NonNull final Object source,
+        @Nonnull @NonNull final TableDto oldTable,
+        @Nonnull @NonNull final TableDto currentTable,
+        final boolean isMView
     ) {
         super(name, requestContext, source);
         this.oldTable = oldTable;
         this.currentTable = currentTable;
+        this.isMView = isMView;
     }
 }
