@@ -107,7 +107,7 @@ public class PartitionController implements PartitionV1 {
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}",
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiOperation(
         value = "Delete named partitions from a table",
         notes = "List of partitions names of the given table name under the given catalog and database"
@@ -169,7 +169,7 @@ public class PartitionController implements PartitionV1 {
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}",
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiOperation(
         value = "Delete partitions for the given view",
         notes = "Delete partitions for the given view"

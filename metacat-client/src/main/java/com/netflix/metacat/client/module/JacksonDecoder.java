@@ -50,8 +50,11 @@ public class JacksonDecoder implements Decoder {
      */
     @Override
     public Object decode(final Response response, final Type type) throws IOException {
-        if (response.body() == null || response.status() == 204
-            || (response.body().length() != null && response.body().length() == 0)) {
+        if (
+            response.body() == null
+                || response.status() == 204
+                || (response.body().length() != null && response.body().length() == 0)
+            ) {
             return null;
         }
         final InputStream inputStream = response.body().asInputStream();

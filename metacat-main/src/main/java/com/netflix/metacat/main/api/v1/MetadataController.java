@@ -217,7 +217,7 @@ public class MetadataController {
      * @param force If true, deletes the metadata without checking if the database/table/partition exists
      */
     @RequestMapping(method = RequestMethod.DELETE, path = "/definition")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiOperation(
         position = 4,
         value = "Deletes the given definition metadata"
@@ -256,7 +256,7 @@ public class MetadataController {
      * Deletes the data metadata marked for deletion.
      */
     @RequestMapping(method = RequestMethod.DELETE, path = "/data/process")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void processDeletedDataMetadata() {
         this.metadataService.processDeletedDataMetadata();
     }

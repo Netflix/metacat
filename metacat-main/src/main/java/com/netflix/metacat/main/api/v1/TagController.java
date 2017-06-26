@@ -264,7 +264,7 @@ public class TagController {
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}",
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiOperation(
         position = 4,
         value = "Remove the tags from the given table",
@@ -273,7 +273,7 @@ public class TagController {
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
+                code = HttpURLConnection.HTTP_NO_CONTENT,
                 message = "The tags were successfully deleted from the table"
             ),
             @ApiResponse(

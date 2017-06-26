@@ -118,6 +118,6 @@ services:
             - metacat
         environment:
             - TARGETS=metacat:8080,metacat:12001,metacat:12003
-            - TIMEOUT=240
+            - TIMEOUT=360
         labels:
           - "com.netflix.metacat.oss.test"
