@@ -21,8 +21,8 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
-import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
@@ -51,29 +51,26 @@ import java.util.List;
 public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
     private final IMetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
-    private final String catalogName;
 
     /**
      * Constructor.
      *
-     * @param catalogName           catalogname
-     * @param metacatHiveClient     hiveclient
+     * @param metacatHiveClient     hive client
      * @param hiveMetacatConverters hive converter
      */
-    public HiveConnectorDatabaseService(final String catalogName,
-                                        final IMetacatHiveClient metacatHiveClient,
-                                        final HiveConnectorInfoConverter hiveMetacatConverters) {
+    public HiveConnectorDatabaseService(
+        final IMetacatHiveClient metacatHiveClient,
+        final HiveConnectorInfoConverter hiveMetacatConverters
+    ) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
-        this.catalogName = catalogName;
     }
 
     /**
      * {@inheritDoc}.
      */
     @Override
-    public void create(final ConnectorRequestContext requestContext,
-                       final DatabaseInfo databaseInfo) {
+    public void create(final ConnectorRequestContext requestContext, final DatabaseInfo databaseInfo) {
         final QualifiedName databaseName = databaseInfo.getName();
         try {
             this.metacatHiveClient.createDatabase(hiveMetacatConverters.fromDatabaseInfo(databaseInfo));
@@ -91,9 +88,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}.
      */
     @Override
-    public void delete(final ConnectorRequestContext requestContext,
-                       final QualifiedName name) {
-
+    public void delete(final ConnectorRequestContext requestContext, final QualifiedName name) {
         try {
             this.metacatHiveClient.dropDatabase(name.getDatabaseName());
         } catch (NoSuchObjectException exception) {
@@ -111,8 +106,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}.
      */
     @Override
-    public void update(final ConnectorRequestContext context,
-                       final DatabaseInfo databaseInfo) {
+    public void update(final ConnectorRequestContext context, final DatabaseInfo databaseInfo) {
         final QualifiedName databaseName = databaseInfo.getName();
         try {
             this.metacatHiveClient.alterDatabase(databaseName.getDatabaseName(),
@@ -131,10 +125,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}.
      */
     @Override
-    public DatabaseInfo get(
-        final ConnectorRequestContext requestContext,
-        final QualifiedName name
-    ) {
+    public DatabaseInfo get(final ConnectorRequestContext requestContext, final QualifiedName name) {
         try {
             final Database database = metacatHiveClient.getDatabase(name.getDatabaseName());
             if (database != null) {
@@ -155,8 +146,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
      * {@inheritDoc}.
      */
     @Override
-    public boolean exists(final ConnectorRequestContext requestContext,
-                          final QualifiedName name) {
+    public boolean exists(final ConnectorRequestContext requestContext, final QualifiedName name) {
         boolean result;
         try {
             result = metacatHiveClient.getDatabase(name.getDatabaseName()) != null;
@@ -217,7 +207,7 @@ public class HiveConnectorDatabaseService implements ConnectorDatabaseService {
             final List<DatabaseInfo> databaseInfos = Lists.newArrayList();
             for (String databaseName : metacatHiveClient.getAllDatabases()) {
                 final QualifiedName qualifiedName = QualifiedName.ofDatabase(name.getCatalogName(), databaseName);
-                if (!qualifiedName.toString().startsWith(prefix.toString())) {
+                if (prefix != null && !qualifiedName.toString().startsWith(prefix.toString())) {
                     continue;
                 }
                 databaseInfos.add(DatabaseInfo.builder().name(qualifiedName).build());

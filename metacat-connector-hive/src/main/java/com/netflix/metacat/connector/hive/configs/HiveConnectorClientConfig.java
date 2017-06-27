@@ -28,12 +28,14 @@ import javax.sql.DataSource;
 
 /**
  * Hive Connector Client Config.
+ *
  * @author zhenl
  * @since 1.1.0
  */
 @Configuration
 @ConditionalOnProperty(value = "useThriftClient", havingValue = "false")
 public class HiveConnectorClientConfig {
+
     /**
      * create local hive client.
      *
@@ -41,21 +43,28 @@ public class HiveConnectorClientConfig {
      * @return IMetacatHiveClient
      * @throws Exception exception
      */
-
     @Bean
-    public IMetacatHiveClient createLocalClient(
-        final ConnectorContext connectorContext) throws Exception {
+    public IMetacatHiveClient createLocalClient(final ConnectorContext connectorContext) throws Exception {
         try {
-            final HiveConf conf = getDefaultConf();
+            final HiveConf conf = this.getDefaultConf();
             connectorContext.getConfiguration().forEach(conf::set);
-            DataSourceManager.get().load(connectorContext.getCatalogName(),
-                connectorContext.getConfiguration());
-            return new EmbeddedHiveClient(connectorContext.getCatalogName(),
-                HMSHandlerProxy.getProxy(conf), connectorContext.getRegistry());
+            DataSourceManager.get().load(
+                connectorContext.getCatalogName(),
+                connectorContext.getConfiguration()
+            );
+            return new EmbeddedHiveClient(
+                connectorContext.getCatalogName(),
+                HMSHandlerProxy.getProxy(conf),
+                connectorContext.getRegistry()
+            );
         } catch (Exception e) {
             throw new IllegalArgumentException(
-                String.format("Failed creating the hive metastore client for catalog: %s",
-                    connectorContext.getCatalogName()), e);
+                String.format(
+                    "Failed creating the hive metastore client for catalog: %s",
+                    connectorContext.getCatalogName()
+                ),
+                e
+            );
         }
     }
 
@@ -66,16 +75,17 @@ public class HiveConnectorClientConfig {
      * @return data source
      */
     @Bean
-    //@ConditionalOnProperty(value = "useThriftClient", havingValue = "false")
     public DataSource hiveDataSource(final ConnectorContext connectorContext) {
-        final HiveConf conf = getDefaultConf();
+        final HiveConf conf = this.getDefaultConf();
         connectorContext.getConfiguration().forEach(conf::set);
-        DataSourceManager.get().load(connectorContext.getCatalogName(),
-            connectorContext.getConfiguration());
+        DataSourceManager.get().load(
+            connectorContext.getCatalogName(),
+            connectorContext.getConfiguration()
+        );
         return DataSourceManager.get().get(connectorContext.getCatalogName());
     }
 
-    private static HiveConf getDefaultConf() {
+    private HiveConf getDefaultConf() {
         final HiveConf result = new HiveConf();
         result.setBoolean(HiveConfigConstants.USE_METASTORE_LOCAL, true);
         result.setInt(HiveConfigConstants.JAVAX_JDO_DATASTORETIMEOUT, 60000);
@@ -83,8 +93,10 @@ public class HiveConnectorClientConfig {
         result.setInt(HiveConfigConstants.JAVAX_JDO_DATASTOREWRITETIMEOUT, 60000);
         result.setInt(HiveConfigConstants.HIVE_METASTORE_DS_RETRY, 0);
         result.setInt(HiveConfigConstants.HIVE_HMSHANDLER_RETRY, 0);
-        result.set(HiveConfigConstants.JAVAX_JDO_PERSISTENCEMANAGER_FACTORY_CLASS,
-            HiveConfigConstants.JAVAX_JDO_PERSISTENCEMANAGER_FACTORY);
+        result.set(
+            HiveConfigConstants.JAVAX_JDO_PERSISTENCEMANAGER_FACTORY_CLASS,
+            HiveConfigConstants.JAVAX_JDO_PERSISTENCEMANAGER_FACTORY
+        );
         result.setBoolean(HiveConfigConstants.HIVE_STATS_AUTOGATHER, false);
         return result;
     }

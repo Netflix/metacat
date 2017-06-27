@@ -24,6 +24,7 @@ import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
@@ -36,6 +37,8 @@ import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
+import lombok.Getter;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
@@ -59,35 +62,38 @@ import java.util.Map;
  * @author zhenl
  * @since 1.0.0
  */
+@Getter
 public class HiveConnectorTableService implements ConnectorTableService {
     private static final String PARAMETER_EXTERNAL = "EXTERNAL";
-    protected final String catalogName;
+    private final String catalogName;
     private final IMetacatHiveClient metacatHiveClient;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final HiveConnectorDatabaseService hiveConnectorDatabaseService;
     private final boolean allowRenameTable;
 
-
     /**
      * Constructor.
      *
-     * @param catalogName                  catalogname
-     * @param metacatHiveClient            hiveclient
-     * @param hiveConnectorDatabaseService hivedatabaseService
+     * @param catalogName                  catalog name
+     * @param metacatHiveClient            hive client
+     * @param hiveConnectorDatabaseService hive database service
      * @param hiveMetacatConverters        converter
-     * @param allowRenameTable             allow rename table
+     * @param connectorContext             the connector context
      */
     public HiveConnectorTableService(
         final String catalogName,
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final HiveConnectorInfoConverter hiveMetacatConverters,
-        final boolean allowRenameTable) {
+        final ConnectorContext connectorContext
+    ) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
         this.hiveConnectorDatabaseService = hiveConnectorDatabaseService;
         this.catalogName = catalogName;
-        this.allowRenameTable = allowRenameTable;
+        this.allowRenameTable = Boolean.parseBoolean(
+            connectorContext.getConfiguration().getOrDefault(HiveConfigConstants.ALLOW_RENAME_TABLE, "false")
+        );
     }
 
     /**
@@ -98,8 +104,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
      * @return table dto
      */
     @Override
-    public TableInfo get(final ConnectorRequestContext requestContext,
-                         final QualifiedName name) {
+    public TableInfo get(final ConnectorRequestContext requestContext, final QualifiedName name) {
         try {
             final Table table = metacatHiveClient.getTableByName(name.getDatabaseName(), name.getTableName());
             return hiveMetacatConverters.toTableInfo(name, table);
@@ -119,8 +124,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
      * @param tableInfo      The resource metadata
      */
     @Override
-    public void create(final ConnectorRequestContext requestContext,
-                       final TableInfo tableInfo) {
+    public void create(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         final QualifiedName tableName = tableInfo.getName();
         try {
             final Table table = hiveMetacatConverters.fromTableInfo(tableInfo);
@@ -139,9 +143,11 @@ public class HiveConnectorTableService implements ConnectorTableService {
         }
     }
 
-    void updateTable(final ConnectorRequestContext requestContext,
-                     final Table table,
-                     final TableInfo tableInfo) throws MetaException {
+    void updateTable(
+        final ConnectorRequestContext requestContext,
+        final Table table,
+        final TableInfo tableInfo
+    ) throws MetaException {
         if (table.getParameters() == null || table.getParameters().isEmpty()) {
             table.setParameters(Maps.newHashMap());
         }
@@ -186,9 +192,9 @@ public class HiveConnectorTableService implements ConnectorTableService {
                 sdParameters = storageInfo.getParameters();
             }
         } else if (table.getSd() != null) {
-            final HiveStorageFormat hiveStorageFormat = extractHiveStorageFormat(table);
+            final HiveStorageFormat hiveStorageFormat = this.extractHiveStorageFormat(table);
             serdeInfo.setSerializationLib(hiveStorageFormat.getSerde());
-            serdeInfo.setParameters(ImmutableMap.<String, String>of());
+            serdeInfo.setParameters(ImmutableMap.of());
             inputFormat = hiveStorageFormat.getInputFormat();
             outputFormat = hiveStorageFormat.getOutputFormat();
         }
@@ -227,28 +233,6 @@ public class HiveConnectorTableService implements ConnectorTableService {
         table.setSd(sd);
     }
 
-    private static HiveStorageFormat extractHiveStorageFormat(final Table table) throws MetaException {
-        final StorageDescriptor descriptor = table.getSd();
-        if (descriptor == null) {
-            throw new MetaException("Table is missing storage descriptor");
-        }
-        final SerDeInfo serdeInfo = descriptor.getSerdeInfo();
-        if (serdeInfo == null) {
-            throw new MetaException(
-                "Table storage descriptor is missing SerDe info");
-        }
-        final String outputFormat = descriptor.getOutputFormat();
-        final String serializationLib = serdeInfo.getSerializationLib();
-
-        for (HiveStorageFormat format : HiveStorageFormat.values()) {
-            if (format.getOutputFormat().equals(outputFormat) && format.getSerde().equals(serializationLib)) {
-                return format;
-            }
-        }
-        throw new MetaException(
-            String.format("Output format %s with SerDe %s is not supported", outputFormat, serializationLib));
-    }
-
     /**
      * Delete a table with the given qualified name.
      *
@@ -256,8 +240,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
      * @param name           The qualified name of the resource to delete
      */
     @Override
-    public void delete(final ConnectorRequestContext requestContext,
-                       final QualifiedName name) {
+    public void delete(final ConnectorRequestContext requestContext, final QualifiedName name) {
         try {
             metacatHiveClient.dropTable(name.getDatabaseName(), name.getTableName());
         } catch (NoSuchObjectException exception) {
@@ -276,8 +259,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
      * @param tableInfo      The resource metadata
      */
     @Override
-    public void update(final ConnectorRequestContext requestContext,
-                       final TableInfo tableInfo) {
+    public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         final QualifiedName tableName = tableInfo.getName();
         try {
             final Table existingTable = hiveMetacatConverters.fromTableInfo(get(requestContext, tableInfo.getName()));
@@ -352,7 +334,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
             final List<TableInfo> tableInfos = Lists.newArrayList();
             for (String tableName : metacatHiveClient.getAllTables(name.getDatabaseName())) {
                 final QualifiedName qualifiedName = QualifiedName.ofDatabase(name.getCatalogName(), tableName);
-                if (!qualifiedName.toString().startsWith(prefix.toString())) {
+                if (prefix != null && !qualifiedName.toString().startsWith(prefix.toString())) {
                     continue;
                 }
                 final Table table = metacatHiveClient.getTableByName(name.getDatabaseName(), tableName);
@@ -411,5 +393,27 @@ public class HiveConnectorTableService implements ConnectorTableService {
                 "Failed renaming from hive table" + oldName.toString()
                     + " to hive talbe " + newName.toString(), exception);
         }
+    }
+
+    private HiveStorageFormat extractHiveStorageFormat(final Table table) throws MetaException {
+        final StorageDescriptor descriptor = table.getSd();
+        if (descriptor == null) {
+            throw new MetaException("Table is missing storage descriptor");
+        }
+        final SerDeInfo serdeInfo = descriptor.getSerdeInfo();
+        if (serdeInfo == null) {
+            throw new MetaException(
+                "Table storage descriptor is missing SerDe info");
+        }
+        final String outputFormat = descriptor.getOutputFormat();
+        final String serializationLib = serdeInfo.getSerializationLib();
+
+        for (HiveStorageFormat format : HiveStorageFormat.values()) {
+            if (format.getOutputFormat().equals(outputFormat) && format.getSerde().equals(serializationLib)) {
+                return format;
+            }
+        }
+        throw new MetaException(
+            String.format("Output format %s with SerDe %s is not supported", outputFormat, serializationLib));
     }
 }

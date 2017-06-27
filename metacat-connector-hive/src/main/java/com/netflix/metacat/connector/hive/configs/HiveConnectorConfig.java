@@ -47,16 +47,43 @@ public class HiveConnectorConfig {
      *
      * @param metacatHiveClient    hive client
      * @param hiveMetacatConverter metacat converter
-     * @param connectorContext      connector config
      * @return HiveConnectorDatabaseService
      */
     @Bean
     public HiveConnectorDatabaseService hiveDatabaseService(
         final IMetacatHiveClient metacatHiveClient,
-        final HiveConnectorInfoConverter hiveMetacatConverter,
-        final ConnectorContext connectorContext) {
-        return new HiveConnectorDatabaseService(connectorContext.getCatalogName(),
-            metacatHiveClient, hiveMetacatConverter);
+        final HiveConnectorInfoConverter hiveMetacatConverter
+    ) {
+        return new HiveConnectorDatabaseService(
+            metacatHiveClient,
+            hiveMetacatConverter
+        );
+    }
+
+    /**
+     * create hive connector table service.
+     *
+     * @param metacatHiveClient            metacat hive client
+     * @param hiveMetacatConverters        hive metacat converters
+     * @param hiveConnectorDatabaseService hive database service
+     * @param connectorContext             connector config
+     * @return HiveConnectorTableService
+     */
+    @Bean
+    @ConditionalOnMissingBean(HiveConnectorTableService.class)
+    public HiveConnectorTableService hiveTableService(
+        final IMetacatHiveClient metacatHiveClient,
+        final HiveConnectorInfoConverter hiveMetacatConverters,
+        final HiveConnectorDatabaseService hiveConnectorDatabaseService,
+        final ConnectorContext connectorContext
+    ) {
+        return new HiveConnectorTableService(
+            connectorContext.getCatalogName(),
+            metacatHiveClient,
+            hiveConnectorDatabaseService,
+            hiveMetacatConverters,
+            connectorContext
+        );
     }
 
     /**
@@ -64,7 +91,7 @@ public class HiveConnectorConfig {
      *
      * @param metacatHiveClient    hive client
      * @param hiveMetacatConverter metacat converter
-     * @param connectorContext      connector config
+     * @param connectorContext     connector config
      * @return HiveConnectorPartitionService
      */
     @Bean
@@ -75,31 +102,11 @@ public class HiveConnectorConfig {
         final ConnectorContext connectorContext
     ) {
         return new HiveConnectorPartitionService(
-            connectorContext.getCatalogName(), metacatHiveClient, hiveMetacatConverter);
+            connectorContext.getCatalogName(),
+            metacatHiveClient,
+            hiveMetacatConverter
+        );
     }
-
-    /**
-     * create hive connector table service.
-     *
-     * @param metacatHiveClient            metacat hive client
-     * @param hiveMetacatConverters        hive metacat converters
-     * @param hiveConnectorDatabaseService hive database service
-     * @param connectorContext              connector config
-     * @return HiveConnectorTableService
-     */
-    @Bean
-    @ConditionalOnMissingBean(HiveConnectorTableService.class)
-    public HiveConnectorTableService hiveTableService(
-        final IMetacatHiveClient metacatHiveClient,
-        final HiveConnectorInfoConverter hiveMetacatConverters,
-        final HiveConnectorDatabaseService hiveConnectorDatabaseService,
-        final ConnectorContext connectorContext) {
-        return new HiveConnectorTableService(connectorContext.getCatalogName(), metacatHiveClient,
-            hiveConnectorDatabaseService, hiveMetacatConverters, Boolean.parseBoolean(
-            connectorContext.getConfiguration()
-                .getOrDefault(HiveConfigConstants.ALLOW_RENAME_TABLE, "false")));
-    }
-
 
     /**
      * create thrift hive client.
@@ -109,29 +116,25 @@ public class HiveConnectorConfig {
      * @throws MetaException meta exception
      */
     @Bean
-  //  @ConditionalOnProperty(value = "useThriftClient", havingValue = "true")
     @ConditionalOnMissingBean(IMetacatHiveClient.class)
-    public IMetacatHiveClient createThriftClient(
-        final ConnectorContext connectorContext) throws MetaException {
-        final HiveMetastoreClientFactory factory =
-            new HiveMetastoreClientFactory(null,
-                (int) HiveConnectorUtil.toTime(
-                    connectorContext.getConfiguration()
-                        .getOrDefault(HiveConfigConstants.HIVE_METASTORE_TIMEOUT, "20s"),
-                    TimeUnit.SECONDS, TimeUnit.MILLISECONDS));
+    public IMetacatHiveClient createThriftClient(final ConnectorContext connectorContext) throws MetaException {
+        final HiveMetastoreClientFactory factory = new HiveMetastoreClientFactory(
+            null,
+            (int) HiveConnectorUtil.toTime(
+                connectorContext.getConfiguration().getOrDefault(HiveConfigConstants.HIVE_METASTORE_TIMEOUT, "20s"),
+                TimeUnit.SECONDS,
+                TimeUnit.MILLISECONDS
+            )
+        );
         final String metastoreUri = connectorContext.getConfiguration().get(HiveConfigConstants.THRIFT_URI);
-        URI uri = null;
         try {
-            uri = new URI(metastoreUri);
+            return new MetacatHiveClient(new URI(metastoreUri), factory);
         } catch (Exception e) {
             final String message = String.format("Invalid thrift uri %s", metastoreUri);
             log.info(message);
             throw new IllegalArgumentException(message, e);
         }
-        return new MetacatHiveClient(uri, factory);
     }
-
-
 
     /**
      * thread Service Manager.
@@ -140,9 +143,7 @@ public class HiveConnectorConfig {
      * @return threadServiceManager
      */
     @Bean
-    public ThreadServiceManager threadServiceManager(
-        final ConnectorContext connectorContext
-    ) {
+    public ThreadServiceManager threadServiceManager(final ConnectorContext connectorContext) {
         return new ThreadServiceManager(connectorContext.getConfig());
     }
 }

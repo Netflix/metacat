@@ -28,6 +28,7 @@ import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -53,7 +54,6 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             + " from DBS d, TBLS t, SDS s where d.DB_ID=t.DB_ID and t.sd_id=s.sd_id";
     private static final String SQL_EXIST_TABLE_BY_NAME =
         "select 1 from DBS d join TBLS t on d.DB_ID=t.DB_ID where d.name=? and t.tbl_name=?";
-    private final boolean allowRenameTable;
     private final Registry registry;
     private final Id requestTimerId;
     private final JdbcUtil jdbcUtil;
@@ -61,25 +61,23 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     /**
      * Constructor.
      *
-     * @param catalogName                  catalogname
+     * @param catalogName                  catalog name
      * @param metacatHiveClient            hive client
      * @param hiveConnectorDatabaseService databaseService
      * @param hiveMetacatConverters        hive converter
-     * @param allowRenameTable             allow rename table
-     * @param connectorContext       serverContext
+     * @param connectorContext             serverContext
      * @param dataSource                   data source
      */
+    @Autowired
     public HiveConnectorFastTableService(
         final String catalogName,
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final HiveConnectorInfoConverter hiveMetacatConverters,
-        final boolean allowRenameTable,
         final ConnectorContext connectorContext,
         final DataSource dataSource
     ) {
-        super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, allowRenameTable);
-        this.allowRenameTable = allowRenameTable;
+        super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, connectorContext);
         this.registry = connectorContext.getRegistry();
         this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
         this.jdbcUtil = new JdbcUtil(dataSource);
@@ -91,7 +89,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     @Override
     public boolean exists(final ConnectorRequestContext requestContext, final QualifiedName name) {
         final long start = registry.clock().monotonicTime();
-        final Map<String, String> tags = new HashMap<String, String>();
+        final Map<String, String> tags = new HashMap<>();
         tags.put("request", HiveMetrics.exists.name());
         boolean result = false;
         try {
@@ -119,7 +117,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final boolean prefixSearch
     ) {
         final long start = registry.clock().monotonicTime();
-        final Map<String, String> tags = new HashMap<String, String>();
+        final Map<String, String> tags = new HashMap<>();
         tags.put("request", HiveMetrics.getTableNames.name());
         // Create the sql
         final StringBuilder queryBuilder = new StringBuilder(SQL_GET_TABLE_NAMES_BY_URI);
@@ -150,7 +148,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
                     names = Lists.newArrayList();
                     result.put(uri, names);
                 }
-                names.add(QualifiedName.ofTable(catalogName, schemaName, tableName));
+                names.add(QualifiedName.ofTable(this.getCatalogName(), schemaName, tableName));
             }
             return result;
         };
