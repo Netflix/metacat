@@ -40,15 +40,14 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
-import com.netflix.metacat.common.server.usermetadata.TagService;
-import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
-import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.common.server.usermetadata.TagService;
+import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -95,8 +94,11 @@ public class TableServiceImpl implements TableService {
         this.converterUtil = converterUtil;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public TableDto create(@Nonnull final QualifiedName name, @Nonnull final TableDto tableDto) {
+    public TableDto create(final QualifiedName name, final TableDto tableDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         validate(name);
         //
@@ -146,8 +148,11 @@ public class TableServiceImpl implements TableService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public TableDto deleteAndReturn(@Nonnull final QualifiedName name, final boolean isMView) {
+    public TableDto deleteAndReturn(final QualifiedName name, final boolean isMView) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.postSync(new MetacatDeleteTablePreEvent(name, metacatRequestContext, this));
         validate(name);
@@ -176,13 +181,19 @@ public class TableServiceImpl implements TableService {
         return tableDto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Optional<TableDto> get(@Nonnull final QualifiedName name, final boolean includeUserMetadata) {
+    public Optional<TableDto> get(final QualifiedName name, final boolean includeUserMetadata) {
         return get(name, true, includeUserMetadata, includeUserMetadata);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Optional<TableDto> get(@Nonnull final QualifiedName name, final boolean includeInfo,
+    public Optional<TableDto> get(final QualifiedName name, final boolean includeInfo,
                                   final boolean includeDefinitionMetadata, final boolean includeDataMetadata) {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -227,10 +238,13 @@ public class TableServiceImpl implements TableService {
         return Optional.of(table);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void rename(
-        @Nonnull final QualifiedName oldName,
-        @Nonnull final QualifiedName newName,
+        final QualifiedName oldName,
+        final QualifiedName newName,
         final boolean isMView
     ) {
         validate(oldName);
@@ -256,13 +270,19 @@ public class TableServiceImpl implements TableService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void update(@Nonnull final QualifiedName name, @Nonnull final TableDto tableDto) {
+    public void update(final QualifiedName name, final TableDto tableDto) {
         updateAndReturn(name, tableDto);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public TableDto updateAndReturn(@Nonnull final QualifiedName name, @Nonnull final TableDto tableDto) {
+    public TableDto updateAndReturn(final QualifiedName name, final TableDto tableDto) {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
@@ -300,19 +320,28 @@ public class TableServiceImpl implements TableService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void delete(@Nonnull final QualifiedName name) {
+    public void delete(final QualifiedName name) {
         deleteAndReturn(name, false);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public TableDto get(@Nonnull final QualifiedName name) {
+    public TableDto get(final QualifiedName name) {
         final Optional<TableDto> dto = get(name, true);
         return dto.orElse(null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public TableDto copy(@Nonnull final QualifiedName sourceName, @Nonnull final QualifiedName targetName) {
+    public TableDto copy(final QualifiedName sourceName, final QualifiedName targetName) {
         // Source should be same
         if (!sourceName.getCatalogName().equals(targetName.getCatalogName())) {
             throw new MetacatNotSupportedException("Cannot copy a table from a different source");
@@ -330,8 +359,11 @@ public class TableServiceImpl implements TableService {
         return copy(oTable.get(), targetName);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public TableDto copy(@Nonnull final TableDto tableDto, @Nonnull final QualifiedName targetName) {
+    public TableDto copy(final TableDto tableDto, final QualifiedName targetName) {
         final QualifiedName databaseName =
             QualifiedName.ofDatabase(targetName.getCatalogName(), targetName.getDatabaseName());
         if (!databaseService.exists(databaseName)) {
@@ -358,8 +390,11 @@ public class TableServiceImpl implements TableService {
         return targetTableDto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void saveMetadata(@Nonnull final QualifiedName name, final ObjectNode definitionMetadata,
+    public void saveMetadata(final QualifiedName name, final ObjectNode definitionMetadata,
                              final ObjectNode dataMetadata) {
         validate(name);
         final Optional<TableDto> tableDtoOptional = get(name, false);
@@ -374,6 +409,9 @@ public class TableServiceImpl implements TableService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<QualifiedName> getQualifiedNames(final String uri, final boolean prefixSearch) {
         final List<QualifiedName> result = Lists.newArrayList();
@@ -396,6 +434,9 @@ public class TableServiceImpl implements TableService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Map<String, List<QualifiedName>> getQualifiedNames(final List<String> uris, final boolean prefixSearch) {
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
@@ -423,8 +464,11 @@ public class TableServiceImpl implements TableService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public boolean exists(@Nonnull final QualifiedName name) {
+    public boolean exists(final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);

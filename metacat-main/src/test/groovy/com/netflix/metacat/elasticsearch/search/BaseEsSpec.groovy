@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.main.search
+package com.netflix.metacat.elasticsearch.search
 
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.json.MetacatJson
@@ -75,7 +75,7 @@ abstract class BaseEsSpec extends Specification {
             client.admin().indices().create(index).actionGet()
         }
 
-        metacatJson = MetacatJsonLocator.INSTANCE
+        metacatJson = new MetacatJsonLocator()
         config.getEsIndex() >> esIndex
         es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
 

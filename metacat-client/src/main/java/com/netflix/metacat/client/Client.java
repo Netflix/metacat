@@ -63,7 +63,8 @@ public final class Client {
         final Retryer retryer,
         final Request.Options options
     ) {
-        final ObjectMapper mapper = MetacatJsonLocator.INSTANCE
+        final MetacatJsonLocator metacatJsonLocator = new MetacatJsonLocator();
+        final ObjectMapper mapper = metacatJsonLocator
             .getPrettyObjectMapper()
             .copy()
             .registerModule(new GuavaModule())
@@ -79,7 +80,7 @@ public final class Client {
             .contract(new JAXRSContract())
             .encoder(new JacksonEncoder(mapper))
             .decoder(new JacksonDecoder(mapper))
-            .errorDecoder(new MetacatErrorDecoder())
+            .errorDecoder(new MetacatErrorDecoder(metacatJsonLocator))
             .requestInterceptor(requestInterceptor)
             .retryer(retryer)
             .options(options);

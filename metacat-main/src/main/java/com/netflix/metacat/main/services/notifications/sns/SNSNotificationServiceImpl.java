@@ -45,7 +45,6 @@ import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.main.services.notifications.NotificationService;
 import com.netflix.spectator.api.Registry;
 import com.netflix.spectator.api.Timer;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 
@@ -82,11 +81,11 @@ public class SNSNotificationServiceImpl implements NotificationService {
      * @param registry          The registry handle of spectator
      */
     public SNSNotificationServiceImpl(
-        @NonNull final AmazonSNS client,
-        @NonNull @Size(min = 1) final String tableTopicArn,
-        @NonNull @Size(min = 1) final String partitionTopicArn,
-        @NonNull final ObjectMapper mapper,
-        @NonNull final Registry registry
+         final AmazonSNS client,
+         @Size(min = 1) final String tableTopicArn,
+         @Size(min = 1) final String partitionTopicArn,
+         final ObjectMapper mapper,
+         final Registry registry
     ) {
 
         this.client = client;
@@ -101,7 +100,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     @EventListener
-    public void notifyOfPartitionAddition(@NonNull final MetacatSaveTablePartitionPostEvent event) {
+    public void notifyOfPartitionAddition(final MetacatSaveTablePartitionPostEvent event) {
         log.debug("Received SaveTablePartitionPostEvent {}", event);
         final String name = event.getName().toString();
         final long timestamp = event.getRequestContext().getTimestamp();
@@ -165,7 +164,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     @EventListener
-    public void notifyOfPartitionDeletion(@NonNull final MetacatDeleteTablePartitionPostEvent event) {
+    public void notifyOfPartitionDeletion(final MetacatDeleteTablePartitionPostEvent event) {
         log.debug("Received DeleteTablePartition event {}", event);
         final String name = event.getName().toString();
         final long timestamp = event.getRequestContext().getTimestamp();
@@ -229,7 +228,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     @EventListener
-    public void notifyOfTableCreation(@NonNull final MetacatCreateTablePostEvent event) {
+    public void notifyOfTableCreation(final MetacatCreateTablePostEvent event) {
         log.debug("Received CreateTableEvent {}", event);
         CreateTableMessage message = null;
         try {
@@ -262,7 +261,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     @EventListener
-    public void notifyOfTableDeletion(@NonNull final MetacatDeleteTablePostEvent event) {
+    public void notifyOfTableDeletion(final MetacatDeleteTablePostEvent event) {
         log.debug("Received DeleteTableEvent {}", event);
         DeleteTableMessage message = null;
         try {
@@ -295,7 +294,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     @EventListener
-    public void notifyOfTableRename(@NonNull final MetacatRenameTablePostEvent event) {
+    public void notifyOfTableRename(final MetacatRenameTablePostEvent event) {
         log.debug("Received RenameTableEvent {}", event);
         UpdateTableMessage message = null;
         try {
@@ -329,7 +328,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
      */
     @Override
     @EventListener
-    public void notifyOfTableUpdate(@NonNull final MetacatUpdateTablePostEvent event) {
+    public void notifyOfTableUpdate(final MetacatUpdateTablePostEvent event) {
         log.debug("Received UpdateTableEvent {}", event);
         UpdateTableMessage message = null;
         try {

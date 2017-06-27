@@ -26,7 +26,6 @@ dependencies {
      *******************************/
 
     compile(project(":metacat-common"))
-
     compile("com.google.inject:guice")
     compile("net.sf.dozer:dozer")
     compile("org.apache.tomcat:tomcat-jdbc")
@@ -41,6 +40,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-logging")
     compile("org.springframework.cloud:spring-cloud-starter-spectator")
     compile("org.springframework:spring-jdbc")
+
 
     /*******************************
      * Provided Dependencies

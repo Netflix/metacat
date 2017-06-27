@@ -18,8 +18,6 @@
 
 package com.netflix.metacat.common.server.connectors;
 
-import com.netflix.metacat.common.server.util.ConnectorContext;
-
 /**
  * Plugin interface implemented by Connectors.
  *

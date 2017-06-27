@@ -51,7 +51,7 @@ class BaseSpec extends Specification {
         MySqlServiceUtil.loadMySqlDataSource(DataSourceManager.get());
         mysqlUserMetadataService = new MysqlUserMetadataService(
             DataSourceManager.get().get(MysqlUserMetadataService.NAME_DATASOURCE),
-            MetacatJsonLocator.INSTANCE,
+            new MetacatJsonLocator(),
             new DefaultConfigImpl(
                 new MetacatProperties()
             )

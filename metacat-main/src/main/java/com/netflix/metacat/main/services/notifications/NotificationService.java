@@ -24,8 +24,6 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 
-import javax.annotation.Nonnull;
-
 /**
  * Interface for services which will provide external notifications based on internal events. The structure and
  * destinations of the notifications are left up to the implementation.
@@ -40,40 +38,40 @@ public interface NotificationService {
      *
      * @param event The event passed within the JVM after a partition has been successfully added
      */
-    void notifyOfPartitionAddition(@Nonnull final MetacatSaveTablePartitionPostEvent event);
+    void notifyOfPartitionAddition(MetacatSaveTablePartitionPostEvent event);
 
     /**
      * Publish information about a partition being deleted.
      *
      * @param event The event passed within the JVM after a partition has been successfully deleted
      */
-    void notifyOfPartitionDeletion(@Nonnull final MetacatDeleteTablePartitionPostEvent event);
+    void notifyOfPartitionDeletion(MetacatDeleteTablePartitionPostEvent event);
 
     /**
      * Publish information about a table being created.
      *
      * @param event The event passed within the JVM after a table has been successfully created
      */
-    void notifyOfTableCreation(@Nonnull final MetacatCreateTablePostEvent event);
+    void notifyOfTableCreation(MetacatCreateTablePostEvent event);
 
     /**
      * Publish information about a table being deleted.
      *
      * @param event The event passed within the JVM after a table has been successfully deleted
      */
-    void notifyOfTableDeletion(@Nonnull final MetacatDeleteTablePostEvent event);
+    void notifyOfTableDeletion(MetacatDeleteTablePostEvent event);
 
     /**
      * Publish information about a table being renamed.
      *
      * @param event The event passed within the JVM after a table has been successfully renamed
      */
-    void notifyOfTableRename(@Nonnull final MetacatRenameTablePostEvent event);
+    void notifyOfTableRename(MetacatRenameTablePostEvent event);
 
     /**
      * Publish information about a table being updated.
      *
      * @param event The event passed within the JVM after a table has been successfully updated
      */
-    void notifyOfTableUpdate(@Nonnull final MetacatUpdateTablePostEvent event);
+    void notifyOfTableUpdate(MetacatUpdateTablePostEvent event);
 }

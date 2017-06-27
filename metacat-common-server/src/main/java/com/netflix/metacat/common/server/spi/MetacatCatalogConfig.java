@@ -11,13 +11,13 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.main.spi;
+
+package com.netflix.metacat.common.server.spi;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 
-import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -35,12 +35,9 @@ public final class MetacatCatalogConfig {
     private final String type;
 
     private MetacatCatalogConfig(
-        @Nonnull
         final String type,
         final boolean includeViewsWithTables,
-        @Nonnull
         final List<String> schemaWhitelist,
-        @Nonnull
         final List<String> schemaBlacklist,
         final int thriftPort) {
         this.type = type;
@@ -52,12 +49,13 @@ public final class MetacatCatalogConfig {
 
     /**
      * Creates the config.
-     * @param type type
+     *
+     * @param type       type
      * @param properties properties
      * @return config
      */
     public static MetacatCatalogConfig createFromMapAndRemoveProperties(final String type,
-        final Map<String, String> properties) {
+                                                                        final Map<String, String> properties) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(type), "type is required");
         final String catalogType =
             properties.containsKey(Keys.CATALOG_TYPE) ? properties.remove(Keys.CATALOG_TYPE) : type;
@@ -108,15 +106,25 @@ public final class MetacatCatalogConfig {
      * Properties in the catalog.
      */
     public static class Keys {
-        /** Catalog type. */
+        /**
+         * Catalog type.
+         */
         public static final String CATALOG_TYPE = "metacat.type";
-        /** List views with tables. */
+        /**
+         * List views with tables.
+         */
         public static final String INCLUDE_VIEWS_WITH_TABLES = "metacat.schema.list-views-with-tables";
-        /** Schemas that are black listed. */
+        /**
+         * Schemas that are black listed.
+         */
         public static final String SCHEMA_BLACKLIST = "metacat.schema.blacklist";
-        /** Schemas that are white listed. */
+        /**
+         * Schemas that are white listed.
+         */
         public static final String SCHEMA_WHITELIST = "metacat.schema.whitelist";
-        /** Thrift port. */
+        /**
+         * Thrift port.
+         */
         public static final String THRIFT_PORT = "metacat.thrift.port";
     }
 }

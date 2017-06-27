@@ -53,7 +53,7 @@ public class CommonServerConfig {
      */
     @Bean
     public MetacatJson metacatJson() {
-        return MetacatJsonLocator.INSTANCE;
+        return new MetacatJsonLocator();
     }
 
     /**

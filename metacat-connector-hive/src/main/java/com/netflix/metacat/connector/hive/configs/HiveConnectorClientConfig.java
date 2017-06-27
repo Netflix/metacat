@@ -13,7 +13,7 @@
 
 package com.netflix.metacat.connector.hive.configs;
 
-import com.netflix.metacat.common.server.util.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;

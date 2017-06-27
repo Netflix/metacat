@@ -11,7 +11,8 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.main.search
+
+package com.netflix.metacat.elasticsearch.search
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.netflix.metacat.common.MetacatRequestContext
@@ -101,7 +102,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec {
         given:
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        es.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), MetacatJsonLocator.INSTANCE.parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
+        es.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
         def result = es.get(Type.table.name(), id)
         es.refresh()
         def resultByUri = es.getTableIdsByUri(Type.table.name(), uri)
@@ -234,7 +235,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec {
         given:
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
         esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        esMig.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), MetacatJsonLocator.INSTANCE.parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
+        esMig.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
         for (String index : [esIndex, esMergeIndex]) {
             def result = es.get(Type.table.name(), id, index)
             es.refresh()
@@ -257,7 +258,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec {
         given:
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        esMig.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), MetacatJsonLocator.INSTANCE.parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
+        esMig.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
         for (String index : [esIndex, esMergeIndex]) {
             def result = es.get(Type.table.name(), id, index)
             es.refresh()
@@ -279,7 +280,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec {
         given:
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
         ElasticSearchDoc doc = new ElasticSearchDoc("test", table, "zhenl", false);
-        ObjectNode oMetadata = MetacatJsonLocator.INSTANCE.toJsonObject(table);
+        ObjectNode oMetadata = new MetacatJsonLocator().toJsonObject(table);
         doc.addSearchableDefinitionMetadata(oMetadata);
         expect:
         ObjectNode node = oMetadata.get("searchableDefinitionMetadata");

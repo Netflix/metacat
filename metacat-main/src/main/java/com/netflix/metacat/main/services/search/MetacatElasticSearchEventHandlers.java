@@ -11,6 +11,7 @@
  *    limitations under the License.
  */
 
+
 package com.netflix.metacat.main.services.search;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
 public class MetacatElasticSearchEventHandlers {
     private final ElasticSearchUtil es;
     private final Registry registry;
-
+    private MetacatJsonLocator metacatJsonLocator;
     /**
      * Constructor.
      *
@@ -54,6 +55,7 @@ public class MetacatElasticSearchEventHandlers {
                                              final Registry registry) {
         this.es = es;
         this.registry = registry;
+        this.metacatJsonLocator = new MetacatJsonLocator();
     }
 
     /**
@@ -68,7 +70,7 @@ public class MetacatElasticSearchEventHandlers {
         final DatabaseDto dto = event.getDatabase();
         final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
             event.getRequestContext().getUserName(), false);
-        es.save(ElasticSearchDoc.Type.database.name(), doc.getId(), doc.toJsonString());
+        es.save(ElasticSearchDoc.Type.database.name(), doc.getId(), es.toJsonString(doc));
     }
 
     /**
@@ -83,7 +85,7 @@ public class MetacatElasticSearchEventHandlers {
         final TableDto dto = event.getTable();
         final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
             event.getRequestContext().getUserName(), false);
-        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc.toJsonString());
+        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
     }
 
     /**
@@ -148,7 +150,7 @@ public class MetacatElasticSearchEventHandlers {
         final TableDto dto = event.getCurrentTable();
         final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
             event.getRequestContext().getUserName(), false);
-        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc.toJsonString());
+        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
     }
 
     /**
@@ -165,7 +167,7 @@ public class MetacatElasticSearchEventHandlers {
         final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
             event.getRequestContext().getUserName(), false);
         final ElasticSearchDoc oldDoc = es.get(ElasticSearchDoc.Type.table.name(), doc.getId());
-        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc.toJsonString());
+        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
         if (oldDoc == null || oldDoc.getDto() == null
             || !Objects.equals(((TableDto) oldDoc.getDto()).getDataMetadata(), dto.getDataMetadata())) {
             updateEntitiesWithSameUri(ElasticSearchDoc.Type.table.name(), dto, event.getRequestContext());
@@ -178,7 +180,7 @@ public class MetacatElasticSearchEventHandlers {
             final List<String> ids = es.getTableIdsByUri(metadataType, dto.getDataUri());
             ids.remove(dto.getName().toString());
             if (!ids.isEmpty()) {
-                final ObjectNode node = MetacatJsonLocator.INSTANCE.emptyObjectNode();
+                final ObjectNode node = metacatJsonLocator.emptyObjectNode();
                 node.set("dataMetadata", dto.getDataMetadata());
                 es.updates(ElasticSearchDoc.Type.table.name(), ids, metacatRequestContext, node);
             }

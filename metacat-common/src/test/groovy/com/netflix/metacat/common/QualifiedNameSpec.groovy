@@ -23,7 +23,7 @@ import spock.lang.Unroll
 
 class QualifiedNameSpec extends Specification {
     @Shared
-    MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
+    MetacatJson metacatJson = new MetacatJsonLocator()
 
     def 'expect exceptions if missing required params at construction time'() {
         when:

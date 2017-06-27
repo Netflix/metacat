@@ -25,10 +25,10 @@ import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonException;
-import com.netflix.metacat.common.json.MetacatJsonLocator;
 import feign.Response;
 import feign.RetryableException;
 import feign.Util;
+import lombok.AllArgsConstructor;
 
 import java.io.IOException;
 
@@ -37,8 +37,9 @@ import java.io.IOException;
  *
  * @author amajumdar
  */
+@AllArgsConstructor
 public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
-    private static final MetacatJson METACAT_JSON = MetacatJsonLocator.INSTANCE;
+    private final MetacatJson metacatJson;
 
     /**
      * {@inheritDoc}
@@ -50,7 +51,7 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
             if (response.body() != null) {
                 message = Util.toString(response.body().asReader());
                 try {
-                    final ObjectNode body = METACAT_JSON.parseJsonObject(message);
+                    final ObjectNode body = metacatJson.parseJsonObject(message);
                     message = body.path("message").asText("No error message supplied.");
                 } catch (final MetacatJsonException ignored) {
                 }

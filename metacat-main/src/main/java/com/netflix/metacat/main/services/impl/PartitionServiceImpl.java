@@ -29,8 +29,8 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
@@ -39,20 +39,20 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPreEv
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
+import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
-import com.netflix.metacat.common.server.util.MetacatContextManager;
-import com.netflix.metacat.common.server.util.ThreadServiceManager;
-import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
+import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -116,13 +116,16 @@ public class PartitionServiceImpl implements PartitionService {
         this.partitionDeletedCountId = registry.createId(Metrics.GaugeDeletePartitions.toString());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<PartitionDto> list(
             final QualifiedName name,
-            final String filter,
-            final List<String> partitionNames,
-            final Sort sort,
-            final Pageable pageable,
+            @Nullable final String filter,
+            @Nullable final List<String> partitionNames,
+            @Nullable final Sort sort,
+            @Nullable final Pageable pageable,
             final boolean includeUserDefinitionMetadata,
             final boolean includeUserDataMetadata,
             final boolean includePartitionDetails
@@ -182,6 +185,9 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Integer count(final QualifiedName name) {
         Integer result = 0;
@@ -195,8 +201,11 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public PartitionsSaveResponseDto save(@Nonnull final QualifiedName name, final PartitionsSaveRequestDto dto) {
+    public PartitionsSaveResponseDto save(final QualifiedName name, final PartitionsSaveRequestDto dto) {
         PartitionsSaveResponseDto result = new PartitionsSaveResponseDto();
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
@@ -254,6 +263,9 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(final QualifiedName name, final List<String> partitionIds) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -297,12 +309,18 @@ public class PartitionServiceImpl implements PartitionService {
         threadServiceManager.getExecutor().submit(() -> userMetadataService.deleteMetadatas(userId, partitions));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<QualifiedName> getQualifiedNames(final String uri, final boolean prefixSearch) {
         return getQualifiedNames(Lists.newArrayList(uri), prefixSearch).values().stream().flatMap(Collection::stream)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Map<String, List<QualifiedName>> getQualifiedNames(final List<String> uris, final boolean prefixSearch) {
         final Map<String, List<QualifiedName>> result = Maps.newConcurrentMap();
@@ -339,13 +357,16 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionKeys(
             final QualifiedName name,
-            final String filter,
-            final List<String> partitionNames,
-            final Sort sort,
-            final Pageable pageable
+            @Nullable final String filter,
+            @Nullable final List<String> partitionNames,
+            @Nullable final Sort sort,
+            @Nullable final Pageable pageable
     ) {
         List<String> result = Lists.newArrayList();
         if (tableService.exists(name)) {
@@ -369,13 +390,16 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getPartitionUris(
             final QualifiedName name,
-            final String filter,
-            final List<String> partitionNames,
-            final Sort sort,
-            final Pageable pageable
+            @Nullable final String filter,
+            @Nullable final List<String> partitionNames,
+            @Nullable final Sort sort,
+            @Nullable final Pageable pageable
     ) {
         List<String> result = Lists.newArrayList();
         if (tableService.exists(name)) {
@@ -396,8 +420,11 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public PartitionDto create(@Nonnull final QualifiedName name, @Nonnull final PartitionDto partitionDto) {
+    public PartitionDto create(final QualifiedName name, final PartitionDto partitionDto) {
         final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
         dto.setCheckIfExists(false);
         dto.setPartitions(Lists.newArrayList(partitionDto));
@@ -405,28 +432,40 @@ public class PartitionServiceImpl implements PartitionService {
         return partitionDto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void update(@Nonnull final QualifiedName name, @Nonnull final PartitionDto partitionDto) {
+    public void update(final QualifiedName name, final PartitionDto partitionDto) {
         final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
         dto.setPartitions(Lists.newArrayList(partitionDto));
         save(name, dto);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public PartitionDto updateAndReturn(@Nonnull final QualifiedName name, @Nonnull final PartitionDto dto) {
+    public PartitionDto updateAndReturn(final QualifiedName name, final PartitionDto dto) {
         update(name, dto);
         return dto;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void delete(@Nonnull final QualifiedName name) {
+    public void delete(final QualifiedName name) {
         final QualifiedName tableName = QualifiedName
                 .ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
         delete(tableName, Lists.newArrayList(name.getPartitionName()));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public PartitionDto get(@Nonnull final QualifiedName name) {
+    public PartitionDto get(final QualifiedName name) {
         PartitionDto result = null;
         final QualifiedName tableName = QualifiedName
                 .ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
@@ -438,8 +477,11 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public boolean exists(@Nonnull final QualifiedName name) {
+    public boolean exists(final QualifiedName name) {
         return get(name) != null;
     }
 }

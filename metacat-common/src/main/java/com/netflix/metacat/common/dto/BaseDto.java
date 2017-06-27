@@ -35,6 +35,7 @@ import java.io.Serializable;
  */
 //TODO: All DTO's should be READ-ONLY
 public abstract class BaseDto implements Serializable {
+    private static MetacatJsonLocator metacatJsonLocator = new MetacatJsonLocator();
     /**
      * Deserialize the input stream.
      *
@@ -46,7 +47,7 @@ public abstract class BaseDto implements Serializable {
     public static ObjectNode deserializeObjectNode(
         @Nonnull @NonNull final ObjectInputStream inputStream
     ) throws IOException {
-        return MetacatJsonLocator.INSTANCE.deserializeObjectNode(inputStream);
+        return metacatJsonLocator.deserializeObjectNode(inputStream);
     }
 
     /**
@@ -60,7 +61,7 @@ public abstract class BaseDto implements Serializable {
         @Nonnull @NonNull final ObjectOutputStream outputStream,
         @Nullable final ObjectNode json
     ) throws IOException {
-        MetacatJsonLocator.INSTANCE.serializeObjectNode(outputStream, json);
+        metacatJsonLocator.serializeObjectNode(outputStream, json);
     }
 
     /**
@@ -68,6 +69,6 @@ public abstract class BaseDto implements Serializable {
      */
     @Override
     public String toString() {
-        return MetacatJsonLocator.INSTANCE.toJsonString(this);
+        return new MetacatJsonLocator().toJsonString(this);
     }
 }

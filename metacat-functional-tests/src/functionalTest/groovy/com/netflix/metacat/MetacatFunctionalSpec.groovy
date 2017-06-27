@@ -45,7 +45,7 @@ class MetacatFunctionalSpec extends Specification {
     public static MetacatV1 api
     public static PartitionV1 partitionApi
     public static ResolverV1 resolverApi
-    public static final MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
+    public static final MetacatJson metacatJson = new MetacatJsonLocator()
     public static final long BATCH_ID = System.currentTimeSeconds()
     public static final int timediff = 24 * 3600
 

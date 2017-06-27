@@ -31,11 +31,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.common.server.util.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.HashMap;
@@ -63,7 +62,6 @@ public class CatalogManager {
      * @param config           config
      * @param registry         registry of spectator
      */
-    @Inject
     public CatalogManager(final ConnectorManager connectorManager,
                           final Config config,
                           final Registry registry) {

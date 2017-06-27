@@ -25,5 +25,4 @@
 
 @ParametersAreNonnullByDefault
 package com.netflix.metacat.common.server.connectors;
-
 import javax.annotation.ParametersAreNonnullByDefault;

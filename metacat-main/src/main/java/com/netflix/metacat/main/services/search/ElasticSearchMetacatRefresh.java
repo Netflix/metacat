@@ -11,6 +11,7 @@
  *    limitations under the License.
  */
 
+
 package com.netflix.metacat.main.services.search;
 
 import com.google.common.base.Functions;
@@ -40,13 +41,13 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.common.server.usermetadata.TagService;
-import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
-import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.common.server.usermetadata.TagService;
+import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import lombok.NonNull;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;

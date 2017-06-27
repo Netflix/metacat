@@ -126,9 +126,9 @@ public enum Metrics {
      */
     Status("status"), StatusSuccess("success"), StatusFailure("failure");
 
-    public static Map<String, String> statusSuccessMap
+    public final static Map<String, String> statusSuccessMap
         = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusSuccess.name());
-    public static Map<String, String> statusFailureMap
+    public final static Map<String, String> statusFailureMap
         = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusFailure.name());
 
     private final String constant;

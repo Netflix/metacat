@@ -13,13 +13,15 @@
 
 package com.netflix.metacat.common.json
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.netflix.metacat.common.dto.DtoVerificationSpec
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class MetacatJsonSpec extends Specification {
-    MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
+    MetacatJson metacatJson = new MetacatJsonLocator()
 
     @Unroll
     def 'can convert #clazz to json and back'() {
@@ -83,5 +85,19 @@ class MetacatJsonSpec extends Specification {
         """{"field": {"overwrite_nested": false}}""" | """{"field": {"overwrite_nested": true}}"""                              | """{"field": {"overwrite_nested": true}}"""
         """{"field": {"old_nested_field": 1}}"""     | """{"field": {"new_nested_field": 2}}"""                                 | """{"field": {"old_nested_field": 1, "new_nested_field": 2}}"""
         """{"field": {"old_nested_field": 1}}"""     | """{"field": {"new_nested_field": {"new_nested_nested_field": true}}}""" | """{"field":{"old_nested_field":1,"new_nested_field":{"new_nested_nested_field":true}}}"""
+    }
+
+    @Unroll
+    def 'parse json string return null for NullNode'() {
+        given:
+        ObjectMapper objectMapper = Mock(ObjectMapper)
+        MetacatJsonLocator metacatJson = new MetacatJsonLocator(objectMapper, objectMapper)
+
+        when:
+        ObjectNode result = metacatJson.parseJsonObject("""{"field": "old_value"}""")
+
+        then:
+        objectMapper.readTree(_) >> NullNode.instance
+        result == null
     }
 }

@@ -11,7 +11,7 @@
  *          limitations under the License.
  */
 
-package com.netflix.metacat.common.server.util;
+package com.netflix.metacat.common.server.connectors;
 
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.spectator.api.Registry;

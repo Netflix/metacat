@@ -30,6 +30,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
@@ -39,8 +40,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.connectors.exception.CatalogNotFoundException;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.common.server.util.ConnectorContext;
-import com.netflix.metacat.main.spi.MetacatCatalogConfig;
+import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
@@ -91,20 +91,25 @@ public class ConnectorManager {
         });
     }
 
-    void addPlugin(final ConnectorPlugin connectorPlugin) {
+    /**
+     * add Plugin.
+     *
+     * @param connectorPlugin connector plugin
+     */
+    public void addPlugin(final ConnectorPlugin connectorPlugin) {
         plugins.put(connectorPlugin.getType(), connectorPlugin);
     }
 
     /**
      * Creates a connection for the given catalog.
      *
-     * @param catalogName                catalog name
-     * @param connectorType              connector type
+     * @param catalogName      catalog name
+     * @param connectorType    connector type
      * @param connectorContext metacat connector properties
      */
-    synchronized void createConnection(final String catalogName,
-                                       final String connectorType,
-                                       final ConnectorContext connectorContext) {
+    public synchronized void createConnection(final String catalogName,
+                                              final String connectorType,
+                                              final ConnectorContext connectorContext) {
         Preconditions.checkState(!stopped.get(), "ConnectorManager is stopped");
         final ConnectorPlugin connectorPlugin = plugins.get(connectorType);
         if (connectorPlugin != null) {

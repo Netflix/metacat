@@ -22,15 +22,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.metacat.main.services.notifications.DefaultNotificationServiceImpl;
 import com.netflix.metacat.main.services.notifications.NotificationService;
+import com.netflix.metacat.main.services.notifications.DefaultNotificationServiceImpl;
 import com.netflix.spectator.api.Registry;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
-import javax.annotation.Nonnull;
 
 /**
  * Provides an instance of SNSNotificationServiceImpl if conditions are right.
@@ -53,9 +51,9 @@ public class SNSNotificationServiceImplProvider implements Provider<Notification
      * @param registry The registry of spectator
      */
     @Inject
-    public SNSNotificationServiceImplProvider(@Nonnull @NonNull final Config config,
-                                              @Nonnull @NonNull final ObjectMapper mapper,
-                                              @Nonnull @NonNull final Registry registry) {
+    public SNSNotificationServiceImplProvider(final Config config,
+                                              final ObjectMapper mapper,
+                                              final Registry registry) {
         this.config = config;
         this.mapper = mapper;
         this.registry = registry;

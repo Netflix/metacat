@@ -13,13 +13,13 @@
 
 package com.netflix.metacat.main.services.search;
 
-
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.TableDto;
 import org.joda.time.Instant;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -29,88 +29,107 @@ import java.util.List;
 public interface ElasticSearchUtil {
     /**
      * Delete the records for the given type.
+     *
      * @param metacatRequestContext context
-     * @param type doc type
-     * @param softDelete if true, marks the doc for deletion
+     * @param type                  doc type
+     * @param softDelete            if true, marks the doc for deletion
      */
-    void delete(final MetacatRequestContext metacatRequestContext, final String type,
-                       final boolean softDelete);
+    void delete(MetacatRequestContext metacatRequestContext, String type,
+                boolean softDelete);
 
     /**
      * Delete index documents.
+     *
      * @param type index type
-     * @param ids entity ids
+     * @param ids  entity ids
      */
-    void delete(final String type, final List<String> ids);
+    void delete(String type, List<String> ids);
 
     /**
      * Delete index document.
+     *
      * @param type index type
-     * @param id entity id
+     * @param id   entity id
      */
-    void delete(final String type, final String id);
+    void delete(String type, String id);
 
     /**
      * Gets the document for the given type and id.
+     *
      * @param type doc type
-     * @param id doc id
+     * @param id   doc id
      * @return doc
      */
-    ElasticSearchDoc get(final String type, final String id);
+    ElasticSearchDoc get(String type, String id);
+
+    /**
+     * Gets the document for the given type and id.
+     *
+     * @param type  doc type
+     * @param id    doc id
+     * @param index the es index
+     * @return doc
+     */
+    ElasticSearchDoc get(String type, String id, String index);
 
     /**
      * List of names.
-     * @param type type
+     *
+     * @param type          type
      * @param qualifiedName name
      * @return list of names
      */
-    List<String> getIdsByQualifiedName(final String type, final QualifiedName qualifiedName);
+    List<String> getIdsByQualifiedName(String type, QualifiedName qualifiedName);
 
     /**
      * Search the names by names and by the given marker.
-     * @param type type
-     * @param qualifiedNames names
-     * @param marker marker
+     *
+     * @param type                  type
+     * @param qualifiedNames        names
+     * @param marker                marker
      * @param excludeQualifiedNames exclude names
-     * @param valueType dto type
-     * @param <T> dto type
+     * @param valueType             dto type
+     * @param <T>                   dto type
      * @return dto
      */
-    <T> List<T> getQualifiedNamesByMarkerByNames(final String type, final List<QualifiedName> qualifiedNames,
-                                                        final Instant marker,
-                                                        final List<QualifiedName> excludeQualifiedNames,
-                                                        final Class<T> valueType);
+    <T> List<T> getQualifiedNamesByMarkerByNames(String type, List<QualifiedName> qualifiedNames,
+                                                 Instant marker,
+                                                 List<QualifiedName> excludeQualifiedNames,
+                                                 Class<T> valueType);
 
     /**
      * List table names.
-     * @param type doc type
-     * @param qualifiedNames names
+     *
+     * @param type                  doc type
+     * @param qualifiedNames        names
      * @param excludeQualifiedNames exclude names
      * @return list of table names
      */
-    List<String> getTableIdsByCatalogs(final String type, final List<QualifiedName> qualifiedNames,
-                                              final List<QualifiedName> excludeQualifiedNames);
+    List<String> getTableIdsByCatalogs(String type, List<QualifiedName> qualifiedNames,
+                                       List<QualifiedName> excludeQualifiedNames);
 
     /**
      * List table names by uri.
-     * @param type doc type
+     *
+     * @param type    doc type
      * @param dataUri uri
      * @return list of table names
      */
-    List<String> getTableIdsByUri(final String type, final String dataUri);
+    List<String> getTableIdsByUri(String type, String dataUri);
 
     /**
      * Wrapper for logging the message in elastic search esIndex.
-     * @param method method
-     * @param type type
-     * @param name name
-     * @param data data
+     *
+     * @param method     method
+     * @param type       type
+     * @param name       name
+     * @param data       data
      * @param logMessage message
-     * @param ex exception
-     * @param error is an error
+     * @param ex         exception
+     * @param error      is an error
      */
-    void log(final String method, final String type, final String name, final String data,
-                    final String logMessage, final Exception ex, final boolean error);
+    void log(String method, String type, String name, @Nullable String data,
+             String logMessage, @Nullable Exception ex, boolean error);
 
     /**
      * Elastic search index refresh.
@@ -119,62 +138,77 @@ public interface ElasticSearchUtil {
 
     /**
      * Bulk save of the entities.
+     *
      * @param type index type
      * @param docs metacat documents
      */
-    void save(final String type, final List<ElasticSearchDoc> docs);
+    void save(String type, List<ElasticSearchDoc> docs);
 
     /**
      * Save of a single entity.
+     *
      * @param type index type
-     * @param id id of the entity
+     * @param id   id of the entity
      * @param body source string of the entity
      */
-    void save(final String type, final String id, final String body);
+    void save(String type, String id, String body);
 
     /**
      * Full text search.
+     *
      * @param searchString search text
      * @return list of table info
      */
-    List<TableDto> simpleSearch(final String searchString);
+    List<TableDto> simpleSearch(String searchString);
 
     /**
      * Marks the documents as deleted.
-     * @param type index type
-     * @param ids list of entity ids
+     *
+     * @param type                  index type
+     * @param ids                   list of entity ids
      * @param metacatRequestContext context containing the user name
      */
-    void softDelete(final String type, final List<String> ids,
-                           final MetacatRequestContext metacatRequestContext);
+    void softDelete(String type, List<String> ids,
+                    MetacatRequestContext metacatRequestContext);
 
 
     /**
      * Marks the document as deleted.
-     * @param type index type
-     * @param id entity id
+     *
+     * @param type                  index type
+     * @param id                    entity id
      * @param metacatRequestContext context containing the user name
      */
-    void softDelete(final String type, final String id, final MetacatRequestContext metacatRequestContext);
+    void softDelete(String type, String id, MetacatRequestContext metacatRequestContext);
 
     /**
      * Creates JSON from search doc.
-     * @param id doc id
-     * @param dto dto
-     * @param context context
+     *
+     * @param id        doc id
+     * @param dto       dto
+     * @param context   context
      * @param isDeleted true if it has to be mark deleted
      * @return doc
      */
-    String toJsonString(final String id, final Object dto, final MetacatRequestContext context,
-                               final boolean isDeleted);
+    String toJsonString(String id, Object dto, MetacatRequestContext context,
+                        boolean isDeleted);
+
+    /**
+     * Creates JSON from elasticSearchdoc object.
+     *
+     * @param elasticSearchDoc elastic search doc.
+     * @return Json String
+     */
+    String toJsonString(ElasticSearchDoc elasticSearchDoc);
 
     /**
      * Updates the documents with partial updates with the given fields.
-     * @param type index type
-     * @param ids list of entity ids
+     *
+     * @param type                  index type
+     * @param ids                   list of entity ids
      * @param metacatRequestContext context containing the user name
-     * @param node json that represents the document source
+     * @param node                  json that represents the document source
      */
-    void updates(final String type, final List<String> ids,
-                        final MetacatRequestContext metacatRequestContext, final ObjectNode node);
+    void updates(String type, List<String> ids,
+                 MetacatRequestContext metacatRequestContext, ObjectNode node);
 }

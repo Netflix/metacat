@@ -31,7 +31,7 @@ public interface CatalogService {
      * @return the information about the given catalog
      */
     @Nonnull
-    CatalogDto get(@Nonnull QualifiedName name);
+    CatalogDto get(QualifiedName name);
 
     /**
      * List of registered catalogs.
@@ -45,5 +45,5 @@ public interface CatalogService {
      * @param name             Qualified name of the catalog
      * @param createCatalogDto catalog
      */
-    void update(@Nonnull QualifiedName name, @Nonnull CreateCatalogDto createCatalogDto);
+    void update(QualifiedName name, CreateCatalogDto createCatalogDto);
 }

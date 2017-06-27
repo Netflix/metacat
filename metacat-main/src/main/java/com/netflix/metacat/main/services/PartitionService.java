@@ -11,6 +11,7 @@
  *    limitations under the License.
  */
 
+
 package com.netflix.metacat.main.services;
 
 import com.netflix.metacat.common.QualifiedName;
@@ -20,7 +21,7 @@ import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -30,22 +31,30 @@ import java.util.Map;
 public interface PartitionService extends MetacatService<PartitionDto> {
     /**
      * Returns the list of partitions.
-     * @param name table name
-     * @param filter filter expression
-     * @param partitionNames partition names to include
-     * @param sort sort info
-     * @param pageable pagination info
+     *
+     * @param name                          table name
+     * @param filter                        filter expression
+     * @param partitionNames                partition names to include
+     * @param sort                          sort info
+     * @param pageable                      pagination info
      * @param includeUserDefinitionMetadata if true, includes the definition metadata
-     * @param includeUserDataMetadata if true, includes the data metadata
-     * @param includePartitionDetails if true, includes parameter details
+     * @param includeUserDataMetadata       if true, includes the data metadata
+     * @param includePartitionDetails       if true, includes parameter details
      * @return list of partitions
      */
-    List<PartitionDto> list(QualifiedName name, String filter, List<String> partitionNames,
-        Sort sort, Pageable pageable,
-        boolean includeUserDefinitionMetadata, boolean includeUserDataMetadata, boolean includePartitionDetails);
+    List<PartitionDto> list(
+        QualifiedName name,
+        @Nullable String filter,
+        @Nullable List<String> partitionNames,
+        @Nullable Sort sort,
+        @Nullable Pageable pageable,
+        boolean includeUserDefinitionMetadata,
+        boolean includeUserDataMetadata,
+        boolean includePartitionDetails);
 
     /**
      * Partition count for the given table name.
+     *
      * @param name table name
      * @return no. of partitions
      */
@@ -54,22 +63,25 @@ public interface PartitionService extends MetacatService<PartitionDto> {
     /**
      * Saves the list of partitions to the given table <code>name</code>. By default, if a partition exists, it drops
      * the partition before adding it. If <code>alterIfExists</code> is true, then it will alter the partition.
-     * @param name table name
+     *
+     * @param name                     table name
      * @param partitionsSaveRequestDto request dto containing the partitions to be added and deleted
      * @return no. of partitions added and updated.
      */
-    PartitionsSaveResponseDto save(@Nonnull QualifiedName name, PartitionsSaveRequestDto partitionsSaveRequestDto);
+    PartitionsSaveResponseDto save(QualifiedName name, PartitionsSaveRequestDto partitionsSaveRequestDto);
 
     /**
      * Deletes the partitions with the given <code>partitionIds</code> for the given table name.
-     * @param name table name
+     *
+     * @param name         table name
      * @param partitionIds partition names
      */
     void delete(QualifiedName name, List<String> partitionIds);
 
     /**
      * Returns the qualified names of partitions that refer to the given uri.
-     * @param uri uri
+     *
+     * @param uri          uri
      * @param prefixSearch if true, this method does a prefix search
      * @return list of names
      */
@@ -77,7 +89,8 @@ public interface PartitionService extends MetacatService<PartitionDto> {
 
     /**
      * Returns a map of uri to qualified names.
-     * @param uris list of uris
+     *
+     * @param uris         list of uris
      * @param prefixSearch if true, this method does a prefix search
      * @return map of uri to qualified names
      */
@@ -85,25 +98,35 @@ public interface PartitionService extends MetacatService<PartitionDto> {
 
     /**
      * Returns a list of partition names.
-     * @param name table name
-     * @param filter filter expression
+     *
+     * @param name           table name
+     * @param filter         filter expression
      * @param partitionNames names
-     * @param sort sort info
-     * @param pageable pagination info
+     * @param sort           sort info
+     * @param pageable       pagination info
      * @return list of partition names
      */
-    List<String> getPartitionKeys(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
-        Pageable pageable);
+    List<String> getPartitionKeys(
+        QualifiedName name,
+        @Nullable String filter,
+        @Nullable List<String> partitionNames,
+        @Nullable Sort sort,
+        @Nullable Pageable pageable);
 
     /**
      * Returns a list of partition uris.
-     * @param name table name
-     * @param filter filter expression
+     *
+     * @param name           table name
+     * @param filter         filter expression
      * @param partitionNames names
-     * @param sort sort info
-     * @param pageable pagination info
+     * @param sort           sort info
+     * @param pageable       pagination info
      * @return list of partition uris
      */
-    List<String> getPartitionUris(QualifiedName name, String filter, List<String> partitionNames, Sort sort,
-        Pageable pageable);
+    List<String> getPartitionUris(
+        QualifiedName name,
+        @Nullable String filter,
+        @Nullable List<String> partitionNames,
+        @Nullable Sort sort,
+        @Nullable Pageable pageable);
 }

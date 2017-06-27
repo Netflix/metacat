@@ -72,7 +72,7 @@ public class MetacatServiceHelper {
      * @return service
      */
     public MetacatService getService(final QualifiedName name) {
-        MetacatService result;
+        final MetacatService result;
         if (name.isPartitionDefinition()) {
             result = partitionService;
         } else if (name.isTableDefinition()) {

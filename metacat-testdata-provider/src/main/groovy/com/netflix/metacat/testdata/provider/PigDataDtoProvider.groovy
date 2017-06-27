@@ -24,7 +24,7 @@ import com.netflix.metacat.common.json.MetacatJsonLocator
  * Created by amajumdar on 5/15/15.
  */
 class PigDataDtoProvider {
-    private static final MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
+    private static final MetacatJson metacatJson = new MetacatJsonLocator()
     /**
      * Returns a tableDto with the provided information.
      */

@@ -28,7 +28,7 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.CatalogService;
-import com.netflix.metacat.main.spi.MetacatCatalogConfig;
+import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -69,7 +69,7 @@ public class CatalogServiceImpl implements CatalogService {
      */
     @Nonnull
     @Override
-    public CatalogDto get(@Nonnull final QualifiedName name) {
+    public CatalogDto get(final QualifiedName name) {
         final MetacatCatalogConfig config = connectorManager.getCatalogConfig(name);
 
         final CatalogDto result = new CatalogDto();
@@ -108,7 +108,7 @@ public class CatalogServiceImpl implements CatalogService {
      * {@inheritDoc}
      */
     @Override
-    public void update(@Nonnull final QualifiedName name, @Nonnull final CreateCatalogDto createCatalogDto) {
+    public void update(final QualifiedName name, final CreateCatalogDto createCatalogDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
         connectorManager.getCatalogConfig(name);

@@ -30,7 +30,7 @@ import java.lang.reflect.*
 class DtoVerificationSpec extends Specification {
     private static final Random rand = new Random()
     private static final ClassPath classPath = ClassPath.from(BaseDto.class.classLoader)
-    private static final MetacatJson metacatJson = MetacatJsonLocator.INSTANCE
+    private static final MetacatJson metacatJson = new MetacatJsonLocator()
 
     public static Set<Class<?>> getDtoClasses() {
         return classPath.getTopLevelClassesRecursive(BaseDto.class.package.name).collect { ClassPath.ClassInfo info ->
