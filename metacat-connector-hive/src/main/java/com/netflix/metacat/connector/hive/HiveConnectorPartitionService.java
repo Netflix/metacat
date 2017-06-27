@@ -23,8 +23,8 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.SortOrder;
-import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
@@ -38,6 +38,7 @@ import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import lombok.Getter;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -67,9 +68,10 @@ import java.util.stream.Collectors;
  * @author zhenl
  * @since 1.0.0
  */
+@Getter
 public class HiveConnectorPartitionService implements ConnectorPartitionService {
-    protected final String catalogName;
-    protected final HiveConnectorInfoConverter hiveMetacatConverters;
+    private final String catalogName;
+    private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final IMetacatHiveClient metacatHiveClient;
 
 
@@ -83,7 +85,8 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     public HiveConnectorPartitionService(
         final String catalogName,
         final IMetacatHiveClient metacatHiveClient,
-        final HiveConnectorInfoConverter hiveMetacatConverters) {
+        final HiveConnectorInfoConverter hiveMetacatConverters
+    ) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
         this.catalogName = catalogName;
@@ -172,11 +175,13 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
         return names;
     }
 
-    private List<Partition> getPartitions(final QualifiedName tableName,
-                                          @Nullable final String filter,
-                                          @Nullable final List<String> partitionIds,
-                                          @Nullable final Sort sort,
-                                          @Nullable final Pageable pageable) {
+    private List<Partition> getPartitions(
+        final QualifiedName tableName,
+        @Nullable final String filter,
+        @Nullable final List<String> partitionIds,
+        @Nullable final Sort sort,
+        @Nullable final Pageable pageable
+    ) {
         final String databasename = tableName.getDatabaseName();
         final String tablename = tableName.getTableName();
         try {
@@ -204,7 +209,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             });
             if (sort != null) {
                 if (sort.getOrder() == SortOrder.DESC) {
-                    Collections.sort(filteredPartitionList, Collections.reverseOrder());
+                    filteredPartitionList.sort(Collections.reverseOrder());
                 } else {
                     Collections.sort(filteredPartitionList);
                 }
@@ -336,24 +341,6 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
         }
     }
 
-    private List<String> getFakePartitionName(final List<Partition> partitions) {
-        // Since we would have to do a table load to find out the actual partition keys here we make up fake ones
-        // so that we can generate the partition name
-        final List<String> ids = partitions.stream().map(Partition::getValues).map(values -> {
-            final Map<String, String> spec = new LinkedHashMap<>();
-            for (int i = 0; i < values.size(); i++) {
-                spec.put("fakekey" + i, values.get(i));
-            }
-            try {
-                return Warehouse.makePartPath(spec);
-            } catch (MetaException me) {
-                return "Got: '" + me.getMessage() + "' for spec: " + spec;
-            }
-        }).collect(Collectors.toList());
-
-        return ids;
-    }
-
     /**
      * {@inheritDoc}.
      */
@@ -378,34 +365,14 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     }
 
     /**
-     * get name of partitions.
-     *
-     * @param table
-     * @param partition
-     * @return partition name
-     */
-    String getNameOfPartition(final Table table, final Partition partition) {
-        try {
-            return Warehouse.makePartName(table.getPartitionKeys(), partition.getValues());
-        } catch (TException e) {
-            throw new InvalidMetaException("One or more partition names are invalid.", e);
-        }
-    }
-
-    /**
      * Returns the list of partition keys.
      *
      * @param fields fields
      * @return partition keys
      */
     protected List<String> getPartitionKeys(final List<FieldSchema> fields) {
-        final List<String> result = Lists.newArrayList();
-        if (fields != null) {
-            result.addAll(fields.stream().map(FieldSchema::getName).collect(Collectors.toList()));
-        }
-        return result;
+        return fields.stream().map(FieldSchema::getName).collect(Collectors.toList());
     }
-
 
     protected Map<String, Partition> getPartitionsByNames(final Table table, final List<String> partitionNames)
         throws TException {
@@ -414,7 +381,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
         List<Partition> partitions =
             metacatHiveClient.getPartitions(databasename, tablename, partitionNames);
         if (partitions == null || partitions.isEmpty()) {
-            if (partitionNames == null || partitionNames.isEmpty()) {
+            if (partitionNames.isEmpty()) {
                 return Collections.emptyMap();
             }
 
@@ -443,6 +410,22 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                 throw new InvalidMetaException("One or more partition names are invalid.", e);
             }
         }, Function.identity()));
+    }
+
+    private List<String> getFakePartitionName(final List<Partition> partitions) {
+        // Since we would have to do a table load to find out the actual partition keys here we make up fake ones
+        // so that we can generate the partition name
+        return partitions.stream().map(Partition::getValues).map(values -> {
+            final Map<String, String> spec = new LinkedHashMap<>();
+            for (int i = 0; i < values.size(); i++) {
+                spec.put("fakekey" + i, values.get(i));
+            }
+            try {
+                return Warehouse.makePartPath(spec);
+            } catch (MetaException me) {
+                return "Got: '" + me.getMessage() + "' for spec: " + spec;
+            }
+        }).collect(Collectors.toList());
     }
 
     private void copyTableSdToPartitionSd(final List<Partition> hivePartitions, final Table table) {
@@ -479,6 +462,14 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                 }
             }
             partition.setSd(tableSdCopy);
+        }
+    }
+
+    private String getNameOfPartition(final Table table, final Partition partition) {
+        try {
+            return Warehouse.makePartName(table.getPartitionKeys(), partition.getValues());
+        } catch (TException e) {
+            throw new InvalidMetaException("One or more partition names are invalid.", e);
         }
     }
 }

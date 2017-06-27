@@ -27,7 +27,6 @@ import com.netflix.metacat.connector.hive.configs.HiveConnectorFastServiceConfig
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.thrift.TException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
@@ -45,85 +44,84 @@ import java.util.Map;
 @Slf4j
 public class HiveConnectorFactory implements ConnectorFactory {
     private final String catalogName;
-    private IMetacatHiveClient client;
-    private HiveConnectorPartitionService partitionService;
-    private HiveConnectorTableService tableService;
-    private HiveConnectorDatabaseService databaseService;
     private AnnotationConfigApplicationContext ctx;
 
     /**
      * Constructor.
      *
-     * @param catalogName            connector name. Also the catalog name.
-     * @param infoConverter          hive info converter
+     * @param catalogName      connector name. Also the catalog name.
+     * @param infoConverter    hive info converter
      * @param connectorContext connector config
      */
-    public HiveConnectorFactory(
+    HiveConnectorFactory(
         final String catalogName,
         final HiveConnectorInfoConverter infoConverter,
         final ConnectorContext connectorContext
     ) {
         this.catalogName = catalogName;
-        final boolean useLocalMetastore = Boolean
-            .parseBoolean(connectorContext.getConfiguration().getOrDefault(
-                HiveConfigConstants.USE_EMBEDDED_METASTORE, "false"));
-        boolean useFastHiveService = false;
-        if (useLocalMetastore) {
-            useFastHiveService = Boolean.parseBoolean(
-                connectorContext.getConfiguration()
-                    .getOrDefault(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false"));
-        }
+        final boolean useLocalMetastore = Boolean.parseBoolean(
+            connectorContext.getConfiguration().getOrDefault(HiveConfigConstants.USE_EMBEDDED_METASTORE, "false")
+        );
+        final boolean useFastHiveService = useLocalMetastore && Boolean.parseBoolean(
+            connectorContext.getConfiguration()
+                .getOrDefault(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false")
+        );
 
-        ctx = new AnnotationConfigApplicationContext();
-        ctx.getBeanFactory().registerSingleton("ConnectorContext", connectorContext);
-        ctx.getBeanFactory().registerSingleton("HiveConnectorInfoConverter", infoConverter);
+        this.ctx = new AnnotationConfigApplicationContext();
+        this.ctx.getBeanFactory().registerSingleton("ConnectorContext", connectorContext);
+        this.ctx.getBeanFactory().registerSingleton("HiveConnectorInfoConverter", infoConverter);
         final StandardEnvironment standardEnvironment = new StandardEnvironment();
         final MutablePropertySources propertySources = standardEnvironment.getPropertySources();
         final Map<String, Object> properties = new HashMap<>();
         properties.put("useHiveFastService", useFastHiveService);
         properties.put("useThriftClient", !useLocalMetastore);
         propertySources.addFirst(new MapPropertySource("HIVE_CONNECTOR", properties));
-        ctx.setEnvironment(standardEnvironment);
+        this.ctx.setEnvironment(standardEnvironment);
         //TODO scan the package, which is not working
-        ctx.register(HiveConnectorFastServiceConfig.class);
-        ctx.register(HiveConnectorClientConfig.class);
-        ctx.register(HiveConnectorConfig.class);
-        ctx.refresh();
-
-        this.client = ctx.getBean(IMetacatHiveClient.class);
-        this.databaseService = ctx.getBean(HiveConnectorDatabaseService.class);
-        this.partitionService = ctx.getBean(HiveConnectorPartitionService.class);
-        this.tableService = ctx.getBean(HiveConnectorTableService.class);
+//        this.ctx.scan(this.getClass().getPackage().getName());
+        this.ctx.register(HiveConnectorFastServiceConfig.class);
+        this.ctx.register(HiveConnectorClientConfig.class);
+        this.ctx.register(HiveConnectorConfig.class);
+        this.ctx.refresh();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConnectorDatabaseService getDatabaseService() {
-        return this.databaseService;
+        return this.ctx.getBean(HiveConnectorDatabaseService.class);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConnectorTableService getTableService() {
-        return this.tableService;
+        return this.ctx.getBean(HiveConnectorTableService.class);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConnectorPartitionService getPartitionService() {
-        return this.partitionService;
+        return this.ctx.getBean(HiveConnectorPartitionService.class);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getName() {
-        return catalogName;
+        return this.catalogName;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void stop() {
-        try {
-            client.shutdown();
-            ctx.close();
-
-        } catch (TException e) {
-            log.warn("Failed shutting down the catalog: {}", catalogName, e);
-        }
+        this.ctx.close();
     }
 }

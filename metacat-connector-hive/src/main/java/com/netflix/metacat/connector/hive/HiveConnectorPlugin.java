@@ -31,13 +31,11 @@ import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
  * @since 1.0.0
  */
 public class HiveConnectorPlugin implements ConnectorPlugin {
-    /**
-     * Type of the connector.
-     */
-    public static final String CONNECTOR_TYPE = "hive";
+    private static final String CONNECTOR_TYPE = "hive";
     private static final HiveTypeConverter HIVE_TYPE_CONVERTER = new HiveTypeConverter();
-    private static final ConnectorInfoConverter INFO_CONVERTER_HIVE =
-            new HiveConnectorInfoConverter(HIVE_TYPE_CONVERTER);
+    private static final HiveConnectorInfoConverter INFO_CONVERTER_HIVE
+        = new HiveConnectorInfoConverter(HIVE_TYPE_CONVERTER);
+
     /**
      * {@inheritDoc}
      */
@@ -55,7 +53,9 @@ public class HiveConnectorPlugin implements ConnectorPlugin {
         final ConnectorContext connectorContext
     ) {
         return new HiveConnectorFactory(
-            catalogName, (HiveConnectorInfoConverter) INFO_CONVERTER_HIVE, connectorContext
+            catalogName,
+            INFO_CONVERTER_HIVE,
+            connectorContext
         );
     }
 
