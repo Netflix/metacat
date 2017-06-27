@@ -10,9 +10,11 @@
  *          See the License for the specific language governing permissions and
  *          limitations under the License.
  */
-package com.netflix.metacat.thrift;
+package com.netflix.metacat.main.services;
 
-import com.netflix.metacat.common.server.connectors.ConnectorManager;
+import com.netflix.metacat.main.manager.ConnectorManager;
+import com.netflix.metacat.thrift.CatalogThriftService;
+import com.netflix.metacat.thrift.CatalogThriftServiceFactory;
 
 import javax.inject.Inject;
 import java.util.List;

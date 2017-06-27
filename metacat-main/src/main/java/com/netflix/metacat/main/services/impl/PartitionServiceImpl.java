@@ -39,7 +39,7 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPreEv
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
-import com.netflix.metacat.common.server.connectors.ConnectorManager;
+import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.services.CatalogService;

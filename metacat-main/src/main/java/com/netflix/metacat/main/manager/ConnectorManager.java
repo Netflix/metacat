@@ -24,12 +24,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.netflix.metacat.common.server.connectors;
+package com.netflix.metacat.main.manager;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
+import com.netflix.metacat.common.server.connectors.ConnectorFactory;
+import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
+import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
+import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
+import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.connectors.exception.CatalogNotFoundException;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;

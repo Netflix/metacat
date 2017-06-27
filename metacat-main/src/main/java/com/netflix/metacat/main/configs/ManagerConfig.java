@@ -22,7 +22,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.type.TypeManager;
 import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.main.manager.CatalogManager;
-import com.netflix.metacat.common.server.connectors.ConnectorManager;
+import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.manager.PluginManager;
 import com.netflix.spectator.api.Registry;
 import org.springframework.context.annotation.Bean;

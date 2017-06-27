@@ -30,7 +30,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
-import com.netflix.metacat.common.server.connectors.ConnectorManager;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.spectator.api.Registry;

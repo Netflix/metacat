@@ -42,7 +42,7 @@ import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPreEvent;
-import com.netflix.metacat.common.server.connectors.ConnectorManager;
+import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
