@@ -1,22 +1,13 @@
 language: java
 sudo: required
 dist: trusty
-group: deprecated-2017Q2
 jdk:
   - oraclejdk8
 services:
   - docker
 git:
   depth: 250
-install:
-  # Update docker-engine using Ubuntu 'trusty' apt repo
-  - curl -sSL "https://get.docker.com/gpg" | sudo -E apt-key add -
-  - echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" | sudo tee -a /etc/apt/sources.list
-  - docker version
-  # Update docker-compose via pip
-  - sudo pip install docker-compose
-  - docker-compose version
-  - ./installViaTravis.sh
+install: true
 script: ./buildViaTravis.sh
 env:
   global:

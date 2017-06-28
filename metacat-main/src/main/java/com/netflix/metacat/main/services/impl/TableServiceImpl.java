@@ -177,7 +177,7 @@ public class TableServiceImpl implements TableService {
         userMetadataService.deleteMetadatas(metacatRequestContext.getUserName(), Lists.newArrayList(tableDto));
         log.info("Deleting tags for table {}", name);
         tagService.delete(name, false);
-        eventBus.postAsync(new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, tableDto));
+        eventBus.postAsync(new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, tableDto, isMView));
         return tableDto;
     }
 
@@ -266,7 +266,8 @@ public class TableServiceImpl implements TableService {
             tagService.rename(oldName, newName.getTableName());
 
             final TableDto dto = get(newName, true).orElseThrow(() -> new IllegalStateException("should exist"));
-            eventBus.postAsync(new MetacatRenameTablePostEvent(oldName, metacatRequestContext, this, oldTable, dto));
+            eventBus.postAsync(
+                new MetacatRenameTablePostEvent(oldName, metacatRequestContext, this, oldTable, dto, isMView));
         }
     }
 
