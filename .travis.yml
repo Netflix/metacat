@@ -1,7 +1,6 @@
 language: java
 sudo: required
 dist: trusty
-group: deprecated-2017Q2
 jdk:
   - oraclejdk8
 services:
