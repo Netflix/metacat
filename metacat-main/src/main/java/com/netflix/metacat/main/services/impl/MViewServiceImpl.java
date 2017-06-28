@@ -66,7 +66,6 @@ public class MViewServiceImpl implements MViewService {
      * Hive database name where views are stored.
      */
     private static final String VIEW_DB_NAME = "franklinviews";
-    //    private static final List<String> SUPPORTED_SOURCES = Lists.newArrayList("hive", "s3", "aegisthus");
     private final ConnectorManager connectorManager;
     private final TableService tableService;
     private final PartitionService partitionService;
@@ -248,8 +247,7 @@ public class MViewServiceImpl implements MViewService {
      * {@inheritDoc}
      */
     @Override
-    public void snapshotPartitions(final QualifiedName name, final String filter) {
-        //TODO check why the partitionNames passin null
+    public void snapshotPartitions(final QualifiedName name, @Nullable final String filter) {
         final List<PartitionDto> partitionDtos =
             partitionService.list(name, filter, null, null, null, false, false, true);
         if (partitionDtos != null && !partitionDtos.isEmpty()) {
@@ -387,7 +385,7 @@ public class MViewServiceImpl implements MViewService {
     public List<String> getPartitionKeys(
          final QualifiedName name,
          @Nullable final String filter,
-         final List<String> partitionNames,
+         @Nullable final List<String> partitionNames,
          @Nullable final Sort sort,
          @Nullable final Pageable pageable) {
         final QualifiedName viewQName =

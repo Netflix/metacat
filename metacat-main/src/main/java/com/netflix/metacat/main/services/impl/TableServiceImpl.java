@@ -135,7 +135,7 @@ public class TableServiceImpl implements TableService {
     }
 
     private void tag(final QualifiedName name, final ObjectNode definitionMetadata) {
-        if (definitionMetadata != null && definitionMetadata.get(NAME_TAGS) != null) {
+        if (definitionMetadata.get(NAME_TAGS) != null) {
             final JsonNode tagsNode = definitionMetadata.get(NAME_TAGS);
             final Set<String> tags = Sets.newHashSet();
             if (tagsNode.isArray() && tagsNode.size() > 0) {
@@ -213,9 +213,7 @@ public class TableServiceImpl implements TableService {
 
         if (includeDefinitionMetadata) {
             final Optional<ObjectNode> definitionMetadata = userMetadataService.getDefinitionMetadata(name);
-            if (definitionMetadata.isPresent()) {
-                table.setDefinitionMetadata(definitionMetadata.get());
-            }
+            definitionMetadata.ifPresent(table::setDefinitionMetadata);
         }
 
         if (includeDataMetadata) {
@@ -229,9 +227,7 @@ public class TableServiceImpl implements TableService {
             if (dto != null && dto.getSerde() != null) {
                 final Optional<ObjectNode> dataMetadata =
                     userMetadataService.getDataMetadata(dto.getSerde().getUri());
-                if (dataMetadata.isPresent()) {
-                    table.setDataMetadata(dataMetadata.get());
-                }
+                dataMetadata.ifPresent(table::setDataMetadata);
             }
         }
 
