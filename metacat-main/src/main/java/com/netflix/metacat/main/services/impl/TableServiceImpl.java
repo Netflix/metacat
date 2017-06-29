@@ -40,12 +40,12 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
-import com.netflix.metacat.main.manager.ConnectorManager;
-import com.netflix.metacat.main.services.DatabaseService;
-import com.netflix.metacat.main.services.TableService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
+import com.netflix.metacat.main.manager.ConnectorManager;
+import com.netflix.metacat.main.services.DatabaseService;
+import com.netflix.metacat.main.services.TableService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
@@ -71,12 +71,12 @@ public class TableServiceImpl implements TableService {
     /**
      * Constructor.
      *
-     * @param connectorManager     connector manager
-     * @param databaseService      database service
-     * @param tagService           tag service
-     * @param userMetadataService  user metadata service
-     * @param eventBus             Internal event bus
-     * @param converterUtil        utility to convert to/from Dto to connector resources
+     * @param connectorManager    connector manager
+     * @param databaseService     database service
+     * @param tagService          tag service
+     * @param userMetadataService user metadata service
+     * @param eventBus            Internal event bus
+     * @param converterUtil       utility to convert to/from Dto to connector resources
      */
     public TableServiceImpl(
         final ConnectorManager connectorManager,
@@ -135,7 +135,7 @@ public class TableServiceImpl implements TableService {
     }
 
     private void tag(final QualifiedName name, final ObjectNode definitionMetadata) {
-        if (definitionMetadata.get(NAME_TAGS) != null) {
+        if (definitionMetadata != null && definitionMetadata.get(NAME_TAGS) != null) {
             final JsonNode tagsNode = definitionMetadata.get(NAME_TAGS);
             final Set<String> tags = Sets.newHashSet();
             if (tagsNode.isArray() && tagsNode.size() > 0) {

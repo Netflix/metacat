@@ -128,7 +128,7 @@ public class CatalogManager implements HealthIndicator {
     }
 
     private List<File> listFiles(final File installedPluginsDir) {
-        if (installedPluginsDir.isDirectory()) {
+        if (installedPluginsDir != null && installedPluginsDir.isDirectory()) {
             final File[] files = installedPluginsDir.listFiles();
             if (files != null) {
                 return ImmutableList.copyOf(files);

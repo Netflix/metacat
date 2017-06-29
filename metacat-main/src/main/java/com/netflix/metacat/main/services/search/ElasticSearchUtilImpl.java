@@ -136,7 +136,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      */
     @Override
     public void delete(final String type, final List<String> ids) {
-        if (!ids.isEmpty()) {
+        if (ids != null && !ids.isEmpty()) {
             final List<List<String>> partitionedIds = Lists.partition(ids, 10000);
             partitionedIds.forEach(subIds -> hardDeleteDoc(type, subIds));
         }
@@ -171,7 +171,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     @Override
     public void softDelete(final String type, final List<String> ids,
                            final MetacatRequestContext metacatRequestContext) {
-        if (!ids.isEmpty()) {
+        if (ids != null && !ids.isEmpty()) {
             final List<List<String>> partitionedIds = Lists.partition(ids, 100);
             partitionedIds.forEach(subIds -> softDeleteDoc(type, subIds, metacatRequestContext));
             partitionedIds.forEach(subIds -> ensureMigrationByCopy(type, subIds));
@@ -185,7 +185,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     public void updates(final String type, final List<String> ids,
                         final MetacatRequestContext metacatRequestContext, final ObjectNode node) {
 
-        if (!ids.isEmpty()) {
+        if (ids != null && !ids.isEmpty()) {
             final List<List<String>> partitionedIds = Lists.partition(ids, 100);
             partitionedIds.forEach(subIds -> updateDocs(type, subIds, metacatRequestContext, node));
             partitionedIds.forEach(subIds -> ensureMigrationByCopy(type, subIds));
@@ -248,7 +248,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      */
     @Override
     public void save(final String type, final List<ElasticSearchDoc> docs) {
-        if (!docs.isEmpty()) {
+        if (docs != null && !docs.isEmpty()) {
             final List<List<ElasticSearchDoc>> partitionedDocs = Lists.partition(docs, 100);
             partitionedDocs.forEach(subDocs -> bulkSaveToIndex(type, subDocs, esIndex));
             partitionedDocs.forEach(subDocs -> ensureMigrationBySave(type, subDocs));
@@ -296,15 +296,17 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     public List<String> getTableIdsByUri(final String type, final String dataUri) {
         List<String> ids = Lists.newArrayList();
         // Run the query and get the response.
-        final SearchRequestBuilder request = client.prepareSearch(esIndex)
-            .setTypes(type)
-            .setSearchType(SearchType.QUERY_THEN_FETCH)
-            .setQuery(QueryBuilders.termQuery("serde.uri", dataUri))
-            .setSize(Integer.MAX_VALUE)
-            .setNoFields();
-        final SearchResponse response = request.execute().actionGet();
-        if (response.getHits().hits().length != 0) {
-            ids = getIds(response);
+        if (dataUri != null) {
+            final SearchRequestBuilder request = client.prepareSearch(esIndex)
+                .setTypes(type)
+                .setSearchType(SearchType.QUERY_THEN_FETCH)
+                .setQuery(QueryBuilders.termQuery("serde.uri", dataUri))
+                .setSize(Integer.MAX_VALUE)
+                .setNoFields();
+            final SearchResponse response = request.execute().actionGet();
+            if (response.getHits().hits().length != 0) {
+                ids = getIds(response);
+            }
         }
         return ids;
     }
@@ -696,7 +698,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      * @param docs metacat documents
      */
     private void bulkSaveToIndex(final String type, final List<ElasticSearchDoc> docs, final String index) {
-        if (!docs.isEmpty()) {
+        if (docs != null && !docs.isEmpty()) {
             try {
                 RETRY_ES_PUBLISH.call(() -> {
                     final BulkRequestBuilder bulkRequest = client.prepareBulk();

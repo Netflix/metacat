@@ -196,7 +196,7 @@ public class ElasticSearchMetacatRefresh {
      */
     public void processPartitions(final List<QualifiedName> names) {
         List<QualifiedName> qNames = names;
-        if (qNames.isEmpty()) {
+        if (qNames == null || qNames.isEmpty()) {
             final List<String> catalogNames = Splitter.on(',').omitEmptyStrings().trimResults()
                 .splitToList(config.getElasticSearchRefreshPartitionsIncludeCatalogs());
             qNames = catalogNames.stream()
@@ -341,7 +341,7 @@ public class ElasticSearchMetacatRefresh {
     }
 
     private void shutdown(@Nullable final ListeningExecutorService executorService) {
-        if (null != executorService) {
+        if (executorService != null) {
             executorService.shutdown();
             try {
                 // Wait a while for existing tasks to terminate
