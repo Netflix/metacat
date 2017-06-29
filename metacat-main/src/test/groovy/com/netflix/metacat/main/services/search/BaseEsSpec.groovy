@@ -11,7 +11,7 @@
  *    limitations under the License.
  */
 
-package com.netflix.metacat.elasticsearch.search
+package com.netflix.metacat.main.services.search
 
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.json.MetacatJson

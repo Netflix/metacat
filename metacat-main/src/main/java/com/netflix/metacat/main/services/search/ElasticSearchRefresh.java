@@ -74,7 +74,7 @@ import java.util.stream.Collectors;
  * @author amajumdar
  */
 @Slf4j
-public class ElasticSearchMetacatRefresh {
+public class ElasticSearchRefresh {
     private static final Predicate<Object> NOT_NULL = Objects::nonNull;
     private static AtomicBoolean isElasticSearchMetacatRefreshAlreadyRunning = new AtomicBoolean(false);
 
@@ -110,7 +110,7 @@ public class ElasticSearchMetacatRefresh {
      * @param registry            registry of spectator
      * @param elasticSearchUtil   ElasticSearch client wrapper
      */
-    public ElasticSearchMetacatRefresh(
+    public ElasticSearchRefresh(
         @Nonnull @NonNull final Config config,
         @Nonnull @NonNull final MetacatEventBus eventBus,
         @Nonnull @NonNull final CatalogService catalogService,
@@ -476,7 +476,7 @@ public class ElasticSearchMetacatRefresh {
                     result = getCatalog(catalogName);
                 } catch (Exception e) {
                     log.error("Failed to retrieve catalog: {}", catalogName);
-                    elasticSearchUtil.log("ElasticSearchMetacatRefresh.getCatalog",
+                    elasticSearchUtil.log("ElasticSearchRefresh.getCatalog",
                         ElasticSearchDoc.Type.catalog.name(), catalogName, null,
                         e.getMessage(), e, true);
                 }
@@ -541,7 +541,7 @@ public class ElasticSearchMetacatRefresh {
                     result = getDatabase(databaseName);
                 } catch (Exception e) {
                     log.error("Failed to retrieve database: {}", databaseName);
-                    elasticSearchUtil.log("ElasticSearchMetacatRefresh.getDatabase",
+                    elasticSearchUtil.log("ElasticSearchRefresh.getDatabase",
                         ElasticSearchDoc.Type.database.name(),
                         databaseName.toString(), null, e.getMessage(), e, true);
                 }
@@ -618,7 +618,7 @@ public class ElasticSearchMetacatRefresh {
                     result = getTable(tableName);
                 } catch (Exception e) {
                     log.error("Failed to retrieve table: {}", tableName);
-                    elasticSearchUtil.log("ElasticSearchMetacatRefresh.getTable",
+                    elasticSearchUtil.log("ElasticSearchRefresh.getTable",
                         ElasticSearchDoc.Type.table.name(),
                         tableName.toString(), null, e.getMessage(), e, true);
                 }

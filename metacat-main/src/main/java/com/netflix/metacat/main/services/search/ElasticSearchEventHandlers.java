@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
  * Event handlers for elastic search indexing.
  */
 @Slf4j
-public class MetacatElasticSearchEventHandlers {
+public class ElasticSearchEventHandlers {
     private final ElasticSearchUtil es;
     private final MetacatJsonLocator metacatJsonLocator;
     private final Config config;
@@ -71,7 +71,7 @@ public class MetacatElasticSearchEventHandlers {
      * @param registry registry to spectator
      * @param config configurations
      */
-    public MetacatElasticSearchEventHandlers(final ElasticSearchUtil es,
+    public ElasticSearchEventHandlers(final ElasticSearchUtil es,
                                              final Registry registry,
                                              final Config config) {
         this.es = es;
