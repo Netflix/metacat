@@ -24,7 +24,6 @@ import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClientFacto
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
-import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
