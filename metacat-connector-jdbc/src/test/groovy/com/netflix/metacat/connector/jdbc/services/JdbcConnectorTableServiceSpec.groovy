@@ -23,6 +23,7 @@ import com.netflix.metacat.common.dto.Pageable
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.type.BaseType
 import com.netflix.metacat.common.type.DecimalType

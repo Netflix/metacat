@@ -25,6 +25,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 
+import javax.annotation.Nullable;
+
 /**
  * Base SNS notification DTO with shared fields.
  *
@@ -61,7 +63,7 @@ public class SNSMessage<P> extends BaseDto {
         @JsonProperty("requestId") @NonNull final String requestId,
         @JsonProperty("type") @NonNull final SNSMessageType type,
         @JsonProperty("name") @NonNull final String name,
-        @JsonProperty("payload") @NonNull final P payload
+        @JsonProperty("payload") @Nullable final P payload
     ) {
         this.id = id;
         this.timestamp = timestamp;

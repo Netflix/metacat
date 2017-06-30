@@ -24,6 +24,7 @@ import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClientFacto
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
+import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -138,12 +139,14 @@ public class HiveConnectorConfig {
 
     /**
      * thread Service Manager.
-     *
      * @param connectorContext connector config
      * @return threadServiceManager
      */
     @Bean
     public ThreadServiceManager threadServiceManager(final ConnectorContext connectorContext) {
-        return new ThreadServiceManager(connectorContext.getConfig());
+        return new ThreadServiceManager(connectorContext.getRegistry(),
+            connectorContext.getConfig().getServiceMaxNumberOfThreads(),
+            1000,
+            "hive");
     }
 }

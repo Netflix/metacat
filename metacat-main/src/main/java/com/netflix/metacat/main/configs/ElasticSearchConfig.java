@@ -117,14 +117,16 @@ public class ElasticSearchConfig {
      *
      * @param elasticSearchUtil The client wrapper utility to use
      * @param registry          registry of spectator
+     * @param config      System config
      * @return The event handler instance
      */
     @Bean
     public MetacatElasticSearchEventHandlers metacatEventHandlers(
         final ElasticSearchUtil elasticSearchUtil,
-        final Registry registry
+        final Registry registry,
+        final Config config
     ) {
-        return new MetacatElasticSearchEventHandlers(elasticSearchUtil, registry);
+        return new MetacatElasticSearchEventHandlers(elasticSearchUtil, registry, config);
     }
 
     /**

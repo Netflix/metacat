@@ -1152,14 +1152,8 @@ public class PartitionController implements PartitionV1 {
                     // This metadata is actually for the table, if it is present update that
                     if (partitionsSaveRequestDto.getDefinitionMetadata() != null
                         || partitionsSaveRequestDto.getDataMetadata() != null) {
-                        final TableDto dto = this.v1.getTable(
-                            catalogName,
-                            databaseName,
-                            tableName,
-                            true,
-                            false,
-                            false
-                        );
+                        final TableDto dto = new TableDto();
+                        dto.setName(name);
                         dto.setDefinitionMetadata(partitionsSaveRequestDto.getDefinitionMetadata());
                         dto.setDataMetadata(partitionsSaveRequestDto.getDataMetadata());
                         this.v1.updateTable(catalogName, databaseName, tableName, dto);
@@ -1231,7 +1225,8 @@ public class PartitionController implements PartitionV1 {
                     // This metadata is actually for the view, if it is present update that
                     if (partitionsSaveRequestDto.getDefinitionMetadata() != null
                         || partitionsSaveRequestDto.getDataMetadata() != null) {
-                        final TableDto dto = this.v1.getMView(catalogName, databaseName, tableName, viewName);
+                        final TableDto dto = new TableDto();
+                        dto.setName(name);
                         dto.setDefinitionMetadata(partitionsSaveRequestDto.getDefinitionMetadata());
                         dto.setDataMetadata(partitionsSaveRequestDto.getDataMetadata());
                         this.v1.updateMView(catalogName, databaseName, tableName, viewName, dto);

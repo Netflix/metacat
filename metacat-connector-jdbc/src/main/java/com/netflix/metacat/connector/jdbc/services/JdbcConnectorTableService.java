@@ -25,9 +25,9 @@ import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
-import com.netflix.metacat.common.server.exception.TableNotFoundException;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
 import lombok.Getter;
@@ -256,7 +256,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     }
 
     @Override
-    public boolean exists(@Nonnull final ConnectorContext context, @Nonnull final QualifiedName name) {
+    public boolean exists(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         boolean result = false;
         try (Connection connection = this.dataSource.getConnection()) {
             final String databaseName = name.getDatabaseName();

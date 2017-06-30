@@ -43,6 +43,8 @@ public class ElasticsearchProperties {
     private Refresh refresh = new Refresh();
     @NonNull
     private Scroll scroll = new Scroll();
+    @NonNull
+    private Publish publish = new Publish();
 
     /**
      * Elasticsearch index related properties.
@@ -269,5 +271,17 @@ public class ElasticsearchProperties {
         public static class Timeout {
             private int ms = 600000;
         }
+    }
+
+    /**
+     * Elasticsearch publish properties.
+     *
+     * @author tgianos
+     * @since 1.1.0
+     */
+    @Data
+    public static class Publish {
+        private boolean partitionEnabled;
+        private boolean metacatLogEnabled;
     }
 }

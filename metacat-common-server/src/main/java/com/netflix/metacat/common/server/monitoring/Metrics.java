@@ -79,20 +79,22 @@ public enum Metrics {
     CounterSNSNotificationTableDelete(Name(Notifications, Count, "table.Delete")),
     CounterSNSNotificationTableRename(Name(Notifications, Count, "table.Rename")),
     CounterSNSNotificationTableUpdate(Name(Notifications, Count, "table.Update")),
+    CounterSNSNotificationPublishMessageSizeExceeded(Name(Notifications, Count, "publish.message.size.exceeded")),
 
     /**
      * ElasticSearch.
      */
     ElasticSearch("elasticsearch"),
-    CounterElasticSearchDatabaseCreate(Name(ElasticSearch, Count, "databaseCreate")),
-    CounterElasticSearchDatabaseDelete(Name(ElasticSearch, Count, "databaseDelete")),
-    CounterElasticSearchTableCreate(Name(ElasticSearch, Count, "tableCreate")),
-    CounterElasticSearchTableDelete(Name(ElasticSearch, Count, "tableDelete")),
-    CounterElasticSearchTableSave(Name(ElasticSearch, Count, "tableSave")),
-    CounterElasticSearchTableRename(Name(ElasticSearch, Count, "tableRename")),
-    CounterElasticSearchTableUpdate(Name(ElasticSearch, Count, "tableUpdate")),
-    CounterElasticSearchPartitionSave(Name(ElasticSearch, Count, "partitionSave")),
-    CounterElasticSearchPartitionDelete(Name(ElasticSearch, Count, "partitionDelete")),
+    TimerElasticSearchEventsDelay(Name(ElasticSearch, Timer, "events.delay")),
+    TimerElasticSearchDatabaseCreate(Name(ElasticSearch, Timer, "databaseCreate")),
+    TimerElasticSearchDatabaseDelete(Name(ElasticSearch, Timer, "databaseDelete")),
+    TimerElasticSearchTableCreate(Name(ElasticSearch, Timer, "tableCreate")),
+    TimerElasticSearchTableDelete(Name(ElasticSearch, Timer, "tableDelete")),
+    TimerElasticSearchTableSave(Name(ElasticSearch, Timer, "tableSave")),
+    TimerElasticSearchTableRename(Name(ElasticSearch, Timer, "tableRename")),
+    TimerElasticSearchTableUpdate(Name(ElasticSearch, Timer, "tableUpdate")),
+    TimerElasticSearchPartitionSave(Name(ElasticSearch, Timer, "partitionSave")),
+    TimerElasticSearchPartitionDelete(Name(ElasticSearch, Timer, "partitionDelete")),
     CounterElasticSearchDelete(Name(ElasticSearch, Count, "esDelete")),
     CounterElasticSearchBulkDelete(Name(ElasticSearch, Count, "esBulkDelete")),
     CounterElasticSearchUpdate(Name(ElasticSearch, Count, "esUpdate")),
@@ -120,6 +122,7 @@ public enum Metrics {
     TimerThriftRequest(Name(Thrift, Timer, "requests")),
     TimerElasticSearchRefresh(Name(ElasticSearch, Timer, "esRefresh")),
     TimerNotificationsPublishDelay(Name(Notifications, Timer, "publish.delay")),
+    TimerNotificationsBeforePublishDelay(Name(Notifications, Timer, "before.publish.delay")),
 
     /**
      * Status.

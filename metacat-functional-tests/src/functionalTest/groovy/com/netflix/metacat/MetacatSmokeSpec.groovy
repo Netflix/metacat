@@ -364,19 +364,69 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
-    def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
+    def "Test create view without snapshot for #catalogName/#databaseName/#tableName/#viewName"() {
         expect:
         try {
-            def uri = isLocalEnv ? 'file:/tmp/abc' : null
+            try {
+                api.createDatabase(catalogName, 'franklinviews', new DatabaseCreateRequestDto())
+            } catch (Exception ignored){}
+            createTable(catalogName, databaseName, tableName)
+            api.createMView(catalogName, databaseName, tableName, viewName, null, null);
+            if (repeat) {
+                api.createMView(catalogName, databaseName, tableName, viewName, null, null);
+            }
+            error == null
+        } catch (Exception e) {
+            e.class == error
+        }
+        if (!error) {
+            def view = api.getMView(catalogName, databaseName, tableName, viewName)
+            assert view != null && view.name.tableName == tableName
+        }
+        cleanup:
+        if (!error) {
+            api.deleteMView(catalogName, databaseName, tableName, viewName)
+        }
+        where:
+        catalogName                | databaseName   | tableName           | viewName    | error                          | repeat
+        'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
+        'embedded-hive-metastore'  | 'smoke_db4'    | 'part'              | 'part_view' | null                           | true
+        'hive-metastore'           | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | false
+        'hive-metastore'           | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | true
+        'embedded-hive-metastore'  | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
+        's3-mysql-db'              | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
+        'xyz'                      | 'smoke_db4'    | 'z'                 | 'part_view' | MetacatNotFoundException.class | false
+    }
+
+    @Unroll
+    def "Test save 0 partitions for #catalogName/#databaseName/#tableName"() {
+        when:
+        createTable(catalogName, databaseName, tableName)
+        partitionApi.savePartitions(catalogName, databaseName, tableName, new PartitionsSaveRequestDto())
+        then:
+        noExceptionThrown()
+        where:
+        catalogName                | databaseName      | tableName
+        'embedded-hive-metastore'  | 'smoke_db'        | 'part'
+        'hive-metastore'           | 'hsmoke_db'       | 'part'
+        's3-mysql-db'              | 'smoke_db'        | 'part'
+    }
+
+    @Unroll
+    def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
+        expect:
+        def uri = isLocalEnv ? 'file:/tmp/abc' : null
+        try {
             createTable(catalogName, databaseName, tableName)
             def partition = PigDataDtoProvider.getPartition(catalogName, databaseName, tableName, partitionName, uri)
             def request = new PartitionsSaveRequestDto(partitions: [partition])
             partitionApi.savePartitions(catalogName, databaseName, tableName, request)
             if (repeat) {
+                partition.getSerde().setUri(partition.getSerde().getUri() + 0)
                 if (alter) {
-                    partition.getSerde().setUri(partition.getSerde().getUri() + 0)
                     request.setAlterIfExists(true)
                 }
+                request.setDefinitionMetadata((ObjectNode) metacatJson.emptyObjectNode().set('savePartitions', metacatJson.emptyObjectNode()))
                 partitionApi.savePartitions(catalogName, databaseName, tableName, request)
             }
             error == null
@@ -395,6 +445,12 @@ class MetacatSmokeSpec extends Specification {
             } != null && partitionDetails.size() == partitions.size() && partitionDetails.find {
                 it.name.partitionName == partitionName
             }.getSerde().getSerdeInfoParameters().size() >= 1
+            if (repeat) {
+                assert api.getTable(catalogName, databaseName, tableName, false, true, false).getDefinitionMetadata().get('savePartitions') != null
+                assert partitions.get(0).dataUri == uri + 0
+            } else {
+                assert partitions.get(0).dataUri == uri
+            }
         }
         cleanup:
         if (!error) {

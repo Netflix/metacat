@@ -18,6 +18,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.spectator.api.Registry;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,31 +44,37 @@ public class ThreadServiceManager {
     /**
      * Constructor.
      *
+     * @param registry registry for spectator
      * @param config Program configuration
      */
     @Autowired
-    public ThreadServiceManager(final Config config) {
+    public ThreadServiceManager(final Registry registry, final Config config) {
         final ExecutorService executorService = newFixedThreadPool(
             config.getServiceMaxNumberOfThreads(),
             "metacat-service-pool-%d",
             1000
         );
         this.executor = MoreExecutors.listeningDecorator(executorService);
+        RegistryUtil.register(registry, "metacat-service-pool", (ThreadPoolExecutor) executorService);
     }
 
     /**
      * Constructor.
+     *
+     * @param registry registry for spectator
      * @param maxThreads maximum number of threads
      * @param maxQueueSize maximum queue size
      * @param usage an identifier where this pool is used
      */
-    public ThreadServiceManager(final int maxThreads, final int maxQueueSize, final String usage) {
+    public ThreadServiceManager(final Registry registry, final int maxThreads,
+        final int maxQueueSize, final String usage) {
         final ExecutorService executorService = newFixedThreadPool(
             maxThreads,
             "metacat-" + usage + "-pool-%d",
             maxQueueSize
         );
         this.executor = MoreExecutors.listeningDecorator(executorService);
+        RegistryUtil.register(registry, "metacat-service-pool", (ThreadPoolExecutor) executorService);
     }
 
     /**

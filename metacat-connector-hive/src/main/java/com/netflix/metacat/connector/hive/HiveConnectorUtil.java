@@ -81,6 +81,4 @@ public final class HiveConnectorUtil {
         }
         return new String[]{value.substring(0, i), value.substring(i)};
     }
-
-
 }
