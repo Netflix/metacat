@@ -36,7 +36,7 @@ public final class RegistryUtil {
      * @param name name of the monitor
      * @param pool thread pool
      */
-    public static void register(final Registry registry,
+    public static void registerThreadPool(final Registry registry,
         final String name,
         final ThreadPoolExecutor pool) {
         registry.gauge(NAME_MONITORED_POOL + name + "_" + "activeCount", pool, ThreadPoolExecutor::getActiveCount);

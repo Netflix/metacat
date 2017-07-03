@@ -55,7 +55,7 @@ public class ThreadServiceManager {
             1000
         );
         this.executor = MoreExecutors.listeningDecorator(executorService);
-        RegistryUtil.register(registry, "metacat-service-pool", (ThreadPoolExecutor) executorService);
+        RegistryUtil.registerThreadPool(registry, "metacat-service-pool", (ThreadPoolExecutor) executorService);
     }
 
     /**
@@ -74,7 +74,7 @@ public class ThreadServiceManager {
             maxQueueSize
         );
         this.executor = MoreExecutors.listeningDecorator(executorService);
-        RegistryUtil.register(registry, "metacat-service-pool", (ThreadPoolExecutor) executorService);
+        RegistryUtil.registerThreadPool(registry, "metacat-service-pool", (ThreadPoolExecutor) executorService);
     }
 
     /**

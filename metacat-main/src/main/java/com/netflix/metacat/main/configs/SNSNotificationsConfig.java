@@ -72,7 +72,7 @@ public class SNSNotificationsConfig {
         return AmazonSNSAsyncClientBuilder.standard().withExecutorFactory(() -> {
             final ExecutorService executor = Executors.newFixedThreadPool(config.getSNSClientThreadCount(),
                 new ThreadFactoryBuilder().setNameFormat("metacat-sns-pool-%d").build());
-            RegistryUtil.register(registry, "metacat-sns-pool", (ThreadPoolExecutor) executor);
+            RegistryUtil.registerThreadPool(registry, "metacat-sns-pool", (ThreadPoolExecutor) executor);
             return executor;
         }).build();
     }

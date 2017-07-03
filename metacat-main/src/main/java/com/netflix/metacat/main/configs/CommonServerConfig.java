@@ -97,7 +97,7 @@ public class CommonServerConfig {
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(metacatProperties.getEvent().getBus().getExecutor().getThread().getCount());
         executor.initialize();
-        RegistryUtil.register(registry, "metacat.event.pool", executor.getThreadPoolExecutor());
+        RegistryUtil.registerThreadPool(registry, "metacat.event.pool", executor.getThreadPoolExecutor());
         return executor;
     }
 

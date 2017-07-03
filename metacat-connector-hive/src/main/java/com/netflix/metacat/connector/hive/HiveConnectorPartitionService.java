@@ -289,8 +289,8 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                     addedPartitionIds.add(partitionName);
                     hivePartitions.add(hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo));
                 } else {
-                    final String partitionUri = getUri(partitionInfo);
-                    final String hivePartitionUri = getUri(hivePartition);
+                    final String partitionUri = getPartitionUri(partitionInfo);
+                    final String hivePartitionUri = getPartitionUri(hivePartition);
                     if (partitionUri == null || !partitionUri.equals(hivePartitionUri)) {
                         existingPartitionIds.add(partitionName);
                         //the partition exists, we should not do anything for the partition exists
@@ -347,20 +347,12 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
         }
     }
 
-    private String getUri(final Partition hivePartition) {
-        String result = null;
-        if (hivePartition.getSd() != null) {
-            result = hivePartition.getSd().getLocation();
-        }
-        return result;
+    private String getPartitionUri(final Partition hivePartition) {
+        return hivePartition.getSd() != null ? hivePartition.getSd().getLocation() : null;
     }
 
-    private String getUri(final PartitionInfo partitionInfo) {
-        String result = null;
-        if (partitionInfo.getSerde() != null) {
-            result = partitionInfo.getSerde().getUri();
-        }
-        return result;
+    private String getPartitionUri(final PartitionInfo partitionInfo) {
+        return partitionInfo.getSerde() != null ? partitionInfo.getSerde().getUri() : null;
     }
 
     /**
