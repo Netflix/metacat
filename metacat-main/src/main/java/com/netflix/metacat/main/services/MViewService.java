@@ -127,7 +127,7 @@ public interface MViewService extends MetacatService<TableDto> {
     List<String> getPartitionKeys(
         QualifiedName name,
         @Nullable String filter,
-        List<String> partitionNames,
+        @Nullable List<String> partitionNames,
         @Nullable Sort sort,
         @Nullable Pageable pageable);
 

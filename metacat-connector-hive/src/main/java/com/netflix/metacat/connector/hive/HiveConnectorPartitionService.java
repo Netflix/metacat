@@ -385,7 +385,8 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
      * @return partition keys
      */
     protected List<String> getPartitionKeys(final List<FieldSchema> fields) {
-        return fields.stream().map(FieldSchema::getName).collect(Collectors.toList());
+        return (fields != null) ? fields.stream().map(FieldSchema::getName).collect(Collectors.toList())
+            :   Lists.newArrayList();
     }
 
     protected Map<String, Partition> getPartitionsByNames(final Table table, final List<String> partitionNames)
@@ -395,7 +396,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
         List<Partition> partitions =
             metacatHiveClient.getPartitions(databasename, tablename, partitionNames);
         if (partitions == null || partitions.isEmpty()) {
-            if (partitionNames.isEmpty()) {
+            if (partitionNames == null || partitionNames.isEmpty()) {
                 return Collections.emptyMap();
             }
 

@@ -27,10 +27,10 @@ import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
-import com.netflix.metacat.main.services.search.ElasticSearchMetacatRefresh;
+import com.netflix.metacat.main.services.search.ElasticSearchRefresh;
 import com.netflix.metacat.main.services.search.ElasticSearchUtil;
 import com.netflix.metacat.main.services.search.ElasticSearchUtilImpl;
-import com.netflix.metacat.main.services.search.MetacatElasticSearchEventHandlers;
+import com.netflix.metacat.main.services.search.ElasticSearchEventHandlers;
 import com.netflix.spectator.api.Registry;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.client.Client;
@@ -114,19 +114,18 @@ public class ElasticSearchConfig {
 
     /**
      * Event handler instance to publish event payloads to ElasticSearch.
-     *
      * @param elasticSearchUtil The client wrapper utility to use
-     * @param registry          registry of spectator
+     * @param registry    registry of spectator
      * @param config      System config
      * @return The event handler instance
      */
     @Bean
-    public MetacatElasticSearchEventHandlers metacatEventHandlers(
+    public ElasticSearchEventHandlers elasticSearchEventHandlers(
         final ElasticSearchUtil elasticSearchUtil,
         final Registry registry,
         final Config config
     ) {
-        return new MetacatElasticSearchEventHandlers(elasticSearchUtil, registry, config);
+        return new ElasticSearchEventHandlers(elasticSearchUtil, registry, config);
     }
 
     /**
@@ -145,7 +144,7 @@ public class ElasticSearchConfig {
      * @return The refresh bean
      */
     @Bean
-    public ElasticSearchMetacatRefresh elasticSearchMetacatRefresh(
+    public ElasticSearchRefresh elasticSearchRefresh(
         final Config config,
         final MetacatEventBus eventBus,
         final CatalogService catalogService,
@@ -157,7 +156,7 @@ public class ElasticSearchConfig {
         final ElasticSearchUtil elasticSearchUtil,
         final Registry registry
     ) {
-        return new ElasticSearchMetacatRefresh(
+        return new ElasticSearchRefresh(
             config,
             eventBus,
             catalogService,

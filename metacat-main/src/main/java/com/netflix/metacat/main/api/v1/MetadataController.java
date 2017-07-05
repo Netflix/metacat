@@ -239,6 +239,7 @@ public class MetadataController {
                 } catch (final NotFoundException ignored) {
                 }
                 if ((force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
+                    //TODO address the dto null issue
                     this.helper.postPreUpdateEvent(name, metacatRequestContext, dto);
                     this.userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
                     if (dto instanceof HasDefinitionMetadata) {
