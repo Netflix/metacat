@@ -41,6 +41,7 @@ public class NotificationsProperties {
     @Data
     public static class Sns {
         private boolean enabled;  // false is default in Java no need to initialize
+        private int threadCount = 50;
         private Topic topic = new Topic();
 
         /**
@@ -77,6 +78,7 @@ public class NotificationsProperties {
             @Data
             public static class Partition {
                 private String arn; // Default to null
+                private boolean enabled = true;
             }
         }
     }

@@ -26,6 +26,7 @@ import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.common.server.util.DataSourceManager;
+import com.netflix.metacat.common.server.util.RegistryUtil;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.spectator.api.Registry;
 import org.springframework.context.ApplicationEventPublisher;
@@ -86,14 +87,17 @@ public class CommonServerConfig {
     /**
      * Get a task executor for executing tasks asynchronously that don't need to be scheduled at a recurring rate.
      *
+     * @param registry         registry for spectator
      * @param metacatProperties The metacat properties to get number of executor threads from.
      *                          Likely best to do one more than number of CPUs
      * @return The task executor the system to use
      */
     @Bean
-    public AsyncTaskExecutor taskExecutor(final MetacatProperties metacatProperties) {
+    public AsyncTaskExecutor taskExecutor(final Registry registry, final MetacatProperties metacatProperties) {
         final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(metacatProperties.getEvent().getBus().getExecutor().getThread().getCount());
+        executor.initialize();
+        RegistryUtil.registerThreadPool(registry, "metacat.event.pool", executor.getThreadPoolExecutor());
         return executor;
     }
 
@@ -145,12 +149,12 @@ public class CommonServerConfig {
 
     /**
      * Get the ThreadServiceManager.
-     *
+     * @param registry registry for spectator
      * @param config System configuration
      * @return The thread service manager to use
      */
     @Bean
-    public ThreadServiceManager threadServiceManager(final Config config) {
-        return new ThreadServiceManager(config);
+    public ThreadServiceManager threadServiceManager(final Registry registry, final Config config) {
+        return new ThreadServiceManager(registry, config);
     }
 }

@@ -82,8 +82,7 @@ class SNSMessageFactorySpec extends Specification {
                     JsonDiff.asJsonPatch(
                         this.mapper.readTree("{\"a\":\"b\"}"),
                         this.mapper.readTree("{\"a\":\"c\"}")
-                    ),
-                    new TableDto()
+                    )
                 )
             )
         )       | UpdateTableMessage.class

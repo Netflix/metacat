@@ -138,12 +138,14 @@ public class HiveConnectorConfig {
 
     /**
      * thread Service Manager.
-     *
      * @param connectorContext connector config
      * @return threadServiceManager
      */
     @Bean
     public ThreadServiceManager threadServiceManager(final ConnectorContext connectorContext) {
-        return new ThreadServiceManager(connectorContext.getConfig());
+        return new ThreadServiceManager(connectorContext.getRegistry(),
+            connectorContext.getConfig().getServiceMaxNumberOfThreads(),
+            1000,
+            "hive");
     }
 }

@@ -17,10 +17,12 @@
  */
 package com.netflix.metacat.main.configs;
 
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sns.AmazonSNSAsync;
+import com.amazonaws.services.sns.AmazonSNSAsyncClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.RegistryUtil;
 import com.netflix.metacat.main.services.notifications.sns.SNSNotificationServiceImpl;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Spring configuration for SNS Notifications.
@@ -55,14 +61,20 @@ public class SNSNotificationsConfig {
     /**
      * If SNS notifications are desired and no existing client has been created elsewhere
      * in the application create a default client here.
-     *
+     * @param config       The system configuration abstraction to use
+     * @param registry     registry for spectator
      * @return The configured SNS client
      */
     //TODO: See what spring-cloud-aws would provide automatically...
     @Bean
     @ConditionalOnMissingBean
-    public AmazonSNS amazonSNS() {
-        return AmazonSNSClientBuilder.defaultClient();
+    public AmazonSNSAsync amazonSNS(final Config config, final Registry registry) {
+        return AmazonSNSAsyncClientBuilder.standard().withExecutorFactory(() -> {
+            final ExecutorService executor = Executors.newFixedThreadPool(config.getSNSClientThreadCount(),
+                new ThreadFactoryBuilder().setNameFormat("metacat-sns-pool-%d").build());
+            RegistryUtil.registerThreadPool(registry, "metacat-sns-pool", (ThreadPoolExecutor) executor);
+            return executor;
+        }).build();
     }
 
     /**
@@ -76,7 +88,7 @@ public class SNSNotificationsConfig {
      */
     @Bean
     public SNSNotificationServiceImpl snsNotificationService(
-        final AmazonSNS amazonSNS,
+        final AmazonSNSAsync amazonSNS,
         final Config config,
         final ObjectMapper objectMapper,
         final Registry registry
@@ -95,6 +107,6 @@ public class SNSNotificationsConfig {
         }
 
         log.info("SNS notifications are enabled. Creating SNSNotificationServiceImpl bean.");
-        return new SNSNotificationServiceImpl(amazonSNS, tableArn, partitionArn, objectMapper, registry);
+        return new SNSNotificationServiceImpl(amazonSNS, tableArn, partitionArn, objectMapper, registry, config);
     }
 }

@@ -25,6 +25,7 @@ import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
@@ -44,7 +45,6 @@ import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Generic JDBC implementation of the ConnectorTableService.
@@ -57,6 +57,7 @@ import java.util.Locale;
 public class JdbcConnectorTableService implements ConnectorTableService {
 
     static final String[] TABLE_TYPES = {"TABLE", "VIEW"};
+    static final String[] TABLE_TYPE = {"TABLE"};
     private static final String EMPTY = "";
     private static final String COMMA_SPACE = ", ";
     private static final String UNSIGNED = "unsigned";
@@ -94,15 +95,9 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         final String databaseName = name.getDatabaseName();
         final String tableName = name.getTableName();
         log.debug("Attempting to delete table {} from database {} for request {}", tableName, databaseName, context);
-        try (final Connection connection = this.dataSource.getConnection()) {
-            final boolean upperCase = connection.getMetaData().storesUpperCaseIdentifiers();
-            if (upperCase) {
-                connection.setSchema(databaseName.toUpperCase(Locale.ENGLISH));
-            } else {
-                connection.setSchema(databaseName);
-            }
-            final String finalTableName = upperCase ? tableName.toUpperCase(Locale.ENGLISH) : tableName;
-            JdbcConnectorUtils.executeUpdate(connection, this.getDropTableSql(name, finalTableName));
+        try (Connection connection = this.dataSource.getConnection()) {
+            connection.setSchema(databaseName);
+            JdbcConnectorUtils.executeUpdate(connection, this.getDropTableSql(name, tableName));
             log.debug("Deleted table {} from database {} for request {}", tableName, databaseName, context);
         } catch (final SQLException se) {
             throw this.exceptionMapper.toConnectorException(se, name);
@@ -116,11 +111,11 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     public TableInfo get(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         log.debug("Beginning to get table metadata for qualified name {} for request {}", name, context);
 
-        try (final Connection connection = this.dataSource.getConnection()) {
+        try (Connection connection = this.dataSource.getConnection()) {
             final String database = name.getDatabaseName();
             connection.setSchema(database);
             final ImmutableList.Builder<FieldInfo> fields = ImmutableList.builder();
-            try (final ResultSet columns = this.getColumns(connection, name)) {
+            try (ResultSet columns = this.getColumns(connection, name)) {
                 while (columns.next()) {
                     final String type = columns.getString("TYPE_NAME");
                     final String size = columns.getString("COLUMN_SIZE");
@@ -140,6 +135,11 @@ public class JdbcConnectorTableService implements ConnectorTableService {
 
                     fields.add(fieldInfo.build());
                 }
+            }
+            final List<FieldInfo> fieldInfos = fields.build();
+            // If table does not exist, throw TableNotFoundException.
+            if (fieldInfos.isEmpty() && !exists(context, name)) {
+                throw new TableNotFoundException(name);
             }
             log.debug("Finished getting table metadata for qualified name {} for request {}", name, context);
             return TableInfo.builder().name(name).fields(fields.build()).build();
@@ -184,10 +184,10 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         final String catalog = name.getCatalogName();
         final String database = name.getDatabaseName();
 
-        try (final Connection connection = this.dataSource.getConnection()) {
+        try (Connection connection = this.dataSource.getConnection()) {
             connection.setSchema(database);
             final List<QualifiedName> names = Lists.newArrayList();
-            try (final ResultSet tables = this.getTables(connection, name, prefix)) {
+            try (ResultSet tables = this.getTables(connection, name, prefix)) {
                 while (tables.next()) {
                     names.add(QualifiedName.ofTable(catalog, database, tables.getString("TABLE_NAME")));
                 }
@@ -236,18 +236,11 @@ public class JdbcConnectorTableService implements ConnectorTableService {
                 "Database names must match and they are " + oldDatabaseName + " and " + newDatabaseName
             );
         }
-        try (final Connection connection = this.dataSource.getConnection()) {
-            final boolean upperCase = connection.getMetaData().storesUpperCaseIdentifiers();
-            if (upperCase) {
-                connection.setSchema(oldDatabaseName.toUpperCase(Locale.ENGLISH));
-            } else {
-                connection.setSchema(oldDatabaseName);
-            }
-            final String finalOldTableName = upperCase ? oldTableName.toUpperCase(Locale.ENGLISH) : oldTableName;
-            final String finalNewTableName = upperCase ? newTableName.toUpperCase(Locale.ENGLISH) : newTableName;
+        try (Connection connection = this.dataSource.getConnection()) {
+            connection.setSchema(oldDatabaseName);
             JdbcConnectorUtils.executeUpdate(
                 connection,
-                this.getRenameTableSql(oldName, finalOldTableName, finalNewTableName)
+                this.getRenameTableSql(oldName, oldTableName, newTableName)
             );
             log.debug(
                 "Renamed table {}/{} to {}/{} for request {}",
@@ -260,6 +253,23 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         } catch (final SQLException se) {
             throw this.exceptionMapper.toConnectorException(se, oldName);
         }
+    }
+
+    @Override
+    public boolean exists(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
+        boolean result = false;
+        try (Connection connection = this.dataSource.getConnection()) {
+            final String databaseName = name.getDatabaseName();
+            connection.setSchema(databaseName);
+            final DatabaseMetaData metaData = connection.getMetaData();
+            final ResultSet rs = metaData.getTables(databaseName, databaseName, name.getTableName(), TABLE_TYPE);
+            if (rs.next()) {
+                result = true;
+            }
+        } catch (final SQLException se) {
+            throw this.exceptionMapper.toConnectorException(se, name);
+        }
+        return result;
     }
 
     /**
@@ -392,7 +402,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     /**
      * Get the SQL for dropping the given table.
      *
-     * @param name           The fully qualified name of the table
+     * @param name The fully qualified name of the table
      * @param finalTableName The final table name that should be dropped
      * @return The SQL to execute to drop the table
      */

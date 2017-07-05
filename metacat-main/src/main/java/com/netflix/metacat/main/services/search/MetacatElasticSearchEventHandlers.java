@@ -29,12 +29,15 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.spectator.api.Registry;
+import com.netflix.spectator.api.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -43,19 +46,61 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MetacatElasticSearchEventHandlers {
     private final ElasticSearchUtil es;
-    private final Registry registry;
-    private MetacatJsonLocator metacatJsonLocator;
+    private final MetacatJsonLocator metacatJsonLocator;
+    private final Config config;
+    private final Timer databaseCreateEventsDelayTimer;
+    private final Timer databaseCreateTimer;
+    private final Timer tableCreateEventsDelayTimer;
+    private final Timer tableCreateTimer;
+    private final Timer databaseDeleteEventsDelayTimer;
+    private final Timer databaseDeleteTimer;
+    private final Timer tableDeleteEventsDelayTimer;
+    private final Timer tableDeleteTimer;
+    private final Timer partitionDeleteEventsDelayTimer;
+    private final Timer partitionDeleteTimer;
+    private final Timer tableRenameEventsDelayTimer;
+    private final Timer tableRenameTimer;
+    private final Timer tableUpdateEventsDelayTimer;
+    private final Timer tableUpdateTimer;
+    private final Timer partitionSaveEventsDelayTimer;
+    private final Timer partitionSaveTimer;
     /**
      * Constructor.
      *
      * @param es elastic search util
      * @param registry registry to spectator
+     * @param config configurations
      */
     public MetacatElasticSearchEventHandlers(final ElasticSearchUtil es,
-                                             final Registry registry) {
+                                             final Registry registry,
+                                             final Config config) {
         this.es = es;
-        this.registry = registry;
         this.metacatJsonLocator = new MetacatJsonLocator();
+        this.config = config;
+        this.databaseCreateEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
+            "metacat.event.type", "database.create");
+        this.databaseCreateTimer = registry.timer(Metrics.TimerElasticSearchDatabaseCreate.name());
+        this.tableCreateEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
+            "metacat.event.type", "table.create");
+        this.tableCreateTimer = registry.timer(Metrics.TimerElasticSearchTableCreate.name());
+        this.databaseDeleteEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
+            "metacat.event.type", "database.delete");
+        this.databaseDeleteTimer = registry.timer(Metrics.TimerElasticSearchDatabaseDelete.name());
+        this.tableDeleteEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
+            "metacat.event.type", "table.delete");
+        this.tableDeleteTimer = registry.timer(Metrics.TimerElasticSearchTableDelete.name());
+        this.partitionDeleteEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
+            "metacat.event.type", "partition.delete");
+        this.partitionDeleteTimer = registry.timer(Metrics.TimerElasticSearchPartitionDelete.name());
+        this.tableRenameEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
+            "metacat.event.type", "table.rename");
+        this.tableRenameTimer = registry.timer(Metrics.TimerElasticSearchTableRename.name());
+        this.tableUpdateEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
+            "metacat.event.type", "table.update");
+        this.tableUpdateTimer = registry.timer(Metrics.TimerElasticSearchTableUpdate.name());
+        this.partitionSaveEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
+            "metacat.event.type", "partition.save");
+        this.partitionSaveTimer = registry.timer(Metrics.TimerElasticSearchPartitionSave.name());
     }
 
     /**
@@ -66,11 +111,14 @@ public class MetacatElasticSearchEventHandlers {
     @EventListener
     public void metacatCreateDatabasePostEventHandler(final MetacatCreateDatabasePostEvent event) {
         log.debug("Received CreateDatabaseEvent {}", event);
-        registry.counter(Metrics.CounterElasticSearchDatabaseCreate.name()).increment();
-        final DatabaseDto dto = event.getDatabase();
-        final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
-            event.getRequestContext().getUserName(), false);
-        es.save(ElasticSearchDoc.Type.database.name(), doc.getId(), es.toJsonString(doc));
+        this.databaseCreateEventsDelayTimer
+            .record(System.currentTimeMillis() - event.getRequestContext().getTimestamp(), TimeUnit.MILLISECONDS);
+        this.databaseCreateTimer.record(() -> {
+            final DatabaseDto dto = event.getDatabase();
+            final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
+                event.getRequestContext().getUserName(), false);
+            es.save(ElasticSearchDoc.Type.database.name(), doc.getId(), es.toJsonString(doc));
+        });
     }
 
     /**
@@ -81,11 +129,14 @@ public class MetacatElasticSearchEventHandlers {
     @EventListener
     public void metacatCreateTablePostEventHandler(final MetacatCreateTablePostEvent event) {
         log.debug("Received CreateTableEvent {}", event);
-        registry.counter(Metrics.CounterElasticSearchTableCreate.name()).increment();
-        final TableDto dto = event.getTable();
-        final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
-            event.getRequestContext().getUserName(), false);
-        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
+        this.tableCreateEventsDelayTimer
+            .record(System.currentTimeMillis() - event.getRequestContext().getTimestamp(), TimeUnit.MILLISECONDS);
+        this.tableCreateTimer.record(() -> {
+            final TableDto dto = event.getTable();
+            final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
+                event.getRequestContext().getUserName(), false);
+            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
+        });
     }
 
     /**
@@ -96,9 +147,12 @@ public class MetacatElasticSearchEventHandlers {
     @EventListener
     public void metacatDeleteDatabasePostEventHandler(final MetacatDeleteDatabasePostEvent event) {
         log.debug("Received DeleteDatabaseEvent {}", event);
-        registry.counter(Metrics.CounterElasticSearchDatabaseDelete.name()).increment();
-        final DatabaseDto dto = event.getDatabase();
-        es.softDelete(ElasticSearchDoc.Type.database.name(), dto.getName().toString(), event.getRequestContext());
+        this.databaseDeleteEventsDelayTimer
+            .record(System.currentTimeMillis() - event.getRequestContext().getTimestamp(), TimeUnit.MILLISECONDS);
+        this.databaseDeleteTimer.record(() -> {
+            final DatabaseDto dto = event.getDatabase();
+            es.softDelete(ElasticSearchDoc.Type.database.name(), dto.getName().toString(), event.getRequestContext());
+        });
     }
 
     /**
@@ -109,16 +163,21 @@ public class MetacatElasticSearchEventHandlers {
     @EventListener
     public void metacatDeleteTablePostEventHandler(final MetacatDeleteTablePostEvent event) {
         log.debug("Received DeleteTableEvent {}", event);
-        registry.counter(Metrics.CounterElasticSearchTableDelete.name()).increment();
-        final TableDto dto = event.getTable();
-        es.softDelete(ElasticSearchDoc.Type.table.name(), dto.getName().toString(), event.getRequestContext());
-        try {
-            final List<String> partitionIdsToBeDeleted =
-                es.getIdsByQualifiedName(ElasticSearchDoc.Type.partition.name(), dto.getName());
-            es.delete(ElasticSearchDoc.Type.partition.name(), partitionIdsToBeDeleted);
-        } catch (Exception e) {
-            log.warn("Failed deleting the partitions for the dropped table/view:{}", dto.getName().toString());
-        }
+        this.tableDeleteEventsDelayTimer
+            .record(System.currentTimeMillis() - event.getRequestContext().getTimestamp(), TimeUnit.MILLISECONDS);
+        this.tableDeleteTimer.record(() -> {
+            final TableDto dto = event.getTable();
+            es.softDelete(ElasticSearchDoc.Type.table.name(), dto.getName().toString(), event.getRequestContext());
+            if (config.isElasticSearchPublishPartitionEnabled()) {
+                try {
+                    final List<String> partitionIdsToBeDeleted =
+                        es.getIdsByQualifiedName(ElasticSearchDoc.Type.partition.name(), dto.getName());
+                    es.delete(ElasticSearchDoc.Type.partition.name(), partitionIdsToBeDeleted);
+                } catch (Exception e) {
+                    log.warn("Failed deleting the partitions for the dropped table/view:{}", dto.getName().toString());
+                }
+            }
+        });
     }
 
     /**
@@ -129,11 +188,16 @@ public class MetacatElasticSearchEventHandlers {
     @EventListener
     public void metacatDeleteTablePartitionPostEventHandler(final MetacatDeleteTablePartitionPostEvent event) {
         log.debug("Received DeleteTablePartitionEvent {}", event);
-        registry.counter(Metrics.CounterElasticSearchPartitionDelete.name()).increment();
-        final List<String> partitionIds = event.getPartitionIds();
-        final List<String> esPartitionIds = partitionIds.stream()
-            .map(partitionId -> event.getName().toString() + "/" + partitionId).collect(Collectors.toList());
-        es.softDelete(ElasticSearchDoc.Type.partition.name(), esPartitionIds, event.getRequestContext());
+        this.partitionDeleteEventsDelayTimer
+            .record(System.currentTimeMillis() - event.getRequestContext().getTimestamp(), TimeUnit.MILLISECONDS);
+        if (config.isElasticSearchPublishPartitionEnabled()) {
+            this.partitionDeleteTimer.record(() -> {
+                final List<String> partitionIds = event.getPartitionIds();
+                final List<String> esPartitionIds = partitionIds.stream()
+                    .map(partitionId -> event.getName().toString() + "/" + partitionId).collect(Collectors.toList());
+                es.softDelete(ElasticSearchDoc.Type.partition.name(), esPartitionIds, event.getRequestContext());
+            });
+        }
     }
 
     /**
@@ -144,13 +208,16 @@ public class MetacatElasticSearchEventHandlers {
     @EventListener
     public void metacatRenameTablePostEventHandler(final MetacatRenameTablePostEvent event) {
         log.debug("Received RenameTableEvent {}", event);
-        registry.counter(Metrics.CounterElasticSearchTableRename.name()).increment();
-        es.delete(ElasticSearchDoc.Type.table.name(), event.getName().toString());
+        this.tableRenameEventsDelayTimer
+            .record(System.currentTimeMillis() - event.getRequestContext().getTimestamp(), TimeUnit.MILLISECONDS);
+        this.tableRenameTimer.record(() -> {
+            es.delete(ElasticSearchDoc.Type.table.name(), event.getName().toString());
 
-        final TableDto dto = event.getCurrentTable();
-        final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
-            event.getRequestContext().getUserName(), false);
-        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
+            final TableDto dto = event.getCurrentTable();
+            final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
+                event.getRequestContext().getUserName(), false);
+            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
+        });
     }
 
     /**
@@ -161,17 +228,20 @@ public class MetacatElasticSearchEventHandlers {
     @EventListener
     public void metacatUpdateTablePostEventHandler(final MetacatUpdateTablePostEvent event) {
         log.debug("Received UpdateTableEvent {}", event);
-        registry.counter(Metrics.CounterElasticSearchTableUpdate.name()).increment();
-        final TableDto dto = event.getCurrentTable();
+        this.tableUpdateEventsDelayTimer
+            .record(System.currentTimeMillis() - event.getRequestContext().getTimestamp(), TimeUnit.MILLISECONDS);
+        this.tableUpdateTimer.record(() -> {
+            final TableDto dto = event.getCurrentTable();
 
-        final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
-            event.getRequestContext().getUserName(), false);
-        final ElasticSearchDoc oldDoc = es.get(ElasticSearchDoc.Type.table.name(), doc.getId());
-        es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
-        if (oldDoc == null || oldDoc.getDto() == null
-            || !Objects.equals(((TableDto) oldDoc.getDto()).getDataMetadata(), dto.getDataMetadata())) {
-            updateEntitiesWithSameUri(ElasticSearchDoc.Type.table.name(), dto, event.getRequestContext());
-        }
+            final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
+                event.getRequestContext().getUserName(), false);
+            final ElasticSearchDoc oldDoc = es.get(ElasticSearchDoc.Type.table.name(), doc.getId());
+            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
+            if (oldDoc == null || oldDoc.getDto() == null
+                || !Objects.equals(((TableDto) oldDoc.getDto()).getDataMetadata(), dto.getDataMetadata())) {
+                updateEntitiesWithSameUri(ElasticSearchDoc.Type.table.name(), dto, event.getRequestContext());
+            }
+        });
     }
 
     private void updateEntitiesWithSameUri(final String metadataType, final TableDto dto,
@@ -195,12 +265,17 @@ public class MetacatElasticSearchEventHandlers {
     @EventListener
     public void metacatSaveTablePartitionPostEventHandler(final MetacatSaveTablePartitionPostEvent event) {
         log.debug("Received SaveTablePartitionEvent {}", event);
-        registry.counter(Metrics.CounterElasticSearchPartitionSave.name()).increment();
-        final List<PartitionDto> partitionDtos = event.getPartitions();
-        final MetacatRequestContext context = event.getRequestContext();
-        final List<ElasticSearchDoc> docs = partitionDtos.stream()
-            .map(dto -> new ElasticSearchDoc(dto.getName().toString(), dto, context.getUserName(), false))
-            .collect(Collectors.toList());
-        es.save(ElasticSearchDoc.Type.partition.name(), docs);
+        this.partitionSaveEventsDelayTimer
+            .record(System.currentTimeMillis() - event.getRequestContext().getTimestamp(), TimeUnit.MILLISECONDS);
+        if (config.isElasticSearchPublishPartitionEnabled()) {
+            this.partitionSaveTimer.record(() -> {
+                final List<PartitionDto> partitionDtos = event.getPartitions();
+                final MetacatRequestContext context = event.getRequestContext();
+                final List<ElasticSearchDoc> docs = partitionDtos.stream()
+                    .map(dto -> new ElasticSearchDoc(dto.getName().toString(), dto, context.getUserName(), false))
+                    .collect(Collectors.toList());
+                es.save(ElasticSearchDoc.Type.partition.name(), docs);
+            });
+        }
     }
 }

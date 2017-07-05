@@ -727,21 +727,23 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      */
     void log(final String method, final String type, final String name, @Nullable final String data,
              final String logMessage, @Nullable final Exception ex, final boolean error, final String index) {
-        try {
-            final Map<String, Object> source = Maps.newHashMap();
-            source.put("method", method);
-            source.put("name", name);
-            source.put("type", type);
-            source.put("data", data);
-            source.put("error", error);
-            source.put("message", logMessage);
-            source.put("details", Throwables.getStackTraceAsString(ex));
-            client.prepareIndex(index, "metacat-log").setSource(source).execute().actionGet();
-        } catch (Exception e) {
-            registry.counter(registry.createId(Metrics.CounterElasticSearchLog.name())
-                .withTags(Metrics.statusFailureMap)).increment();
-            log.warn("Failed saving the log message in elastic search for index{} method {}, name {}. Message: {}",
-                index, method, name, e.getMessage());
+        if (config.isElasticSearchPublishMetacatLogEnabled()) {
+            try {
+                final Map<String, Object> source = Maps.newHashMap();
+                source.put("method", method);
+                source.put("name", name);
+                source.put("type", type);
+                source.put("data", data);
+                source.put("error", error);
+                source.put("message", logMessage);
+                source.put("details", Throwables.getStackTraceAsString(ex));
+                client.prepareIndex(index, "metacat-log").setSource(source).execute().actionGet();
+            } catch (Exception e) {
+                registry.counter(registry.createId(Metrics.CounterElasticSearchLog.name())
+                    .withTags(Metrics.statusFailureMap)).increment();
+                log.warn("Failed saving the log message in elastic search for index{} method {}, name {}. Message: {}",
+                    index, method, name, e.getMessage());
+            }
         }
     }
 

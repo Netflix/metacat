@@ -58,6 +58,16 @@ public class DefaultConfigImpl implements Config {
         return this.metacatProperties.getElasticsearch().isEnabled();
     }
 
+    @Override
+    public boolean isElasticSearchPublishPartitionEnabled() {
+        return this.metacatProperties.getElasticsearch().getPublish().isPartitionEnabled();
+    }
+
+    @Override
+    public boolean isElasticSearchPublishMetacatLogEnabled() {
+        return this.metacatProperties.getElasticsearch().getPublish().isMetacatLogEnabled();
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -345,5 +355,15 @@ public class DefaultConfigImpl implements Config {
     @Override
     public String getSnsTopicPartitionArn() {
         return this.metacatProperties.getNotifications().getSns().getTopic().getPartition().getArn();
+    }
+
+    @Override
+    public int getSNSClientThreadCount() {
+        return this.metacatProperties.getNotifications().getSns().getThreadCount();
+    }
+
+    @Override
+    public boolean isSnsNotificationTopicPartitionEnabled() {
+        return this.metacatProperties.getNotifications().getSns().getTopic().getPartition().isEnabled();
     }
 }

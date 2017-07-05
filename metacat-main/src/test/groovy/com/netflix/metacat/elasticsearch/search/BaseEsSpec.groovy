@@ -25,7 +25,7 @@ import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsReques
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.common.settings.Settings
-import org.junit.Ignore
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 

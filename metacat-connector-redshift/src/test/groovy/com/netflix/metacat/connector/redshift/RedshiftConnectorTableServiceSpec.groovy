@@ -29,7 +29,6 @@ import spock.lang.Unroll
 
 import javax.sql.DataSource
 import java.sql.Connection
-import java.sql.DatabaseMetaData
 import java.sql.Statement
 
 /**
@@ -49,7 +48,6 @@ class RedshiftConnectorTableServiceSpec extends Specification {
     def "Can delete an uppercase table"() {
         def connection = Mock(Connection)
         def statement = Mock(Statement)
-        def metadata = Mock(DatabaseMetaData)
 
         def database = UUID.randomUUID().toString().toLowerCase()
         def table = UUID.randomUUID().toString().toLowerCase()
@@ -61,18 +59,15 @@ class RedshiftConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> true
-        1 * connection.setSchema(database.toUpperCase())
+        1 * connection.setSchema(database)
         1 * statement.executeUpdate(
-            "DROP TABLE " + qName.getCatalogName() + "." + qName.getDatabaseName() + "." + table.toUpperCase()
+            "DROP TABLE " + qName.getCatalogName() + "." + qName.getDatabaseName() + "." + table
         )
     }
 
     def "Can delete a mixed case table"() {
         def connection = Mock(Connection)
         def statement = Mock(Statement)
-        def metadata = Mock(DatabaseMetaData)
 
         def database = UUID.randomUUID().toString()
         def table = UUID.randomUUID().toString()
@@ -84,8 +79,6 @@ class RedshiftConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> false
         1 * connection.setSchema(database)
         1 * statement.executeUpdate(
             "DROP TABLE " + qName.getCatalogName() + "." + qName.getDatabaseName() + "." + table
@@ -106,7 +99,6 @@ class RedshiftConnectorTableServiceSpec extends Specification {
     def "Can rename uppercase table"() {
         def connection = Mock(Connection)
         def statement = Mock(Statement)
-        def metadata = Mock(DatabaseMetaData)
         def oldName = QualifiedName.ofTable("a", "b", "c")
         def newName = QualifiedName.ofTable("a", "b", "d")
 
@@ -116,17 +108,14 @@ class RedshiftConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> true
         1 * statement.executeUpdate(
-            "ALTER TABLE " + oldName.getDatabaseName() + ".C RENAME TO D"
+            "ALTER TABLE " + oldName.getDatabaseName() + ".c RENAME TO d"
         )
     }
 
     def "Can rename lowercase table"() {
         def connection = Mock(Connection)
         def statement = Mock(Statement)
-        def metadata = Mock(DatabaseMetaData)
         def oldName = QualifiedName.ofTable("a", "b", "c")
         def newName = QualifiedName.ofTable("a", "b", "d")
 
@@ -136,8 +125,6 @@ class RedshiftConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.getMetaData() >> metadata
-        1 * metadata.storesUpperCaseIdentifiers() >> false
         1 * statement.executeUpdate(
             "ALTER TABLE " + oldName.getDatabaseName() + ".c RENAME TO d"
         )
@@ -184,15 +171,5 @@ class RedshiftConnectorTableServiceSpec extends Specification {
                 )
             }
         )      | "update"        | UnsupportedOperationException
-        (
-            {
-                new JdbcConnectorTableService(
-                    Mock(DataSource), Mock(JdbcTypeConverter), Mock(JdbcExceptionMapper)
-                ).exists(
-                    Mock(ConnectorRequestContext),
-                    QualifiedName.ofTable("catalog", "database", "table")
-                )
-            }
-        )      | "exists"        | UnsupportedOperationException
     }
 }

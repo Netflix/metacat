@@ -276,14 +276,6 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         )      | "update"        | UnsupportedOperationException
         (
             {
-                new JdbcConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).exists(
-                    Mock(ConnectorRequestContext),
-                    QualifiedName.ofDatabase("catalog", "database")
-                )
-            }
-        )      | "exists"        | UnsupportedOperationException
-        (
-            {
                 new JdbcConnectorDatabaseService(Mock(DataSource), Mock(JdbcExceptionMapper)).rename(
                     Mock(ConnectorRequestContext),
                     QualifiedName.ofDatabase("catalog", "database"),

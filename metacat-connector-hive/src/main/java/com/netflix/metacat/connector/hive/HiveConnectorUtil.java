@@ -31,7 +31,7 @@ public final class HiveConnectorUtil {
     /**
      * unitFor.
      *
-     * @param inputUnit        inputUnit
+     * @param inputUnit   inputUnit
      * @param defaultUnit defaultUnit
      * @return TimeUnit
      */
