@@ -22,7 +22,6 @@ import com.netflix.metacat.main.manager.CatalogManager
 import com.netflix.metacat.main.manager.ConnectorManager
 import com.netflix.metacat.main.manager.PluginManager
 import org.springframework.boot.actuate.health.Status
-import org.springframework.context.event.ContextRefreshedEvent
 import spock.lang.Specification
 
 /**
@@ -40,6 +39,7 @@ class MetacatInitializationServiceSpec extends Specification {
         def threadServiceManager = Mock(ThreadServiceManager)
         def thriftService = Mock(MetacatThriftService)
 
+        when:
         def initializationService = new MetacatInitializationService(
             pluginManager,
             catalogManager,
@@ -47,20 +47,7 @@ class MetacatInitializationServiceSpec extends Specification {
             threadServiceManager,
             thriftService
         )
-
-        when:
         def health = initializationService.health()
-
-        then:
-        health.getStatus() == Status.OUT_OF_SERVICE
-        health.getDetails().size() == 3
-        health.getDetails().get(MetacatInitializationService.PLUGIN_KEY) == false
-        health.getDetails().get(MetacatInitializationService.CATALOG_KEY) == false
-        health.getDetails().get(MetacatInitializationService.THRIFT_KEY) == false
-
-        when:
-        initializationService.start(Mock(ContextRefreshedEvent))
-        health = initializationService.health()
 
         then:
         health.getStatus() == Status.UP
@@ -76,9 +63,10 @@ class MetacatInitializationServiceSpec extends Specification {
         def connectorManager = Mock(ConnectorManager)
         def threadServiceManager = Mock(ThreadServiceManager)
         def thriftService = Mock(MetacatThriftService) {
-            1 * start() >> { throw new RuntimeException("uh oh") }
+            1 * start() >> { throw new IllegalArgumentException("uh oh") }
         }
 
+        when:
         def initializationService = new MetacatInitializationService(
             pluginManager,
             catalogManager,
@@ -87,30 +75,7 @@ class MetacatInitializationServiceSpec extends Specification {
             thriftService
         )
 
-        when:
-        def health = initializationService.health()
-
         then:
-        health.getStatus() == Status.OUT_OF_SERVICE
-        health.getDetails().size() == 3
-        health.getDetails().get(MetacatInitializationService.PLUGIN_KEY) == false
-        health.getDetails().get(MetacatInitializationService.CATALOG_KEY) == false
-        health.getDetails().get(MetacatInitializationService.THRIFT_KEY) == false
-
-        when:
-        try {
-            initializationService.start(Mock(ContextRefreshedEvent))
-            assert false
-        } catch (final Exception e) {
-            assert e != null
-        }
-        health = initializationService.health()
-
-        then:
-        health.getStatus() == Status.OUT_OF_SERVICE
-        health.getDetails().size() == 3
-        health.getDetails().get(MetacatInitializationService.PLUGIN_KEY) == true
-        health.getDetails().get(MetacatInitializationService.CATALOG_KEY) == true
-        health.getDetails().get(MetacatInitializationService.THRIFT_KEY) == false
+        thrown(IllegalArgumentException)
     }
 }
