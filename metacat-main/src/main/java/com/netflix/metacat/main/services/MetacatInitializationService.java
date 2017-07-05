@@ -22,13 +22,11 @@ import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.main.manager.CatalogManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.manager.PluginManager;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.event.ContextClosedEvent;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,7 +38,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @since 1.1.0
  */
 @Slf4j
-@AllArgsConstructor
 public class MetacatInitializationService implements HealthIndicator {
     protected static final String PLUGIN_KEY = "pluginsLoaded";
     protected static final String CATALOG_KEY = "catalogsLoaded";
@@ -62,6 +59,31 @@ public class MetacatInitializationService implements HealthIndicator {
     private final AtomicBoolean thriftStarted = new AtomicBoolean();
 
     /**
+     * Constructor.
+     *
+     * @param pluginManager        Plugin manager to use
+     * @param catalogManager       Catalog manager to use
+     * @param connectorManager     Connector manager to use
+     * @param threadServiceManager Thread service manager to use
+     * @param metacatThriftService Metacat thrift service implementation to use
+     */
+    public MetacatInitializationService(
+        final PluginManager pluginManager,
+        final CatalogManager catalogManager,
+        final ConnectorManager connectorManager,
+        final ThreadServiceManager threadServiceManager,
+        final MetacatThriftService metacatThriftService
+    ) {
+        this.pluginManager = pluginManager;
+        this.catalogManager = catalogManager;
+        this.connectorManager = connectorManager;
+        this.threadServiceManager = threadServiceManager;
+        this.metacatThriftService = metacatThriftService;
+
+        this.start();
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -77,30 +99,6 @@ public class MetacatInitializationService implements HealthIndicator {
         builder.withDetail(THRIFT_KEY, thrift);
 
         return builder.build();
-    }
-
-    /**
-     * Metacat service initialization.
-     *
-     * @param event The context refreshed event that is fired whenever context initialized or refreshed
-     */
-    @EventListener
-    public void start(final ContextRefreshedEvent event) {
-        log.info("Metacat application started per {}. Starting services.", event);
-        try {
-            // TODO: Rather than doing this statically why don't we have things that need to be started implement
-            //       some interface/order?
-            this.pluginManager.loadPlugins();
-            this.pluginsLoaded.set(true);
-            this.catalogManager.loadCatalogs();
-            this.catalogsLoaded.set(true);
-            this.metacatThriftService.start();
-            this.thriftStarted.set(true);
-        } catch (final Exception e) {
-            log.error("Unable to init services due to {}", e.getMessage(), e);
-            Throwables.propagate(e);
-        }
-        log.info("Finished starting services.");
     }
 
     /**
@@ -123,5 +121,26 @@ public class MetacatInitializationService implements HealthIndicator {
             log.error("Unable to properly shutdown services due to {}", e.getMessage(), e);
         }
         log.info("Finished stopping services.");
+    }
+
+    /**
+     * Metacat service initialization.
+     */
+    public void start() {
+        log.info("Metacat application starting. Starting internal services...");
+        try {
+            // TODO: Rather than doing this statically why don't we have things that need to be started implement
+            //       some interface/order?
+            this.pluginManager.loadPlugins();
+            this.pluginsLoaded.set(true);
+            this.catalogManager.loadCatalogs();
+            this.catalogsLoaded.set(true);
+            this.metacatThriftService.start();
+            this.thriftStarted.set(true);
+        } catch (final Exception e) {
+            log.error("Unable to initialize services due to {}", e.getMessage(), e);
+            Throwables.propagate(e);
+        }
+        log.info("Finished starting internal services.");
     }
 }
