@@ -63,15 +63,7 @@ class SNSNotificationServiceImplSpec extends Specification {
     def config = Mock(Config)
     def counter = Mock(Counter)
     def id = Mock(Id)
-
-    def service = new SNSNotificationServiceImpl(
-        this.client,
-        this.tableArn,
-        this.partitionArn,
-        this.mapper,
-        this.registry,
-        this.config
-    )
+    def service;
 
     def requestContext = new MetacatRequestContext(
         UUID.randomUUID().toString(),
@@ -83,13 +75,23 @@ class SNSNotificationServiceImplSpec extends Specification {
 
     def setup() {
         this.registry.timer(
-            Metrics.TimerNotificationsBeforePublishDelay.name(),
-            "metacat.event.type",
+            Metrics.TimerNotificationsBeforePublishDelay.getMetricName(),
+            Metrics.TagEventsType.getMetricName(),
             _ as String
         ) >> this.timer
+
         this.registry.counter(_) >> counter
         this.registry.createId(_) >> id
+        this.service = new SNSNotificationServiceImpl(
+            this.client,
+            this.tableArn,
+            this.partitionArn,
+            this.mapper,
+            this.config,
+            new SNSNotificationMetric(this.registry)
+        )
     }
+
 
     def "Will Notify On Partition Creation"() {
         def partitions = Lists.newArrayList(new PartitionDto(), new PartitionDto(), new PartitionDto())

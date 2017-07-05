@@ -318,7 +318,7 @@ public class ElasticSearchRefresh {
                 }
             } catch (Exception e) {
                 log.error("Full refresh of metacat index failed", e);
-                registry.counter(registry.createId(Metrics.CounterElasticSearchRefresh.name())
+                registry.counter(registry.createId(Metrics.CounterElasticSearchRefresh.getMetricName())
                     .withTags(Metrics.statusFailureMap)).increment();
             } finally {
                 try {
@@ -327,7 +327,7 @@ public class ElasticSearchRefresh {
                 } finally {
                     isElasticSearchMetacatRefreshAlreadyRunning.set(false);
                     final long duration = registry.clock().monotonicTime() - start;
-                    this.registry.timer(Metrics.TimerElasticSearchRefresh.name()
+                    this.registry.timer(Metrics.TimerElasticSearchRefresh.getMetricName()
                         + "." + requestName).record(duration, TimeUnit.MILLISECONDS);
                     log.info("### Time taken to complete {} is {} ms", requestName, duration);
                 }
@@ -335,7 +335,7 @@ public class ElasticSearchRefresh {
 
         } else {
             log.info("Full refresh of metacat index is already running.");
-            registry.counter(registry.createId(Metrics.CounterElasticSearchRefreshAlreadyRunning.name()))
+            registry.counter(registry.createId(Metrics.CounterElasticSearchRefreshAlreadyRunning.getMetricName()))
                 .increment();
         }
     }
@@ -410,7 +410,7 @@ public class ElasticSearchRefresh {
                 log.info("Count of unmarked databases({}) is more than the threshold {}", unmarkedDatabaseDtos.size(),
                     config.getElasticSearchThresholdUnmarkedDatabasesDelete());
                 registry.counter(
-                    registry.createId(Metrics.CounterElasticSearchUnmarkedDatabaseThreshholdReached.name()))
+                    registry.createId(Metrics.CounterElasticSearchUnmarkedDatabaseThreshholdReached.getMetricName()))
                     .increment();
             }
         }
@@ -458,7 +458,7 @@ public class ElasticSearchRefresh {
                 log.info("Count of unmarked tables({}) is more than the threshold {}", unmarkedTableDtos.size(),
                     config.getElasticSearchThresholdUnmarkedTablesDelete());
                 registry.counter(
-                    registry.createId(Metrics.CounterElasticSearchUnmarkedTableThreshholdReached.name()))
+                    registry.createId(Metrics.CounterElasticSearchUnmarkedTableThreshholdReached.getMetricName()))
                     .increment();
 
             }

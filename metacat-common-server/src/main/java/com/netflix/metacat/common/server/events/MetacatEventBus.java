@@ -18,6 +18,7 @@
 package com.netflix.metacat.common.server.events;
 
 import com.netflix.metacat.common.server.monitoring.Metrics;
+import com.netflix.spectator.api.Counter;
 import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -39,8 +40,8 @@ public class MetacatEventBus {
 
     private final ApplicationEventPublisher eventPublisher;
     private final ApplicationEventMulticaster eventMulticaster;
-    private final Registry registry;
-
+    private final Counter eventAsync;
+    private final Counter eventSync;
     /**
      * Constructor.
      *
@@ -55,7 +56,8 @@ public class MetacatEventBus {
     ) {
         this.eventPublisher = eventPublisher;
         this.eventMulticaster = eventMulticaster;
-        this.registry = registry;
+        this.eventAsync = registry.counter(Metrics.CounterEventAsync.getMetricName());
+        this.eventSync = registry.counter(Metrics.CounterEventSync.getMetricName());
     }
 
     /**
@@ -65,7 +67,7 @@ public class MetacatEventBus {
      */
     public void postAsync(final ApplicationEvent event) {
         log.debug("Received request to post an event {} asynchronously", event);
-        registry.counter(Metrics.CounterEventAsync.name()).increment();
+        this.eventAsync.increment();
         this.eventMulticaster.multicastEvent(event);
     }
 
@@ -76,7 +78,7 @@ public class MetacatEventBus {
      */
     public void postSync(final ApplicationEvent event) {
         log.debug("Received request to post an event {} synchronously", event);
-        registry.counter(Metrics.CounterEventSync.name()).increment();
+        this.eventSync.increment();
         this.eventPublisher.publishEvent(event);
     }
 

@@ -69,9 +69,9 @@ public final class RequestWrapper {
     @Autowired
     public RequestWrapper(@NotNull @NonNull final Registry registry) {
         this.registry = registry;
-        requestCounterId = registry.createId(Metrics.CounterRequestCount.name());
-        requestFailureCounterId = registry.createId(Metrics.CounterRequestFailureCount.name());
-        requestTimerId = registry.createId(Metrics.TimerRequest.name());
+        requestCounterId = registry.createId(Metrics.CounterRequestCount.getMetricName());
+        requestFailureCounterId = registry.createId(Metrics.CounterRequestFailureCount.getMetricName());
+        requestTimerId = registry.createId(Metrics.TimerRequest.getMetricName());
     }
 
     /**

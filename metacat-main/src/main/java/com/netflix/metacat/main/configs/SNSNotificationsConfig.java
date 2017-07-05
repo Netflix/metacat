@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.RegistryUtil;
+import com.netflix.metacat.main.services.notifications.sns.SNSNotificationMetric;
 import com.netflix.metacat.main.services.notifications.sns.SNSNotificationServiceImpl;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
@@ -83,7 +84,7 @@ public class SNSNotificationsConfig {
      * @param amazonSNS    The SNS client to use
      * @param config       The system configuration abstraction to use
      * @param objectMapper The object mapper to use
-     * @param registry     registry for spectator
+     * @param snsNotificationMetric The sns notification metric
      * @return Configured Notification Service bean
      */
     @Bean
@@ -91,7 +92,7 @@ public class SNSNotificationsConfig {
         final AmazonSNSAsync amazonSNS,
         final Config config,
         final ObjectMapper objectMapper,
-        final Registry registry
+        final SNSNotificationMetric snsNotificationMetric
     ) {
         final String tableArn = config.getSnsTopicTableArn();
         if (StringUtils.isEmpty(tableArn)) {
@@ -107,6 +108,20 @@ public class SNSNotificationsConfig {
         }
 
         log.info("SNS notifications are enabled. Creating SNSNotificationServiceImpl bean.");
-        return new SNSNotificationServiceImpl(amazonSNS, tableArn, partitionArn, objectMapper, registry, config);
+        return new SNSNotificationServiceImpl(amazonSNS,
+            tableArn, partitionArn, objectMapper, config, snsNotificationMetric);
+    }
+
+    /**
+     * SNS Notification Metric.
+     *
+     * @param registry registry for spectator
+     * @return  Notification Metric bean
+     */
+    @Bean
+    public SNSNotificationMetric snsNotificationMetric(
+        final Registry registry
+    ) {
+        return new SNSNotificationMetric(registry);
     }
 }

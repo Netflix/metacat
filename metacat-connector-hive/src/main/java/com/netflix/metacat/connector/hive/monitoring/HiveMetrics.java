@@ -18,6 +18,7 @@
 package com.netflix.metacat.connector.hive.monitoring;
 
 import com.netflix.metacat.common.server.monitoring.Metrics;
+import lombok.Getter;
 
 /**
  * Hive Metrics.
@@ -25,6 +26,7 @@ import com.netflix.metacat.common.server.monitoring.Metrics;
  * @author zhenl
  * @since 1.0.0
  */
+@Getter
 public enum HiveMetrics {
 
     /**
@@ -67,19 +69,20 @@ public enum HiveMetrics {
     listPartitionsByFilter("listPartitionsByFilter"),
     getPartitions("getPartitions"),
     getPartitionCount("getPartitionCount"),
+    getPartitionKeys("getPartitionKeys"),
     getPartitionNames("getPartitionNames"),
     getTableNames("getTableNames"),
     exists("exists");
 
-    private final String constant;
+    private final String metricName;
 
     HiveMetrics(final String constant) {
-        this.constant = constant;
+        this.metricName = constant;
     }
 
     @Override
     public String toString() {
-        return constant;
+        return metricName;
     }
 
     private static String Name(final HiveMetrics component, final Metrics type, final String measure) {

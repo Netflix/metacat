@@ -14,6 +14,7 @@
 package com.netflix.metacat.common.server.monitoring;
 
 import com.google.common.collect.ImmutableMap;
+import lombok.Getter;
 
 import java.util.Map;
 
@@ -25,6 +26,7 @@ import java.util.Map;
  * @author zhenl
  * @since 1.0.0
  */
+@Getter
 public enum Metrics {
     /**
      * General logging constants.
@@ -44,6 +46,7 @@ public enum Metrics {
     Events("events"),
     CounterEventAsync(Name(Events, Count, "async")),
     CounterEventSync(Name(Events, Count, "sync")),
+    TagEventsType("metacat.events.type"),
 
     /**
      * thrift request.
@@ -130,14 +133,14 @@ public enum Metrics {
     Status("status"), StatusSuccess("success"), StatusFailure("failure");
 
     public final static Map<String, String> statusSuccessMap
-        = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusSuccess.name());
+        = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusSuccess.getMetricName());
     public final static Map<String, String> statusFailureMap
-        = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusFailure.name());
+        = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusFailure.getMetricName());
 
-    private final String constant;
+    private final String metricName;
 
     Metrics(final String constant) {
-        this.constant = constant;
+        this.metricName = constant;
     }
 
     private static String Name(final Metrics component, final Metrics type, final String measure) {
@@ -146,6 +149,6 @@ public enum Metrics {
 
     @Override
     public String toString() {
-        return constant;
+        return metricName;
     }
 }
