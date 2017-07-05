@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 /**
  * Metacat thrift service.
+ *
  * @author zhenl
  * @since 1.1.0
  */
