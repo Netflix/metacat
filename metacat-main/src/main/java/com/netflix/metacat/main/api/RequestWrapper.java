@@ -102,7 +102,7 @@ public final class RequestWrapper {
         final QualifiedName name,
         final String resourceRequestName,
         final Supplier<R> supplier) {
-        final long start = registry.clock().monotonicTime();
+        final long start = registry.clock().wallTime();
         final Map<String, String> tags = new HashMap<>(name.parts());
         tags.put("request", resourceRequestName);
         registry.counter(requestCounterId.withTags(tags)).increment();
@@ -142,7 +142,7 @@ public final class RequestWrapper {
             log.error(message, e);
             throw new MetacatException(message, e);
         } finally {
-            final long duration = registry.clock().monotonicTime() - start;
+            final long duration = registry.clock().wallTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
                 duration);
             this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
@@ -160,7 +160,7 @@ public final class RequestWrapper {
     public <R> R processRequest(
         final String resourceRequestName,
         final Supplier<R> supplier) {
-        final long start = registry.clock().monotonicTime();
+        final long start = registry.clock().wallTime();
         final Map<String, String> tags = Maps.newHashMap();
         tags.put("request", resourceRequestName);
         registry.counter(requestCounterId.withTags(tags)).increment();
@@ -183,7 +183,7 @@ public final class RequestWrapper {
             log.error(message, e);
             throw new MetacatException(message, e);
         } finally {
-            final long duration = registry.clock().monotonicTime() - start;
+            final long duration = registry.clock().wallTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
                 duration);
             this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);

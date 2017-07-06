@@ -298,7 +298,7 @@ public class ElasticSearchRefresh {
     private void _process(final List<QualifiedName> qNames, final Supplier<ListenableFuture<Void>> supplier,
                           final String requestName, final boolean delete, final int queueSize) {
         if (isElasticSearchMetacatRefreshAlreadyRunning.compareAndSet(false, true)) {
-            final long start = registry.clock().monotonicTime();
+            final long start = registry.clock().wallTime();
             try {
                 log.info("Start: Full refresh of metacat index in elastic search. Processing {} ...", qNames);
                 final MetacatRequestContext context =
@@ -326,7 +326,7 @@ public class ElasticSearchRefresh {
                     shutdown(esService);
                 } finally {
                     isElasticSearchMetacatRefreshAlreadyRunning.set(false);
-                    final long duration = registry.clock().monotonicTime() - start;
+                    final long duration = registry.clock().wallTime() - start;
                     this.registry.timer(Metrics.TimerElasticSearchRefresh.getMetricName()
                         + "." + requestName).record(duration, TimeUnit.MILLISECONDS);
                     log.info("### Time taken to complete {} is {} ms", requestName, duration);

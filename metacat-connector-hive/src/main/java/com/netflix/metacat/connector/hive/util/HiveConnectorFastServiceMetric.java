@@ -17,11 +17,14 @@
 package com.netflix.metacat.connector.hive.util;
 
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
+import com.netflix.spectator.api.Counter;
 import com.netflix.spectator.api.Registry;
 import com.netflix.spectator.api.Timer;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -31,13 +34,10 @@ import java.util.HashMap;
  * @since 1.1.0
  */
 @Getter
+@Slf4j
 public class HiveConnectorFastServiceMetric {
-    private final Timer fastHivePartitionCountTimer;
-    private final Timer fastHiveGetPartitionTimer;
-    private final Timer fastHiveGetPartitionKeysTimer;
-    private final Timer fastHiveGetPartitionNamesTimer;
-    private final Timer fastHiveTableExistsTimer;
-    private final Timer fastHiveTableGetTableNamesTimer;
+    private final HashMap<String, Timer> timerMap = new HashMap<>();
+    private final Counter getHiveTablePartsFailureCounter;
 
     /**
      * Constructor.
@@ -45,26 +45,42 @@ public class HiveConnectorFastServiceMetric {
      * @param registry the spectator registry
      */
     public HiveConnectorFastServiceMetric(final Registry registry) {
-        this.fastHivePartitionCountTimer = createTimer(registry,
-            HiveMetrics.TimerFastHiveRequest.getMetricName(), HiveMetrics.getPartitionCount.getMetricName());
-        this.fastHiveGetPartitionTimer = createTimer(registry,
-            HiveMetrics.TimerFastHiveRequest.getMetricName(), HiveMetrics.getPartitions.getMetricName());
-        this.fastHiveGetPartitionKeysTimer = createTimer(registry,
-            HiveMetrics.TimerFastHiveRequest.getMetricName(), HiveMetrics.getPartitionKeys.getMetricName());
-        this.fastHiveGetPartitionNamesTimer = createTimer(registry,
-            HiveMetrics.TimerFastHiveRequest.getMetricName(), HiveMetrics.getPartitionNames.getMetricName());
-        this.fastHiveTableExistsTimer = createTimer(registry,
-            HiveMetrics.TimerFastHiveRequest.getMetricName(), HiveMetrics.exists.getMetricName());
-        this.fastHiveTableGetTableNamesTimer = createTimer(registry,
-            HiveMetrics.TimerFastHiveRequest.getMetricName(), HiveMetrics.getTableNames.getMetricName());
+        timerMap.put(HiveMetrics.getPartitionCount.getMetricName(), createTimer(registry,
+            HiveMetrics.getPartitionCount.getMetricName()));
+        timerMap.put(HiveMetrics.getPartitions.getMetricName(), createTimer(registry,
+            HiveMetrics.getPartitions.getMetricName()));
+        timerMap.put(HiveMetrics.getPartitionKeys.getMetricName(), createTimer(registry,
+            HiveMetrics.getPartitionKeys.getMetricName()));
+        timerMap.put(HiveMetrics.getPartitionNames.getMetricName(), createTimer(registry,
+            HiveMetrics.getPartitionNames.getMetricName()));
+        timerMap.put(HiveMetrics.tableExists.getMetricName(), createTimer(registry,
+            HiveMetrics.tableExists.getMetricName()));
+        timerMap.put(HiveMetrics.getPartitionNames.getMetricName(), createTimer(registry,
+            HiveMetrics.getTableNames.getMetricName()));
+
+        getHiveTablePartsFailureCounter = registry.counter(
+            HiveMetrics.CounterHiveExperimentGetTablePartitionsFailure.getMetricName());
+
     }
 
-    private Timer createTimer(final Registry registry, final String timerName, final String requestTag) {
+    private Timer createTimer(final Registry registry, final String requestTag) {
         final HashMap<String, String> tags = new HashMap<>();
-        tags.put("request", HiveMetrics.getPartitionCount.getMetricName());
-        return registry.timer(
-            registry.createId(HiveMetrics.TimerFastHiveRequest.getMetricName())
-                .withTags(tags));
+        tags.put("request", requestTag);
+        return registry.timer(registry.createId(HiveMetrics.TimerFastHiveRequest.getMetricName()).withTags(tags));
     }
 
+    /**
+     * record the duration to timer.
+     *
+     * @param metricName metric name.
+     * @param duration   duration of the operation.
+     */
+    public void recordTimer(final String metricName, final long duration) {
+        if (this.timerMap.containsKey(metricName)) {
+            log.debug("### Time taken to complete {} is {} ms", metricName, duration);
+            this.timerMap.get(metricName).record(duration, TimeUnit.MILLISECONDS);
+        } else {
+            log.error("Not supported metric {}", metricName);
+        }
+    }
 }

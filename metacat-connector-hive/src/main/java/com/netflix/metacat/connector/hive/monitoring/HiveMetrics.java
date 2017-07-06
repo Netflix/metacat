@@ -72,7 +72,7 @@ public enum HiveMetrics {
     getPartitionKeys("getPartitionKeys"),
     getPartitionNames("getPartitionNames"),
     getTableNames("getTableNames"),
-    exists("exists");
+    tableExists("tableExists");
 
     private final String metricName;
 

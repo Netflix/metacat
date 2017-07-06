@@ -40,8 +40,8 @@ public class MetacatEventBus {
 
     private final ApplicationEventPublisher eventPublisher;
     private final ApplicationEventMulticaster eventMulticaster;
-    private final Counter eventAsync;
-    private final Counter eventSync;
+    private final Counter eventAsyncCounter;
+    private final Counter eventSyncCounter;
     /**
      * Constructor.
      *
@@ -56,8 +56,8 @@ public class MetacatEventBus {
     ) {
         this.eventPublisher = eventPublisher;
         this.eventMulticaster = eventMulticaster;
-        this.eventAsync = registry.counter(Metrics.CounterEventAsync.getMetricName());
-        this.eventSync = registry.counter(Metrics.CounterEventSync.getMetricName());
+        this.eventAsyncCounter = registry.counter(Metrics.CounterEventAsync.getMetricName());
+        this.eventSyncCounter = registry.counter(Metrics.CounterEventSync.getMetricName());
     }
 
     /**
@@ -67,7 +67,7 @@ public class MetacatEventBus {
      */
     public void postAsync(final ApplicationEvent event) {
         log.debug("Received request to post an event {} asynchronously", event);
-        this.eventAsync.increment();
+        this.eventAsyncCounter.increment();
         this.eventMulticaster.multicastEvent(event);
     }
 
@@ -78,7 +78,7 @@ public class MetacatEventBus {
      */
     public void postSync(final ApplicationEvent event) {
         log.debug("Received request to post an event {} synchronously", event);
-        this.eventSync.increment();
+        this.eventSyncCounter.increment();
         this.eventPublisher.publishEvent(event);
     }
 

@@ -28,6 +28,7 @@ import com.netflix.metacat.common.dto.notifications.sns.messages.*
 import com.netflix.metacat.common.server.events.*
 import com.netflix.metacat.common.server.monitoring.Metrics
 import com.netflix.metacat.common.server.properties.Config
+import com.netflix.spectator.api.Clock
 import com.netflix.spectator.api.Counter
 import com.netflix.spectator.api.Id
 import com.netflix.spectator.api.Registry
@@ -64,6 +65,7 @@ class SNSNotificationServiceImplSpec extends Specification {
     def counter = Mock(Counter)
     def id = Mock(Id)
     def service;
+    def clock = Mock(Clock)
 
     def requestContext = new MetacatRequestContext(
         UUID.randomUUID().toString(),
@@ -74,12 +76,9 @@ class SNSNotificationServiceImplSpec extends Specification {
     )
 
     def setup() {
-        this.registry.timer(
-            Metrics.TimerNotificationsBeforePublishDelay.getMetricName(),
-            Metrics.TagEventsType.getMetricName(),
-            _ as String
-        ) >> this.timer
-
+        this.registry.clock() >> clock
+        this.clock.wallTime() >> System.currentTimeMillis()
+        this.registry.timer(_, _, _) >> this.timer
         this.registry.counter(_) >> counter
         this.registry.createId(_) >> id
         this.service = new SNSNotificationServiceImpl(

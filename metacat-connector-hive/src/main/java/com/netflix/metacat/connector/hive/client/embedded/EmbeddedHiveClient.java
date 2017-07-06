@@ -355,7 +355,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     }
 
     private <R> R callWrap(final String requestName, final Callable<R> supplier) throws TException {
-        final long start = registry.clock().monotonicTime();
+        final long start = registry.clock().wallTime();
         final Map<String, String> tags = new HashMap<String, String>();
         tags.put("request", requestName);
 
@@ -367,7 +367,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
         } catch (Exception e) {
             throw new TException(e.getMessage(), e.getCause());
         } finally {
-            final long duration = registry.clock().monotonicTime() - start;
+            final long duration = registry.clock().wallTime() - start;
             log.debug("### Time taken to complete {} is {} ms", requestName,
                 duration);
             this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);

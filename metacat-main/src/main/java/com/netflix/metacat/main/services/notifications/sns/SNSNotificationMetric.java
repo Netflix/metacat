@@ -103,6 +103,6 @@ public class SNSNotificationMetric {
             Metrics.TagEventsType.getMetricName(),
             message.getClass().getName()
         );
-        timer.record(System.currentTimeMillis() - message.getTimestamp(), TimeUnit.MILLISECONDS);
+        timer.record(this.registry.clock().wallTime() - message.getTimestamp(), TimeUnit.MILLISECONDS);
     }
 }

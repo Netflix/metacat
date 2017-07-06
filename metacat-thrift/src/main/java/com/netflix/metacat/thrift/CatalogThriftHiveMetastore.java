@@ -1694,7 +1694,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
 
     private <R> R requestWrapper(final String methodName, final Object[] args, final ThriftSupplier<R> supplier)
         throws TException {
-        final long start = registry.clock().monotonicTime();
+        final long start = registry.clock().wallTime();
         registry.counter(registry.createId(Metrics.CounterThrift.getMetricName() + "." + methodName)).increment();
         try {
             log.info("+++ Thrift({}): Calling {}({})", catalogName, methodName, args);
@@ -1717,7 +1717,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             me.initCause(e);
             throw me;
         } finally {
-            final long duration = registry.clock().monotonicTime() - start;
+            final long duration = registry.clock().wallTime() - start;
             this.registry.timer(Metrics.TimerThriftRequest.getMetricName()
                 + "." + methodName).record(duration, TimeUnit.MILLISECONDS);
             log.info("+++ Thrift({}): Time taken to complete {} is {} ms", catalogName, methodName, duration);
