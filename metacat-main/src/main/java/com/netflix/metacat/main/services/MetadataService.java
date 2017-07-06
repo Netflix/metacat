@@ -97,7 +97,7 @@ public class MetadataService {
                 }
             }
         } catch (Exception e) {
-            registry.counter(Metrics.CounterDeleteMetaData.name()).increment();
+            registry.counter(Metrics.CounterDeleteMetaData.getMetricName()).increment();
             log.warn("Failed deleting data metadata", e);
         }
         log.info("End deleting data metadata");

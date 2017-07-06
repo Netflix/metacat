@@ -26,12 +26,8 @@ import com.netflix.metacat.common.dto.PartitionsSaveResponseDto
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.dto.notifications.sns.messages.*
 import com.netflix.metacat.common.server.events.*
-import com.netflix.metacat.common.server.monitoring.Metrics
 import com.netflix.metacat.common.server.properties.Config
-import com.netflix.spectator.api.Counter
-import com.netflix.spectator.api.Id
-import com.netflix.spectator.api.Registry
-import com.netflix.spectator.api.Timer
+import com.netflix.spectator.api.*
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -63,15 +59,8 @@ class SNSNotificationServiceImplSpec extends Specification {
     def config = Mock(Config)
     def counter = Mock(Counter)
     def id = Mock(Id)
-
-    def service = new SNSNotificationServiceImpl(
-        this.client,
-        this.tableArn,
-        this.partitionArn,
-        this.mapper,
-        this.registry,
-        this.config
-    )
+    def service;
+    def clock = Mock(Clock)
 
     def requestContext = new MetacatRequestContext(
         UUID.randomUUID().toString(),
@@ -82,14 +71,21 @@ class SNSNotificationServiceImplSpec extends Specification {
     )
 
     def setup() {
-        this.registry.timer(
-            Metrics.TimerNotificationsBeforePublishDelay.name(),
-            "metacat.event.type",
-            _ as String
-        ) >> this.timer
+        this.registry.clock() >> clock
+        this.clock.wallTime() >> System.currentTimeMillis()
+        this.registry.timer(_, _, _) >> this.timer
         this.registry.counter(_) >> counter
         this.registry.createId(_) >> id
+        this.service = new SNSNotificationServiceImpl(
+            this.client,
+            this.tableArn,
+            this.partitionArn,
+            this.mapper,
+            this.config,
+            new SNSNotificationMetric(this.registry)
+        )
     }
+
 
     def "Will Notify On Partition Creation"() {
         def partitions = Lists.newArrayList(new PartitionDto(), new PartitionDto(), new PartitionDto())

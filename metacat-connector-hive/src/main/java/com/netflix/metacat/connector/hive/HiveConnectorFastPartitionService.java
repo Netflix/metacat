@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
@@ -37,14 +38,13 @@ import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserEval;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.util.JdbcUtil;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
+import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.metacat.connector.hive.util.PartitionDetail;
 import com.netflix.metacat.connector.hive.util.PartitionFilterGenerator;
-import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -63,7 +63,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -116,8 +115,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
 
     private final ThreadServiceManager threadServiceManager;
     private final Registry registry;
-    private final Id requestTimerId;
     private final JdbcUtil jdbcUtil;
+    private final HiveConnectorFastServiceMetric fastServiceMetric;
 
     /**
      * Constructor.
@@ -128,6 +127,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @param connectorContext      server context
      * @param threadServiceManager  thread service manager
      * @param dataSource            data source
+     * @param fastServiceMetric     fast service metric
      */
     public HiveConnectorFastPartitionService(
         final String catalogName,
@@ -135,13 +135,14 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final ConnectorContext connectorContext,
         final ThreadServiceManager threadServiceManager,
-        final DataSource dataSource
+        final DataSource dataSource,
+        final HiveConnectorFastServiceMetric fastServiceMetric
     ) {
         super(catalogName, metacatHiveClient, hiveMetacatConverters);
         this.threadServiceManager = threadServiceManager;
         this.registry = connectorContext.getRegistry();
-        this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
         this.jdbcUtil = new JdbcUtil(dataSource);
+        this.fastServiceMetric = fastServiceMetric;
     }
 
     /**
@@ -155,9 +156,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final ConnectorRequestContext requestContext,
         final QualifiedName tableName
     ) {
-        final long start = registry.clock().monotonicTime();
-        final Map<String, String> tags = new HashMap<>();
-        tags.put("request", HiveMetrics.getPartitionCount.name());
+        final long start = registry.clock().wallTime();
         final Integer result;
         // Handler for reading the result set
         final ResultSetExtractor<Integer> handler = rs -> {
@@ -173,9 +172,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         } catch (DataAccessException e) {
             throw new ConnectorException("getPartitionCount", e);
         } finally {
-            final long duration = registry.clock().monotonicTime() - start;
-            log.debug("### Time taken to complete getPartitionCount is {} ms", duration);
-            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            this.fastServiceMetric.recordTimer(
+                HiveMetrics.TagGetPartitionCount.getMetricName(), registry.clock().wallTime() - start);
         }
         return result;
     }
@@ -189,9 +187,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final QualifiedName tableName,
         final PartitionListRequest partitionsRequest
     ) {
-        final long start = registry.clock().monotonicTime();
-        final Map<String, String> tags = new HashMap<>();
-        tags.put("request", HiveMetrics.getPartitions.name());
+        final long start = registry.clock().wallTime();
         try {
             return this.getPartitions(
                 tableName.getDatabaseName(),
@@ -203,9 +199,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                 partitionsRequest.getIncludePartitionDetails()
             );
         } finally {
-            final long duration = registry.clock().monotonicTime() - start;
-            log.debug("### Time taken to complete getPartitions is {} ms", duration);
-            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            this.fastServiceMetric.recordTimer(
+                HiveMetrics.TagGetPartitions.getMetricName(), registry.clock().wallTime() - start);
         }
     }
 
@@ -216,9 +211,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     public List<String> getPartitionKeys(final ConnectorRequestContext requestContext,
                                          final QualifiedName tableName,
                                          final PartitionListRequest partitionsRequest) {
-        final long start = registry.clock().monotonicTime();
-        final Map<String, String> tags = new HashMap<>();
-        tags.put("request", "getPartitionKeys");
+        final long start = registry.clock().wallTime();
         final List<String> result;
         final List<String> partitionNames = partitionsRequest.getPartitionNames();
         final Sort sort = partitionsRequest.getSort();
@@ -265,10 +258,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             result = getHandlerResults(tableName.getDatabaseName(), tableName.getTableName(),
                 null, partitionNames, SQL_GET_PARTITIONS_WITH_KEY, handler, sort, pageable);
         }
-        final long duration = registry.clock().monotonicTime() - start;
-        log.debug("### Time taken to complete getPartitionKeys is {} ms", duration);
-        this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
-
+        this.fastServiceMetric.recordTimer(
+            HiveMetrics.TagGetPartitionKeys.getMetricName(), registry.clock().wallTime() - start);
         return result;
     }
 
@@ -284,10 +275,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         @Nonnull final ConnectorRequestContext context,
         @Nonnull final List<String> uris,
         final boolean prefixSearch) {
-        final long start = registry.clock().monotonicTime();
-        final Map<String, String> tags = new HashMap<>();
-        tags.put("request", HiveMetrics.getPartitionNames.name());
-
+        final long start = registry.clock().wallTime();
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
         // Create the sql
         final StringBuilder queryBuilder = new StringBuilder(SQL_GET_PARTITION_NAMES_BY_URI);
@@ -327,9 +315,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         } catch (DataAccessException e) {
             Throwables.propagate(e);
         } finally {
-            final long duration = registry.clock().monotonicTime() - start;
-            log.debug("### Time taken to complete getPartitionNames is {} ms", duration);
-            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            this.fastServiceMetric.recordTimer(
+                HiveMetrics.TagGetPartitionNames.getMetricName(), registry.clock().wallTime() - start);
         }
         return result;
     }
@@ -503,8 +490,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             log.warn("Experiment: Get partitions for for table {} filter {}"
                     + " failed with error {}", tableName, filterExpression,
                 e.getMessage());
-            registry.counter(HiveMetrics.CounterHiveExperimentGetTablePartitionsFailure.name()).increment();
-
+            this.fastServiceMetric.getGetHiveTablePartsFailureCounter().increment();
             partitions = getHandlerResults(databaseName, tableName,
                 filterExpression, partitionIds, sql, resultSetExtractor, null,
                 prepareFilterSql(filterExpression), Lists.newArrayList(), sort, pageable);

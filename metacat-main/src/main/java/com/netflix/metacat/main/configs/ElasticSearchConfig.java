@@ -27,6 +27,7 @@ import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.main.services.search.ElasticSearchMetric;
 import com.netflix.metacat.main.services.search.ElasticSearchRefresh;
 import com.netflix.metacat.main.services.search.ElasticSearchUtil;
 import com.netflix.metacat.main.services.search.ElasticSearchUtilImpl;
@@ -96,10 +97,10 @@ public class ElasticSearchConfig {
     /**
      * ElasticSearch utility wrapper.
      *
-     * @param client      The configured ElasticSearch client
-     * @param config      System config
-     * @param metacatJson JSON utilities
-     * @param registry    registry of spectator
+     * @param client              The configured ElasticSearch client
+     * @param config              System config
+     * @param metacatJson         JSON utilities
+     * @param elasticSearchMetric es metric
      * @return The ElasticSearch utility instance
      */
     @Bean
@@ -107,9 +108,23 @@ public class ElasticSearchConfig {
         final Client client,
         final Config config,
         final MetacatJson metacatJson,
+        final ElasticSearchMetric elasticSearchMetric
+    ) {
+        return new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric);
+    }
+
+
+    /**
+     * ElasticSearch metric.
+     *
+     * @param registry registry of spectator
+     * @return The ElasticSearch utility instance
+     */
+    @Bean
+    public ElasticSearchMetric elasticSearchMetric(
         final Registry registry
     ) {
-        return new ElasticSearchUtilImpl(client, config, metacatJson, registry);
+        return new ElasticSearchMetric(registry);
     }
 
     /**

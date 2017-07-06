@@ -20,12 +20,12 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.util.JdbcUtil;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
-import com.netflix.spectator.api.Id;
+import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,10 +35,8 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * HiveConnectorFastTableService.
@@ -55,8 +53,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private static final String SQL_EXIST_TABLE_BY_NAME =
         "select 1 from DBS d join TBLS t on d.DB_ID=t.DB_ID where d.name=? and t.tbl_name=?";
     private final Registry registry;
-    private final Id requestTimerId;
     private final JdbcUtil jdbcUtil;
+    private final HiveConnectorFastServiceMetric fastServiceMetric;
 
     /**
      * Constructor.
@@ -67,6 +65,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param hiveMetacatConverters        hive converter
      * @param connectorContext             serverContext
      * @param dataSource                   data source
+     * @param fastServiceMetric     fast service metric
      */
     @Autowired
     public HiveConnectorFastTableService(
@@ -75,12 +74,13 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final ConnectorContext connectorContext,
-        final DataSource dataSource
+        final DataSource dataSource,
+        final HiveConnectorFastServiceMetric fastServiceMetric
     ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, connectorContext);
         this.registry = connectorContext.getRegistry();
-        this.requestTimerId = registry.createId(HiveMetrics.TimerFastHiveRequest.name());
         this.jdbcUtil = new JdbcUtil(dataSource);
+        this.fastServiceMetric = fastServiceMetric;
     }
 
     /**
@@ -88,9 +88,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      */
     @Override
     public boolean exists(final ConnectorRequestContext requestContext, final QualifiedName name) {
-        final long start = registry.clock().monotonicTime();
-        final Map<String, String> tags = new HashMap<>();
-        tags.put("request", HiveMetrics.exists.name());
+        final long start = registry.clock().wallTime();
         boolean result = false;
         try {
             final Object qResult = jdbcUtil.getJdbcTemplate().queryForObject(SQL_EXIST_TABLE_BY_NAME, Integer.class,
@@ -103,9 +101,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         } catch (DataAccessException e) {
             throw Throwables.propagate(e);
         } finally {
-            final long duration = registry.clock().monotonicTime() - start;
-            log.debug("### Time taken to complete exists is {} ms", duration);
-            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            this.fastServiceMetric.recordTimer(
+                HiveMetrics.TagTableExists.getMetricName(), registry.clock().wallTime() - start);
         }
         return result;
     }
@@ -116,9 +113,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final List<String> uris,
         final boolean prefixSearch
     ) {
-        final long start = registry.clock().monotonicTime();
-        final Map<String, String> tags = new HashMap<>();
-        tags.put("request", HiveMetrics.getTableNames.name());
+        final long start = registry.clock().wallTime();
         // Create the sql
         final StringBuilder queryBuilder = new StringBuilder(SQL_GET_TABLE_NAMES_BY_URI);
         final List<String> params = Lists.newArrayList();
@@ -157,9 +152,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         } catch (DataAccessException e) {
             throw Throwables.propagate(e);
         } finally {
-            final long duration = registry.clock().monotonicTime() - start;
-            log.debug("### Time taken to complete getTableNames is {} ms", duration);
-            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            this.fastServiceMetric.recordTimer(
+                HiveMetrics.TagGetTableNames.getMetricName(), registry.clock().wallTime() - start);
         }
         return result;
     }

@@ -14,6 +14,7 @@
 package com.netflix.metacat.common.server.monitoring;
 
 import com.google.common.collect.ImmutableMap;
+import lombok.Getter;
 
 import java.util.Map;
 
@@ -25,127 +26,126 @@ import java.util.Map;
  * @author zhenl
  * @since 1.0.0
  */
+@Getter
 public enum Metrics {
     /**
-     * General logging constants.
+     * Events.
      */
-    AppPrefix("metacat"),
-
-    /**
-     * Measure types
-     */
-    Count("count"),
-    Gauge("gauge"),
-    Timer("timer"),
-
-    /**
-     * events.
-     */
-    Events("events"),
-    CounterEventAsync(Name(Events, Count, "async")),
-    CounterEventSync(Name(Events, Count, "sync")),
+    CounterEventAsync(Component.events, Type.counter, "async"),
+    CounterEventSync(Component.events, Type.counter, "sync"),
 
     /**
      * thrift request.
      */
-    Thrift("thrift"),
-    CounterThrift(Name(Thrift, Count, "request")),
+    CounterThrift(Component.thrift, Type.counter, "request"),
 
     /**
      * Gauge.
      */
-    PartionService("partitionservice"),
-    GaugeAddPartitions(Name(PartionService, Metrics.Gauge, "partitionAdd")),
-    GaugeDeletePartitions(Name(PartionService, Metrics.Gauge, "partitionDelete")),
-    GaugeGetPartitionsCount(Name(PartionService, Metrics.Gauge, "partitionGet")),
+    GaugeAddPartitions(Component.partionservice, Type.gauge, "partitionAdd"),
+    GaugeDeletePartitions(Component.partionservice, Type.gauge, "partitionDelete"),
+    GaugeGetPartitionsCount(Component.partionservice, Type.gauge, "partitionGet"),
 
     /**
      * metacat request.
      */
-    Server("server"),
-    CounterRequestCount(Name(Server,Count,"request")),
-    CounterRequestFailureCount(Name(Server,Count,"requestfailure")),
-    CounterDeleteMetaData(Name(Server,Count,"deleteMetadata")),
+    CounterRequestCount(Component.server, Type.counter, "request"),
+    CounterRequestFailureCount(Component.server, Type.counter, "requestfailure"),
+    CounterDeleteMetaData(Component.server, Type.counter, "deleteMetadata"),
 
     /**
      * Notifications.
      */
-    Notifications("notifications"),
-    CounterSNSNotificationPartitionAdd(Name(Notifications, Count, "partitionsAdd")),
-    CounterSNSNotificationTablePartitionAdd(Name(Notifications, Count, "table.partitionsAdd")),
-    CounterSNSNotificationPartitionDelete(Name(Notifications, Count, "partitionsDelete")),
-    CounterSNSNotificationTablePartitionDelete(Name(Notifications, Count, "table.partitionsDelete")),
-    CounterSNSNotificationTableCreate(Name(Notifications, Count, "table.Create")),
-    CounterSNSNotificationTableDelete(Name(Notifications, Count, "table.Delete")),
-    CounterSNSNotificationTableRename(Name(Notifications, Count, "table.Rename")),
-    CounterSNSNotificationTableUpdate(Name(Notifications, Count, "table.Update")),
-    CounterSNSNotificationPublishMessageSizeExceeded(Name(Notifications, Count, "publish.message.size.exceeded")),
+    CounterSNSNotificationPartitionAdd(Component.notifications, Type.counter, "partitionsAdd"),
+    CounterSNSNotificationTablePartitionAdd(Component.notifications, Type.counter, "table.partitionsAdd"),
+    CounterSNSNotificationPartitionDelete(Component.notifications, Type.counter, "partitionsDelete"),
+    CounterSNSNotificationTablePartitionDelete(Component.notifications, Type.counter, "table.partitionsDelete"),
+    CounterSNSNotificationTableCreate(Component.notifications, Type.counter, "table.Create"),
+    CounterSNSNotificationTableDelete(Component.notifications, Type.counter, "table.Delete"),
+    CounterSNSNotificationTableRename(Component.notifications, Type.counter, "table.Rename"),
+    CounterSNSNotificationTableUpdate(Component.notifications, Type.counter, "table.Update"),
+    CounterSNSNotificationPublishMessageSizeExceeded(Component.notifications, Type.counter, "publish.message.size.exceeded"),
 
     /**
      * ElasticSearch.
      */
-    ElasticSearch("elasticsearch"),
-    TimerElasticSearchEventsDelay(Name(ElasticSearch, Timer, "events.delay")),
-    TimerElasticSearchDatabaseCreate(Name(ElasticSearch, Timer, "databaseCreate")),
-    TimerElasticSearchDatabaseDelete(Name(ElasticSearch, Timer, "databaseDelete")),
-    TimerElasticSearchTableCreate(Name(ElasticSearch, Timer, "tableCreate")),
-    TimerElasticSearchTableDelete(Name(ElasticSearch, Timer, "tableDelete")),
-    TimerElasticSearchTableSave(Name(ElasticSearch, Timer, "tableSave")),
-    TimerElasticSearchTableRename(Name(ElasticSearch, Timer, "tableRename")),
-    TimerElasticSearchTableUpdate(Name(ElasticSearch, Timer, "tableUpdate")),
-    TimerElasticSearchPartitionSave(Name(ElasticSearch, Timer, "partitionSave")),
-    TimerElasticSearchPartitionDelete(Name(ElasticSearch, Timer, "partitionDelete")),
-    CounterElasticSearchDelete(Name(ElasticSearch, Count, "esDelete")),
-    CounterElasticSearchBulkDelete(Name(ElasticSearch, Count, "esBulkDelete")),
-    CounterElasticSearchUpdate(Name(ElasticSearch, Count, "esUpdate")),
-    CounterElasticSearchBulkUpdate(Name(ElasticSearch, Count, "esBulkUpdate")),
-    CounterElasticSearchSave(Name(ElasticSearch, Count, "esSave")),
-    CounterElasticSearchBulkSave(Name(ElasticSearch, Count, "esBulkSave")),
-    CounterElasticSearchLog(Name(ElasticSearch, Count, "esLog")),
-    CounterElasticSearchRefresh(Name(ElasticSearch, Count, "esRefresh")),
-    CounterElasticSearchRefreshAlreadyRunning(Name(ElasticSearch, Count, "esRefreshAlreadyRunning")),
-    CounterElasticSearchUnmarkedDatabaseThreshholdReached(Name(ElasticSearch, Count, "unmarkedDatabasesThresholdReached")),
-    CounterElasticSearchUnmarkedTableThreshholdReached(Name(ElasticSearch, Count, "unmarkedTablesThresholdReached")),
+    TimerElasticSearchEventsDelay(Component.elasticsearch, Type.timer, "events.delay"),
+    TimerElasticSearchDatabaseCreate(Component.elasticsearch, Type.timer, "databaseCreate"),
+    TimerElasticSearchDatabaseDelete(Component.elasticsearch, Type.timer, "databaseDelete"),
+    TimerElasticSearchTableCreate(Component.elasticsearch, Type.timer, "tableCreate"),
+    TimerElasticSearchTableDelete(Component.elasticsearch, Type.timer, "tableDelete"),
+    TimerElasticSearchTableSave(Component.elasticsearch, Type.timer, "tableSave"),
+    TimerElasticSearchTableRename(Component.elasticsearch, Type.timer, "tableRename"),
+    TimerElasticSearchTableUpdate(Component.elasticsearch, Type.timer, "tableUpdate"),
+    TimerElasticSearchPartitionSave(Component.elasticsearch, Type.timer, "partitionSave"),
+    TimerElasticSearchPartitionDelete(Component.elasticsearch, Type.timer, "partitionDelete"),
+    CounterElasticSearchDelete(Component.elasticsearch, Type.counter, "esDelete"),
+    CounterElasticSearchBulkDelete(Component.elasticsearch, Type.counter, "esBulkDelete"),
+    CounterElasticSearchUpdate(Component.elasticsearch, Type.counter, "esUpdate"),
+    CounterElasticSearchBulkUpdate(Component.elasticsearch, Type.counter, "esBulkUpdate"),
+    CounterElasticSearchSave(Component.elasticsearch, Type.counter, "esSave"),
+    CounterElasticSearchBulkSave(Component.elasticsearch, Type.counter, "esBulkSave"),
+    CounterElasticSearchLog(Component.elasticsearch, Type.counter, "esLog"),
+    CounterElasticSearchRefresh(Component.elasticsearch, Type.counter, "esRefresh"),
+    CounterElasticSearchRefreshAlreadyRunning(Component.elasticsearch, Type.counter, "esRefreshAlreadyRunning"),
+    CounterElasticSearchUnmarkedDatabaseThreshholdReached(Component.elasticsearch, Type.counter, "unmarkedDatabasesThresholdReached"),
+    CounterElasticSearchUnmarkedTableThreshholdReached(Component.elasticsearch, Type.counter, "unmarkedTablesThresholdReached"),
+
 
     /**
      * Jdbc Interceptor
      */
-    JdbcInterceptor("jdbcinterceptor"),
-    GaugeConnectionsTotal(Name(JdbcInterceptor, Gauge, "connections.total")),
-    GaugeConnectionsActive(Name(JdbcInterceptor, Gauge, "connections.active")),
-    GaugeConnectionsIdle(Name(JdbcInterceptor, Gauge, "connections.idle")),
+    GaugeConnectionsTotal(Component.jdbcinterceptor, Type.gauge, "connections.total"),
+    GaugeConnectionsActive(Component.jdbcinterceptor, Type.gauge, "connections.active"),
+    GaugeConnectionsIdle(Component.jdbcinterceptor, Type.gauge, "connections.idle"),
 
     /**
      * Timers.
      */
-    TimerRequest(Name(Server, Timer, "requests")),
-    TimerThriftRequest(Name(Thrift, Timer, "requests")),
-    TimerElasticSearchRefresh(Name(ElasticSearch, Timer, "esRefresh")),
-    TimerNotificationsPublishDelay(Name(Notifications, Timer, "publish.delay")),
-    TimerNotificationsBeforePublishDelay(Name(Notifications, Timer, "before.publish.delay")),
+    TimerRequest(Component.server, Type.timer, "requests"),
+    TimerThriftRequest(Component.server, Type.timer, "requests"),
+    TimerElasticSearchRefresh(Component.server, Type.timer, "esRefresh"),
+    TimerNotificationsPublishDelay(Component.server, Type.timer, "publish.delay"),
+    TimerNotificationsBeforePublishDelay(Component.server, Type.timer, "before.publish.delay"),
 
-    /**
-     * Status.
-     */
-    Status("status"), StatusSuccess("success"), StatusFailure("failure");
+    TagEventsType("metacat.events.type");
 
-    public final static Map<String, String> statusSuccessMap
-        = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusSuccess.name());
-    public final static Map<String, String> statusFailureMap
-        = ImmutableMap.of(Metrics.Status.name(), Metrics.StatusFailure.name());
+    public final static Map<String, String> tagStatusSuccessMap
+        = ImmutableMap.of("status", "success");
+    public final static Map<String, String> tagStatusFailureMap
+        = ImmutableMap.of("status", "failure");
 
-    private final String constant;
 
-    Metrics(final String constant) {
-        this.constant = constant;
+
+    enum Type {
+        counter,
+        gauge,
+        timer
     }
 
-    private static String Name(final Metrics component, final Metrics type, final String measure) {
-        return AppPrefix + "." + component.name() + "." + type.name() + "." + measure;
+    enum Component {
+        metacat,
+        events,
+        thrift,
+        server,
+        notifications,
+        partionservice,
+        elasticsearch,
+        jdbcinterceptor
+    }
+
+    private final String metricName;
+
+    Metrics(final Component component, final Type type, final String measure) {
+        this.metricName = Component.metacat.name() + "." + component.name() + "." + type.name() + "." + measure;
+    }
+
+    Metrics(final String tagName) {
+        this.metricName = tagName;
     }
 
     @Override
     public String toString() {
-        return constant;
+        return metricName;
     }
-}
+    }

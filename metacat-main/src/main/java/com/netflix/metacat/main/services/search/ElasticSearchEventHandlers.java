@@ -77,30 +77,30 @@ public class ElasticSearchEventHandlers {
         this.es = es;
         this.metacatJsonLocator = new MetacatJsonLocator();
         this.config = config;
-        this.databaseCreateEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
-            "metacat.event.type", "database.create");
-        this.databaseCreateTimer = registry.timer(Metrics.TimerElasticSearchDatabaseCreate.name());
-        this.tableCreateEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
-            "metacat.event.type", "table.create");
-        this.tableCreateTimer = registry.timer(Metrics.TimerElasticSearchTableCreate.name());
-        this.databaseDeleteEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
-            "metacat.event.type", "database.delete");
-        this.databaseDeleteTimer = registry.timer(Metrics.TimerElasticSearchDatabaseDelete.name());
-        this.tableDeleteEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
-            "metacat.event.type", "table.delete");
-        this.tableDeleteTimer = registry.timer(Metrics.TimerElasticSearchTableDelete.name());
-        this.partitionDeleteEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
-            "metacat.event.type", "partition.delete");
-        this.partitionDeleteTimer = registry.timer(Metrics.TimerElasticSearchPartitionDelete.name());
-        this.tableRenameEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
-            "metacat.event.type", "table.rename");
-        this.tableRenameTimer = registry.timer(Metrics.TimerElasticSearchTableRename.name());
-        this.tableUpdateEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
-            "metacat.event.type", "table.update");
-        this.tableUpdateTimer = registry.timer(Metrics.TimerElasticSearchTableUpdate.name());
-        this.partitionSaveEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.name(),
-            "metacat.event.type", "partition.save");
-        this.partitionSaveTimer = registry.timer(Metrics.TimerElasticSearchPartitionSave.name());
+        this.databaseCreateEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.getMetricName(),
+            Metrics.TagEventsType.getMetricName(), "database.create");
+        this.databaseCreateTimer = registry.timer(Metrics.TimerElasticSearchDatabaseCreate.getMetricName());
+        this.tableCreateEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.getMetricName(),
+            Metrics.TagEventsType.getMetricName(), "table.create");
+        this.tableCreateTimer = registry.timer(Metrics.TimerElasticSearchTableCreate.getMetricName());
+        this.databaseDeleteEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.getMetricName(),
+            Metrics.TagEventsType.getMetricName(), "database.delete");
+        this.databaseDeleteTimer = registry.timer(Metrics.TimerElasticSearchDatabaseDelete.getMetricName());
+        this.tableDeleteEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.getMetricName(),
+            Metrics.TagEventsType.getMetricName(), "table.delete");
+        this.tableDeleteTimer = registry.timer(Metrics.TimerElasticSearchTableDelete.getMetricName());
+        this.partitionDeleteEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.getMetricName(),
+            Metrics.TagEventsType.getMetricName(), "partition.delete");
+        this.partitionDeleteTimer = registry.timer(Metrics.TimerElasticSearchPartitionDelete.getMetricName());
+        this.tableRenameEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.getMetricName(),
+            Metrics.TagEventsType.getMetricName(), "table.rename");
+        this.tableRenameTimer = registry.timer(Metrics.TimerElasticSearchTableRename.getMetricName());
+        this.tableUpdateEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.getMetricName(),
+            Metrics.TagEventsType.getMetricName(), "table.update");
+        this.tableUpdateTimer = registry.timer(Metrics.TimerElasticSearchTableUpdate.getMetricName());
+        this.partitionSaveEventsDelayTimer = registry.timer(Metrics.TimerElasticSearchEventsDelay.getMetricName(),
+            Metrics.TagEventsType.getMetricName(), "partition.save");
+        this.partitionSaveTimer = registry.timer(Metrics.TimerElasticSearchPartitionSave.getMetricName());
     }
 
     /**

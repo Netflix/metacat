@@ -26,7 +26,6 @@ import com.amazonaws.services.sns.model.PublishResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.diff.JsonDiff;
-import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.TableDto;
@@ -48,17 +47,12 @@ import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.services.notifications.NotificationService;
-import com.netflix.spectator.api.Registry;
-import com.netflix.spectator.api.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 
-import javax.annotation.Nullable;
 import javax.validation.constraints.Size;
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of the NotificationService using Amazon SNS.
@@ -73,34 +67,34 @@ public class SNSNotificationServiceImpl implements NotificationService {
     private final String tableTopicArn;
     private final String partitionTopicArn;
     private final ObjectMapper mapper;
-    private final Registry registry;
     private final Config config;
+    private SNSNotificationMetric notificationMetric;
 
     /**
      * Constructor.
      *
-     * @param client            The SNS client to use to publish notifications
-     * @param tableTopicArn     The topic to publish table related notifications to
-     * @param partitionTopicArn The topic to publish partition related notifications to
-     * @param mapper            The object mapper to use to convert objects to JSON strings
-     * @param registry          The registry handle of spectator
-     * @param config            server configuration
+     * @param client             The SNS client to use to publish notifications
+     * @param tableTopicArn      The topic to publish table related notifications to
+     * @param partitionTopicArn  The topic to publish partition related notifications to
+     * @param mapper             The object mapper to use to convert objects to JSON strings
+     * @param config             The system config
+     * @param notificationMetric The SNS notification metric
      */
     public SNSNotificationServiceImpl(
-         final AmazonSNSAsync client,
-         @Size(min = 1) final String tableTopicArn,
-         @Size(min = 1) final String partitionTopicArn,
-         final ObjectMapper mapper,
-         final Registry registry,
-         final Config config
+        final AmazonSNSAsync client,
+        @Size(min = 1) final String tableTopicArn,
+        @Size(min = 1) final String partitionTopicArn,
+        final ObjectMapper mapper,
+        final Config config,
+        final SNSNotificationMetric notificationMetric
     ) {
 
         this.client = client;
         this.tableTopicArn = tableTopicArn;
         this.partitionTopicArn = partitionTopicArn;
         this.mapper = mapper;
-        this.registry = registry;
         this.config = config;
+        this.notificationMetric = notificationMetric;
     }
 
     /**
@@ -239,7 +233,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 "Unable to publish rename table notification",
                 Metrics.CounterSNSNotificationTableRename.name(), true);
         } catch (final Exception e) {
-            this.handleException(
+            this.notificationMetric.handleException(
                 event.getName(),
                 "Unable to create json patch for rename table notification",
                 Metrics.CounterSNSNotificationTableRename.name(),
@@ -270,7 +264,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 "Unable to publish update table notification",
                 Metrics.CounterSNSNotificationTableUpdate.name(), true);
         } catch (final Exception e) {
-            this.handleException(
+            this.notificationMetric.handleException(
                 event.getName(),
                 "Unable to create json patch for update table notification",
                 Metrics.CounterSNSNotificationTableUpdate.name(),
@@ -278,19 +272,6 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 e
             );
         }
-    }
-
-    private void handleException(
-        final QualifiedName name,
-        final String message,
-        final String counterKey,
-        @Nullable final SNSMessage payload,
-        final Exception e
-    ) {
-        log.error("{} with payload: {}", message, payload, e);
-        final Map<String, String> tags = ImmutableMap.<String, String>builder().putAll(name.parts())
-            .putAll(Metrics.statusFailureMap).build();
-        this.registry.counter(this.registry.createId(counterKey).withTags(tags)).increment();
     }
 
     private UpdateTableMessage createUpdateTableMessage(
@@ -322,11 +303,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final String counterKey,
         final boolean retryOnLongMessage
     ) {
-        registry.timer(
-            Metrics.TimerNotificationsBeforePublishDelay.name(),
-            "metacat.event.type",
-            message.getType().name()
-        ).record(System.currentTimeMillis() - message.getTimestamp(), TimeUnit.MILLISECONDS);
+        this.notificationMetric.recordTime(message, Metrics.TimerNotificationsBeforePublishDelay.getMetricName());
         try {
             final AsyncHandler<PublishRequest, PublishResult> handler =
                 new AsyncHandler<PublishRequest, PublishResult>() {
@@ -335,15 +312,14 @@ public class SNSNotificationServiceImpl implements NotificationService {
                         if (retryOnLongMessage && (exception instanceof InvalidParameterException
                             || exception instanceof InvalidParameterValueException)) {
                             log.error("SNS Publish message exceeded the size threshold", exception);
-                            registry.counter(
-                                registry.createId(Metrics.CounterSNSNotificationPublishMessageSizeExceeded.name()))
-                                .increment();
+                            notificationMetric.counterIncrement(
+                                Metrics.CounterSNSNotificationPublishMessageSizeExceeded.getMetricName());
                             final SNSMessage<Void> voidMessage = new SNSMessage<>(message.getId(),
                                 message.getTimestamp(), message.getRequestId(), message.getType(), message.getName(),
                                 null);
                             publishNotification(arn, voidMessage, name, errorMessage, counterKey, false);
                         } else {
-                            handleException(name, errorMessage, counterKey, message, exception);
+                            notificationMetric.handleException(name, errorMessage, counterKey, message, exception);
                         }
                     }
 
@@ -353,18 +329,14 @@ public class SNSNotificationServiceImpl implements NotificationService {
                             arn, publishResult.getMessageId());
                         log.debug("Successfully published message {} to topic {} with id {}",
                             message, arn, publishResult.getMessageId());
-                        registry.counter(registry.createId(counterKey).withTags(Metrics.statusSuccessMap)).increment();
-                        final Timer timer = registry.timer(
-                            Metrics.TimerNotificationsPublishDelay.name(),
-                            "metacat.event.type",
-                            message.getClass().getName()
-                        );
-                        timer.record(System.currentTimeMillis() - message.getTimestamp(), TimeUnit.MILLISECONDS);
+                        notificationMetric.counterIncrement(counterKey);
+                        notificationMetric.recordTime(message,
+                            Metrics.TimerNotificationsPublishDelay.getMetricName());
                     }
                 };
             client.publishAsync(arn, mapper.writeValueAsString(message), handler);
         } catch (final Exception e) {
-            handleException(name, errorMessage, counterKey, message, e);
+            notificationMetric.handleException(name, errorMessage, counterKey, message, e);
         }
     }
 }

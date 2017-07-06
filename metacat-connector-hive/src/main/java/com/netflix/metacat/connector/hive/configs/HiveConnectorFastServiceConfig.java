@@ -22,6 +22,7 @@ import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -40,6 +41,21 @@ import javax.sql.DataSource;
 public class HiveConnectorFastServiceConfig {
 
     /**
+     * create hive connector fast service metric.
+     *
+     * @param connectorContext connector config
+     * @return HiveConnectorFastServiceMetric
+     */
+    @Bean
+    public HiveConnectorFastServiceMetric hiveConnectorFastServiceMetric(
+        final ConnectorContext connectorContext
+    ) {
+        return new HiveConnectorFastServiceMetric(
+            connectorContext.getRegistry()
+        );
+    }
+
+    /**
      * create hive connector fast partition service.
      *
      * @param metacatHiveClient    hive client
@@ -47,6 +63,7 @@ public class HiveConnectorFastServiceConfig {
      * @param threadServiceManager thread service manager
      * @param connectorContext     connector config
      * @param dataSource           data source
+     * @param serviceMetric        fast service metric
      * @return HiveConnectorPartitionService
      */
     @Bean
@@ -55,7 +72,8 @@ public class HiveConnectorFastServiceConfig {
         final HiveConnectorInfoConverter hiveMetacatConverter,
         final ThreadServiceManager threadServiceManager,
         final ConnectorContext connectorContext,
-        @Qualifier("hiveDataSource") final DataSource dataSource
+        @Qualifier("hiveDataSource") final DataSource dataSource,
+        final HiveConnectorFastServiceMetric serviceMetric
     ) {
         return new HiveConnectorFastPartitionService(
             connectorContext.getCatalogName(),
@@ -63,7 +81,8 @@ public class HiveConnectorFastServiceConfig {
             hiveMetacatConverter,
             connectorContext,
             threadServiceManager,
-            dataSource
+            dataSource,
+            serviceMetric
         );
     }
 
@@ -75,6 +94,7 @@ public class HiveConnectorFastServiceConfig {
      * @param hiveConnectorDatabaseService hive database service
      * @param connectorContext             server context
      * @param dataSource                   data source
+     * @param serviceMetric                fast service metric
      * @return HiveConnectorFastTableService
      */
     @Bean
@@ -83,7 +103,8 @@ public class HiveConnectorFastServiceConfig {
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final ConnectorContext connectorContext,
-        @Qualifier("hiveDataSource") final DataSource dataSource
+        @Qualifier("hiveDataSource") final DataSource dataSource,
+        final HiveConnectorFastServiceMetric serviceMetric
     ) {
         return new HiveConnectorFastTableService(
             connectorContext.getCatalogName(),
@@ -91,7 +112,8 @@ public class HiveConnectorFastServiceConfig {
             hiveConnectorDatabaseService,
             hiveMetacatConverters,
             connectorContext,
-            dataSource
+            dataSource,
+            serviceMetric
         );
     }
 }
