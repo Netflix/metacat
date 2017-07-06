@@ -1710,7 +1710,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             throw e;
         } catch (Exception e) {
             registry.counter(registry.createId(Metrics.CounterThrift.getMetricName() + "." + methodName)
-                .withTags(Metrics.statusFailureMap)).increment();
+                .withTags(Metrics.tagStatusFailureMap)).increment();
             final String message = String.format("%s -- %s failed", e.getMessage(), methodName);
             log.error(message, e);
             final MetaException me = new MetaException(message);

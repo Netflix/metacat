@@ -113,7 +113,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void createDatabase(final Database database) throws TException {
-        callWrap(HiveMetrics.createDatabase.getMetricName(), () -> {
+        callWrap(HiveMetrics.TagCreateDatabase.getMetricName(), () -> {
             handler.create_database(database);
             return null;
         });
@@ -124,7 +124,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void createTable(final Table table) throws TException {
-        callWrap(HiveMetrics.createTable.getMetricName(), () -> {
+        callWrap(HiveMetrics.TagCreateTable.getMetricName(), () -> {
             handler.create_table(table);
             return null;
         });
@@ -135,7 +135,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void dropDatabase(final String dbName) throws TException {
-        callWrap(HiveMetrics.dropDatabase.getMetricName(), () -> {
+        callWrap(HiveMetrics.TagDropDatabase.getMetricName(), () -> {
             handler.drop_database(dbName, false, false);
             return null;
         });
@@ -155,7 +155,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     private void dropHivePartitions(final String dbName, final String tableName,
                                     final List<String> partitionNames)
         throws TException {
-        callWrap(HiveMetrics.dropHivePartitions.getMetricName(), () -> {
+        callWrap(HiveMetrics.TagDropHivePartitions.getMetricName(), () -> {
             final List<List<String>> dropParts = new ArrayList<>();
             for (String partName : partitionNames) {
                 dropParts.add(new ArrayList<>(PartitionUtil.getPartitionKeyValues(partName).values()));
@@ -171,7 +171,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     @Override
     public void alterDatabase(final String databaseName,
                               final Database database) throws TException {
-        callWrap(HiveMetrics.alterDatabase.getMetricName(), () -> {
+        callWrap(HiveMetrics.TagAlterDatabase.getMetricName(), () -> {
             handler.alter_database(databaseName, database);
             return null;
         });
@@ -182,7 +182,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public List<String> getAllDatabases() throws TException {
-        return callWrap(HiveMetrics.getAllDatabases.getMetricName(), handler::get_all_databases);
+        return callWrap(HiveMetrics.TagGetAllDatabases.getMetricName(), handler::get_all_databases);
     }
 
     /**
@@ -198,7 +198,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public Database getDatabase(final String databaseName) throws TException {
-        return callWrap(HiveMetrics.getDatabase.getMetricName(), () -> handler.get_database(databaseName));
+        return callWrap(HiveMetrics.TagGetDatabase.getMetricName(), () -> handler.get_database(databaseName));
     }
 
     /**
@@ -206,7 +206,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     @Override
     public List<String> getAllTables(final String databaseName) throws TException {
-        return callWrap(HiveMetrics.getAllTables.getMetricName(), () -> {
+        return callWrap(HiveMetrics.TagGetAllTables.getMetricName(), () -> {
             final List<String> tables = handler.get_all_tables(databaseName);
             if (tables.isEmpty()) {
                 handler.get_database(databaseName);
@@ -221,11 +221,11 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     @Override
     public Table getTableByName(final String databaseName,
                                 final String tableName) throws TException {
-        return callWrap(HiveMetrics.getTableByName.getMetricName(), () -> loadTable(databaseName, tableName));
+        return callWrap(HiveMetrics.TagGetTableByName.getMetricName(), () -> loadTable(databaseName, tableName));
     }
 
     private Table loadTable(final String dbName, final String tableName) throws TException {
-        return callWrap(HiveMetrics.loadTable.getMetricName(), () -> handler.get_table(dbName, tableName));
+        return callWrap(HiveMetrics.TagLoadTable.getMetricName(), () -> handler.get_table(dbName, tableName));
     }
 
     /**
@@ -235,7 +235,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public void alterTable(final String databaseName,
                            final String tableName,
                            final Table table) throws TException {
-        callWrap(HiveMetrics.alterTable.getMetricName(), () -> {
+        callWrap(HiveMetrics.TagAlterTable.getMetricName(), () -> {
             handler.alter_table(databaseName, tableName, table);
             return null;
         });
@@ -248,7 +248,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public void alterPartitions(final String dbName,
                                 final String tableName,
                                 final List<Partition> partitions) throws TException {
-        callWrap(HiveMetrics.alterPartitions.getMetricName(), () -> {
+        callWrap(HiveMetrics.TagAlterPartitions.getMetricName(), () -> {
             handler.alter_partitions(dbName, tableName, partitions);
             return null;
         });
@@ -262,7 +262,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
                                   final String tableName,
                                   final List<Partition> addParts,
                                   final List<String> dropPartNames) throws TException {
-        callWrap(HiveMetrics.addDropPartitions.getMetricName(), () -> {
+        callWrap(HiveMetrics.TagAddDropPartitions.getMetricName(), () -> {
             final List<List<String>> dropParts = new ArrayList<>();
             for (String partName : dropPartNames) {
                 dropParts.add(new ArrayList<>(PartitionUtil.getPartitionKeyValues(partName).values()));
@@ -278,7 +278,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     @Override
     public void dropTable(final String databaseName,
                           final String tableName) throws TException {
-        callWrap(HiveMetrics.dropTable.getMetricName(), () -> {
+        callWrap(HiveMetrics.TagDropTable.getMetricName(), () -> {
             handler.drop_table(databaseName, tableName, false);
             return null;
         });
@@ -293,7 +293,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
                        final String oldTableName,
                        final String newdatabadeName,
                        final String newTableName) throws TException {
-        callWrap(HiveMetrics.rename.getMetricName(), () -> {
+        callWrap(HiveMetrics.TagRename.getMetricName(), () -> {
             final Table table = new Table(loadTable(databaseName, oldTableName));
             table.setDbName(newdatabadeName);
             table.setTableName(newTableName);
@@ -310,7 +310,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public List<Partition> getPartitions(final String databaseName,
                                          final String tableName,
                                          @Nullable final List<String> partitionNames) throws TException {
-        return callWrap(HiveMetrics.getPartitions.getMetricName(), () -> {
+        return callWrap(HiveMetrics.TagGetPartitions.getMetricName(), () -> {
             if (partitionNames != null && !partitionNames.isEmpty()) {
                 return handler.get_partitions_by_names(databaseName, tableName, partitionNames);
             }
@@ -325,7 +325,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public int getPartitionCount(final String databaseName,
                                  final String tableName) throws TException {
 
-        return callWrap(HiveMetrics.getPartitionCount.getMetricName(),
+        return callWrap(HiveMetrics.TagGetPartitionCount.getMetricName(),
             () -> getPartitions(databaseName, tableName, null).size());
     }
 
@@ -337,7 +337,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     public List<String> getPartitionNames(final String databaseName,
                                           final String tableName)
         throws TException {
-        return callWrap(HiveMetrics.getPartitionNames.getMetricName(),
+        return callWrap(HiveMetrics.TagGetPartitionNames.getMetricName(),
             () -> handler.get_partition_names(databaseName, tableName, ALL_RESULTS));
     }
 
@@ -350,7 +350,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
                                                   final String tableName,
                                                   final String filter
     ) throws TException {
-        return callWrap(HiveMetrics.listPartitionsByFilter.getMetricName(),
+        return callWrap(HiveMetrics.TagListPartitionsByFilter.getMetricName(),
             () -> handler.get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS));
     }
 

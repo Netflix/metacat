@@ -41,20 +41,24 @@ public class ElasticSearchMetric {
      */
     public ElasticSearchMetric(final Registry registry) {
         this.elasticSearchDeleteFailureCounter = registry.counter(
-            registry.createId(Metrics.CounterElasticSearchDelete.getMetricName()).withTags(Metrics.statusFailureMap));
+            registry.createId(Metrics.CounterElasticSearchDelete.getMetricName())
+                .withTags(Metrics.tagStatusFailureMap));
         this.elasticSearchBulkDeleteFailureCounter = registry.counter(
             registry.createId(
-                Metrics.CounterElasticSearchBulkDelete.getMetricName()).withTags(Metrics.statusFailureMap));
+                Metrics.CounterElasticSearchBulkDelete.getMetricName())
+                .withTags(Metrics.tagStatusFailureMap));
         this.elasticSearchUpdateFailureCounter = registry.counter(
-            registry.createId(Metrics.CounterElasticSearchUpdate.getMetricName()).withTags(Metrics.statusFailureMap));
+            registry.createId(Metrics.CounterElasticSearchUpdate.getMetricName())
+                .withTags(Metrics.tagStatusFailureMap));
         this.elasticSearchBulkUpdateFailureCounter = registry.counter(
             registry.createId(
-                Metrics.CounterElasticSearchBulkUpdate.getMetricName()).withTags(Metrics.statusFailureMap));
+                Metrics.CounterElasticSearchBulkUpdate.getMetricName()).withTags(Metrics.tagStatusFailureMap));
         this.elasticSearchLogFailureCounter = registry.counter(
-            registry.createId(Metrics.CounterElasticSearchLog.getMetricName()).withTags(Metrics.statusFailureMap));
+            registry.createId(Metrics.CounterElasticSearchLog.getMetricName()).withTags(Metrics.tagStatusFailureMap));
         this.elasticSearchSaveFailureCounter = registry.counter(
-            registry.createId(Metrics.CounterElasticSearchSave.getMetricName()).withTags(Metrics.statusFailureMap));
+            registry.createId(Metrics.CounterElasticSearchSave.getMetricName()).withTags(Metrics.tagStatusFailureMap));
         this.elasticSearchBulkSaveFailureCounter = registry.counter(
-            registry.createId(Metrics.CounterElasticSearchBulkSave.getMetricName()).withTags(Metrics.statusFailureMap));
+            registry.createId(Metrics.CounterElasticSearchBulkSave.getMetricName())
+                .withTags(Metrics.tagStatusFailureMap));
     }
 }

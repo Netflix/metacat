@@ -173,7 +173,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             throw new ConnectorException("getPartitionCount", e);
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.getPartitionCount.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagGetPartitionCount.getMetricName(), registry.clock().wallTime() - start);
         }
         return result;
     }
@@ -200,7 +200,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             );
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.getPartitions.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagGetPartitions.getMetricName(), registry.clock().wallTime() - start);
         }
     }
 
@@ -259,7 +259,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                 null, partitionNames, SQL_GET_PARTITIONS_WITH_KEY, handler, sort, pageable);
         }
         this.fastServiceMetric.recordTimer(
-            HiveMetrics.getPartitionKeys.getMetricName(), registry.clock().wallTime() - start);
+            HiveMetrics.TagGetPartitionKeys.getMetricName(), registry.clock().wallTime() - start);
         return result;
     }
 
@@ -316,7 +316,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             Throwables.propagate(e);
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.getPartitionNames.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagGetPartitionNames.getMetricName(), registry.clock().wallTime() - start);
         }
         return result;
     }

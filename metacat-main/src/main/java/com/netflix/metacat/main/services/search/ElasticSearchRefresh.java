@@ -319,7 +319,7 @@ public class ElasticSearchRefresh {
             } catch (Exception e) {
                 log.error("Full refresh of metacat index failed", e);
                 registry.counter(registry.createId(Metrics.CounterElasticSearchRefresh.getMetricName())
-                    .withTags(Metrics.statusFailureMap)).increment();
+                    .withTags(Metrics.tagStatusFailureMap)).increment();
             } finally {
                 try {
                     shutdown(service);

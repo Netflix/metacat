@@ -17,7 +17,6 @@
 
 package com.netflix.metacat.connector.hive.monitoring;
 
-import com.netflix.metacat.common.server.monitoring.Metrics;
 import lombok.Getter;
 
 /**
@@ -32,60 +31,64 @@ public enum HiveMetrics {
     /**
      * hive sql lock error.
      */
-    Hive("hive"),
-    CounterHiveSqlLockError(Name(Hive, Metrics.Count, "hiveSqlLockError")),
-    CounterHiveExperimentGetTablePartitionsFailure(Name(Hive, Metrics.Count, "experimentGetPartitionsFailure")),
+    CounterHiveSqlLockError(Type.counter, "hiveSqlLockError"),
+    CounterHiveExperimentGetTablePartitionsFailure(Type.counter,"experimentGetPartitionsFailure"),
 
     /**
      * Gauge.
      */
-    GaugeAddPartitions(Name(Hive, Metrics.Gauge, "partitionAdd")),
-    GaugeDeletePartitions(Name(Hive, Metrics.Gauge, "partitionDelete")),
-    GaugeGetPartitionsCount(Name(Hive, Metrics.Gauge, "partitionGet")),
+    GaugeAddPartitions(Type.gauge, "partitionAdd"),
+    GaugeDeletePartitions(Type.gauge, "partitionDelete"),
+    GaugeGetPartitionsCount(Type.gauge, "partitionGet"),
 
     /**
      * Timer.
      */
-    TimerHiveRequest(Name(Hive, Metrics.Timer, "embeddedclient.requests")), TimerFastHiveRequest(Name(Hive, Metrics.Timer, "fast.requests")),
+    TimerHiveRequest(Type.timer, "embeddedclient.requests"), TimerFastHiveRequest(Type.timer, "fast.requests"),
 
     /**
      * hive function names.
      */
-    createDatabase("createDatabase"),
-    createTable("createTable"),
-    dropDatabase("dropDatabase"),
-    dropHivePartitions("dropHivePartitions"),
-    alterDatabase("alterDatabase"),
-    getAllDatabases("getAllDatabases"),
-    getDatabase("getDatabase"),
-    getAllTables("getAllTables"),
-    getTableByName("getTableByName"),
-    loadTable("loadTable"),
-    alterTable("alterTable"),
-    alterPartitions("alterPartitions"),
-    addDropPartitions("addDropPartitions"),
-    dropTable("dropTable"),
-    rename("rename"),
-    listPartitionsByFilter("listPartitionsByFilter"),
-    getPartitions("getPartitions"),
-    getPartitionCount("getPartitionCount"),
-    getPartitionKeys("getPartitionKeys"),
-    getPartitionNames("getPartitionNames"),
-    getTableNames("getTableNames"),
-    tableExists("tableExists");
+    TagCreateDatabase("createDatabase"),
+    TagCreateTable("createTable"),
+    TagDropDatabase("dropDatabase"),
+    TagDropHivePartitions("dropHivePartitions"),
+    TagAlterDatabase("alterDatabase"),
+    TagGetAllDatabases("getAllDatabases"),
+    TagGetDatabase("getDatabase"),
+    TagGetAllTables("getAllTables"),
+    TagGetTableByName("getTableByName"),
+    TagLoadTable("loadTable"),
+    TagAlterTable("alterTable"),
+    TagAlterPartitions("alterPartitions"),
+    TagAddDropPartitions("addDropPartitions"),
+    TagDropTable("dropTable"),
+    TagRename("rename"),
+    TagListPartitionsByFilter("listPartitionsByFilter"),
+    TagGetPartitions("getPartitions"),
+    TagGetPartitionCount("getPartitionCount"),
+    TagGetPartitionKeys("getPartitionKeys"),
+    TagGetPartitionNames("getPartitionNames"),
+    TagGetTableNames("getTableNames"),
+    TagTableExists("tableExists");
+
+    enum Type {
+        counter,
+        gauge,
+        timer
+    }
 
     private final String metricName;
 
-    HiveMetrics(final String constant) {
-        this.metricName = constant;
+    HiveMetrics(final Type type, final String measure) {
+        this.metricName = "metacat.hive." + type.name() + "." + type.name() + "." + measure;
+    }
+    HiveMetrics(final String name) {
+        this.metricName = name;
     }
 
     @Override
     public String toString() {
         return metricName;
-    }
-
-    private static String Name(final HiveMetrics component, final Metrics type, final String measure) {
-        return Metrics.AppPrefix + "." + component.name() + "." + type.name() + "." + measure;
     }
 }

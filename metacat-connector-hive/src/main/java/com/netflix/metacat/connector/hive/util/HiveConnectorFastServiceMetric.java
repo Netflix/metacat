@@ -45,18 +45,18 @@ public class HiveConnectorFastServiceMetric {
      * @param registry the spectator registry
      */
     public HiveConnectorFastServiceMetric(final Registry registry) {
-        timerMap.put(HiveMetrics.getPartitionCount.getMetricName(), createTimer(registry,
-            HiveMetrics.getPartitionCount.getMetricName()));
-        timerMap.put(HiveMetrics.getPartitions.getMetricName(), createTimer(registry,
-            HiveMetrics.getPartitions.getMetricName()));
-        timerMap.put(HiveMetrics.getPartitionKeys.getMetricName(), createTimer(registry,
-            HiveMetrics.getPartitionKeys.getMetricName()));
-        timerMap.put(HiveMetrics.getPartitionNames.getMetricName(), createTimer(registry,
-            HiveMetrics.getPartitionNames.getMetricName()));
-        timerMap.put(HiveMetrics.tableExists.getMetricName(), createTimer(registry,
-            HiveMetrics.tableExists.getMetricName()));
-        timerMap.put(HiveMetrics.getPartitionNames.getMetricName(), createTimer(registry,
-            HiveMetrics.getTableNames.getMetricName()));
+        timerMap.put(HiveMetrics.TagGetPartitionCount.getMetricName(), createTimer(registry,
+            HiveMetrics.TagGetPartitionCount.getMetricName()));
+        timerMap.put(HiveMetrics.TagGetPartitions.getMetricName(), createTimer(registry,
+            HiveMetrics.TagGetPartitions.getMetricName()));
+        timerMap.put(HiveMetrics.TagGetPartitionKeys.getMetricName(), createTimer(registry,
+            HiveMetrics.TagGetPartitionKeys.getMetricName()));
+        timerMap.put(HiveMetrics.TagGetPartitionNames.getMetricName(), createTimer(registry,
+            HiveMetrics.TagGetPartitionNames.getMetricName()));
+        timerMap.put(HiveMetrics.TagTableExists.getMetricName(), createTimer(registry,
+            HiveMetrics.TagTableExists.getMetricName()));
+        timerMap.put(HiveMetrics.TagGetTableNames.getMetricName(), createTimer(registry,
+            HiveMetrics.TagGetTableNames.getMetricName()));
 
         getHiveTablePartsFailureCounter = registry.counter(
             HiveMetrics.CounterHiveExperimentGetTablePartitionsFailure.getMetricName());

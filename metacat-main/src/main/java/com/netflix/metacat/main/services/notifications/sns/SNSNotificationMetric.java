@@ -55,22 +55,22 @@ public class SNSNotificationMetric {
         this.registry = registry;
         this.counterHashMap.put(Metrics.CounterSNSNotificationTablePartitionAdd.getMetricName(),
             registry.counter(registry.createId(Metrics.CounterSNSNotificationTablePartitionAdd.getMetricName())
-                .withTags(Metrics.statusSuccessMap)));
+                .withTags(Metrics.tagStatusSuccessMap)));
         this.counterHashMap.put(Metrics.CounterSNSNotificationPartitionDelete.getMetricName(),
             registry.counter(registry.createId(Metrics.CounterSNSNotificationPartitionDelete.getMetricName())
-                .withTags(Metrics.statusSuccessMap)));
+                .withTags(Metrics.tagStatusSuccessMap)));
         this.counterHashMap.put(Metrics.CounterSNSNotificationTableCreate.getMetricName(),
             registry.counter(registry.createId(Metrics.CounterSNSNotificationTableCreate.getMetricName())
-                .withTags(Metrics.statusSuccessMap)));
+                .withTags(Metrics.tagStatusSuccessMap)));
         this.counterHashMap.put(Metrics.CounterSNSNotificationTableDelete.getMetricName(),
             registry.counter(registry.createId(Metrics.CounterSNSNotificationTableDelete.getMetricName())
-                .withTags(Metrics.statusSuccessMap)));
+                .withTags(Metrics.tagStatusSuccessMap)));
         this.counterHashMap.put(Metrics.CounterSNSNotificationTableRename.getMetricName(),
             registry.counter(registry.createId(Metrics.CounterSNSNotificationTableRename.getMetricName())
-                .withTags(Metrics.statusSuccessMap)));
+                .withTags(Metrics.tagStatusSuccessMap)));
         this.counterHashMap.put(Metrics.CounterSNSNotificationTableUpdate.getMetricName(),
             registry.counter(registry.createId(Metrics.CounterSNSNotificationTableUpdate.getMetricName())
-                .withTags(Metrics.statusSuccessMap)));
+                .withTags(Metrics.tagStatusSuccessMap)));
         this.counterHashMap.put(Metrics.CounterSNSNotificationPublishMessageSizeExceeded.getMetricName(),
             registry.counter(
                 registry.createId(Metrics.CounterSNSNotificationPublishMessageSizeExceeded.getMetricName())));
@@ -93,7 +93,7 @@ public class SNSNotificationMetric {
     ) {
         log.error("{} with payload: {}", message, payload, e);
         final Map<String, String> tags = new HashMap<>(name.parts());
-        tags.putAll(Metrics.statusFailureMap);
+        tags.putAll(Metrics.tagStatusFailureMap);
         this.registry.counter(this.registry.createId(counterKey).withTags(tags)).increment();
     }
 

@@ -102,7 +102,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             throw Throwables.propagate(e);
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.tableExists.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagTableExists.getMetricName(), registry.clock().wallTime() - start);
         }
         return result;
     }
@@ -153,7 +153,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             throw Throwables.propagate(e);
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.getTableNames.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagGetTableNames.getMetricName(), registry.clock().wallTime() - start);
         }
         return result;
     }
