@@ -17,7 +17,6 @@
  */
 package com.netflix.metacat.main.configs;
 
-import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.properties.Config;
@@ -27,7 +26,6 @@ import com.netflix.metacat.common.server.usermetadata.DefaultUserMetadataService
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
-import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.main.manager.CatalogManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
@@ -61,56 +59,35 @@ import org.springframework.context.annotation.Configuration;
 public class ServicesConfig {
 
     /**
-     * User Metadata service.
+     * No-op User Metadata service.
      *
-     * @param dataSourceManager The datasource manager to use
-     * @param config            System config to use
-     * @param metacatJson       Json Utilities to use
      * @return User metadata service based on MySql
      */
     @Bean
-    @ConditionalOnMissingBean
-    public UserMetadataService userMetadataService(
-        final DataSourceManager dataSourceManager,
-        final Config config,
-        final MetacatJson metacatJson
-    ) {
+    @ConditionalOnMissingBean(UserMetadataService.class)
+    public UserMetadataService userMetadataService() {
         return new DefaultUserMetadataService();
     }
 
     /**
-     * Tag service.
+     * No-op Tag service.
      *
-     * @param dataSourceManager The datasource manager to use
-     * @param config            System config to use
-     * @param metacatJson       Json Utilities to use
      * @return User metadata service based on MySql
      */
     @Bean
-    @ConditionalOnMissingBean
-    public TagService tagService(
-        final DataSourceManager dataSourceManager,
-        final Config config,
-        final MetacatJson metacatJson
-    ) {
+    @ConditionalOnMissingBean(TagService.class)
+    public TagService tagService() {
         return new DefaultTagService();
     }
 
     /**
-     * Look up service.
+     * No-op Look up service.
      *
-     * @param dataSourceManager The datasource manager to use
-     * @param config            System config to use
-     * @param metacatJson       Json Utilities to use
      * @return User metadata service based on MySql
      */
     @Bean
-    @ConditionalOnMissingBean
-    public LookupService lookupService(
-        final DataSourceManager dataSourceManager,
-        final Config config,
-        final MetacatJson metacatJson
-    ) {
+    @ConditionalOnMissingBean(LookupService.class)
+    public LookupService lookupService() {
         return new DefaultLookupService();
     }
 

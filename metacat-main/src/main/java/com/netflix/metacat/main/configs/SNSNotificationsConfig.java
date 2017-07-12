@@ -17,8 +17,9 @@
  */
 package com.netflix.metacat.main.configs;
 
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.sns.AmazonSNSAsync;
-import com.amazonaws.services.sns.AmazonSNSAsyncClientBuilder;
+import com.amazonaws.services.sns.AmazonSNSAsyncClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.netflix.metacat.common.server.properties.Config;
@@ -54,7 +55,7 @@ public class SNSNotificationsConfig {
      * @return JSON object mapper
      */
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(ObjectMapper.class)
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
     }
@@ -68,14 +69,12 @@ public class SNSNotificationsConfig {
      */
     //TODO: See what spring-cloud-aws would provide automatically...
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(AmazonSNSAsync.class)
     public AmazonSNSAsync amazonSNS(final Config config, final Registry registry) {
-        return AmazonSNSAsyncClientBuilder.standard().withExecutorFactory(() -> {
-            final ExecutorService executor = Executors.newFixedThreadPool(config.getSNSClientThreadCount(),
-                new ThreadFactoryBuilder().setNameFormat("metacat-sns-pool-%d").build());
-            RegistryUtil.registerThreadPool(registry, "metacat-sns-pool", (ThreadPoolExecutor) executor);
-            return executor;
-        }).build();
+        final ExecutorService executor = Executors.newFixedThreadPool(config.getSNSClientThreadCount(),
+            new ThreadFactoryBuilder().setNameFormat("metacat-sns-pool-%d").build());
+        RegistryUtil.registerThreadPool(registry, "metacat-sns-pool", (ThreadPoolExecutor) executor);
+        return new AmazonSNSAsyncClient(DefaultAWSCredentialsProviderChain.getInstance(), executor);
     }
 
     /**
