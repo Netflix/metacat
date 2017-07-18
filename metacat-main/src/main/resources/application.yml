@@ -41,3 +41,7 @@ server:
 spring:
   application:
     name: metacat
+  jackson:
+    default-property-inclusion: always
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: false

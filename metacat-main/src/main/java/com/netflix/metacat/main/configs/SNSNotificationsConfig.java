@@ -50,17 +50,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class SNSNotificationsConfig {
 
     /**
-     * An object mapper bean to use if none already exists.
-     *
-     * @return JSON object mapper
-     */
-    @Bean
-    @ConditionalOnMissingBean(ObjectMapper.class)
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
-    }
-
-    /**
      * If SNS notifications are desired and no existing client has been created elsewhere
      * in the application create a default client here.
      * @param config       The system configuration abstraction to use

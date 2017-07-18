@@ -69,6 +69,6 @@ public abstract class BaseDto implements Serializable {
      */
     @Override
     public String toString() {
-        return new MetacatJsonLocator().toJsonString(this);
+        return METACAT_JSON_LOCATOR.toJsonString(this);
     }
 }
