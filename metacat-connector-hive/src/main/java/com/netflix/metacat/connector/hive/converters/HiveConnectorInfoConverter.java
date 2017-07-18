@@ -345,25 +345,24 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
             return new StorageDescriptor(
                     Collections.emptyList(),
                     "",
-                    "",
-                    "",
+                    null,
+                   null,
                     false,
                     0,
-                    new SerDeInfo("", "", new HashMap<>()),
+                    new SerDeInfo("", null, new HashMap<>()),
                     Collections.emptyList(),
                     Collections.emptyList(),
                     new HashMap<>());
         }
         // Set all required fields to a non-null value
-        final String inputFormat = notNull(storageInfo.getInputFormat()) ? storageInfo.getInputFormat() : "";
+        final String inputFormat = storageInfo.getInputFormat();
         final String location = notNull(storageInfo.getUri()) ? storageInfo.getUri() : "";
-        final String outputFormat = notNull(storageInfo.getOutputFormat()) ? storageInfo.getOutputFormat() : "";
+        final String outputFormat = storageInfo.getOutputFormat();
         final Map<String, String> sdParams = notNull(storageInfo.getParameters())
                 ? storageInfo.getParameters() : new HashMap<>();
         final Map<String, String> serdeParams = notNull(storageInfo.getSerdeInfoParameters())
                 ? storageInfo.getSerdeInfoParameters() : new HashMap<>();
-        final String serializationLib = notNull(storageInfo.getSerializationLib())
-                ? storageInfo.getSerializationLib() : "";
+        final String serializationLib = storageInfo.getSerializationLib();
         return new StorageDescriptor(
                 cols,
                 location,

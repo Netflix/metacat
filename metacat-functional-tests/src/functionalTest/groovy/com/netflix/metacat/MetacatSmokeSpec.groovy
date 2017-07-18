@@ -253,6 +253,11 @@ class MetacatSmokeSpec extends Specification {
             if (!setUri) {
                 tableDto.getSerde().setUri(null)
             }
+            if(setNull) {
+                tableDto.getSerde().setInputFormat(null)
+                tableDto.getSerde().setOutputFormat(null)
+                tableDto.getSerde().setSerializationLib(null)
+            }
             api.createTable(catalogName, databaseName, tableName, tableDto)
             tableDto.getSerde().setUri(updatedUri)
             api.updateTable(catalogName, databaseName, tableName, tableDto)
@@ -274,13 +279,15 @@ class MetacatSmokeSpec extends Specification {
             api.deleteTable(catalogName, databaseName, tableName)
         }
         where:
-        catalogName                | databaseName  | tableName           | setUri | error
-        'embedded-hive-metastore'  | 'smoke_db1'   | 'test_create_table' | true   | null
-        'embedded-hive-metastore'  | 'smoke_db1'   | 'test_create_table' | false  | null
-        'hive-metastore'           | 'hsmoke_db1'  | 'test_create_table' | true   | null
-        'hive-metastore'           | 'hsmoke_db1'  | 'test_create_table' | false  | null
-        's3-mysql-db'              | 'smoke_db1'   | 'test_create_table' | true   | null
-        'invalid-catalog'          | 'smoke_db1'   | 'z'                 | true   | MetacatNotFoundException.class
+        catalogName                | databaseName  | tableName           | setUri | setNull| error
+        'embedded-hive-metastore'  | 'smoke_db1'   | 'test_create_table' | true   | false  | null
+        'embedded-hive-metastore'  | 'smoke_db1'   | 'test_create_table' | false  | false  | null
+        'embedded-hive-metastore'  | 'smoke_db1'   | 'test_create_table1'| false  | true   | null
+        'hive-metastore'           | 'hsmoke_db1'  | 'test_create_table' | true   | false  | null
+        'hive-metastore'           | 'hsmoke_db1'  | 'test_create_table' | false  | false  | null
+        'hive-metastore'           | 'hsmoke_db1'  | 'test_create_table1'| false  | true   | null
+        's3-mysql-db'              | 'smoke_db1'   | 'test_create_table' | true   | false  | null
+        'invalid-catalog'          | 'smoke_db1'   | 'z'                 | true   | false  | MetacatNotFoundException.class
     }
 
     /**
