@@ -132,11 +132,11 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         table.sd != null
         table.sd.cols != null
         table.sd.location != null
-        table.sd.inputFormat != null
-        table.sd.outputFormat != null
+        table.sd.inputFormat == null
+        table.sd.outputFormat == null
         table.sd.serdeInfo != null
         table.sd.serdeInfo.name != null
-        table.sd.serdeInfo.serializationLib != null
+        table.sd.serdeInfo.serializationLib == null
         table.sd.serdeInfo.parameters != null
         table.sd.bucketCols != null
         table.sd.sortCols != null
@@ -288,11 +288,11 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         partition.sd != null
         partition.sd.cols != null
         partition.sd.location != null
-        partition.sd.inputFormat != null
-        partition.sd.outputFormat != null
+        partition.sd.inputFormat == null
+        partition.sd.outputFormat == null
         partition.sd.serdeInfo != null
         partition.sd.serdeInfo.name != null
-        partition.sd.serdeInfo.serializationLib != null
+        partition.sd.serdeInfo.serializationLib == null
         partition.sd.serdeInfo.parameters != null
         partition.sd.bucketCols != null
         partition.sd.sortCols != null

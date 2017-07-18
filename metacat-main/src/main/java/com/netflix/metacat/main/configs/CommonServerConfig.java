@@ -17,6 +17,9 @@
  */
 package com.netflix.metacat.main.configs;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonLocator;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
@@ -29,9 +32,11 @@ import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.RegistryUtil;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.spectator.api.Registry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -46,6 +51,20 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  */
 @Configuration
 public class CommonServerConfig {
+
+    /**
+     * An object mapper bean to use if none already exists.
+     *
+     * @return JSON object mapper
+     */
+    @Primary
+    @Bean
+    @ConditionalOnMissingBean(ObjectMapper.class)
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .setSerializationInclusion(JsonInclude.Include.ALWAYS);
+    }
 
     /**
      * Metacat JSON Handler.
