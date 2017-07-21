@@ -15,6 +15,7 @@ package com.netflix.metacat.metadata.mysql;
 
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
@@ -93,12 +94,15 @@ public class MySqlUserMetadataConfig {
      * mySql DataSource.
      *
      * @param dataSourceManager data source manager
+     * @param metacatProperties metacat properties
      * @return data source
      * @throws Exception exception
      */
     @Bean
-    public DataSource mySqlDataSource(final DataSourceManager dataSourceManager) throws Exception {
-        MySqlServiceUtil.loadMySqlDataSource(dataSourceManager);
+    public DataSource mySqlDataSource(final DataSourceManager dataSourceManager,
+        final MetacatProperties metacatProperties) throws Exception {
+        MySqlServiceUtil.loadMySqlDataSource(dataSourceManager,
+            metacatProperties.getUsermetadata().getConfig().getLocation());
         return dataSourceManager.get(UserMetadataService.NAME_DATASOURCE);
     }
 
