@@ -48,7 +48,7 @@ class BaseSpec extends Specification {
         setupMysql()
 
         // TODO: Perhaps this should be mocked?
-        MySqlServiceUtil.loadMySqlDataSource(DataSourceManager.get());
+        MySqlServiceUtil.loadMySqlDataSource(DataSourceManager.get(), "usermetadata.properties");
         mysqlUserMetadataService = new MysqlUserMetadataService(
             DataSourceManager.get().get(MysqlUserMetadataService.NAME_DATASOURCE),
             new MetacatJsonLocator(),
@@ -85,7 +85,7 @@ class BaseSpec extends Specification {
         }
         runScript(DriverManager.getConnection(mysqlServer.getJdbcUrl()), new FileReader(prepareFile), ';')
         //forcing loading the mysql properties
-        MySqlServiceUtil.loadMySqlDataSource(DataSourceManager.get())
+        MySqlServiceUtil.loadMySqlDataSource(DataSourceManager.get(), "usermetadata.properties")
     }
 
     def runScript(Connection conn, Reader reader, String delimiter) throws IOException,

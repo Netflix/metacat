@@ -146,11 +146,11 @@ public final class MySqlServiceUtil {
      * load mysql data source.
      *
      * @param dataSourceManager data source manager to use
+     * @param configLocation usermetadata config location
      * @throws Exception exception to throw
      */
-    public static void loadMySqlDataSource(final DataSourceManager dataSourceManager) throws Exception {
-        final String configLocation =
-            System.getProperty(UserMetadataService.METACAT_USERMETADATA_CONFIG_LOCATION, "usermetadata.properties");
+    public static void loadMySqlDataSource(final DataSourceManager dataSourceManager,
+        final String configLocation) throws Exception {
 
         final URL url = Thread.currentThread().getContextClassLoader().getResource(configLocation);
         final Path filePath;

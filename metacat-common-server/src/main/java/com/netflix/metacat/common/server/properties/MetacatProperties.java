@@ -55,4 +55,6 @@ public class MetacatProperties {
     private TypeProperties type = new TypeProperties();
     @NonNull
     private User user = new User();
+    @NonNull
+    private UserMetadata usermetadata = new UserMetadata();
 }
