@@ -17,6 +17,8 @@
  */
 package com.netflix.metacat.common.server.properties;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.Data;
 import lombok.NonNull;
@@ -123,8 +125,16 @@ public class ElasticsearchProperties {
             private String catalogs;
             private String databases;
 
+            /**
+             * Get the databases stored in the variable as a List of fully qualified names.
+             *
+             * @return The databases as a list or empty list if {@code names} is null or empty
+             */
+            @JsonIgnore
             public List<QualifiedName> getDatabasesAsListOfQualfiedNames() {
-                return PropertyUtils.delimitedStringsToQualifiedNamesList(this.databases, ',');
+                return this.databases == null
+                    ? Lists.newArrayList()
+                    : PropertyUtils.delimitedStringsToQualifiedNamesList(this.databases, ',');
             }
         }
 
@@ -155,8 +165,11 @@ public class ElasticsearchProperties {
                  *
                  * @return The names as a list or empty list if {@code names} is null or empty
                  */
+                @JsonIgnore
                 public List<QualifiedName> getNamesAsListOfQualifiedNames() {
-                    return PropertyUtils.delimitedStringsToQualifiedNamesList(this.names, ',');
+                    return this.names == null
+                        ? Lists.newArrayList()
+                        : PropertyUtils.delimitedStringsToQualifiedNamesList(this.names, ',');
                 }
             }
         }
