@@ -435,7 +435,7 @@ public class ElasticSearchRefresh {
                     return result;
                 }).collect(Collectors.toList());
                 log.info("Unmarked tables({}): {}", unmarkedTableNames.size(), unmarkedTableNames);
-                log.info("Deleting tables({}): {}", deleteTableDtos.size());
+                log.info("Deleting tables({})", deleteTableDtos.size());
                 if (!deleteTableDtos.isEmpty()) {
                     final List<String> deleteTableNames = deleteTableDtos.stream().map(
                         dto -> dto.getName().toString()).collect(Collectors.toList());

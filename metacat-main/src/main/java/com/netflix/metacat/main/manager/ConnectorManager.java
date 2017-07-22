@@ -124,7 +124,7 @@ public class ConnectorManager {
                     connectorContext.getConfiguration());
             catalogs.put(catalogName, catalogConfig);
         } else {
-            log.warn("No plugin for connector with type %s", connectorType);
+            log.warn("No plugin for connector with type {}", connectorType);
         }
     }
 
