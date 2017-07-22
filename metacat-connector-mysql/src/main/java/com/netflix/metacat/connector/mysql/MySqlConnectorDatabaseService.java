@@ -109,7 +109,8 @@ public class MySqlConnectorDatabaseService extends JdbcConnectorDatabaseService 
             log.debug("Finished listing database names for catalog {} for request {}", catalogName, context);
             return results;
         } catch (final SQLException se) {
-            log.debug("An exception occurred listing database names for catalog {} for request {}", catalogName, context, se);
+            log.debug("An exception occurred listing database names for catalog {} for request {}",
+                catalogName, context, se);
             throw this.getExceptionMapper().toConnectorException(se, name);
         }
     }

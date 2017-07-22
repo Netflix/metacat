@@ -261,7 +261,8 @@ public class ElasticSearchRefresh {
                 ElasticSearchDoc.Type.partition.name(),
                 Lists.newArrayList(tableName), refreshMarker, excludeQualifiedNames, PartitionDto.class);
             if (!unmarkedPartitionDtos.isEmpty()) {
-                log.info("Start deleting unmarked partitions({}) for table {}", unmarkedPartitionDtos.size(), tableName);
+                log.info("Start deleting unmarked partitions({}) for table {}",
+                    unmarkedPartitionDtos.size(), tableName);
                 try {
                     final List<String> unmarkedPartitionNames = unmarkedPartitionDtos.stream()
                         .map(p -> p.getDefinitionName().getPartitionName()).collect(Collectors.toList());
@@ -272,7 +273,8 @@ public class ElasticSearchRefresh {
                             p.getDefinitionName().getPartitionName()))
                         .map(p -> p.getDefinitionName().toString()).collect(Collectors.toList());
                     if (!partitionIds.isEmpty()) {
-                        log.info("Deleting unused partitions({}) for table {}:{}", partitionIds.size(), tableName, partitionIds);
+                        log.info("Deleting unused partitions({}) for table {}:{}",
+                            partitionIds.size(), tableName, partitionIds);
                         elasticSearchUtil.delete(ElasticSearchDoc.Type.partition.name(), partitionIds);
                         final List<HasMetadata> deletePartitionDtos = unmarkedPartitionDtos.stream()
                             .filter(
