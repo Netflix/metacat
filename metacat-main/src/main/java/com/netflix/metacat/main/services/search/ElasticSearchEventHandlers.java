@@ -174,7 +174,7 @@ public class ElasticSearchEventHandlers {
                         es.getIdsByQualifiedName(ElasticSearchDoc.Type.partition.name(), dto.getName());
                     es.delete(ElasticSearchDoc.Type.partition.name(), partitionIdsToBeDeleted);
                 } catch (Exception e) {
-                    log.warn("Failed deleting the partitions for the dropped table/view:{}", dto.getName().toString());
+                    log.warn("Failed deleting the partitions for the dropped table/view:{}", dto.getName());
                 }
             }
         });

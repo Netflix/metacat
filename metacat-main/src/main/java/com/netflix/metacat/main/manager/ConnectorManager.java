@@ -86,7 +86,7 @@ public class ConnectorManager {
             try {
                 connectorFactory.stop();
             } catch (Throwable t) {
-                log.error(String.format("Error shutting down connector: %s", connectorFactory.getName()), t);
+                log.error("Error shutting down connector: {}", connectorFactory.getName(), t);
             }
         });
     }

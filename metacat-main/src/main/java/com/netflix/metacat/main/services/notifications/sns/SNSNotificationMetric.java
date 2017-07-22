@@ -80,7 +80,7 @@ public class SNSNotificationMetric {
         if (counterHashMap.containsKey(counterKey)) {
             this.counterHashMap.get(counterKey).increment();
         } else {
-            log.error("SNS Notification does not suport counter for " + counterKey);
+            log.error("SNS Notification does not suport counter for {}", counterKey);
         }
     }
 

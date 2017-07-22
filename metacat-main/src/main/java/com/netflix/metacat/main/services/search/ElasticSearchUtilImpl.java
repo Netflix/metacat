@@ -220,7 +220,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 return null;
             });
         } catch (Exception e) {
-            log.error(String.format("Failed updating metadata of type %s with ids %s", type, ids), e);
+            log.error("Failed updating metadata of type {} with ids {}", type, ids, e);
             this.elasticSearchMetric.getElasticSearchBulkUpdateFailureCounter().increment();
             log("ElasticSearchUtil.updatDocs", type, ids.toString(), null, e.getMessage(), e, true);
         }
@@ -532,7 +532,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 return null;
             });
         } catch (Exception e) {
-            log.error(String.format("Failed deleting metadata of type %s with ids %s", type, ids), e);
+            log.error("Failed deleting metadata of type {} with ids {}", type, ids, e);
             this.elasticSearchMetric.getElasticSearchBulkDeleteFailureCounter().increment();
             log("ElasticSearchUtil.bulkDelete", type, ids.toString(), null, e.getMessage(), e, true);
         }
@@ -598,7 +598,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      */
     private void ensureMigrationBySave(final String type, final List<ElasticSearchDoc> docs) {
         if (!Strings.isNullOrEmpty(config.getMergeEsIndex())) {
-            log.info("Bulk save to mergeEsIndex = " + config.getMergeEsIndex());
+            log.info("Bulk save to mergeEsIndex = {}", config.getMergeEsIndex());
             bulkSaveToIndex(type, docs, config.getMergeEsIndex());
         }
     }
@@ -635,7 +635,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 return null;
             });
         } catch (Exception e) {
-            log.error(String.format("Failed soft deleting metadata of type %s with ids %s", type, ids), e);
+            log.error("Failed soft deleting metadata of type {} with ids {}", type, ids, e);
             this.elasticSearchMetric.getElasticSearchBulkDeleteFailureCounter().increment();
             log("ElasticSearchUtil.bulkSoftDelete", type, ids.toString(), null, e.getMessage(), e, true);
         }
@@ -656,9 +656,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 return null;
             });
         } catch (Exception e) {
-            log.error(
-                String.format("Failed saving metadata of"
-                    + " index %s type %s with id %s: %s", index, type, id, body), e);
+            log.error("Failed saving metadata of"
+                    + " index {} type {} with id {}: {}", index, type, id, body, e);
             this.elasticSearchMetric.getElasticSearchSaveFailureCounter().increment();
             log("ElasticSearchUtil.saveToIndex", type, id, null, e.getMessage(), e, true, index);
         }
@@ -710,7 +709,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                     return null;
                 });
             } catch (Exception e) {
-                log.error(String.format("Failed saving metadatas of index %s type %s", index, type), e);
+                log.error("Failed saving metadatas of index {} type {}", index, type, e);
                 this.elasticSearchMetric.getElasticSearchBulkSaveFailureCounter().increment();
                 final List<String> docIds = docs.stream().map(ElasticSearchDoc::getId).collect(Collectors.toList());
                 log("ElasticSearchUtil.bulkSaveToIndex", type, docIds.toString(), null, e.getMessage(), e, true, index);
