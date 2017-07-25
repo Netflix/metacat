@@ -86,7 +86,7 @@ public class ConnectorManager {
             try {
                 connectorFactory.stop();
             } catch (Throwable t) {
-                log.error(String.format("Error shutting down connector: %s", connectorFactory.getName()), t);
+                log.error("Error shutting down connector: {}", connectorFactory.getName(), t);
             }
         });
     }
@@ -124,7 +124,7 @@ public class ConnectorManager {
                     connectorContext.getConfiguration());
             catalogs.put(catalogName, catalogConfig);
         } else {
-            log.warn("No plugin for connector with type %s", connectorType);
+            log.warn("No plugin for connector with type {}", connectorType);
         }
     }
 

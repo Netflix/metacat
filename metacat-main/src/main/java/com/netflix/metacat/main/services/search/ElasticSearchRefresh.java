@@ -261,8 +261,8 @@ public class ElasticSearchRefresh {
                 ElasticSearchDoc.Type.partition.name(),
                 Lists.newArrayList(tableName), refreshMarker, excludeQualifiedNames, PartitionDto.class);
             if (!unmarkedPartitionDtos.isEmpty()) {
-                log.info("Start deleting unmarked partitions({}) for table {}", unmarkedPartitionDtos.size(),
-                    tableName.toString());
+                log.info("Start deleting unmarked partitions({}) for table {}",
+                    unmarkedPartitionDtos.size(), tableName);
                 try {
                     final List<String> unmarkedPartitionNames = unmarkedPartitionDtos.stream()
                         .map(p -> p.getDefinitionName().getPartitionName()).collect(Collectors.toList());
@@ -273,8 +273,8 @@ public class ElasticSearchRefresh {
                             p.getDefinitionName().getPartitionName()))
                         .map(p -> p.getDefinitionName().toString()).collect(Collectors.toList());
                     if (!partitionIds.isEmpty()) {
-                        log.info("Deleting unused partitions({}) for table {}:{}", partitionIds.size(),
-                            tableName.toString(), partitionIds);
+                        log.info("Deleting unused partitions({}) for table {}:{}",
+                            partitionIds.size(), tableName, partitionIds);
                         elasticSearchUtil.delete(ElasticSearchDoc.Type.partition.name(), partitionIds);
                         final List<HasMetadata> deletePartitionDtos = unmarkedPartitionDtos.stream()
                             .filter(
@@ -284,12 +284,12 @@ public class ElasticSearchRefresh {
                         userMetadataService.deleteMetadatas("admin", deletePartitionDtos);
                     }
                 } catch (Exception e) {
-                    log.warn("Failed deleting the unmarked partitions for table {}", tableName.toString());
+                    log.warn("Failed deleting the unmarked partitions for table {}", tableName);
                 }
-                log.info("End deleting unmarked partitions for table {}", tableName.toString());
+                log.info("End deleting unmarked partitions for table {}", tableName);
             }
         } catch (Exception e) {
-            log.warn("Failed getting the unmarked partitions for table {}", tableName.toString());
+            log.warn("Failed getting the unmarked partitions for table {}", tableName);
         }
         return null;
     }
@@ -435,7 +435,7 @@ public class ElasticSearchRefresh {
                     return result;
                 }).collect(Collectors.toList());
                 log.info("Unmarked tables({}): {}", unmarkedTableNames.size(), unmarkedTableNames);
-                log.info("Deleting tables({}): {}", deleteTableDtos.size());
+                log.info("Deleting tables({})", deleteTableDtos.size());
                 if (!deleteTableDtos.isEmpty()) {
                     final List<String> deleteTableNames = deleteTableDtos.stream().map(
                         dto -> dto.getName().toString()).collect(Collectors.toList());
@@ -560,7 +560,7 @@ public class ElasticSearchRefresh {
                                     databaseDto.getName().getDatabaseName(), s))
                                 .collect(Collectors.toList());
                             log.info("Full refresh of database {} for tables({}): {}",
-                                databaseDto.getName().toString(),
+                                databaseDto.getName(),
                                 databaseDto.getTables().size(), databaseDto.getTables());
                             return processTables(databaseDto.getName(), tableNames);
                         }).filter(NOT_NULL).collect(Collectors.toList());

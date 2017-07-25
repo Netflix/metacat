@@ -675,7 +675,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
                 final QualifiedName partitionName = getPartitionDtoByName(tableDto, partName).getName();
 
                 if (deleteData) {
-                    log.warn("Ignoring command to delete data for {}/{}/{}/{}", partitionName);
+                    log.warn("Ignoring command to delete data for {}/{}/{}/{}",
+                        catalogName, tableDto.getName().getDatabaseName(), tableDto.getName().getTableName(),
+                        partitionName.getPartitionName());
                 }
 
                 partV1.deletePartitions(

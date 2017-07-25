@@ -81,7 +81,7 @@ public class FilterPartition {
             } catch (IllegalArgumentException e) {
                 throw e;
             } catch (Throwable t) {
-                log.warn("Caught unexpected exception during evaluatePartitionExpression,", t);
+                log.warn("Caught unexpected exception during evaluatePartitionExpression", t);
                 return false;
             }
         }

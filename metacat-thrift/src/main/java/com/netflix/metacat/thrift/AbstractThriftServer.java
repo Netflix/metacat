@@ -97,7 +97,7 @@ public abstract class AbstractThriftServer {
         log.info("initializing thrift server {}", getServerName());
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
             .setNameFormat(threadPoolNameFormat)
-            .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in thread: " + t.getName(), e))
+            .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in thread: {}", t.getName(), e))
             .build();
         final ExecutorService executorService = new ThreadPoolExecutor(
             Math.min(2, config.getThriftServerMaxWorkerThreads()),
@@ -131,11 +131,12 @@ public abstract class AbstractThriftServer {
                         server.serve();
                     } catch (Throwable t) {
                         if (!stopping.get()) {
-                            log.error("Unexpected exception in " + getServerName()
-                                + ". This probably means that the worker "
-                                + " pool was exhausted. Increase 'metacat.thrift.server_max_worker_threads' from "
-                                + config.getThriftServerMaxWorkerThreads() + " or throttle the number of requests. "
-                                + "This server thread is not in a bad state so starting a new one.", t);
+                            log.error("Unexpected exception in {}. This probably "
+                                + "means that the worker pool was exhausted. "
+                                + "Increase 'metacat.thrift.server_max_worker_threads' "
+                                + "from {} or throttle the number of requests. "
+                                + "This server thread is not in a bad state so starting a new one.",
+                                getServerName(), config.getThriftServerMaxWorkerThreads(), t);
                             startServing(executorService, serverTransport);
                         } else {
                             log.debug("stopping serving");

@@ -105,7 +105,7 @@ public class MySqlTypeConverter extends JdbcTypeConverter {
             case "enum":
             case "set":
             default:
-                log.info("Encountered " + splitType[0] + " type. Returning Unknown type.");
+                log.info("Encountered {} type. Returning Unknown type.", splitType[0]);
                 return BaseType.UNKNOWN;
         }
     }

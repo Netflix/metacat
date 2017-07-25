@@ -115,14 +115,14 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
         @Nonnull @NonNull final QualifiedName name
     ) {
         final String keyspace = name.getDatabaseName();
-        log.debug("Attempting to get keyspace metadata for keyspace {} for request", keyspace, context);
+        log.debug("Attempting to get keyspace metadata for keyspace {} for request {}", keyspace, context);
         try {
             final KeyspaceMetadata keyspaceMetadata = this.getCluster().getMetadata().getKeyspace(keyspace);
             if (keyspaceMetadata == null) {
                 throw new DatabaseNotFoundException(name);
             }
 
-            log.debug("Successfully found the keyspace metadata for {} for request", name, context);
+            log.debug("Successfully found the keyspace metadata for {} for request {}", name, context);
             return DatabaseInfo.builder().name(name).build();
         } catch (final DriverException de) {
             log.error(de.getMessage(), de);
@@ -172,7 +172,7 @@ public class CassandraConnectorDatabaseService extends CassandraService implemen
         @Nonnull @NonNull final QualifiedName name
     ) {
         final String keyspace = name.getDatabaseName();
-        log.debug("Checking if keyspace {} exists for request", keyspace, context);
+        log.debug("Checking if keyspace {} exists for request {}", keyspace, context);
         try {
             final boolean exists = this.getCluster().getMetadata().getKeyspace(keyspace) != null;
             log.debug("Keyspace {} {} for request {}", keyspace, exists ? "exists" : "doesn't exist", context);
