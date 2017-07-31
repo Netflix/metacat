@@ -54,7 +54,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -142,7 +141,7 @@ public class PartitionServiceImpl implements PartitionService {
         if (Strings.isNullOrEmpty(filter)
             && (pageable == null || !pageable.isPageable())
             && (partitionNames == null || partitionNames.isEmpty())
-            && config.getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions().contains(name)) {
+            && config.getNamesToThrowErrorOnListPartitionsWithNoFilter().contains(name)) {
             throw new IllegalArgumentException(String.format("No filter or limit specified for table %s", name));
         }
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -165,9 +164,9 @@ public class PartitionServiceImpl implements PartitionService {
                 uris.add(partitionDto.getDataUri());
             });
 
-            registry.gauge(this.partitionGetGaugeId.withTags(new HashMap<>(name.parts())), result.size());
+            registry.gauge(this.partitionGetGaugeId.withTags(name.parts()), result.size());
             registry.distributionSummary(
-                this.partitionGetDistSummary.withTags(new HashMap<>(name.parts()))).record(result.size());
+                this.partitionGetDistSummary.withTags(name.parts())).record(result.size());
 
             log.info("Got {} partitions for {} using filter: {} and partition names: {}",
                 result.size(), name, filter,
@@ -227,9 +226,9 @@ public class PartitionServiceImpl implements PartitionService {
             return result;
         }
         final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
-        registry.gauge(this.partitionAddGaugeId.withTags(new HashMap<>(name.parts())), partitionDtos.size());
+        registry.gauge(this.partitionAddGaugeId.withTags(name.parts()), partitionDtos.size());
         registry.distributionSummary(
-            this.partitionAddDistSummary.withTags(new HashMap<>(name.parts()))).record(partitionDtos.size());
+            this.partitionAddDistSummary.withTags(name.parts())).record(partitionDtos.size());
 
         if (!tableService.exists(name)) {
             throw new TableNotFoundException(name);
@@ -237,7 +236,7 @@ public class PartitionServiceImpl implements PartitionService {
         List<HasMetadata> deletePartitions = Lists.newArrayList();
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
             eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
-            registry.gauge(this.partitionDeleteGaugeId.withTags(new HashMap<>(name.parts())),
+            registry.gauge(this.partitionDeleteGaugeId.withTags(name.parts()),
                 partitionIdsForDeletes.size());
             final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
             requestDto.setIncludePartitionDetails(false);
@@ -282,9 +281,9 @@ public class PartitionServiceImpl implements PartitionService {
     @Override
     public void delete(final QualifiedName name, final List<String> partitionIds) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        registry.gauge(this.partitionDeleteGaugeId.withTags(new HashMap<>(name.parts())), partitionIds.size());
+        registry.gauge(this.partitionDeleteGaugeId.withTags(name.parts()), partitionIds.size());
         registry.distributionSummary(
-            this.partitionDeleteDistSummary.withTags(new HashMap<>(name.parts()))).record(partitionIds.size());
+            this.partitionDeleteDistSummary.withTags(name.parts())).record(partitionIds.size());
         if (!tableService.exists(name)) {
             throw new TableNotFoundException(name);
         }

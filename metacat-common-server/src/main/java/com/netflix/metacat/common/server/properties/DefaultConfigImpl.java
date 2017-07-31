@@ -274,7 +274,7 @@ public class DefaultConfigImpl implements Config {
      * {@inheritDoc}
      */
     @Override
-    public List<QualifiedName> getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions() {
+    public List<QualifiedName> getNamesToThrowErrorOnListPartitionsWithNoFilter() {
         return this.metacatProperties
             .getService()
             .getTables()
