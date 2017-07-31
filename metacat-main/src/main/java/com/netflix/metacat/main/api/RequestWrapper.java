@@ -143,8 +143,7 @@ public final class RequestWrapper {
             throw new MetacatException(message, e);
         } finally {
             final long duration = registry.clock().wallTime() - start;
-            log.info("### Time taken to complete {} is {} ms", resourceRequestName,
-                duration);
+            log.info("### Time taken to complete {} for {} is {} ms", resourceRequestName, name, duration);
             this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
         }
     }

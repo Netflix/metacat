@@ -211,7 +211,7 @@ public interface Config {
      *
      * @return list of names
      */
-    List<QualifiedName> getQualifiedNamesToThrowErrorWhenNoFilterOnListPartitions();
+    List<QualifiedName> getNamesToThrowErrorOnListPartitionsWithNoFilter();
 
     /**
      * Elastic search index.
