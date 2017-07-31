@@ -47,6 +47,12 @@ public enum Metrics {
     GaugeGetPartitionsCount(Component.partionservice, Type.gauge, "partitionGet"),
 
     /**
+     * DistributionSummary.
+     */
+    DistributionSummaryAddPartitions(Component.partionservice, Type.distributionSummary, "partitionAdd"),
+    DistributionSummaryGetPartitions(Component.partionservice, Type.distributionSummary, "partitionGet"),
+    DistributionSummaryDeletePartitions(Component.partionservice, Type.distributionSummary, "partitionDelete"),
+    /**
      * metacat request.
      */
     CounterRequestCount(Component.server, Type.counter, "request"),
@@ -120,7 +126,8 @@ public enum Metrics {
     enum Type {
         counter,
         gauge,
-        timer
+        timer,
+        distributionSummary
     }
 
     enum Component {
