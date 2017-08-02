@@ -117,7 +117,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
         );
         this.publishNotification(this.tableTopicArn, tableMessage, event.getName(),
             "Unable to publish table partition add notification",
-            Metrics.CounterSNSNotificationTablePartitionAdd.name(), true);
+            Metrics.CounterSNSNotificationTablePartitionAdd.getMetricName(), true);
         if (config.isSnsNotificationTopicPartitionEnabled()) {
             AddPartitionMessage message = null;
             for (final PartitionDto partition : event.getPartitions()) {
@@ -130,7 +130,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 );
                 this.publishNotification(this.partitionTopicArn, message, event.getName(),
                     "Unable to publish partition creation notification",
-                    Metrics.CounterSNSNotificationPartitionAdd.name(), true);
+                    Metrics.CounterSNSNotificationPartitionAdd.getMetricName(), true);
                 log.debug("Published create partition message {} on {}", message, this.partitionTopicArn);
             }
         }
@@ -155,7 +155,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
         );
         this.publishNotification(this.tableTopicArn, tableMessage, event.getName(),
             "Unable to publish table partition delete notification",
-            Metrics.CounterSNSNotificationTablePartitionDelete.name(), true);
+            Metrics.CounterSNSNotificationTablePartitionDelete.getMetricName(), true);
         DeletePartitionMessage message = null;
         if (config.isSnsNotificationTopicPartitionEnabled()) {
             for (final String partitionId : event.getPartitionIds()) {
@@ -168,7 +168,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 );
                 this.publishNotification(this.partitionTopicArn, message, event.getName(),
                     "Unable to publish partition deletion notification",
-                    Metrics.CounterSNSNotificationPartitionDelete.name(), true);
+                    Metrics.CounterSNSNotificationPartitionDelete.getMetricName(), true);
                 log.debug("Published delete partition message {} on {}", message, this.partitionTopicArn);
             }
         }
@@ -190,7 +190,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
         );
         this.publishNotification(this.tableTopicArn, message, event.getName(),
             "Unable to publish create table notification",
-            Metrics.CounterSNSNotificationTableCreate.name(), true);
+            Metrics.CounterSNSNotificationTableCreate.getMetricName(), true);
     }
 
     /**
@@ -209,7 +209,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
         );
         this.publishNotification(this.tableTopicArn, message, event.getName(),
             "Unable to publish delete table notification",
-            Metrics.CounterSNSNotificationTableDelete.name(), true);
+            Metrics.CounterSNSNotificationTableDelete.getMetricName(), true);
     }
 
     /**
@@ -231,12 +231,12 @@ public class SNSNotificationServiceImpl implements NotificationService {
             );
             this.publishNotification(this.tableTopicArn, message, event.getName(),
                 "Unable to publish rename table notification",
-                Metrics.CounterSNSNotificationTableRename.name(), true);
+                Metrics.CounterSNSNotificationTableRename.getMetricName(), true);
         } catch (final Exception e) {
             this.notificationMetric.handleException(
                 event.getName(),
                 "Unable to create json patch for rename table notification",
-                Metrics.CounterSNSNotificationTableRename.name(),
+                Metrics.CounterSNSNotificationTableRename.getMetricName(),
                 message,
                 e
             );
@@ -262,12 +262,12 @@ public class SNSNotificationServiceImpl implements NotificationService {
             );
             this.publishNotification(this.tableTopicArn, message, event.getName(),
                 "Unable to publish update table notification",
-                Metrics.CounterSNSNotificationTableUpdate.name(), true);
+                Metrics.CounterSNSNotificationTableUpdate.getMetricName(), true);
         } catch (final Exception e) {
             this.notificationMetric.handleException(
                 event.getName(),
                 "Unable to create json patch for update table notification",
-                Metrics.CounterSNSNotificationTableUpdate.name(),
+                Metrics.CounterSNSNotificationTableUpdate.getMetricName(),
                 message,
                 e
             );
