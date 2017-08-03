@@ -49,24 +49,19 @@ user metadata. Please look at this [sample](https://github.com/Netflix/metacat/b
 
 ### Running Locally
 
-Take the build WAR in `metacat-war/build/libs` and deploy it to an existing Tomcat as `ROOT.war` with the following
-properties exposed in your Tomcat `setenv.sh` where `${SRC}` is the directory you've checkout the Metacat code:
+Take the build WAR in `metacat-war/build/libs` and deploy it to an existing Tomcat as `ROOT.war`.
 
-* metacat.plugin.config.location=${SRC}/metacat-functional-tests/metacat-test-cluster/etc-metacat/catalog
-* metacat.usermetadata.config.location=${SRC}/metacat-functional-tests/metacat-test-cluster/etc-metacat/usermetadata.properties
-
-Start Tomcat and you can go to the following locations:
-
-REST API can be accessed @ [http://localhost:8080/mds/v1/catalog](http://localhost:8080/mds/v1/catalog)
+The REST API can be accessed @ [http://localhost:8080/mds/v1/catalog](http://localhost:8080/mds/v1/catalog)
 
 Swagger API documentation can be accessed @ [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
-### Using Docker
+### Docker Compose Example
 
 **Pre-requisite: Docker compose is installed**
 
-To start a self contained metacat environment, run the command below. This will start a `docker-compose` cluster 
-containing a Metacat container, a Hive Metastore Container, a Cassandra container and a PostgreSQL container.
+To start a self contained Metacat environment with some sample catalogs run the command below. 
+This will start a `docker-compose` cluster containing a Metacat container, a Hive Metastore Container, a Cassandra 
+container and a PostgreSQL container.
 
 ```
 ./gradlew metacatPorts
