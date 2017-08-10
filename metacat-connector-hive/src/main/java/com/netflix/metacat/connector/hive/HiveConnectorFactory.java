@@ -74,7 +74,7 @@ public class HiveConnectorFactory implements ConnectorFactory {
         final MutablePropertySources propertySources = standardEnvironment.getPropertySources();
         final Map<String, Object> properties = new HashMap<>();
         properties.put("useHiveFastService", useFastHiveService);
-        properties.put("useThriftClient", !useLocalMetastore);
+        properties.put("useEmbeddedClient", useLocalMetastore);
         propertySources.addFirst(new MapPropertySource("HIVE_CONNECTOR", properties));
         this.ctx.setEnvironment(standardEnvironment);
         //TODO scan the package, which is not working

@@ -33,7 +33,7 @@ import javax.sql.DataSource;
  * @since 1.1.0
  */
 @Configuration
-@ConditionalOnProperty(value = "useThriftClient", havingValue = "false")
+@ConditionalOnProperty(value = "useEmbeddedClient", havingValue = "true")
 public class HiveConnectorClientConfig {
 
     /**

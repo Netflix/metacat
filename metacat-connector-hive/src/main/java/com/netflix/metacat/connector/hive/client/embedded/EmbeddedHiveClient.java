@@ -90,7 +90,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
                               final Registry registry) {
         this.handler = handler;
         this.registry = registry;
-        this.requestTimerId = registry.createId(HiveMetrics.TimerHiveRequest.name());
+        this.requestTimerId = registry.createId(HiveMetrics.TimerHiveRequest.getMetricName());
         this.hiveSqlErrorCounter =
             registry.counter(HiveMetrics.CounterHiveSqlLockError.getMetricName() + "." + catalogName);
     }
