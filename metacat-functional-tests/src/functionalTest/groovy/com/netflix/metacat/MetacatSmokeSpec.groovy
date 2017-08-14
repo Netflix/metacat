@@ -283,6 +283,7 @@ class MetacatSmokeSpec extends Specification {
         'hive-metastore'          | 'hsmoke_db1' | 'test_create_table' | false  | false   | null
         'hive-metastore'          | 'hsmoke_db1' | 'test_create_table1'| false  | true    | null
         's3-mysql-db'             | 'smoke_db1'  | 'test_create_table' | true   | false   | null
+        's3-mysql-db'             | 'smoke_db1'  | 'test_create_table.definition' | true   | false   | null   //verify the table name can have . character
         'invalid-catalog'         | 'smoke_db1'  | 'z'                 | true   | false   | MetacatNotFoundException.class
     }
 
