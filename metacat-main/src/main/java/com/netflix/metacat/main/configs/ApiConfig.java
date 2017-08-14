@@ -24,6 +24,8 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 import java.util.Map;
 
@@ -34,7 +36,19 @@ import java.util.Map;
  * @since 1.1.0
  */
 @Configuration
-public class ApiConfig {
+public class ApiConfig extends WebMvcConfigurerAdapter {
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Turn off {@literal .} recognition in paths. Needed due to table's name potentially having '.' as character.
+     *
+     * @see <a href="http://stackoverflow.com/a/23938850">Stack Overflow Issue Answer From Dave Syer</a>
+     */
+    @Override
+    public void configurePathMatch(final PathMatchConfigurer configurer) {
+        configurer.setUseRegisteredSuffixPatternMatch(true);
+    }
 
     /**
      * The rest filter registration bean.
