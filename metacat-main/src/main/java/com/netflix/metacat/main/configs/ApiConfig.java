@@ -24,6 +24,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
@@ -37,19 +38,30 @@ import java.util.Map;
  */
 @Configuration
 public class ApiConfig extends WebMvcConfigurerAdapter {
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Turn off {@literal .} Turn off suffix-based content negotiation. The table name may have extension, e.g. knp,
+     * , which is a type and will be rejected by spring
+     *
+     * @see <a href="https://stackoverflow.com/questions/30793717">Stack Overflow Issue</a>
+     */
+    @Override
+    public void configureContentNegotiation(final ContentNegotiationConfigurer configurer) {
+        configurer.favorPathExtension(false);
+    }
 
     /**
      * {@inheritDoc}
      * <p>
      * Turn off {@literal .} recognition in paths. Needed due to table's name potentially having '.' as character.
      *
-     * @see <a href="http://stackoverflow.com/a/23938850">Stack Overflow Issue Answer From Dave Syer</a>
+     * @see <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/html/mvc.html#mvc-ann-requestmapping-suffix-pattern-match">Spring doc</a>
      */
     @Override
     public void configurePathMatch(final PathMatchConfigurer configurer) {
-        configurer.setUseRegisteredSuffixPatternMatch(true);
+        configurer.setUseSuffixPatternMatch(false);
     }
-
     /**
      * The rest filter registration bean.
      *
