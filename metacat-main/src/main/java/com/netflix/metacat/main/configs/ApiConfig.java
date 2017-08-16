@@ -56,7 +56,8 @@ public class ApiConfig extends WebMvcConfigurerAdapter {
      * <p>
      * Turn off {@literal .} recognition in paths. Needed due to table's name potentially having '.' as character.
      *
-     * @see <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/html/mvc.html#mvc-ann-requestmapping-suffix-pattern-match">Spring doc</a>
+     * @see <a href="https://docs.spring.io/spring/docs/current/
+     * spring-framework-reference/html/mvc.html#mvc-ann-requestmapping-suffix-pattern-match">Spring doc</a>
      */
     @Override
     public void configurePathMatch(final PathMatchConfigurer configurer) {
