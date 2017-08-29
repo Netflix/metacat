@@ -45,8 +45,12 @@ abstract class BaseEsSpec extends Specification {
     @Shared
     MetacatJson metacatJson
     @Shared
-    MetacatRequestContext metacatContext = new MetacatRequestContext("test",
-        "testApp", "testClientId", "testJobId", null, null)
+    MetacatRequestContext metacatContext = MetacatRequestContext.builder().
+        userName("test").
+        clientAppName("testApp").
+        clientId("testClientId").
+        jobId("testJobId").build()
+
     @Shared
     String esIndex = "metacat"
     @Shared

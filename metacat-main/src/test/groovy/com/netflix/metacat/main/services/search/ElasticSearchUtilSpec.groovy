@@ -101,7 +101,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec {
         given:
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        es.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null, null), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
+        es.updates(Type.table.name(), [id], MetacatRequestContext.builder().userName("testUpdate").build(), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
         def result = es.get(Type.table.name(), id)
         es.refresh()
         def resultByUri = es.getTableIdsByUri(Type.table.name(), uri)
@@ -129,7 +129,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec {
         }
         es.save(Type.table.name(), docs)
         es.refresh()
-        es.delete(new MetacatRequestContext("testUpdate", null, null, null, null, null), Type.table.name(), softDelete)
+        es.delete(MetacatRequestContext.builder().userName("testUpdate").build(), Type.table.name(), softDelete)
         where:
         catalogName | databaseName | tableName | noOfTables | softDelete
         'prodhive'  | 'amajumdar'  | 'part'    | 10         | false
@@ -234,7 +234,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec {
         given:
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
         esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        esMig.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null, null), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
+        esMig.updates(Type.table.name(), [id], MetacatRequestContext.builder().userName("testUpdate").build(), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
         for (String index : [esIndex, esMergeIndex]) {
             def result = es.get(Type.table.name(), id, index)
             es.refresh()
@@ -257,7 +257,7 @@ class ElasticSearchUtilSpec extends BaseEsSpec {
         given:
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
         es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        esMig.updates(Type.table.name(), [id], new MetacatRequestContext("testUpdate", null, null, null, null, null), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
+        esMig.updates(Type.table.name(), [id], MetacatRequestContext.builder().userName("testUpdate").build(), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
         for (String index : [esIndex, esMergeIndex]) {
             def result = es.get(Type.table.name(), id, index)
             es.refresh()

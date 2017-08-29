@@ -43,7 +43,7 @@ public final class MetacatContextManager {
     public static MetacatRequestContext getContext() {
         MetacatRequestContext result = context.get();
         if (result == null) {
-            result = new MetacatRequestContext(null, null, null, null, null, null);
+            result = new MetacatRequestContext();
             setContext(result);
         }
         return result;

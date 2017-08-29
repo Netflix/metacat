@@ -62,14 +62,13 @@ class SNSNotificationServiceImplSpec extends Specification {
     def service;
     def clock = Mock(Clock)
 
-    def requestContext = new MetacatRequestContext(
-        UUID.randomUUID().toString(),
-        UUID.randomUUID().toString(),
-        UUID.randomUUID().toString(),
-        UUID.randomUUID().toString(),
-        UUID.randomUUID().toString(),
-        "/mds/v1"
-    )
+    def requestContext = MetacatRequestContext.builder().userName(UUID.randomUUID().toString())
+        .clientAppName(UUID.randomUUID().toString())
+        .clientId(UUID.randomUUID().toString())
+        .jobId(UUID.randomUUID().toString())
+        .dataTypeContext(UUID.randomUUID().toString())
+        .apiUri("/mds/v1")
+        .scheme("internal").build();
 
     def setup() {
         this.registry.clock() >> clock

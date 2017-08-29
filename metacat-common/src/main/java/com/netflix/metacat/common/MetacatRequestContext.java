@@ -17,21 +17,20 @@
  */
 package com.netflix.metacat.common;
 
-import com.google.common.collect.ImmutableSet;
-import lombok.Data;
+import lombok.Getter;
 
 import javax.annotation.Nullable;
 import java.util.Date;
-import java.util.Set;
 import java.util.UUID;
 
 /**
- * The context of the request to Metacat.
+ * The context of the request to metacat.
  *
  * @author amajumdar
  * @author tgianos
+ * @author zhenl
  */
-@Data
+@Getter
 public class MetacatRequestContext {
     /**
      * Request header representing the user name.
@@ -51,19 +50,34 @@ public class MetacatRequestContext {
     public static final String HEADER_KEY_DATA_TYPE_CONTEXT = "X-Netflix.data.type.context";
 
     /**
-     * url start.
+     * Default if unknown.
      */
-    public static final Set REST_API_PATH_PREFIX = ImmutableSet.of("/mds/v0/", "/mds/v1/");
+    public static final String UNKNOWN = "UNKNOWN";
 
     private final String id = UUID.randomUUID().toString();
     // TODO: Move to Java 8 and use java.time.Instant
     private final long timestamp = new Date().getTime();
+
     private final String userName;
     private final String clientAppName;
     private final String clientId;
     private final String jobId;
     private final String dataTypeContext;
-    private final String apiPathPrefix;
+    private final String apiUri;
+    private final String scheme;
+
+    /**
+     * Constructor.
+     */
+    public MetacatRequestContext() {
+        this.userName = null;
+        this.clientAppName = null;
+        this.clientId = null;
+        this.jobId = null;
+        this.dataTypeContext = null;
+        this.apiUri = UNKNOWN;
+        this.scheme = UNKNOWN;
+    }
 
     /**
      * Constructor.
@@ -73,21 +87,143 @@ public class MetacatRequestContext {
      * @param clientId        client id
      * @param jobId           job id
      * @param dataTypeContext data type context
-     * @param apiPathPrefix   the path prefix of rest api
+     * @param apiUri          the uri of rest api
+     * @param scheme          http, thrift, internal, etc.
      */
-    public MetacatRequestContext(
+    protected MetacatRequestContext(
         @Nullable final String userName,
         @Nullable final String clientAppName,
         @Nullable final String clientId,
         @Nullable final String jobId,
         @Nullable final String dataTypeContext,
-        @Nullable final String apiPathPrefix
+        final String apiUri,
+        final String scheme
     ) {
         this.userName = userName;
         this.clientAppName = clientAppName;
         this.clientId = clientId;
         this.jobId = jobId;
         this.dataTypeContext = dataTypeContext;
-        this.apiPathPrefix = apiPathPrefix;
+        this.apiUri = apiUri;
+        this.scheme = scheme;
+    }
+
+    /**
+     * builder class for MetacatRequestContext.
+     * @return the builder class for MetacatRequestContext
+     */
+    public static MetacatRequestContext.MetacatRequestContextBuilder builder() {
+        return new MetacatRequestContext.MetacatRequestContextBuilder();
+    }
+
+    /**
+     * MetacatRequestContext builder class.
+     */
+    public static class MetacatRequestContextBuilder {
+        private String bUserName;
+        private String bClientAppName;
+        private String bClientId;
+        private String bJobId;
+        private String bDataTypeContext;
+        private String bApiUri;
+        private String bScheme;
+
+        MetacatRequestContextBuilder() {
+            this.bApiUri = UNKNOWN;
+            this.bScheme = UNKNOWN;
+        }
+
+        /**
+         * set userName.
+         *
+         * @param userName user name at client side
+         * @return the builder
+         */
+        public MetacatRequestContext.MetacatRequestContextBuilder userName(@Nullable final String userName) {
+            this.bUserName = userName;
+            return this;
+        }
+
+        /**
+         * set clientAppName.
+         *
+         * @param clientAppName application name of client
+         * @return the builder
+         */
+        public MetacatRequestContext.MetacatRequestContextBuilder clientAppName(@Nullable final String clientAppName) {
+            this.bClientAppName = clientAppName;
+            return this;
+        }
+
+        /**
+         * set clientId.
+         *
+         * @param clientId client identifier, such as host name
+         * @return the builder
+         */
+        public MetacatRequestContext.MetacatRequestContextBuilder clientId(@Nullable final String clientId) {
+            this.bClientId = clientId;
+            return this;
+        }
+
+        /**
+         * set jobId.
+         *
+         * @param jobId jobid from client side
+         * @return the builder
+         */
+        public MetacatRequestContext.MetacatRequestContextBuilder jobId(@Nullable final String jobId) {
+            this.bJobId = jobId;
+            return this;
+        }
+
+        /**
+         * set datatypeContext.
+         *
+         * @param dataTypeContext the data type context in rest api
+         * @return the builder
+         */
+        public MetacatRequestContext.MetacatRequestContextBuilder dataTypeContext(
+            @Nullable final String dataTypeContext) {
+            this.bDataTypeContext = dataTypeContext;
+            return this;
+        }
+
+        /**
+         * set apiUri.
+         *
+         * @param apiUri the uri in rest api
+         * @return the builder
+         */
+        public MetacatRequestContext.MetacatRequestContextBuilder apiUri(final String apiUri) {
+            this.bApiUri = apiUri;
+            return this;
+        }
+
+        /**
+         * set scheme.
+         *
+         * @param scheme the scheme component in restapi such as http
+         * @return the builder
+         */
+        public MetacatRequestContext.MetacatRequestContextBuilder scheme(final String scheme) {
+            this.bScheme = scheme;
+            return this;
+        }
+
+        /**
+         * builder.
+         *
+         * @return MetacatRequestContext object
+         */
+        public MetacatRequestContext build() {
+            return new MetacatRequestContext(this.bUserName,
+                this.bClientAppName,
+                this.bClientId,
+                this.bJobId,
+                this.bDataTypeContext,
+                this.bApiUri,
+                this.bScheme);
+        }
     }
 }
