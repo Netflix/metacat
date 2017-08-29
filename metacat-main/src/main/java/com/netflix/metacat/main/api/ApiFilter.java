@@ -65,14 +65,21 @@ public class ApiFilter implements Filter {
         final String clientHost = httpServletRequest.getHeader("X-Forwarded-For");
         final String jobId = httpServletRequest.getHeader(MetacatRequestContext.HEADER_KEY_JOB_ID);
         final String dataTypeContext = httpServletRequest.getHeader(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT);
+        String apiVersion = null;
+        for (Object version: MetacatRequestContext.REST_API_PATH_PREFIX) {
+            if (httpServletRequest.getRequestURI().startsWith((String) version)) {
+                apiVersion = (String) version;
+            }
+        }
         final MetacatRequestContext context = new MetacatRequestContext(
             userName,
             clientAppName,
             clientHost,
             jobId,
-            dataTypeContext
+            dataTypeContext,
+            apiVersion
         );
-        // TODO: Rather than setting it as thread local why don't we store this in the http session and inject in MVC?
+
         MetacatContextManager.setContext(context);
         log.info(context.toString());
 

@@ -107,7 +107,7 @@ public class CatalogThriftEventHandler implements TServerEventHandler {
             @Nullable final String dataTypeContext,
             final long requestThreadId
         ) {
-            super(userName, clientAppName, clientId, jobId, dataTypeContext);
+            super(userName, clientAppName, clientId, jobId, dataTypeContext, "/thrift/v1");
             this.requestThreadId = requestThreadId;
         }
 

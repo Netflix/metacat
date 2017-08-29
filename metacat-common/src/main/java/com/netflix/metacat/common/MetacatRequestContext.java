@@ -17,10 +17,12 @@
  */
 package com.netflix.metacat.common;
 
+import com.google.common.collect.ImmutableSet;
 import lombok.Data;
 
 import javax.annotation.Nullable;
 import java.util.Date;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -48,6 +50,11 @@ public class MetacatRequestContext {
      */
     public static final String HEADER_KEY_DATA_TYPE_CONTEXT = "X-Netflix.data.type.context";
 
+    /**
+     * url start.
+     */
+    public static final Set REST_API_PATH_PREFIX = ImmutableSet.of("/mds/v0/", "/mds/v1/");
+
     private final String id = UUID.randomUUID().toString();
     // TODO: Move to Java 8 and use java.time.Instant
     private final long timestamp = new Date().getTime();
@@ -56,6 +63,7 @@ public class MetacatRequestContext {
     private final String clientId;
     private final String jobId;
     private final String dataTypeContext;
+    private final String apiPathPrefix;
 
     /**
      * Constructor.
@@ -65,18 +73,21 @@ public class MetacatRequestContext {
      * @param clientId        client id
      * @param jobId           job id
      * @param dataTypeContext data type context
+     * @param apiPathPrefix   the path prefix of rest api
      */
     public MetacatRequestContext(
         @Nullable final String userName,
         @Nullable final String clientAppName,
         @Nullable final String clientId,
         @Nullable final String jobId,
-        @Nullable final String dataTypeContext
+        @Nullable final String dataTypeContext,
+        @Nullable final String apiPathPrefix
     ) {
         this.userName = userName;
         this.clientAppName = clientAppName;
         this.clientId = clientId;
         this.jobId = jobId;
         this.dataTypeContext = dataTypeContext;
+        this.apiPathPrefix = apiPathPrefix;
     }
 }

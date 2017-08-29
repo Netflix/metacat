@@ -303,7 +303,7 @@ public class ElasticSearchRefresh {
                 log.info("Start: Full refresh of metacat index in elastic search. Processing {} ...", qNames);
                 final MetacatRequestContext context =
                     new MetacatRequestContext("admin", "elasticSearchRefresher", null, null,
-                        null);
+                        null, null);
                 MetacatContextManager.setContext(context);
                 refreshMarker = Instant.now();
                 refreshMarkerText = refreshMarker.toString();
@@ -370,7 +370,8 @@ public class ElasticSearchRefresh {
         // delete
         //
         elasticSearchUtil.refresh();
-        final MetacatRequestContext context = new MetacatRequestContext("admin", "metacat-refresh", null, null, null);
+        final MetacatRequestContext context = new MetacatRequestContext("admin",
+            "metacat-refresh", null, null, null, null);
 
         final List<DatabaseDto> unmarkedDatabaseDtos = elasticSearchUtil
             .getQualifiedNamesByMarkerByNames("database", qNames, refreshMarker, excludeQualifiedNames,

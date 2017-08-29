@@ -67,7 +67,8 @@ class SNSNotificationServiceImplSpec extends Specification {
         UUID.randomUUID().toString(),
         UUID.randomUUID().toString(),
         UUID.randomUUID().toString(),
-        UUID.randomUUID().toString()
+        UUID.randomUUID().toString(),
+        "/mds/v1"
     )
 
     def setup() {
