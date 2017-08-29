@@ -62,6 +62,7 @@ public class ApiConfig extends WebMvcConfigurerAdapter {
     public void configurePathMatch(final PathMatchConfigurer configurer) {
         configurer.setUseSuffixPatternMatch(false);
     }
+
     /**
      * The rest filter registration bean.
      *

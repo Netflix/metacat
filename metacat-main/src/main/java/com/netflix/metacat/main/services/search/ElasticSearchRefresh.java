@@ -301,9 +301,12 @@ public class ElasticSearchRefresh {
             final long start = registry.clock().wallTime();
             try {
                 log.info("Start: Full refresh of metacat index in elastic search. Processing {} ...", qNames);
-                final MetacatRequestContext context =
-                    new MetacatRequestContext("admin", "elasticSearchRefresher", null, null,
-                        null);
+                final MetacatRequestContext context = MetacatRequestContext.builder()
+                    .userName("admin")
+                    .clientAppName("elasticSearchRefresher")
+                    .apiUri("esRefresh")
+                    .scheme("internal")
+                    .build();
                 MetacatContextManager.setContext(context);
                 refreshMarker = Instant.now();
                 refreshMarkerText = refreshMarker.toString();
@@ -370,7 +373,11 @@ public class ElasticSearchRefresh {
         // delete
         //
         elasticSearchUtil.refresh();
-        final MetacatRequestContext context = new MetacatRequestContext("admin", "metacat-refresh", null, null, null);
+        final MetacatRequestContext context = MetacatRequestContext.builder().userName("admin").
+                                                                    clientAppName("metacat-refresh")
+                                                                    .apiUri("esRefresh")
+                                                                    .scheme("internal").build();
+
 
         final List<DatabaseDto> unmarkedDatabaseDtos = elasticSearchUtil
             .getQualifiedNamesByMarkerByNames("database", qNames, refreshMarker, excludeQualifiedNames,
