@@ -247,8 +247,8 @@ public class ElasticSearchEventHandlers {
     private void updateEntitiesWithSameUri(final String metadataType, final TableDto dto,
                                            final MetacatRequestContext metacatRequestContext) {
         if (dto.isDataExternal()) {
-            final List<String> ids = es.getTableIdsByUri(metadataType, dto.getDataUri());
-            ids.remove(dto.getName().toString());
+            final List<String> ids = es.getTableIdsByUri(metadataType, dto.getDataUri())
+                .stream().filter(s -> !s.equals(dto.getName().toString())).collect(Collectors.toList());
             if (!ids.isEmpty()) {
                 final ObjectNode node = metacatJsonLocator.emptyObjectNode();
                 node.set("dataMetadata", dto.getDataMetadata());
