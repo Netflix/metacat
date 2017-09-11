@@ -25,6 +25,7 @@ import com.netflix.metacat.common.json.MetacatJsonLocator;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.converter.DozerTypeConverter;
 import com.netflix.metacat.common.server.converter.TypeConverterFactory;
+import com.netflix.metacat.common.server.events.MetacatApplicationEventMulticaster;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
@@ -33,7 +34,6 @@ import com.netflix.metacat.common.server.util.RegistryUtil;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.spectator.api.Registry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ApplicationEventMulticaster;
@@ -87,18 +87,29 @@ public class CommonServerConfig {
     /**
      * The event bus abstraction to use.
      *
-     * @param eventPublisher   The synchronous event publisher
-     * @param eventMulticaster The asynchronous event publisher
+     * @param applicationEventMulticaster The asynchronous event publisher
      * @param registry         registry for spectator
      * @return The event bus to use.
      */
     @Bean
-    public MetacatEventBus metacatEventBus(
-        final ApplicationEventPublisher eventPublisher,
-        final ApplicationEventMulticaster eventMulticaster,
+    public MetacatEventBus eventBus(
+        final MetacatApplicationEventMulticaster applicationEventMulticaster,
         final Registry registry
     ) {
-        return new MetacatEventBus(eventPublisher, eventMulticaster, registry);
+        return new MetacatEventBus(applicationEventMulticaster, registry);
+    }
+
+    /**
+     * The application event multicaster to use.
+     *
+     * @param asyncEventMulticaster The asynchronous event publisher
+     * @return The application event multicaster to use.
+     */
+    @Bean
+    public MetacatApplicationEventMulticaster applicationEventMulticaster(
+        final ApplicationEventMulticaster asyncEventMulticaster
+    ) {
+        return new MetacatApplicationEventMulticaster(asyncEventMulticaster);
     }
 
     /**
@@ -125,7 +136,7 @@ public class CommonServerConfig {
      * @return The application event multicaster to use
      */
     @Bean
-    public ApplicationEventMulticaster applicationEventMulticaster(final TaskExecutor taskExecutor) {
+    public ApplicationEventMulticaster asyncEventMulticaster(final TaskExecutor taskExecutor) {
         final SimpleApplicationEventMulticaster applicationEventMulticaster = new SimpleApplicationEventMulticaster();
         applicationEventMulticaster.setTaskExecutor(taskExecutor);
         return applicationEventMulticaster;

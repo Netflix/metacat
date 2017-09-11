@@ -57,7 +57,7 @@ dependencies {
      *******************************/
 
     testCompile(project(":metacat-common").sourceSets.test.output)
-    testRuntime("commons-logging:commons-logging")
+    testCompile("commons-logging:commons-logging")
 }
 
 tasks.withType(Checkstyle) {
