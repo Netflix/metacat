@@ -242,7 +242,14 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     }
 
     /**
-     * {@inheritDoc}.
+     * By default(checkIfExists=true and aletrIfExists=false), this method adds the provided list of partitions.
+     * If a partition already exists, it is dropped first before adding it.
+     * If checkIfExists=false, the method adds the partitions to the table. If a partition already exists,
+     * an AlreadyExistsException error is thrown.
+     * If alterIfExists=true, the method updates existing partitions and adds non-existant partitions.
+     *
+     * If a partition in the provided partition list has all the details, then it is used. If the details are missing,
+     * then the table details are inherited. This is mostly for the storage information.
      */
     @Override
     public PartitionsSaveResponse savePartitions(
@@ -268,7 +275,12 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             // Existing partition map
             Map<String, Partition> existingPartitionMap = Collections.emptyMap();
 
-            if (partitionsSaveRequest.getCheckIfExists()) {
+            //
+            // If either checkIfExists or alterIfExists is true, check to see if any of the partitions already exists.
+            // If it exists and if alterIfExists=false, we will drop it before adding.
+            // If it exists and if alterIfExists=true, we will alter it.
+            //
+            if (partitionsSaveRequest.getCheckIfExists() || partitionsSaveRequest.getAlterIfExists()) {
                 final List<String> partitionNames = partitionInfos.stream().map(
                     partition -> {
                         final String partitionName = partition.getName().getPartitionName();
@@ -317,13 +329,16 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                 deletePartitionIds.addAll(partitionsSaveRequest.getPartitionIdsForDeletes());
             }
 
+            // If alterIfExists=true, then alter partitions if they already exists
             if (partitionsSaveRequest.getAlterIfExists() && !existingHivePartitions.isEmpty()) {
                 copyTableSdToPartitionSd(existingHivePartitions, table);
                 metacatHiveClient.alterPartitions(databasename,
                     tablename, existingHivePartitions);
             }
 
+            // Copy the storage details from the table if the partition does not contain the details.
             copyTableSdToPartitionSd(hivePartitions, table);
+            // Drop partitions with ids in 'deletePartitionIds' and add 'hivePartitions' partitions
             metacatHiveClient.addDropPartitions(databasename,
                 tablename, hivePartitions, Lists.newArrayList(deletePartitionIds));
 
