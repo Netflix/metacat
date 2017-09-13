@@ -140,10 +140,6 @@
                 }
               }
             },
-            "com.netflix.dse.mds.metric.MaxStrLen": {
-              "type": "object",
-              "enabled": false
-            },
             "lifetime": {
               "properties": {
                 "partitionedBy": {
@@ -260,22 +256,6 @@
               "index": true
             },
             "type": {
-              "type": "keyword",
-              "index": true
-            }
-          }
-        }
-      }
-    },
-    "partition": {
-      "properties": {
-        "audit": {
-          "properties": {
-            "createdBy": {
-              "type": "keyword",
-              "index": true
-            },
-            "lastModifiedBy": {
               "type": "keyword",
               "index": true
             }
