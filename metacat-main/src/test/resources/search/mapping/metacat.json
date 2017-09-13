@@ -1,304 +1,311 @@
 {
-    "settings": {
-        "index":{"number_of_shards":10},
-        "analysis": {
-            "analyzer": {
-                "paths": {
-                    "tokenizer": "path_hierarchy"
-                },
-                "path": {
-                    "type": "pattern",
-                    "pattern": "/"
-                }
-            }
-        }
+  "settings": {
+    "index": {
+      "number_of_shards": 5,
+      "max_result_window": 2147483647
     },
-    "mappings": {
-        "_default_": {
-            "_timestamp" : {
-                "enabled" : true,
-                "store" : true
-            },
-            "_all": { "enabled":  true },
-            "properties": {
-                "audit": {
-                    "properties": {
-                        "createdBy": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        },
-                        "lastModifiedBy": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        }
-                    }
-                },
-                "serde": {
-                    "properties": {
-                        "inputFormat": {
-                            "type": "string",
-                            "fields": {
-                                "raw": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                }
-                            }
-                        },
-                        "outputFormat": {
-                            "type": "string",
-                            "fields": {
-                                "raw": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                }
-                            }
-                        },
-                        "owner": {
-                            "type": "string",
-                            "fields": {
-                                "raw": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                }
-                            }
-                        },
-                        "serializationLib": {
-                            "type": "string",
-                            "fields": {
-                                "raw": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                }
-                            }
-                        },
-                        "uri": {
-                            "type": "string",
-                            "index": "not_analyzed",
-                            "fields": {
-                                "tree": {
-                                    "type": "string",
-                                    "analyzer": "paths"
-                                }
-                            }
-                        }
-                    }
-                },
-                "searchableDefinitionMetadata": {
-                    "properties": {
-                        "job": {
-                            "properties": {
-                                "name": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                }
-                            }
-                        },
-                        "owner": {
-                            "properties": {
-                                "name": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                },
-                                "team": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                },
-                                "userId": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                }
-                            }
-                        },
-                        "tags":{
-                            "type": "string",
-                            "index": "not_analyzed"
-                        },
-                        "data_hygiene": {
-                            "properties": {
-                                "delete_column": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                },
-                                "delete_method": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                }
-                            }
-                        },
-                        "com.netflix.dse.mds.metric.MaxStrLen": {
-                            "type": "object",
-                            "enabled": false
-                        },
-                        "lifetime": {
-                            "properties": {
-                                "partitionedBy": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                },
-                                "user": {
-                                    "type": "string",
-                                    "index": "not_analyzed"
-                                }
-                            }
-                        }
-                    }
-                },
-                "definitionMetadata": {
-                    "type": "object",
-                    "enabled": false
-                },
-                "dataMetadata":{
-                    "type": "object",
-                    "enabled": false
-                },
-                "name": {
-                    "properties": {
-                        "catalogName": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        },
-                        "databaseName": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        },
-                        "qualifiedName": {
-                            "type": "string",
-                            "index": "not_analyzed",
-                            "fields": {
-                                "tree": {
-                                    "type": "string",
-                                    "analyzer": "paths"
-                                }
-                            }
-                        },
-                        "tableName": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        },
-                        "viewName": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        },
-                        "partitionName": {
-                            "type": "string",
-                            "index": "not_analyzed",
-                            "fields": {
-                                "keys": {
-                                    "type": "string",
-                                    "analyzer": "path"
-                                }
-                            }
-                        }
-                    }
-                },
-                "user_": {
-                    "type": "string",
-                    "fields": {
-                        "raw": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        }
-                    }
-                },
-                "type": {
-                    "type": "string",
-                    "index": "not_analyzed"
-                },
-                "refreshMarker_": {
-                    "type": "string",
-                    "index": "not_analyzed"
-                }
-            }
+    "analysis": {
+      "analyzer": {
+        "paths": {
+          "tokenizer": "path_hierarchy"
         },
-        "table": {
-            "properties": {
-                "fields": {
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        },
-                        "type": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        },
-                        "source_type": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        }
-                    }
-                }
-            }
-        },
-        "mview": {
-            "properties": {
-                "fields": {
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        },
-                        "type": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        }
-                    }
-                }
-            }
-        },
-        "partition": {
-            "properties": {
-                "audit": {
-                    "properties": {
-                        "createdBy": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        },
-                        "lastModifiedBy": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        }
-                    }
-                }
-            }
-        },
-        "metacat-log": {
-            "properties": {
-                "method": {
-                    "type": "string",
-                    "fields": {
-                        "raw": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        }
-                    }
-                },
-                "name": {
-                    "type": "string",
-                    "fields": {
-                        "raw": {
-                            "type": "string",
-                            "index": "not_analyzed"
-                        }
-                    }
-                },
-                "type": {
-                    "type": "string",
-                    "index": "not_analyzed"
-                },
-                "data": {
-                    "type": "string",
-                    "index": "not_analyzed"
-                },
-                "message": {
-                    "type": "string",
-                    "index": "not_analyzed"
-                },
-                "details": {
-                    "type": "string",
-                    "index": "not_analyzed"
-                }
-            }
+        "path": {
+          "type": "pattern",
+          "pattern": "/"
         }
+      }
     }
+  },
+  "mappings": {
+    "_default_": {
+      "_all": {
+        "enabled": true
+      },
+      "dynamic_templates": [
+        {
+          "strings" : {
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "text"
+            }
+          }
+        }
+      ],
+      "properties": {
+        "audit": {
+          "properties": {
+            "createdBy": {
+              "type": "keyword",
+              "index": true
+            },
+            "lastModifiedBy": {
+              "type": "keyword",
+              "index": true
+            }
+          }
+        },
+        "serde": {
+          "properties": {
+            "inputFormat": {
+              "type": "text",
+              "index": true,
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "outputFormat": {
+              "type": "text",
+              "index": true,
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "owner": {
+              "type": "text",
+              "index": true,
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "serializationLib": {
+              "type": "text",
+              "index": true,
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "uri": {
+              "type": "keyword",
+              "index": true,
+              "fields": {
+                "tree": {
+                  "type": "text",
+                  "analyzer": "paths"
+                }
+              }
+            }
+          }
+        },
+        "searchableDefinitionMetadata": {
+          "properties": {
+            "job": {
+              "properties": {
+                "name": {
+                  "type": "keyword",
+                  "index": true
+                }
+              }
+            },
+            "owner": {
+              "properties": {
+                "name": {
+                  "type": "keyword",
+                  "index": true
+                },
+                "team": {
+                  "type": "keyword",
+                  "index": true
+                },
+                "userId": {
+                  "type": "keyword",
+                  "index": true
+                }
+              }
+            },
+            "tags": {
+              "type": "keyword",
+              "index": true
+            },
+            "data_hygiene": {
+              "properties": {
+                "delete_column": {
+                  "type": "keyword",
+                  "index": true
+                },
+                "delete_method": {
+                  "type": "keyword",
+                  "index": true
+                }
+              }
+            },
+            "com.netflix.dse.mds.metric.MaxStrLen": {
+              "type": "object",
+              "enabled": false
+            },
+            "lifetime": {
+              "properties": {
+                "partitionedBy": {
+                  "type": "keyword",
+                  "index": true
+                },
+                "user": {
+                  "type": "text",
+                  "index": true,
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "definitionMetadata": {
+          "type": "object",
+          "enabled": false
+        },
+        "dataMetadata": {
+          "type": "object",
+          "enabled": false
+        },
+        "name": {
+          "properties": {
+            "catalogName": {
+              "type": "keyword",
+              "index": true
+            },
+            "databaseName": {
+              "type": "keyword",
+              "index": true
+            },
+            "qualifiedName": {
+              "type": "keyword",
+              "index": true,
+              "fields": {
+                "tree": {
+                  "type": "text",
+                  "analyzer": "paths"
+                }
+              }
+            },
+            "tableName": {
+              "type": "keyword",
+              "index": true
+            },
+            "viewName": {
+              "type": "keyword",
+              "index": true
+            },
+            "partitionName": {
+              "type": "keyword",
+              "index": true,
+              "fields": {
+                "keys": {
+                  "type": "text",
+                  "analyzer": "path"
+                }
+              }
+            }
+          }
+        },
+        "timestamp": {
+          "type": "date",
+          "format": "epoch_millis",
+          "index": true
+        },
+        "user_": {
+          "type": "keyword",
+          "index": true
+        },
+        "type": {
+          "type": "keyword",
+          "index": true
+        },
+        "refreshMarker_": {
+          "type": "keyword",
+          "index": true
+        }
+      }
+    },
+    "table": {
+      "properties": {
+        "fields": {
+          "properties": {
+            "name": {
+              "type": "keyword",
+              "index": true
+            },
+            "type": {
+              "type": "keyword",
+              "index": true
+            },
+            "source_type": {
+              "type": "keyword",
+              "index": true
+            }
+          }
+        }
+      }
+    },
+    "mview": {
+      "properties": {
+        "fields": {
+          "properties": {
+            "name": {
+              "type": "keyword",
+              "index": true
+            },
+            "type": {
+              "type": "keyword",
+              "index": true
+            }
+          }
+        }
+      }
+    },
+    "partition": {
+      "properties": {
+        "audit": {
+          "properties": {
+            "createdBy": {
+              "type": "keyword",
+              "index": true
+            },
+            "lastModifiedBy": {
+              "type": "keyword",
+              "index": true
+            }
+          }
+        }
+      }
+    },
+    "metacat-log": {
+      "properties": {
+        "method": {
+          "type": "keyword",
+          "index": true
+        },
+        "type": {
+          "type": "keyword",
+          "index": true
+        },
+        "data": {
+          "type": "keyword",
+          "index": true
+        },
+        "message": {
+          "type": "keyword",
+          "index": true
+        },
+        "details": {
+          "type": "keyword",
+          "index": true
+        }
+      }
+    }
+  }
 }

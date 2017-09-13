@@ -142,6 +142,8 @@ configure(javaProjects) {
             dependency("org.spockframework:spock-core:1.1-groovy-2.4")
             dependency("org.spockframework:spock-guice:1.1-groovy-2.4")
             dependency("org.spockframework:spock-spring:1.1-groovy-2.4")
+            /**es 5.4.1 dependencies*/
+            dependency("org.elasticsearch.client:transport:5.4.1")
         }
     }
 

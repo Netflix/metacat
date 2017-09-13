@@ -16,278 +16,597 @@ package com.netflix.metacat.main.services.search
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.netflix.metacat.common.MetacatRequestContext
-import com.netflix.metacat.common.dto.TableDto
+import com.netflix.metacat.common.QualifiedName
+import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
+import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.testdata.provider.DataDtoProvider
-import spock.lang.Unroll
+import com.netflix.spectator.api.Counter
+import org.elasticsearch.action.ListenableActionFuture
+import org.elasticsearch.action.bulk.BulkItemResponse
+import org.elasticsearch.action.bulk.BulkRequestBuilder
+import org.elasticsearch.action.bulk.BulkResponse
+import org.elasticsearch.action.delete.DeleteRequestBuilder
+import org.elasticsearch.action.get.GetRequestBuilder
+import org.elasticsearch.action.get.GetResponse
+import org.elasticsearch.action.index.IndexRequestBuilder
+import org.elasticsearch.action.search.SearchRequestBuilder
+import org.elasticsearch.action.search.SearchResponse
+import org.elasticsearch.action.search.SearchType
+import org.elasticsearch.action.update.UpdateRequestBuilder
+import org.elasticsearch.client.Client
+import org.elasticsearch.client.Response
+import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.index.query.QueryBuilder
+import org.elasticsearch.search.SearchHit
+import org.elasticsearch.search.SearchHits
+import org.elasticsearch.transport.TransportException
+import org.joda.time.Instant
+import spock.lang.Shared
+import spock.lang.Specification
 
 import static com.netflix.metacat.main.services.search.ElasticSearchDoc.Type
 
 /**
  * Testing suit for elastic search util
  */
-class ElasticSearchUtilSpec extends BaseEsSpec {
+class ElasticSearchUtilSpec extends Specification {
+    @Shared
+    Config config = Mock(Config)
+    @Shared
+    MetacatJson metacatJson = new MetacatJsonLocator()
+    @Shared
+    String esIndex = "metacat"
 
-    @Unroll
+    def setupSpec() {
+        config.getEsIndex() >> esIndex
+    }
+
     def "Test save for #id"() {
-        given:
+        def catalogName = 'prodhive'
+        def databaseName = 'estestdb'
+        def tableName = 'part'
+        def id = 'prodhive/amajumdar/part_test'
+        def client = Mock(Client)
+        def indexRequestBuilder = Mock(IndexRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
-        es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        def result = (TableDto) es.get(Type.table.name(), id).getDto()
-        expect:
-        id == result.getName().toString()
-        where:
-        catalogName | databaseName | tableName | id
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part'
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part'
+        def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
+            "testuser", false)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+
+        when:
+            es.save(Type.table.name(), id, doc)
+
+        then:
+        1 * client.prepareIndex(_, _, _) >> indexRequestBuilder
+        1 * indexRequestBuilder.setSource(_, _) >> indexRequestBuilder
+        1 * indexRequestBuilder.execute() >> future
+        1 * future.actionGet()
     }
 
-    @Unroll
-    def "Test saves for #id"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b/c")
-        es.save(Type.table.name(), [new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false)])
-        def result = (TableDto) es.get(Type.table.name(), id).getDto()
-        expect:
-        id == result.getName().toString()
-        where:
-        catalogName | databaseName | tableName   | id
-        'prodhive'  | 'amajumdar'  | 'part_test' | 'prodhive/amajumdar/part_test'
+    def "Test save for #id throw other exception"() {
+        def catalogName = 'prodhive'
+        def databaseName = 'estestdb'
+        def tableName = 'part'
+        def id = 'prodhive/estestdb/part_test'
+        def client = Mock(Client)
+        def indexRequestBuilder = Mock(IndexRequestBuilder)
+        def indexRequestBuilder2 = Mock(IndexRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def counter = Mock(Counter)
+        def response = Mock(Response)
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
+        def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
+            "testuser", false)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+
+        when:
+        es.save(Type.table.name(), id, doc)
+
+        then:
+        3 * client.prepareIndex(_, _, _) >> indexRequestBuilder
+        3 * indexRequestBuilder.setSource(_,_) >> indexRequestBuilder
+        3 * indexRequestBuilder.execute() >> { throw new TransportException("trans error")}
+        1 * elasticSearchMetric.getElasticSearchSaveFailureCounter() >> counter
+        1 * counter.increment()
+        1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
+        1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
+        1 * indexRequestBuilder2.execute()  >> future
+        1 * future.actionGet() >> response
     }
 
+    def "Test save for #id throw other exception with log error"() {
+        def catalogName = 'prodhive'
+        def databaseName = 'estestdb'
+        def tableName = 'part'
+        def id = 'prodhive/estestdb/part_test'
+        def client = Mock(Client)
+        def indexRequestBuilder = Mock(IndexRequestBuilder)
+        def indexRequestBuilder2 = Mock(IndexRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def counter = Mock(Counter)
+        def counter2 = Mock(Counter)
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
+        def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
+            "testuser", false)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
 
-    @Unroll
+        when:
+        es.save(Type.table.name(), id, doc)
+
+        then:
+        3 * client.prepareIndex(_, _, _) >> indexRequestBuilder
+        3 * indexRequestBuilder.setSource(_,_) >> indexRequestBuilder
+        3 * indexRequestBuilder.execute() >> { throw new TransportException("trans error")}
+        1 * elasticSearchMetric.getElasticSearchSaveFailureCounter() >> counter
+        1 * counter.increment()
+        1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
+        1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
+        1 * indexRequestBuilder2.execute()  >> future
+        1 * future.actionGet() >> { throw new Exception("log error")}
+        1 * elasticSearchMetric.getElasticSearchLogFailureCounter() >> counter2
+        1 * counter2.increment()
+    }
+
     def "Test delete for #id"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
-        es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        softDelete ? es.softDelete(Type.table.name(), id, metacatContext) : es.delete(Type.table.name(), id)
-        def result = es.get(Type.table.name(), id, esIndex)
-        expect:
-        if (softDelete) {
-            result.isDeleted()
-            id == ((TableDto) result.getDto()).getName().toString()
-        } else {
-            result == null
-        }
-        where:
-        catalogName | databaseName | tableName | id                        | softDelete
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part' | false
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part' | true
+        def id = 'prodhive/estestdb/part_test'
+        def client = Mock(Client)
+        def deleteRequestBuilder = Mock(DeleteRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+
+        when:
+        es.delete(Type.table.name(), id)
+
+        then:
+        1 * client.prepareDelete(_, _, _) >> deleteRequestBuilder
+        1 * deleteRequestBuilder.execute() >> future
+        1 * future.actionGet()
     }
 
-    @Unroll
-    def "Test deletes for #id"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
-        es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        softDelete ? es.softDelete(Type.table.name(), [id], metacatContext) : es.delete(Type.table.name(), [id])
-        def result = es.get(Type.table.name(), id)
-        expect:
-        if (softDelete) {
-            result.isDeleted()
-            id == ((TableDto) result.getDto()).getName().toString()
-        } else {
-            result == null
-        }
-        where:
-        catalogName | databaseName | tableName | id                        | softDelete
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part' | false
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part' | true
+    def "Test delete for #id throw Exception"() {
+        def id = 'prodhive/estestdb/part_test'
+        def client = Mock(Client)
+        def deleteRequestBuilder = Mock(DeleteRequestBuilder)
+        def indexRequestBuilder2 = Mock(IndexRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def counter = Mock(Counter)
+        def response = Mock(Response)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+
+        when:
+        es.delete(Type.table.name(), id)
+
+        then:
+        1 * client.prepareDelete(_, _, _) >> deleteRequestBuilder
+        1 * deleteRequestBuilder.execute() >> { throw new IOException("ouch", new Throwable("Io exception")) }
+        1 * elasticSearchMetric.getElasticSearchDeleteFailureCounter() >> counter
+        1 * counter.increment()
+        1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
+        1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
+        1 * indexRequestBuilder2.execute()  >> future
+        1 * future.actionGet() >> response
     }
 
-    @Unroll
     def "Test updates for #id"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
-        es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        es.updates(Type.table.name(), [id], MetacatRequestContext.builder().userName("testUpdate").build(), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
-        def result = es.get(Type.table.name(), id)
-        es.refresh()
-        def resultByUri = es.getTableIdsByUri(Type.table.name(), uri)
-        expect:
-        result != null
-        result.getUser() == "testUpdate"
-        ((TableDto) result.getDto()).getDataMetadata() != null
-        resultByUri != null
-        resultByUri.size() == 1
-        resultByUri[0] == id
-        where:
-        catalogName | databaseName | tableName | id                        | uri
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part' | 's3:/a/b'
+        def catalogName = 'prodhive'
+        def databaseName = 'estestdb'
+        def tableName = 'part'
+        def id = 'prodhive/estestdb/part_test'
+        def client = Mock(Client)
+        def bulkRequestBuilder = Mock(BulkRequestBuilder)
+        def updateRequestBuilder = Mock(UpdateRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def bulkResponse = Mock(BulkResponse)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
+        def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
+            "testuser", false)
+
+        when:
+        es.updates(Type.table.name(),
+            [id],
+            metacatJson.toJsonObject(doc.getDto()))
+
+        then:
+        1 * client.prepareBulk() >> bulkRequestBuilder
+        1 * client.prepareUpdate(_,_,_) >> updateRequestBuilder
+        1 * updateRequestBuilder.setRetryOnConflict(3) >> updateRequestBuilder
+        1 * updateRequestBuilder.setDoc(_,_) >> updateRequestBuilder
+        1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
+        1 * bulkRequestBuilder.execute() >> future
+        1 * future.actionGet() >> bulkResponse
+        1 * bulkResponse.hasFailures() >> false
+    }
+
+    def "Test updates for #id with failure"()  {
+        def catalogName = 'prodhive'
+        def databaseName = 'estestdb'
+        def tableName = 'part'
+        def id = 'prodhive/estestdb/part_test'
+        def client = Mock(Client)
+        def counter = Mock(Counter)
+        def counter2 = Mock(Counter)
+        def bulkRequestBuilder = Mock(BulkRequestBuilder)
+        def updateRequestBuilder = Mock(UpdateRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def bulkResponse = Mock(BulkResponse)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
+        def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
+            "testuser", false)
+        def bulkItemResponse = Mock(BulkItemResponse)
+
+
+        when:
+        es.updates(Type.table.name(),
+            [id],
+            metacatJson.toJsonObject(doc.getDto()))
+
+        then:
+        1 * client.prepareBulk() >> bulkRequestBuilder
+        1 * client.prepareUpdate(_,_,_) >> updateRequestBuilder
+        1 * updateRequestBuilder.setRetryOnConflict(3) >> updateRequestBuilder
+        1 * updateRequestBuilder.setDoc(_,_) >> updateRequestBuilder
+        1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
+        1 * bulkRequestBuilder.execute() >> future
+        1 * future.actionGet() >> bulkResponse
+        1 * bulkResponse.hasFailures() >> true
+        1 * bulkResponse.getItems() >> [bulkItemResponse]
+        1 * bulkItemResponse.isFailed() >> true
+        2 * bulkItemResponse.getFailureMessage() >> "ouch failed"
+        2 * bulkItemResponse.getId() >> "1"
+        1 * elasticSearchMetric.getElasticSearchUpdateFailureCounter() >> counter
+        1 * counter.increment()
+        1 * elasticSearchMetric.getElasticSearchLogFailureCounter() >> counter2
+        1 * counter2.increment()
+    }
+
+    def "Test updates for #id with Exception "()  {
+        def catalogName = 'prodhive'
+        def databaseName = 'estestdb'
+        def tableName = 'part'
+        def id = 'prodhive/estestdb/part_test'
+        def client = Mock(Client)
+        def counter = Mock(Counter)
+        def bulkRequestBuilder = Mock(BulkRequestBuilder)
+        def updateRequestBuilder = Mock(UpdateRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
+        def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
+            "testuser", false)
+        def indexRequestBuilder2 = Mock(IndexRequestBuilder)
+        def response = Mock(Response)
+
+        when:
+        es.updates(Type.table.name(),
+            [id],
+            metacatJson.toJsonObject(doc.getDto()))
+
+        then:
+        1 * client.prepareBulk() >> bulkRequestBuilder
+        1 * client.prepareUpdate(_,_,_) >> updateRequestBuilder
+        1 * updateRequestBuilder.setRetryOnConflict(3) >> updateRequestBuilder
+        1 * updateRequestBuilder.setDoc(_,_) >> updateRequestBuilder
+        1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
+        1 * bulkRequestBuilder.execute() >> future
+        1 * future.actionGet() >> {throw new Exception("ouch", new Throwable("Exception")) }
+        1 * elasticSearchMetric.getElasticSearchBulkUpdateFailureCounter() >> counter
+        1 * counter.increment()
+        1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
+        1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
+        1 * indexRequestBuilder2.execute()  >> future
+        1 * future.actionGet() >> response
+    }
+
+    def "Test get for #id"() {
+        def id = 'prodhive/estestdb/part_test'
+        def client = Mock(Client)
+        def getRequestBuilder = Mock(GetRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def response = Mock(GetResponse)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        def responseMap = Mock(Map)
+        when:
+        es.get(Type.table.name(), id)
+
+        then:
+        1 * client.prepareGet(_, _, _) >> getRequestBuilder
+        1 * getRequestBuilder.execute() >> future
+        1 * future.actionGet() >> response
+        2 * response.exists >> true
+        1 * response.getSourceAsMap() >> responseMap
+        1 * responseMap.get(ElasticSearchDoc.Field.USER) >> "user"
+        1 * responseMap.get(ElasticSearchDoc.Field.DELETED) >> true
+        1 * responseMap.get(ElasticSearchDoc.Field.TIMESTAMP) >> 12345l
+        1 * response.getSourceAsBytes()
+        1 * response.getType() >> "table"
+        1 * response.getId() >> "user"
+    }
+
+    def "Test non-exist #id"() {
+        def id = 'prodhive/estestdb/part_test'
+        def client = Mock(Client)
+        def getRequestBuilder = Mock(GetRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def response = Mock(GetResponse)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        when:
+        es.get(Type.table.name(), id)
+
+        then:
+        1 * client.prepareGet(_, _, _) >> getRequestBuilder
+        1 * getRequestBuilder.execute() >> future
+        1 * future.actionGet() >> response
+        1 * response.exists >> false
+    }
+
+    def "Test getIdsByQualifiedName"() {
+        def name = QualifiedName.fromString("testhive/test/testtable")
+        def client = Mock(Client)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def response = Mock(SearchResponse)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def searchRequestBuilder = Mock(SearchRequestBuilder)
+        def searchHits = Mock(SearchHits)
+        def hit = Mock(SearchHit)
+        when:
+        es.getIdsByQualifiedName(Type.table.name(), name)
+
+        then:
+        1 * client.prepareSearch(_) >> searchRequestBuilder
+        1 * searchRequestBuilder.setTypes(_ as String) >> searchRequestBuilder
+        1 * searchRequestBuilder.setSearchType(SearchType.QUERY_THEN_FETCH) >> searchRequestBuilder
+        1 * searchRequestBuilder.setQuery(_ as QueryBuilder) >> searchRequestBuilder
+        1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
+        1 * searchRequestBuilder.setFetchSource(false) >> searchRequestBuilder
+        1 * searchRequestBuilder.execute() >> future
+        1 * future.actionGet() >> response
+        2 * response.getHits() >> searchHits
+        2 * searchHits.getHits() >> [hit]
     }
 
 
-    @Unroll
-    def "Test deletes for #type"() {
-        given:
-        def tables = DataDtoProvider.getTables(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b", noOfTables)
-        def docs = tables.collect {
-            String userName = it.getAudit() != null ? it.getAudit().getCreatedBy()
-                : "admin";
-            return new ElasticSearchDoc(it.getName().toString(), it, userName, false, null)
-        }
-        es.save(Type.table.name(), docs)
-        es.refresh()
-        es.delete(MetacatRequestContext.builder().userName("testUpdate").build(), Type.table.name(), softDelete)
-        where:
-        catalogName | databaseName | tableName | noOfTables | softDelete
-        'prodhive'  | 'amajumdar'  | 'part'    | 10         | false
-        'prodhive'  | 'amajumdar'  | 'part'    | 0          | false
-        'prodhive'  | 'amajumdar'  | 'part'    | 1000       | false
-        'prodhive'  | 'amajumdar'  | 'part'    | 10         | true
-        'prodhive'  | 'amajumdar'  | 'part'    | 0          | true
+    def "Test getQualifiedNamesByMarkerByNames"() {
+        def names = [ QualifiedName.fromString("testhive/test/testtable") ]
+        def instant = new Instant()
+        def excludeQualifiedNames = []
+
+        def client = Mock(Client)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def response = Mock(SearchResponse)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        def searchRequestBuilder = Mock(SearchRequestBuilder)
+        def searchHits = Mock(SearchHits)
+        def hit = Mock(SearchHit)
+        when:
+        es.getQualifiedNamesByMarkerByNames("table", names, instant, excludeQualifiedNames, String.class)
+
+        then:
+        1 * client.prepareSearch(_) >> searchRequestBuilder
+        1 * searchRequestBuilder.setTypes(_ as String) >> searchRequestBuilder
+        1 * searchRequestBuilder.setSearchType(SearchType.QUERY_THEN_FETCH) >> searchRequestBuilder
+        1 * searchRequestBuilder.setQuery(_ as QueryBuilder) >> searchRequestBuilder
+        1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
+        1 * searchRequestBuilder.execute() >> future
+        1 * future.actionGet() >> response
+        2 * response.getHits() >> searchHits
+        2 * searchHits.getHits() >> [hit]
+        1 *  hit.getSourceAsString() >> "test"
     }
 
-    @Unroll
-    def "Test migSave for #id"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
-        esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        for (String index : [esIndex, esMergeIndex]) {
-            def result = (TableDto) es.get(Type.table.name(), id, index).getDto()
-            expect:
-            id == result.getName().toString()
-        }
-        where:
-        catalogName | databaseName | tableName | id
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part'
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part'
+    def "Test getTableIdsByUri" () {
+        def uri = "s3://bucket/testhive/test/testtable"
+        def client = Mock(Client)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def response = Mock(SearchResponse)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        def searchRequestBuilder = Mock(SearchRequestBuilder)
+        def searchHits = Mock(SearchHits)
+        def hit = Mock(SearchHit)
+        when:
+        es.getTableIdsByUri(Type.table.name(), uri)
+
+        then:
+        1 * client.prepareSearch(_) >> searchRequestBuilder
+        1 * searchRequestBuilder.setTypes(_ as String) >> searchRequestBuilder
+        1 * searchRequestBuilder.setSearchType(SearchType.QUERY_THEN_FETCH) >> searchRequestBuilder
+        1 * searchRequestBuilder.setQuery(_ as QueryBuilder) >> searchRequestBuilder
+        1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
+        1 * searchRequestBuilder.setFetchSource(false) >> searchRequestBuilder
+        1 * searchRequestBuilder.execute() >> future
+        1 * future.actionGet() >> response
+        2 * response.getHits() >> searchHits
+        2 * searchHits.getHits() >> [hit]
     }
 
-    @Unroll
-    def "Test migSave for list of #id"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
-        esMig.save(Type.table.name(), [new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false)])
-        for (String index : [esIndex, esMergeIndex]) {
-            def result = (TableDto) es.get(Type.table.name(), id, index).getDto()
-            expect:
-            id == result.getName().toString()
-        }
-        where:
-        catalogName | databaseName | tableName | id
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part'
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part'
+    def "Test getTableIdsByCatalogs" () {
+        def names = [ QualifiedName.fromString("testhive/test/testtable") ]
+        def excludeQualifiedNames = []
+        def client = Mock(Client)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def response = Mock(SearchResponse)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        def searchRequestBuilder = Mock(SearchRequestBuilder)
+        def searchHits = Mock(SearchHits)
+        def hit = Mock(SearchHit)
+        when:
+        es.getTableIdsByCatalogs(Type.table.name(), names, excludeQualifiedNames)
+
+        then:
+        1 * client.prepareSearch(_) >> searchRequestBuilder
+        1 * searchRequestBuilder.setTypes(_ as String) >> searchRequestBuilder
+        1 * searchRequestBuilder.setSearchType(SearchType.QUERY_THEN_FETCH) >> searchRequestBuilder
+        1 * searchRequestBuilder.setQuery(_ as QueryBuilder) >> searchRequestBuilder
+        1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
+        1 * searchRequestBuilder.setFetchSource(false) >> searchRequestBuilder
+        1 * searchRequestBuilder.execute() >> future
+        1 * future.actionGet() >> response
+        2 * response.getHits() >> searchHits
+        2 * searchHits.getHits() >> [hit]
+
     }
 
-    @Unroll
-    def "Test migSoftDelete for #id that does not exists in mergeIndex"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
-        es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        esMig.softDelete(Type.table.name(), id, metacatContext)
-        for (String index : [esIndex, esMergeIndex]) {
-            def result = es.get(Type.table.name(), id, index)
-            expect:
-            result.isDeleted()
-            id == ((TableDto) result.getDto()).getName().toString()
-        }
-        where:
-        catalogName | databaseName | tableName | id
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part'
+    def "Test simpleSearch" () {
+        def names = [ QualifiedName.fromString("testhive/test/testtable") ]
+        def excludeQualifiedNames = []
+        def client = Mock(Client)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def response = Mock(SearchResponse)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        def searchRequestBuilder = Mock(SearchRequestBuilder)
+        def searchHits = Mock(SearchHits)
+        def hit = Mock(SearchHit)
+        when:
+        es.simpleSearch("simpleSearch")
+
+        then:
+        1 * client.prepareSearch(_) >> searchRequestBuilder
+        1 * searchRequestBuilder.setTypes(_ as String) >> searchRequestBuilder
+        1 * searchRequestBuilder.setSearchType(SearchType.QUERY_THEN_FETCH) >> searchRequestBuilder
+        1 * searchRequestBuilder.setQuery(_ as QueryBuilder) >> searchRequestBuilder
+        1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
+        1 * searchRequestBuilder.execute() >> future
+        1 * future.actionGet() >> response
+        2 * response.getHits() >> searchHits
+        2 * searchHits.getHits() >> [hit]
+        1 *  hit.getSourceAsString() >> "test"
     }
 
-    @Unroll
-    def "Test migSoftDeletes for list of #id that exists in mergeIndex"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
-        def docs = [new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
-                    new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
-                    new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false)]
-        esMig.save(Type.table.name(), docs)
-        esMig.softDelete(Type.table.name(), [id], metacatContext)
-        for (String index : [esIndex, esMergeIndex]) {
-            def result = es.get(Type.table.name(), id, index)
-            expect:
-            result.isDeleted()
-            id == ((TableDto) result.getDto()).getName().toString()
-        }
-        where:
-        catalogName | databaseName | tableName | id
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part'
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part'
+    def "Test softDelete" () {
+        def ids = [ "testhive/test/testtable"]
+        def client = Mock(Client)
+        def bulkRequestBuilder = Mock(BulkRequestBuilder)
+        def updateRequestBuilder = Mock(UpdateRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def bulkResponse = Mock(BulkResponse)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def metacatConext = Mock(MetacatRequestContext)
+        when:
+        es.softDelete(Type.table.name(), ids, metacatConext)
+
+        then:
+        1 * metacatConext.getUserName() >> "test"
+        1 * client.prepareBulk() >> bulkRequestBuilder
+        1 * client.prepareUpdate(_,_,_) >> updateRequestBuilder
+        1 * updateRequestBuilder.setRetryOnConflict(3) >> updateRequestBuilder
+        1 * updateRequestBuilder.setDoc(_ as XContentBuilder) >> updateRequestBuilder
+        1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
+        1 * bulkRequestBuilder.execute() >> future
+        1 * future.actionGet() >> bulkResponse
+        1 * bulkResponse.hasFailures() >> false
     }
 
-    @Unroll
-    def "Test migSoftDeletes for list of #id that do not exist in mergeIndex"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
-        def docs = [new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
-                    new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false),
-                    new ElasticSearchDoc(table.name.toString(), table, metacatContext.userName, false)]
-        es.save(Type.table.name(), docs)
-        esMig.softDelete(Type.table.name(), [id], metacatContext)
-        for (String index : [esIndex, esMergeIndex]) {
-            def result = es.get(Type.table.name(), id, index)
-            expect:
-            result.isDeleted()
-            id == ((TableDto) result.getDto()).getName().toString()
-        }
-        where:
-        catalogName | databaseName | tableName | id
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part'
+    def "Test softDelete with failure"()  {
+        def ids = [ "testhive/test/testtable"]
+        def client = Mock(Client)
+        def counter = Mock(Counter)
+        def counter2 = Mock(Counter)
+        def bulkRequestBuilder = Mock(BulkRequestBuilder)
+        def updateRequestBuilder = Mock(UpdateRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def bulkResponse = Mock(BulkResponse)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+
+        def bulkItemResponse = Mock(BulkItemResponse)
+
+        def metacatConext = Mock(MetacatRequestContext)
+        when:
+        es.softDelete(Type.table.name(), ids, metacatConext)
+
+        then:
+        1 * metacatConext.getUserName() >> "test"
+        1 * client.prepareBulk() >> bulkRequestBuilder
+        1 * client.prepareUpdate(_,_,_) >> updateRequestBuilder
+        1 * updateRequestBuilder.setRetryOnConflict(3) >> updateRequestBuilder
+        1 * updateRequestBuilder.setDoc(_ as XContentBuilder) >> updateRequestBuilder
+        1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
+        1 * bulkRequestBuilder.execute() >> future
+        1 * future.actionGet() >> bulkResponse
+        1 * bulkResponse.hasFailures() >> true
+        1 * bulkResponse.getItems() >> [bulkItemResponse]
+        1 * bulkItemResponse.isFailed() >> true
+        2 * bulkItemResponse.getFailureMessage() >> "ouch failed"
+        2 * bulkItemResponse.getId() >> "1"
+        1 * elasticSearchMetric.getElasticSearchDeleteFailureCounter() >> counter
+        1 * counter.increment()
+        1 * elasticSearchMetric.getElasticSearchLogFailureCounter() >> counter2
+        1 * counter2.increment()
     }
 
-    @Unroll
-    def "Test migUpdates for #id that exists in mergeIndex"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
-        esMig.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        esMig.updates(Type.table.name(), [id], MetacatRequestContext.builder().userName("testUpdate").build(), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
-        for (String index : [esIndex, esMergeIndex]) {
-            def result = es.get(Type.table.name(), id, index)
-            es.refresh()
-            def resultByUri = es.getTableIdsByUri(Type.table.name(), uri)
-            expect:
-            result != null
-            result.getUser() == "testUpdate"
-            ((TableDto) result.getDto()).getDataMetadata() != null
-            resultByUri != null
-            resultByUri.size() == 1
-            resultByUri[0] == id
-        }
-        where:
-        catalogName | databaseName | tableName | id                        | uri
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part' | 's3:/a/b'
+    def "Test softDelete with Exception "()  {
+        def ids = [ "testhive/test/testtable"]
+        def client = Mock(Client)
+        def counter = Mock(Counter)
+        def bulkRequestBuilder = Mock(BulkRequestBuilder)
+        def updateRequestBuilder = Mock(UpdateRequestBuilder)
+        def future = Mock(ListenableActionFuture)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def indexRequestBuilder2 = Mock(IndexRequestBuilder)
+        def metacatConext = Mock(MetacatRequestContext)
+        def response = Mock(Response)
+
+        when:
+        es.softDelete(Type.table.name(), ids, metacatConext)
+
+        then:
+        1 * metacatConext.getUserName() >> "test"
+        1 * client.prepareBulk() >> bulkRequestBuilder
+        1 * client.prepareUpdate(_,_,_) >> updateRequestBuilder
+        1 * updateRequestBuilder.setRetryOnConflict(3) >> updateRequestBuilder
+        1 * updateRequestBuilder.setDoc(_ as XContentBuilder) >> updateRequestBuilder
+        1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
+        1 * bulkRequestBuilder.execute() >> future
+        1 * future.actionGet() >> {throw new Exception("ouch", new Throwable("Exception")) }
+        1 * elasticSearchMetric.getElasticSearchBulkDeleteFailureCounter() >> counter
+        1 * counter.increment()
+        1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
+        1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
+        1 * indexRequestBuilder2.execute()  >> future
+        1 * future.actionGet() >> response
     }
 
-    @Unroll
-    def "Test migUpdates for #id that does not exists in mergeIndex"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
-        es.save(Type.table.name(), id, es.toJsonString(id, table, metacatContext, false))
-        esMig.updates(Type.table.name(), [id], MetacatRequestContext.builder().userName("testUpdate").build(), new MetacatJsonLocator().parseJsonObject('{"dataMetadata": {"metrics":{"count":10}}}'))
-        for (String index : [esIndex, esMergeIndex]) {
-            def result = es.get(Type.table.name(), id, index)
-            es.refresh()
-            def resultByUri = es.getTableIdsByUri(Type.table.name(), uri)
-            expect:
-            result != null
-            result.getUser() == "testUpdate"
-            ((TableDto) result.getDto()).getDataMetadata() != null
-            resultByUri != null
-            resultByUri.size() == 1
-            resultByUri[0] == id
-        }
-        where:
-        catalogName | databaseName | tableName | id                        | uri
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part' | 's3:/a/b'
-    }
+    def "Test toJsonString" () {
+        def catalogName = 'prodhive'
+        def databaseName = 'estestdb'
+        def tableName = 'part'
+        def client = Mock(Client)
+        def elasticSearchMetric = Mock(ElasticSearchMetric)
+        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
+        def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
+            "testuser", false)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        when:
+        String str = es.toJsonString(doc)
+        ObjectNode nodes = metacatJson.parseJsonObject(str)
 
-    def "Test ElasticSearchDoc addSearchableDefinitionMetadata"() {
-        given:
-        def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, metacatContext.getUserName(), uri)
-        ElasticSearchDoc doc = new ElasticSearchDoc("test", table, "zhenl", false);
-        ObjectNode oMetadata = new MetacatJsonLocator().toJsonObject(table);
-        doc.addSearchableDefinitionMetadata(oMetadata);
-        expect:
-        ObjectNode node = oMetadata.get("searchableDefinitionMetadata");
-        node.get("owner") != null
-        node.get("lifetime") != null
-        node.get("extendedSchema") != null
-        where:
-        catalogName | databaseName | tableName | id                        | uri
-        'prodhive'  | 'amajumdar'  | 'part'    | 'prodhive/amajumdar/part' | 's3:/a/b'
+        then:
+        nodes.get("audit").size() == 4
+        nodes.get("fields").size() == 4
+        nodes.get("timestamp") != null
+        nodes.get("user_") != null
+        nodes.get("deleted_") != null
+        nodes.get(ElasticSearchDocConstants.DEFINITION_METADATA).size() == 20
+        nodes.get(ElasticSearchDoc.Field.SEARCHABLE_DEFINITION_METADATA).size() == 14
     }
 }

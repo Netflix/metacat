@@ -27,34 +27,38 @@ import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.main.services.search.ElasticSearchEventHandlers;
 import com.netflix.metacat.main.services.search.ElasticSearchMetric;
 import com.netflix.metacat.main.services.search.ElasticSearchRefresh;
 import com.netflix.metacat.main.services.search.ElasticSearchUtil;
 import com.netflix.metacat.main.services.search.ElasticSearchUtilImpl;
-import com.netflix.metacat.main.services.search.ElasticSearchEventHandlers;
 import com.netflix.spectator.api.Registry;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 /**
  * Configuration for ElasticSearch which triggers when metacat.elasticsearch.enabled is true.
  *
  * @author tgianos
+ * @author zhenl
  * @since 1.1.0
  */
-//TODO: Look into spring data elasticsearch to replace this
+@Slf4j
 @Configuration
 @ConditionalOnProperty(value = "metacat.elasticsearch.enabled", havingValue = "true")
 public class ElasticSearchConfig {
-
     /**
      * The ElasticSearch client.
      *
@@ -68,12 +72,12 @@ public class ElasticSearchConfig {
         if (StringUtils.isBlank(clusterName)) {
             throw new IllegalStateException("No cluster name set. Unable to continue");
         }
-        final Settings settings = ImmutableSettings
-            .settingsBuilder()
+        final Settings settings = Settings.builder()
             .put("cluster.name", clusterName)
+            .put("client.transport.sniff", true) //to dynamically add new hosts and remove old ones
             .put("transport.tcp.connect_timeout", "60s")
             .build();
-        final TransportClient client = new TransportClient(settings);
+        final TransportClient client = new PreBuiltTransportClient(settings);
         // Add the transport address if exists
         final String clusterNodesStr = config.getElasticSearchClusterNodes();
         if (StringUtils.isNotBlank(clusterNodesStr)) {
@@ -81,10 +85,15 @@ public class ElasticSearchConfig {
             final Iterable<String> clusterNodes = Splitter.on(',').split(clusterNodesStr);
             clusterNodes.
                 forEach(
-                    clusterNode ->
-                        client.addTransportAddress(
-                            new InetSocketTransportAddress(clusterNode, port)
-                        )
+                    clusterNode -> {
+                        try {
+                            client.addTransportAddress(
+                                new InetSocketTransportAddress(InetAddress.getByName(clusterNode), port)
+                            );
+                        } catch (UnknownHostException exception) {
+                            log.error("Skipping unknown host {}", clusterNode);
+                        }
+                    }
                 );
         }
 
@@ -129,9 +138,10 @@ public class ElasticSearchConfig {
 
     /**
      * Event handler instance to publish event payloads to ElasticSearch.
+     *
      * @param elasticSearchUtil The client wrapper utility to use
-     * @param registry    registry of spectator
-     * @param config      System config
+     * @param registry          registry of spectator
+     * @param config            System config
      * @return The event handler instance
      */
     @Bean
