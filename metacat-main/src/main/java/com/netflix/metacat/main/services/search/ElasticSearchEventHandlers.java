@@ -64,16 +64,17 @@ public class ElasticSearchEventHandlers {
     private final Timer tableUpdateTimer;
     private final Timer partitionSaveEventsDelayTimer;
     private final Timer partitionSaveTimer;
+
     /**
      * Constructor.
      *
-     * @param es elastic search util
+     * @param es       elastic search util
      * @param registry registry to spectator
-     * @param config configurations
+     * @param config   configurations
      */
     public ElasticSearchEventHandlers(final ElasticSearchUtil es,
-                                             final Registry registry,
-                                             final Config config) {
+                                      final Registry registry,
+                                      final Config config) {
         this.es = es;
         this.metacatJsonLocator = new MetacatJsonLocator();
         this.config = config;
@@ -117,7 +118,7 @@ public class ElasticSearchEventHandlers {
             final DatabaseDto dto = event.getDatabase();
             final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
                 event.getRequestContext().getUserName(), false);
-            es.save(ElasticSearchDoc.Type.database.name(), doc.getId(), es.toJsonString(doc));
+            es.save(ElasticSearchDoc.Type.database.name(), doc.getId(), doc);
         });
     }
 
@@ -135,7 +136,7 @@ public class ElasticSearchEventHandlers {
             final TableDto dto = event.getTable();
             final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
                 event.getRequestContext().getUserName(), false);
-            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
+            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc);
         });
     }
 
@@ -216,7 +217,7 @@ public class ElasticSearchEventHandlers {
             final TableDto dto = event.getCurrentTable();
             final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
                 event.getRequestContext().getUserName(), false);
-            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
+            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc);
         });
     }
 
@@ -236,23 +237,26 @@ public class ElasticSearchEventHandlers {
             final ElasticSearchDoc doc = new ElasticSearchDoc(dto.getName().toString(), dto,
                 event.getRequestContext().getUserName(), false);
             final ElasticSearchDoc oldDoc = es.get(ElasticSearchDoc.Type.table.name(), doc.getId());
-            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), es.toJsonString(doc));
+            es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc);
             if (oldDoc == null || oldDoc.getDto() == null
                 || !Objects.equals(((TableDto) oldDoc.getDto()).getDataMetadata(), dto.getDataMetadata())) {
-                updateEntitiesWithSameUri(ElasticSearchDoc.Type.table.name(), dto, event.getRequestContext());
+                updateEntitiesWithSameUri(ElasticSearchDoc.Type.table.name(),
+                    dto, event.getRequestContext().getUserName());
             }
         });
     }
 
     private void updateEntitiesWithSameUri(final String metadataType, final TableDto dto,
-                                           final MetacatRequestContext metacatRequestContext) {
+                                           final String userName) {
         if (dto.isDataExternal()) {
             final List<String> ids = es.getTableIdsByUri(metadataType, dto.getDataUri())
                 .stream().filter(s -> !s.equals(dto.getName().toString())).collect(Collectors.toList());
             if (!ids.isEmpty()) {
                 final ObjectNode node = metacatJsonLocator.emptyObjectNode();
-                node.set("dataMetadata", dto.getDataMetadata());
-                es.updates(ElasticSearchDoc.Type.table.name(), ids, metacatRequestContext, node);
+                node.set(ElasticSearchDoc.Field.DATA_METADATA, dto.getDataMetadata());
+                node.put(ElasticSearchDoc.Field.USER, userName);
+                node.put(ElasticSearchDoc.Field.TIMESTAMP, java.time.Instant.now().toEpochMilli());
+                es.updates(ElasticSearchDoc.Type.table.name(), ids, node);
             }
         }
     }

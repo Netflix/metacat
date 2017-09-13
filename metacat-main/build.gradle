@@ -29,7 +29,8 @@ dependencies {
     compile(project(":metacat-common"))
     compile(project(":metacat-common-server"))
     compile(project(":metacat-thrift"))
-    compile("org.elasticsearch:elasticsearch")
+    compile("org.elasticsearch.client:transport")
+
     compile("com.amazonaws:aws-java-sdk-sns")
     compile("joda-time:joda-time")
 
@@ -74,14 +75,16 @@ dependencies {
     runtime("io.springfox:springfox-swagger-ui")
     runtime("org.webjars:hal-browser")
     runtime("org.springframework:spring-aspects")
+    runtime("org.apache.logging.log4j:log4j-core")
 
     /*******************************
      * Test Dependencies
      *******************************/
 
     testCompile(project(":metacat-testdata-provider"))
-
     testCompile("io.airlift:testing-mysql-server")
+    testCompile("org.apache.logging.log4j:log4j-core")
+
 }
 
 test {

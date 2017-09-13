@@ -149,9 +149,9 @@ public interface ElasticSearchUtil {
      *
      * @param type index type
      * @param id   id of the entity
-     * @param body source string of the entity
+     * @param doc metacat documents
      */
-    void save(String type, String id, String body);
+    void save(String type, String id, ElasticSearchDoc doc);
 
     /**
      * Full text search.
@@ -182,18 +182,6 @@ public interface ElasticSearchUtil {
     void softDelete(String type, String id, MetacatRequestContext metacatRequestContext);
 
     /**
-     * Creates JSON from search doc.
-     *
-     * @param id        doc id
-     * @param dto       dto
-     * @param context   context
-     * @param isDeleted true if it has to be mark deleted
-     * @return doc
-     */
-    String toJsonString(String id, Object dto, MetacatRequestContext context,
-                        boolean isDeleted);
-
-    /**
      * Creates JSON from elasticSearchdoc object.
      *
      * @param elasticSearchDoc elastic search doc.
@@ -206,9 +194,7 @@ public interface ElasticSearchUtil {
      *
      * @param type                  index type
      * @param ids                   list of entity ids
-     * @param metacatRequestContext context containing the user name
-     * @param node                  json that represents the document source
+     * @param node    Object node to update the doc
      */
-    void updates(String type, List<String> ids,
-                 MetacatRequestContext metacatRequestContext, ObjectNode node);
+    void updates(String type, List<String> ids, ObjectNode node);
 }

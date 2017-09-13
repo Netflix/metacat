@@ -22,6 +22,8 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.TableDto;
 import lombok.Getter;
 
+import java.time.Instant;
+
 /**
  * Document that gets stored in elastic search.
  *
@@ -51,10 +53,11 @@ public class ElasticSearchDoc {
 
     private String id;
     private Object dto;
+    private Long timestamp;
     private String user;
     private boolean deleted;
     private String refreshMarker;
-    private boolean addSearchableDefinitionMetadataEnabled = true;
+
 
     /**
      * Constructor.
@@ -64,11 +67,36 @@ public class ElasticSearchDoc {
      * @param user    user name
      * @param deleted is it marked deleted
      */
-    public ElasticSearchDoc(final String id, final Object dto, final String user, final boolean deleted) {
+    public ElasticSearchDoc(final String id,
+                            final Object dto,
+                            final String user,
+                            final boolean deleted) {
         this.id = id;
         this.dto = dto;
         this.user = user;
         this.deleted = deleted;
+        this.timestamp = Instant.now().toEpochMilli();
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param id        doc id
+     * @param dto       dto
+     * @param user      user name
+     * @param deleted   is it marked deleted
+     * @param timestamp timestampe of the doc
+     */
+    public ElasticSearchDoc(final String id,
+                            final Object dto,
+                            final String user,
+                            final boolean deleted,
+                            final long timestamp) {
+        this.id = id;
+        this.dto = dto;
+        this.user = user;
+        this.deleted = deleted;
+        this.timestamp = timestamp;
     }
 
     /**
@@ -78,17 +106,20 @@ public class ElasticSearchDoc {
      * @param dto           dto
      * @param user          user name
      * @param deleted       is it marked deleted
-     * @param refreshMarker marker
+     * @param refreshMarker refresh marker
      */
-    public ElasticSearchDoc(final String id, final Object dto, final String user, final boolean deleted,
+    public ElasticSearchDoc(final String id,
+                            final Object dto,
+                            final String user,
+                            final boolean deleted,
                             final String refreshMarker) {
         this.id = id;
         this.dto = dto;
         this.user = user;
         this.deleted = deleted;
         this.refreshMarker = refreshMarker;
+        this.timestamp = Instant.now().toEpochMilli();
     }
-
 
     /**
      * addSearchableDefinitionMetadataEnabled.
@@ -137,7 +168,8 @@ public class ElasticSearchDoc {
         public static final String DELETED = "deleted_";
         public static final String REFRESH_MARKER = "refreshMarker_";
         public static final String SEARCHABLE_DEFINITION_METADATA = "searchableDefinitionMetadata";
+        public static final String TIMESTAMP = "timestamp";
+        public static final String DATA_METADATA = "dataMetadata";
     }
-
 
 }
