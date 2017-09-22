@@ -13,37 +13,36 @@
 
 package com.netflix.metacat.metadata.mysql;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.server.model.Lookup;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
-import com.netflix.metacat.common.server.util.JdbcUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.transaction.CannotCreateTransactionException;
-import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * User metadata service impl using Mysql.
  */
 @Slf4j
 @SuppressFBWarnings
+@Transactional("metadataTxManager")
 public class MySqlLookupService implements LookupService {
     private static final String SQL_GET_LOOKUP =
         "select id, name, type, created_by createdBy, last_updated_by lastUpdatedBy, date_created dateCreated,"
@@ -61,17 +60,17 @@ public class MySqlLookupService implements LookupService {
         "select lv.values_string value from lookup l, lookup_values lv where l.id=lv.lookup_id and l.name=?";
     private static final String STRING_TYPE = "string";
     private final Config config;
-    private JdbcUtil jdbcUtil;
+    private JdbcTemplate jdbcTemplate;
 
     /**
      * Constructor.
      *
      * @param config     config
-     * @param dataSource datasource to user
+     * @param jdbcTemplate jdbc template
      */
-    public MySqlLookupService(final Config config, final DataSource dataSource) {
+    public MySqlLookupService(final Config config, @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate) {
         this.config = config;
-        this.jdbcUtil = new JdbcUtil(dataSource);
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     /**
@@ -84,9 +83,9 @@ public class MySqlLookupService implements LookupService {
     @Transactional(readOnly = true)
     public Lookup get(final String name) {
         try {
-            return jdbcUtil.getJdbcTemplate().queryForObject(
+            return jdbcTemplate.queryForObject(
                 SQL_GET_LOOKUP,
-                new Object[]{name},
+                new Object[]{name}, new int[]{Types.VARCHAR},
                 (rs, rowNum) -> {
                     final Lookup lookup = new Lookup();
                     lookup.setId(rs.getLong("id"));
@@ -101,7 +100,7 @@ public class MySqlLookupService implements LookupService {
                 });
         } catch (EmptyResultDataAccessException e) {
             return null;
-        } catch (DataAccessException e) {
+        } catch (Exception e) {
             final String message = String.format("Failed to get the lookup for name %s", name);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
@@ -135,10 +134,10 @@ public class MySqlLookupService implements LookupService {
     @Transactional(readOnly = true)
     public Set<String> getValues(final Long lookupId) {
         try {
-            return MySqlServiceUtil.getValues(jdbcUtil, SQL_GET_LOOKUP_VALUES, lookupId);
+            return MySqlServiceUtil.getValues(jdbcTemplate, SQL_GET_LOOKUP_VALUES, lookupId);
         } catch (EmptyResultDataAccessException e) {
             return Sets.newHashSet();
-        } catch (DataAccessException e) {
+        } catch (Exception e) {
             final String message = String.format("Failed to get the lookup values for id %s", lookupId);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
@@ -155,10 +154,10 @@ public class MySqlLookupService implements LookupService {
     @Transactional(readOnly = true)
     public Set<String> getValues(final String name) {
         try {
-            return MySqlServiceUtil.getValues(jdbcUtil, SQL_GET_LOOKUP_VALUES_BY_NAME, name);
+            return MySqlServiceUtil.getValues(jdbcTemplate, SQL_GET_LOOKUP_VALUES_BY_NAME, name);
         } catch (EmptyResultDataAccessException e) {
             return Sets.newHashSet();
-        } catch (DataAccessException e) {
+        } catch (Exception e) {
             final String message = String.format("Failed to get the lookup values for name %s", name);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
@@ -173,53 +172,48 @@ public class MySqlLookupService implements LookupService {
      * @return returns the lookup with the given name.
      */
     @Override
-    @Transactional
     public Lookup setValues(final String name, final Set<String> values) {
         try {
-            return jdbcUtil.getTransactionTemplate().execute(new TransactionCallback<Lookup>() {
-                @Override
-                public Lookup doInTransaction(final TransactionStatus status) {
-                    Lookup lookup = null;
-                    try {
-                        lookup = findOrCreateLookupByName(name);
-                    } catch (SQLException e) {
-                        throw new CannotCreateTransactionException(
-                            "findOrCreateTagItemByName failed " + name, e);
-                    }
-                    final Set<String> inserts;
-                    Set<String> deletes = Sets.newHashSet();
-                    final Set<String> lookupValues = lookup.getValues();
-                    if (lookupValues == null || lookupValues.isEmpty()) {
-                        inserts = values;
-                    } else {
-                        inserts = Sets.difference(values, lookupValues).immutableCopy();
-                        deletes = Sets.difference(lookupValues, values).immutableCopy();
-                    }
-                    lookup.setValues(values);
-                    if (!inserts.isEmpty()) {
-                        insertLookupValues(lookup.getId(), inserts);
-                    }
-                    if (!deletes.isEmpty()) {
-                        deleteLookupValues(lookup.getId(), deletes);
-                    }
-                    return lookup;
-                }
-            });
-        } catch (CannotCreateTransactionException | DataAccessException e) {
+            Lookup lookup = null;
+            try {
+                lookup = findOrCreateLookupByName(name);
+            } catch (SQLException e) {
+                throw new CannotCreateTransactionException(
+                    "findOrCreateTagItemByName failed " + name, e);
+            }
+            final Set<String> inserts;
+            Set<String> deletes = Sets.newHashSet();
+            final Set<String> lookupValues = lookup.getValues();
+            if (lookupValues == null || lookupValues.isEmpty()) {
+                inserts = values;
+            } else {
+                inserts = Sets.difference(values, lookupValues).immutableCopy();
+                deletes = Sets.difference(lookupValues, values).immutableCopy();
+            }
+            lookup.setValues(values);
+            if (!inserts.isEmpty()) {
+                insertLookupValues(lookup.getId(), inserts);
+            }
+            if (!deletes.isEmpty()) {
+                deleteLookupValues(lookup.getId(), deletes);
+            }
+            return lookup;
+        } catch (Exception e) {
             final String message = String.format("Failed to set the lookup values for name %s", name);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
         }
     }
 
-    private void insertLookupValues(final Long id, final Set<String> inserts)
-        throws DataAccessException {
-        MySqlServiceUtil.batchInsertValues(jdbcUtil, SQL_INSERT_LOOKUP_VALUES, id, inserts);
+    private void insertLookupValues(final Long id, final Set<String> inserts) {
+        jdbcTemplate.batchUpdate(SQL_INSERT_LOOKUP_VALUES, inserts.stream().map(insert -> new Object[]{id, insert})
+            .collect(Collectors.toList()), new int[]{Types.BIGINT, Types.VARCHAR});
     }
 
-    private void deleteLookupValues(final Long id, final Set<String> deletes)
-        throws DataAccessException {
-        MySqlServiceUtil.batchDeleteValues(jdbcUtil, SQL_DELETE_LOOKUP_VALUES, id, deletes);
+    private void deleteLookupValues(final Long id, final Set<String> deletes) {
+        jdbcTemplate.update(
+            String.format(SQL_DELETE_LOOKUP_VALUES, "'" + Joiner.on("','").skipNulls().join(deletes) + "'"),
+            new SqlParameterValue(Types.BIGINT, id));
     }
 
     /**
@@ -229,29 +223,19 @@ public class MySqlLookupService implements LookupService {
      * @return Look up object
      * @throws SQLException sql exception
      */
-    @Transactional
-    public Lookup findOrCreateLookupByName(final String name) throws SQLException {
+    private Lookup findOrCreateLookupByName(final String name) throws SQLException {
         Lookup lookup = get(name);
         if (lookup == null) {
             final KeyHolder holder = new GeneratedKeyHolder();
-            jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
-                @Override
-                protected void doInTransactionWithoutResult(final TransactionStatus status) {
-                    jdbcUtil.getJdbcTemplate().update(new PreparedStatementCreator() {
-                        @Override
-                        public PreparedStatement createPreparedStatement(final Connection connection)
-                            throws SQLException {
-                            final PreparedStatement ps = connection.prepareStatement(SQL_INSERT_LOOKUP,
-                                Statement.RETURN_GENERATED_KEYS);
-                            ps.setString(1, name);
-                            ps.setString(2, STRING_TYPE);
-                            ps.setString(3, config.getLookupServiceUserAdmin());
-                            ps.setString(4, config.getLookupServiceUserAdmin());
-                            return ps;
-                        }
-                    }, holder);
-                }
-            });
+            jdbcTemplate.update(connection -> {
+                final PreparedStatement ps = connection.prepareStatement(SQL_INSERT_LOOKUP,
+                    Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, name);
+                ps.setString(2, STRING_TYPE);
+                ps.setString(3, config.getLookupServiceUserAdmin());
+                ps.setString(4, config.getLookupServiceUserAdmin());
+                return ps;
+            }, holder);
             final Long lookupId = holder.getKey().longValue();
             lookup = new Lookup();
             lookup.setName(name);
@@ -268,35 +252,29 @@ public class MySqlLookupService implements LookupService {
      * @return returns the lookup with the given name.
      */
     @Override
-    @Transactional
     public Lookup addValues(final String name, final Set<String> values) {
         try {
-            return jdbcUtil.getTransactionTemplate().execute(new TransactionCallback<Lookup>() {
-                @Override
-                public Lookup doInTransaction(final TransactionStatus status) {
-                    Lookup lookup = null;
-                    try {
-                        lookup = findOrCreateLookupByName(name);
-                    } catch (SQLException e) {
-                        throw new CannotCreateTransactionException(
-                            "findOrCreateTagItemByName failed " + name, e);
-                    }
+            Lookup lookup = null;
+            try {
+                lookup = findOrCreateLookupByName(name);
+            } catch (SQLException e) {
+                throw new CannotCreateTransactionException(
+                    "findOrCreateTagItemByName failed " + name, e);
+            }
 
-                    final Set<String> inserts;
-                    final Set<String> lookupValues = lookup.getValues();
-                    if (lookupValues == null || lookupValues.isEmpty()) {
-                        inserts = values;
-                        lookup.setValues(values);
-                    } else {
-                        inserts = Sets.difference(values, lookupValues);
-                    }
-                    if (!inserts.isEmpty()) {
-                        insertLookupValues(lookup.getId(), inserts);
-                    }
-                    return lookup;
-                }
-            });
-        } catch (CannotCreateTransactionException | DataAccessException e) {
+            final Set<String> inserts;
+            final Set<String> lookupValues = lookup.getValues();
+            if (lookupValues == null || lookupValues.isEmpty()) {
+                inserts = values;
+                lookup.setValues(values);
+            } else {
+                inserts = Sets.difference(values, lookupValues);
+            }
+            if (!inserts.isEmpty()) {
+                insertLookupValues(lookup.getId(), inserts);
+            }
+            return lookup;
+        } catch (Exception e) {
             final String message = String.format("Failed to set the lookup values for name %s", name);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);

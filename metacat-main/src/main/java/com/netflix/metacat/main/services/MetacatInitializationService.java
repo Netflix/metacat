@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -79,8 +80,6 @@ public class MetacatInitializationService implements HealthIndicator {
         this.connectorManager = connectorManager;
         this.threadServiceManager = threadServiceManager;
         this.metacatThriftService = metacatThriftService;
-
-        this.start();
     }
 
     /**
@@ -125,9 +124,12 @@ public class MetacatInitializationService implements HealthIndicator {
 
     /**
      * Metacat service initialization.
+     *
+     * @param event Event when the context is starting
      */
-    public void start() {
-        log.info("Metacat application starting. Starting internal services...");
+    @EventListener
+    public void start(final ContextRefreshedEvent event) {
+        log.info("Metacat application starting per {}. Starting internal services...", event);
         try {
             // TODO: Rather than doing this statically why don't we have things that need to be started implement
             //       some interface/order?

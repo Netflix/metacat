@@ -16,25 +16,25 @@
 
 package com.netflix.metacat.connector.hive;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
-import com.netflix.metacat.common.server.util.JdbcUtil;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.sql.DataSource;
+import java.sql.Types;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +45,7 @@ import java.util.Map;
  * @since 1.0.0
  */
 @Slf4j
-@Transactional(readOnly = true)
+@Transactional("hiveTxManager")
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private static final String SQL_GET_TABLE_NAMES_BY_URI =
         "select d.name schema_name, t.tbl_name table_name, s.location"
@@ -53,7 +53,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private static final String SQL_EXIST_TABLE_BY_NAME =
         "select 1 from DBS d join TBLS t on d.DB_ID=t.DB_ID where d.name=? and t.tbl_name=?";
     private final Registry registry;
-    private final JdbcUtil jdbcUtil;
+    private JdbcTemplate jdbcTemplate;
     private final HiveConnectorFastServiceMetric fastServiceMetric;
 
     /**
@@ -64,7 +64,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param hiveConnectorDatabaseService databaseService
      * @param hiveMetacatConverters        hive converter
      * @param connectorContext             serverContext
-     * @param dataSource                   data source
+     * @param jdbcTemplate                 JDBC template
      * @param fastServiceMetric     fast service metric
      */
     @Autowired
@@ -74,12 +74,12 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final ConnectorContext connectorContext,
-        final DataSource dataSource,
+        @Qualifier("hiveJdbcTemplate") final JdbcTemplate jdbcTemplate,
         final HiveConnectorFastServiceMetric fastServiceMetric
     ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, connectorContext);
         this.registry = connectorContext.getRegistry();
-        this.jdbcUtil = new JdbcUtil(dataSource);
+        this.jdbcTemplate = jdbcTemplate;
         this.fastServiceMetric = fastServiceMetric;
     }
 
@@ -91,15 +91,14 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final long start = registry.clock().wallTime();
         boolean result = false;
         try {
-            final Object qResult = jdbcUtil.getJdbcTemplate().queryForObject(SQL_EXIST_TABLE_BY_NAME, Integer.class,
-                name.getDatabaseName(), name.getTableName());
+            final Object qResult = jdbcTemplate.queryForObject(SQL_EXIST_TABLE_BY_NAME,
+                new String[]{name.getDatabaseName(), name.getTableName()},
+                new int[]{Types.VARCHAR, Types.VARCHAR}, Integer.class);
             if (qResult != null) {
                 result = true;
             }
         } catch (EmptyResultDataAccessException e) {
             return false;
-        } catch (DataAccessException e) {
-            throw Throwables.propagate(e);
         } finally {
             this.fastServiceMetric.recordTimer(
                 HiveMetrics.TagTableExists.getMetricName(), registry.clock().wallTime() - start);
@@ -116,19 +115,19 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final long start = registry.clock().wallTime();
         // Create the sql
         final StringBuilder queryBuilder = new StringBuilder(SQL_GET_TABLE_NAMES_BY_URI);
-        final List<String> params = Lists.newArrayList();
+        final List<SqlParameterValue> params = Lists.newArrayList();
         if (prefixSearch) {
             queryBuilder.append(" and (1=0");
             uris.forEach(uri -> {
                 queryBuilder.append(" or location like ?");
-                params.add(uri + "%");
+                params.add(new SqlParameterValue(Types.VARCHAR, uri + "%"));
             });
             queryBuilder.append(" )");
         } else {
             queryBuilder.append(" and location in (");
             uris.forEach(uri -> {
                 queryBuilder.append("?,");
-                params.add(uri);
+                params.add(new SqlParameterValue(Types.VARCHAR, uri));
             });
             queryBuilder.deleteCharAt(queryBuilder.length() - 1).append(")");
         }
@@ -138,19 +137,13 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
                 final String schemaName = rs.getString("schema_name");
                 final String tableName = rs.getString("table_name");
                 final String uri = rs.getString("location");
-                List<QualifiedName> names = result.get(uri);
-                if (names == null) {
-                    names = Lists.newArrayList();
-                    result.put(uri, names);
-                }
+                final List<QualifiedName> names = result.computeIfAbsent(uri, k -> Lists.newArrayList());
                 names.add(QualifiedName.ofTable(this.getCatalogName(), schemaName, tableName));
             }
             return result;
         };
         try {
-            jdbcUtil.getJdbcTemplate().query(queryBuilder.toString(), params.toArray(), handler);
-        } catch (DataAccessException e) {
-            throw Throwables.propagate(e);
+            jdbcTemplate.query(queryBuilder.toString(), params.toArray(), handler);
         } finally {
             this.fastServiceMetric.recordTimer(
                 HiveMetrics.TagGetTableNames.getMetricName(), registry.clock().wallTime() - start);

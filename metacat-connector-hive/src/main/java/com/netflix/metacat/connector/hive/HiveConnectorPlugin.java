@@ -23,6 +23,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
+import org.apache.log4j.BasicConfigurator;
 
 /**
  * Hive plugin.
@@ -35,6 +36,13 @@ public class HiveConnectorPlugin implements ConnectorPlugin {
     private static final HiveTypeConverter HIVE_TYPE_CONVERTER = new HiveTypeConverter();
     private static final HiveConnectorInfoConverter INFO_CONVERTER_HIVE
         = new HiveConnectorInfoConverter(HIVE_TYPE_CONVERTER);
+
+    /**
+     * Constructor.
+     */
+    public HiveConnectorPlugin() {
+        BasicConfigurator.configure();
+    }
 
     /**
      * {@inheritDoc}

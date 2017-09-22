@@ -14,18 +14,12 @@
 package com.netflix.metacat.metadata.mysql;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.DataSourceManager;
-import com.netflix.metacat.common.server.util.JdbcUtil;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.Reader;
 import java.net.URL;
@@ -33,8 +27,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -51,18 +43,16 @@ public final class MySqlServiceUtil {
     /**
      * Returns the list of string having the input ids.
      *
-     * @param jdbcUtil jdbc util
+     * @param jdbcTemplate jdbc template
      * @param sql      query sql
      * @param item     identifier
      * @return list of results
-     * @throws DataAccessException data access exception
      */
-    @Transactional(readOnly = true)
-    public static Set<String> getValues(final JdbcUtil jdbcUtil,
+    public static Set<String> getValues(final JdbcTemplate jdbcTemplate,
                                         final String sql,
-                                        final Object item) throws DataAccessException {
+                                        final Object item) {
         try {
-            return jdbcUtil.getJdbcTemplate().query(sql, rs -> {
+            return jdbcTemplate.query(sql, rs -> {
                 final Set<String> result = Sets.newHashSet();
                 while (rs.next()) {
                     result.add(rs.getString("value"));
@@ -72,74 +62,6 @@ public final class MySqlServiceUtil {
         } catch (EmptyResultDataAccessException e) {
             return Sets.newHashSet();
         }
-    }
-
-
-    /**
-     * insertLookupValues.
-     *
-     * @param jdbcUtil jdbc util
-     * @param sql      query sql
-     * @param id       id
-     * @param inserts  data to insert
-     * @throws DataAccessException data access exception
-     */
-    @Transactional
-    public static void batchInsertValues(final JdbcUtil jdbcUtil,
-                                         final String sql,
-                                         final Long id,
-                                         final Set<String> inserts)
-        throws DataAccessException {
-        final List<Object[]> batch = new ArrayList<Object[]>();
-        for (String insert : inserts) {
-            batch.add(ImmutableList.of(id, insert).toArray());
-        }
-        jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
-            @Override
-            protected void doInTransactionWithoutResult(final TransactionStatus status) {
-                jdbcUtil.getJdbcTemplate().batchUpdate(sql, batch);
-            }
-        });
-    }
-
-    /**
-     * deleteLookupValues.
-     *
-     * @param jdbcUtil jdbc util
-     * @param sql      query sql
-     * @param id       identifier
-     * @param deletes  data to delete
-     * @throws DataAccessException data access exception
-     */
-    @Transactional
-    public static void batchDeleteValues(final JdbcUtil jdbcUtil,
-                                         final String sql,
-                                         final Long id,
-                                         final Set<String> deletes)
-        throws DataAccessException {
-        jdbcUtil.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
-            @Override
-            protected void doInTransactionWithoutResult(final TransactionStatus status) {
-                jdbcUtil.getJdbcTemplate()
-                    .update(String.format(sql, "'" + Joiner.on("','").skipNulls().join(deletes) + "'"), id);
-            }
-        });
-    }
-
-    /**
-     * deleteLookupValues.
-     *
-     * @param jdbcUtil jdbc util
-     * @param sql      update sql
-     * @param updates  data to delete
-     * @throws DataAccessException data access exception
-     */
-    public static void batchUpdateValues(final JdbcUtil jdbcUtil,
-                                         final String sql,
-                                         final List<Object[]> updates)
-        throws DataAccessException {
-        jdbcUtil.getJdbcTemplate()
-            .batchUpdate(sql, updates);
     }
 
     /**
