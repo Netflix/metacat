@@ -21,13 +21,11 @@ import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
@@ -68,7 +66,7 @@ public class MySqlLookupService implements LookupService {
      * @param config     config
      * @param jdbcTemplate jdbc template
      */
-    public MySqlLookupService(final Config config, @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate) {
+    public MySqlLookupService(final Config config, final JdbcTemplate jdbcTemplate) {
         this.config = config;
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -174,13 +172,7 @@ public class MySqlLookupService implements LookupService {
     @Override
     public Lookup setValues(final String name, final Set<String> values) {
         try {
-            Lookup lookup = null;
-            try {
-                lookup = findOrCreateLookupByName(name);
-            } catch (SQLException e) {
-                throw new CannotCreateTransactionException(
-                    "findOrCreateTagItemByName failed " + name, e);
-            }
+            final Lookup lookup = findOrCreateLookupByName(name);
             final Set<String> inserts;
             Set<String> deletes = Sets.newHashSet();
             final Set<String> lookupValues = lookup.getValues();
@@ -254,13 +246,7 @@ public class MySqlLookupService implements LookupService {
     @Override
     public Lookup addValues(final String name, final Set<String> values) {
         try {
-            Lookup lookup = null;
-            try {
-                lookup = findOrCreateLookupByName(name);
-            } catch (SQLException e) {
-                throw new CannotCreateTransactionException(
-                    "findOrCreateTagItemByName failed " + name, e);
-            }
+            final Lookup lookup = findOrCreateLookupByName(name);
 
             final Set<String> inserts;
             final Set<String> lookupValues = lookup.getValues();

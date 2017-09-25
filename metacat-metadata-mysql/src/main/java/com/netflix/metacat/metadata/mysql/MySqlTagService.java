@@ -28,13 +28,11 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nullable;
@@ -102,7 +100,7 @@ public class MySqlTagService implements TagService {
      */
     public MySqlTagService(
         final Config config,
-        @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
+        final JdbcTemplate jdbcTemplate,
         final LookupService lookupService,
         final MetacatJson metacatJson,
         final UserMetadataService userMetadataService
@@ -386,13 +384,7 @@ public class MySqlTagService implements TagService {
                                     final boolean updateUserMetadata) {
         addTags(tags);
         try {
-            TagItem tagItem = null;
-            try {
-                tagItem = findOrCreateTagItemByName(name.toString());
-            } catch (SQLException e) {
-                throw new CannotCreateTransactionException(
-                    "findOrCreateTagItemByName failed " + name.toString(), e);
-            }
+            final TagItem tagItem = findOrCreateTagItemByName(name.toString());
             final Set<String> inserts;
             Set<String> deletes = Sets.newHashSet();
             Set<String> values = tagItem.getValues();

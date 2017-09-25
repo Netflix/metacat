@@ -30,7 +30,6 @@ import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.SqlParameterValue;
@@ -68,7 +67,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param config      config
      */
     public MysqlUserMetadataService(
-        @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
+        final JdbcTemplate jdbcTemplate,
         final MetacatJson metacatJson,
         final Config config
     ) {

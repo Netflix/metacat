@@ -50,7 +50,6 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.SqlParameterValue;
@@ -136,7 +135,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final ConnectorContext connectorContext,
         final ThreadServiceManager threadServiceManager,
-        @Qualifier("hiveJdbcTemplate") final JdbcTemplate jdbcTemplate,
+        final JdbcTemplate jdbcTemplate,
         final HiveConnectorFastServiceMetric fastServiceMetric
     ) {
         super(catalogName, metacatHiveClient, hiveMetacatConverters);

@@ -27,7 +27,6 @@ import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -74,7 +73,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final ConnectorContext connectorContext,
-        @Qualifier("hiveJdbcTemplate") final JdbcTemplate jdbcTemplate,
+        final JdbcTemplate jdbcTemplate,
         final HiveConnectorFastServiceMetric fastServiceMetric
     ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, connectorContext);
