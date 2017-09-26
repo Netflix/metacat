@@ -20,9 +20,12 @@ import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;
 import com.netflix.metacat.connector.hive.metastore.HMSHandlerProxy;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
 import javax.sql.DataSource;
 
@@ -83,6 +86,30 @@ public class HiveConnectorClientConfig {
             connectorContext.getConfiguration()
         );
         return DataSourceManager.get().get(connectorContext.getCatalogName());
+    }
+
+    /**
+     * hive metadata Transaction Manager.
+     *
+     * @param hiveDataSource hive data source
+     * @return hive transaction manager
+     */
+    @Bean
+    public DataSourceTransactionManager hiveTxManager(
+        @Qualifier("hiveDataSource") final DataSource hiveDataSource) {
+        return new DataSourceTransactionManager(hiveDataSource);
+    }
+
+    /**
+     * hive metadata JDBC template.
+     *
+     * @param hiveDataSource hive data source
+     * @return hive JDBC Template
+     */
+    @Bean
+    public JdbcTemplate hiveJdbcTemplate(
+        @Qualifier("hiveDataSource") final DataSource hiveDataSource) {
+        return new JdbcTemplate(hiveDataSource);
     }
 
     private HiveConf getDefaultConf() {

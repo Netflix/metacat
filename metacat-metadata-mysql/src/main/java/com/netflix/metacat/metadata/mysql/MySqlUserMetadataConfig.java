@@ -24,6 +24,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
 import javax.sql.DataSource;
 
@@ -41,38 +43,38 @@ public class MySqlUserMetadataConfig {
     /**
      * User Metadata service.
      *
-     * @param dataSource  The data ource to use
+     * @param jdbcTemplate  JDBC template
      * @param config      System config to use
      * @param metacatJson Json Utilities to use
      * @return User metadata service based on MySql
      */
     @Bean
     public UserMetadataService userMetadataService(
-        @Qualifier("mySqlDataSource") final DataSource dataSource,
+        @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
         final Config config,
         final MetacatJson metacatJson
     ) {
-        return new MysqlUserMetadataService(dataSource, metacatJson, config);
+        return new MysqlUserMetadataService(jdbcTemplate, metacatJson, config);
     }
 
     /**
      * Lookup service.
      *
-     * @param dataSource The data source to use
+     * @param jdbcTemplate JDBC template
      * @param config     System configuration to use
      * @return Lookup service backed by MySQL
      */
     @Bean
     public LookupService lookupService(
-        @Qualifier("mySqlDataSource") final DataSource dataSource,
+        @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
         final Config config) {
-        return new MySqlLookupService(config, dataSource);
+        return new MySqlLookupService(config, jdbcTemplate);
     }
 
     /**
      * The tag service to use.
      *
-     * @param dataSource          The data source to use
+     * @param jdbcTemplate        JDBC template
      * @param config              System config to use
      * @param metacatJson         Json Utilities to use
      * @param lookupService       Look up service implementation to use
@@ -81,13 +83,13 @@ public class MySqlUserMetadataConfig {
      */
     @Bean
     public TagService tagService(
-        @Qualifier("mySqlDataSource") final DataSource dataSource,
+        @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
         final Config config,
         final MetacatJson metacatJson,
         final LookupService lookupService,
         final UserMetadataService userMetadataService
     ) {
-        return new MySqlTagService(config, dataSource, lookupService, metacatJson, userMetadataService);
+        return new MySqlTagService(config, jdbcTemplate, lookupService, metacatJson, userMetadataService);
     }
 
     /**
@@ -99,11 +101,35 @@ public class MySqlUserMetadataConfig {
      * @throws Exception exception
      */
     @Bean
-    public DataSource mySqlDataSource(final DataSourceManager dataSourceManager,
+    public DataSource metadataDataSource(final DataSourceManager dataSourceManager,
         final MetacatProperties metacatProperties) throws Exception {
         MySqlServiceUtil.loadMySqlDataSource(dataSourceManager,
             metacatProperties.getUsermetadata().getConfig().getLocation());
         return dataSourceManager.get(UserMetadataService.NAME_DATASOURCE);
+    }
+
+    /**
+     * mySql metadata Transaction Manager.
+     *
+     * @param mySqlDataSource metadata data source
+     * @return metadata transaction manager
+     */
+    @Bean
+    public DataSourceTransactionManager metadataTxManager(
+        @Qualifier("metadataDataSource") final DataSource mySqlDataSource) {
+        return new DataSourceTransactionManager(mySqlDataSource);
+    }
+
+    /**
+     * mySql metadata JDBC template.
+     *
+     * @param mySqlDataSource metadata data source
+     * @return metadata JDBC template
+     */
+    @Bean
+    public JdbcTemplate metadataJdbcTemplate(
+        @Qualifier("metadataDataSource") final DataSource mySqlDataSource) {
+        return new JdbcTemplate(mySqlDataSource);
     }
 
 }

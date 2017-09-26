@@ -47,6 +47,7 @@ class MetacatInitializationServiceSpec extends Specification {
             threadServiceManager,
             thriftService
         )
+        initializationService.start(null)
         def health = initializationService.health()
 
         then:
@@ -74,7 +75,7 @@ class MetacatInitializationServiceSpec extends Specification {
             threadServiceManager,
             thriftService
         )
-
+        initializationService.start(null)
         then:
         thrown(IllegalArgumentException)
     }

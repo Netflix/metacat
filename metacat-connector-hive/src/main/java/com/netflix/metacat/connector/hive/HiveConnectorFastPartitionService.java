@@ -38,7 +38,6 @@ import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserEval;
-import com.netflix.metacat.common.server.util.JdbcUtil;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
@@ -51,14 +50,15 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
-import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.sql.DataSource;
 import java.io.StringReader;
+import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,7 +75,7 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 @Slf4j
-@Transactional(readOnly = true)
+@Transactional("hiveTxManager")
 public class HiveConnectorFastPartitionService extends HiveConnectorPartitionService {
     private static final String FIELD_DATE_CREATED = "dateCreated";
     private static final String FIELD_BATCHID = "batchid";
@@ -115,7 +115,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
 
     private final ThreadServiceManager threadServiceManager;
     private final Registry registry;
-    private final JdbcUtil jdbcUtil;
+    private JdbcTemplate jdbcTemplate;
     private final HiveConnectorFastServiceMetric fastServiceMetric;
 
     /**
@@ -126,7 +126,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @param hiveMetacatConverters hive converter
      * @param connectorContext      server context
      * @param threadServiceManager  thread service manager
-     * @param dataSource            data source
+     * @param jdbcTemplate          JDBC template
      * @param fastServiceMetric     fast service metric
      */
     public HiveConnectorFastPartitionService(
@@ -135,13 +135,13 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final ConnectorContext connectorContext,
         final ThreadServiceManager threadServiceManager,
-        final DataSource dataSource,
+        final JdbcTemplate jdbcTemplate,
         final HiveConnectorFastServiceMetric fastServiceMetric
     ) {
         super(catalogName, metacatHiveClient, hiveMetacatConverters);
         this.threadServiceManager = threadServiceManager;
         this.registry = connectorContext.getRegistry();
-        this.jdbcUtil = new JdbcUtil(dataSource);
+        this.jdbcTemplate = jdbcTemplate;
         this.fastServiceMetric = fastServiceMetric;
     }
 
@@ -152,6 +152,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @return Number of partitions
      */
     @Override
+    @Transactional(readOnly = true)
     public int getPartitionCount(
         final ConnectorRequestContext requestContext,
         final QualifiedName tableName
@@ -167,10 +168,11 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             return count;
         };
         try {
-            result = jdbcUtil.getJdbcTemplate().query(SQL_GET_PARTITION_COUNT, handler,
-                tableName.getDatabaseName(), tableName.getTableName());
-        } catch (DataAccessException e) {
-            throw new ConnectorException("getPartitionCount", e);
+            result = jdbcTemplate.query(SQL_GET_PARTITION_COUNT,
+                new String[]{tableName.getDatabaseName(), tableName.getTableName()},
+                new int[]{Types.VARCHAR, Types.VARCHAR}, handler);
+        } catch (Exception e) {
+            throw new ConnectorException("Failed getting the partition count", e);
         } finally {
             this.fastServiceMetric.recordTimer(
                 HiveMetrics.TagGetPartitionCount.getMetricName(), registry.clock().wallTime() - start);
@@ -182,6 +184,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * {@inheritDoc}.
      */
     @Override
+    @Transactional(readOnly = true)
     public List<PartitionInfo> getPartitions(
         final ConnectorRequestContext requestContext,
         final QualifiedName tableName,
@@ -208,6 +211,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * {@inheritDoc}.
      */
     @Override
+    @Transactional(readOnly = true)
     public List<String> getPartitionKeys(final ConnectorRequestContext requestContext,
                                          final QualifiedName tableName,
                                          final PartitionListRequest partitionsRequest) {
@@ -271,6 +275,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @return partition names
      */
     @Override
+    @Transactional(readOnly = true)
     public Map<String, List<QualifiedName>> getPartitionNames(
         @Nonnull final ConnectorRequestContext context,
         @Nonnull final List<String> uris,
@@ -279,18 +284,19 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
         // Create the sql
         final StringBuilder queryBuilder = new StringBuilder(SQL_GET_PARTITION_NAMES_BY_URI);
-        final List<String> params = Lists.newArrayList();
+        final List<SqlParameterValue> params = Lists.newArrayList();
         if (prefixSearch) {
             queryBuilder.append(" 1=2");
             uris.forEach(uri -> {
                 queryBuilder.append(" or location like ?");
-                params.add(uri + "%");
+                params.add(new SqlParameterValue(Types.VARCHAR, uri + "%"));
             });
         } else {
             queryBuilder.append(" location in (");
             Joiner.on(',').appendTo(queryBuilder, uris.stream().map(uri -> "?").collect(Collectors.toList()));
             queryBuilder.append(")");
-            params.addAll(uris);
+            params.addAll(uris.stream()
+                .map(uri -> new SqlParameterValue(Types.VARCHAR, uri)).collect(Collectors.toList()));
         }
 
         final ResultSetExtractor<Map<String, List<QualifiedName>>> handler = rs -> {
@@ -311,9 +317,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             return result;
         };
         try {
-            jdbcUtil.getJdbcTemplate().query(queryBuilder.toString(), params.toArray(), handler);
-        } catch (DataAccessException e) {
-            Throwables.propagate(e);
+            jdbcTemplate.query(queryBuilder.toString(), params.toArray(), handler);
         } finally {
             this.fastServiceMetric.recordTimer(
                 HiveMetrics.TagGetPartitionNames.getMetricName(), registry.clock().wallTime() - start);
@@ -322,6 +326,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     }
 
     @Override
+    @Transactional(readOnly = true)
     protected Map<String, Partition> getPartitionsByNames(final Table table, final List<String> partitionNames)
         throws TException {
         final TableInfo tableInfo = this.getHiveMetacatConverters().toTableInfo(
@@ -508,12 +513,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             }
             return result;
         };
-        try {
-            return jdbcUtil.getJdbcTemplate()
-                .query(SQL_GET_PARTITION_KEYS, new Object[]{databaseName, tableName}, handler);
-        } catch (DataAccessException e) {
-            throw Throwables.propagate(e);
-        }
+        return jdbcTemplate
+            .query(SQL_GET_PARTITION_KEYS, new Object[]{databaseName, tableName},
+                new int[]{Types.VARCHAR, Types.VARCHAR}, handler);
     }
 
     private String getDateCreatedSqlCriteria(final String filterExpression) {
@@ -565,21 +567,12 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                 final Long id = rs.getLong(idName);
                 final String key = rs.getString("param_key");
                 final String value = rs.getString("param_value");
-                Map<String, String> parameters = result.get(id);
-                if (parameters == null) {
-                    parameters = Maps.newHashMap();
-                    result.put(id, parameters);
-                }
+                final Map<String, String> parameters = result.computeIfAbsent(id, k -> Maps.newHashMap());
                 parameters.put(key, value);
             }
             return result;
         };
-        try {
-            return jdbcUtil.getJdbcTemplate().query(queryBuilder.toString(), handler);
-        } catch (DataAccessException e) {
-            Throwables.propagate(e);
-        }
-        return Maps.newHashMap();
+        return jdbcTemplate.query(queryBuilder.toString(), handler);
     }
 
     private Collection<String> getSinglePartitionExprs(@Nullable final String filterExpression) {
@@ -713,17 +706,13 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         }
 
         List<T> partitions = Lists.newArrayList();
-        try {
-            final List<Object> params = Lists.newArrayList(databaseName, tableName);
-            if (filterSql != null && filterParams != null) {
-                params.addAll(filterParams);
-            }
-            final Object[] oParams = new Object[params.size()];
-            partitions = (List) jdbcUtil.getJdbcTemplate().query(
-                queryBuilder.toString(), params.toArray(oParams), resultSetExtractor);
-        } catch (DataAccessException e) {
-            Throwables.propagate(e);
+        final List<Object> params = Lists.newArrayList(databaseName, tableName);
+        if (filterSql != null && filterParams != null) {
+            params.addAll(filterParams);
         }
+        final Object[] oParams = new Object[params.size()];
+        partitions = (List) jdbcTemplate.query(
+            queryBuilder.toString(), params.toArray(oParams), resultSetExtractor);
         //
         if (pageable != null && pageable.isPageable() && !Strings.isNullOrEmpty(filterExpression)) {
             int limit = pageable.getOffset() + pageable.getLimit();

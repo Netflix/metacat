@@ -16,8 +16,19 @@ package com.netflix.metacat.metadata.mysql
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
+import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.metacat.common.server.util.DataSourceManager
 import io.airlift.testing.mysql.TestingMySqlServer
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.datasource.DataSourceTransactionManager
+import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.support.AnnotationConfigContextLoader
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
@@ -34,13 +45,32 @@ import java.util.concurrent.atomic.AtomicBoolean
 import static java.lang.String.format
 
 @Ignore
+@SpringBootTest(classes=Config.class)
+@JdbcTest
 class BaseSpec extends Specification {
     private static final AtomicBoolean initialized = new AtomicBoolean();
     @Shared
     TestingMySqlServer mysqlServer
-    @Shared
-    MysqlUserMetadataService mysqlUserMetadataService
+    @Autowired
+    UserMetadataService mysqlUserMetadataService
+    @Configuration
+    static class Config {
+        @Bean
+        UserMetadataService mysqlUserMetadataService() {
+            return new MysqlUserMetadataService(
+                new JdbcTemplate(DataSourceManager.get().get(MysqlUserMetadataService.NAME_DATASOURCE)),
+                new MetacatJsonLocator(),
+                new DefaultConfigImpl(
+                    new MetacatProperties()
+                )
+            )
+        }
 
+        @Bean
+        DataSourceTransactionManager metadataTxManager() {
+            return new DataSourceTransactionManager(DataSourceManager.get().get(MysqlUserMetadataService.NAME_DATASOURCE));
+        }
+    }
     def setupSpec() {
         if (!initialized.compareAndSet(false, true)) {
             return
@@ -49,13 +79,6 @@ class BaseSpec extends Specification {
 
         // TODO: Perhaps this should be mocked?
         MySqlServiceUtil.loadMySqlDataSource(DataSourceManager.get(), "usermetadata.properties");
-        mysqlUserMetadataService = new MysqlUserMetadataService(
-            DataSourceManager.get().get(MysqlUserMetadataService.NAME_DATASOURCE),
-            new MetacatJsonLocator(),
-            new DefaultConfigImpl(
-                new MetacatProperties()
-            )
-        )
     }
 
     def setupMysql() {
@@ -65,7 +88,8 @@ class BaseSpec extends Specification {
         props.setProperty('javax.jdo.option.username', mysqlServer.getUser())
         props.setProperty('javax.jdo.option.password', mysqlServer.getPassword())
         props.setProperty('javax.jdo.option.defaultTransactionIsolation', 'READ_COMMITTED')
-        props.setProperty('javax.jdo.option.defaultAutoCommit', 'false');
+        props.setProperty('javax.jdo.option.defaultAutoCommit', 'false')
+        props.setProperty('javax.jdo.option.driverClassName', 'com.mysql.jdbc.Driver')
         URL url = Thread.currentThread().getContextClassLoader().getResource("usermetadata.properties")
         Path filePath
         if (url != null) {

@@ -151,6 +151,7 @@ configure(javaProjects) {
         all*.exclude module: "jcl-over-slf4j"
         all*.exclude module: "log4j-over-slf4j"
         all*.exclude module: "slf4j-jdk14"
+        all*.exclude group: "ch.qos.logback", module: "logback-classic"
     }
 
     dependencies {

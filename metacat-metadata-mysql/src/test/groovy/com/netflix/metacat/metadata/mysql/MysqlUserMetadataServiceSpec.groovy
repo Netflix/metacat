@@ -18,7 +18,9 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 
 /**
- * Created by amajumdar on 9/11/15.
+ * Tests for MysqlUserMetadataService.
+ * TODO: Need to move this to integration-test
+ * @author amajumdar
  */
 class MysqlUserMetadataServiceSpec extends BaseSpec {
     def testAll() {

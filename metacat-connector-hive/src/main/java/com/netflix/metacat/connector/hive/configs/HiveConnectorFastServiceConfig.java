@@ -27,8 +27,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.sql.DataSource;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * HiveConnectorFastServiceConfig.
@@ -62,7 +61,7 @@ public class HiveConnectorFastServiceConfig {
      * @param hiveMetacatConverter metacat converter
      * @param threadServiceManager thread service manager
      * @param connectorContext     connector config
-     * @param dataSource           data source
+     * @param hiveJdbcTemplate     hive JDBC template
      * @param serviceMetric        fast service metric
      * @return HiveConnectorPartitionService
      */
@@ -72,7 +71,7 @@ public class HiveConnectorFastServiceConfig {
         final HiveConnectorInfoConverter hiveMetacatConverter,
         final ThreadServiceManager threadServiceManager,
         final ConnectorContext connectorContext,
-        @Qualifier("hiveDataSource") final DataSource dataSource,
+        @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
         final HiveConnectorFastServiceMetric serviceMetric
     ) {
         return new HiveConnectorFastPartitionService(
@@ -81,7 +80,7 @@ public class HiveConnectorFastServiceConfig {
             hiveMetacatConverter,
             connectorContext,
             threadServiceManager,
-            dataSource,
+            hiveJdbcTemplate,
             serviceMetric
         );
     }
@@ -93,7 +92,7 @@ public class HiveConnectorFastServiceConfig {
      * @param hiveMetacatConverters        hive metacat converters
      * @param hiveConnectorDatabaseService hive database service
      * @param connectorContext             server context
-     * @param dataSource                   data source
+     * @param hiveJdbcTemplate             hive JDBC template
      * @param serviceMetric                fast service metric
      * @return HiveConnectorFastTableService
      */
@@ -103,7 +102,7 @@ public class HiveConnectorFastServiceConfig {
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final ConnectorContext connectorContext,
-        @Qualifier("hiveDataSource") final DataSource dataSource,
+        @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
         final HiveConnectorFastServiceMetric serviceMetric
     ) {
         return new HiveConnectorFastTableService(
@@ -112,7 +111,7 @@ public class HiveConnectorFastServiceConfig {
             hiveConnectorDatabaseService,
             hiveMetacatConverters,
             connectorContext,
-            dataSource,
+            hiveJdbcTemplate,
             serviceMetric
         );
     }

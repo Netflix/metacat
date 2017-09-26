@@ -46,7 +46,10 @@ dependencies {
      * Test Dependencies
      *******************************/
 
-    testCompile("io.airlift:testing-mysql-server")
+    testCompile("io.airlift:testing-mysql-server") {
+        exclude module:"bval-jsr303"
+        exclude module:"validation-api"
+    }
     testCompile(project(":metacat-testdata-provider"))
-    testRuntime("commons-logging:commons-logging")
+    testCompile("commons-logging:commons-logging")
 }
