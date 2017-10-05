@@ -23,6 +23,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.SortOrder;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
@@ -31,13 +32,16 @@ import com.netflix.metacat.common.server.connectors.exception.InvalidMetaExcepti
 import com.netflix.metacat.common.server.connectors.exception.PartitionAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.PartitionNotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
+import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.sql.PartitionHolder;
 import lombok.Getter;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
@@ -55,7 +59,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,6 +74,7 @@ import java.util.stream.Collectors;
 @Getter
 public class HiveConnectorPartitionService implements ConnectorPartitionService {
     private final String catalogName;
+    private final ConnectorContext context;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final IMetacatHiveClient metacatHiveClient;
 
@@ -78,18 +82,19 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     /**
      * Constructor.
      *
-     * @param catalogName           catalogname
+     * @param context               connector context
      * @param metacatHiveClient     hive client
      * @param hiveMetacatConverters hive converter
      */
     public HiveConnectorPartitionService(
-        final String catalogName,
+        final ConnectorContext context,
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorInfoConverter hiveMetacatConverters
     ) {
         this.metacatHiveClient = metacatHiveClient;
         this.hiveMetacatConverters = hiveMetacatConverters;
-        this.catalogName = catalogName;
+        this.catalogName = context.getCatalogName();
+        this.context = context;
     }
 
     /**
@@ -254,120 +259,165 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     @Override
     public PartitionsSaveResponse savePartitions(
         final ConnectorRequestContext requestContext,
-        final QualifiedName tableName,
+        final QualifiedName tableQName,
         final PartitionsSaveRequest partitionsSaveRequest
     ) {
-        final String databasename = tableName.getDatabaseName();
-        final String tablename = tableName.getTableName();
-        // New partitions
-        final List<Partition> hivePartitions = Lists.newArrayList();
-
+        final String databaseName = tableQName.getDatabaseName();
+        final String tableName = tableQName.getTableName();
+        final Table table;
         try {
-            final Table table = metacatHiveClient.getTableByName(databasename, tablename);
-            final List<PartitionInfo> partitionInfos = partitionsSaveRequest.getPartitions();
-            // New partition ids
-            final List<String> addedPartitionIds = Lists.newArrayList();
-            // Updated partition ids
-            final List<String> existingPartitionIds = Lists.newArrayList();
-            // Existing partitions
-            final List<Partition> existingHivePartitions = Lists.newArrayList();
+            table = metacatHiveClient.getTableByName(databaseName, tableName);
+        } catch (NoSuchObjectException exception) {
+            throw new TableNotFoundException(tableQName, exception);
+        } catch (TException e) {
+            throw new ConnectorException(String.format("Failed getting hive table %s", tableQName), e);
+        }
+        // New partitions
+        final List<PartitionInfo> addedPartitionInfos = Lists.newArrayList();
+        final List<PartitionInfo> partitionInfos = partitionsSaveRequest.getPartitions();
+        final List<String> partitionNames = partitionInfos.stream()
+            .map(part  -> {
+                final String partitionName = part.getName().getPartitionName();
+                PartitionUtil.validatePartitionName(partitionName, getPartitionKeys(table.getPartitionKeys()));
+                return partitionName;
+            }).collect(Collectors.toList());
 
-            // Existing partition map
-            Map<String, Partition> existingPartitionMap = Collections.emptyMap();
+        // New partition names
+        final List<String> addedPartitionNames = Lists.newArrayList();
+        // Updated partition names
+        final List<String> existingPartitionNames = Lists.newArrayList();
+        // Existing partitions
+        final List<PartitionHolder> existingPartitionHolders = Lists.newArrayList();
 
-            //
-            // If either checkIfExists or alterIfExists is true, check to see if any of the partitions already exists.
-            // If it exists and if alterIfExists=false, we will drop it before adding.
-            // If it exists and if alterIfExists=true, we will alter it.
-            //
-            if (partitionsSaveRequest.getCheckIfExists() || partitionsSaveRequest.getAlterIfExists()) {
-                final List<String> partitionNames = partitionInfos.stream().map(
-                    partition -> {
-                        final String partitionName = partition.getName().getPartitionName();
-                        PartitionUtil
-                            .validatePartitionName(partitionName,
-                                getPartitionKeys(table.getPartitionKeys()));
-                        return partitionName;
-                    }).collect(Collectors.toList());
-                existingPartitionMap = getPartitionsByNames(table, partitionNames);
-            }
+        // Existing partition map
+        Map<String, PartitionHolder> existingPartitionMap = Collections.emptyMap();
 
-            final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(tableName, table);
+        //
+        // If either checkIfExists or alterIfExists is true, check to see if any of the partitions already exists.
+        // If it exists and if alterIfExists=false, we will drop it before adding.
+        // If it exists and if alterIfExists=true, we will alter it.
+        //
+        if (partitionsSaveRequest.getCheckIfExists() || partitionsSaveRequest.getAlterIfExists()) {
+            existingPartitionMap = getPartitionsByNames(table, partitionNames);
+        }
 
-            for (PartitionInfo partitionInfo : partitionInfos) {
-                final String partitionName = partitionInfo.getName().getPartitionName();
-                final Partition hivePartition = existingPartitionMap.get(partitionName);
-                if (hivePartition == null) {
-                    addedPartitionIds.add(partitionName);
-                    hivePartitions.add(hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo));
-                } else {
-                    final String partitionUri = getPartitionUri(partitionInfo);
-                    final String hivePartitionUri = getPartitionUri(hivePartition);
-                    if (partitionUri == null || !partitionUri.equals(hivePartitionUri)) {
-                        existingPartitionIds.add(partitionName);
-                        //the partition exists, we should not do anything for the partition exists
-                        //unless we alterifExists
-                        final Partition existingPartition =
-                            hiveMetacatConverters.fromPartitionInfo(tableInfo, partitionInfo);
-                        if (partitionsSaveRequest.getAlterIfExists()) {
-                            existingPartition.setParameters(hivePartition.getParameters());
-                            existingPartition.setCreateTime(hivePartition.getCreateTime());
-                            existingPartition.setLastAccessTime(hivePartition.getLastAccessTime());
-                            existingHivePartitions.add(existingPartition);
-                        } else {
-                            hivePartitions.add(existingPartition);
+        for (PartitionInfo partitionInfo : partitionInfos) {
+            final String partitionName = partitionInfo.getName().getPartitionName();
+            final PartitionHolder existingPartitionHolder = existingPartitionMap.get(partitionName);
+            if (existingPartitionHolder == null) {
+                addedPartitionNames.add(partitionName);
+                addedPartitionInfos.add(partitionInfo);
+            } else {
+                final String partitionUri =
+                    partitionInfo.getSerde() != null ? partitionInfo.getSerde().getUri() : null;
+                final String existingPartitionUri = getPartitionUri(existingPartitionHolder);
+                if (partitionUri == null || !partitionUri.equals(existingPartitionUri)) {
+                    existingPartitionNames.add(partitionName);
+                    //the partition exists, we should not do anything for the partition exists
+                    //unless we alterifExists
+                    if (partitionsSaveRequest.getAlterIfExists()) {
+                        if (partitionInfo.getSerde() == null) {
+                            partitionInfo.setSerde(new StorageInfo());
                         }
+                        if (partitionInfo.getAudit() == null) {
+                            partitionInfo.setAudit(new AuditInfo());
+                        }
+                        if (existingPartitionHolder.getPartition() != null) {
+                            final Partition existingPartition = existingPartitionHolder.getPartition();
+                            partitionInfo.getSerde().setParameters(existingPartition.getParameters());
+                            partitionInfo.getAudit().setCreatedDate(
+                                HiveConnectorInfoConverter.epochSecondsToDate(existingPartition.getCreateTime()));
+                            partitionInfo.getAudit().setLastModifiedDate(
+                                HiveConnectorInfoConverter.epochSecondsToDate(existingPartition.getLastAccessTime()));
+                        } else {
+                            final PartitionInfo existingPartitionInfo = existingPartitionHolder.getPartitionInfo();
+                            if (existingPartitionInfo.getSerde() != null) {
+                                partitionInfo.getSerde()
+                                    .setParameters(existingPartitionInfo.getSerde().getParameters());
+                            }
+                            if (existingPartitionInfo.getAudit() != null) {
+                                partitionInfo.getAudit()
+                                    .setCreatedDate(existingPartitionInfo.getAudit().getCreatedDate());
+                                partitionInfo.getAudit()
+                                    .setLastModifiedDate(existingPartitionInfo.getAudit().getLastModifiedDate());
+                            }
+                        }
+                        existingPartitionHolder.setPartitionInfo(partitionInfo);
+                        existingPartitionHolders.add(existingPartitionHolder);
+                    } else {
+                        addedPartitionInfos.add(partitionInfo);
                     }
                 }
             }
+        }
 
-            final Set<String> deletePartitionIds = Sets.newHashSet();
-            if (!partitionsSaveRequest.getAlterIfExists()) {
-                deletePartitionIds.addAll(existingPartitionIds);
-            }
-            if (partitionsSaveRequest.getPartitionIdsForDeletes() != null) {
-                deletePartitionIds.addAll(partitionsSaveRequest.getPartitionIdsForDeletes());
-            }
+        final Set<String> deletePartitionNames = Sets.newHashSet();
+        if (!partitionsSaveRequest.getAlterIfExists()) {
+            deletePartitionNames.addAll(existingPartitionNames);
+        }
+        if (partitionsSaveRequest.getPartitionIdsForDeletes() != null) {
+            deletePartitionNames.addAll(partitionsSaveRequest.getPartitionIdsForDeletes());
+        }
 
+        addUpdateDropPartitions(tableQName, table, partitionNames, addedPartitionInfos, existingPartitionHolders,
+            deletePartitionNames);
+
+        final PartitionsSaveResponse result = new PartitionsSaveResponse();
+        result.setAdded(addedPartitionNames);
+        result.setUpdated(existingPartitionNames);
+        return result;
+    }
+
+    protected void addUpdateDropPartitions(final QualifiedName tableQName, final Table table,
+        final List<String> partitionNames, final List<PartitionInfo> addedPartitionInfos,
+        final List<PartitionHolder> existingPartitionInfos, final Set<String> deletePartitionNames) {
+        final String databaseName = table.getDbName();
+        final String tableName = table.getTableName();
+        final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(tableQName, table);
+
+        try {
+            final List<Partition> existingPartitions = existingPartitionInfos.stream()
+                .map(p -> hiveMetacatConverters.fromPartitionInfo(tableInfo, p.getPartitionInfo()))
+                .collect(Collectors.toList());
+            final List<Partition> addedPartitions = addedPartitionInfos.stream()
+                .map(p -> hiveMetacatConverters.fromPartitionInfo(tableInfo, p)).collect(Collectors.toList());
             // If alterIfExists=true, then alter partitions if they already exists
-            if (partitionsSaveRequest.getAlterIfExists() && !existingHivePartitions.isEmpty()) {
-                copyTableSdToPartitionSd(existingHivePartitions, table);
-                metacatHiveClient.alterPartitions(databasename,
-                    tablename, existingHivePartitions);
+            if (!existingPartitionInfos.isEmpty()) {
+                copyTableSdToPartitionSd(existingPartitions, table);
+                metacatHiveClient.alterPartitions(databaseName,
+                    tableName, existingPartitions);
             }
 
             // Copy the storage details from the table if the partition does not contain the details.
-            copyTableSdToPartitionSd(hivePartitions, table);
-            // Drop partitions with ids in 'deletePartitionIds' and add 'hivePartitions' partitions
-            metacatHiveClient.addDropPartitions(databasename,
-                tablename, hivePartitions, Lists.newArrayList(deletePartitionIds));
-
-            final PartitionsSaveResponse result = new PartitionsSaveResponse();
-            result.setAdded(addedPartitionIds);
-            result.setUpdated(existingPartitionIds);
-            return result;
+            copyTableSdToPartitionSd(addedPartitions, table);
+            // Drop partitions with ids in 'deletePartitionNames' and add 'addedPartitionInfos' partitions
+            metacatHiveClient.addDropPartitions(databaseName,
+                tableName, addedPartitions, Lists.newArrayList(deletePartitionNames));
         } catch (NoSuchObjectException exception) {
             if (exception.getMessage() != null && exception.getMessage().startsWith("Partition doesn't exist")) {
-                throw new PartitionNotFoundException(tableName, "", exception);
+                throw new PartitionNotFoundException(tableQName, "", exception);
             } else {
-                throw new TableNotFoundException(tableName, exception);
+                throw new TableNotFoundException(tableQName, exception);
             }
         } catch (MetaException | InvalidObjectException exception) {
             throw new InvalidMetaException("One or more partitions are invalid.", exception);
         } catch (AlreadyExistsException e) {
-            final List<String> ids = getFakePartitionName(hivePartitions);
-            throw new PartitionAlreadyExistsException(tableName, ids, e);
+            throw new PartitionAlreadyExistsException(tableQName, partitionNames, e);
         } catch (TException exception) {
             throw new ConnectorException(String.format("Failed savePartitions hive table %s", tableName), exception);
         }
     }
 
-    private String getPartitionUri(final Partition hivePartition) {
-        return hivePartition.getSd() != null ? hivePartition.getSd().getLocation() : null;
-    }
-
-    private String getPartitionUri(final PartitionInfo partitionInfo) {
-        return partitionInfo.getSerde() != null ? partitionInfo.getSerde().getUri() : null;
+    private String getPartitionUri(final PartitionHolder partition) {
+        String result = null;
+        if (partition.getPartition() != null) {
+            final Partition hivePartition = partition.getPartition();
+            result = hivePartition.getSd() != null ? hivePartition.getSd().getLocation() : null;
+        } else if (partition.getPartitionInfo() != null) {
+            final PartitionInfo partitionInfo = partition.getPartitionInfo();
+            result = partitionInfo.getSerde() != null ? partitionInfo.getSerde().getUri() : null;
+        }
+        return result;
     }
 
     /**
@@ -404,58 +454,23 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             :   Lists.newArrayList();
     }
 
-    protected Map<String, Partition> getPartitionsByNames(final Table table, final List<String> partitionNames)
-        throws TException {
+    protected Map<String, PartitionHolder> getPartitionsByNames(final Table table, final List<String> partitionNames) {
         final String databasename = table.getDbName();
         final String tablename = table.getTableName();
-        List<Partition> partitions =
-            metacatHiveClient.getPartitions(databasename, tablename, partitionNames);
-        if (partitions == null || partitions.isEmpty()) {
-            if (partitionNames == null || partitionNames.isEmpty()) {
-                return Collections.emptyMap();
-            }
+        try {
+            final List<Partition> partitions =
+                metacatHiveClient.getPartitions(databasename, tablename, partitionNames);
 
-            // Fall back to scanning all partitions ourselves if finding by name does not work
-            final List<Partition> allPartitions =
-                metacatHiveClient.getPartitions(databasename, tablename,
-                    null);
-            if (allPartitions == null || allPartitions.isEmpty()) {
-                return Collections.emptyMap();
-            }
-
-            partitions = allPartitions.stream().filter(part -> {
+            return partitions.stream().map(PartitionHolder::new).collect(Collectors.toMap(part -> {
                 try {
-                    return partitionNames.contains(
-                        Warehouse.makePartName(table.getPartitionKeys(), part.getValues()));
+                    return Warehouse.makePartName(table.getPartitionKeys(), part.getPartition().getValues());
                 } catch (Exception e) {
                     throw new InvalidMetaException("One or more partition names are invalid.", e);
                 }
-            }).collect(Collectors.toList());
+            }, Function.identity()));
+        } catch (Exception e) {
+            throw new InvalidMetaException("One or more partition names are invalid.", e);
         }
-
-        return partitions.stream().collect(Collectors.toMap(part -> {
-            try {
-                return Warehouse.makePartName(table.getPartitionKeys(), part.getValues());
-            } catch (Exception e) {
-                throw new InvalidMetaException("One or more partition names are invalid.", e);
-            }
-        }, Function.identity()));
-    }
-
-    private List<String> getFakePartitionName(final List<Partition> partitions) {
-        // Since we would have to do a table load to find out the actual partition keys here we make up fake ones
-        // so that we can generate the partition name
-        return partitions.stream().map(Partition::getValues).map(values -> {
-            final Map<String, String> spec = new LinkedHashMap<>();
-            for (int i = 0; i < values.size(); i++) {
-                spec.put("fakekey" + i, values.get(i));
-            }
-            try {
-                return Warehouse.makePartPath(spec);
-            } catch (MetaException me) {
-                return "Got: '" + me.getMessage() + "' for spec: " + spec;
-            }
-        }).collect(Collectors.toList());
     }
 
     private void copyTableSdToPartitionSd(final List<Partition> hivePartitions, final Table table) {

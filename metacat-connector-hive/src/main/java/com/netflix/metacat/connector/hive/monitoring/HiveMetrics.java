@@ -45,7 +45,6 @@ public enum HiveMetrics {
      * Timer.
      */
     TimerHiveRequest(Type.timer, "embeddedclient.requests"), TimerFastHiveRequest(Type.timer, "fast.requests"),
-
     /**
      * hive function names.
      */
@@ -60,6 +59,7 @@ public enum HiveMetrics {
     TagGetTableByName("getTableByName"),
     TagLoadTable("loadTable"),
     TagAlterTable("alterTable"),
+    TagAddPartitions("addPartitions"),
     TagAlterPartitions("alterPartitions"),
     TagAddDropPartitions("addDropPartitions"),
     TagDropTable("dropTable"),

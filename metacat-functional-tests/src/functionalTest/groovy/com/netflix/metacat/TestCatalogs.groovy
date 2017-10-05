@@ -38,22 +38,36 @@ class TestCatalogs {
         List<QualifiedName> preExistingTables = []
         String thriftUri
         String type
+        boolean validateWithHive = true
         boolean validateFilterExpressionBasedOnPartitionKeyType = true
     }
 
     static final Set<TestCatalog> ALL = [
-            new TestCatalog(
-                    createDatabase: true,
-                    createPartition: true,
-                    createTable: true,
-                    deleteDatabase: true,
-                    deleteTable: true,
-                    name: 'embedded-hive-metastore',
-                    partitionKeysAppearLast: true,
-                    type: 'hive',
-                    createView: true,
-                    validateFilterExpressionBasedOnPartitionKeyType: false
-            ),
+        new TestCatalog(
+            createDatabase: true,
+            createPartition: true,
+            createTable: true,
+            deleteDatabase: true,
+            deleteTable: true,
+            name: 'embedded-hive-metastore',
+            partitionKeysAppearLast: true,
+            type: 'hive',
+            createView: true,
+            validateFilterExpressionBasedOnPartitionKeyType: false
+        ),
+        new TestCatalog(
+            createDatabase: true,
+            createPartition: true,
+            createTable: true,
+            deleteDatabase: true,
+            deleteTable: true,
+            name: 'embedded-fast-hive-metastore',
+            partitionKeysAppearLast: true,
+            type: 'hive',
+            createView: true,
+            validateWithHive: false,
+            validateFilterExpressionBasedOnPartitionKeyType: false
+        ),
         new TestCatalog(
             createDatabase: true,
             createPartition: true,
@@ -167,6 +181,10 @@ class TestCatalogs {
 
     static Collection<TestCatalog> getThriftImplementers(Collection<TestCatalog> source) {
         return source.findAll { it.thriftUri }
+    }
+
+    static Collection<TestCatalog> getThriftImplementersToValidateWithHive(Collection<TestCatalog> source) {
+        return source.findAll { it.thriftUri && it.validateWithHive}
     }
 
     static Collection<TestCatalog> getCanCreateDatabase(Collection<TestCatalog> source) {

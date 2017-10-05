@@ -57,6 +57,14 @@ public class HiveConnectorFastServiceMetric {
             HiveMetrics.TagTableExists.getMetricName()));
         timerMap.put(HiveMetrics.TagGetTableNames.getMetricName(), createTimer(registry,
             HiveMetrics.TagGetTableNames.getMetricName()));
+        timerMap.put(HiveMetrics.TagAddPartitions.getMetricName(), createTimer(registry,
+            HiveMetrics.TagAddPartitions.getMetricName()));
+        timerMap.put(HiveMetrics.TagAlterPartitions.getMetricName(), createTimer(registry,
+            HiveMetrics.TagAlterPartitions.getMetricName()));
+        timerMap.put(HiveMetrics.TagDropHivePartitions.getMetricName(), createTimer(registry,
+            HiveMetrics.TagDropHivePartitions.getMetricName()));
+        timerMap.put(HiveMetrics.TagAddDropPartitions.getMetricName(), createTimer(registry,
+            HiveMetrics.TagAddDropPartitions.getMetricName()));
 
         getHiveTablePartsFailureCounter = registry.counter(
             HiveMetrics.CounterHiveExperimentGetTablePartitionsFailure.getMetricName());

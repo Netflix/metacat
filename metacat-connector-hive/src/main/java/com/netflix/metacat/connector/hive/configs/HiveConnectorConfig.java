@@ -102,7 +102,7 @@ public class HiveConnectorConfig {
         final ConnectorContext connectorContext
     ) {
         return new HiveConnectorPartitionService(
-            connectorContext.getCatalogName(),
+            connectorContext,
             metacatHiveClient,
             hiveMetacatConverter
         );

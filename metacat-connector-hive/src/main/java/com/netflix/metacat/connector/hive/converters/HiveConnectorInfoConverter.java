@@ -70,7 +70,12 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         this.hiveTypeConverter = hiveTypeConverter;
     }
 
-    private static Date epochSecondsToDate(final long seconds) {
+    /**
+     * Converts epoch time to Date.
+     * @param seconds time in seconds
+     * @return Date
+     */
+    public static Date epochSecondsToDate(final long seconds) {
         return Date.from(Instant.ofEpochSecond(seconds));
     }
 
