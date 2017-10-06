@@ -414,10 +414,6 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
     private void initializeAddedPartition(
             final Table tbl, final PartitionSpecProxy.PartitionIterator part,
             final boolean madeDir) throws MetaException {
-        if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVESTATSAUTOGATHER) && !MetaStoreUtils.isView(tbl)) {
-            MetaStoreUtils.updatePartitionStatsFast(part, wh, madeDir, false);
-        }
-
         // set create time
         final long time = System.currentTimeMillis() / 1000;
         part.setCreateTime((int) time);

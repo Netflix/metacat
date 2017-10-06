@@ -24,6 +24,7 @@ import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.sql.SequenceGeneration;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -88,7 +89,6 @@ public class HiveConnectorFastServiceConfig {
     /**
      * Service to get partitions.
      *
-     * @param hiveMetacatConverter metacat converter
      * @param threadServiceManager thread service manager
      * @param connectorContext     connector config
      * @param hiveJdbcTemplate     hive JDBC template
@@ -97,14 +97,12 @@ public class HiveConnectorFastServiceConfig {
      */
     @Bean
     public DirectSqlGetPartition directSqlGetPartition(
-        final HiveConnectorInfoConverter hiveMetacatConverter,
         final ThreadServiceManager threadServiceManager,
         final ConnectorContext connectorContext,
         @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
         final HiveConnectorFastServiceMetric serviceMetric
     ) {
         return new DirectSqlGetPartition(
-            hiveMetacatConverter,
             connectorContext,
             threadServiceManager,
             hiveJdbcTemplate,
@@ -117,6 +115,7 @@ public class HiveConnectorFastServiceConfig {
      *
      * @param connectorContext     connector config
      * @param hiveJdbcTemplate     hive JDBC template
+     * @param sequenceGeneration    sequence generator
      * @param serviceMetric        fast service metric
      * @return HiveConnectorPartitionService
      */
@@ -124,13 +123,28 @@ public class HiveConnectorFastServiceConfig {
     public DirectSqlSavePartition directSqlSavePartition(
         final ConnectorContext connectorContext,
         @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
+        final SequenceGeneration sequenceGeneration,
         final HiveConnectorFastServiceMetric serviceMetric
     ) {
         return new DirectSqlSavePartition(
             connectorContext,
             hiveJdbcTemplate,
+            sequenceGeneration,
             serviceMetric
         );
+    }
+
+    /**
+     * Service to generate sequence ids.
+     *
+     * @param hiveJdbcTemplate     hive JDBC template
+     * @return HiveConnectorPartitionService
+     */
+    @Bean
+    public SequenceGeneration sequenceGeneration(
+        @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate
+    ) {
+        return new SequenceGeneration(hiveJdbcTemplate);
     }
 
     /**

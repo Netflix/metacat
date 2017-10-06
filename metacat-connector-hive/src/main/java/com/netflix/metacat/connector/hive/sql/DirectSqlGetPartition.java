@@ -15,6 +15,7 @@
  */
 package com.netflix.metacat.connector.hive.sql;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -38,7 +39,6 @@ import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserEval;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
-import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.metacat.connector.hive.util.PartitionFilterGenerator;
@@ -75,39 +75,6 @@ import java.util.stream.Collectors;
 public class DirectSqlGetPartition {
     private static final String FIELD_DATE_CREATED = "dateCreated";
     private static final String FIELD_BATCHID = "batchid";
-    private static final String SQL_GET_PARTITIONS_WITH_KEY_URI =
-        "select p.PART_NAME as name, p.CREATE_TIME as dateCreated, sds.location uri"
-            + " from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID "
-            + "join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID";
-    private static final String SQL_GET_PARTITIONS_WITH_KEY =
-        "select p.PART_NAME as name from PARTITIONS as p"
-            + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d on t.DB_ID = d.DB_ID";
-    private static final String SQL_GET_PARTITIONS =
-        "select p.part_id as id, p.PART_NAME as name, p.CREATE_TIME as dateCreated,"
-            + " sds.location uri, sds.input_format, sds.output_format,"
-            + " sds.sd_id, s.serde_id, s.slib from PARTITIONS as p"
-            + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d"
-            + " on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID"
-            + " join SERDES s on sds.SERDE_ID=s.SERDE_ID";
-    private static final String SQL_GET_PARTITION_NAMES_BY_URI =
-        "select p.part_name partition_name,t.tbl_name table_name,d.name schema_name,"
-            + " sds.location from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID"
-            + " join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID where";
-    private static final String SQL_GET_PARTITION_PARAMS =
-        "select part_id, param_key, param_value from PARTITION_PARAMS where 1=1";
-    private static final String SQL_GET_SD_PARAMS =
-        "select sd_id, param_key, param_value from SD_PARAMS where 1=1";
-    private static final String SQL_GET_SERDE_PARAMS =
-        "select serde_id, param_key, param_value from SERDE_PARAMS where 1=1";
-    private static final String SQL_GET_PARTITION_KEYS =
-        "select pkey_name, pkey_type from PARTITION_KEYS as p "
-            + "join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d"
-            + " on t.DB_ID = d.DB_ID where d.name=? and t.tbl_name=? order by integer_idx";
-
-    private static final String SQL_GET_PARTITION_COUNT =
-        "select count(*) count from PARTITIONS as p"
-            + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d on t.DB_ID = d.DB_ID"
-            + " join SDS as sds on p.SD_ID = sds.SD_ID where d.NAME = ? and t.TBL_NAME = ?";
 
     private final ThreadServiceManager threadServiceManager;
     private final Registry registry;
@@ -118,14 +85,12 @@ public class DirectSqlGetPartition {
     /**
      * Constructor.
      *
-     * @param hiveMetacatConverters hive converter
      * @param connectorContext      server context
      * @param threadServiceManager  thread service manager
      * @param jdbcTemplate          JDBC template
      * @param fastServiceMetric     fast service metric
      */
     public DirectSqlGetPartition(
-        final HiveConnectorInfoConverter hiveMetacatConverters,
         final ConnectorContext connectorContext,
         final ThreadServiceManager threadServiceManager,
         final JdbcTemplate jdbcTemplate,
@@ -161,7 +126,7 @@ public class DirectSqlGetPartition {
             return count;
         };
         try {
-            result = jdbcTemplate.query(SQL_GET_PARTITION_COUNT,
+            result = jdbcTemplate.query(SQL.SQL_GET_PARTITION_COUNT,
                 new String[]{tableName.getDatabaseName(), tableName.getTableName()},
                 new int[]{Types.VARCHAR, Types.VARCHAR}, handler);
         } catch (Exception e) {
@@ -251,7 +216,7 @@ public class DirectSqlGetPartition {
             };
             result = getHandlerResults(tableName.getDatabaseName(),
                 tableName.getTableName(), filterExpression, partitionNames,
-                SQL_GET_PARTITIONS_WITH_KEY_URI, handler, sort, pageable);
+                SQL.SQL_GET_PARTITIONS_WITH_KEY_URI, handler, sort, pageable);
         } else {
             final ResultSetExtractor<List<String>> handler = rs -> {
                 final List<String> names = Lists.newArrayList();
@@ -261,7 +226,7 @@ public class DirectSqlGetPartition {
                 return names;
             };
             result = getHandlerResults(tableName.getDatabaseName(), tableName.getTableName(),
-                null, partitionNames, SQL_GET_PARTITIONS_WITH_KEY, handler, sort, pageable);
+                null, partitionNames, SQL.SQL_GET_PARTITIONS_WITH_KEY, handler, sort, pageable);
         }
         this.fastServiceMetric.recordTimer(
             HiveMetrics.TagGetPartitionKeys.getMetricName(), registry.clock().wallTime() - start);
@@ -284,7 +249,7 @@ public class DirectSqlGetPartition {
         final long start = registry.clock().wallTime();
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
         // Create the sql
-        final StringBuilder queryBuilder = new StringBuilder(SQL_GET_PARTITION_NAMES_BY_URI);
+        final StringBuilder queryBuilder = new StringBuilder(SQL.SQL_GET_PARTITION_NAMES_BY_URI);
         final List<SqlParameterValue> params = Lists.newArrayList();
         if (prefixSearch) {
             queryBuilder.append(" 1=2");
@@ -416,7 +381,7 @@ public class DirectSqlGetPartition {
                 tableName,
                 filterExpression,
                 partitionIds,
-                SQL_GET_PARTITIONS,
+                SQL.SQL_GET_PARTITIONS,
                 handler,
                 sort,
                 pageable
@@ -433,19 +398,19 @@ public class DirectSqlGetPartition {
             final List<ListenableFuture<Void>> futures = Lists.newArrayList();
             final Map<Long, Map<String, String>> partitionParams = Maps.newHashMap();
             futures.add(threadServiceManager.getExecutor().submit(() ->
-                populateParameters(partIds, SQL_GET_PARTITION_PARAMS,
+                populateParameters(partIds, SQL.SQL_GET_PARTITION_PARAMS,
                     "part_id", partitionParams)));
 
             final Map<Long, Map<String, String>> sdParams = Maps.newHashMap();
             if (!sdIds.isEmpty()) {
                 futures.add(threadServiceManager.getExecutor().submit(() ->
-                    populateParameters(sdIds, SQL_GET_SD_PARAMS,
+                    populateParameters(sdIds, SQL.SQL_GET_SD_PARAMS,
                         "sd_id", sdParams)));
             }
             final Map<Long, Map<String, String>> serdeParams = Maps.newHashMap();
             if (!serdeIds.isEmpty()) {
                 futures.add(threadServiceManager.getExecutor().submit(() ->
-                    populateParameters(serdeIds, SQL_GET_SERDE_PARAMS,
+                    populateParameters(serdeIds, SQL.SQL_GET_SERDE_PARAMS,
                         "serde_id", serdeParams)));
             }
             try {
@@ -522,7 +487,7 @@ public class DirectSqlGetPartition {
             return result;
         };
         return jdbcTemplate
-            .query(SQL_GET_PARTITION_KEYS, new Object[]{databaseName, tableName},
+            .query(SQL.SQL_GET_PARTITION_KEYS, new Object[]{databaseName, tableName},
                 new int[]{Types.VARCHAR, Types.VARCHAR}, handler);
     }
 
@@ -734,5 +699,42 @@ public class DirectSqlGetPartition {
             }
         }
         return partitions;
+    }
+
+    @VisibleForTesting
+    private static class SQL {
+        static final String SQL_GET_PARTITIONS_WITH_KEY_URI =
+            "select p.PART_NAME as name, p.CREATE_TIME as dateCreated, sds.location uri"
+                + " from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID "
+                + "join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID";
+        static final String SQL_GET_PARTITIONS_WITH_KEY =
+            "select p.PART_NAME as name from PARTITIONS as p"
+                + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d on t.DB_ID = d.DB_ID";
+        static final String SQL_GET_PARTITIONS =
+            "select p.part_id as id, p.PART_NAME as name, p.CREATE_TIME as dateCreated,"
+                + " sds.location uri, sds.input_format, sds.output_format,"
+                + " sds.sd_id, s.serde_id, s.slib from PARTITIONS as p"
+                + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d"
+                + " on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID"
+                + " join SERDES s on sds.SERDE_ID=s.SERDE_ID";
+        static final String SQL_GET_PARTITION_NAMES_BY_URI =
+            "select p.part_name partition_name,t.tbl_name table_name,d.name schema_name,"
+                + " sds.location from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID"
+                + " join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID where";
+        static final String SQL_GET_PARTITION_PARAMS =
+            "select part_id, param_key, param_value from PARTITION_PARAMS where 1=1";
+        static final String SQL_GET_SD_PARAMS =
+            "select sd_id, param_key, param_value from SD_PARAMS where 1=1";
+        static final String SQL_GET_SERDE_PARAMS =
+            "select serde_id, param_key, param_value from SERDE_PARAMS where 1=1";
+        static final String SQL_GET_PARTITION_KEYS =
+            "select pkey_name, pkey_type from PARTITION_KEYS as p "
+                + "join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d"
+                + " on t.DB_ID = d.DB_ID where d.name=? and t.tbl_name=? order by integer_idx";
+
+        static final String SQL_GET_PARTITION_COUNT =
+            "select count(*) count from PARTITIONS as p"
+                + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d on t.DB_ID = d.DB_ID"
+                + " join SDS as sds on p.SD_ID = sds.SD_ID where d.NAME = ? and t.TBL_NAME = ?";
     }
 }

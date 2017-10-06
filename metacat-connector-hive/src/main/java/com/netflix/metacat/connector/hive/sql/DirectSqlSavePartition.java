@@ -15,6 +15,7 @@
  */
 package com.netflix.metacat.connector.hive.sql;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -39,7 +40,6 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,14 +60,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional("hiveTxManager")
 public class DirectSqlSavePartition {
-    private static final String SEQUENCE_NAME_PARTITION = "org.apache.hadoop.hive.metastore.model.MPartition";
-    private static final String SEQUENCE_NAME_SERDES = "org.apache.hadoop.hive.metastore.model.MSerDeInfo";
-    private static final String SEQUENCE_NAME_SDS = "org.apache.hadoop.hive.metastore.model.MStorageDescriptor";
     private static final String PARAM_LAST_DDL_TIME = "transient_lastDdlTime";
     private static final int BATCH_SIZE = 2500;
     private final Registry registry;
     private final String catalogName;
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    private final SequenceGeneration sequenceGeneration;
     private final HiveConnectorFastServiceMetric fastServiceMetric;
 
     /**
@@ -75,13 +73,15 @@ public class DirectSqlSavePartition {
      *
      * @param connectorContext     connector context
      * @param jdbcTemplate         JDBC template
+     * @param sequenceGeneration    sequence generator
      * @param fastServiceMetric     fast service metric
      */
     public DirectSqlSavePartition(final ConnectorContext connectorContext, final JdbcTemplate jdbcTemplate,
-        final HiveConnectorFastServiceMetric fastServiceMetric) {
+        final SequenceGeneration sequenceGeneration, final HiveConnectorFastServiceMetric fastServiceMetric) {
         this.registry = connectorContext.getRegistry();
         this.catalogName = connectorContext.getCatalogName();
         this.jdbcTemplate = jdbcTemplate;
+        this.sequenceGeneration = sequenceGeneration;
         this.fastServiceMetric = fastServiceMetric;
     }
 
@@ -99,7 +99,8 @@ public class DirectSqlSavePartition {
             // Get the table id and column id
             final TableSequenceIds tableSequenceIds = getTableSequenceIds(table.getDbName(), table.getTableName());
             // Get the sequence ids and lock the records in the database
-            final PartitionSequenceIds partitionSequenceIds = newPartitionSequenceIds(partitions.size());
+            final PartitionSequenceIds partitionSequenceIds =
+                sequenceGeneration.newPartitionSequenceIds(partitions.size());
             final List<List<PartitionInfo>> subPartitionList = Lists.partition(partitions, BATCH_SIZE);
             // Use the current time for create and update time.
             final long currentTimeInEpoch = Instant.now().getEpochSecond();
@@ -192,73 +193,6 @@ public class DirectSqlSavePartition {
             throw new InvalidMetaException(tableQName, null);
         }
         return new Path(table.getSd().getLocation(), escapedPartName).toString();
-    }
-
-    private PartitionSequenceIds newPartitionSequenceIds(final int size) {
-        //
-        // Get the sequence ids for partitions, sds and serde tables. Lock and update the sequence id to the number of
-        // partitions we need to insert.
-        //
-        final PartitionSequenceIds result = new PartitionSequenceIds();
-        try {
-            jdbcTemplate.query(SQL.SEQUENCE_NEXT_VAL,
-                new SqlParameterValue[] {new SqlParameterValue(Types.VARCHAR, SEQUENCE_NAME_PARTITION),
-                    new SqlParameterValue(Types.VARCHAR, SEQUENCE_NAME_SERDES),
-                    new SqlParameterValue(Types.VARCHAR, SEQUENCE_NAME_SDS), },
-                (RowCallbackHandler) rs -> {
-                    final String sequenceName = rs.getString("sequence_name");
-                    final Long nextVal = rs.getLong("next_val");
-                    switch (sequenceName) {
-                    case SEQUENCE_NAME_PARTITION:
-                        result.setPartId(nextVal);
-                        break;
-                    case SEQUENCE_NAME_SDS:
-                        result.setSdsId(nextVal);
-                        break;
-                    case SEQUENCE_NAME_SERDES:
-                        result.setSerdeId(nextVal);
-                        break;
-                    default:
-                        throw new IllegalStateException("Failed retrieving the sequence numbers.");
-                    }
-                });
-        } catch (Exception e) {
-            log.warn("Failed getting the sequence ids for partition", e);
-        }
-
-        try {
-            final List<Object[]> insertValues = Lists.newArrayList();
-            final List<Object[]> updateValues = Lists.newArrayList();
-            if (result.getPartId() == null) {
-                result.setPartId(1L);
-                insertValues.add(new Object[] {result.getPartId() + size, SEQUENCE_NAME_PARTITION });
-            } else {
-                updateValues.add(new Object[] {result.getPartId() + size, SEQUENCE_NAME_PARTITION });
-            }
-            if (result.getSdsId() == null) {
-                result.setSdsId(1L);
-                insertValues.add(new Object[] {result.getSdsId() + size, SEQUENCE_NAME_SDS });
-            } else {
-                updateValues.add(new Object[] {result.getSdsId() + size, SEQUENCE_NAME_SDS });
-            }
-            if (result.getSerdeId() == null) {
-                result.setSerdeId(1L);
-                insertValues.add(new Object[] {result.getSerdeId() + size, SEQUENCE_NAME_SERDES });
-            } else {
-                updateValues.add(new Object[] {result.getSerdeId() + size, SEQUENCE_NAME_SERDES });
-            }
-            if (!insertValues.isEmpty()) {
-                jdbcTemplate.batchUpdate(SQL.SEQUENCE_INSERT_VAL, insertValues,
-                    new int[] {Types.BIGINT, Types.VARCHAR });
-            }
-            if (!updateValues.isEmpty()) {
-                jdbcTemplate.batchUpdate(SQL.SEQUENCE_UPDATE_VAL, updateValues,
-                    new int[] {Types.BIGINT, Types.VARCHAR });
-            }
-            return result;
-        } catch (Exception e) {
-            throw new ConnectorException("Failed updating the sequence ids for partition", e);
-        }
     }
 
     private TableSequenceIds getTableSequenceIds(final String dbName, final String tableName) {
@@ -451,7 +385,8 @@ public class DirectSqlSavePartition {
             subPartitionIds.stream().map(p -> new SqlParameterValue(Types.BIGINT, p.getSdsId()))
                 .toArray(SqlParameterValue[]::new);
         final SqlParameterValue[] serdeIds =
-            subPartitionIds.stream().map(p -> new SqlParameterValue(Types.BIGINT, p.getSerdeId()))
+            subPartitionIds.stream().filter(p -> p.getSerdeId() != null)
+                .map(p -> new SqlParameterValue(Types.BIGINT, p.getSerdeId()))
                 .toArray(SqlParameterValue[]::new);
         final String paramVariableString = Joiner.on(",").skipNulls().join(paramVariables);
         jdbcTemplate.update(
@@ -497,13 +432,8 @@ public class DirectSqlSavePartition {
         }
     }
 
+    @VisibleForTesting
     private static class SQL {
-        static final String SEQUENCE_NEXT_VAL =
-            "SELECT NEXT_VAL, SEQUENCE_NAME FROM SEQUENCE_TABLE WHERE SEQUENCE_NAME in (?,?,?) FOR UPDATE";
-        static final String SEQUENCE_INSERT_VAL =
-            "INSERT INTO SEQUENCE_TABLE(NEXT_VAL,SEQUENCE_NAME) VALUES (?,?)";
-        static final String SEQUENCE_UPDATE_VAL =
-            "UPDATE SEQUENCE_TABLE SET NEXT_VAL=? WHERE SEQUENCE_NAME=?";
         static final String SERDES_INSERT =
             "INSERT INTO SERDES (NAME,SLIB,SERDE_ID) VALUES (?,?,?)";
         static final String SERDES_UPDATE =

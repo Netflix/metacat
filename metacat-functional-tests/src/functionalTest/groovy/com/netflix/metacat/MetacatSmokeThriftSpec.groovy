@@ -35,10 +35,14 @@ import org.apache.hadoop.hive.ql.metadata.Table
 import org.apache.hadoop.hive.ql.session.SessionState
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import java.util.logging.LogManager
+
 /**
  * Created by amajumdar on 5/12/15.
  */
@@ -64,6 +68,7 @@ class MetacatSmokeThriftSpec extends Specification {
         localFastConf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_embedded_fast_hive_thrift_port']}")
         SessionState.setCurrentSessionState(new SessionState(localFastConf))
         clients.put('localfast', Hive.get(localFastConf))
+        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("ROOT")).setLevel(ch.qos.logback.classic.Level.OFF)
         converter = new ConverterUtil(
             new DozerTypeConverter(
                 new TypeConverterFactory(
