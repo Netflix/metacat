@@ -44,6 +44,8 @@ public class HiveProperties {
 
         @NonNull
         private Partition partition = new Partition();
+        private int fetchSize = 2500;
+        private int batchSize = 2500;
 
         /**
          * Metastore partition related properties.

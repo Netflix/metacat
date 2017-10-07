@@ -197,6 +197,16 @@ public class DefaultConfigImpl implements Config {
         return this.metacatProperties.getHive().getMetastore().getPartition().getName().getWhitelist().getPattern();
     }
 
+    @Override
+    public int getHiveMetastoreFetchSize() {
+        return this.metacatProperties.getHive().getMetastore().getFetchSize();
+    }
+
+    @Override
+    public int getHiveMetastoreBatchSize() {
+        return this.metacatProperties.getHive().getMetastore().getBatchSize();
+    }
+
     /**
      * {@inheritDoc}
      */

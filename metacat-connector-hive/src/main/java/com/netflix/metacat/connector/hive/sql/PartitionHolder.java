@@ -21,8 +21,8 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 
 /**
  * A wrapper class to hold the Partition internal ids and the partition either as PartitionInfo or Partition.
- * @author zhenl
- * @since 1.0.0
+ * @author amajumdar
+ * @since 1.1.x
  */
 @Data
 public class PartitionHolder {
@@ -52,13 +52,5 @@ public class PartitionHolder {
      */
     public PartitionHolder(final Partition partition) {
         this.partition = partition;
-    }
-
-    /**
-     * Constructor populating the partition info only.
-     * @param partitionInfo partition info
-     */
-    public PartitionHolder(final PartitionInfo partitionInfo) {
-        this.partitionInfo = partitionInfo;
     }
 }

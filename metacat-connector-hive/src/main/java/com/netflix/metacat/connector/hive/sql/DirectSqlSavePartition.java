@@ -29,13 +29,10 @@ import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
+import com.netflix.metacat.connector.hive.util.PartitionUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.common.FileUtils;
-import org.apache.hadoop.hive.metastore.Warehouse;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -45,8 +42,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Types;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,9 +56,9 @@ import java.util.stream.Collectors;
 @Transactional("hiveTxManager")
 public class DirectSqlSavePartition {
     private static final String PARAM_LAST_DDL_TIME = "transient_lastDdlTime";
-    private static final int BATCH_SIZE = 2500;
     private final Registry registry;
     private final String catalogName;
+    private final int batchSize;
     private final JdbcTemplate jdbcTemplate;
     private final SequenceGeneration sequenceGeneration;
     private final HiveConnectorFastServiceMetric fastServiceMetric;
@@ -80,6 +75,7 @@ public class DirectSqlSavePartition {
         final SequenceGeneration sequenceGeneration, final HiveConnectorFastServiceMetric fastServiceMetric) {
         this.registry = connectorContext.getRegistry();
         this.catalogName = connectorContext.getCatalogName();
+        this.batchSize = connectorContext.getConfig().getHiveMetastoreBatchSize();
         this.jdbcTemplate = jdbcTemplate;
         this.sequenceGeneration = sequenceGeneration;
         this.fastServiceMetric = fastServiceMetric;
@@ -101,7 +97,7 @@ public class DirectSqlSavePartition {
             // Get the sequence ids and lock the records in the database
             final PartitionSequenceIds partitionSequenceIds =
                 sequenceGeneration.newPartitionSequenceIds(partitions.size());
-            final List<List<PartitionInfo>> subPartitionList = Lists.partition(partitions, BATCH_SIZE);
+            final List<List<PartitionInfo>> subPartitionList = Lists.partition(partitions, batchSize);
             // Use the current time for create and update time.
             final long currentTimeInEpoch = Instant.now().getEpochSecond();
             int index = 0;
@@ -109,7 +105,7 @@ public class DirectSqlSavePartition {
             for (List<PartitionInfo> subPartitions : subPartitionList) {
                 _insert(tableQName, table, tableSequenceIds, partitionSequenceIds, subPartitions, currentTimeInEpoch,
                     index);
-                index += BATCH_SIZE;
+                index += batchSize;
             }
         } finally {
             this.fastServiceMetric.recordTimer(
@@ -135,8 +131,8 @@ public class DirectSqlSavePartition {
             final long sdsId = partitionSequenceIds.getSdsId() +  currentIndex;
             final long serdeId = partitionSequenceIds.getSerdeId() +  currentIndex;
             final String partitionName = partition.getName().getPartitionName();
-            final List<String> partValues = getPartValuesFromPartName(table, partitionName);
-            final String escapedPartName = makePartName(table.getPartitionKeys(), partValues);
+            final List<String> partValues = PartitionUtil.getPartValuesFromPartName(tableQName, table, partitionName);
+            final String escapedPartName = PartitionUtil.makePartName(table.getPartitionKeys(), partValues);
             partitionsValues.add(new Object[]{0, tableSequenceIds.getTableId(), currentTimeInEpoch,
                 sdsId, escapedPartName, partId, });
             for (int i = 0; i < partValues.size(); i++) {
@@ -209,52 +205,6 @@ public class DirectSqlSavePartition {
     }
 
     /**
-     * Retrieves the partition values from the partition name. This method also validates the partition keys to that
-     * of the table.
-     * @param table       table
-     * @param partName    partition name
-     * @return list of partition values
-     */
-    private List<String> getPartValuesFromPartName(final Table table, final String partName) {
-        final QualifiedName tableName = QualifiedName.ofTable(catalogName, table.getDbName(), table.getTableName());
-        if (Strings.isNullOrEmpty(partName)) {
-            throw new InvalidMetaException(tableName, partName, null);
-        }
-        final LinkedHashMap<String, String> partSpec = new LinkedHashMap<>();
-        Warehouse.makeSpecFromName(partSpec, new Path(partName));
-        final List<String> values = new ArrayList<>();
-        for (FieldSchema field : table.getPartitionKeys()) {
-            final String key = field.getName();
-            final String val = partSpec.get(key);
-            if (val == null) {
-                throw new InvalidMetaException(tableName, partName, null);
-            }
-            values.add(val);
-        }
-        return values;
-    }
-
-    /**
-     * Escape partition name.
-     *
-     * @param partName    partition name
-     * @return Escaped partition name
-     */
-    private String escapePartitionName(final String partName) {
-        final LinkedHashMap<String, String> partSpec = new LinkedHashMap<>();
-        Warehouse.makeSpecFromName(partSpec, new Path(partName));
-        return FileUtils.makePartName(new ArrayList<>(partSpec.keySet()), new ArrayList<>(partSpec.values()));
-    }
-
-    private String makePartName(final List<FieldSchema> partitionKeys, final List<String> partValues) {
-        try {
-            return Warehouse.makePartName(partitionKeys, partValues);
-        } catch (MetaException e) {
-            throw new InvalidMetaException("Failed making the part name from the partition values", e);
-        }
-    }
-
-    /**
      * Updates the existing partitions. This method assumes that the partitions already exists and so does not
      * validate to check if it exists.
      * Note: Column descriptor of the partitions will not be updated.
@@ -265,7 +215,7 @@ public class DirectSqlSavePartition {
     public void update(final QualifiedName tableQName, final List<PartitionHolder> partitionHolders) {
         final long start = registry.clock().wallTime();
         try {
-            final List<List<PartitionHolder>> subPartitionDetailList = Lists.partition(partitionHolders, BATCH_SIZE);
+            final List<List<PartitionHolder>> subPartitionDetailList = Lists.partition(partitionHolders, batchSize);
             final long currentTimeInEpoch = Instant.now().getEpochSecond();
             for (List<PartitionHolder> subPartitionHolders : subPartitionDetailList) {
                 _update(tableQName, subPartitionHolders, currentTimeInEpoch);
@@ -335,7 +285,7 @@ public class DirectSqlSavePartition {
     public void delete(final QualifiedName tableQName, final List<String> partitionNames) {
         final long start = registry.clock().wallTime();
         try {
-            final List<List<String>> subPartitionNameList = Lists.partition(partitionNames, BATCH_SIZE);
+            final List<List<String>> subPartitionNameList = Lists.partition(partitionNames, batchSize);
             subPartitionNameList.forEach(subPartitionNames -> _delete(tableQName, subPartitionNames));
         } finally {
             this.fastServiceMetric.recordTimer(
@@ -367,7 +317,7 @@ public class DirectSqlSavePartition {
         values[index++] = new SqlParameterValue(Types.VARCHAR, tableName.getDatabaseName());
         values[index++] = new SqlParameterValue(Types.VARCHAR, tableName.getTableName());
         for (String partitionName: partitionNames) {
-            values[index++] = new SqlParameterValue(Types.VARCHAR, escapePartitionName(partitionName));
+            values[index++] = new SqlParameterValue(Types.VARCHAR, partitionName);
         }
         return jdbcTemplate.query(
             String.format(SQL.PARTITIONS_SELECT, paramVariableString), values,

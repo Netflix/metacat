@@ -46,7 +46,6 @@ import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.thrift.TException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.SqlParameterValue;
@@ -292,7 +291,8 @@ public class DirectSqlGetPartition {
     }
 
     @Transactional(readOnly = true)
-    protected Map<String, PartitionHolder> getPartitionsByNames(final Table table, final List<String> partitionNames) {
+    protected Map<String, PartitionHolder> getPartitionHoldersByNames(final Table table,
+        final List<String> partitionNames) {
         return this.getPartitions(
             table.getDbName(),
             table.getTableName(),
@@ -305,23 +305,6 @@ public class DirectSqlGetPartition {
                 p -> p.getPartitionInfo().getName().getPartitionName(),
                 p -> p)
             );
-    }
-
-    @Transactional(readOnly = true)
-    protected Map<String, PartitionHolder> getPartitionDetailsByNames(final Table table,
-        final List<String> partitionNames)
-        throws TException {
-        return this.getPartitions(
-            table.getDbName(),
-            table.getTableName(),
-            partitionNames,
-            null,
-            null,
-            null,
-            false
-        ).stream().collect(Collectors.toMap(
-            partitionHolder -> partitionHolder.getPartitionInfo().getName().getPartitionName(),
-            partitionHolder -> partitionHolder));
     }
 
     private List<PartitionHolder> getPartitions(

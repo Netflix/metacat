@@ -144,6 +144,20 @@ public interface Config {
     String getHivePartitionWhitelistPattern();
 
     /**
+     * Number of records to fetch in one call from Hive Metastore.
+     *
+     * @return fetch size
+     */
+    int getHiveMetastoreFetchSize();
+
+    /**
+     * Number of records to save in one call to Hive Metastore.
+     *
+     * @return batch size
+     */
+    int getHiveMetastoreBatchSize();
+
+    /**
      * Lookup service admin user name.
      *
      * @return user name

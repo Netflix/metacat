@@ -19,7 +19,7 @@ import java.util.List;
  * @author amajumdar
  */
 @Slf4j
-@Transactional
+@Transactional("hiveTxManager")
 public class SequenceGeneration {
     private static final String SEQUENCE_NAME_PARTITION = "org.apache.hadoop.hive.metastore.model.MPartition";
     private static final String SEQUENCE_NAME_SERDES = "org.apache.hadoop.hive.metastore.model.MSerDeInfo";
