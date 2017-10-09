@@ -24,13 +24,17 @@ import lombok.NoArgsConstructor;
  * Class representing the ids for a partition.
  *
  * @author amajumdar
+ * @since 1.1.x
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 public class PartitionSequenceIds {
+    // id of the PARTITIONS table
     private Long partId;
+    // id of the SDS table
     private Long sdsId;
+    // id of the SERDES table
     private Long serdeId;
 }

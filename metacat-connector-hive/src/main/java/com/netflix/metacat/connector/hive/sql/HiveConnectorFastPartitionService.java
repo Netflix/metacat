@@ -15,7 +15,6 @@
  */
 package com.netflix.metacat.connector.hive.sql;
 
-import com.google.common.base.Strings;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
@@ -26,6 +25,7 @@ import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -165,10 +165,10 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final StorageInfo sd = partitionInfo.getSerde();
         final StorageDescriptor tableSd = table.getSd();
 
-        if (Strings.isNullOrEmpty(sd.getInputFormat())) {
+        if (StringUtils.isNotBlank(sd.getInputFormat())) {
             sd.setInputFormat(tableSd.getInputFormat());
         }
-        if (Strings.isNullOrEmpty(sd.getOutputFormat())) {
+        if (StringUtils.isNotBlank(sd.getOutputFormat())) {
             sd.setOutputFormat(tableSd.getOutputFormat());
         }
         if (sd.getParameters() == null || sd.getParameters().isEmpty()) {
@@ -176,7 +176,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         }
         final SerDeInfo tableSerde = tableSd.getSerdeInfo();
         if (tableSerde != null) {
-            if (Strings.isNullOrEmpty(sd.getSerializationLib())) {
+            if (StringUtils.isNotBlank(sd.getSerializationLib())) {
                 sd.setSerializationLib(tableSerde.getSerializationLib());
             }
             if (sd.getSerdeInfoParameters() == null || sd.getSerdeInfoParameters().isEmpty()) {

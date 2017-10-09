@@ -17,6 +17,7 @@ import java.util.List;
 /**
  * This class is used to generate the sequence ids.
  * @author amajumdar
+ * @since 1.1.x
  */
 @Slf4j
 @Transactional("hiveTxManager")

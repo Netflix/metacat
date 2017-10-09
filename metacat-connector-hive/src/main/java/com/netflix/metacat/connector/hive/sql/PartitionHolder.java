@@ -26,8 +26,11 @@ import org.apache.hadoop.hive.metastore.api.Partition;
  */
 @Data
 public class PartitionHolder {
+    // id of the PARTITIONS table
     private Long id;
+    // id of the SDS table
     private Long sdId;
+    // id of the SERDES table
     private Long serdeId;
     private PartitionInfo partitionInfo;
     private Partition partition;
