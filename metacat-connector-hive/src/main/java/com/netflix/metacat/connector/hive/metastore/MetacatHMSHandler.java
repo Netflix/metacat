@@ -58,9 +58,7 @@ import java.util.regex.Pattern;
  * @since 1.0.0
  */
 public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMetacatHMSHandler {
-    private Warehouse wh;
     private Pattern partitionValidationPattern;
-    private final HiveConf hiveConf;
     private int nextSerialNum;
     private ThreadLocal<Integer> threadLocalId = new ThreadLocal<Integer>() {
         @Override
@@ -116,10 +114,8 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
      */
     public MetacatHMSHandler(final String name, final HiveConf conf, final boolean init) throws MetaException {
         super(name, conf, init);
-        wh = new Warehouse(conf);
-        this.hiveConf = conf;
         final String partitionValidationRegex =
-                hiveConf.getVar(HiveConf.ConfVars.METASTORE_PARTITION_NAME_WHITELIST_PATTERN);
+            getHiveConf().getVar(HiveConf.ConfVars.METASTORE_PARTITION_NAME_WHITELIST_PATTERN);
         if (partitionValidationRegex != null && !partitionValidationRegex.isEmpty()) {
             partitionValidationPattern = Pattern.compile(partitionValidationRegex);
         } else {
@@ -152,7 +148,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
     public Configuration getConf() {
         Configuration conf = threadLocalConf.get();
         if (conf == null) {
-            conf = new Configuration(hiveConf);
+            conf = new Configuration(getHiveConf());
             threadLocalConf.set(conf);
         }
         return conf;
@@ -160,10 +156,10 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
 
     private RawStore newRawStore() throws MetaException {
         final Configuration conf = getConf();
-        final String rawStoreClassName = hiveConf.getVar(HiveConf.ConfVars.METASTORE_RAW_STORE_IMPL);
+        final String rawStoreClassName = getHiveConf().getVar(HiveConf.ConfVars.METASTORE_RAW_STORE_IMPL);
         LOG.info(String.format("%s: Opening raw store with implemenation class: %s", threadLocalId.get(),
                 rawStoreClassName));
-        return RawStoreProxy.getProxy(hiveConf, conf, rawStoreClassName, threadLocalId.get());
+        return RawStoreProxy.getProxy(getHiveConf(), conf, rawStoreClassName, threadLocalId.get());
     }
 
     private void logInfo(final String m) {
@@ -337,7 +333,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
                 // Clean up the result of adding partitions
                 for (Map.Entry<PartValEqWrapper, Boolean> e : addedPartitions.entrySet()) {
                     if (e.getValue()) {
-                        wh.deleteDir(new Path(e.getKey().partition.getSd().getLocation()), true);
+                        getWh().deleteDir(new Path(e.getKey().partition.getSd().getLocation()), true);
                         // we just created this directory - it's not a case of pre-creation, so we nuke
                     }
                 }
@@ -384,20 +380,21 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
             if (tbl.getSd().getLocation() == null) {
                 throw new MetaException("Cannot specify location for a view partition");
             }
-            partLocation = wh.getDnsPath(new Path(partLocationStr));
+            partLocation = getWh().getDnsPath(new Path(partLocationStr));
         }
 
         boolean result = false;
         if (partLocation != null) {
             part.getSd().setLocation(partLocation.toString());
-
-            // Check to see if the directory already exists before calling
-            // mkdirs() because if the file system is read-only, mkdirs will
-            // throw an exception even if the directory already exists.
-            if (!wh.isDir(partLocation)) {
-                if (!wh.mkdirs(partLocation, true)) {
-                    throw new MetaException(partLocation
-                            + " is not a directory or unable to create one");
+            final boolean doFileSystemCalls = getHiveConf().getBoolean("hive.metastore.use.fs.calls", true)
+                || (tbl.getParameters() != null && Boolean.parseBoolean(tbl.getParameters()
+                .getOrDefault("hive.metastore.use.fs.calls", "true")));
+            if (doFileSystemCalls) {
+                // Check to see if the directory already exists before calling
+                // mkdirs() because if the file system is read-only, mkdirs will
+                // throw an exception even if the directory already exists.
+                if (!getWh().mkdirs(partLocation, true)) {
+                    throw new MetaException(partLocation + " is not a directory or unable to create one");
                 }
                 result = true;
             }
@@ -423,7 +420,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
 
         // Inherit table properties into partition properties.
         final Map<String, String> tblParams = tbl.getParameters();
-        final String inheritProps = hiveConf.getVar(HiveConf.ConfVars.METASTORE_PART_INHERIT_TBL_PROPS).trim();
+        final String inheritProps = getHiveConf().getVar(HiveConf.ConfVars.METASTORE_PART_INHERIT_TBL_PROPS).trim();
         // Default value is empty string in which case no properties will be inherited.
         // * implies all properties needs to be inherited
         Set<String> inheritKeys = new HashSet<String>(Arrays.asList(inheritProps.split(",")));

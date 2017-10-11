@@ -18,14 +18,18 @@ package com.netflix.metacat.connector.hive.sql;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.util.PartitionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -34,6 +38,7 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * HiveConnectorFastPartitionService.
@@ -45,12 +50,14 @@ import java.util.Set;
 public class HiveConnectorFastPartitionService extends HiveConnectorPartitionService {
     private DirectSqlGetPartition directSqlGetPartition;
     private DirectSqlSavePartition directSqlSavePartition;
+    private Warehouse warehouse;
 
     /**
      * Constructor.
      *
      * @param context               connector context
      * @param metacatHiveClient     hive client
+     * @param warehouse             hive warehouse
      * @param hiveMetacatConverters hive converter
      * @param directSqlGetPartition service to get partitions
      * @param directSqlSavePartition service to save partitions
@@ -58,11 +65,13 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     public HiveConnectorFastPartitionService(
         final ConnectorContext context,
         final IMetacatHiveClient metacatHiveClient,
+        final Warehouse warehouse,
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final DirectSqlGetPartition directSqlGetPartition,
         final DirectSqlSavePartition directSqlSavePartition
     ) {
         super(context, metacatHiveClient, hiveMetacatConverters);
+        this.warehouse = warehouse;
         this.directSqlGetPartition = directSqlGetPartition;
         this.directSqlSavePartition = directSqlSavePartition;
     }
@@ -127,19 +136,60 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final List<String> partitionNames, final List<PartitionInfo> addedPartitionInfos,
         final List<PartitionHolder> existingPartitionHolders, final Set<String> deletePartitionNames) {
         final boolean  useHiveFastServiceForSavePartitions = Boolean.parseBoolean(getContext().getConfiguration()
-                .getOrDefault("hive.use.embedded.fastservice.save.partitions", "false"))
+                .getOrDefault("hive.use.embedded.sql.save.partitions", "false"))
             || (table.getParameters() != null && Boolean.parseBoolean(table.getParameters()
-                .getOrDefault("hive.use.embedded.fastservice.save.partitions", "false")));
+                .getOrDefault("hive.use.embedded.sql.save.partitions", "false")));
         if (useHiveFastServiceForSavePartitions) {
             if (!existingPartitionHolders.isEmpty()) {
-                copyTableSdToPartitionHoldersSd(existingPartitionHolders, table);
+                final List<PartitionInfo> existingPartitionInfos = existingPartitionHolders.stream()
+                    .map(PartitionHolder::getPartitionInfo).collect(Collectors.toList());
+                copyTableSdToPartitionInfosSd(existingPartitionInfos, table);
+                createLocationForPartitions(tableQName, existingPartitionInfos, table);
             }
             copyTableSdToPartitionInfosSd(addedPartitionInfos, table);
+            createLocationForPartitions(tableQName, addedPartitionInfos, table);
             directSqlSavePartition.addUpdateDropPartitions(tableQName, table, addedPartitionInfos,
                 existingPartitionHolders, deletePartitionNames);
         } else {
             super.addUpdateDropPartitions(tableQName, table, partitionNames, addedPartitionInfos,
                 existingPartitionHolders, deletePartitionNames);
+        }
+    }
+
+    private void createLocationForPartitions(final QualifiedName tableQName,
+        final List<PartitionInfo> partitionInfos, final Table table) {
+        final boolean doFileSystemCalls = Boolean.parseBoolean(getContext().getConfiguration()
+            .getOrDefault("hive.metastore.use.fs.calls", "true"))
+            || (table.getParameters() != null && Boolean.parseBoolean(table.getParameters()
+            .getOrDefault("hive.metastore.use.fs.calls", "true")));
+        partitionInfos.forEach(partitionInfo ->
+            createLocationForPartition(tableQName, partitionInfo, table, doFileSystemCalls));
+    }
+
+    private void createLocationForPartition(final QualifiedName tableQName,
+        final PartitionInfo partitionInfo, final Table table, final boolean doFileSystemCalls) {
+        String location = partitionInfo.getSerde().getUri();
+        if (StringUtils.isBlank(location)) {
+            if (table.getSd() == null || table.getSd().getLocation() == null) {
+                throw new InvalidMetaException(tableQName, null);
+            }
+            final String partitionName = partitionInfo.getName().getPartitionName();
+            final List<String> partValues = PartitionUtil
+                .getPartValuesFromPartName(tableQName, table, partitionName);
+            final String escapedPartName = PartitionUtil.makePartName(table.getPartitionKeys(), partValues);
+            location =  new Path(table.getSd().getLocation(), escapedPartName).toString();
+            partitionInfo.getSerde().setUri(location);
+        }
+        if (doFileSystemCalls && StringUtils.isNotBlank(location)) {
+            try {
+                final Path path = new Path(location);
+                if (!warehouse.mkdirs(path, true)) {
+                        throw new InvalidMetaException(String
+                            .format("%s is not a directory or unable to create one", location), null);
+                }
+            } catch (Exception e) {
+                throw new InvalidMetaException(String.format("Failed creating partition location; %s", location), e);
+            }
         }
     }
 
@@ -152,23 +202,14 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         }
     }
 
-    private void copyTableSdToPartitionHoldersSd(final List<PartitionHolder> partitionHolders, final Table table) {
-        //
-        // Update the partition info based on that of the table.
-        //
-        for (PartitionHolder partitionHolder : partitionHolders) {
-            copyTableSdToPartitionInfoSd(partitionHolder.getPartitionInfo(), table);
-        }
-    }
-
     private void copyTableSdToPartitionInfoSd(final PartitionInfo partitionInfo, final Table table) {
         final StorageInfo sd = partitionInfo.getSerde();
         final StorageDescriptor tableSd = table.getSd();
 
-        if (StringUtils.isNotBlank(sd.getInputFormat())) {
+        if (StringUtils.isBlank(sd.getInputFormat())) {
             sd.setInputFormat(tableSd.getInputFormat());
         }
-        if (StringUtils.isNotBlank(sd.getOutputFormat())) {
+        if (StringUtils.isBlank(sd.getOutputFormat())) {
             sd.setOutputFormat(tableSd.getOutputFormat());
         }
         if (sd.getParameters() == null || sd.getParameters().isEmpty()) {
@@ -176,7 +217,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         }
         final SerDeInfo tableSerde = tableSd.getSerdeInfo();
         if (tableSerde != null) {
-            if (StringUtils.isNotBlank(sd.getSerializationLib())) {
+            if (StringUtils.isBlank(sd.getSerializationLib())) {
                 sd.setSerializationLib(tableSerde.getSerializationLib());
             }
             if (sd.getSerdeInfoParameters() == null || sd.getSerdeInfoParameters().isEmpty()) {

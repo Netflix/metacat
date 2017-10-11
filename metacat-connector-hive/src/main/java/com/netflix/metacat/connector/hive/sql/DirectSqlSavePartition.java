@@ -17,12 +17,10 @@ package com.netflix.metacat.connector.hive.sql;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
-import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.exception.PartitionAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
@@ -32,7 +30,6 @@ import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.metacat.connector.hive.util.PartitionUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -139,9 +136,6 @@ public class DirectSqlSavePartition {
                 partitionKeyValsValues.add(new Object[] {partId, partValues.get(i), i});
             }
             if (storageInfo != null) {
-                if (Strings.isNullOrEmpty(storageInfo.getUri())) {
-                    storageInfo.setUri(createLocationForPartition(tableQName, table, escapedPartName));
-                }
                 serdesValues.add(new Object[]{null, storageInfo.getSerializationLib(), serdeId});
                 final Map<String, String> serdeInfoParameters = storageInfo.getSerdeInfoParameters();
                 if (serdeInfoParameters != null) {
@@ -181,14 +175,6 @@ public class DirectSqlSavePartition {
             throw new ConnectorException(
                 String.format("Failed inserting partitions %s for table %s", partitionNames, tableQName), e);
         }
-    }
-
-    private String createLocationForPartition(final QualifiedName tableQName, final Table table,
-        final String escapedPartName) {
-        if (table.getSd() == null || table.getSd().getLocation() == null) {
-            throw new InvalidMetaException(tableQName, null);
-        }
-        return new Path(table.getSd().getLocation(), escapedPartName).toString();
     }
 
     private TableSequenceIds getTableSequenceIds(final String dbName, final String tableName) {

@@ -26,6 +26,7 @@ import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.sql.SequenceGeneration;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
+import org.apache.hadoop.hive.metastore.Warehouse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -63,6 +64,7 @@ public class HiveConnectorFastServiceConfig {
      * create hive connector fast partition service.
      *
      * @param metacatHiveClient    hive client
+     * @param warehouse            hive warehouse
      * @param hiveMetacatConverter metacat converter
      * @param connectorContext     connector config
      * @param directSqlGetPartition service to get partitions
@@ -72,6 +74,7 @@ public class HiveConnectorFastServiceConfig {
     @Bean
     public HiveConnectorPartitionService partitionService(
         final IMetacatHiveClient metacatHiveClient,
+        final Warehouse warehouse,
         final HiveConnectorInfoConverter hiveMetacatConverter,
         final ConnectorContext connectorContext,
         final DirectSqlGetPartition directSqlGetPartition,
@@ -80,6 +83,7 @@ public class HiveConnectorFastServiceConfig {
         return new HiveConnectorFastPartitionService(
             connectorContext,
             metacatHiveClient,
+            warehouse,
             hiveMetacatConverter,
             directSqlGetPartition,
             directSqlSavePartition
