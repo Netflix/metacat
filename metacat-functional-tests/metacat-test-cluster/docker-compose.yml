@@ -30,9 +30,9 @@ services:
             - '8000'
             - '12001'
             - '12003'
+            - '12004'
         volumes:
             - ../build/metacat-war-expanded/ROOT:/usr/local/tomcat/webapps/ROOT
-            - ./resources/log4j.properties:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/log4j.properties
             - ./resources/logging.properties:/usr/local/tomcat/conf/logging.properties
             - ../build/logs/metacat:/usr/local/tomcat/logs
             - ./etc-metacat:/etc/metacat:ro
@@ -70,6 +70,8 @@ services:
             - MYSQL_USER=metacat_user
             - MYSQL_PASSWORD=metacat_user_password
             - MYSQL_DATABASE=metacat
+        ports:
+            - '3306'
         labels:
           - "com.netflix.metacat.oss.test"
     postgresql:
@@ -117,7 +119,7 @@ services:
         depends_on:
             - metacat
         environment:
-            - TARGETS=metacat:8080,metacat:12001,metacat:12003
+            - TARGETS=metacat:8080,metacat:12001,metacat:12003,metacat:12004
             - TIMEOUT=360
         labels:
           - "com.netflix.metacat.oss.test"

@@ -20,6 +20,7 @@ import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient;
 import com.netflix.metacat.connector.hive.metastore.HMSHandlerProxy;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.Warehouse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -64,6 +65,30 @@ public class HiveConnectorClientConfig {
             throw new IllegalArgumentException(
                 String.format(
                     "Failed creating the hive metastore client for catalog: %s",
+                    connectorContext.getCatalogName()
+                ),
+                e
+            );
+        }
+    }
+
+
+    /**
+     * create warehouse for file system calls.
+     *
+     * @param connectorContext connector config context
+     * @return WareHouse
+     */
+    @Bean
+    public Warehouse warehouse(final ConnectorContext connectorContext) {
+        try {
+            final HiveConf conf = this.getDefaultConf();
+            connectorContext.getConfiguration().forEach(conf::set);
+            return new Warehouse(conf);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                String.format(
+                    "Failed creating the hive warehouse for catalog: %s",
                     connectorContext.getCatalogName()
                 ),
                 e

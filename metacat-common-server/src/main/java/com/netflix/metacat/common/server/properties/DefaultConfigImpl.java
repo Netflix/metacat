@@ -201,6 +201,22 @@ public class DefaultConfigImpl implements Config {
      * {@inheritDoc}
      */
     @Override
+    public int getHiveMetastoreFetchSize() {
+        return this.metacatProperties.getHive().getMetastore().getFetchSize();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getHiveMetastoreBatchSize() {
+        return this.metacatProperties.getHive().getMetastore().getBatchSize();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getLookupServiceUserAdmin() {
         return this.metacatProperties.getLookupService().getUserAdmin();
     }

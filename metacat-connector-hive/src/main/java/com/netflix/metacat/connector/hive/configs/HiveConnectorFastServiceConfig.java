@@ -16,18 +16,23 @@ package com.netflix.metacat.connector.hive.configs;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
-import com.netflix.metacat.connector.hive.HiveConnectorFastPartitionService;
-import com.netflix.metacat.connector.hive.HiveConnectorFastTableService;
+import com.netflix.metacat.connector.hive.sql.DirectSqlGetPartition;
+import com.netflix.metacat.connector.hive.sql.DirectSqlSavePartition;
+import com.netflix.metacat.connector.hive.sql.HiveConnectorFastPartitionService;
+import com.netflix.metacat.connector.hive.sql.HiveConnectorFastTableService;
 import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.sql.SequenceGeneration;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
+import org.apache.hadoop.hive.metastore.Warehouse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
  * HiveConnectorFastServiceConfig.
@@ -36,6 +41,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * @since 1.1.0
  */
 @Configuration
+@EnableTransactionManagement(proxyTargetClass = true)
 @ConditionalOnProperty(value = "useHiveFastService", havingValue = "true")
 public class HiveConnectorFastServiceConfig {
 
@@ -58,7 +64,35 @@ public class HiveConnectorFastServiceConfig {
      * create hive connector fast partition service.
      *
      * @param metacatHiveClient    hive client
+     * @param warehouse            hive warehouse
      * @param hiveMetacatConverter metacat converter
+     * @param connectorContext     connector config
+     * @param directSqlGetPartition service to get partitions
+     * @param directSqlSavePartition service to save partitions
+     * @return HiveConnectorPartitionService
+     */
+    @Bean
+    public HiveConnectorPartitionService partitionService(
+        final IMetacatHiveClient metacatHiveClient,
+        final Warehouse warehouse,
+        final HiveConnectorInfoConverter hiveMetacatConverter,
+        final ConnectorContext connectorContext,
+        final DirectSqlGetPartition directSqlGetPartition,
+        final DirectSqlSavePartition directSqlSavePartition
+    ) {
+        return new HiveConnectorFastPartitionService(
+            connectorContext,
+            metacatHiveClient,
+            warehouse,
+            hiveMetacatConverter,
+            directSqlGetPartition,
+            directSqlSavePartition
+        );
+    }
+
+    /**
+     * Service to get partitions.
+     *
      * @param threadServiceManager thread service manager
      * @param connectorContext     connector config
      * @param hiveJdbcTemplate     hive JDBC template
@@ -66,23 +100,55 @@ public class HiveConnectorFastServiceConfig {
      * @return HiveConnectorPartitionService
      */
     @Bean
-    public HiveConnectorPartitionService fastHivePartitionService(
-        final IMetacatHiveClient metacatHiveClient,
-        final HiveConnectorInfoConverter hiveMetacatConverter,
+    public DirectSqlGetPartition directSqlGetPartition(
         final ThreadServiceManager threadServiceManager,
         final ConnectorContext connectorContext,
         @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
         final HiveConnectorFastServiceMetric serviceMetric
     ) {
-        return new HiveConnectorFastPartitionService(
-            connectorContext.getCatalogName(),
-            metacatHiveClient,
-            hiveMetacatConverter,
+        return new DirectSqlGetPartition(
             connectorContext,
             threadServiceManager,
             hiveJdbcTemplate,
             serviceMetric
         );
+    }
+
+    /**
+     * Service to save partitions.
+     *
+     * @param connectorContext     connector config
+     * @param hiveJdbcTemplate     hive JDBC template
+     * @param sequenceGeneration    sequence generator
+     * @param serviceMetric        fast service metric
+     * @return HiveConnectorPartitionService
+     */
+    @Bean
+    public DirectSqlSavePartition directSqlSavePartition(
+        final ConnectorContext connectorContext,
+        @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
+        final SequenceGeneration sequenceGeneration,
+        final HiveConnectorFastServiceMetric serviceMetric
+    ) {
+        return new DirectSqlSavePartition(
+            connectorContext,
+            hiveJdbcTemplate,
+            sequenceGeneration,
+            serviceMetric
+        );
+    }
+
+    /**
+     * Service to generate sequence ids.
+     *
+     * @param hiveJdbcTemplate     hive JDBC template
+     * @return HiveConnectorPartitionService
+     */
+    @Bean
+    public SequenceGeneration sequenceGeneration(
+        @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate
+    ) {
+        return new SequenceGeneration(hiveJdbcTemplate);
     }
 
     /**
@@ -97,7 +163,7 @@ public class HiveConnectorFastServiceConfig {
      * @return HiveConnectorFastTableService
      */
     @Bean
-    public HiveConnectorTableService fastHiveTableService(
+    public HiveConnectorTableService hiveTableService(
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,

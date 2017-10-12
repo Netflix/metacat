@@ -59,7 +59,6 @@ class MetacatFunctionalSpec extends Specification {
             .withDataTypeContext('pig')
             .withUserName('metacat-test')
             .withClientAppName('metacat-test')
-            .withLogLevel(Logger.Level.FULL)
             .build()
         api = client.api
         partitionApi = client.partitionApi

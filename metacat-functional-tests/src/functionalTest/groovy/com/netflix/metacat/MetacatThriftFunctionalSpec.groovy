@@ -78,6 +78,11 @@ class MetacatThriftFunctionalSpec extends Specification {
         assert thriftPort, 'Required system property "metacat_embedded_hive_thrift_port" is not set'
         TestCatalogs.findByCatalogName('embedded-hive-metastore').thriftUri = "thrift://localhost:${thriftPort}".toString()
 
+        Logger.getRootLogger().setLevel(Level.OFF)
+        thriftPort = System.properties['metacat_embedded_fast_hive_thrift_port']?.toString()?.trim()
+        assert thriftPort, 'Required system property "metacat_embedded_fast_hive_thrift_port" is not set'
+        TestCatalogs.findByCatalogName('embedded-fast-hive-metastore').thriftUri = "thrift://localhost:${thriftPort}".toString()
+
         thriftPort = System.properties['hive_thrift_port']?.toString()?.trim()
         assert thriftPort, 'Required system property "hive_thrift_port" is not set'
         hiveThriftUri = "thrift://localhost:${thriftPort}".toString()
@@ -314,7 +319,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         metacatDatabases == hiveDatabases
 
         where:
-        catalog << TestCatalogs.getThriftImplementers(TestCatalogs.ALL)
+        catalog << TestCatalogs.getThriftImplementersToValidateWithHive(TestCatalogs.ALL)
     }
 
     def 'createDatabase: can create a database for "#catalog.name"'() {
@@ -370,7 +375,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         databaseDifferences(metacatDb, hiveDb).empty
 
         where:
-        name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
+        name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementersToValidateWithHive(TestCatalogs.ALL))
     }
 
     def 'getDatabasesByPattern: can find #name with multiple patterns'() {
@@ -473,7 +478,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         databaseDifferences(metacatDb, hiveDb).empty
 
         where:
-        name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
+        name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementersToValidateWithHive(TestCatalogs.ALL))
     }
 
     def 'createTable: can create a partitioned table in #name'() {
@@ -659,7 +664,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         tableDifferences(metacatTbl, hiveTbl).empty
 
         where:
-        name << TestCatalogs.getCreatedTables(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
+        name << TestCatalogs.getCreatedTables(TestCatalogs.getThriftImplementersToValidateWithHive(TestCatalogs.ALL))
     }
 
     def 'createPartition: fails on an unpartitioned table #name'() {
@@ -948,7 +953,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         partitionDifferences(metacatPartition, hivePartition).empty
 
         where:
-        name << TestCatalogs.getCreatedPartitions(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
+        name << TestCatalogs.getCreatedPartitions(TestCatalogs.getThriftImplementersToValidateWithHive(TestCatalogs.ALL))
     }
 
     def 'dropPartition: can drop #name'() {

@@ -77,8 +77,6 @@ public class HiveConnectorFactory implements ConnectorFactory {
         properties.put("useEmbeddedClient", useLocalMetastore);
         propertySources.addFirst(new MapPropertySource("HIVE_CONNECTOR", properties));
         this.ctx.setEnvironment(standardEnvironment);
-        //TODO scan the package, which is not working
-//        this.ctx.scan(this.getClass().getPackage().getName());
         this.ctx.register(HiveConnectorFastServiceConfig.class);
         this.ctx.register(HiveConnectorClientConfig.class);
         this.ctx.register(HiveConnectorConfig.class);

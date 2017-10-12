@@ -14,13 +14,16 @@
  *     limitations under the License.
  */
 
-package com.netflix.metacat.connector.hive;
+package com.netflix.metacat.connector.hive.sql;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
+import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
+import com.netflix.metacat.connector.hive.HiveConnectorTableService;
+import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
