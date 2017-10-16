@@ -125,6 +125,7 @@ class PigDataDtoProvider {
                         serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
                         uri: uri
                 ),
+                metadata: ['functionalTest': 'true'],
                 definitionMetadata: getDefinitionMetadata('test'),
                 dataMetadata: metacatJson.parseJsonObject('{"metrics": {}}')
         )
