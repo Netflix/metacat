@@ -469,11 +469,12 @@ class MetacatSmokeSpec extends Specification {
                 it.name.partitionName == partitionName
             } != null
             def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: partitionName.replace('=', '="') + '"', includePartitionDetails: true))
-            assert partitionDetails != null && partitionDetails.size() == 1 && partitionDetails.find {
-                it.name.partitionName == partitionName
-            } != null && partitionDetails.size() == partitions.size() && partitionDetails.find {
-                it.name.partitionName == partitionName
-            }.getSerde().getSerdeInfoParameters().size() >= 1
+            def partitionDetail = partitionDetails.find { it.name.partitionName == partitionName }
+            assert partitionDetails != null && partitionDetails.size() == 1 && partitionDetail != null && partitionDetails.size() == partitions.size() && partitionDetail.getSerde().getSerdeInfoParameters().size() >= 1
+            if (catalogName != 's3-mysql-db') {
+                assert partitionDetail.getMetadata().size() >= 1
+                assert partitionDetail.getMetadata().get('functionalTest') == 'true'
+            }
             if (repeat) {
                 assert api.getTable(catalogName, databaseName, tableName, false, true, false).getDefinitionMetadata().get('savePartitions') != null
                 assert partitions.get(0).dataUri == uri + 0

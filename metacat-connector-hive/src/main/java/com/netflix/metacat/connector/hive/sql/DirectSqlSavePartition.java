@@ -135,6 +135,13 @@ public class DirectSqlSavePartition {
             for (int i = 0; i < partValues.size(); i++) {
                 partitionKeyValsValues.add(new Object[] {partId, partValues.get(i), i});
             }
+            // Partition parameters
+            final Map<String, String> parameters = partition.getMetadata();
+            if (parameters != null) {
+                parameters
+                    .forEach((key, value) -> partitionParamsValues.add(new Object[] {value, partId, key }));
+            }
+            partitionParamsValues.add(new Object[] {currentTimeInEpoch, partId, PARAM_LAST_DDL_TIME });
             if (storageInfo != null) {
                 serdesValues.add(new Object[]{null, storageInfo.getSerializationLib(), serdeId});
                 final Map<String, String> serdeInfoParameters = storageInfo.getSerdeInfoParameters();
@@ -144,13 +151,6 @@ public class DirectSqlSavePartition {
                 }
                 sdsValues.add(new Object[]{storageInfo.getOutputFormat(), false, tableSequenceIds.getCdId(),
                     false, serdeId, storageInfo.getUri(), storageInfo.getInputFormat(), 0, sdsId, });
-                final Map<String, String> parameters = storageInfo.getParameters();
-                if (parameters != null) {
-                    parameters
-                        .forEach((key, value) -> partitionParamsValues.add(new Object[] {value, partId, key }));
-                    partitionParamsValues.add(
-                        new Object[] {currentTimeInEpoch, partId, PARAM_LAST_DDL_TIME });
-                }
             }
             partitionNames.add(partitionName);
             currentIndex++;
@@ -226,6 +226,14 @@ public class DirectSqlSavePartition {
             final long partId = partitionHolder.getId();
             final long sdsId = partitionHolder.getSdId();
             final long serdeId = partitionHolder.getSerdeId();
+            // Partition parameters
+            final Map<String, String> parameters = partition.getMetadata();
+            if (parameters != null) {
+                parameters
+                    .forEach((key, value) -> partitionParamsValues.add(new Object[] {value, partId, key, value }));
+            }
+            partitionParamsValues.add(
+                new Object[] {currentTimeInEpoch, partId, PARAM_LAST_DDL_TIME, currentTimeInEpoch });
             if (storageInfo != null) {
                 serdesValues.add(new Object[]{null, storageInfo.getSerializationLib(), serdeId});
                 final Map<String, String> serdeInfoParameters = storageInfo.getSerdeInfoParameters();
@@ -235,13 +243,6 @@ public class DirectSqlSavePartition {
                 }
                 sdsValues.add(new Object[]{storageInfo.getOutputFormat(), false, false, storageInfo.getUri(),
                     storageInfo.getInputFormat(), sdsId, });
-                final Map<String, String> parameters = storageInfo.getParameters();
-                if (parameters != null) {
-                    parameters
-                        .forEach((key, value) -> partitionParamsValues.add(new Object[] {value, partId, key, value }));
-                    partitionParamsValues.add(
-                        new Object[] {currentTimeInEpoch, partId, PARAM_LAST_DDL_TIME, currentTimeInEpoch });
-                }
             }
             partitionNames.add(partition.getName().toString());
         }
