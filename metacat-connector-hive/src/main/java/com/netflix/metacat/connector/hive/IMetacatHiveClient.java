@@ -95,7 +95,7 @@ public interface IMetacatHiveClient {
      *
      * @param databaseName databaseName
      * @param tableName    tableName
-     * @return list of tables
+     * @return table information
      * @throws TException NotfoundException
      */
     default Table getTableByName(final String databaseName,

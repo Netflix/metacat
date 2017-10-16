@@ -16,21 +16,18 @@
 
 package com.netflix.metacat.connector.hive;
 
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
-import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
-import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.SpringConnectorFactory;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorClientConfig;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorConfig;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorFastServiceConfig;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
-import org.springframework.core.env.MutablePropertySources;
-import org.springframework.core.env.StandardEnvironment;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,10 +39,7 @@ import java.util.Map;
  * @since 1.0.0
  */
 @Slf4j
-public class HiveConnectorFactory implements ConnectorFactory {
-    private final String catalogName;
-    private AnnotationConfigApplicationContext ctx;
-
+public class HiveConnectorFactory extends SpringConnectorFactory {
     /**
      * Constructor.
      *
@@ -58,29 +52,22 @@ public class HiveConnectorFactory implements ConnectorFactory {
         final HiveConnectorInfoConverter infoConverter,
         final ConnectorContext connectorContext
     ) {
-        this.catalogName = catalogName;
+        super(catalogName, infoConverter, connectorContext);
         final boolean useLocalMetastore = Boolean.parseBoolean(
-            connectorContext.getConfiguration().getOrDefault(HiveConfigConstants.USE_EMBEDDED_METASTORE, "false")
+            connectorContext.getConfiguration()
+                .getOrDefault(HiveConfigConstants.USE_EMBEDDED_METASTORE, "false")
         );
         final boolean useFastHiveService = useLocalMetastore && Boolean.parseBoolean(
             connectorContext.getConfiguration()
                 .getOrDefault(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false")
         );
-
-        this.ctx = new AnnotationConfigApplicationContext();
-        this.ctx.getBeanFactory().registerSingleton("ConnectorContext", connectorContext);
-        this.ctx.getBeanFactory().registerSingleton("HiveConnectorInfoConverter", infoConverter);
-        final StandardEnvironment standardEnvironment = new StandardEnvironment();
-        final MutablePropertySources propertySources = standardEnvironment.getPropertySources();
         final Map<String, Object> properties = new HashMap<>();
         properties.put("useHiveFastService", useFastHiveService);
         properties.put("useEmbeddedClient", useLocalMetastore);
-        propertySources.addFirst(new MapPropertySource("HIVE_CONNECTOR", properties));
-        this.ctx.setEnvironment(standardEnvironment);
-        this.ctx.register(HiveConnectorFastServiceConfig.class);
-        this.ctx.register(HiveConnectorClientConfig.class);
-        this.ctx.register(HiveConnectorConfig.class);
-        this.ctx.refresh();
+        super.addEnvProperties(new MapPropertySource("HIVE_CONNECTOR", properties));
+        super.registerClazz(HiveConnectorFastServiceConfig.class,
+            HiveConnectorClientConfig.class, HiveConnectorConfig.class);
+        super.refresh();
     }
 
     /**
@@ -105,21 +92,5 @@ public class HiveConnectorFactory implements ConnectorFactory {
     @Override
     public ConnectorPartitionService getPartitionService() {
         return this.ctx.getBean(HiveConnectorPartitionService.class);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getName() {
-        return this.catalogName;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void stop() {
-        this.ctx.close();
     }
 }

@@ -21,16 +21,6 @@
       "_all": {
         "enabled": true
       },
-      "dynamic_templates": [
-        {
-          "strings" : {
-            "match_mapping_type": "string",
-            "mapping": {
-              "type": "text"
-            }
-          }
-        }
-      ],
       "properties": {
         "audit": {
           "properties": {

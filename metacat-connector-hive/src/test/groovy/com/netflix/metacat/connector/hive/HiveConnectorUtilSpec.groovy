@@ -16,6 +16,7 @@
 
 package com.netflix.metacat.connector.hive
 
+import com.netflix.metacat.common.server.connectors.util.TimeUtil
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -30,8 +31,8 @@ class HiveConnectorUtilSpec extends Specification{
     @Unroll
     def "Test for get socket timeout" (){
         given:
-        def timeout = HiveConnectorUtil.toTime(inputString, TimeUnit.SECONDS, TimeUnit.SECONDS)
-        def timeoutm = HiveConnectorUtil.toTime(inputString, TimeUnit.SECONDS, TimeUnit.MILLISECONDS)
+        def timeout = TimeUtil.toTime(inputString, TimeUnit.SECONDS, TimeUnit.SECONDS)
+        def timeoutm = TimeUtil.toTime(inputString, TimeUnit.SECONDS, TimeUnit.MILLISECONDS)
         expect:
         timeout == output
         timeoutm == output*1000

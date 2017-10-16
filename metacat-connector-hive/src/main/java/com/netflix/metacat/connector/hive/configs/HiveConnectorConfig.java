@@ -18,7 +18,7 @@ import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
 import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
-import com.netflix.metacat.connector.hive.HiveConnectorUtil;
+import com.netflix.metacat.common.server.connectors.util.TimeUtil;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClientFactory;
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient;
@@ -120,7 +120,7 @@ public class HiveConnectorConfig {
     public IMetacatHiveClient createThriftClient(final ConnectorContext connectorContext) throws MetaException {
         final HiveMetastoreClientFactory factory = new HiveMetastoreClientFactory(
             null,
-            (int) HiveConnectorUtil.toTime(
+            (int) TimeUtil.toTime(
                 connectorContext.getConfiguration().getOrDefault(HiveConfigConstants.HIVE_METASTORE_TIMEOUT, "20s"),
                 TimeUnit.SECONDS,
                 TimeUnit.MILLISECONDS

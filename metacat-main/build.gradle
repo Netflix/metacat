@@ -70,7 +70,7 @@ dependencies {
     runtime(project(":metacat-connector-postgresql"))
     runtime(project(":metacat-connector-redshift"))
     runtime(project(":metacat-connector-s3"))
-
+    runtime(project(":metacat-connector-druid"))
 
     runtime("io.springfox:springfox-swagger-ui")
     runtime("org.webjars:hal-browser")

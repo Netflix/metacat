@@ -46,9 +46,9 @@ public interface ConnectorPlugin {
     );
 
     /**
-     * Returns the partition service implementation of the connector.
+     * Returns the type convertor of the connector.
      *
-     * @return Returns the partition service implementation of the connector.
+     * @return Returns the type convertor of the connector.
      */
     ConnectorTypeConverter getTypeConverter();
 
