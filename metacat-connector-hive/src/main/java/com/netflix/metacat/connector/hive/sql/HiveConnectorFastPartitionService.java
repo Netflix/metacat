@@ -183,7 +183,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         if (doFileSystemCalls && StringUtils.isNotBlank(location)) {
             try {
                 final Path path = new Path(location);
-                if (!warehouse.mkdirs(path, true)) {
+                if (!warehouse.mkdirs(path, false)) {
                         throw new InvalidMetaException(String
                             .format("%s is not a directory or unable to create one", location), null);
                 }
