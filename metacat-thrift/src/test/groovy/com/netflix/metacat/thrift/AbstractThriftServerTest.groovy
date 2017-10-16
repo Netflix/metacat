@@ -20,6 +20,7 @@ package com.netflix.metacat.thrift
 import com.google.common.base.Stopwatch
 import com.google.common.base.Throwables
 import com.netflix.metacat.common.server.properties.Config
+import com.netflix.spectator.api.NoopRegistry
 import org.apache.thrift.TException
 import org.apache.thrift.TProcessor
 import org.apache.thrift.protocol.TProtocol
@@ -47,7 +48,7 @@ class AbstractThriftServerTest extends Specification {
         final TProcessor processor
 
         protected TestThriftServer(Config config, int port, TProcessor processor) {
-            super(config, port, "test-thrift-server-port-${port}-%d")
+            super(config, new NoopRegistry(), port, "test-thrift-server-port-${port}-%d")
             this.processor = processor
         }
 
