@@ -19,7 +19,6 @@ package com.netflix.metacat.main.configs;
 
 import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.api.v1.PartitionV1;
-import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.MetacatThriftService;
@@ -55,7 +54,6 @@ public class ThriftConfig {
      * The Catalog Thrift Service Factory.
      *
      * @param config               Application config to use
-     * @param typeConverterFactory Type converters factory to use
      * @param hiveConverters       Hive converters to use
      * @param metacatV1            The Metacat V1 API implementation to use
      * @param partitionV1          The Metacat Partition V1 API to use
@@ -65,7 +63,6 @@ public class ThriftConfig {
     @Bean
     public CatalogThriftServiceFactory catalogThriftServiceFactory(
         final Config config,
-        final TypeConverterFactory typeConverterFactory,
         final HiveConverters hiveConverters,
         final MetacatV1 metacatV1,
         final PartitionV1 partitionV1,
@@ -73,7 +70,6 @@ public class ThriftConfig {
     ) {
         return new CatalogThriftServiceFactoryImpl(
             config,
-            typeConverterFactory,
             hiveConverters,
             metacatV1,
             partitionV1,

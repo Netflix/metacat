@@ -32,7 +32,6 @@ public class CatalogThriftService extends AbstractThriftServer {
     private final HiveConverters hiveConverters;
     private final MetacatV1 metacatV1;
     private final PartitionV1 partitionV1;
-    private final Registry registry;
 
     /**
      * Constructor.
@@ -54,12 +53,11 @@ public class CatalogThriftService extends AbstractThriftServer {
         final int portNumber,
         final Registry registry
     ) {
-        super(config, portNumber, "thrift-pool-" + catalogName + "-" + portNumber + "-%d");
+        super(config, registry, portNumber, "thrift-pool-" + catalogName + "-" + portNumber + "-%d");
         this.hiveConverters = hiveConverters;
         this.metacatV1 = metacatV1;
         this.partitionV1 = partitionV1;
         this.catalogName = catalogName;
-        this.registry = registry;
     }
 
     /**

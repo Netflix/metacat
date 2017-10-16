@@ -21,7 +21,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.api.v1.PartitionV1;
-import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.spectator.api.Registry;
 
@@ -31,18 +30,12 @@ import java.util.Objects;
  * Thrift service factory.
  */
 public class CatalogThriftServiceFactoryImpl implements CatalogThriftServiceFactory {
-    private final Config config;
-    private final HiveConverters hiveConverters;
-    private final MetacatV1 metacatV1;
-    private final PartitionV1 partitionV1;
-    private final TypeConverterFactory typeConverterFactory;
     private final LoadingCache<CacheKey, CatalogThriftService> cache;
 
     /**
      * Constructor.
      *
      * @param config               config
-     * @param typeConverterFactory type converter provider
      * @param hiveConverters       hive converter
      * @param metacatV1            Metacat V1
      * @param partitionV1          Partition V1
@@ -50,17 +43,11 @@ public class CatalogThriftServiceFactoryImpl implements CatalogThriftServiceFact
      */
     public CatalogThriftServiceFactoryImpl(
         final Config config,
-        final TypeConverterFactory typeConverterFactory,
         final HiveConverters hiveConverters,
         final MetacatV1 metacatV1,
         final PartitionV1 partitionV1,
         final Registry registry
     ) {
-        this.config = config;
-        this.typeConverterFactory = typeConverterFactory;
-        this.hiveConverters = hiveConverters;
-        this.metacatV1 = metacatV1;
-        this.partitionV1 = partitionV1;
         this.cache = CacheBuilder.newBuilder()
             .build(new CacheLoader<CacheKey, CatalogThriftService>() {
                 public CatalogThriftService load(final CacheKey key) {

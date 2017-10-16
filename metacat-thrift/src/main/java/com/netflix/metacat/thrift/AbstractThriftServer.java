@@ -18,6 +18,8 @@ package com.netflix.metacat.thrift;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.RegistryUtil;
+import com.netflix.spectator.api.Registry;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public abstract class AbstractThriftServer {
     protected final Config config;
+    protected final Registry registry;
     @Getter
     private final int portNumber;
     private final String threadPoolNameFormat;
@@ -52,10 +55,12 @@ public abstract class AbstractThriftServer {
 
     protected AbstractThriftServer(
         @NonNull final Config config,
+        @NonNull final Registry registry,
         final int portNumber,
         @NonNull final String threadPoolNameFormat
     ) {
         this.config = config;
+        this.registry = registry;
         this.portNumber = portNumber;
         this.threadPoolNameFormat = threadPoolNameFormat;
     }
@@ -107,6 +112,7 @@ public abstract class AbstractThriftServer {
             new SynchronousQueue<>(),
             threadFactory
         );
+        RegistryUtil.registerThreadPool(registry, threadPoolNameFormat, (ThreadPoolExecutor) executorService);
         final int timeout = config.getThriftServerSocketClientTimeoutInSeconds() * 1000;
         final TServerTransport serverTransport = new TServerSocket(portNumber, timeout);
         startServing(executorService, serverTransport);
