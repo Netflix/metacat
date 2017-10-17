@@ -54,6 +54,7 @@ class MetacatFunctionalSpec extends Specification {
     def setupSpec() {
         def httpPort = System.properties['metacat_http_port']?.toString()?.trim()
         assert httpPort, 'Required system property "metacat_http_port" is not set'
+
         def client = Client.builder()
             .withHost("http://localhost:$httpPort")
             .withDataTypeContext('pig')
@@ -320,6 +321,7 @@ class MetacatFunctionalSpec extends Specification {
         def worldTables = ['city', 'country', 'countrylanguage']
         def real_estateTables = ['apartments', 'houses']
         def billsTables = ['bills_compress', 'bills_nc']
+        def druid_db = 'database'
 
         when:
         def database = api.getDatabase(name.catalogName, name.databaseName, true)
@@ -335,7 +337,10 @@ class MetacatFunctionalSpec extends Specification {
             assert database.tables.containsAll(billsTables)
         } else if (name.databaseName == 'public' || name.databaseName == 'pg_catalog') {
             assert name.catalogName.contains("postgresql")
-        } else {
+        } else if (name.databaseName == 'database') {
+            assert name.catalogName.contains("druid")
+        }
+        else {
             throw new IllegalStateException("Unknown database: ${name.databaseName}")
         }
         database.definitionMetadata == null

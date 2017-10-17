@@ -1,4 +1,5 @@
 /*
+ *
  *  Copyright 2017 Netflix, Inc.
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +13,21 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
+ *
  */
 
-package com.netflix.metacat.connector.hive;
+package com.netflix.metacat.common.server.connectors.util;
 
 import java.util.concurrent.TimeUnit;
 
 /**
- * HiveConnectorUtil.
+ * TimeUtil.
  *
  * @author zhenl
  * @since 1.0.0
  */
-public final class HiveConnectorUtil {
-    private HiveConnectorUtil() {
+public final class TimeUtil {
+    private TimeUtil() {
     }
 
     /**
