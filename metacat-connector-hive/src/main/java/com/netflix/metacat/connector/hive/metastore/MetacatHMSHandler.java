@@ -15,6 +15,7 @@
  */
 package com.netflix.metacat.connector.hive.metastore;
 
+import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.spectator.api.NoopRegistry;
 import com.netflix.spectator.api.Registry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -58,8 +59,6 @@ import java.util.regex.Pattern;
  * @since 1.0.0
  */
 public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMetacatHMSHandler {
-    private static final String REGISTRY_ID_IS_NOT_DIR = "metacat.hive.counter.partitionPathIsNotDir";
-
     private Pattern partitionValidationPattern;
     private int nextSerialNum;
     private final Registry registry;
@@ -404,7 +403,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
                     //
                     // Added to track the number of partition locations that do not exist before
                     // adding the partition metadata
-                    registry.counter(REGISTRY_ID_IS_NOT_DIR,
+                    registry.counter(HiveMetrics.CounterHivePartitionPathIsNotDir.getMetricName(),
                         "database", tbl.getDbName(), "table", tbl.getTableName()).increment();
                     logInfo(String.format("Partition location %s does not exist for table %s",
                         partLocation, tbl.getTableName()));
