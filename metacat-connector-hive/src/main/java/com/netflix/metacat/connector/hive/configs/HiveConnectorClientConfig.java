@@ -58,7 +58,7 @@ public class HiveConnectorClientConfig {
             );
             return new EmbeddedHiveClient(
                 connectorContext.getCatalogName(),
-                HMSHandlerProxy.getProxy(conf),
+                HMSHandlerProxy.getProxy(conf, connectorContext.getRegistry()),
                 connectorContext.getRegistry()
             );
         } catch (Exception e) {

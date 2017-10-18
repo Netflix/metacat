@@ -161,7 +161,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final boolean doFileSystemCalls = Boolean.parseBoolean(getContext().getConfiguration()
             .getOrDefault("hive.metastore.use.fs.calls", "true"))
             || (table.getParameters() != null && Boolean.parseBoolean(table.getParameters()
-            .getOrDefault("hive.metastore.use.fs.calls", "true")));
+            .getOrDefault("hive.metastore.use.fs.calls", "false")));
         partitionInfos.forEach(partitionInfo ->
             createLocationForPartition(tableQName, partitionInfo, table, doFileSystemCalls));
     }

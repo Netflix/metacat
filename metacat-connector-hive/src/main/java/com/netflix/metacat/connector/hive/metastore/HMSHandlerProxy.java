@@ -16,6 +16,7 @@
 package com.netflix.metacat.connector.hive.metastore;
 
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
+import com.netflix.spectator.api.Registry;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.Deadline;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -38,9 +39,9 @@ public final class HMSHandlerProxy implements InvocationHandler {
     private long timeout = 600000; //600s
 
 
-    private HMSHandlerProxy(final HiveConf hiveConf) throws MetaException {
+    private HMSHandlerProxy(final HiveConf hiveConf, final Registry registry) throws MetaException {
         metacatHMSHandler =
-                new MetacatHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME, hiveConf, false);
+                new MetacatHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME, hiveConf, registry, false);
         metacatHMSHandler.init();
         timeout = HiveConf.getTimeVar(hiveConf,
                 HiveConf.ConfVars.METASTORE_CLIENT_SOCKET_TIMEOUT, TimeUnit.MILLISECONDS);
@@ -50,13 +51,14 @@ public final class HMSHandlerProxy implements InvocationHandler {
      * getProxy.
      *
      * @param hiveConf hive configuration
+     * @param registry registry
      * @return MetacatHMSHandler
      * @throws Exception Exception
      */
-    public static IMetacatHMSHandler getProxy(final HiveConf hiveConf)
+    public static IMetacatHMSHandler getProxy(final HiveConf hiveConf, final Registry registry)
             throws Exception {
 
-        final HMSHandlerProxy handler = new HMSHandlerProxy(hiveConf);
+        final HMSHandlerProxy handler = new HMSHandlerProxy(hiveConf, registry);
         return (IMetacatHMSHandler) Proxy.newProxyInstance(
                 HMSHandlerProxy.class.getClassLoader(),
                 new Class[]{IMetacatHMSHandler.class}, handler);
