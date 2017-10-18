@@ -15,18 +15,19 @@
  */
 package com.netflix.metacat.connector.hive.metastore;
 
+import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
+import com.netflix.spectator.api.NoopRegistry;
+import com.netflix.spectator.api.Registry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.metrics.Metrics;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
-import org.apache.hadoop.hive.metastore.IHMSHandler;
 import org.apache.hadoop.hive.metastore.MetaStoreEndFunctionContext;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.RawStore;
 import org.apache.hadoop.hive.metastore.RawStoreProxy;
-import org.apache.hadoop.hive.metastore.RetryingHMSHandler;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
@@ -60,6 +61,8 @@ import java.util.regex.Pattern;
 public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMetacatHMSHandler {
     private Pattern partitionValidationPattern;
     private int nextSerialNum;
+    private final Registry registry;
+
     private ThreadLocal<Integer> threadLocalId = new ThreadLocal<Integer>() {
         @Override
         protected synchronized Integer initialValue() {
@@ -101,7 +104,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
      * @throws MetaException exception
      */
     public MetacatHMSHandler(final String name, final HiveConf conf) throws MetaException {
-        this(name, conf, true);
+        this(name, conf, new NoopRegistry(), true);
     }
 
     /**
@@ -109,11 +112,14 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
      *
      * @param name client name
      * @param conf hive configurations
+     * @param registry registry
      * @param init initialize if true.
      * @throws MetaException exception
      */
-    public MetacatHMSHandler(final String name, final HiveConf conf, final boolean init) throws MetaException {
+    public MetacatHMSHandler(final String name, final HiveConf conf, final Registry registry, final boolean init)
+        throws MetaException {
         super(name, conf, init);
+        this.registry = registry;
         final String partitionValidationRegex =
             getHiveConf().getVar(HiveConf.ConfVars.METASTORE_PARTITION_NAME_WHITELIST_PATTERN);
         if (partitionValidationRegex != null && !partitionValidationRegex.isEmpty()) {
@@ -388,13 +394,22 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
             part.getSd().setLocation(partLocation.toString());
             final boolean doFileSystemCalls = getHiveConf().getBoolean("hive.metastore.use.fs.calls", true)
                 || (tbl.getParameters() != null && Boolean.parseBoolean(tbl.getParameters()
-                .getOrDefault("hive.metastore.use.fs.calls", "true")));
+                .getOrDefault("hive.metastore.use.fs.calls", "false")));
             if (doFileSystemCalls) {
                 // Check to see if the directory already exists before calling
                 // mkdirs() because if the file system is read-only, mkdirs will
                 // throw an exception even if the directory already exists.
-                if (!getWh().mkdirs(partLocation, true)) {
-                    throw new MetaException(partLocation + " is not a directory or unable to create one");
+                if (!getWh().isDir(partLocation)) {
+                    //
+                    // Added to track the number of partition locations that do not exist before
+                    // adding the partition metadata
+                    registry.counter(HiveMetrics.CounterHivePartitionPathIsNotDir.getMetricName(),
+                        "database", tbl.getDbName(), "table", tbl.getTableName()).increment();
+                    logInfo(String.format("Partition location %s does not exist for table %s",
+                        partLocation, tbl.getTableName()));
+                    if (!getWh().mkdirs(partLocation, true)) {
+                        throw new MetaException(partLocation + " is not a directory or unable to create one");
+                    }
                 }
                 result = true;
             }
@@ -489,38 +504,4 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
         }
         return deletedPartitions;
     }
-
-    /**
-     * Returns the Hive metastore handle.
-     *
-     * @param name  client name
-     * @param conf  hive conf
-     * @param local is local
-     * @return hive metastore handle
-     * @throws MetaException any exception
-     */
-    public static IHMSHandler newRetryingHMSHandler(final String name, final HiveConf conf, final boolean local)
-            throws MetaException {
-        final MetacatHMSHandler baseHandler = new MetacatHMSHandler(name, conf, false);
-        return RetryingHMSHandler.getProxy(conf, baseHandler, local);
-    }
-
-
-    /**
-     * Returns the Hive metastore handle.
-     *
-     * @param name        client name
-     * @param conf        hive conf
-     * @param local       is local
-     * @param baseHandler baseHandler
-     * @return hive metastore handle
-     * @throws MetaException any exception
-     */
-    public static IHMSHandler newRetryingHMSHandler(final String name,
-                                                    final HiveConf conf,
-                                                    final boolean local, final MetacatHMSHandler baseHandler)
-            throws MetaException {
-        return RetryingHMSHandler.getProxy(conf, baseHandler, local);
-    }
-
 }
