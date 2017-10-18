@@ -58,7 +58,7 @@ import java.util.regex.Pattern;
  * @since 1.0.0
  */
 public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMetacatHMSHandler {
-    private static final String REGISTRY_ID_IS_DIR = "metacat.hive.counter.partitionPathIsDir";
+    private static final String REGISTRY_ID_IS_NOT_DIR = "metacat.hive.counter.partitionPathIsNotDir";
 
     private Pattern partitionValidationPattern;
     private int nextSerialNum;
@@ -401,15 +401,16 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
                 // mkdirs() because if the file system is read-only, mkdirs will
                 // throw an exception even if the directory already exists.
                 if (!getWh().isDir(partLocation)) {
-                    if (!getWh().mkdirs(partLocation, true)) {
-                        throw new MetaException(partLocation + " is not a directory or unable to create one");
-                    }
-                } else {
                     //
                     // Added to track the number of partition locations that do not exist before
                     // adding the partition metadata
-                    registry.counter(REGISTRY_ID_IS_DIR,
+                    registry.counter(REGISTRY_ID_IS_NOT_DIR,
                         "database", tbl.getDbName(), "table", tbl.getTableName()).increment();
+                    logInfo(String.format("Partition location %s does not exist for table %s",
+                        partLocation, tbl.getTableName()));
+                    if (!getWh().mkdirs(partLocation, true)) {
+                        throw new MetaException(partLocation + " is not a directory or unable to create one");
+                    }
                 }
                 result = true;
             }
