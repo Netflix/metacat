@@ -169,6 +169,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     private void createLocationForPartition(final QualifiedName tableQName,
         final PartitionInfo partitionInfo, final Table table, final boolean doFileSystemCalls) {
         String location = partitionInfo.getSerde().getUri();
+        Path path = null;
         if (StringUtils.isBlank(location)) {
             if (table.getSd() == null || table.getSd().getLocation() == null) {
                 throw new InvalidMetaException(tableQName, null);
@@ -177,18 +178,27 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             final List<String> partValues = PartitionUtil
                 .getPartValuesFromPartName(tableQName, table, partitionName);
             final String escapedPartName = PartitionUtil.makePartName(table.getPartitionKeys(), partValues);
-            location =  new Path(table.getSd().getLocation(), escapedPartName).toString();
-            partitionInfo.getSerde().setUri(location);
-        }
-        if (doFileSystemCalls && StringUtils.isNotBlank(location)) {
+            path =  new Path(table.getSd().getLocation(), escapedPartName);
+        } else {
             try {
-                final Path path = new Path(location);
-                if (!warehouse.mkdirs(path, false)) {
+                path = warehouse.getDnsPath(new Path(location));
+            } catch (Exception e) {
+                throw new InvalidMetaException(String.format("Failed forming partition location; %s", location), e);
+            }
+        }
+        if (path != null) {
+            location = path.toString();
+            partitionInfo.getSerde().setUri(location);
+            if (doFileSystemCalls) {
+                try {
+                    if (!warehouse.mkdirs(path, false)) {
                         throw new InvalidMetaException(String
                             .format("%s is not a directory or unable to create one", location), null);
+                    }
+                } catch (Exception e) {
+                    throw new InvalidMetaException(String.format("Failed creating partition location; %s", location),
+                        e);
                 }
-            } catch (Exception e) {
-                throw new InvalidMetaException(String.format("Failed creating partition location; %s", location), e);
             }
         }
     }
