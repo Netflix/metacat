@@ -25,6 +25,7 @@ import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.PartitionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -190,6 +191,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             location = path.toString();
             partitionInfo.getSerde().setUri(location);
             if (doFileSystemCalls) {
+                getContext().getRegistry().counter(HiveMetrics.CounterHivePartitionFileSystemCall.getMetricName(),
+                    "database", table.getDbName(), "table", table.getTableName()).increment();
                 try {
                     if (!warehouse.mkdirs(path, false)) {
                         throw new InvalidMetaException(String
