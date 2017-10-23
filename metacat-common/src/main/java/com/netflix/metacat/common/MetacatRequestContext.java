@@ -108,6 +108,22 @@ public class MetacatRequestContext {
         this.scheme = scheme;
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("MetacatRequestContext{");
+        sb.append("id='").append(id).append('\'');
+        sb.append(", timestamp=").append(timestamp);
+        sb.append(", userName='").append(userName).append('\'');
+        sb.append(", clientAppName='").append(clientAppName).append('\'');
+        sb.append(", clientId='").append(clientId).append('\'');
+        sb.append(", jobId='").append(jobId).append('\'');
+        sb.append(", dataTypeContext='").append(dataTypeContext).append('\'');
+        sb.append(", apiUri='").append(apiUri).append('\'');
+        sb.append(", scheme='").append(scheme).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
+
     /**
      * builder class for MetacatRequestContext.
      * @return the builder class for MetacatRequestContext
