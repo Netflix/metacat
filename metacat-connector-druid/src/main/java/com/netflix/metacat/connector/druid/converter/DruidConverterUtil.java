@@ -79,7 +79,7 @@ public final class DruidConverterUtil {
     }
 
     private static String getUriFromKey(final String bucket, final String key) {
-        return bucket + key.substring(0, key.lastIndexOf("/"));
+        return bucket + "/" + key.substring(0, key.lastIndexOf("/"));
     }
 
     private static Segment getSegmentFromJsonNode(final ObjectNode node) {

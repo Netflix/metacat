@@ -9,7 +9,7 @@ import spock.lang.Specification
  * @since 1.2.0
  */
 class DruidHttpClientUtilSpec extends Specification{
-
+    
     def "Test for getLatestDataByName"() {
 
         when:
