@@ -77,6 +77,22 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
+    public void saveMetadata(final String userId, final HasMetadata holder, final boolean merge) {
+        super.saveMetadata(userId, holder, merge);
+    }
+
+    @Override
+    public void populateMetadata(final HasMetadata holder) {
+        super.populateMetadata(holder);
+    }
+
+    @Override
+    public void populateMetadata(final HasMetadata holder, final ObjectNode definitionMetadata,
+        final ObjectNode dataMetadata) {
+        super.populateMetadata(holder, definitionMetadata, dataMetadata);
+    }
+
+    @Override
     public void softDeleteDataMetadatas(
         final String user,
         @Nonnull final List<String> uris
