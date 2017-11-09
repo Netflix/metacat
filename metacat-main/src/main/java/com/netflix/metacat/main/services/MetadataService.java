@@ -39,7 +39,7 @@ import java.util.stream.Stream;
 
 /**
  * Metadata Service. This class includes any common services for the user metadata.
- * Created by amajumdar on 9/26/16.
+ * @author amajumdar
  */
 @Slf4j
 public class MetadataService {
@@ -152,7 +152,8 @@ public class MetadataService {
             offset += limit;
         }
         threadServiceManager.stop();
-        log.info("End deleting obsolete definition metadata");
+        log.info("End deleting obsolete definition metadata. Deleted {} number of definition metadatas",
+            offset + dtos.size());
     }
 
     /**
@@ -174,6 +175,8 @@ public class MetadataService {
         if ((force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
             if (dto != null) {
                 this.helper.postPreUpdateEvent(name, metacatRequestContext, dto);
+            } else {
+                this.helper.postPreDeleteEvent(name, metacatRequestContext);
             }
             this.userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
             this.tagService.delete(name, false);
@@ -181,6 +184,8 @@ public class MetadataService {
             if (dto != null) {
                 final BaseDto newDto = service.get(name);
                 this.helper.postPostUpdateEvent(name, metacatRequestContext, dto, newDto);
+            } else {
+                this.helper.postPostDeleteEvent(name, metacatRequestContext);
             }
         }
     }

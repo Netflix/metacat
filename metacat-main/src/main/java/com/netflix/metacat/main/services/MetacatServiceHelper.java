@@ -20,10 +20,18 @@ import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.BaseDto;
+import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.server.events.MetacatDeleteDatabasePreEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteMViewPostEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteMViewPreEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPreEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
+import com.netflix.metacat.common.server.events.MetacatDeleteTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
@@ -175,6 +183,74 @@ public class MetacatServiceHelper {
                 (TableDto) currentDto
             );
             this.eventBus.postAsync(event);
+        } else if (name.isDatabaseDefinition()) {
+            this.eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
+        } else {
+            throw new IllegalArgumentException(String.format("Invalid name %s", name));
+        }
+    }
+
+
+
+    /**
+     * Calls the right method of the event bus for the given qualified name.
+     *
+     * @param name                  name
+     * @param metacatRequestContext context
+     */
+    public void postPreDeleteEvent(
+        final QualifiedName name,
+        final MetacatRequestContext metacatRequestContext
+    ) {
+        if (name.isPartitionDefinition()) {
+            final PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
+            partitionsSaveRequestDto.setPartitionIdsForDeletes(Lists.newArrayList(name.getPartitionName()));
+            this.eventBus.postSync(
+                new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, partitionsSaveRequestDto)
+            );
+        } else if (name.isViewDefinition()) {
+            this.eventBus.postSync(
+                new MetacatDeleteMViewPreEvent(name, metacatRequestContext, this)
+            );
+        } else if (name.isTableDefinition()) {
+            this.eventBus.postSync(new MetacatDeleteTablePreEvent(name, metacatRequestContext, this));
+        } else if (name.isDatabaseDefinition()) {
+            final DatabaseDto dto = new DatabaseDto();
+            dto.setName(name);
+            eventBus.postSync(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, this, dto));
+        } else {
+            throw new IllegalArgumentException(String.format("Invalid name %s", name));
+        }
+    }
+
+    /**
+     * Calls the right method of the event bus for the given qualified name.
+     *
+     * @param name                  name
+     * @param metacatRequestContext context
+     */
+    public void postPostDeleteEvent(
+        final QualifiedName name,
+        final MetacatRequestContext metacatRequestContext
+    ) {
+        if (name.isPartitionDefinition()) {
+            this.eventBus.postAsync(
+                new MetacatDeleteTablePartitionPostEvent(
+                    name,
+                    metacatRequestContext,
+                    this,
+                    Lists.newArrayList(name.getPartitionName())
+                )
+            );
+        } else if (name.isViewDefinition()) {
+            final TableDto dto = new TableDto();
+            dto.setName(name);
+            this.eventBus.postAsync(new MetacatDeleteMViewPostEvent(name, metacatRequestContext, this, dto));
+        } else if (name.isTableDefinition()) {
+            final TableDto dto = new TableDto();
+            dto.setName(name);
+            this.eventBus.postAsync(new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, dto,
+                false));
         } else if (name.isDatabaseDefinition()) {
             this.eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
         } else {
