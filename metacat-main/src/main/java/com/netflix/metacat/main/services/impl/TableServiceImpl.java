@@ -40,12 +40,14 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
+import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
@@ -53,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -67,6 +70,7 @@ public class TableServiceImpl implements TableService {
     private final UserMetadataService userMetadataService;
     private final MetacatEventBus eventBus;
     private final ConverterUtil converterUtil;
+    private final Registry registry;
 
     /**
      * Constructor.
@@ -77,6 +81,7 @@ public class TableServiceImpl implements TableService {
      * @param userMetadataService user metadata service
      * @param eventBus            Internal event bus
      * @param converterUtil       utility to convert to/from Dto to connector resources
+     * @param registry             registry handle
      */
     public TableServiceImpl(
         final ConnectorManager connectorManager,
@@ -84,7 +89,8 @@ public class TableServiceImpl implements TableService {
         final TagService tagService,
         final UserMetadataService userMetadataService,
         final MetacatEventBus eventBus,
-        final ConverterUtil converterUtil
+        final ConverterUtil converterUtil,
+        final Registry registry
     ) {
         this.connectorManager = connectorManager;
         this.databaseService = databaseService;
@@ -92,6 +98,7 @@ public class TableServiceImpl implements TableService {
         this.userMetadataService = userMetadataService;
         this.eventBus = eventBus;
         this.converterUtil = converterUtil;
+        this.registry = registry;
     }
 
     /**
@@ -113,7 +120,12 @@ public class TableServiceImpl implements TableService {
 
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for table {}", name);
+            final long start = registry.clock().wallTime();
             userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, false);
+            final long duration = registry.clock().wallTime() - start;
+            log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
+            registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
+                .record(duration, TimeUnit.MILLISECONDS);
             tag(name, tableDto.getDefinitionMetadata());
         }
         final TableDto dto = get(name, true).orElseThrow(() -> new IllegalStateException("Should exist"));
@@ -194,7 +206,7 @@ public class TableServiceImpl implements TableService {
      */
     @Override
     public Optional<TableDto> get(final QualifiedName name, final boolean includeInfo,
-                                  final boolean includeDefinitionMetadata, final boolean includeDataMetadata) {
+        final boolean includeDefinitionMetadata, final boolean includeDataMetadata) {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
@@ -299,7 +311,12 @@ public class TableServiceImpl implements TableService {
         // Merge in metadata if the user sent any
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for table {}", name);
+            final long start = registry.clock().wallTime();
             userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
+            final long duration = registry.clock().wallTime() - start;
+            log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
+            registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
+                .record(duration, TimeUnit.MILLISECONDS);
         }
         final TableDto updatedDto = get(name, true).orElseThrow(() -> new IllegalStateException("should exist"));
         eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, updatedDto));
@@ -392,7 +409,7 @@ public class TableServiceImpl implements TableService {
      */
     @Override
     public void saveMetadata(final QualifiedName name, final ObjectNode definitionMetadata,
-                             final ObjectNode dataMetadata) {
+        final ObjectNode dataMetadata) {
         validate(name);
         final Optional<TableDto> tableDtoOptional = get(name, false);
         if (tableDtoOptional.isPresent()) {

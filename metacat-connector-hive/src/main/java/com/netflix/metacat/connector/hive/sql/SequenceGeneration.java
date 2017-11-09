@@ -8,6 +8,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.SqlParameterValue;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +41,7 @@ public class SequenceGeneration {
      * @param size number of records getting inserted
      * @return current sequence ids
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.REPEATABLE_READ)
     public PartitionSequenceIds newPartitionSequenceIds(final int size) {
         //
         // Get the sequence ids for partitions, sds and serde tables. Lock and update the sequence id to the number of

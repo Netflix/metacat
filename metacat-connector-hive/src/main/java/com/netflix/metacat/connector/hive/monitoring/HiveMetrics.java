@@ -63,6 +63,7 @@ public enum HiveMetrics {
     TagAlterTable("alterTable"),
     TagAddPartitions("addPartitions"),
     TagAlterPartitions("alterPartitions"),
+    TagCreatePartitionLocations("createPartitionLocations"),
     TagAddDropPartitions("addDropPartitions"),
     TagDropTable("dropTable"),
     TagRename("rename"),

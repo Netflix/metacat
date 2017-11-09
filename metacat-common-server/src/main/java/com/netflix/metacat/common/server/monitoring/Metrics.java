@@ -113,6 +113,8 @@ public enum Metrics {
     TimerElasticSearchRefresh(Component.server, Type.timer, "esRefresh"),
     TimerNotificationsPublishDelay(Component.server, Type.timer, "publish.delay"),
     TimerNotificationsBeforePublishDelay(Component.server, Type.timer, "before.publish.delay"),
+    TimerSavePartitionMetadata(Component.partionservice, Type.timer, "savePartitionMetadata"),
+    TimerSaveTableMetadata(Component.tableservice, Type.timer, "saveTableMetadata"),
 
     TagEventsType("metacat.events.type");
 
@@ -136,6 +138,7 @@ public enum Metrics {
         thrift,
         server,
         notifications,
+        tableservice,
         partionservice,
         elasticsearch,
         jdbcinterceptor
@@ -155,4 +158,4 @@ public enum Metrics {
     public String toString() {
         return metricName;
     }
-    }
+}
