@@ -254,7 +254,7 @@ public class PartitionServiceImpl implements PartitionService {
         eventBus.postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, this, dto));
         log.info("Saving partitions for {} ({})", name, partitionDtos.size());
         result = converterUtil.toPartitionsSaveResponseDto(
-                service.savePartitions(connectorRequestContext, name, converterUtil.toPartitionsSaveRequest(dto)));
+            service.savePartitions(connectorRequestContext, name, converterUtil.toPartitionsSaveRequest(dto)));
 
         // Save metadata
         log.info("Saving user metadata for partitions for {}", name);
@@ -263,7 +263,13 @@ public class PartitionServiceImpl implements PartitionService {
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIdsForDeletes, name);
             deleteMetadatas(metacatRequestContext.getUserName(), deletePartitions);
         }
+        final long start = registry.clock().wallTime();
         userMetadataService.saveMetadatas(metacatRequestContext.getUserName(), partitionDtos, true);
+        final long duration = registry.clock().wallTime() - start;
+        log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
+        registry.timer(Metrics.TimerSavePartitionMetadata.getMetricName(),
+            "database", name.getDatabaseName(), "table", name.getTableName())
+            .record(duration, TimeUnit.MILLISECONDS);
         eventBus.postAsync(
             new MetacatSaveTablePartitionPostEvent(name, metacatRequestContext, this, partitionDtos, result));
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {

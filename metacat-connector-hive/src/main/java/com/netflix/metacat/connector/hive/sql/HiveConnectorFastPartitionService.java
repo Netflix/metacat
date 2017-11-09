@@ -39,6 +39,7 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -108,8 +109,8 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      */
     @Override
     public List<String> getPartitionKeys(final ConnectorRequestContext requestContext,
-                                         final QualifiedName tableName,
-                                         final PartitionListRequest partitionsRequest) {
+        final QualifiedName tableName,
+        final PartitionListRequest partitionsRequest) {
         return directSqlGetPartition.getPartitionKeys(requestContext, tableName, partitionsRequest);
     }
 
@@ -137,18 +138,25 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final List<String> partitionNames, final List<PartitionInfo> addedPartitionInfos,
         final List<PartitionHolder> existingPartitionHolders, final Set<String> deletePartitionNames) {
         final boolean  useHiveFastServiceForSavePartitions = Boolean.parseBoolean(getContext().getConfiguration()
-                .getOrDefault("hive.use.embedded.sql.save.partitions", "false"))
+            .getOrDefault("hive.use.embedded.sql.save.partitions", "false"))
             || (table.getParameters() != null && Boolean.parseBoolean(table.getParameters()
-                .getOrDefault("hive.use.embedded.sql.save.partitions", "false")));
+            .getOrDefault("hive.use.embedded.sql.save.partitions", "false")));
         if (useHiveFastServiceForSavePartitions) {
-            if (!existingPartitionHolders.isEmpty()) {
-                final List<PartitionInfo> existingPartitionInfos = existingPartitionHolders.stream()
-                    .map(PartitionHolder::getPartitionInfo).collect(Collectors.toList());
-                copyTableSdToPartitionInfosSd(existingPartitionInfos, table);
-                createLocationForPartitions(tableQName, existingPartitionInfos, table);
+            final long start = getContext().getRegistry().clock().wallTime();
+            try {
+                if (!existingPartitionHolders.isEmpty()) {
+                    final List<PartitionInfo> existingPartitionInfos = existingPartitionHolders.stream()
+                        .map(PartitionHolder::getPartitionInfo).collect(Collectors.toList());
+                    copyTableSdToPartitionInfosSd(existingPartitionInfos, table);
+                    createLocationForPartitions(tableQName, existingPartitionInfos, table);
+                }
+                copyTableSdToPartitionInfosSd(addedPartitionInfos, table);
+                createLocationForPartitions(tableQName, addedPartitionInfos, table);
+            } finally {
+                getContext().getRegistry().timer(HiveMetrics.TagCreatePartitionLocations.getMetricName(),
+                    "database", table.getDbName(), "table", table.getTableName())
+                    .record(getContext().getRegistry().clock().wallTime() - start, TimeUnit.MILLISECONDS);
             }
-            copyTableSdToPartitionInfosSd(addedPartitionInfos, table);
-            createLocationForPartitions(tableQName, addedPartitionInfos, table);
             directSqlSavePartition.addUpdateDropPartitions(tableQName, table, addedPartitionInfos,
                 existingPartitionHolders, deletePartitionNames);
         } else {
@@ -194,9 +202,18 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                 getContext().getRegistry().counter(HiveMetrics.CounterHivePartitionFileSystemCall.getMetricName(),
                     "database", table.getDbName(), "table", table.getTableName()).increment();
                 try {
-                    if (!warehouse.mkdirs(path, false)) {
-                        throw new InvalidMetaException(String
-                            .format("%s is not a directory or unable to create one", location), null);
+                    if (!warehouse.isDir(path)) {
+                        //
+                        // Added to track the number of partition locations that do not exist before
+                        // adding the partition metadata
+                        getContext().getRegistry().counter(HiveMetrics.CounterHivePartitionPathIsNotDir.getMetricName(),
+                            "database", table.getDbName(), "table", table.getTableName()).increment();
+                        log.info(String.format("Partition location %s does not exist for table %s",
+                            location, tableQName));
+                        if (!warehouse.mkdirs(path, false)) {
+                            throw new InvalidMetaException(String
+                                .format("%s is not a directory or unable to create one", location), null);
+                        }
                     }
                 } catch (Exception e) {
                     throw new InvalidMetaException(String.format("Failed creating partition location; %s", location),
