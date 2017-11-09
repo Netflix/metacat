@@ -29,6 +29,8 @@ import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePreEvent;
+import com.netflix.metacat.common.server.events.MetacatUpdateMViewPostEvent;
+import com.netflix.metacat.common.server.events.MetacatUpdateMViewPreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
 
@@ -43,6 +45,7 @@ public class MetacatServiceHelper {
     private final DatabaseService databaseService;
     private final TableService tableService;
     private final PartitionService partitionService;
+    private final MViewService mViewService;
     private final MetacatEventBus eventBus;
 
     /**
@@ -51,17 +54,20 @@ public class MetacatServiceHelper {
      * @param databaseService  database service
      * @param tableService     table service
      * @param partitionService partition service
+     * @param mViewService     mview service
      * @param eventBus         event bus
      */
     public MetacatServiceHelper(
         final DatabaseService databaseService,
         final TableService tableService,
         final PartitionService partitionService,
+        final MViewService mViewService,
         final MetacatEventBus eventBus
     ) {
         this.databaseService = databaseService;
         this.tableService = tableService;
         this.partitionService = partitionService;
+        this.mViewService = mViewService;
         this.eventBus = eventBus;
     }
 
@@ -75,6 +81,8 @@ public class MetacatServiceHelper {
         final MetacatService result;
         if (name.isPartitionDefinition()) {
             result = partitionService;
+        } else if (name.isViewDefinition()) {
+            result = mViewService;
         } else if (name.isTableDefinition()) {
             result = tableService;
         } else if (name.isDatabaseDefinition()) {
@@ -104,6 +112,10 @@ public class MetacatServiceHelper {
             }
             this.eventBus.postSync(
                 new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, this, partitionsSaveRequestDto)
+            );
+        } else if (name.isViewDefinition()) {
+            this.eventBus.postSync(
+                new MetacatUpdateMViewPreEvent(name, metacatRequestContext, this, (TableDto) dto)
             );
         } else if (name.isTableDefinition()) {
             this.eventBus.postSync(
@@ -146,6 +158,14 @@ public class MetacatServiceHelper {
                     partitionsSaveResponseDto
                 )
             );
+        } else if (name.isViewDefinition()) {
+            final MetacatUpdateMViewPostEvent event = new MetacatUpdateMViewPostEvent(
+                name,
+                metacatRequestContext,
+                this,
+                (TableDto) currentDto
+            );
+            this.eventBus.postAsync(event);
         } else if (name.isTableDefinition()) {
             final MetacatUpdateTablePostEvent event = new MetacatUpdateTablePostEvent(
                 name,

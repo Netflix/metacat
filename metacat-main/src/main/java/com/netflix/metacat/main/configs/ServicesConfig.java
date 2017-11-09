@@ -246,6 +246,7 @@ public class ServicesConfig {
      * @param tableService     table service
      * @param partitionService partition service
      * @param eventBus         event bus
+     * @param mViewService     view service
      * @return The service helper instance to use
      */
     @Bean
@@ -253,9 +254,10 @@ public class ServicesConfig {
         final DatabaseService databaseService,
         final TableService tableService,
         final PartitionService partitionService,
+        final MViewService mViewService,
         final MetacatEventBus eventBus
     ) {
-        return new MetacatServiceHelper(databaseService, tableService, partitionService, eventBus);
+        return new MetacatServiceHelper(databaseService, tableService, partitionService, mViewService, eventBus);
     }
 
     /**
@@ -265,6 +267,8 @@ public class ServicesConfig {
      * @param tableService        The table service to use
      * @param partitionService    The partition service to use
      * @param userMetadataService The user metadata service to use
+     * @param tagService          tag service
+     * @param helper              Metacat service helper
      * @param registry            registry for spectator
      * @return The metadata service bean
      */
@@ -274,9 +278,12 @@ public class ServicesConfig {
         final TableService tableService,
         final PartitionService partitionService,
         final UserMetadataService userMetadataService,
+        final TagService tagService,
+        final MetacatServiceHelper helper,
         final Registry registry
     ) {
-        return new MetadataService(config, tableService, partitionService, userMetadataService, registry);
+        return new MetadataService(config, tableService, partitionService, userMetadataService,
+            tagService, helper, registry);
     }
 
     /**

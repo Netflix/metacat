@@ -32,7 +32,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Set;
 
@@ -116,19 +115,9 @@ public interface MetadataV1 {
     @Produces(MediaType.APPLICATION_JSON)
     void deleteDefinitionMetadata(
         @QueryParam("name")
-            QualifiedName name,
+            String name,
         @DefaultValue("false")
         @QueryParam("force")
             Boolean force
     );
-
-    /**
-     * Deletes the data metadata marked for deletion.
-     *
-     * @return response
-     */
-    @DELETE
-    @Path("data/process")
-    @Consumes(MediaType.APPLICATION_JSON)
-    Response processDeletedDataMetadata();
 }
