@@ -124,8 +124,7 @@ public class TableServiceImpl implements TableService {
             userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, false);
             final long duration = registry.clock().wallTime() - start;
             log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
-            registry.timer(Metrics.TimerSaveTableMetadata.getMetricName(),
-                "database", name.getDatabaseName(), "table", name.getTableName())
+            registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
                 .record(duration, TimeUnit.MILLISECONDS);
             tag(name, tableDto.getDefinitionMetadata());
         }
@@ -316,8 +315,7 @@ public class TableServiceImpl implements TableService {
             userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
             final long duration = registry.clock().wallTime() - start;
             log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
-            registry.timer(Metrics.TimerSaveTableMetadata.getMetricName(),
-                "database", name.getDatabaseName(), "table", name.getTableName())
+            registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
                 .record(duration, TimeUnit.MILLISECONDS);
         }
         final TableDto updatedDto = get(name, true).orElseThrow(() -> new IllegalStateException("should exist"));

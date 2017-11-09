@@ -267,8 +267,7 @@ public class PartitionServiceImpl implements PartitionService {
         userMetadataService.saveMetadatas(metacatRequestContext.getUserName(), partitionDtos, true);
         final long duration = registry.clock().wallTime() - start;
         log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
-        registry.timer(Metrics.TimerSavePartitionMetadata.getMetricName(),
-            "database", name.getDatabaseName(), "table", name.getTableName())
+        registry.timer(registry.createId(Metrics.TimerSavePartitionMetadata.getMetricName()).withTags(name.parts()))
             .record(duration, TimeUnit.MILLISECONDS);
         eventBus.postAsync(
             new MetacatSaveTablePartitionPostEvent(name, metacatRequestContext, this, partitionDtos, result));
