@@ -812,6 +812,7 @@ class MetacatFunctionalSpec extends Specification {
         !keys.contains(name.partitionName)
         !keys.contains(escapedName.partitionName)
 
+        //Partition Add operation
         when:
         def response = partitionApi.savePartitions(name.catalogName, name.databaseName, name.tableName, request)
 
@@ -819,6 +820,7 @@ class MetacatFunctionalSpec extends Specification {
         response.added.contains(escapedName.partitionName)
         response.updated.empty
 
+        //URI is pointed by a partition
         when:
         def resovlerRep = resolverApi.resolveByUri(false, resolveByUridto)
         then:
@@ -830,6 +832,7 @@ class MetacatFunctionalSpec extends Specification {
         then:
         !resovlerRep.partitions.empty
 
+        //URI is pointed by only one partition
         when:
         resolverApi.isUriUsedMoreThanOnce(false, resolveByUridto)
         then:
@@ -841,6 +844,7 @@ class MetacatFunctionalSpec extends Specification {
         then:
         keys.contains(escapedName.partitionName)
 
+        //Verify added partition keys, definition metadata, and data metadata
         when:
         def allPartitions = partitionApi.getPartitions(name.catalogName, name.databaseName, name.tableName, null, null, null, null, null, true)
         def savedPartition = allPartitions?.find { it.name == escapedName }
@@ -862,28 +866,7 @@ class MetacatFunctionalSpec extends Specification {
         savedPartition.definitionMetadata.get('part_def_field').longValue() == Long.MAX_VALUE
         savedPartition.dataMetadata.get('part_data_field').intValue() == Integer.MIN_VALUE
 
-        when:
-        def table = api.getTable(name.catalogName, name.databaseName, name.tableName, true, true, true)
-        then:
-        table.definitionMetadata.get('table_def_field').longValue() == now.time
-
-        when: "nothing is changed on the partitions"
-        request = new PartitionsSaveRequestDto(
-            partitions: [
-                new PartitionDto(
-                    name: name,
-                    serde: new StorageDto(
-                        uri: dataUri
-                    ),
-                )
-            ]
-        )
-        response = partitionApi.savePartitions(name.catalogName, name.databaseName, name.tableName, request)
-
-        then: "nothing is added or updated"
-        response.added.empty
-        response.updated.empty
-
+        //Partition update operation
         when: "something is updated on the partitions"
         request.partitions.first().serde.uri = "${dataUri}_new_uri"
         request.partitions.first().definitionMetadata = metacatJson.parseJsonObject('{"updated_field": 1}')
@@ -895,6 +878,7 @@ class MetacatFunctionalSpec extends Specification {
         response.added.empty
         response.updated.contains(escapedName.partitionName)
 
+        //Verify updated partition keys, definition metadata, and data metadata
         when:
         allPartitions = partitionApi.getPartitions(name.catalogName, name.databaseName, name.tableName, null, null, null, null, null, true)
         savedPartition = allPartitions?.find { it.name == escapedName }
@@ -909,7 +893,6 @@ class MetacatFunctionalSpec extends Specification {
         JSONAssert.assertEquals(definitionMetadataStr, partitionJson, false)
         JSONAssert.assertEquals(strJson, partitionJson, false)
 
-
         allPartitions
         savedPartition
         savedPartition.name == escapedName
@@ -922,6 +905,73 @@ class MetacatFunctionalSpec extends Specification {
         and: 'since the uri changed there should only be the new metadata'
         savedPartition.dataMetadata == metacatJson.parseJsonObject('{"new_entry":true}')
         TestCatalogs.findByQualifiedName(escapedName).createdPartitions << escapedName
+
+        //Partition metadata only update operation
+        when:
+        definitionMetadata = metacatJson.emptyObjectNode().put('part_def_field', -1)
+        dataMetadata = metacatJson.emptyObjectNode().put('part_data_field', -1)
+
+        request = new PartitionsSaveRequestDto(
+            definitionMetadata: tableMetadata,
+            saveMetadataOnly: true,
+            partitions: [
+                new PartitionDto(
+                    name: name,
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: dataMetadata,
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdDate: now,
+                        lastModifiedDate: now
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: "${dataUri}_new_uri".toString()
+                    ),
+                )
+            ]
+        )
+        response = partitionApi.savePartitions(name.catalogName, name.databaseName, name.tableName, request)
+        then:
+        response.updated.empty
+        response.added.empty
+
+        when:
+        allPartitions = partitionApi.getPartitions(name.catalogName, name.databaseName, name.tableName, null, null, null, null, null, true)
+        savedPartition = allPartitions?.find { it.name == escapedName }
+        partitionJson = TestUtilities.toJsonString(savedPartition)
+
+        then:
+        //metadata is updated
+        savedPartition.definitionMetadata.get('part_def_field').longValue() == -1
+        savedPartition.dataMetadata.get('part_data_field').intValue() == -1
+        //partition info does not change
+        JSONAssert.assertEquals(strJson, partitionJson, false)
+
+        //Verify partition update has no effects if current partition has the same value(metadata) as update request
+        when:
+        def table = api.getTable(name.catalogName, name.databaseName, name.tableName, true, true, true)
+        then:
+        table.definitionMetadata.get('table_def_field').longValue() == now.time
+
+        when: "nothing is changed on the partitions"
+        request = new PartitionsSaveRequestDto(
+            partitions: [
+                new PartitionDto(
+                    name: name,
+                    serde: new StorageDto(
+                        uri: "${dataUri}_new_uri".toString()
+                    ),
+                )
+            ]
+        )
+        response = partitionApi.savePartitions(name.catalogName, name.databaseName, name.tableName, request)
+
+        then: "nothing is added or updated"
+        response.added.empty
+        response.updated.empty
 
         where:
         args << TestCatalogs.getCreatedTables(TestCatalogs.ALL)

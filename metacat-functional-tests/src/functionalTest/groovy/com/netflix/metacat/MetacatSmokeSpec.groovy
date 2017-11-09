@@ -39,6 +39,7 @@ import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.*
 import feign.jaxrs.JAXRSContract
 import feign.slf4j.Slf4jLogger
+import org.joda.time.Instant
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -445,10 +446,12 @@ class MetacatSmokeSpec extends Specification {
     def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
         expect:
         def uri = isLocalEnv ? 'file:/tmp/abc' : String.format("s3://wh/%s.db/%s", databaseName, tableName)
+        def createDate = Instant.now().toDate()
         try {
             createTable(catalogName, databaseName, tableName)
             def partition = PigDataDtoProvider.getPartition(catalogName, databaseName, tableName, partitionName, uri + uriSuffix)
             def request = new PartitionsSaveRequestDto(partitions: [partition])
+
             partitionApi.savePartitions(catalogName, databaseName, tableName, request)
             if (repeat) {
                 partition.getSerde().setUri(uri + '0' + uriSuffix)
@@ -456,6 +459,11 @@ class MetacatSmokeSpec extends Specification {
                     request.setAlterIfExists(true)
                 }
                 request.setDefinitionMetadata((ObjectNode) metacatJson.emptyObjectNode().set('savePartitions', metacatJson.emptyObjectNode()))
+                partitionApi.savePartitions(catalogName, databaseName, tableName, request)
+                def savedPartitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionName.replace('=', '="') + '"', null, null, null, null, false)
+                createDate = savedPartitions.get(0).getAudit().createdDate
+                request.getPartitions().get(0).setDataMetadata(metacatJson.emptyObjectNode().put('updateMetadata', -1))
+                request.setSaveMetadataOnly(true)
                 partitionApi.savePartitions(catalogName, databaseName, tableName, request)
             }
             error == null
@@ -478,6 +486,8 @@ class MetacatSmokeSpec extends Specification {
             if (repeat) {
                 assert api.getTable(catalogName, databaseName, tableName, false, true, false).getDefinitionMetadata().get('savePartitions') != null
                 assert partitions.get(0).dataUri == uri + '0' + uriResult
+                assert partitions.get(0).getDataMetadata().get('updateMetadata') != null
+                assert partitions.get(0).getAudit().createdDate == createDate
             } else {
                 assert partitions.get(0).dataUri == uri + uriResult
             }

@@ -33,10 +33,13 @@ import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
+import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPreEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
+import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionMetadataOnlyPostEvent;
+import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionMetadataOnlyPreEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
@@ -73,10 +76,8 @@ public class PartitionServiceImpl implements PartitionService {
     private final MetacatEventBus eventBus;
     private final ConverterUtil converterUtil;
     private final Registry registry;
-    private final Id partitionGetGaugeId;
-    private final Id partitionAddGaugeId;
-    private final Id partitionDeleteGaugeId;
     private final Id partitionAddDistSummary;
+    private final Id partitionMetadataOnlyAddDistSummary;
     private final Id partitionGetDistSummary;
     private final Id partitionDeleteDistSummary;
 
@@ -113,11 +114,10 @@ public class PartitionServiceImpl implements PartitionService {
         this.eventBus = eventBus;
         this.converterUtil = converterUtil;
         this.registry = registry;
-        this.partitionGetGaugeId = registry.createId(Metrics.GaugeGetPartitionsCount.toString());
-        this.partitionAddGaugeId = registry.createId(Metrics.GaugeAddPartitions.toString());
-        this.partitionDeleteGaugeId = registry.createId(Metrics.GaugeDeletePartitions.toString());
         this.partitionAddDistSummary =
             registry.createId(Metrics.DistributionSummaryAddPartitions.getMetricName());
+        this.partitionMetadataOnlyAddDistSummary =
+            registry.createId(Metrics.DistributionSummaryMetadataOnlyAddPartitions.getMetricName());
         this.partitionGetDistSummary =
             registry.createId(Metrics.DistributionSummaryGetPartitions.getMetricName());
         this.partitionDeleteDistSummary =
@@ -164,7 +164,6 @@ public class PartitionServiceImpl implements PartitionService {
                 uris.add(partitionDto.getDataUri());
             });
 
-            registry.gauge(this.partitionGetGaugeId.withTags(name.parts()), result.size());
             registry.distributionSummary(
                 this.partitionGetDistSummary.withTags(name.parts())).record(result.size());
 
@@ -216,28 +215,76 @@ public class PartitionServiceImpl implements PartitionService {
      */
     @Override
     public PartitionsSaveResponseDto save(final QualifiedName name, final PartitionsSaveRequestDto dto) {
-        PartitionsSaveResponseDto result = new PartitionsSaveResponseDto();
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
         final List<PartitionDto> partitionDtos = dto.getPartitions();
         // If no partitions are passed, then return
         if (partitionDtos == null || partitionDtos.isEmpty()) {
-            return result;
+            return new PartitionsSaveResponseDto();
         }
-        final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
-        registry.gauge(this.partitionAddGaugeId.withTags(name.parts()), partitionDtos.size());
-        registry.distributionSummary(
-            this.partitionAddDistSummary.withTags(name.parts())).record(partitionDtos.size());
-
         if (!tableService.exists(name)) {
             throw new TableNotFoundException(name);
         }
+        //optimization for metadata only updates (e.g. squirrel) , assuming only validate partitions are requested
+        if (dto.getSaveMetadataOnly()) {
+            return savePartitionMetadataOnly(metacatRequestContext, dto, name, partitionDtos);
+        } else {
+            return updatePartitions(service, metacatRequestContext, dto, name, partitionDtos);
+        }
+    }
+
+    /**
+     * Optimization for metadata only updates.
+     *
+     * @param metacatRequestContext request context
+     * @param dto                   savePartition dto
+     * @param name                  qualified name
+     * @param partitionDtos         partition dtos
+     * @return empty save partition response dto
+     */
+    private PartitionsSaveResponseDto savePartitionMetadataOnly(
+        final MetacatRequestContext metacatRequestContext,
+        final PartitionsSaveRequestDto dto,
+        final QualifiedName name, final List<PartitionDto> partitionDtos) {
+        registry.distributionSummary(
+            this.partitionMetadataOnlyAddDistSummary.withTags(name.parts())).record(partitionDtos.size());
+        eventBus.postSync(
+            new MetacatSaveTablePartitionMetadataOnlyPreEvent(name, metacatRequestContext, this, dto));
+        // Save metadata
+        log.info("Saving metadata only for partitions for {}", name);
+        userMetadataService.saveMetadatas(metacatRequestContext.getUserName(), partitionDtos, true);
+        eventBus.postSync(
+            new MetacatSaveTablePartitionMetadataOnlyPostEvent(
+                name, metacatRequestContext, this, partitionDtos, new PartitionsSaveResponseDto()));
+        //empty saveResponseDto is returned for optimization purpose
+        //since client (squirrel) only checks the response code
+        return converterUtil.toPartitionsSaveResponseDto(new PartitionsSaveResponse());
+    }
+
+    /**
+     * Add, delete, update partitions.
+     *
+     * @param service               partition service
+     * @param metacatRequestContext metacat request context
+     * @param dto                   partition save request dto
+     * @param name                  qualified name
+     * @param partitionDtos         partitions dto
+     * @return partition save response dto
+     */
+    private PartitionsSaveResponseDto updatePartitions(
+        final ConnectorPartitionService service,
+        final MetacatRequestContext metacatRequestContext,
+        final PartitionsSaveRequestDto dto,
+        final QualifiedName name, final List<PartitionDto> partitionDtos) {
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         List<HasMetadata> deletePartitions = Lists.newArrayList();
+        registry.distributionSummary(
+            this.partitionAddDistSummary.withTags(name.parts())).record(partitionDtos.size());
+        final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
             eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
-            registry.gauge(this.partitionDeleteGaugeId.withTags(name.parts()),
-                partitionIdsForDeletes.size());
+            registry.distributionSummary(
+                this.partitionDeleteDistSummary.withTags(name.parts())).record(partitionIdsForDeletes.size());
             final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
             requestDto.setIncludePartitionDetails(false);
             requestDto.setPartitionNames(partitionIdsForDeletes);
@@ -248,14 +295,12 @@ public class PartitionServiceImpl implements PartitionService {
                     .collect(Collectors.toList());
             }
         }
-        //
+
         // Save all the new and updated partitions
-        //
         eventBus.postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, this, dto));
         log.info("Saving partitions for {} ({})", name, partitionDtos.size());
-        result = converterUtil.toPartitionsSaveResponseDto(
+        final PartitionsSaveResponseDto result = converterUtil.toPartitionsSaveResponseDto(
             service.savePartitions(connectorRequestContext, name, converterUtil.toPartitionsSaveRequest(dto)));
-
         // Save metadata
         log.info("Saving user metadata for partitions for {}", name);
         // delete metadata
@@ -276,7 +321,6 @@ public class PartitionServiceImpl implements PartitionService {
                 new MetacatDeleteTablePartitionPostEvent(name,
                     metacatRequestContext, this, partitionIdsForDeletes));
         }
-
         return result;
     }
 
@@ -286,7 +330,6 @@ public class PartitionServiceImpl implements PartitionService {
     @Override
     public void delete(final QualifiedName name, final List<String> partitionIds) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        registry.gauge(this.partitionDeleteGaugeId.withTags(name.parts()), partitionIds.size());
         registry.distributionSummary(
             this.partitionDeleteDistSummary.withTags(name.parts())).record(partitionIds.size());
         if (!tableService.exists(name)) {
