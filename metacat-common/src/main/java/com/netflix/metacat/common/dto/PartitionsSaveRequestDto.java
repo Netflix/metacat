@@ -53,6 +53,9 @@ public class PartitionsSaveRequestDto extends BaseDto {
     private Boolean checkIfExists = true;
     // If true, we alter if partition exists. If checkIfExists=false, then this is false too.
     private Boolean alterIfExists = false;
+    // If true, metacat will only update metadata. For optimization purpose, metacat skips the partition validation
+    // and other flags settings, such as checkIfExists, for partition operations.
+    private Boolean saveMetadataOnly = false;
 
     private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();

@@ -40,16 +40,10 @@ public enum Metrics {
     CounterThrift(Component.thrift, Type.counter, "request"),
 
     /**
-     * Gauge.
-     */
-    GaugeAddPartitions(Component.partionservice, Type.gauge, "partitionAdd"),
-    GaugeDeletePartitions(Component.partionservice, Type.gauge, "partitionDelete"),
-    GaugeGetPartitionsCount(Component.partionservice, Type.gauge, "partitionGet"),
-
-    /**
      * DistributionSummary.
      */
     DistributionSummaryAddPartitions(Component.partionservice, Type.distributionSummary, "partitionAdd"),
+    DistributionSummaryMetadataOnlyAddPartitions(Component.partionservice, Type.distributionSummary, "partitionMetadataOnlyAdd"),
     DistributionSummaryGetPartitions(Component.partionservice, Type.distributionSummary, "partitionGet"),
     DistributionSummaryDeletePartitions(Component.partionservice, Type.distributionSummary, "partitionDelete"),
     /**
