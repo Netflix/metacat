@@ -236,26 +236,26 @@ public class MetadataController {
     /**
      * Deletes the data metadata marked for deletion.
      */
-    @RequestMapping(method = RequestMethod.DELETE, path = "/data/process")
+    @RequestMapping(method = RequestMethod.DELETE, path = "/data/cleanup")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiOperation(
         hidden = true,
         value = "Admin API to delete obsolete data metadata"
     )
-    public void processDeletedDataMetadata() {
-        this.metadataService.processDeletedDataMetadata();
+    public void cleanUpDeletedDataMetadata() {
+        this.metadataService.cleanUpDeletedDataMetadata();
     }
 
     /**
      * Deletes the obsolete metadata.
      */
-    @RequestMapping(method = RequestMethod.DELETE, path = "/definition/process")
+    @RequestMapping(method = RequestMethod.DELETE, path = "/definition/cleanup")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiOperation(
         hidden = true,
         value = "Admin API to delete obsolete metadata"
     )
-    public void processObsoleteMetadata() {
-        this.metadataService.deleteObsoleteDefinitionMetadata();
+    public void cleanUpObsoleteMetadata() {
+        this.metadataService.cleanUpObsoleteDefinitionMetadata();
     }
 }

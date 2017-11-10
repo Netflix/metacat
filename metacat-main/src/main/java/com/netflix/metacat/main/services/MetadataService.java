@@ -77,7 +77,7 @@ public class MetadataService {
     /**
      * Deletes all the data metadata marked for deletion.
      */
-    public void processDeletedDataMetadata() {
+    public void cleanUpDeletedDataMetadata() {
         // Get the data metadata that were marked deleted a number of days back
         // Check if the uri is being used
         // If uri is not used then delete the entry from data_metadata
@@ -135,7 +135,7 @@ public class MetadataService {
     /**
      * Deletes definition metadata of tables/views/partitions that have been deleted already.
      */
-    public void deleteObsoleteDefinitionMetadata() {
+    public void cleanUpObsoleteDefinitionMetadata() {
         log.info("Start deleting obsolete definition metadata");
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         List<DefinitionMetadataDto> dtos = null;
@@ -193,7 +193,7 @@ public class MetadataService {
     /**
      * Deletes tags for deleted tables.
      */
-    public void deleteObsoleteTags() {
+    public void cleanUpObsoleteTags() {
         log.info("Start deleting obsolete tags");
         final List<QualifiedName> names = tagService.list(null, null, null, null, null);
         names.forEach(name -> {

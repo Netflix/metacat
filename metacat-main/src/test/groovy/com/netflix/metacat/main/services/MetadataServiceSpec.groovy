@@ -14,7 +14,7 @@ import spock.lang.Specification
  * Tests for Metadata service.
  * @author amajumdar
  */
-class MetadataServiceSpec extends Specification{
+class MetadataServiceSpec extends Specification {
     def config = new DefaultConfigImpl(new MetacatProperties())
     def registry = new NoopRegistry()
     def tableService = Mock(TableService)
@@ -43,14 +43,14 @@ class MetadataServiceSpec extends Specification{
 
     def testDeleteObsoleteDefinitionMetadata() {
         when:
-        service.deleteObsoleteDefinitionMetadata()
+        service.cleanUpObsoleteDefinitionMetadata()
         then:
         1 * mService.searchDefinitionMetadatas(_,_,_,_,_,_,_) >> [new DefinitionMetadataDto(name: name)]
         1 * helper.getService(name) >> tableService
         1 * tableService.get(name)
         1 * mService.deleteDefinitionMetadatas([name])
         when:
-        service.deleteObsoleteDefinitionMetadata()
+        service.cleanUpObsoleteDefinitionMetadata()
         then:
         2 * mService.searchDefinitionMetadatas(_,_,_,_,_,_,_) >>> [[new DefinitionMetadataDto(name: name)] * 10000, [new DefinitionMetadataDto(name: name)]]
         helper.getService(name) >> tableService
