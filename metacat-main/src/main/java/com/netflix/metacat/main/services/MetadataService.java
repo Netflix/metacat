@@ -178,30 +178,35 @@ public class MetadataService {
      */
     public boolean deleteDefinitionMetadata(final QualifiedName name, final boolean force,
         final MetacatRequestContext metacatRequestContext) {
-        final MetacatService service = this.helper.getService(name);
-        BaseDto dto = null;
-        if (!force) {
-            try {
-                dto = service.get(name);
-            } catch (final NotFoundException ignored) {
+        try {
+            final MetacatService service = this.helper.getService(name);
+            BaseDto dto = null;
+            if (!force) {
+                try {
+                    dto = service.get(name);
+                } catch (final NotFoundException ignored) {
+                }
             }
-        }
-        if ((force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
-            if (dto != null) {
-                this.helper.postPreUpdateEvent(name, metacatRequestContext, dto);
-            } else {
-                this.helper.postPreDeleteEvent(name, metacatRequestContext);
+            if ((force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
+                if (dto != null) {
+                    this.helper.postPreUpdateEvent(name, metacatRequestContext, dto);
+                } else {
+                    this.helper.postPreDeleteEvent(name, metacatRequestContext);
+                }
+                this.userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
+                this.tagService.delete(name, false);
+                log.info("Deleted obsolete definition metadata for {}", name);
+                if (dto != null) {
+                    final BaseDto newDto = service.get(name);
+                    this.helper.postPostUpdateEvent(name, metacatRequestContext, dto, newDto);
+                } else {
+                    this.helper.postPostDeleteEvent(name, metacatRequestContext);
+                }
+                return true;
             }
-            this.userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
-            this.tagService.delete(name, false);
-            log.info("Deleted obsolete definition metadata for {}", name);
-            if (dto != null) {
-                final BaseDto newDto = service.get(name);
-                this.helper.postPostUpdateEvent(name, metacatRequestContext, dto, newDto);
-            } else {
-                this.helper.postPostDeleteEvent(name, metacatRequestContext);
-            }
-            return true;
+        } catch (Exception e) {
+            log.warn("Failed deleting definition metadata for name {}.", name, e);
+            throw e;
         }
         return false;
     }
