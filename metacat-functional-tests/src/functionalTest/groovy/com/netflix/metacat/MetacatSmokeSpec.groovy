@@ -39,6 +39,8 @@ import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.*
 import feign.jaxrs.JAXRSContract
 import feign.slf4j.Slf4jLogger
+import groovy.sql.Sql
+import spock.lang.Ignore
 import org.joda.time.Instant
 import spock.lang.Shared
 import spock.lang.Specification
@@ -810,5 +812,38 @@ class MetacatSmokeSpec extends Specification {
         'hive-metastore'                | 'hsmoke_db'  | 'part'    | ['one=test', 'one=invalid']
         'hive-metastore'                | 'hsmoke_db'  | 'invalid' | ['one=test', 'one=invalid']
 
+    }
+
+    @Unroll
+    def "Delete definition metadata for table #name"() {
+        when:
+        def qName = QualifiedName.fromString(name)
+        createTable(qName.getCatalogName(), qName.getDatabaseName(), qName.getTableName())
+        metadataApi.deleteDefinitionMetadata(name, force)
+        def list = metadataApi.getDefinitionMetadataList(null, null, null, null, null, null, name, null)
+        then:
+        list.isEmpty() == force
+        cleanup:
+        api.deleteTable(qName.getCatalogName(), qName.getDatabaseName(), qName.getTableName())
+        where:
+        name                                        | force
+        'embedded-hive-metastore/smoke_db/dm'       | false
+        'embedded-hive-metastore/smoke_db/dm'       | true
+    }
+
+    @Unroll
+    @Ignore
+    def "Delete definition metadata for non-existant #name"() {
+        when:
+        def metacatSource = Sql.newInstance('jdbc:mysql://hive-metastore-db:3306/metacat?useUnicode=true&characterEncoding=latin1&autoReconnect=true&sessionVariables=@@innodb_lock_wait_timeout=120&rewriteBatchedStatements=true', 'metacat_user','metacat_user_password', 'com.mysql.jdbc.Driver')
+        metacatSource.execute("insert into definition_metadata(version,created_by,data,date_created,last_updated,last_updated_by,name) values (0,'test', '{}',now(), now(), 'test'," + name+ ")")
+        metadataApi.deleteDefinitionMetadata(name, false)
+        def list = metadataApi.getDefinitionMetadataList(null, null, null, null, null, null, name, null)
+        then:
+        list.isEmpty()
+        where:
+        name << ['embedded-hive-metastore/invalid/dm',
+                 'embedded-hive-metastore/invalid/dm/vm',
+                 'embedded-hive-metastore/invalid/dm/vm=1']
     }
 }

@@ -18,21 +18,16 @@
 package com.netflix.metacat.main.api.v1;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.BaseDto;
 import com.netflix.metacat.common.dto.DataMetadataDto;
 import com.netflix.metacat.common.dto.DataMetadataGetRequestDto;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
-import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.SortOrder;
-import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.api.RequestWrapper;
-import com.netflix.metacat.main.services.MetacatService;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.MetadataService;
 import io.swagger.annotations.Api;
@@ -224,7 +219,7 @@ public class MetadataController {
     )
     public void deleteDefinitionMetadata(
         @ApiParam(value = "Name of definition metadata to be deleted", required = true)
-        @RequestParam(name = "name") final QualifiedName name,
+        @RequestParam(name = "name") final String name,
         @ApiParam(value = "If true, deletes the metadata without checking if the database/table/partition exists")
         @RequestParam(name = "force", defaultValue = "false") final boolean force
     ) {
@@ -232,22 +227,7 @@ public class MetadataController {
         requestWrapper.processRequest(
             "deleteDefinitionMetadata",
             () -> {
-                final MetacatService service = this.helper.getService(name);
-                BaseDto dto = null;
-                try {
-                    dto = service.get(name);
-                } catch (final NotFoundException ignored) {
-                }
-                if ((force || dto == null) && !"rds".equalsIgnoreCase(name.getCatalogName())) {
-                    //TODO address the dto null issue
-                    this.helper.postPreUpdateEvent(name, metacatRequestContext, dto);
-                    this.userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
-                    if (dto instanceof HasDefinitionMetadata) {
-                        ((HasDefinitionMetadata) dto).setDefinitionMetadata(null);
-                    }
-                    final BaseDto newDto = service.get(name);
-                    this.helper.postPostUpdateEvent(name, metacatRequestContext, dto, newDto);
-                }
+                metadataService.deleteDefinitionMetadata(QualifiedName.fromString(name), force, metacatRequestContext);
                 return null;
             }
         );
@@ -256,9 +236,26 @@ public class MetadataController {
     /**
      * Deletes the data metadata marked for deletion.
      */
-    @RequestMapping(method = RequestMethod.DELETE, path = "/data/process")
+    @RequestMapping(method = RequestMethod.DELETE, path = "/data/cleanup")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void processDeletedDataMetadata() {
-        this.metadataService.processDeletedDataMetadata();
+    @ApiOperation(
+        hidden = true,
+        value = "Admin API to delete obsolete data metadata"
+    )
+    public void cleanUpDeletedDataMetadata() {
+        this.metadataService.cleanUpDeletedDataMetadata();
+    }
+
+    /**
+     * Deletes the obsolete metadata.
+     */
+    @RequestMapping(method = RequestMethod.DELETE, path = "/definition/cleanup")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ApiOperation(
+        hidden = true,
+        value = "Admin API to delete obsolete metadata"
+    )
+    public void cleanUpObsoleteMetadata() {
+        this.metadataService.cleanUpObsoleteDefinitionMetadata();
     }
 }
