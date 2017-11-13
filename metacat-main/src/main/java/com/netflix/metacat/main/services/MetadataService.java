@@ -195,7 +195,7 @@ public class MetadataService {
                 }
                 this.userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
                 this.tagService.delete(name, false);
-                log.info("Deleted obsolete definition metadata for {}", name);
+                log.info("Deleted definition metadata for {}", name);
                 if (dto != null) {
                     final BaseDto newDto = service.get(name);
                     this.helper.postPostUpdateEvent(name, metacatRequestContext, dto, newDto);
