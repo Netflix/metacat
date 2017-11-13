@@ -13,8 +13,11 @@
 
 package com.netflix.metacat.main.services;
 
+import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
@@ -142,18 +145,28 @@ public class MetadataService {
         int offset = 0;
         final int limit = 10000;
         final ThreadServiceManager threadServiceManager =
-            new ThreadServiceManager(registry, 25, 20000, "definition");
+            new ThreadServiceManager(registry, 10, 20000, "definition");
         final ListeningExecutorService service = threadServiceManager.getExecutor();
+        int totalDeletes = 0;
         while (offset == 0 || dtos.size() == limit) {
             dtos = userMetadataService.searchDefinitionMetadatas(null, null, null,
                 "id", null, offset, limit);
-            dtos.forEach(dto ->
-                service.submit(() -> deleteDefinitionMetadata(dto.getName(), false, metacatRequestContext)));
-            offset += limit;
+            int deletes = 0;
+            final List<ListenableFuture<Boolean>> futures = dtos.stream().map(dto ->
+                service.submit(() -> deleteDefinitionMetadata(dto.getName(), false, metacatRequestContext)))
+                .collect(Collectors.toList());
+            try {
+                deletes = Futures.transform(Futures.successfulAsList(futures),
+                    (Function<List<Boolean>, Integer>) input ->
+                        (int) (input != null ? input.stream().filter(b -> b != null && b).count() : 0)).get();
+            } catch (Exception e) {
+                log.warn("Failed deleting obsolete definition metadata for offset {}.", offset, e);
+            }
+            totalDeletes += deletes;
+            offset += limit - deletes;
         }
         threadServiceManager.stop();
-        log.info("End deleting obsolete definition metadata. Deleted {} number of definition metadatas",
-            offset + dtos.size());
+        log.info("End deleting obsolete definition metadata. Deleted {} number of definition metadatas", totalDeletes);
     }
 
     /**
@@ -161,8 +174,9 @@ public class MetadataService {
      * @param name qualified name
      * @param force If true, deletes the metadata without checking if the database/table/partition exists
      * @param metacatRequestContext request context
+     * @return true if deleted
      */
-    public void deleteDefinitionMetadata(final QualifiedName name, final boolean force,
+    public boolean deleteDefinitionMetadata(final QualifiedName name, final boolean force,
         final MetacatRequestContext metacatRequestContext) {
         final MetacatService service = this.helper.getService(name);
         BaseDto dto = null;
@@ -187,7 +201,9 @@ public class MetadataService {
             } else {
                 this.helper.postPostDeleteEvent(name, metacatRequestContext);
             }
+            return true;
         }
+        return false;
     }
 
     /**
