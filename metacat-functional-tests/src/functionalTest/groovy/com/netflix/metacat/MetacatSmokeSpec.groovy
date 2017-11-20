@@ -304,7 +304,7 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
-    def "Test copy table as #catalogName/#databaseName/#tableName"() {
+    def "Test copy table as #catalogName/#databaseName/metacat_all_types_copy"() {
         given:
         createTable(catalogName, databaseName, 'metacat_all_types')
         def table = api.getTable(catalogName, databaseName, 'metacat_all_types', true, true, false)
