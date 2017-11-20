@@ -48,6 +48,13 @@ import java.util.stream.Collectors;
 
 /**
  * User metadata service.
+ *
+ * Definition metadata (business metadata about the logical schema definition) is stored in two tables. Definition
+ * metadata about the partitions are stored in 'partition_definition_metadata' table. Definition metadata about the
+ * catalogs, databases and tables are stored in 'definition_metadata' table.
+ *
+ * Data metadata (metadata about the data stored in the location referred by the schema). This information is stored in
+ * 'data_metadata' table.
  */
 @Slf4j
 @SuppressFBWarnings
@@ -345,29 +352,42 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @Transactional(readOnly = true)
     public Map<String, ObjectNode> getDefinitionMetadataMap(
         @Nonnull final List<QualifiedName> names) {
+        //
+        // names can contain partition names and non-partition names. Since definition metadata is stored in two tables,
+        // metadata needs to be retrieved from both the tables.
+        //
         final List<QualifiedName> oNames = names.stream().filter(name -> !name.isPartitionDefinition()).collect(
             Collectors.toList());
         final List<QualifiedName> partitionNames = names.stream().filter(QualifiedName::isPartitionDefinition).collect(
             Collectors.toList());
         final Map<String, ObjectNode> result = Maps.newHashMap();
         if (!oNames.isEmpty()) {
-            final List<List<QualifiedName>> parts = Lists.partition(oNames, config.getUserMetadataMaxInClauseItems());
-            result.putAll(parts.stream()
-                .map(keys -> _getMetadataMap(keys, SQL.GET_DEFINITION_METADATAS))
-                .flatMap(it -> it.entrySet().stream())
-                .collect(Collectors.toMap(it -> QualifiedName.fromString(it.getKey()).toString(),
-                    Map.Entry::getValue)));
+            result.putAll(_getNonPartitionDefinitionMetadataMap(oNames));
         }
         if (!partitionNames.isEmpty()) {
-            final List<List<QualifiedName>> parts = Lists
-                .partition(partitionNames, config.getUserMetadataMaxInClauseItems());
-            result.putAll(parts.stream()
-                .map(keys -> _getMetadataMap(keys, SQL.GET_PARTITION_DEFINITION_METADATAS))
-                .flatMap(it -> it.entrySet().stream())
-                .collect(Collectors.toMap(it -> QualifiedName.fromString(it.getKey()).toString(),
-                    Map.Entry::getValue)));
+            result.putAll(_getPartitionDefinitionMetadata(partitionNames));
         }
         return result;
+    }
+
+    @SuppressWarnings("checkstyle:methodname")
+    private Map<String, ObjectNode> _getNonPartitionDefinitionMetadataMap(final List<QualifiedName> names) {
+        final List<List<QualifiedName>> parts = Lists.partition(names, config.getUserMetadataMaxInClauseItems());
+        return parts.stream()
+            .map(keys -> _getMetadataMap(keys, SQL.GET_DEFINITION_METADATAS))
+            .flatMap(it -> it.entrySet().stream())
+            .collect(Collectors.toMap(it -> QualifiedName.fromString(it.getKey()).toString(),
+                Map.Entry::getValue));
+    }
+
+    @SuppressWarnings("checkstyle:methodname")
+    private Map<String, ObjectNode> _getPartitionDefinitionMetadata(final List<QualifiedName> names) {
+        final List<List<QualifiedName>> parts = Lists.partition(names, config.getUserMetadataMaxInClauseItems());
+        return parts.stream()
+            .map(keys -> _getMetadataMap(keys, SQL.GET_PARTITION_DEFINITION_METADATAS))
+            .flatMap(it -> it.entrySet().stream())
+            .collect(Collectors.toMap(it -> QualifiedName.fromString(it.getKey()).toString(),
+                Map.Entry::getValue));
     }
 
     /**
