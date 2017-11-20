@@ -36,6 +36,20 @@ CREATE TABLE metacat.definition_metadata (
   UNIQUE KEY name (name)
 ) DEFAULT CHARSET=latin1;
 
+-- Create syntax for TABLE 'definition_metadata'
+CREATE TABLE metacat.partition_definition_metadata (
+  id bigint(20) NOT NULL AUTO_INCREMENT,
+  version bigint(20) NOT NULL,
+  created_by varchar(255) NOT NULL,
+  data longtext NOT NULL,
+  date_created datetime NOT NULL,
+  last_updated datetime NOT NULL,
+  last_updated_by varchar(255) NOT NULL,
+  name varchar(255) NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY name (name)
+) DEFAULT CHARSET=latin1;
+
 -- Create syntax for TABLE 'lookup'
 CREATE TABLE metacat.lookup (
   id bigint(20) NOT NULL AUTO_INCREMENT,

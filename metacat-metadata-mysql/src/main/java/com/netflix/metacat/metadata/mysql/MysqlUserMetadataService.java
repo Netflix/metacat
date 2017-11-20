@@ -39,7 +39,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.sql.Types;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +48,13 @@ import java.util.stream.Collectors;
 
 /**
  * User metadata service.
+ *
+ * Definition metadata (business metadata about the logical schema definition) is stored in two tables. Definition
+ * metadata about the partitions are stored in 'partition_definition_metadata' table. Definition metadata about the
+ * catalogs, databases and tables are stored in 'definition_metadata' table.
+ *
+ * Data metadata (metadata about the data stored in the location referred by the schema). This information is stored in
+ * 'data_metadata' table.
  */
 @Slf4j
 @SuppressFBWarnings
@@ -191,12 +197,25 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         @Nullable final List<QualifiedName> names
     ) {
         if (names != null && !names.isEmpty()) {
-            final List<String> paramVariables = names.stream().map(s -> "?").collect(Collectors.toList());
-            final SqlParameterValue[] aNames = names.stream().map(n -> new SqlParameterValue(Types.VARCHAR, n))
+            final SqlParameterValue[] aNames = names.stream().filter(name -> !name.isPartitionDefinition())
+                .map(n -> new SqlParameterValue(Types.VARCHAR, n))
                 .toArray(SqlParameterValue[]::new);
-            jdbcTemplate.update(
-                String.format(SQL.DELETE_DEFINITION_METADATA, Joiner.on(",").skipNulls().join(paramVariables)),
-                (Object[]) aNames);
+            final SqlParameterValue[] aPartitionNames = names.stream().filter(QualifiedName::isPartitionDefinition)
+                .map(n -> new SqlParameterValue(Types.VARCHAR, n))
+                .toArray(SqlParameterValue[]::new);
+            if (aNames.length > 0) {
+                final List<String> paramVariables = Arrays.stream(aNames).map(s -> "?").collect(Collectors.toList());
+                jdbcTemplate.update(
+                    String.format(SQL.DELETE_DEFINITION_METADATA, Joiner.on(",").skipNulls().join(paramVariables)),
+                    (Object[]) aNames);
+            }
+            if (aPartitionNames.length > 0) {
+                final List<String> paramVariables =
+                    Arrays.stream(aPartitionNames).map(s -> "?").collect(Collectors.toList());
+                jdbcTemplate.update(
+                    String.format(SQL.DELETE_PARTITION_DEFINITION_METADATA,
+                        Joiner.on(",").skipNulls().join(paramVariables)), (Object[]) aPartitionNames);
+            }
         }
     }
 
@@ -290,7 +309,9 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @Transactional(readOnly = true)
     public Optional<ObjectNode> getDefinitionMetadata(
         @Nonnull final QualifiedName name) {
-        return getJsonForKey(SQL.GET_DEFINITION_METADATA, name.toString());
+        return getJsonForKey(
+            name.isPartitionDefinition() ? SQL.GET_PARTITION_DEFINITION_METADATA : SQL.GET_DEFINITION_METADATA,
+            name.toString());
     }
 
     @Override
@@ -331,16 +352,42 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @Transactional(readOnly = true)
     public Map<String, ObjectNode> getDefinitionMetadataMap(
         @Nonnull final List<QualifiedName> names) {
-        if (!names.isEmpty()) {
-            final List<List<QualifiedName>> parts = Lists.partition(names, config.getUserMetadataMaxInClauseItems());
-            return parts.stream()
-                .map(keys -> _getMetadataMap(keys, SQL.GET_DEFINITION_METADATAS))
-                .flatMap(it -> it.entrySet().stream())
-                .collect(Collectors.toMap(it -> QualifiedName.fromString(it.getKey()).toString(),
-                    Map.Entry::getValue));
-        } else {
-            return Collections.emptyMap();
+        //
+        // names can contain partition names and non-partition names. Since definition metadata is stored in two tables,
+        // metadata needs to be retrieved from both the tables.
+        //
+        final List<QualifiedName> oNames = names.stream().filter(name -> !name.isPartitionDefinition()).collect(
+            Collectors.toList());
+        final List<QualifiedName> partitionNames = names.stream().filter(QualifiedName::isPartitionDefinition).collect(
+            Collectors.toList());
+        final Map<String, ObjectNode> result = Maps.newHashMap();
+        if (!oNames.isEmpty()) {
+            result.putAll(_getNonPartitionDefinitionMetadataMap(oNames));
         }
+        if (!partitionNames.isEmpty()) {
+            result.putAll(_getPartitionDefinitionMetadata(partitionNames));
+        }
+        return result;
+    }
+
+    @SuppressWarnings("checkstyle:methodname")
+    private Map<String, ObjectNode> _getNonPartitionDefinitionMetadataMap(final List<QualifiedName> names) {
+        final List<List<QualifiedName>> parts = Lists.partition(names, config.getUserMetadataMaxInClauseItems());
+        return parts.stream()
+            .map(keys -> _getMetadataMap(keys, SQL.GET_DEFINITION_METADATAS))
+            .flatMap(it -> it.entrySet().stream())
+            .collect(Collectors.toMap(it -> QualifiedName.fromString(it.getKey()).toString(),
+                Map.Entry::getValue));
+    }
+
+    @SuppressWarnings("checkstyle:methodname")
+    private Map<String, ObjectNode> _getPartitionDefinitionMetadata(final List<QualifiedName> names) {
+        final List<List<QualifiedName>> parts = Lists.partition(names, config.getUserMetadataMaxInClauseItems());
+        return parts.stream()
+            .map(keys -> _getMetadataMap(keys, SQL.GET_PARTITION_DEFINITION_METADATAS))
+            .flatMap(it -> it.entrySet().stream())
+            .collect(Collectors.toMap(it -> QualifiedName.fromString(it.getKey()).toString(),
+                Map.Entry::getValue));
     }
 
     /**
@@ -480,10 +527,14 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             if (merge) {
                 metacatJson.mergeIntoPrimary(merged, metadata.get());
             }
-            count = executeUpdateForKey(SQL.UPDATE_DEFINITION_METADATA, merged.toString(), userId, name.toString());
+            count = executeUpdateForKey(
+                name.isPartitionDefinition()
+                    ? SQL.UPDATE_PARTITION_DEFINITION_METADATA : SQL.UPDATE_DEFINITION_METADATA,
+                merged.toString(), userId, name.toString());
         } else {
             count = metadata.map(jsonNodes -> executeUpdateForKey(
-                SQL.INSERT_DEFINITION_METADATA,
+                name.isPartitionDefinition()
+                    ? SQL.INSERT_PARTITION_DEFINITION_METADATA : SQL.INSERT_DEFINITION_METADATA,
                 jsonNodes.toString(),
                 userId,
                 userId,
@@ -547,6 +598,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     // Curate the list of existing and new metadatas
                     final List<Object[]> insertDefinitionMetadatas = Lists.newArrayList();
                     final List<Object[]> updateDefinitionMetadatas = Lists.newArrayList();
+                    final List<Object[]> insertPartitionDefinitionMetadatas = Lists.newArrayList();
+                    final List<Object[]> updatePartitionDefinitionMetadatas = Lists.newArrayList();
                     final List<Object[]> insertDataMetadatas = Lists.newArrayList();
                     final List<Object[]> updateDataMetadatas = Lists.newArrayList();
                     definitionMetadatas.forEach(oDef -> {
@@ -556,24 +609,21 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                             final String name = qualifiedName.toString();
                             final ObjectNode oNode = definitionMap.get(name);
                             if (oNode == null) {
-                                insertDefinitionMetadatas
-                                    .add(
-                                        new Object[]{
-                                            metacatJson.toJsonString(oDef.getDefinitionMetadata()),
-                                            user,
-                                            user,
-                                            name,
-                                        }
-                                    );
+                                final Object[] o = new Object[]{
+                                    metacatJson.toJsonString(oDef.getDefinitionMetadata()), user, user, name, };
+                                if (qualifiedName.isPartitionDefinition()) {
+                                    insertPartitionDefinitionMetadatas.add(o);
+                                } else {
+                                    insertDefinitionMetadatas.add(o);
+                                }
                             } else {
                                 metacatJson.mergeIntoPrimary(oNode, oDef.getDefinitionMetadata());
-                                updateDefinitionMetadatas
-                                    .add(new Object[]{
-                                            metacatJson.toJsonString(oNode),
-                                            user,
-                                            name,
-                                        }
-                                    );
+                                final Object[] o = new Object[]{metacatJson.toJsonString(oNode), user, name };
+                                if (qualifiedName.isPartitionDefinition()) {
+                                    updatePartitionDefinitionMetadatas.add(o);
+                                } else {
+                                    updateDefinitionMetadatas.add(o);
+                                }
                             }
                         }
                     });
@@ -603,6 +653,16 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     }
                     if (!updateDefinitionMetadatas.isEmpty()) {
                         jdbcTemplate.batchUpdate(SQL.UPDATE_DEFINITION_METADATA, updateDefinitionMetadatas,
+                            new int[]{Types.VARCHAR, Types.VARCHAR, Types.VARCHAR});
+                    }
+                    if (!insertPartitionDefinitionMetadatas.isEmpty()) {
+                        jdbcTemplate.batchUpdate(SQL.INSERT_PARTITION_DEFINITION_METADATA,
+                            insertPartitionDefinitionMetadatas,
+                            new int[]{Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR});
+                    }
+                    if (!updatePartitionDefinitionMetadatas.isEmpty()) {
+                        jdbcTemplate.batchUpdate(SQL.UPDATE_PARTITION_DEFINITION_METADATA,
+                            updatePartitionDefinitionMetadatas,
                             new int[]{Types.VARCHAR, Types.VARCHAR, Types.VARCHAR});
                     }
                     if (!insertDataMetadatas.isEmpty()) {
@@ -757,6 +817,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             "delete from data_metadata where id in (%s)";
         static final String DELETE_DEFINITION_METADATA =
             "delete from definition_metadata where name in (%s)";
+        static final String DELETE_PARTITION_DEFINITION_METADATA =
+            "delete from partition_definition_metadata where name in (%s)";
         static final String GET_DATA_METADATA =
             "select uri name, data from data_metadata where uri=?";
         static final String GET_DELETED_DATA_METADATA_URI =
@@ -765,13 +827,17 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         static final String GET_DESCENDANT_DATA_URIS =
             "select uri from data_metadata where uri like ?";
         static final String GET_DESCENDANT_DEFINITION_NAMES =
-            "select name from definition_metadata where name like ?";
+            "select name from partition_definition_metadata where name like ?";
         static final String GET_DATA_METADATAS =
             "select uri name,data from data_metadata where uri in (%s)";
         static final String GET_DEFINITION_METADATA =
             "select name, data from definition_metadata where name=?";
+        static final String GET_PARTITION_DEFINITION_METADATA =
+            "select name, data from partition_definition_metadata where name=?";
         static final String GET_DEFINITION_METADATAS =
             "select name,data from definition_metadata where name in (%s)";
+        static final String GET_PARTITION_DEFINITION_METADATAS =
+            "select name,data from partition_definition_metadata where name in (%s)";
         static final String SEARCH_DEFINITION_METADATAS =
             "select name,data from definition_metadata where 1=1";
         static final String SEARCH_DEFINITION_METADATA_NAMES =
@@ -782,11 +848,16 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         static final String INSERT_DEFINITION_METADATA = "insert into definition_metadata "
             + "(data, created_by, last_updated_by, date_created, last_updated, version, name) values "
             + "(?, ?, ?, now(), now(), 0, ?)";
+        static final String INSERT_PARTITION_DEFINITION_METADATA = "insert into partition_definition_metadata "
+            + "(data, created_by, last_updated_by, date_created, last_updated, version, name) values "
+            + "(?, ?, ?, now(), now(), 0, ?)";
         static final String RENAME_DATA_METADATA = "update data_metadata set uri=? where uri=?";
         static final String RENAME_DEFINITION_METADATA = "update definition_metadata set name=? where name=?";
         static final String UPDATE_DATA_METADATA =
             "update data_metadata set data=?, last_updated=now(), last_updated_by=? where uri=?";
         static final String UPDATE_DEFINITION_METADATA =
             "update definition_metadata set data=?, last_updated=now(), last_updated_by=? where name=?";
+        static final String UPDATE_PARTITION_DEFINITION_METADATA =
+            "update partition_definition_metadata set data=?, last_updated=now(), last_updated_by=? where name=?";
     }
 }

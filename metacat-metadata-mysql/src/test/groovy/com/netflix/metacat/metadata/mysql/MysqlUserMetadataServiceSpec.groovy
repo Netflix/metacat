@@ -64,7 +64,7 @@ class MysqlUserMetadataServiceSpec extends BaseSpec {
         mysqlUserMetadataService.saveMetadatas(userName, tables, true)
         then:
         mysqlUserMetadataService.getDefinitionMetadataMap(names).size() == 5
-        mysqlUserMetadataService.getDescendantDefinitionNames(QualifiedName.ofDatabase(catalogName, databaseName)).size() == 10
+        mysqlUserMetadataService.getDescendantDefinitionNames(QualifiedName.ofDatabase(catalogName, databaseName)).size() == 5
         when:
         mysqlUserMetadataService.deleteMetadatas("test", tables)
         then:
