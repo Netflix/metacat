@@ -31,6 +31,7 @@ import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -317,7 +318,11 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     public FieldSchema metacatToHiveField(final FieldInfo fieldInfo) {
         final FieldSchema result = new FieldSchema();
         result.setName(fieldInfo.getName());
-        result.setType(hiveTypeConverter.fromMetacatType(fieldInfo.getType()));
+        if (StringUtils.isBlank(fieldInfo.getSourceType())) {
+            result.setType(hiveTypeConverter.fromMetacatType(fieldInfo.getType()));
+        } else {
+            result.setType(fieldInfo.getSourceType());
+        }
         result.setComment(fieldInfo.getComment());
         return result;
     }

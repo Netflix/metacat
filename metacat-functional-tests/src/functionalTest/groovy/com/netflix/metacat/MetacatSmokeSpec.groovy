@@ -303,6 +303,27 @@ class MetacatSmokeSpec extends Specification {
         'invalid-catalog'               | 'smoke_db1'  | 'z'                 | true   | false   | MetacatNotFoundException.class
     }
 
+    @Unroll
+    def "Test copy table as #catalogName/#databaseName/metacat_all_types_copy"() {
+        given:
+        createTable(catalogName, databaseName, 'metacat_all_types')
+        def table = api.getTable(catalogName, databaseName, 'metacat_all_types', true, true, false)
+        table.setName(QualifiedName.ofTable(catalogName, databaseName, 'metacat_all_types_copy'))
+        api.createTable(catalogName, databaseName, 'metacat_all_types_copy', table)
+        def copyTable = api.getTable(catalogName, databaseName, 'metacat_all_types_copy', true, true, false)
+        expect:
+        table.fields == copyTable.fields
+        cleanup:
+        api.deleteTable(catalogName, databaseName, 'metacat_all_types')
+        api.deleteTable(catalogName, databaseName, 'metacat_all_types_copy')
+        where:
+        catalogName                     | databaseName
+        'embedded-hive-metastore'       | 'smoke_db1'
+        'embedded-fast-hive-metastore'  | 'fsmoke_db1'
+        'hive-metastore'                | 'hsmoke_db1'
+        's3-mysql-db'                   | 'smoke_db1'
+    }
+
     /**
      * This test case validates the mixed case of definition names in user metadata. Added after we came across
      * a regression issue with Aegisthus job.
