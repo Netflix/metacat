@@ -1303,7 +1303,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         given:
         def db = 'db1'
         def tables = ['t1', 't2', 't3']
-        metacatV1.getDatabase(_, db, false) >> new DatabaseDto(tables: tables)
+        metacatV1.getDatabase(_, db, false, true) >> new DatabaseDto(tables: tables)
 
         when:
         def result = ms.get_all_tables(db)
@@ -1348,7 +1348,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         result
         notThrown(Exception)
-        1 * metacatV1.getDatabase(_, db, true)
+        1 * metacatV1.getDatabase(_, db, true, false)
         1 * hiveConverters.metacatToHiveDatabase(_) >> new Database()
         registry.clock() >> clock
         registry.timer(_) >> timer
@@ -2249,7 +2249,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         notThrown(Exception)
-        1 * metacatV1.getDatabase(_, db, false) >> { new DatabaseDto(tables: ['t1', 't2', 't3']) }
+        1 * metacatV1.getDatabase(_, db, false, true) >> { new DatabaseDto(tables: ['t1', 't2', 't3']) }
         !results.empty
         if (limit <= 0) {
             assert results.size() == 3
@@ -2317,7 +2317,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
 
         given:
-        metacatV1.getDatabase(_, _, false) >> new DatabaseDto(
+        metacatV1.getDatabase(_, _, false, true) >> new DatabaseDto(
                 tables: ['atbl', 'btbl', 'ctbl', 'dtbl', 'dtbl1', 'dtbl2', 'dtbl3', 'etbl', 'ftbl']
         )
 

@@ -390,7 +390,7 @@ public class ElasticSearchRefresh {
                     boolean result = false;
                     try {
                         unmarkedDatabaseNames.add(databaseDto.getName().toString());
-                        final DatabaseDto dto = databaseService.get(databaseDto.getName(), false);
+                        final DatabaseDto dto = databaseService.get(databaseDto.getName(), false, false);
                         if (dto == null) {
                             result = true;
                         }
@@ -689,7 +689,7 @@ public class ElasticSearchRefresh {
     }
 
     protected DatabaseDto getDatabase(final QualifiedName databaseName) {
-        return databaseService.get(databaseName, true);
+        return databaseService.get(databaseName, true, true);
     }
 
     protected Optional<TableDto> getTable(final QualifiedName tableName) {

@@ -815,7 +815,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     public List<String> get_all_tables(final String dbName) throws TException {
         final String databaseName = normalizeIdentifier(dbName);
         return requestWrapper("get_all_tables", new Object[]{dbName},
-            () -> v1.getDatabase(catalogName, databaseName, false).getTables());
+            () -> v1.getDatabase(catalogName, databaseName, false, true).getTables());
     }
 
     /**
@@ -841,7 +841,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     public Database get_database(final String name) throws TException {
         return requestWrapper("get_database", new Object[]{name}, () -> {
             final String databaseName = normalizeIdentifier(name);
-            final DatabaseDto dto = v1.getDatabase(catalogName, databaseName, true);
+            final DatabaseDto dto = v1.getDatabase(catalogName, databaseName, true, false);
             return hiveConverters.metacatToHiveDatabase(dto);
         });
     }
@@ -1367,7 +1367,8 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         return requestWrapper("get_table_names_by_filter", new Object[]{dbname, filter, maxTables}, () -> {
             final String databaseName = normalizeIdentifier(dbname);
 
-            final List<String> tables = v1.getDatabase(catalogName, databaseName, false).getTables();
+            final List<String> tables =
+                v1.getDatabase(catalogName, databaseName, false, true).getTables();
             // TODO apply filter
             if (!"hive_filter_field_params__presto_view = \"true\"".equals(filter)) {
                 throw new IllegalArgumentException("Unexpected filter: '" + filter + "'");
@@ -1409,7 +1410,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     @Override
     public List<String> get_tables(final String dbName, final String hivePattern) throws TException {
         return requestWrapper("get_tables", new Object[]{dbName, hivePattern}, () -> {
-            List<String> result = v1.getDatabase(catalogName, dbName, false).getTables();
+            List<String> result = v1.getDatabase(catalogName, dbName, false, true).getTables();
             if (hivePattern != null) {
                 final Pattern pattern = PATTERNS.getUnchecked("(?i)" + hivePattern.replaceAll("\\*", ".*"));
                 result = result.stream().filter(name -> pattern.matcher(name).matches()).collect(Collectors.toList());

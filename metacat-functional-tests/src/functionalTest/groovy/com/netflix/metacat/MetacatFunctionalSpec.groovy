@@ -234,7 +234,7 @@ class MetacatFunctionalSpec extends Specification {
         catalogResponse.databases.contains(databaseName)
 
         when:
-        def database = api.getDatabase(catalog.name, databaseName, false)
+        def database = api.getDatabase(catalog.name, databaseName, false, true)
 
         then:
         database.type == catalog.type
@@ -242,7 +242,7 @@ class MetacatFunctionalSpec extends Specification {
         database.definitionMetadata == null
 
         when:
-        database = api.getDatabase(catalog.name, databaseName, true)
+        database = api.getDatabase(catalog.name, databaseName, true, true)
         catalog.createdDatabases << QualifiedName.ofDatabase(catalog.name, databaseName)
 
         then:
@@ -277,7 +277,7 @@ class MetacatFunctionalSpec extends Specification {
         catalogResponse.databases.contains(databaseName)
 
         when:
-        def database = api.getDatabase(catalog.name, databaseName, false)
+        def database = api.getDatabase(catalog.name, databaseName, false, false)
 
         then:
         database.type == catalog.type
@@ -285,14 +285,14 @@ class MetacatFunctionalSpec extends Specification {
         database.definitionMetadata == null
 
         when:
-        database = api.getDatabase(catalog.name, databaseName, true)
+        database = api.getDatabase(catalog.name, databaseName, true, false)
         catalog.createdDatabases << QualifiedName.ofDatabase(catalog.name, databaseName)
 
         then:
         database.type == catalog.type
         database.name == QualifiedName.ofDatabase(catalog.name, databaseName)
         database.definitionMetadata == metadata
-        database.tables.empty
+        database.tables == null
 
         where:
         catalog << TestCatalogs.getCanCreateDatabase(TestCatalogs.ALL)
@@ -324,7 +324,7 @@ class MetacatFunctionalSpec extends Specification {
         def druid_db = 'database'
 
         when:
-        def database = api.getDatabase(name.catalogName, name.databaseName, true)
+        def database = api.getDatabase(name.catalogName, name.databaseName, true, true)
 
         then:
         if (name.databaseName == 'world') {
@@ -351,7 +351,7 @@ class MetacatFunctionalSpec extends Specification {
 
     def 'getDatabase: for created database #name with metadata'() {
         when:
-        def database = api.getDatabase(name.catalogName, name.databaseName, true)
+        def database = api.getDatabase(name.catalogName, name.databaseName, true, true)
 
         then:
         database.tables.empty
@@ -367,7 +367,7 @@ class MetacatFunctionalSpec extends Specification {
 
     def 'getDatabase: for created database #name without metadata'() {
         when:
-        def database = api.getDatabase(name.catalogName, name.databaseName, false)
+        def database = api.getDatabase(name.catalogName, name.databaseName, false, true)
 
         then:
         database.tables.empty
@@ -389,7 +389,7 @@ class MetacatFunctionalSpec extends Specification {
         )
 
         when:
-        def database = api.getDatabase(catalog.name, databaseName, false)
+        def database = api.getDatabase(catalog.name, databaseName, false, true)
 
         then:
         !database.tables.contains(tableName)
@@ -509,14 +509,14 @@ class MetacatFunctionalSpec extends Specification {
         )
 
         when:
-        def database = api.getDatabase(catalog.name, databaseName, false)
+        def database = api.getDatabase(catalog.name, databaseName, false, true)
 
         then:
         !database.tables.contains(tableName)
 
         when:
         api.createTable(catalog.name, databaseName, tableName, dto)
-        database = api.getDatabase(catalog.name, databaseName, false)
+        database = api.getDatabase(catalog.name, databaseName, false, true)
 
         then:
         database.tables.contains(tableName)
@@ -638,7 +638,7 @@ class MetacatFunctionalSpec extends Specification {
         )
 
         when:
-        def database = api.getDatabase(catalog.name, databaseName, false)
+        def database = api.getDatabase(catalog.name, databaseName, false, true)
 
         then:
         if (!database.tables.contains(tableName)) {
@@ -1025,14 +1025,14 @@ class MetacatFunctionalSpec extends Specification {
         )
 
         when:
-        def database = api.getDatabase(name.catalogName, name.databaseName, false)
+        def database = api.getDatabase(name.catalogName, name.databaseName, false, true)
 
         then:
         !database.tables.contains(tableName)
 
         when:
         api.createTable(name.catalogName, name.databaseName, tableName, dto)
-        database = api.getDatabase(name.catalogName, name.databaseName, false)
+        database = api.getDatabase(name.catalogName, name.databaseName, false, true)
 
         then:
         database.tables.contains(tableName)
@@ -1189,7 +1189,7 @@ class MetacatFunctionalSpec extends Specification {
         def viewQName = QualifiedName.ofView(name.catalogName, name.databaseName, name.tableName, viewName)
 
         when:
-        def database = api.getDatabase(name.catalogName, name.databaseName, false)
+        def database = api.getDatabase(name.catalogName, name.databaseName, false, true)
 
         then:
         database.tables.contains(name.tableName)
@@ -1310,7 +1310,7 @@ class MetacatFunctionalSpec extends Specification {
 
     def 'deleteTable: #name'() {
         when:
-        def database = api.getDatabase(name.catalogName, name.databaseName, false)
+        def database = api.getDatabase(name.catalogName, name.databaseName, false, true)
 
         then:
         database.tables.contains(name.tableName)
@@ -1318,7 +1318,7 @@ class MetacatFunctionalSpec extends Specification {
         when:
         api.getTable(name.catalogName, name.databaseName, name.tableName, false, false, false)
         api.deleteTable(name.catalogName, name.databaseName, name.tableName)
-        database = api.getDatabase(name.catalogName, name.databaseName, false)
+        database = api.getDatabase(name.catalogName, name.databaseName, false, true)
 
         then:
         !database.tables.contains(name.tableName)
@@ -1368,7 +1368,7 @@ class MetacatFunctionalSpec extends Specification {
         !catalog.databases.contains(name.databaseName)
 
         when:
-        api.getDatabase(name.catalogName, name.databaseName, false)
+        api.getDatabase(name.catalogName, name.databaseName, false, true)
         TestCatalogs.findByQualifiedName(name).createdDatabases.remove(name)
 
         then:

@@ -24,7 +24,8 @@ public interface DatabaseService extends MetacatService<DatabaseDto> {
      * Gets the database for the given name.
      * @param name name
      * @param includeUserMetadata if true, will also include the user metadata
+     * @param includeTableNames   if true, include the list of table names
      * @return database info
      */
-    DatabaseDto get(QualifiedName name, boolean includeUserMetadata);
+    DatabaseDto get(QualifiedName name, boolean includeUserMetadata, boolean includeTableNames);
 }
