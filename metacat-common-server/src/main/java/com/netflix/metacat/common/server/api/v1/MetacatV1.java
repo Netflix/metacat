@@ -130,9 +130,11 @@ public interface MetacatV1 {
      * @param catalogName         catalog name
      * @param databaseName        database name
      * @param includeUserMetadata true if details should include user metadata
+     * @param includeTableNames   if true, then table names are listed
      * @return database with details
      */
-    DatabaseDto getDatabase(final String catalogName, final String databaseName, final boolean includeUserMetadata);
+    DatabaseDto getDatabase(final String catalogName, final String databaseName, final boolean includeUserMetadata,
+        final boolean includeTableNames);
 
     /**
      * Get the catalog by name.

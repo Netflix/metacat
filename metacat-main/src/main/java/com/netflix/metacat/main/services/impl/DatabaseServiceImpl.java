@@ -96,7 +96,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             userMetadataService.saveDefinitionMetadata(name, metacatRequestContext.getUserName(),
                 Optional.of(dto.getDefinitionMetadata()), true);
         }
-        final DatabaseDto createdDto = get(name, dto.getDefinitionMetadata() != null);
+        final DatabaseDto createdDto = get(name, dto.getDefinitionMetadata() != null, true);
         eventBus.postAsync(new MetacatCreateDatabasePostEvent(name, metacatRequestContext, this, createdDto));
         return createdDto;
     }
@@ -142,7 +142,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         validate(name);
         log.info("Dropping schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final DatabaseDto dto = get(name, true);
+        final DatabaseDto dto = get(name, true, true);
         eventBus.postSync(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, this, dto));
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         connectorManager.getDatabaseService(name.getCatalogName()).delete(connectorRequestContext, name);
@@ -160,43 +160,47 @@ public class DatabaseServiceImpl implements DatabaseService {
      */
     @Override
     public DatabaseDto get(final QualifiedName name) {
-        return get(name, true);
+        return get(name, true, true);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public DatabaseDto get(final QualifiedName name, final boolean includeUserMetadata) {
+    public DatabaseDto get(final QualifiedName name, final boolean includeUserMetadata,
+        final boolean includeTableNames) {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final MetacatCatalogConfig config = connectorManager.getCatalogConfig(name.getCatalogName());
         final ConnectorDatabaseService service = connectorManager.getDatabaseService(name.getCatalogName());
         final ConnectorTableService tableService = connectorManager.getTableService(name.getCatalogName());
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
-        final List<QualifiedName> tableNames = tableService.listNames(connectorRequestContext, name, null, null, null);
-        List<QualifiedName> viewNames = Collections.emptyList();
-        if (config.isIncludeViewsWithTables()) {
-            // TODO JdbcMetadata returns ImmutableList.of() for views.  We should change it to fetch views.
-            try {
-                viewNames = service.listViewNames(connectorRequestContext, name);
-            } catch (UnsupportedOperationException ignored) {
-            }
-        }
-
-        // Check to see if schema exists
-        if (tableNames.isEmpty() && viewNames.isEmpty() && !exists(name)) {
-            throw new DatabaseNotFoundException(name);
-        }
 
         final DatabaseDto dto = converterUtil.toDatabaseDto(service.get(connectorRequestContext, name));
         dto.setType(connectorManager.getCatalogConfig(name).getType());
-        dto.setTables(
-            Stream.concat(tableNames.stream(), viewNames.stream())
-                .map(QualifiedName::getTableName)
-                .sorted(String.CASE_INSENSITIVE_ORDER)
-                .collect(Collectors.toList())
-        );
+        if (includeTableNames) {
+            final List<QualifiedName> tableNames = tableService
+                .listNames(connectorRequestContext, name, null, null, null);
+            List<QualifiedName> viewNames = Collections.emptyList();
+            if (config.isIncludeViewsWithTables()) {
+                // TODO JdbcMetadata returns ImmutableList.of() for views.  We should change it to fetch views.
+                try {
+                    viewNames = service.listViewNames(connectorRequestContext, name);
+                } catch (UnsupportedOperationException ignored) {
+                }
+            }
+
+            // Check to see if schema exists
+            if (tableNames.isEmpty() && viewNames.isEmpty() && !exists(name)) {
+                throw new DatabaseNotFoundException(name);
+            }
+            dto.setTables(
+                Stream.concat(tableNames.stream(), viewNames.stream())
+                    .map(QualifiedName::getTableName)
+                    .sorted(String.CASE_INSENSITIVE_ORDER)
+                    .collect(Collectors.toList())
+            );
+        }
         if (includeUserMetadata) {
             log.info("Populate user metadata for schema {}", name);
             userMetadataService.populateMetadata(dto);

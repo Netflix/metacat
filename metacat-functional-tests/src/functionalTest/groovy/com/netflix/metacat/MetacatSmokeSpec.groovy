@@ -125,7 +125,7 @@ class MetacatSmokeSpec extends Specification {
         if (!catalog.databases.contains(databaseName)) {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
         }
-        def database = api.getDatabase(catalogName, databaseName, false)
+        def database = api.getDatabase(catalogName, databaseName, false, true)
         def owner = 'amajumdar'
         def uri = null
         if (Boolean.valueOf(System.getProperty("local", "true"))) {
@@ -228,7 +228,7 @@ class MetacatSmokeSpec extends Specification {
             e.class == error
         }
         if (!error) {
-            def database = api.getDatabase(catalogName, databaseName, true)
+            def database = api.getDatabase(catalogName, databaseName, true, true)
             assert database != null && database.name.databaseName == databaseName
             assert database.definitionMetadata != null && database.definitionMetadata == definitionMetadata
         }
@@ -547,7 +547,7 @@ class MetacatSmokeSpec extends Specification {
     @Unroll
     def "Test catalog failure cases"() {
         when:
-        api.getDatabase('invalid', 'invalid', false)
+        api.getDatabase('invalid', 'invalid', false, false)
         then:
         thrown(MetacatNotFoundException)
         when:
@@ -603,7 +603,7 @@ class MetacatSmokeSpec extends Specification {
     @Unroll
     def "Test database failure cases"() {
         when:
-        api.getDatabase(catalogName, 'invalid', false)
+        api.getDatabase(catalogName, 'invalid', false, true)
         then:
         thrown(MetacatNotFoundException)
         when:

@@ -568,7 +568,9 @@ public class MetacatController implements MetacatV1 {
         @ApiParam(value = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
         @ApiParam(value = "Whether to include user metadata information to the response")
-        @RequestParam(name = "includeUserMetadata", defaultValue = "true") final boolean includeUserMetadata
+        @RequestParam(name = "includeUserMetadata", defaultValue = "true") final boolean includeUserMetadata,
+        @ApiParam(value = "Whether to include list of table names")
+        @RequestParam(name = "includeTableNames", defaultValue = "true") final boolean includeTableNames
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofDatabase(catalogName, databaseName)
@@ -576,7 +578,7 @@ public class MetacatController implements MetacatV1 {
         return this.requestWrapper.processRequest(
             name,
             "getDatabase",
-            () -> databaseService.get(name, includeUserMetadata)
+            () -> databaseService.get(name, includeUserMetadata, includeTableNames)
         );
     }
 

@@ -223,6 +223,7 @@ public interface MetacatV1 {
      * @param catalogName         catalog name
      * @param databaseName        database name
      * @param includeUserMetadata true if details should include user metadata
+     * @param includeTableNames   if true, include the list of table names
      * @return database with details
      */
     @GET
@@ -236,7 +237,10 @@ public interface MetacatV1 {
             String databaseName,
         @DefaultValue("true")
         @QueryParam("includeUserMetadata")
-            Boolean includeUserMetadata
+            Boolean includeUserMetadata,
+        @DefaultValue("true")
+        @QueryParam("includeTableNames")
+            Boolean includeTableNames
     );
 
     /**
