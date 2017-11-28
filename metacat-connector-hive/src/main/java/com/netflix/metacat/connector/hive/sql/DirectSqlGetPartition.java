@@ -40,6 +40,7 @@ import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEva
 import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserEval;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
+import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.metacat.connector.hive.util.PartitionFilterGenerator;
 import com.netflix.spectator.api.Registry;
@@ -60,7 +61,10 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -74,20 +78,27 @@ import java.util.stream.Collectors;
 public class DirectSqlGetPartition {
     private static final String FIELD_DATE_CREATED = "dateCreated";
     private static final String FIELD_BATCHID = "batchid";
+    private static final String AUDIT_DB = "audit";
+    private static final Pattern AUDIT_TABLENAME_PATTERN = Pattern.compile(
+        "(?<db>.*)__(?<table>.*)__audit(.*)$"
+    );
+    private static final String PARTITION_NAME = "name";
+    private static final String PARTITION_URI = "uri";
 
     private final ThreadServiceManager threadServiceManager;
     private final Registry registry;
     private JdbcTemplate jdbcTemplate;
     private final HiveConnectorFastServiceMetric fastServiceMetric;
     private final String catalogName;
+    private final boolean isAuditProcessingEnabled;
 
     /**
      * Constructor.
      *
-     * @param connectorContext      server context
-     * @param threadServiceManager  thread service manager
-     * @param jdbcTemplate          JDBC template
-     * @param fastServiceMetric     fast service metric
+     * @param connectorContext     server context
+     * @param threadServiceManager thread service manager
+     * @param jdbcTemplate         JDBC template
+     * @param fastServiceMetric    fast service metric
      */
     public DirectSqlGetPartition(
         final ConnectorContext connectorContext,
@@ -100,13 +111,15 @@ public class DirectSqlGetPartition {
         this.registry = connectorContext.getRegistry();
         this.jdbcTemplate = jdbcTemplate;
         this.fastServiceMetric = fastServiceMetric;
+        this.isAuditProcessingEnabled = Boolean.valueOf(connectorContext.getConfiguration()
+                .getOrDefault(HiveConfigConstants.ENABLE_AUDIT_PROCESSING, "true"));
     }
 
     /**
      * Number of partitions for the given table.
      *
      * @param requestContext request context
-     * @param tableName tableName
+     * @param tableName      tableName
      * @return Number of partitions
      */
     @Transactional(readOnly = true)
@@ -115,7 +128,6 @@ public class DirectSqlGetPartition {
         final QualifiedName tableName
     ) {
         final long start = registry.clock().wallTime();
-        final Integer result;
         // Handler for reading the result set
         final ResultSetExtractor<Integer> handler = rs -> {
             int count = 0;
@@ -125,16 +137,29 @@ public class DirectSqlGetPartition {
             return count;
         };
         try {
-            result = jdbcTemplate.query(SQL.SQL_GET_PARTITION_COUNT,
-                new String[]{tableName.getDatabaseName(), tableName.getTableName()},
-                new int[]{Types.VARCHAR, Types.VARCHAR}, handler);
+            final Optional<QualifiedName> sourceTable
+                = getSourceTableName(tableName.getDatabaseName(), tableName.getTableName());
+            return sourceTable.map(
+                qualifiedName ->
+                    jdbcTemplate.query(SQL.SQL_GET_AUDIT_TABLE_PARTITION_COUNT,
+                        new String[]{
+                            tableName.getDatabaseName(),
+                            tableName.getTableName(),
+                            qualifiedName.getDatabaseName(),
+                            qualifiedName.getTableName(), },
+                        new int[]{Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR}, handler))
+                .orElseGet(
+                    () -> jdbcTemplate.query(SQL.SQL_GET_PARTITION_COUNT,
+                        new String[]{
+                            tableName.getDatabaseName(),
+                            tableName.getTableName(), },
+                        new int[]{Types.VARCHAR, Types.VARCHAR}, handler));
         } catch (Exception e) {
             throw new ConnectorException("Failed getting the partition count", e);
         } finally {
             this.fastServiceMetric.recordTimer(
                 HiveMetrics.TagGetPartitionCount.getMetricName(), registry.clock().wallTime() - start);
         }
-        return result;
     }
 
     /**
@@ -169,6 +194,92 @@ public class DirectSqlGetPartition {
     }
 
     /**
+     * Gets the partition uris based on a filter expression for the specified table.
+     *
+     * @param requestContext    The Metacat request context
+     * @param tableName         table handle to get partition for
+     * @param partitionsRequest The metadata for what kind of partitions to get from the table
+     * @return filtered list of partition names
+     */
+    @Transactional(readOnly = true)
+    public List<String> getPartitionUris(final ConnectorRequestContext requestContext,
+                                         final QualifiedName tableName,
+                                         final PartitionListRequest partitionsRequest) {
+        final long start = registry.clock().wallTime();
+        final List<String> result;
+        final List<String> partitionNames = partitionsRequest.getPartitionNames();
+        final Sort sort = partitionsRequest.getSort();
+        final Pageable pageable = partitionsRequest.getPageable();
+
+        final String filterExpression = partitionsRequest.getFilter();
+
+        if (filterExpression != null) {
+            return filterPartitionsColumn(
+                tableName.getDatabaseName(),
+                tableName.getTableName(),
+                partitionNames,
+                PARTITION_URI,
+                filterExpression,
+                sort, pageable);
+        } else {
+            final ResultSetExtractor<List<String>> handler = rs -> {
+                final List<String> uris = Lists.newArrayList();
+                while (rs.next()) {
+                    uris.add(rs.getString(PARTITION_URI));
+                }
+                return uris;
+            };
+            result = getHandlerResults(tableName.getDatabaseName(), tableName.getTableName(),
+                null, partitionNames, SQL.SQL_GET_PARTITIONS_URI, handler, sort, pageable);
+        }
+        this.fastServiceMetric.recordTimer(
+            HiveMetrics.TagGetPartitionKeys.getMetricName(), registry.clock().wallTime() - start);
+        return result;
+    }
+
+
+    /**
+     * query partitions using filters from name or uri column.
+     */
+    private List<String> filterPartitionsColumn(
+        final String databaseName,
+        final String tableName,
+        final List<String> partitionNames,
+        final String columnName,
+        final String filterExpression,
+        final Sort sort,
+        final Pageable pageable) {
+        final FilterPartition filter = new FilterPartition();
+        // batch exists
+        final boolean isBatched =
+            !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_BATCHID);
+        final boolean hasDateCreated =
+            !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_DATE_CREATED);
+
+        ResultSetExtractor<List<String>> handler = rs -> {
+            final List<String> columns = Lists.newArrayList();
+            while (rs.next()) {
+                final String name = rs.getString(PARTITION_NAME);
+                final String uri = rs.getString(PARTITION_URI);
+                final long createdDate = rs.getLong(FIELD_DATE_CREATED);
+                Map<String, String> values = null;
+                if (hasDateCreated) {
+                    values = Maps.newHashMap();
+                    values.put(FIELD_DATE_CREATED, createdDate + "");
+                }
+                if (Strings.isNullOrEmpty(filterExpression)
+                    || filter.evaluatePartitionExpression(filterExpression, name, uri, isBatched, values)) {
+                    columns.add(rs.getString(columnName));
+                }
+            }
+            return columns;
+        };
+        return getHandlerResults(databaseName,
+            tableName, filterExpression, partitionNames,
+            SQL.SQL_GET_PARTITIONS_WITH_KEY_URI, handler, sort, pageable);
+    }
+
+    /**
      * Gets the partition names/keys based on a filter expression for the specified table.
      *
      * @param requestContext    The Metacat request context
@@ -188,34 +299,13 @@ public class DirectSqlGetPartition {
 
         final String filterExpression = partitionsRequest.getFilter();
         if (filterExpression != null) {
-            final FilterPartition filter = new FilterPartition();
-            // batch exists
-            final boolean isBatched =
-                !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_BATCHID);
-            final boolean hasDateCreated =
-                !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_DATE_CREATED);
-
-            ResultSetExtractor<List<String>> handler = rs -> {
-                final List<String> names = Lists.newArrayList();
-                while (rs.next()) {
-                    final String name = rs.getString("name");
-                    final String uri = rs.getString("uri");
-                    final long createdDate = rs.getLong(FIELD_DATE_CREATED);
-                    Map<String, String> values = null;
-                    if (hasDateCreated) {
-                        values = Maps.newHashMap();
-                        values.put(FIELD_DATE_CREATED, createdDate + "");
-                    }
-                    if (Strings.isNullOrEmpty(filterExpression)
-                        || filter.evaluatePartitionExpression(filterExpression, name, uri, isBatched, values)) {
-                        names.add(name);
-                    }
-                }
-                return names;
-            };
-            result = getHandlerResults(tableName.getDatabaseName(),
-                tableName.getTableName(), filterExpression, partitionNames,
-                SQL.SQL_GET_PARTITIONS_WITH_KEY_URI, handler, sort, pageable);
+            return filterPartitionsColumn(
+                tableName.getDatabaseName(),
+                tableName.getTableName(),
+                partitionNames,
+                PARTITION_NAME,
+                filterExpression,
+                sort, pageable);
         } else {
             final ResultSetExtractor<List<String>> handler = rs -> {
                 final List<String> names = Lists.newArrayList();
@@ -235,7 +325,7 @@ public class DirectSqlGetPartition {
     /**
      * getPartitionNames.
      *
-     * @param context request context
+     * @param context      request context
      * @param uris         uris
      * @param prefixSearch prefixSearch
      * @return partition names
@@ -292,7 +382,7 @@ public class DirectSqlGetPartition {
 
     @Transactional(readOnly = true)
     protected Map<String, PartitionHolder> getPartitionHoldersByNames(final Table table,
-        final List<String> partitionNames) {
+                                                                      final List<String> partitionNames) {
         return this.getPartitions(
             table.getDbName(),
             table.getTableName(),
@@ -302,9 +392,9 @@ public class DirectSqlGetPartition {
             null,
             false
         ).stream().collect(Collectors.toMap(
-                p -> p.getPartitionInfo().getName().getPartitionName(),
-                p -> p)
-            );
+            p -> p.getPartitionInfo().getName().getPartitionName(),
+            p -> p)
+        );
     }
 
     private List<PartitionHolder> getPartitions(
@@ -358,17 +448,17 @@ public class DirectSqlGetPartition {
             return result;
         };
 
-        final List<PartitionHolder> partitions =
-            this.getHandlerResults(
-                databaseName,
-                tableName,
-                filterExpression,
-                partitionIds,
-                SQL.SQL_GET_PARTITIONS,
-                handler,
-                sort,
-                pageable
-            );
+        final List<PartitionHolder> partitions = this.getHandlerResults(
+            databaseName,
+            tableName,
+            filterExpression,
+            partitionIds,
+            SQL.SQL_GET_PARTITIONS,
+            handler,
+            sort,
+            pageable
+        );
+
         if (includePartitionDetails && !partitions.isEmpty()) {
             final List<Long> partIds = Lists.newArrayListWithCapacity(partitions.size());
             final List<Long> sdIds = Lists.newArrayListWithCapacity(partitions.size());
@@ -469,9 +559,18 @@ public class DirectSqlGetPartition {
             }
             return result;
         };
-        return jdbcTemplate
-            .query(SQL.SQL_GET_PARTITION_KEYS, new Object[]{databaseName, tableName},
-                new int[]{Types.VARCHAR, Types.VARCHAR}, handler);
+        final Optional<QualifiedName> sourceTable = getSourceTableName(databaseName, tableName);
+
+        return sourceTable.map(qualifiedName -> jdbcTemplate
+            .query(SQL.SQL_GET_AUDIT_TABLE_PARTITION_KEYS,
+                new Object[]{databaseName, tableName, qualifiedName.getDatabaseName(), qualifiedName.getTableName()},
+                new int[]{Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR},
+                handler))
+            .orElseGet(() -> jdbcTemplate
+                .query(SQL.SQL_GET_PARTITION_KEYS,
+                    new Object[]{databaseName, tableName},
+                    new int[]{Types.VARCHAR, Types.VARCHAR},
+                    handler));
     }
 
     private String getDateCreatedSqlCriteria(final String filterExpression) {
@@ -592,7 +691,7 @@ public class DirectSqlGetPartition {
             final List<T> finalPartitions = partitions;
             subFilterPartitionNamesList.forEach(
                 subPartitionIds -> finalPartitions.addAll(
-                    this.getSubHandlerResults(
+                    this.getSubHandlerResultsFromQuery(
                         databaseName,
                         tableName,
                         filterExpression,
@@ -608,7 +707,7 @@ public class DirectSqlGetPartition {
                 )
             );
         } else {
-            partitions = this.getSubHandlerResults(
+            partitions = this.getSubHandlerResultsFromQuery(
                 databaseName,
                 tableName,
                 filterExpression,
@@ -625,6 +724,50 @@ public class DirectSqlGetPartition {
         return partitions;
     }
 
+    private <T> List<T> getSubHandlerResultsFromQuery(
+        final String databaseName,
+        final String tableName,
+        @Nullable final String filterExpression,
+        @Nullable final List<String> partitionIds,
+        final String sql,
+        final ResultSetExtractor resultSetExtractor,
+        @Nullable final String joinSql,
+        @Nullable final String filterSql,
+        @Nullable final List<Object> filterParams,
+        @Nullable final Sort sort,
+        @Nullable final Pageable pageable
+    ) {
+        if (getSourceTableName(databaseName, tableName).isPresent()) {
+            return this.getSubHandlerAuditTableResults(
+                databaseName,
+                tableName,
+                filterExpression,
+                partitionIds,
+                sql,
+                resultSetExtractor,
+                joinSql,
+                filterSql,
+                filterParams,
+                sort,
+                pageable
+            );
+        } else {
+            return this.getSubHandlerResults(
+                databaseName,
+                tableName,
+                filterExpression,
+                partitionIds,
+                sql,
+                resultSetExtractor,
+                joinSql,
+                filterSql,
+                filterParams,
+                sort,
+                pageable
+            );
+        }
+    }
+
     private <T> List<T> getSubHandlerResults(
         final String databaseName,
         final String tableName,
@@ -639,18 +782,130 @@ public class DirectSqlGetPartition {
         @Nullable final Pageable pageable
     ) {
         // Create the sql
-        final StringBuilder queryBuilder = new StringBuilder(sql);
-        if (joinSql != null) {
-            queryBuilder.append(joinSql);
+        final StringBuilder queryBuilder = getBasicPartitionQuery(partitionIds, sql, joinSql, filterSql);
+        addSortPageableFilter(queryBuilder, filterExpression, sort, pageable);
+
+        List<T> partitions;
+        final List<Object> params = Lists.newArrayList(databaseName, tableName);
+        if (filterSql != null && filterParams != null) {
+            params.addAll(filterParams);
         }
-        queryBuilder.append(" where d.NAME = ? and t.TBL_NAME = ?");
+        final Object[] oParams = new Object[params.size()];
+        partitions = (List) jdbcTemplate.query(
+            queryBuilder.toString(), params.toArray(oParams), resultSetExtractor);
+
+        if (pageable != null && pageable.isPageable() && !Strings.isNullOrEmpty(filterExpression)) {
+            partitions = processPageable(partitions, pageable);
+        }
+        return partitions;
+    }
+
+    /**
+     * Check if an audit table, i.e. the database is audit and the table name matches WAP table pattern
+     *
+     * @param databaseName database
+     * @param tableName    table name
+     * @return true or false
+     */
+    private Optional<QualifiedName> getSourceTableName(final String databaseName, final String tableName) {
+        Optional<QualifiedName> sourceTable = Optional.empty();
+        if (isAuditProcessingEnabled && databaseName.equals(AUDIT_DB)) {
+            final Matcher matcher = AUDIT_TABLENAME_PATTERN.matcher(tableName);
+            if (matcher.matches()) {
+                final String sourceDatabaseName = matcher.group("db");
+                final String sourceTableName = matcher.group("table");
+                sourceTable = Optional.of(QualifiedName.ofTable(this.catalogName, sourceDatabaseName, sourceTableName));
+            }
+        }
+        return sourceTable;
+    }
+
+    /**
+     * Process audit table partition related query.
+     *
+     * @param databaseName       database name
+     * @param tableName          table name
+     * @param filterExpression   filter
+     * @param partitionIds       partition ids
+     * @param sql                query sql
+     * @param resultSetExtractor result extractor
+     * @param joinSql            join sql
+     * @param filterSql          filter sql
+     * @param filterParams       filter parameters
+     * @param sort               sort object
+     * @param pageable           pageable object
+     * @param <T>                query object
+     * @return query results
+     */
+    private <T> List<T> getSubHandlerAuditTableResults(
+        final String databaseName,
+        final String tableName,
+        @Nullable final String filterExpression,
+        @Nullable final List<String> partitionIds,
+        final String sql,
+        final ResultSetExtractor resultSetExtractor,
+        @Nullable final String joinSql,
+        @Nullable final String filterSql,
+        @Nullable final List<Object> filterParams,
+        @Nullable final Sort sort,
+        @Nullable final Pageable pageable
+    ) {
+        final Optional<QualifiedName> sourceTableName = getSourceTableName(databaseName, tableName);
+        List<T> partitions = Lists.newArrayList();
+        if (sourceTableName.isPresent()) {
+            final StringBuilder auditTableQueryBuilder = getBasicPartitionQuery(partitionIds, sql, joinSql, filterSql);
+            final StringBuilder sourceTableQueryBuilder = getBasicPartitionQuery(partitionIds, sql, joinSql, filterSql)
+                .append(SQL.SQL_NOT_IN_AUTDI_TABLE_PARTITIONS);
+
+            //union the two queries, using ALL for optimization since the above sql already filtered out the overlap
+            //partitions from the source table
+            auditTableQueryBuilder.append(" UNION ALL ").append(sourceTableQueryBuilder);
+
+            addSortPageableFilter(auditTableQueryBuilder, filterExpression, sort, pageable);
+
+            final List<Object> params = Lists.newArrayList(databaseName, tableName,
+                sourceTableName.get().getDatabaseName(), sourceTableName.get().getTableName(), databaseName, tableName);
+            if (filterSql != null && filterParams != null) {
+                params.addAll(filterParams);
+            }
+            final Object[] oParams = new Object[params.size()];
+            partitions = (List) jdbcTemplate.query(
+                auditTableQueryBuilder.toString(), params.toArray(oParams), resultSetExtractor);
+            if (pageable != null && pageable.isPageable() && !Strings.isNullOrEmpty(filterExpression)) {
+                partitions = processPageable(partitions, pageable);
+            }
+        }
+        return partitions;
+    }
+
+    private StringBuilder getBasicPartitionQuery(
+        @Nullable final List<String> partitionIds,
+        final String sql,
+        @Nullable final String joinSql,
+        @Nullable final String filterSql
+    ) {
+        final StringBuilder tableQueryBuilder = new StringBuilder(sql);
+        if (joinSql != null) {
+            tableQueryBuilder.append(joinSql);
+        }
+        tableQueryBuilder.append(" where d.NAME = ? and t.TBL_NAME = ?");
         if (filterSql != null) {
-            queryBuilder.append(filterSql);
+            tableQueryBuilder.append(filterSql);
         }
         if (partitionIds != null && !partitionIds.isEmpty()) {
-            queryBuilder.append(" and p.PART_NAME in ('")
+            tableQueryBuilder.append(" and p.PART_NAME in ('")
                 .append(Joiner.on("','").skipNulls().join(partitionIds)).append("')");
         }
+        return tableQueryBuilder;
+    }
+
+    //adding the sort and limit to sql query
+    private void addSortPageableFilter(
+        final StringBuilder queryBuilder,
+        @Nullable final String filterExpression,
+        @Nullable final Sort sort,
+        @Nullable final Pageable pageable
+    ) {
         if (sort != null && sort.hasSort()) {
             queryBuilder.append(" order by ").append(sort.getSortBy()).append(" ").append(sort.getOrder().name());
         }
@@ -660,28 +915,19 @@ public class DirectSqlGetPartition {
             }
             queryBuilder.append(" limit ").append(pageable.getOffset()).append(',').append(pageable.getLimit());
         }
+    }
 
-        List<T> partitions = Lists.newArrayList();
-        final List<Object> params = Lists.newArrayList(databaseName, tableName);
-        if (filterSql != null && filterParams != null) {
-            params.addAll(filterParams);
+    private <T> List<T> processPageable(final List<T> partitions,
+                                        final Pageable pageable) {
+        int limit = pageable.getOffset() + pageable.getLimit();
+        if (partitions.size() < limit) {
+            limit = partitions.size();
         }
-        final Object[] oParams = new Object[params.size()];
-        partitions = (List) jdbcTemplate.query(
-            queryBuilder.toString(), params.toArray(oParams), resultSetExtractor);
-        //
-        if (pageable != null && pageable.isPageable() && !Strings.isNullOrEmpty(filterExpression)) {
-            int limit = pageable.getOffset() + pageable.getLimit();
-            if (partitions.size() < limit) {
-                limit = partitions.size();
-            }
-            if (pageable.getOffset() > limit) {
-                partitions = Lists.newArrayList();
-            } else {
-                partitions = partitions.subList(pageable.getOffset(), limit);
-            }
+        if (pageable.getOffset() > limit) {
+            return Lists.newArrayList();
+        } else {
+            return partitions.subList(pageable.getOffset(), limit);
         }
-        return partitions;
     }
 
     @VisibleForTesting
@@ -690,6 +936,11 @@ public class DirectSqlGetPartition {
             "select p.PART_NAME as name, p.CREATE_TIME as dateCreated, sds.location uri"
                 + " from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID "
                 + "join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID";
+        static final String SQL_GET_PARTITIONS_URI =
+            "select sds.location uri"
+                + " from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID "
+                + "join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID";
+
         static final String SQL_GET_PARTITIONS_WITH_KEY =
             "select p.PART_NAME as name from PARTITIONS as p"
                 + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d on t.DB_ID = d.DB_ID";
@@ -714,10 +965,35 @@ public class DirectSqlGetPartition {
             "select pkey_name, pkey_type from PARTITION_KEYS as p "
                 + "join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d"
                 + " on t.DB_ID = d.DB_ID where d.name=? and t.tbl_name=? order by integer_idx";
-
         static final String SQL_GET_PARTITION_COUNT =
             "select count(*) count from PARTITIONS as p"
                 + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d on t.DB_ID = d.DB_ID"
-                + " join SDS as sds on p.SD_ID = sds.SD_ID where d.NAME = ? and t.TBL_NAME = ?";
+                + " where d.NAME = ? and t.TBL_NAME = ?";
+
+        //audit table, takes precedence in case there are parititons overlap with the source
+        static final String SQL_GET_AUDIT_TABLE_PARTITION_COUNT =
+            "select count(distinct p1.part_name) count from PARTITIONS as p1 "
+                + "join TBLS as t1 on t1.TBL_ID = p1.TBL_ID join DBS as d1 on t1.DB_ID = d1.DB_ID "
+                + "where ( d1.NAME = ?  and t1.TBL_NAME = ? ) "
+                + "or ( d1.NAME = ? and t1.TBL_NAME = ?)";
+
+        // using nest order https://stackoverflow.com/questions/6965333/mysql-union-distinct
+        static final String SQL_GET_AUDIT_TABLE_PARTITION_KEYS =
+            "select pkey_name, pkey_type from ("
+                + "select pkey_name, pkey_type, integer_idx from PARTITION_KEYS as p1 "
+                + "join TBLS as t1 on t1.TBL_ID = p1.TBL_ID join DBS as d1 "
+                + "on t1.DB_ID = d1.DB_ID where d1.NAME = ? and t1.TBL_NAME = ? order by integer_idx "
+                + ") as tmp"
+                + "UNION "
+                + "select pkey_name, pkey_type from PARTITION_KEYS as p2 "
+                + "join TBLS as t2 on t2.TBL_ID = p2.TBL_ID join DBS as d2 "
+                + "on t2.DB_ID = d2.DB_ID where d2.NAME = ? and t2.TBL_NAME = ?";
+
+        //select the partitions not in audit table
+        static final String SQL_NOT_IN_AUTDI_TABLE_PARTITIONS =
+            " and p.PART_NAME not in ("
+                + " select p1.PART_NAME from PARTITIONS as p1"
+                + " join TBLS as t1 on t1.TBL_ID = p1.TBL_ID join DBS as d1"
+                + " on t1.DB_ID = d1.DB_ID where d1.NAME = ? and t1.TBL_NAME = ? )";  //audit table
     }
 }

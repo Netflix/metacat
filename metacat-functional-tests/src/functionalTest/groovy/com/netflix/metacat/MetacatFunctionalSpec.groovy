@@ -31,7 +31,6 @@ import com.netflix.metacat.common.exception.MetacatNotFoundException
 import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
-import feign.Logger
 import feign.RetryableException
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.joda.time.Instant
@@ -67,7 +66,6 @@ class MetacatFunctionalSpec extends Specification {
         tagApi = client.tagApi
         TestCatalogs.resetAll()
     }
-
 
     def 'getCatalogName: existing catalogs'() {
         when:
@@ -161,13 +159,11 @@ class MetacatFunctionalSpec extends Specification {
         where:
         catalog << TestCatalogs.ALL
     }
-
     def "create test_db"() {
         given:
         ObjectNode metadata = metacatJson.parseJsonObject('{"objectField": {}}')
         def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
         String databaseName = "test_db_${catalog.name.replace('-', '_')}".toString()
-
         when:
         def catalogResponse = api.getCatalog(catalog.name)
 
@@ -177,11 +173,9 @@ class MetacatFunctionalSpec extends Specification {
         } else {
             println "test_db already exists in $catalog.name. Skipping create test_db"
         }
-
         where:
         catalog << TestCatalogs.getCanCreateDatabase(TestCatalogs.ALL)
     }
-
 
     def 'createDatabase: nonexistent_catalog #metadataMessage fails'() {
         given:
@@ -651,7 +645,6 @@ class MetacatFunctionalSpec extends Specification {
         catalog << TestCatalogs.getCanCreateTable(TestCatalogs.ALL)
     }
 
-
     def 'updateTable: #name'() {
         given:
         def now = new Date()
@@ -995,6 +988,7 @@ class MetacatFunctionalSpec extends Specification {
         }.flatten()
     }
 
+
     def 'test partition filtering expressions in #name'() {
         given:
         def tableName = "table_part_filtering_$BATCH_ID".toString()
@@ -1181,6 +1175,176 @@ class MetacatFunctionalSpec extends Specification {
 
         where:
         name << TestCatalogs.getAllDatabases(TestCatalogs.getCanCreateTable(TestCatalogs.ALL))
+    }
+
+    def 'test get AUDIT table partitions'() {
+        given:
+        def tableName = "test_wap_table".toString()
+        def olddate = new Date(1500000000)
+        def databaseName = "test_db"
+        def catalogName = catalog.name
+        def dataUri = "file:/tmp/${catalogName}/${databaseName}/${tableName}".toString()
+        ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
+        ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
+        def dto = new TableDto(
+            name: QualifiedName.ofTable(catalogName, databaseName, tableName),
+            audit: new AuditDto(
+                createdBy: 'createdBy',
+                createdDate: olddate
+            ),
+            serde: new StorageDto(
+                owner: 'metacat-test',
+                inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                parameters: [
+                    'serialization.format': '1'
+                ],
+                uri: dataUri
+            ),
+            definitionMetadata: definitionMetadata,
+            dataMetadata: dataMetadata,
+            fields: [
+                new FieldDto(
+                    comment: 'added 1st - partition key',
+                    name: 'field1',
+                    pos: 0,
+                    type: 'boolean',
+                    partition_key: true
+                ),
+                new FieldDto(
+                    comment: 'added 2st',
+                    name: 'field2',
+                    pos: 1,
+                    type: 'boolean',
+                    partition_key: false
+                ),
+                new FieldDto(
+                    comment: 'added 3rd, a single char partition key to test that use case',
+                    name: 'p',
+                    pos: 2,
+                    type: 'boolean',
+                    partition_key: true
+                ),
+                new FieldDto(
+                    comment: 'added 4st',
+                    name: 'field4',
+                    pos: 3,
+                    type: 'boolean',
+                    partition_key: false
+                ),
+            ]
+        )
+
+
+        def tableMetadata = metacatJson.emptyObjectNode().put('table_def_field', '1')
+        def partName = QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=true/p=false")
+        def newdate = new Date(1500001000)
+        def request = new PartitionsSaveRequestDto(
+            definitionMetadata: tableMetadata,
+            partitions: [
+                new PartitionDto(
+                    name: partName,
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: dataMetadata,
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdDate: olddate,
+                        lastModifiedDate: olddate
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri
+                    ),
+                )
+            ]
+        )
+
+        def request_audit = new PartitionsSaveRequestDto(
+            definitionMetadata: tableMetadata,
+            partitions: [
+                new PartitionDto(
+                    name: partName,
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: dataMetadata,
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdBy: "audit_process",
+                        createdDate: newdate,
+                        lastModifiedDate: newdate
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri +"_auditpart"
+                    ),
+                ),
+                new PartitionDto(
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=false/p=false"),
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: dataMetadata,
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdBy: "audit_process",
+                        createdDate: newdate,
+                        lastModifiedDate: newdate
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri +"_auditpart"
+                    ),
+                )
+            ]
+        )
+
+        //create the audit table
+        def auditableName =  databaseName+"__" + tableName + "__audit_12345"
+        when:
+        try{
+            api.createDatabase(catalogName, "test_db", new DatabaseCreateRequestDto())
+        }catch(Exception e) {}
+        try {
+            api.createTable(catalogName, "test_db", tableName, dto)
+        }catch(Exception e) {
+        }
+        //try to create the audit table
+        dto.name = QualifiedName.ofTable(catalogName, "audit", auditableName)
+        try {
+            api.createDatabase(catalogName, "audit", new DatabaseCreateRequestDto())
+        }catch(Exception e) {}
+        try {
+            api.createTable(catalogName, "audit", auditableName, dto)
+        }catch(Exception e) {}
+
+        then:
+        def table = api.getTable(catalogName, "audit", auditableName, false, false, false )
+        table
+
+        //Partition Add operation
+        when:
+        def response = partitionApi.savePartitions(catalogName, "test_db", tableName, request)
+        then:
+        response
+
+        when:
+        response = partitionApi.savePartitions(catalogName, "audit", auditableName, request_audit)
+
+        then:
+        response
+        when:
+        def partitions = partitionApi.getPartitions(catalogName, "audit", auditableName,null, null, null, null, null, true)
+        then:
+        //check the wap get pattern is the combination of two tables and the audit table has priority in case
+        // of overlapped partitions
+        partitions.size() == 2
+        partitions.get(0).serde.uri.equals(dataUri +"_auditpart")
+        where:
+        catalog << TestCatalogs.supportAUDITTables(TestCatalogs.ALL);
     }
 
     def 'createMView: #name'() {

@@ -118,6 +118,17 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     }
 
     /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public List<String> getPartitionUris(
+        final ConnectorRequestContext requestContext,
+        final QualifiedName tableName,
+        final PartitionListRequest partitionsRequest
+    ) {
+        return directSqlGetPartition.getPartitionUris(requestContext, tableName, partitionsRequest);
+    }
+    /**
      * getPartitionNames.
      *
      * @param uris         uris

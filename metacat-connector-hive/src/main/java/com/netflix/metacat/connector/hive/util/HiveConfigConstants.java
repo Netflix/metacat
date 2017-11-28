@@ -47,6 +47,10 @@ public final class HiveConfigConstants {
      */
     public static final String USE_FASTHIVE_SERVICE = "hive.use.embedded.fastservice";
     /**
+     * ENABLE_AUDIT_PROCESSING.
+     */
+    public static final String ENABLE_AUDIT_PROCESSING = "hive.use.embedded.fastservice.auditEnabled";
+    /**
      * USE_FASTPARTITION_SERVICE.
      */
     public static final String THREAD_POOL_SIZE = "hive.thread.pool.size";
