@@ -143,6 +143,24 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         return directSqlGetPartition.getPartitionNames(context, uris, prefixSearch);
     }
 
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public void deletePartitions(
+        final ConnectorRequestContext requestContext,
+        final QualifiedName tableName,
+        final List<String> partitionNames
+    ) {
+        final boolean  useHiveFastServiceForDeletePartitions = Boolean.parseBoolean(getContext().getConfiguration()
+            .getOrDefault("hive.use.embedded.sql.delete.partitions", "false"));
+        if (useHiveFastServiceForDeletePartitions) {
+            directSqlSavePartition.delete(tableName, partitionNames);
+        } else {
+            super.deletePartitions(requestContext, tableName, partitionNames);
+        }
+    }
+
     @Override
     protected Map<String, PartitionHolder> getPartitionsByNames(final Table table, final List<String> partitionNames) {
         return directSqlGetPartition.getPartitionHoldersByNames(table, partitionNames);
