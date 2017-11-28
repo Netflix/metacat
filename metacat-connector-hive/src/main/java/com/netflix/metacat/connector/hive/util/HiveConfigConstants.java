@@ -51,6 +51,10 @@ public final class HiveConfigConstants {
      */
     public static final String ENABLE_AUDIT_PROCESSING = "hive.use.embedded.fastservice.auditEnabled";
     /**
+     * USE_FAST_DELETION.
+     */
+    public static final String USE_FAST_DELETION = "hive.use.embedded.sql.delete.partitions";
+    /**
      * USE_FASTPARTITION_SERVICE.
      */
     public static final String THREAD_POOL_SIZE = "hive.thread.pool.size";

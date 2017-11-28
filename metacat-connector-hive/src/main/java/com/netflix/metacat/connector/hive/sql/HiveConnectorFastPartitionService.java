@@ -26,6 +26,7 @@ import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
+import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import com.netflix.metacat.connector.hive.util.PartitionUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
@@ -269,4 +270,25 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             }
         }
     }
+
+
+    /**
+    * {@inheritDoc}.
+    */
+    @Override
+    public void deletePartitions(
+        final ConnectorRequestContext requestContext,
+        final QualifiedName tableName,
+        final List<String> partitionNames
+    ) {
+        //The direct sql based deletion doesn't check if the partition is valid
+        if (Boolean.parseBoolean(getContext().getConfiguration()
+            .getOrDefault(HiveConfigConstants.USE_FAST_DELETION, "false"))) {
+                directSqlSavePartition.delete(tableName, partitionNames);
+        } else {
+            //will throw exception if the partitions are invalid
+            super.deletePartitions(requestContext, tableName, partitionNames);
+        }
+    }
+
 }
