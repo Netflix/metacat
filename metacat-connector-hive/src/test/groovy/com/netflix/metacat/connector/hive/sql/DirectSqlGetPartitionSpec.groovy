@@ -50,6 +50,8 @@ class DirectSqlGetPartitionSpec extends Specification {
     def partitionInfos = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, partitionName, 's3:/a/b', 5).collect { converter.fromPartitionDto(it)}
     def partitionHolders = partitionInfos.collect { new PartitionHolder(1,1,1,it)}
     def partitionNames = partitionInfos.collect { it.name.partitionName}
+    def partitionuris = partitionInfos.collect { it.serde.uri}
+    def partitionTableDbNames = partitionInfos.collect { [it.name.partitionName, it.name.tableName, it.name.databaseName]}
     def requestContext = new ConnectorRequestContext(Instant.now().toEpochMilli(), 'test')
     def emptyPartitionsRequest = new PartitionListRequest()
     def partitionsRequest = new PartitionListRequest(filter:"field1='a'", sort: new Sort('createdDate', SortOrder.ASC), pageable: new Pageable(3,1))
@@ -83,7 +85,23 @@ class DirectSqlGetPartitionSpec extends Specification {
         keys.size() == 3
     }
 
-    def "Test getting partition names"() {
+
+    def "Test getting partition uris"() {
+        when:
+        def uris = service.getPartitionUris(requestContext, qualifiedName, emptyPartitionsRequest)
+        then:
+        1 * jdbcTemplate.query(_,_,_) >> partitionuris
+        noExceptionThrown()
+        uris.size() == partitionNames.size()
+        when:
+        uris = service.getPartitionUris(requestContext, qualifiedName, partitionsRequest)
+        then:
+        1 * jdbcTemplate.query(_,_,_) >> partitionuris
+        noExceptionThrown()
+        uris.size() == 3
+    }
+
+    def "Test getting partitions by names"() {
         when:
         def holders = service.getPartitionHoldersByNames(table, partitionNames)
         then:

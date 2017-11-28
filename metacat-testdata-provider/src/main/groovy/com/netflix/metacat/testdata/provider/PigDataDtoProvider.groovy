@@ -133,8 +133,7 @@ class PigDataDtoProvider {
     /**
      * Returns a tableDto with the provided information. This table contains two columns.
      */
-    def static TableDto getPartTable(String sourceName, String databaseName, String owner, String uri){
-        def tableName = 'part'
+    def static TableDto getPartTable(String sourceName, String databaseName, String tableName, String owner, String uri){
         if (uri == null){
             uri = String.format("s3://wh/%s.db/%s", databaseName, tableName)
         }
@@ -175,6 +174,7 @@ class PigDataDtoProvider {
                 definitionMetadata: getDefinitionMetadata(owner)
         )
     }
+
     /**
      * Returns a tableDto with the provided information. This table contains three columns.
      */
@@ -227,6 +227,8 @@ class PigDataDtoProvider {
                 definitionMetadata: getDefinitionMetadata(owner)
         )
     }
+
+
     /**
      * Returns a tableDto with the provided information. This table contains columns with different data types.
      */

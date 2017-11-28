@@ -29,6 +29,7 @@ class TestCatalogs {
         boolean deleteDatabaseWithNoCheck
         boolean deleteTable
         boolean createView
+        boolean supportAUDITtables = false
         List<QualifiedName> createdDatabases = []
         List<QualifiedName> createdPartitions = []
         List<QualifiedName> createdTables = []
@@ -66,7 +67,8 @@ class TestCatalogs {
             type: 'hive',
             createView: true,
             validateWithHive: false,
-            validateFilterExpressionBasedOnPartitionKeyType: false
+            validateFilterExpressionBasedOnPartitionKeyType: false,
+            supportAUDITtables: true
         ),
         new TestCatalog(
             createDatabase: true,
@@ -77,7 +79,7 @@ class TestCatalogs {
             name: 'hive-metastore',
             partitionKeysAppearLast: true,
             type: 'hive',
-            createView: true,
+            createView: true
         ),
         new TestCatalog(
             createDatabase: true,
@@ -230,6 +232,11 @@ class TestCatalogs {
     static Collection<TestCatalog> getCanNotDeleteTable(Collection<TestCatalog> source) {
         return source.findAll { !it.deleteTable }
     }
+
+    static Collection<TestCatalog> supportAUDITTables(Collection<TestCatalog> source) {
+        return source.findAll { it.supportAUDITtables }
+    }
+
 
     static void resetAll() {
         TestCatalogs.ALL.each { catalog ->

@@ -61,6 +61,7 @@ public class HiveConnectorFactory extends SpringConnectorFactory {
             connectorContext.getConfiguration()
                 .getOrDefault(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false")
         );
+
         final Map<String, Object> properties = new HashMap<>();
         properties.put("useHiveFastService", useFastHiveService);
         properties.put("useEmbeddedClient", useLocalMetastore);

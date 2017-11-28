@@ -133,9 +133,9 @@ class MetacatSmokeSpec extends Specification {
         }
         if (!database.getTables().contains(tableName)) {
             def newTable
-            if ('part' == tableName) {
-                newTable = PigDataDtoProvider.getPartTable(catalogName, databaseName, owner, uri)
-            } else if ('parts' == tableName) {
+            if ('part' == tableName || 'fsmoke_db__part__audit_12345' == tableName) {
+                newTable = PigDataDtoProvider.getPartTable(catalogName, databaseName, tableName, owner, uri)
+            } else if ('parts' == tableName  ) {
                 newTable = PigDataDtoProvider.getPartsTable(catalogName, databaseName, owner, uri)
             } else if ('metacat_all_types' == tableName) {
                 newTable = PigDataDtoProvider.getMetacatAllTypesTable(catalogName, databaseName, owner, uri)
@@ -144,48 +144,6 @@ class MetacatSmokeSpec extends Specification {
             }
             api.createTable(catalogName, databaseName, tableName, newTable)
         }
-    }
-
-    def createTable() {
-        when:
-        try {
-            api.createDatabase('embedded-hive-metastore', 'smoke_db', new DatabaseCreateRequestDto())
-        } catch (Exception ignored) {
-        }
-        try {
-            api.createDatabase('embedded-hive-metastore', 'franklinviews', new DatabaseCreateRequestDto())
-        } catch (Exception ignored) {
-        }
-        try {
-            api.createDatabase('embedded-fast-hive-metastore', 'fsmoke_db', new DatabaseCreateRequestDto())
-        } catch (Exception ignored) {
-        }
-        try {
-            api.createDatabase('embedded-fast-hive-metastore', 'franklinviews', new DatabaseCreateRequestDto())
-        } catch (Exception ignored) {
-        }
-        try {
-            api.createDatabase('hive-metastore', 'smoke_db', new DatabaseCreateRequestDto())
-        } catch (Exception ignored) {
-        }
-        try {
-            api.createDatabase('hive-metastore', 'franklinviews', new DatabaseCreateRequestDto())
-        } catch (Exception ignored) {
-        }
-        createTable('embedded-hive-metastore', 'smoke_db', 'part')
-        createTable('embedded-hive-metastore', 'smoke_db', 'parts')
-        createTable('embedded-fast-hive-metastore', 'fsmoke_db', 'part')
-        createTable('embedded-fast-hive-metastore', 'fsmoke_db', 'parts')
-        createTable('hive-metastore', 'hsmoke_db', 'part')
-        createTable('hive-metastore', 'hsmoke_db', 'parts')
-
-        try {
-            api.createDatabase('s3', 'smoke_db', new DatabaseCreateRequestDto())
-        } catch (Exception ignored) {
-        }
-        createTable('s3-mysql-db', 'smoke_db', 'part')
-        then:
-        noExceptionThrown()
     }
 
     def createAllTypesTable() {
@@ -463,6 +421,45 @@ class MetacatSmokeSpec extends Specification {
         'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'
         'hive-metastore'                | 'hsmoke_db'       | 'part'
         's3-mysql-db'                   | 'smoke_db'        | 'part'
+    }
+
+    @Unroll
+    def "Test get AUDIT table partitions for #catalogName/#databaseName/#tableName"() {
+        def partRequestDto = new PartitionsSaveRequestDto(
+            definitionMetadata: metacatJson.emptyObjectNode(),
+            partitions: [
+                new PartitionDto(
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "one=1"),
+                    definitionMetadata: metacatJson.emptyObjectNode(),
+                    dataMetadata: metacatJson.emptyObjectNode(),
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdDate: Instant.now().toDate(),
+                        lastModifiedDate: Instant.now().toDate()
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: ""
+                    ),
+                )
+            ]
+        )
+
+        when:
+        createTable(catalogName, databaseName, tableName)
+
+        partitionApi.savePartitions(catalogName, databaseName, tableName, partRequestDto)
+        def partkeys = partitionApi.getPartitionKeys(catalogName, databaseName, tableName,null, null, null, null, null)
+        then:
+        noExceptionThrown()
+        assert partkeys.size() == 1
+        assert partkeys.get(0).equals("one=1")
+        where:
+        catalogName                     | databaseName      | tableName
+        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'
+        'embedded-fast-hive-metastore'  | 'audit'           | 'fsmoke_db__part__audit_12345'
     }
 
     @Unroll
