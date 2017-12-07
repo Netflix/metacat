@@ -35,6 +35,7 @@ import feign.RetryableException
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.joda.time.Instant
 import org.skyscreamer.jsonassert.JSONAssert
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Stepwise
 import spock.lang.Unroll
@@ -1177,6 +1178,7 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getAllDatabases(TestCatalogs.getCanCreateTable(TestCatalogs.ALL))
     }
 
+    @Ignore
     def 'test get AUDIT table partitions'() {
         given:
         def tableName = "test_wap_table".toString()
