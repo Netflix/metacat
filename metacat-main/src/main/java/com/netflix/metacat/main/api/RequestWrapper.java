@@ -111,32 +111,36 @@ public final class RequestWrapper {
             log.info("### Calling method: {} for {}", resourceRequestName, name);
             return supplier.get();
         } catch (UnsupportedOperationException e) {
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             log.error(e.getMessage(), e);
             throw new MetacatNotSupportedException("Catalog does not support the operation");
         } catch (DatabaseAlreadyExistsException | TableAlreadyExistsException | PartitionAlreadyExistsException e) {
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             log.error(e.getMessage(), e);
             throw new MetacatAlreadyExistsException(e.getMessage());
         } catch (NotFoundException | MetacatNotFoundException e) {
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             log.error(e.getMessage(), e);
             throw new MetacatNotFoundException(
                 String.format("Unable to locate for %s. Details: %s", name, e.getMessage()));
         } catch (InvalidMetaException | IllegalArgumentException e) {
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             log.error(e.getMessage(), e);
             throw new MetacatBadRequestException(
                 String.format("%s.%s", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (ConnectorException e) {
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
-            registry.counter(requestFailureCounterId.withTags(tags)).increment();
             throw new MetacatException(message, e);
         } catch (UserMetadataServiceException e) {
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             final String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             throw new MetacatUserMetadataException(message);
         } catch (Exception e) {
-            registry.counter(requestFailureCounterId.withTags(tags)).increment();
-
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
@@ -167,14 +171,16 @@ public final class RequestWrapper {
             log.info("### Calling method: {}", resourceRequestName);
             return supplier.get();
         } catch (UnsupportedOperationException e) {
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             log.error(e.getMessage(), e);
             throw new MetacatNotSupportedException("Catalog does not support the operation");
         } catch (IllegalArgumentException e) {
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             log.error(e.getMessage(), e);
             throw new MetacatBadRequestException(String.format("%s.%s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (Exception e) {
-            registry.counter(requestFailureCounterId.withTags(tags)).increment();
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             final String message = String
                 .format("%s.%s -- %s failed.",
                     e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage(),
@@ -188,4 +194,10 @@ public final class RequestWrapper {
             this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
         }
     }
+
+    private void collectRequestExceptionMetrics(final Map<String, String> tags, final String exceptionName) {
+        tags.put("exception", exceptionName);
+        registry.counter(requestFailureCounterId.withTags(tags)).increment();
+    }
+
 }
