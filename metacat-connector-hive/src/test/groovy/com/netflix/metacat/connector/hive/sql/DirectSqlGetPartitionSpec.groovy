@@ -103,7 +103,7 @@ class DirectSqlGetPartitionSpec extends Specification {
 
     def "Test getting partitions by names"() {
         when:
-        def holders = service.getPartitionHoldersByNames(table, partitionNames)
+        def holders = service.getPartitionHoldersByNames(table, partitionNames, true)
         then:
         1 * jdbcTemplate.query(_,_,_) >> partitionHolders
         noExceptionThrown()

@@ -454,7 +454,8 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
             :   Lists.newArrayList();
     }
 
-    protected Map<String, PartitionHolder> getPartitionsByNames(final Table table, final List<String> partitionNames) {
+    protected Map<String, PartitionHolder> getPartitionsByNames(final Table table,
+                                                                final List<String> partitionNames) {
         final String databasename = table.getDbName();
         final String tablename = table.getTableName();
         try {

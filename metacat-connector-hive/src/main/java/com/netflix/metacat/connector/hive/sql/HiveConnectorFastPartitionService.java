@@ -146,7 +146,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
 
     @Override
     protected Map<String, PartitionHolder> getPartitionsByNames(final Table table, final List<String> partitionNames) {
-        return directSqlGetPartition.getPartitionHoldersByNames(table, partitionNames);
+        return directSqlGetPartition.getPartitionHoldersByNames(table, partitionNames, true);
     }
 
     protected void addUpdateDropPartitions(final QualifiedName tableQName, final Table table,

@@ -28,7 +28,8 @@ metacat:
   plugin:
     config:
       location: /etc/catalog
-
+  swagger:
+    enabled: true
 netflix:
   appinfo:
     name: metacat
