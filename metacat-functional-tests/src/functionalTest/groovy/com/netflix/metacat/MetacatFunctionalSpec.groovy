@@ -1178,8 +1178,7 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getAllDatabases(TestCatalogs.getCanCreateTable(TestCatalogs.ALL))
     }
 
-    @Ignore
-    def 'test get AUDIT table partitions'() {
+    def 'test get and save AUDIT table partition'() {
         given:
         def tableName = "test_wap_table".toString()
         def olddate = new Date(1500000000)
@@ -1240,13 +1239,29 @@ class MetacatFunctionalSpec extends Specification {
 
 
         def tableMetadata = metacatJson.emptyObjectNode().put('table_def_field', '1')
-        def partName = QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=true/p=false")
+
         def newdate = new Date(1500001000)
         def request = new PartitionsSaveRequestDto(
             definitionMetadata: tableMetadata,
             partitions: [
                 new PartitionDto(
-                    name: partName,
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=1/p=2"),
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: dataMetadata,
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdDate: olddate,
+                        lastModifiedDate: olddate
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri
+                    ),
+                ),
+                new PartitionDto(
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=1/p=3"),
                     definitionMetadata: definitionMetadata,
                     dataMetadata: dataMetadata,
                     dataExternal: true,
@@ -1268,7 +1283,7 @@ class MetacatFunctionalSpec extends Specification {
             definitionMetadata: tableMetadata,
             partitions: [
                 new PartitionDto(
-                    name: partName,
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=1/p=2"),
                     definitionMetadata: definitionMetadata,
                     dataMetadata: dataMetadata,
                     dataExternal: true,
@@ -1285,7 +1300,7 @@ class MetacatFunctionalSpec extends Specification {
                     ),
                 ),
                 new PartitionDto(
-                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=false/p=false"),
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=2/p=4"),
                     definitionMetadata: definitionMetadata,
                     dataMetadata: dataMetadata,
                     dataExternal: true,
@@ -1340,11 +1355,159 @@ class MetacatFunctionalSpec extends Specification {
         response
         when:
         def partitions = partitionApi.getPartitions(catalogName, "audit", auditableName,null, null, null, null, null, true)
+        def audit_part = partitions.find{item -> item.name.partitionName.equals("field1=1/p=2")}
+
         then:
         //check the wap get pattern is the combination of two tables and the audit table has priority in case
         // of overlapped partitions
-        partitions.size() == 2
-        partitions.get(0).serde.uri.equals(dataUri +"_auditpart")
+        partitions.size() >= 3
+        audit_part.serde.uri.equals(dataUri +"_auditpart")
+
+
+        //test save and update partitions
+        when:
+        def request_audit_2 = new PartitionsSaveRequestDto(
+            definitionMetadata: tableMetadata,
+            partitions: [
+                new PartitionDto(
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=1/p=2"),
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: dataMetadata,
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdBy: "audit_process_2",
+                        createdDate: newdate,
+                        lastModifiedDate: newdate
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri +"_auditpart_2"
+                    ),
+                ),
+                new PartitionDto(
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=2/p=4"),
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: dataMetadata,
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdBy: "audit_process_2",
+                        createdDate: newdate,
+                        lastModifiedDate: newdate
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri +"_auditpart_2"
+                    ),
+                ),
+                new PartitionDto(
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=3/p=2"),
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: dataMetadata,
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdBy: "audit_process_2",
+                        createdDate: newdate,
+                        lastModifiedDate: newdate
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri +"_auditpart_2"
+                    ),
+                ),
+            ]
+        )
+        response = partitionApi.savePartitions(catalogName, "audit", auditableName, request_audit_2)
+
+        then:
+        response
+
+        when:
+        partitions = partitionApi.getPartitions(catalogName, "audit", auditableName,null, null, null, null, null, true)
+        then:
+        partitions
+        partitions.size() >= 4
+
+
+        //test update partition metadata only
+        //partition uri is needed for datametadata
+        when:
+        def request_audit_3 = new PartitionsSaveRequestDto(
+            saveMetadataOnly: true,
+            definitionMetadata: tableMetadata,
+            partitions: [
+                new PartitionDto(
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=1/p=2"),
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: metacatJson.emptyObjectNode().put('data_field_new', 10),
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdBy: "audit_process_2",
+                        createdDate: newdate,
+                        lastModifiedDate: newdate
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri +"_auditpart_2"
+                    )
+                ),
+                new PartitionDto(
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=2/p=4"),
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: metacatJson.emptyObjectNode().put('data_field_new', 10),
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdBy: "audit_process_2",
+                        createdDate: newdate,
+                        lastModifiedDate: newdate
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri +"_auditpart_2"
+                    ),
+                ),
+                new PartitionDto(
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=3/p=2"),
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: metacatJson.emptyObjectNode().put('data_field_new', 10),
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdBy: "audit_process_2",
+                        createdDate: newdate,
+                        lastModifiedDate: newdate
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri +"_auditpart_2"
+                    ),
+                ),
+            ]
+        )
+        response = partitionApi.savePartitions(catalogName, "audit", auditableName, request_audit_3)
+
+        then:
+        response
+        response.added.size() == 0
+        response.updated.size() == 0
+
+        when:
+        partitions = partitionApi.getPartitions(catalogName, "audit", auditableName,null, null, null, null, null, true)
+        audit_part = partitions.find{item -> item.name.partitionName.equals("field1=1/p=2")}
+
+        then:
+        partitions
+        audit_part.dataMetadata.findValue('data_field_new').intValue() == 10
         where:
         catalog << TestCatalogs.supportAUDITTables(TestCatalogs.ALL);
     }

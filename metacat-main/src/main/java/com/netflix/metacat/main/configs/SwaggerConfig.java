@@ -19,6 +19,7 @@ package com.netflix.metacat.main.configs;
 
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.server.properties.Config;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -39,6 +40,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
  * @since 1.1.0
  */
 @Configuration
+@ConditionalOnProperty(value = "metacat.swagger.enabled", havingValue = "true")
 @EnableSwagger2
 @Import(BeanValidatorPluginsConfiguration.class)
 public class SwaggerConfig {
