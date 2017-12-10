@@ -1184,6 +1184,8 @@ class MetacatFunctionalSpec extends Specification {
         def olddate = new Date(1500000000)
         def databaseName = "test_db"
         def catalogName = catalog.name
+        //create the audit table
+        def auditableName =  databaseName+"__" + tableName + "__audit_12345"
         def dataUri = "file:/tmp/${catalogName}/${databaseName}/${tableName}".toString()
         ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
         ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
@@ -1275,7 +1277,23 @@ class MetacatFunctionalSpec extends Specification {
                         serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
                         uri: dataUri
                     ),
-                )
+                ),
+                new PartitionDto(
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=3/p=5"),
+                    definitionMetadata: definitionMetadata,
+                    dataMetadata: dataMetadata,
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdDate: olddate,
+                        lastModifiedDate: olddate
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: dataUri
+                    ),
+                ),
             ]
         )
 
@@ -1283,7 +1301,7 @@ class MetacatFunctionalSpec extends Specification {
             definitionMetadata: tableMetadata,
             partitions: [
                 new PartitionDto(
-                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=1/p=2"),
+                    name: QualifiedName.ofPartition(catalogName, "audit", auditableName, "field1=1/p=2"),
                     definitionMetadata: definitionMetadata,
                     dataMetadata: dataMetadata,
                     dataExternal: true,
@@ -1300,7 +1318,7 @@ class MetacatFunctionalSpec extends Specification {
                     ),
                 ),
                 new PartitionDto(
-                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=2/p=4"),
+                    name: QualifiedName.ofPartition(catalogName, "audit", auditableName, "field1=2/p=4"),
                     definitionMetadata: definitionMetadata,
                     dataMetadata: dataMetadata,
                     dataExternal: true,
@@ -1319,8 +1337,6 @@ class MetacatFunctionalSpec extends Specification {
             ]
         )
 
-        //create the audit table
-        def auditableName =  databaseName+"__" + tableName + "__audit_12345"
         when:
         try{
             api.createDatabase(catalogName, "test_db", new DatabaseCreateRequestDto())
@@ -1370,7 +1386,7 @@ class MetacatFunctionalSpec extends Specification {
             definitionMetadata: tableMetadata,
             partitions: [
                 new PartitionDto(
-                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=1/p=2"),
+                    name: QualifiedName.ofPartition(catalogName, "audit", auditableName, "field1=1/p=2"),
                     definitionMetadata: definitionMetadata,
                     dataMetadata: dataMetadata,
                     dataExternal: true,
@@ -1387,7 +1403,7 @@ class MetacatFunctionalSpec extends Specification {
                     ),
                 ),
                 new PartitionDto(
-                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=2/p=4"),
+                    name: QualifiedName.ofPartition(catalogName, "audit", auditableName, "field1=2/p=4"),
                     definitionMetadata: definitionMetadata,
                     dataMetadata: dataMetadata,
                     dataExternal: true,
@@ -1404,7 +1420,7 @@ class MetacatFunctionalSpec extends Specification {
                     ),
                 ),
                 new PartitionDto(
-                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "field1=3/p=2"),
+                    name: QualifiedName.ofPartition(catalogName, "audit", auditableName, "field1=3/p=2"),
                     definitionMetadata: definitionMetadata,
                     dataMetadata: dataMetadata,
                     dataExternal: true,

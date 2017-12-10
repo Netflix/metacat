@@ -463,6 +463,7 @@ class MetacatSmokeSpec extends Specification {
         'embedded-fast-hive-metastore'  | 'audit'           | 'fsmoke_db__part__audit_12345'
     }
 
+    @Ignore
     @Unroll
     def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
         expect:
@@ -540,6 +541,67 @@ class MetacatSmokeSpec extends Specification {
         's3-mysql-db'                   | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
         's3-mysql-db'                   | 'smoke_db'        | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
         's3-mysql-db'                   | 'invalid-catalog' | 'z'       | 'one=xyz'     | ''        | ''        | false  | false | MetacatNotFoundException.class
+    }
+
+    @Unroll
+    def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName using hivesave"() {
+        expect:
+        def uri = isLocalEnv ? 'file:/tmp/abc' : null
+        try {
+            createTable(catalogName, databaseName, tableName)
+            def partition = PigDataDtoProvider.getPartition(catalogName, databaseName, tableName, partitionName, uri)
+            def request = new PartitionsSaveRequestDto(partitions: [partition])
+            partitionApi.savePartitions(catalogName, databaseName, tableName, request)
+            if (repeat) {
+                partition.getSerde().setUri(partition.getSerde().getUri() + 0)
+                if (alter) {
+                    request.setAlterIfExists(true)
+                }
+                request.setDefinitionMetadata((ObjectNode) metacatJson.emptyObjectNode().set('savePartitions', metacatJson.emptyObjectNode()))
+                partitionApi.savePartitions(catalogName, databaseName, tableName, request)
+            }
+            error == null
+        } catch (Exception e) {
+            e.class == error
+        }
+        if (!error) {
+            //To test the case that double quoats are supported
+            def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionName.replace('=', '="') + '"', null, null, null, null, true)
+            assert partitions != null && partitions.size() == 1 && partitions.find {
+                it.name.partitionName == partitionName
+            } != null
+            def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: partitionName.replace('=', '="') + '"', includePartitionDetails: true))
+            assert partitionDetails != null && partitionDetails.size() == 1 && partitionDetails.find {
+                it.name.partitionName == partitionName
+            } != null && partitionDetails.size() == partitions.size() && partitionDetails.find {
+                it.name.partitionName == partitionName
+            }.getSerde().getSerdeInfoParameters().size() >= 1
+            if (repeat) {
+                assert api.getTable(catalogName, databaseName, tableName, false, true, false).getDefinitionMetadata().get('savePartitions') != null
+                assert partitions.get(0).dataUri == uri + 0
+            } else {
+                assert partitions.get(0).dataUri == uri
+            }
+        }
+        cleanup:
+        if (!error) {
+            partitionApi.deletePartitions(catalogName, databaseName, tableName, [partitionName])
+        }
+        where:
+        catalogName               | databaseName      | tableName | partitionName | repeat | alter | error
+        'embedded-hive-metastore' | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
+        'embedded-hive-metastore' | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
+        'embedded-hive-metastore' | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
+        'embedded-hive-metastore' | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
+        'hive-metastore'          | 'hsmoke_db'       | 'part'    | 'one=xyz'     | false  | false | null
+        'hive-metastore'          | 'hsmoke_db'       | 'part'    | 'one=xyz'     | true   | false | null
+        'hive-metastore'          | 'hsmoke_db'       | 'part'    | 'one=xyz'     | true   | true  | null
+        'hive-metastore'          | 'hsmoke_db'       | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
+        's3-mysql-db'             | 'smoke_db'        | 'part'    | 'one=xyz'     | false  | false | null
+        's3-mysql-db'             | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | true  | null
+        's3-mysql-db'             | 'smoke_db'        | 'part'    | 'one=xyz'     | true   | false | null
+        's3-mysql-db'             | 'smoke_db'        | 'part'    | 'two=xyz'     | false  | false | MetacatBadRequestException.class
+        's3-mysql-db'             | 'invalid-catalog' | 'z'       | 'one=xyz'     | false  | false | MetacatNotFoundException.class
     }
 
     @Unroll
