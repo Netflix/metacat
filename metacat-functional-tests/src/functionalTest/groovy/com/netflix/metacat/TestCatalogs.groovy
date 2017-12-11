@@ -54,7 +54,8 @@ class TestCatalogs {
             partitionKeysAppearLast: true,
             type: 'hive',
             createView: true,
-            validateFilterExpressionBasedOnPartitionKeyType: false
+            validateFilterExpressionBasedOnPartitionKeyType: false,
+            supportAUDITtables: true
         ),
         new TestCatalog(
             createDatabase: true,
