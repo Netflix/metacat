@@ -423,7 +423,6 @@ class MetacatSmokeSpec extends Specification {
         's3-mysql-db'                   | 'smoke_db'        | 'part'
     }
 
-    @Ignore
     @Unroll
     def "Test get AUDIT table partitions for #catalogName/#databaseName/#tableName"() {
         def partRequestDto = new PartitionsSaveRequestDto(
