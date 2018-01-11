@@ -54,19 +54,19 @@ class DirectSqlSavePartitionSpec extends Specification {
         when:
         service.insert(qualifiedName, table, partitionInfos)
         then:
-        1 * jdbcTemplate.queryForObject(DirectSqlSavePartition.SQL.TABLE_SELECT,_,_) >> { throw new EmptyResultDataAccessException(1)}
+        1 * jdbcTemplate.queryForObject(DirectSqlSavePartition.SQL.TABLE_SELECT, _, _) >> { throw new EmptyResultDataAccessException(1)}
         thrown(TableNotFoundException)
         when:
         service.insert(qualifiedName, table, invalidPartitionInfos)
         then:
         1 * jdbcTemplate.queryForObject(DirectSqlSavePartition.SQL.TABLE_SELECT,_,_) >> new TableSequenceIds(1,1)
-        1 * jdbcTemplate.query(SequenceGeneration.SQL.SEQUENCE_NEXT_VAL,_,_)
+        3 * jdbcTemplate.queryForObject(SequenceGeneration.SQL.SEQUENCE_NEXT_VAL_BYNAME,_,_)
         thrown(InvalidMetaException)
         when:
         service.insert(qualifiedName, table, partitionInfos)
         then:
         1 * jdbcTemplate.queryForObject(DirectSqlSavePartition.SQL.TABLE_SELECT,_,_) >> new TableSequenceIds(1,1)
-        1 * jdbcTemplate.query(SequenceGeneration.SQL.SEQUENCE_NEXT_VAL,_,_)
+        3 * jdbcTemplate.queryForObject(SequenceGeneration.SQL.SEQUENCE_NEXT_VAL_BYNAME,_,_)
         noExceptionThrown()
     }
 
@@ -107,9 +107,9 @@ class DirectSqlSavePartitionSpec extends Specification {
         service.addUpdateDropPartitions(qualifiedName, table, partitionInfos, partitionHolders, new HashSet<String>(partitionNames))
         then:
         1 * jdbcTemplate.queryForObject(DirectSqlSavePartition.SQL.TABLE_SELECT,_,_) >> new TableSequenceIds(1,1)
-        1 * jdbcTemplate.query(SequenceGeneration.SQL.SEQUENCE_NEXT_VAL,_,_)
+        3 * jdbcTemplate.queryForObject(SequenceGeneration.SQL.SEQUENCE_NEXT_VAL_BYNAME,_,_)
         1 * jdbcTemplate.query(_,_,_) >> [new PartitionSequenceIds()]
-        6 * jdbcTemplate.update(_,_)
+        9 * jdbcTemplate.update(_,_)
         noExceptionThrown()
     }
 }
