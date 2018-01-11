@@ -63,13 +63,14 @@ public class DirectSqlSavePartition {
     /**
      * Constructor.
      *
-     * @param connectorContext     connector context
-     * @param jdbcTemplate         JDBC template
-     * @param sequenceGeneration    sequence generator
-     * @param fastServiceMetric     fast service metric
+     * @param connectorContext   connector context
+     * @param jdbcTemplate       JDBC template
+     * @param sequenceGeneration sequence generator
+     * @param fastServiceMetric  fast service metric
      */
     public DirectSqlSavePartition(final ConnectorContext connectorContext, final JdbcTemplate jdbcTemplate,
-        final SequenceGeneration sequenceGeneration, final HiveConnectorFastServiceMetric fastServiceMetric) {
+                                  final SequenceGeneration sequenceGeneration,
+                                  final HiveConnectorFastServiceMetric fastServiceMetric) {
         this.registry = connectorContext.getRegistry();
         this.catalogName = connectorContext.getCatalogName();
         this.batchSize = connectorContext.getConfig().getHiveMetastoreBatchSize();
@@ -83,7 +84,7 @@ public class DirectSqlSavePartition {
      * Note: Column descriptor of the partitions will be set to that of the table.
      *
      * @param tableQName table name
-     * @param table hive table
+     * @param table      hive table
      * @param partitions list of partitions
      */
     public void insert(final QualifiedName tableQName, final Table table, final List<PartitionInfo> partitions) {
@@ -93,7 +94,7 @@ public class DirectSqlSavePartition {
             final TableSequenceIds tableSequenceIds = getTableSequenceIds(table.getDbName(), table.getTableName());
             // Get the sequence ids and lock the records in the database
             final PartitionSequenceIds partitionSequenceIds =
-                sequenceGeneration.newPartitionSequenceIds(partitions.size());
+                this.getPartitionSequenceIds(partitions.size());
             final List<List<PartitionInfo>> subPartitionList = Lists.partition(partitions, batchSize);
             // Use the current time for create and update time.
             final long currentTimeInEpoch = Instant.now().getEpochSecond();
@@ -110,10 +111,19 @@ public class DirectSqlSavePartition {
         }
     }
 
+    private PartitionSequenceIds getPartitionSequenceIds(final int size) {
+        return new PartitionSequenceIds(sequenceGeneration.newPartitionSequenceIdByName(size,
+            SequenceGeneration.SEQUENCE_NAME_PARTITION),
+            sequenceGeneration.newPartitionSequenceIdByName(size,
+                SequenceGeneration.SEQUENCE_NAME_SDS),
+            sequenceGeneration.newPartitionSequenceIdByName(size,
+                SequenceGeneration.SEQUENCE_NAME_SERDES));
+    }
+
     @SuppressWarnings("checkstyle:methodname")
     private void _insert(final QualifiedName tableQName, final Table table, final TableSequenceIds tableSequenceIds,
-        final PartitionSequenceIds partitionSequenceIds, final List<PartitionInfo> partitions,
-        final long currentTimeInEpoch, final int index) {
+                         final PartitionSequenceIds partitionSequenceIds, final List<PartitionInfo> partitions,
+                         final long currentTimeInEpoch, final int index) {
         final List<Object[]> serdesValues = Lists.newArrayList();
         final List<Object[]> serdeParamsValues = Lists.newArrayList();
         final List<Object[]> sdsValues = Lists.newArrayList();
@@ -122,32 +132,32 @@ public class DirectSqlSavePartition {
         final List<Object[]> partitionKeyValsValues = Lists.newArrayList();
         final List<String> partitionNames = Lists.newArrayList();
         int currentIndex = index;
-        for (PartitionInfo partition: partitions) {
+        for (PartitionInfo partition : partitions) {
             final StorageInfo storageInfo = partition.getSerde();
-            final long partId = partitionSequenceIds.getPartId() +  currentIndex;
-            final long sdsId = partitionSequenceIds.getSdsId() +  currentIndex;
-            final long serdeId = partitionSequenceIds.getSerdeId() +  currentIndex;
+            final long partId = partitionSequenceIds.getPartId() + currentIndex;
+            final long sdsId = partitionSequenceIds.getSdsId() + currentIndex;
+            final long serdeId = partitionSequenceIds.getSerdeId() + currentIndex;
             final String partitionName = partition.getName().getPartitionName();
             final List<String> partValues = PartitionUtil.getPartValuesFromPartName(tableQName, table, partitionName);
             final String escapedPartName = PartitionUtil.makePartName(table.getPartitionKeys(), partValues);
             partitionsValues.add(new Object[]{0, tableSequenceIds.getTableId(), currentTimeInEpoch,
                 sdsId, escapedPartName, partId, });
             for (int i = 0; i < partValues.size(); i++) {
-                partitionKeyValsValues.add(new Object[] {partId, partValues.get(i), i});
+                partitionKeyValsValues.add(new Object[]{partId, partValues.get(i), i});
             }
             // Partition parameters
             final Map<String, String> parameters = partition.getMetadata();
             if (parameters != null) {
                 parameters
-                    .forEach((key, value) -> partitionParamsValues.add(new Object[] {value, partId, key }));
+                    .forEach((key, value) -> partitionParamsValues.add(new Object[]{value, partId, key}));
             }
-            partitionParamsValues.add(new Object[] {currentTimeInEpoch, partId, PARAM_LAST_DDL_TIME });
+            partitionParamsValues.add(new Object[]{currentTimeInEpoch, partId, PARAM_LAST_DDL_TIME});
             if (storageInfo != null) {
                 serdesValues.add(new Object[]{null, storageInfo.getSerializationLib(), serdeId});
                 final Map<String, String> serdeInfoParameters = storageInfo.getSerdeInfoParameters();
                 if (serdeInfoParameters != null) {
                     serdeInfoParameters
-                        .forEach((key, value) -> serdeParamsValues.add(new Object[] {value, serdeId, key }));
+                        .forEach((key, value) -> serdeParamsValues.add(new Object[]{value, serdeId, key}));
                 }
                 sdsValues.add(new Object[]{storageInfo.getOutputFormat(), false, tableSequenceIds.getCdId(),
                     false, serdeId, storageInfo.getUri(), storageInfo.getInputFormat(), 0, sdsId, });
@@ -157,18 +167,18 @@ public class DirectSqlSavePartition {
         }
         try {
             jdbcTemplate.batchUpdate(SQL.SERDES_INSERT, serdesValues,
-                new int[] {Types.VARCHAR, Types.VARCHAR, Types.BIGINT });
+                new int[]{Types.VARCHAR, Types.VARCHAR, Types.BIGINT});
             jdbcTemplate.batchUpdate(SQL.SERDE_PARAMS_INSERT, serdeParamsValues,
-                new int[] {Types.VARCHAR, Types.BIGINT, Types.VARCHAR });
+                new int[]{Types.VARCHAR, Types.BIGINT, Types.VARCHAR});
             jdbcTemplate.batchUpdate(SQL.SDS_INSERT, sdsValues,
-                new int[] {Types.VARCHAR, Types.BOOLEAN, Types.BIGINT, Types.BOOLEAN,
+                new int[]{Types.VARCHAR, Types.BOOLEAN, Types.BIGINT, Types.BOOLEAN,
                     Types.BIGINT, Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.BIGINT, });
             jdbcTemplate.batchUpdate(SQL.PARTITIONS_INSERT, partitionsValues,
-                new int[] {Types.INTEGER, Types.BIGINT, Types.INTEGER, Types.BIGINT, Types.VARCHAR, Types.BIGINT });
+                new int[]{Types.INTEGER, Types.BIGINT, Types.INTEGER, Types.BIGINT, Types.VARCHAR, Types.BIGINT});
             jdbcTemplate.batchUpdate(SQL.PARTITION_PARAMS_INSERT, partitionParamsValues,
-                new int[] {Types.VARCHAR, Types.BIGINT, Types.VARCHAR });
+                new int[]{Types.VARCHAR, Types.BIGINT, Types.VARCHAR});
             jdbcTemplate.batchUpdate(SQL.PARTITION_KEY_VALS_INSERT, partitionKeyValsValues,
-                new int[] {Types.BIGINT, Types.VARCHAR, Types.INTEGER });
+                new int[]{Types.BIGINT, Types.VARCHAR, Types.INTEGER});
         } catch (DuplicateKeyException e) {
             throw new PartitionAlreadyExistsException(tableQName, partitionNames, e);
         } catch (Exception e) {
@@ -180,7 +190,7 @@ public class DirectSqlSavePartition {
     private TableSequenceIds getTableSequenceIds(final String dbName, final String tableName) {
         try {
             return jdbcTemplate.queryForObject(SQL.TABLE_SELECT,
-                new SqlParameterValue[] {new SqlParameterValue(Types.VARCHAR, dbName),
+                new SqlParameterValue[]{new SqlParameterValue(Types.VARCHAR, dbName),
                     new SqlParameterValue(Types.VARCHAR, tableName), },
                 (rs, rowNum) -> new TableSequenceIds(rs.getLong("tbl_id"), rs.getLong("cd_id")));
         } catch (EmptyResultDataAccessException e) {
@@ -195,7 +205,7 @@ public class DirectSqlSavePartition {
      * validate to check if it exists.
      * Note: Column descriptor of the partitions will not be updated.
      *
-     * @param tableQName  table name
+     * @param tableQName       table name
      * @param partitionHolders list of partitions
      */
     public void update(final QualifiedName tableQName, final List<PartitionHolder> partitionHolders) {
@@ -214,7 +224,7 @@ public class DirectSqlSavePartition {
 
     @SuppressWarnings("checkstyle:methodname")
     private void _update(final QualifiedName tableQName, final List<PartitionHolder> partitionHolders,
-        final long currentTimeInEpoch) {
+                         final long currentTimeInEpoch) {
         final List<Object[]> serdesValues = Lists.newArrayList();
         final List<Object[]> serdeParamsValues = Lists.newArrayList();
         final List<Object[]> sdsValues = Lists.newArrayList();
@@ -230,16 +240,16 @@ public class DirectSqlSavePartition {
             final Map<String, String> parameters = partition.getMetadata();
             if (parameters != null) {
                 parameters
-                    .forEach((key, value) -> partitionParamsValues.add(new Object[] {value, partId, key, value }));
+                    .forEach((key, value) -> partitionParamsValues.add(new Object[]{value, partId, key, value}));
             }
             partitionParamsValues.add(
-                new Object[] {currentTimeInEpoch, partId, PARAM_LAST_DDL_TIME, currentTimeInEpoch });
+                new Object[]{currentTimeInEpoch, partId, PARAM_LAST_DDL_TIME, currentTimeInEpoch});
             if (storageInfo != null) {
                 serdesValues.add(new Object[]{null, storageInfo.getSerializationLib(), serdeId});
                 final Map<String, String> serdeInfoParameters = storageInfo.getSerdeInfoParameters();
                 if (serdeInfoParameters != null) {
                     serdeInfoParameters
-                        .forEach((key, value) -> serdeParamsValues.add(new Object[] {value, serdeId, key, value }));
+                        .forEach((key, value) -> serdeParamsValues.add(new Object[]{value, serdeId, key, value}));
                 }
                 sdsValues.add(new Object[]{storageInfo.getOutputFormat(), false, false, storageInfo.getUri(),
                     storageInfo.getInputFormat(), sdsId, });
@@ -248,13 +258,13 @@ public class DirectSqlSavePartition {
         }
         try {
             jdbcTemplate.batchUpdate(SQL.SERDES_UPDATE, serdesValues,
-                new int[] {Types.VARCHAR, Types.VARCHAR, Types.BIGINT });
+                new int[]{Types.VARCHAR, Types.VARCHAR, Types.BIGINT});
             jdbcTemplate.batchUpdate(SQL.SERDE_PARAMS_INSERT_UPDATE, serdeParamsValues,
-                new int[] {Types.VARCHAR, Types.BIGINT, Types.VARCHAR, Types.VARCHAR });
+                new int[]{Types.VARCHAR, Types.BIGINT, Types.VARCHAR, Types.VARCHAR});
             jdbcTemplate.batchUpdate(SQL.SDS_UPDATE, sdsValues,
-                new int[] {Types.VARCHAR, Types.BOOLEAN, Types.BOOLEAN, Types.VARCHAR, Types.VARCHAR, Types.BIGINT });
+                new int[]{Types.VARCHAR, Types.BOOLEAN, Types.BOOLEAN, Types.VARCHAR, Types.VARCHAR, Types.BIGINT});
             jdbcTemplate.batchUpdate(SQL.PARTITION_PARAMS_INSERT_UPDATE, partitionParamsValues,
-                new int[] {Types.VARCHAR, Types.BIGINT, Types.VARCHAR, Types.VARCHAR });
+                new int[]{Types.VARCHAR, Types.BIGINT, Types.VARCHAR, Types.VARCHAR});
         } catch (DuplicateKeyException e) {
             throw new PartitionAlreadyExistsException(tableQName, partitionNames, e);
         } catch (Exception e) {
@@ -266,7 +276,7 @@ public class DirectSqlSavePartition {
     /**
      * Delete the partitions with the given <code>partitionNames</code>.
      *
-     * @param tableQName table name
+     * @param tableQName     table name
      * @param partitionNames list of partition ids
      */
     public void delete(final QualifiedName tableQName, final List<String> partitionNames) {
@@ -296,14 +306,14 @@ public class DirectSqlSavePartition {
     }
 
     private List<PartitionSequenceIds> getPartitionSequenceIds(final QualifiedName tableName,
-        final List<String> partitionNames) {
+                                                               final List<String> partitionNames) {
         final List<String> paramVariables = partitionNames.stream().map(s -> "?").collect(Collectors.toList());
         final String paramVariableString = Joiner.on(",").skipNulls().join(paramVariables);
         final SqlParameterValue[] values = new SqlParameterValue[partitionNames.size() + 2];
         int index = 0;
         values[index++] = new SqlParameterValue(Types.VARCHAR, tableName.getDatabaseName());
         values[index++] = new SqlParameterValue(Types.VARCHAR, tableName.getTableName());
-        for (String partitionName: partitionNames) {
+        for (String partitionName : partitionNames) {
             values[index++] = new SqlParameterValue(Types.VARCHAR, partitionName);
         }
         return jdbcTemplate.query(
@@ -343,15 +353,16 @@ public class DirectSqlSavePartition {
     /**
      * Drops, updates and adds partitions for a table.
      *
-     * @param tableQName                table name
-     * @param table                     table
-     * @param addedPartitionInfos       new partitions to be added
-     * @param existingPartitionHolders  existing partitions to be altered/updated
-     * @param deletePartitionNames      existing partitions to be dropped
+     * @param tableQName               table name
+     * @param table                    table
+     * @param addedPartitionInfos      new partitions to be added
+     * @param existingPartitionHolders existing partitions to be altered/updated
+     * @param deletePartitionNames     existing partitions to be dropped
      */
     public void addUpdateDropPartitions(final QualifiedName tableQName, final Table table,
-        final List<PartitionInfo> addedPartitionInfos,
-        final List<PartitionHolder> existingPartitionHolders, final Set<String> deletePartitionNames) {
+                                        final List<PartitionInfo> addedPartitionInfos,
+                                        final List<PartitionHolder> existingPartitionHolders,
+                                        final Set<String> deletePartitionNames) {
         final long start = registry.clock().wallTime();
         try {
             if (!deletePartitionNames.isEmpty()) {
