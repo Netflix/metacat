@@ -606,7 +606,7 @@ class ElasticSearchUtilSpec extends Specification {
         nodes.get("timestamp") != null
         nodes.get("user_") != null
         nodes.get("deleted_") != null
-        nodes.get(ElasticSearchDocConstants.DEFINITION_METADATA).size() == 20
+        nodes.get(ElasticSearchDocConstants.DEFINITION_METADATA).size() == 18
         nodes.get(ElasticSearchDoc.Field.SEARCHABLE_DEFINITION_METADATA).size() == 14
     }
 }

@@ -260,9 +260,14 @@ public class HiveConnectorTableService implements ConnectorTableService {
      */
     @Override
     public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
+        final Table existingTable = hiveMetacatConverters.fromTableInfo(get(requestContext, tableInfo.getName()));
+        update(requestContext, existingTable, tableInfo);
+    }
+
+    protected void update(final ConnectorRequestContext requestContext,
+                          final Table existingTable, final TableInfo tableInfo) {
         final QualifiedName tableName = tableInfo.getName();
         try {
-            final Table existingTable = hiveMetacatConverters.fromTableInfo(get(requestContext, tableInfo.getName()));
             if (existingTable.getTableType().equals(TableType.VIRTUAL_VIEW.name())) {
                 throw new TableNotFoundException(tableName);
             }

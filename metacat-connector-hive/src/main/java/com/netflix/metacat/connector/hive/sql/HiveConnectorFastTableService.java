@@ -16,29 +16,24 @@
 
 package com.netflix.metacat.connector.hive.sql;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
+import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
-import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.SqlParameterValue;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Types;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * HiveConnectorFastTableService.
@@ -47,16 +42,14 @@ import java.util.Map;
  * @since 1.0.0
  */
 @Slf4j
-@Transactional("hiveTxManager")
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
-    private static final String SQL_GET_TABLE_NAMES_BY_URI =
-        "select d.name schema_name, t.tbl_name table_name, s.location"
-            + " from DBS d, TBLS t, SDS s where d.DB_ID=t.DB_ID and t.sd_id=s.sd_id";
-    private static final String SQL_EXIST_TABLE_BY_NAME =
-        "select 1 from DBS d join TBLS t on d.DB_ID=t.DB_ID where d.name=? and t.tbl_name=?";
+    private static final String PARAM_TABLE_TYPE = "table_type";
+    private static final String PARAM_METADATA_LOCATION = "metadata_location";
+    private static final String PARAM_PREVIOUS_METADATA_LOCATION = "previous_metadata_location";
+    private static final String ICEBERG_TABLE_TYPE = "iceberg";
+
     private final Registry registry;
-    private JdbcTemplate jdbcTemplate;
-    private final HiveConnectorFastServiceMetric fastServiceMetric;
+    private final DirectSqlTable directSqlTable;
 
     /**
      * Constructor.
@@ -66,8 +59,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param hiveConnectorDatabaseService databaseService
      * @param hiveMetacatConverters        hive converter
      * @param connectorContext             serverContext
-     * @param jdbcTemplate                 JDBC template
-     * @param fastServiceMetric     fast service metric
+     * @param directSqlTable               Table jpa service
      */
     @Autowired
     public HiveConnectorFastTableService(
@@ -76,13 +68,11 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final ConnectorContext connectorContext,
-        final JdbcTemplate jdbcTemplate,
-        final HiveConnectorFastServiceMetric fastServiceMetric
+        final DirectSqlTable directSqlTable
     ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, connectorContext);
         this.registry = connectorContext.getRegistry();
-        this.jdbcTemplate = jdbcTemplate;
-        this.fastServiceMetric = fastServiceMetric;
+        this.directSqlTable = directSqlTable;
     }
 
     /**
@@ -90,22 +80,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      */
     @Override
     public boolean exists(final ConnectorRequestContext requestContext, final QualifiedName name) {
-        final long start = registry.clock().wallTime();
-        boolean result = false;
-        try {
-            final Object qResult = jdbcTemplate.queryForObject(SQL_EXIST_TABLE_BY_NAME,
-                new String[]{name.getDatabaseName(), name.getTableName()},
-                new int[]{Types.VARCHAR, Types.VARCHAR}, Integer.class);
-            if (qResult != null) {
-                result = true;
-            }
-        } catch (EmptyResultDataAccessException e) {
-            return false;
-        } finally {
-            this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagTableExists.getMetricName(), registry.clock().wallTime() - start);
-        }
-        return result;
+        return directSqlTable.exists(name);
     }
 
     @Override
@@ -114,43 +89,59 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final List<String> uris,
         final boolean prefixSearch
     ) {
-        final long start = registry.clock().wallTime();
-        // Create the sql
-        final StringBuilder queryBuilder = new StringBuilder(SQL_GET_TABLE_NAMES_BY_URI);
-        final List<SqlParameterValue> params = Lists.newArrayList();
-        if (prefixSearch) {
-            queryBuilder.append(" and (1=0");
-            uris.forEach(uri -> {
-                queryBuilder.append(" or location like ?");
-                params.add(new SqlParameterValue(Types.VARCHAR, uri + "%"));
-            });
-            queryBuilder.append(" )");
-        } else {
-            queryBuilder.append(" and location in (");
-            uris.forEach(uri -> {
-                queryBuilder.append("?,");
-                params.add(new SqlParameterValue(Types.VARCHAR, uri));
-            });
-            queryBuilder.deleteCharAt(queryBuilder.length() - 1).append(")");
-        }
-        final Map<String, List<QualifiedName>> result = Maps.newHashMap();
-        ResultSetExtractor<Map<String, List<QualifiedName>>> handler = rs -> {
-            while (rs.next()) {
-                final String schemaName = rs.getString("schema_name");
-                final String tableName = rs.getString("table_name");
-                final String uri = rs.getString("location");
-                final List<QualifiedName> names = result.computeIfAbsent(uri, k -> Lists.newArrayList());
-                names.add(QualifiedName.ofTable(this.getCatalogName(), schemaName, tableName));
-            }
-            return result;
-        };
-        try {
-            jdbcTemplate.query(queryBuilder.toString(), params.toArray(), handler);
-        } finally {
-            this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagGetTableNames.getMetricName(), registry.clock().wallTime() - start);
-        }
-        return result;
+        return directSqlTable.getTableNames(uris, prefixSearch);
     }
 
+    /**
+     * Update a table with the given metadata.
+     *
+     * If table is an iceberg table, then lock the table for update so that no other request can update it. If the meta
+     * information is invalid, then throw an error.
+     * If table is not an iceberg table, then do a regular table update.
+     *
+     * @param requestContext The request context
+     * @param tableInfo      The resource metadata
+     */
+    @Override
+    public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
+        if (isIcebergTable(tableInfo)) {
+            final QualifiedName tableName = tableInfo.getName();
+            final Long tableId = directSqlTable.getTableId(tableName);
+            try {
+                directSqlTable.lockIcebergTable(tableId);
+                try {
+                    final TableInfo existingTableInfo = get(requestContext, tableInfo.getName());
+                    if (isIcebergTable(existingTableInfo) && isValidIcebergUpdate(existingTableInfo, tableInfo)) {
+                        final Table existingTable = getHiveMetacatConverters().fromTableInfo(existingTableInfo);
+                        super.update(requestContext, existingTable, tableInfo);
+                    } else {
+                        throw new IllegalStateException("Invalid iceberg table metadata");
+                    }
+                } finally {
+                    directSqlTable.unlockIcebergTable(tableId);
+                }
+            } catch (IllegalStateException e) {
+                throw new TablePreconditionFailedException(tableName, e.getMessage());
+            }
+        } else {
+            super.update(requestContext, tableInfo);
+        }
+    }
+
+    private boolean isValidIcebergUpdate(final TableInfo existingTableInfo, final TableInfo newTableInfo) {
+        final Map<String, String> existingMetadata = existingTableInfo.getMetadata();
+        final Map<String, String> newMetadata = newTableInfo.getMetadata();
+        if (StringUtils.isNotBlank(existingMetadata.get(PARAM_METADATA_LOCATION))
+            && Objects.equals(existingMetadata.get(PARAM_METADATA_LOCATION),
+            newMetadata.get(PARAM_PREVIOUS_METADATA_LOCATION))) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isIcebergTable(final TableInfo tableInfo) {
+        return tableInfo.getMetadata() != null
+            && tableInfo.getMetadata().containsKey(PARAM_TABLE_TYPE)
+            && ICEBERG_TABLE_TYPE.equals(tableInfo.getMetadata().get(PARAM_TABLE_TYPE));
+    }
 }

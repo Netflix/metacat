@@ -24,6 +24,7 @@ import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
+import com.netflix.metacat.common.exception.MetacatPreconditionFailedException;
 import com.netflix.metacat.common.exception.MetacatUserMetadataException;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
@@ -31,6 +32,7 @@ import com.netflix.metacat.common.server.connectors.exception.InvalidMetaExcepti
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.PartitionAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExistsException;
+import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import com.netflix.spectator.api.Id;
@@ -127,6 +129,11 @@ public final class RequestWrapper {
             collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             log.error(e.getMessage(), e);
             throw new MetacatBadRequestException(
+                String.format("%s.%s", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage()));
+        } catch (TablePreconditionFailedException e) {
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
+            log.error(e.getMessage(), e);
+            throw new MetacatPreconditionFailedException(
                 String.format("%s.%s", e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (ConnectorException e) {
             collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());

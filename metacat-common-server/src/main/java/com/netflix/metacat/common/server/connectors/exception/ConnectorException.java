@@ -30,6 +30,15 @@ public class ConnectorException extends RuntimeException {
      * Constructor.
      *
      * @param message message
+     */
+    public ConnectorException(final String message) {
+        super(message);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param message message
      * @param cause   cause
      */
     public ConnectorException(final String message, @Nullable final Throwable cause) {

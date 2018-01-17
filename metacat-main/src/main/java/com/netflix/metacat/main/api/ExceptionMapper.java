@@ -22,6 +22,7 @@ import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
+import com.netflix.metacat.common.exception.MetacatPreconditionFailedException;
 import com.netflix.metacat.common.exception.MetacatUserMetadataException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -58,6 +59,8 @@ public class ExceptionMapper {
             status = HttpStatus.CONFLICT.value();
         } else if (e instanceof MetacatBadRequestException) {
             status = HttpStatus.BAD_REQUEST.value();
+        } else if (e instanceof MetacatPreconditionFailedException) {
+            status = HttpStatus.PRECONDITION_FAILED.value();
         } else if (e instanceof MetacatNotFoundException) {
             status = HttpStatus.NOT_FOUND.value();
         } else if (e instanceof MetacatNotSupportedException) {

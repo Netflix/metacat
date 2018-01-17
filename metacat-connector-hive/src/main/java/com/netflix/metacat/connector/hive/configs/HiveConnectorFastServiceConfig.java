@@ -16,14 +16,15 @@ package com.netflix.metacat.connector.hive.configs;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
-import com.netflix.metacat.connector.hive.sql.DirectSqlGetPartition;
-import com.netflix.metacat.connector.hive.sql.DirectSqlSavePartition;
-import com.netflix.metacat.connector.hive.sql.HiveConnectorFastPartitionService;
-import com.netflix.metacat.connector.hive.sql.HiveConnectorFastTableService;
 import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.sql.DirectSqlGetPartition;
+import com.netflix.metacat.connector.hive.sql.DirectSqlSavePartition;
+import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
+import com.netflix.metacat.connector.hive.sql.HiveConnectorFastPartitionService;
+import com.netflix.metacat.connector.hive.sql.HiveConnectorFastTableService;
 import com.netflix.metacat.connector.hive.sql.SequenceGeneration;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import org.apache.hadoop.hive.metastore.Warehouse;
@@ -152,14 +153,34 @@ public class HiveConnectorFastServiceConfig {
     }
 
     /**
+     * Service to get partitions.
+     *
+     * @param connectorContext     connector config
+     * @param hiveJdbcTemplate     hive JDBC template
+     * @param serviceMetric        fast service metric
+     * @return HiveConnectorPartitionService
+     */
+    @Bean
+    public DirectSqlTable directSqlTable(
+        final ConnectorContext connectorContext,
+        @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
+        final HiveConnectorFastServiceMetric serviceMetric
+    ) {
+        return new DirectSqlTable(
+            connectorContext,
+            hiveJdbcTemplate,
+            serviceMetric
+        );
+    }
+
+    /**
      * create hive connector fast table service.
      *
      * @param metacatHiveClient            metacat hive client
      * @param hiveMetacatConverters        hive metacat converters
      * @param hiveConnectorDatabaseService hive database service
      * @param connectorContext             server context
-     * @param hiveJdbcTemplate             hive JDBC template
-     * @param serviceMetric                fast service metric
+     * @param directSqlTable               table jpa service
      * @return HiveConnectorFastTableService
      */
     @Bean
@@ -168,8 +189,7 @@ public class HiveConnectorFastServiceConfig {
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final ConnectorContext connectorContext,
-        @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
-        final HiveConnectorFastServiceMetric serviceMetric
+        final DirectSqlTable directSqlTable
     ) {
         return new HiveConnectorFastTableService(
             connectorContext.getCatalogName(),
@@ -177,8 +197,7 @@ public class HiveConnectorFastServiceConfig {
             hiveConnectorDatabaseService,
             hiveMetacatConverters,
             connectorContext,
-            hiveJdbcTemplate,
-            serviceMetric
+            directSqlTable
         );
     }
 }

@@ -33,6 +33,7 @@ import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
 import com.netflix.metacat.common.exception.MetacatBadRequestException
 import com.netflix.metacat.common.exception.MetacatNotFoundException
 import com.netflix.metacat.common.exception.MetacatNotSupportedException
+import com.netflix.metacat.common.exception.MetacatPreconditionFailedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
@@ -259,6 +260,48 @@ class MetacatSmokeSpec extends Specification {
         's3-mysql-db'                   | 'smoke_db1'  | 'test_create_table.knp' | true   | false   | null   //verify the table name can have knp extension
         's3-mysql-db'                   | 'smoke_db1'  | 'test_create_table.mp3' | true   | false   | null   //verify the table name can have knp extension
         'invalid-catalog'               | 'smoke_db1'  | 'z'                 | true   | false   | MetacatNotFoundException.class
+    }
+
+    @Unroll
+    def "Test create/update iceberg table"() {
+        given:
+        def catalogName = 'embedded-fast-hive-metastore'
+        def databaseName = 'iceberg_db'
+        def tableName = 'iceberg_table'
+        def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
+        def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
+        def metadataLocation = String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'iceberg.0')
+        def metadata = [table_type: 'iceberg', metadata_location: metadataLocation]
+        tableDto.setMetadata(metadata)
+        when:
+        // Updating an non-iceberg table with iceberg metadata should fail
+        createTable(catalogName, databaseName, tableName)
+        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        then:
+        thrown(MetacatPreconditionFailedException)
+        when:
+        api.deleteTable(catalogName, databaseName, tableName)
+        api.createTable(catalogName, databaseName, tableName, tableDto)
+        def metadataLocation1 = String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'iceberg.1')
+        def metadata1 = [table_type: 'iceberg', metadata_location: metadataLocation1, previous_metadata_location: metadataLocation]
+        tableDto.getMetadata().putAll(metadata1)
+        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        then:
+        noExceptionThrown()
+        when:
+        def metadataLocation2 = String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'iceberg.2')
+        def metadata2 = [table_type: 'iceberg', metadata_location: metadataLocation2, previous_metadata_location: metadataLocation1]
+        tableDto.getMetadata().putAll(metadata2)
+        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        then:
+        noExceptionThrown()
+        when:
+        tableDto.getMetadata().putAll(metadata1)
+        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        then:
+        thrown(MetacatPreconditionFailedException)
+        cleanup:
+        api.deleteTable(catalogName, databaseName, tableName)
     }
 
     @Unroll
