@@ -271,7 +271,7 @@ class MetacatSmokeSpec extends Specification {
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         def metadataLocation = String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'iceberg.0')
-        def metadata = [table_type: 'iceberg', metadata_location: metadataLocation]
+        def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
         when:
         // Updating an non-iceberg table with iceberg metadata should fail
@@ -283,14 +283,14 @@ class MetacatSmokeSpec extends Specification {
         api.deleteTable(catalogName, databaseName, tableName)
         api.createTable(catalogName, databaseName, tableName, tableDto)
         def metadataLocation1 = String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'iceberg.1')
-        def metadata1 = [table_type: 'iceberg', metadata_location: metadataLocation1, previous_metadata_location: metadataLocation]
+        def metadata1 = [table_type: 'ICEBERG', metadata_location: metadataLocation1, previous_metadata_location: metadataLocation]
         tableDto.getMetadata().putAll(metadata1)
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:
         noExceptionThrown()
         when:
         def metadataLocation2 = String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'iceberg.2')
-        def metadata2 = [table_type: 'iceberg', metadata_location: metadataLocation2, previous_metadata_location: metadataLocation1]
+        def metadata2 = [table_type: 'ICEBERG', metadata_location: metadataLocation2, previous_metadata_location: metadataLocation1]
         tableDto.getMetadata().putAll(metadata2)
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:

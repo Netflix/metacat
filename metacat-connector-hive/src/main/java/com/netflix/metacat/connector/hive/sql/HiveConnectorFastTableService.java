@@ -108,7 +108,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
                 try {
                     final TableInfo existingTableInfo = get(requestContext, tableInfo.getName());
                     if (!isValidIcebergUpdate(existingTableInfo, tableInfo)) {
-                        throw new IllegalStateException("Invalid iceberg table metadata.");
+                        throw new IllegalStateException("Invalid iceberg table metadata. "
+                            + "Existing metadata location does not match the given previous metadata location");
                     } else {
                         final Table existingTable = getHiveMetacatConverters().fromTableInfo(existingTableInfo);
                         super.update(requestContext, existingTable, tableInfo);

@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright 2016 Netflix, Inc.
+ *  Copyright 2018 Netflix, Inc.
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ package com.netflix.metacat.common.exception;
 /**
  * Exception when operation failed precondition. Ex. if a locked table is updated, this exception will be thrown.
  *
+ * @since 1.2.0
  * @author amajumdar
  */
 public class MetacatPreconditionFailedException extends MetacatException {

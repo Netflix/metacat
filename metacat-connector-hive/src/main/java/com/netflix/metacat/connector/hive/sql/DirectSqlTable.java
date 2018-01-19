@@ -43,15 +43,18 @@ import java.util.Map;
  * This class makes direct sql calls to get/set table metadata.
  *
  * @author amajumdar
- * @since 1.1.1
+ * @since 1.2.0
  */
 @Slf4j
 @Transactional("hiveTxManager")
 public class DirectSqlTable {
+    /* Defines the table type. */
     protected static final String PARAM_TABLE_TYPE = "table_type";
+    /* Defines the current metadata location of the iceberg table. */
     protected static final String PARAM_METADATA_LOCATION = "metadata_location";
+    /* Defines the previous metadata location of the iceberg table. */
     protected static final String PARAM_PREVIOUS_METADATA_LOCATION = "previous_metadata_location";
-    protected static final String ICEBERG_TABLE_TYPE = "iceberg";
+    protected static final String ICEBERG_TABLE_TYPE = "ICEBERG";
     protected static final String PARAM_METADATA_LOCK = "metadata_lock";
     private final Registry registry;
     private final JdbcTemplate jdbcTemplate;
@@ -164,7 +167,9 @@ public class DirectSqlTable {
                     new SqlParameterValue(Types.VARCHAR, PARAM_TABLE_TYPE), }, String.class);
         } catch (EmptyResultDataAccessException ignored) { }
         if (tableType == null || !ICEBERG_TABLE_TYPE.equals(tableType)) {
-            throw new InvalidMetaException(tableName, "Originally table is not of type iceberg", null);
+            final String message = String.format("Originally table %s is not of type iceberg", tableName);
+            log.info(message);
+            throw new InvalidMetaException(tableName, message, null);
         }
         Boolean isLocked = null;
         try {
@@ -175,7 +180,9 @@ public class DirectSqlTable {
         if (isLocked == null) {
             insertTableParam(tableId, PARAM_METADATA_LOCK, 1);
         } else if (isLocked) {
-            throw new IllegalStateException("Iceberg table is locked.");
+            final String message = String.format("Iceberg table %s is locked.", tableName);
+            log.info(message);
+            throw new IllegalStateException(message);
         } else {
             updateTableParam(tableId, PARAM_METADATA_LOCK, 1);
         }
