@@ -153,7 +153,7 @@ public class HiveConnectorFastServiceConfig {
     }
 
     /**
-     * Service to get partitions.
+     * Data access service to get partitions.
      *
      * @param connectorContext     connector config
      * @param hiveJdbcTemplate     hive JDBC template

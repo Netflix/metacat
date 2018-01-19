@@ -278,7 +278,7 @@ class MetacatSmokeSpec extends Specification {
         createTable(catalogName, databaseName, tableName)
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:
-        thrown(MetacatPreconditionFailedException)
+        thrown(MetacatBadRequestException)
         when:
         api.deleteTable(catalogName, databaseName, tableName)
         api.createTable(catalogName, databaseName, tableName, tableDto)

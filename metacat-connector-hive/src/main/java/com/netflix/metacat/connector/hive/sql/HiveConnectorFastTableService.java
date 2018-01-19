@@ -43,11 +43,6 @@ import java.util.Objects;
  */
 @Slf4j
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
-    private static final String PARAM_TABLE_TYPE = "table_type";
-    private static final String PARAM_METADATA_LOCATION = "metadata_location";
-    private static final String PARAM_PREVIOUS_METADATA_LOCATION = "previous_metadata_location";
-    private static final String ICEBERG_TABLE_TYPE = "iceberg";
-
     private final Registry registry;
     private final DirectSqlTable directSqlTable;
 
@@ -108,17 +103,19 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             final QualifiedName tableName = tableInfo.getName();
             final Long tableId = directSqlTable.getTableId(tableName);
             try {
-                directSqlTable.lockIcebergTable(tableId);
+                log.debug("Locking Iceberg table {}", tableName);
+                directSqlTable.lockIcebergTable(tableId, tableName);
                 try {
                     final TableInfo existingTableInfo = get(requestContext, tableInfo.getName());
-                    if (isIcebergTable(existingTableInfo) && isValidIcebergUpdate(existingTableInfo, tableInfo)) {
+                    if (!isValidIcebergUpdate(existingTableInfo, tableInfo)) {
+                        throw new IllegalStateException("Invalid iceberg table metadata.");
+                    } else {
                         final Table existingTable = getHiveMetacatConverters().fromTableInfo(existingTableInfo);
                         super.update(requestContext, existingTable, tableInfo);
-                    } else {
-                        throw new IllegalStateException("Invalid iceberg table metadata");
                     }
                 } finally {
                     directSqlTable.unlockIcebergTable(tableId);
+                    log.debug("Unlocked Iceberg table {}", tableName);
                 }
             } catch (IllegalStateException e) {
                 throw new TablePreconditionFailedException(tableName, e.getMessage());
@@ -131,17 +128,23 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private boolean isValidIcebergUpdate(final TableInfo existingTableInfo, final TableInfo newTableInfo) {
         final Map<String, String> existingMetadata = existingTableInfo.getMetadata();
         final Map<String, String> newMetadata = newTableInfo.getMetadata();
-        if (StringUtils.isNotBlank(existingMetadata.get(PARAM_METADATA_LOCATION))
-            && Objects.equals(existingMetadata.get(PARAM_METADATA_LOCATION),
-            newMetadata.get(PARAM_PREVIOUS_METADATA_LOCATION))) {
+        final String existingMetadataLocation = existingMetadata != null
+            ? existingMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION) : null;
+        final String previousMetadataLocation = newMetadata != null
+            ? newMetadata.get(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION) : null;
+        if (StringUtils.isNotBlank(existingMetadataLocation)
+            && Objects.equals(existingMetadataLocation, previousMetadataLocation)) {
             return true;
+        } else {
+            log.info("Invalid iceberg table metadata location (expected:{}, given:{})",
+                existingMetadataLocation, previousMetadataLocation);
+            return false;
         }
-        return false;
     }
 
     private boolean isIcebergTable(final TableInfo tableInfo) {
         return tableInfo.getMetadata() != null
-            && tableInfo.getMetadata().containsKey(PARAM_TABLE_TYPE)
-            && ICEBERG_TABLE_TYPE.equals(tableInfo.getMetadata().get(PARAM_TABLE_TYPE));
+            && tableInfo.getMetadata().containsKey(DirectSqlTable.PARAM_TABLE_TYPE)
+            && DirectSqlTable.ICEBERG_TABLE_TYPE.equals(tableInfo.getMetadata().get(DirectSqlTable.PARAM_TABLE_TYPE));
     }
 }

@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright 2016 Netflix, Inc.
+ *  Copyright 2018 Netflix, Inc.
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
@@ -42,12 +43,16 @@ import java.util.Map;
  * This class makes direct sql calls to get/set table metadata.
  *
  * @author amajumdar
- * @since 1.2.0
+ * @since 1.1.1
  */
 @Slf4j
 @Transactional("hiveTxManager")
 public class DirectSqlTable {
-    private static final String PARAM_METADATA_LOCK = "metadata_lock";
+    protected static final String PARAM_TABLE_TYPE = "table_type";
+    protected static final String PARAM_METADATA_LOCATION = "metadata_location";
+    protected static final String PARAM_PREVIOUS_METADATA_LOCATION = "previous_metadata_location";
+    protected static final String ICEBERG_TABLE_TYPE = "iceberg";
+    protected static final String PARAM_METADATA_LOCK = "metadata_lock";
     private final Registry registry;
     private final JdbcTemplate jdbcTemplate;
     private final HiveConnectorFastServiceMetric fastServiceMetric;
@@ -88,6 +93,7 @@ public class DirectSqlTable {
                 result = true;
             }
         } catch (EmptyResultDataAccessException e) {
+            log.debug("Table {} does not exist.", name);
             return false;
         } finally {
             this.fastServiceMetric.recordTimer(
@@ -147,12 +153,22 @@ public class DirectSqlTable {
     /**
      * Locks the iceberg table for update so that no other request can modify the table.
      * @param tableId table internal id
+     * @param tableName table name
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void lockIcebergTable(final Long tableId) {
+    public void lockIcebergTable(final Long tableId, final QualifiedName tableName) {
+        String tableType = null;
+        try {
+            tableType = jdbcTemplate.queryForObject(SQL.TABLE_PARAM_LOCK,
+                new SqlParameterValue[] {new SqlParameterValue(Types.BIGINT, tableId),
+                    new SqlParameterValue(Types.VARCHAR, PARAM_TABLE_TYPE), }, String.class);
+        } catch (EmptyResultDataAccessException ignored) { }
+        if (tableType == null || !ICEBERG_TABLE_TYPE.equals(tableType)) {
+            throw new InvalidMetaException(tableName, "Originally table is not of type iceberg", null);
+        }
         Boolean isLocked = null;
         try {
-            isLocked = jdbcTemplate.queryForObject(SQL.ICEBERG_TABLE_LOCK,
+            isLocked = jdbcTemplate.queryForObject(SQL.TABLE_PARAM_LOCK,
                 new SqlParameterValue[] {new SqlParameterValue(Types.BIGINT, tableId),
                     new SqlParameterValue(Types.VARCHAR, PARAM_METADATA_LOCK), }, Boolean.class);
         } catch (EmptyResultDataAccessException ignored) { }
@@ -188,6 +204,7 @@ public class DirectSqlTable {
      * @param tableName table name
      * @return table id
      */
+    @Transactional(readOnly = true)
     public Long getTableId(final QualifiedName tableName) {
         try {
             return jdbcTemplate.queryForObject(SQL.GET_TABLE_ID,
@@ -207,7 +224,7 @@ public class DirectSqlTable {
             "select 1 from DBS d join TBLS t on d.DB_ID=t.DB_ID where d.name=? and t.tbl_name=?";
         static final String GET_TABLE_ID =
             "select t.tbl_id from DBS d join TBLS t on d.DB_ID=t.DB_ID where d.name=? and t.tbl_name=?";
-        static final String ICEBERG_TABLE_LOCK =
+        static final String TABLE_PARAM_LOCK =
             "SELECT param_value FROM TABLE_PARAMS WHERE tbl_id=? and param_key=? FOR UPDATE";
         static final String UPDATE_TABLE_PARAMS =
             "update TABLE_PARAMS set param_value=? WHERE tbl_id=? and param_key=?";
