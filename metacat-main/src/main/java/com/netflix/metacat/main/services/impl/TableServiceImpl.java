@@ -41,6 +41,7 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
@@ -71,6 +72,7 @@ public class TableServiceImpl implements TableService {
     private final MetacatEventBus eventBus;
     private final ConverterUtil converterUtil;
     private final Registry registry;
+    private final Config config;
 
     /**
      * Constructor.
@@ -82,6 +84,7 @@ public class TableServiceImpl implements TableService {
      * @param eventBus            Internal event bus
      * @param converterUtil       utility to convert to/from Dto to connector resources
      * @param registry             registry handle
+     * @param config               configurations
      */
     public TableServiceImpl(
         final ConnectorManager connectorManager,
@@ -90,7 +93,8 @@ public class TableServiceImpl implements TableService {
         final UserMetadataService userMetadataService,
         final MetacatEventBus eventBus,
         final ConverterUtil converterUtil,
-        final Registry registry
+        final Registry registry,
+        final Config config
     ) {
         this.connectorManager = connectorManager;
         this.databaseService = databaseService;
@@ -99,6 +103,7 @@ public class TableServiceImpl implements TableService {
         this.eventBus = eventBus;
         this.converterUtil = converterUtil;
         this.registry = registry;
+        this.config = config;
     }
 
     /**
@@ -184,13 +189,46 @@ public class TableServiceImpl implements TableService {
             return t;
         });
 
-        // Delete the metadata.  Type doesn't matter since we discard the result
-        log.info("Deleting user metadata for table {}", name);
-        userMetadataService.deleteMetadatas(metacatRequestContext.getUserName(), Lists.newArrayList(tableDto));
-        log.info("Deleting tags for table {}", name);
-        tagService.delete(name, false);
+        if (canDeleteMetadata(name)) {
+            // Delete the metadata.  Type doesn't matter since we discard the result
+            log.info("Deleting user metadata for table {}", name);
+            userMetadataService.deleteMetadatas(metacatRequestContext.getUserName(), Lists.newArrayList(tableDto));
+            log.info("Deleting tags for table {}", name);
+            tagService.delete(name, false);
+        } else {
+            if (config.canSoftDeleteDataMetadata() && tableDto.isDataExternal()) {
+                userMetadataService.softDeleteDataMetadatas(metacatRequestContext.getUserName(),
+                    Lists.newArrayList(tableDto.getDataUri()));
+            }
+        }
         eventBus.postAsync(new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, tableDto, isMView));
         return tableDto;
+    }
+
+    /**
+     * Returns true
+     * 1. If the system is configured to delete deifnition metadata.
+     * 2. If the system is configured not to but the tableName is configured to either explicitly or if the
+     * table's database/catalog is configure to.
+     * @param tableName table name
+     * @return whether or not to delete definition metadata
+     */
+    private boolean canDeleteMetadata(final QualifiedName tableName) {
+        return config.canDeleteTableDefinitionMetadata() || isEnabledForTableDefinitionMetadataDelete(tableName);
+    }
+
+    /**
+     * Returns true if tableName is enabled for deifnition metadata delete either explicitly or if the
+     * table's database/catalog is configure to.
+     * @param tableName table name
+     * @return whether or not to delete definition metadata
+     */
+    private boolean isEnabledForTableDefinitionMetadataDelete(final QualifiedName tableName) {
+        final Set<QualifiedName> enableDeleteForQualifiedNames = config.getNamesEnabledForDefinitionMetadataDelete();
+        return enableDeleteForQualifiedNames.contains(tableName)
+            || enableDeleteForQualifiedNames.contains(
+                QualifiedName.ofDatabase(tableName.getCatalogName(), tableName.getDatabaseName()))
+            || enableDeleteForQualifiedNames.contains(QualifiedName.ofCatalog(tableName.getCatalogName()));
     }
 
     /**

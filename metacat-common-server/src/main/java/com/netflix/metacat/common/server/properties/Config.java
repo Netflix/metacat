@@ -16,6 +16,7 @@ package com.netflix.metacat.common.server.properties;
 import com.netflix.metacat.common.QualifiedName;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Property configurations.
@@ -304,4 +305,18 @@ public interface Config {
      * @return Whether SNS notifications to partitions topic should be enabled
      */
     boolean isSnsNotificationTopicPartitionEnabled();
+
+    /**
+     * Whether or not to delete definition metadata for tables.
+     *
+     * @return Whether or not to delete definition metadata for tables.
+     */
+    boolean canDeleteTableDefinitionMetadata();
+
+    /**
+     * List of names for which the table definition metadata will be deleted.
+     *
+     * @return list of names
+     */
+    Set<QualifiedName> getNamesEnabledForDefinitionMetadataDelete();
 }

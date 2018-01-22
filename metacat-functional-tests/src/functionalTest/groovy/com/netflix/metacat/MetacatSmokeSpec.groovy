@@ -305,6 +305,27 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
+    def "Test delete table #catalogName/#databaseName/#tableName"() {
+        given:
+        def name = catalogName + '/' + databaseName + '/' + tableName
+        createTable(catalogName, databaseName, tableName)
+        api.deleteTable(catalogName, databaseName, tableName)
+        def definitions = metadataApi.getDefinitionMetadataList(null, null, null, null, null, null, name,null)
+        expect:
+        definitions.size() == result
+        cleanup:
+        metadataApi.deleteDefinitionMetadata(name, true)
+        where:
+        catalogName                     | databaseName  | tableName             | result
+        'embedded-hive-metastore'       | 'smoke_ddb1'  | 'test_create_table'   | 0
+        'embedded-fast-hive-metastore'  | 'fsmoke_ddb1' | 'test_create_table'   | 0
+        'hive-metastore'                | 'hsmoke_ddb'  | 'test_create_table'   | 0
+        'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table1'  | 0
+        'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table2'  | 1
+        's3-mysql-db'                   | 'smoke_ddb1'  | 'test_create_table'   | 0
+    }
+
+    @Unroll
     def "Test copy table as #catalogName/#databaseName/metacat_all_types_copy"() {
         given:
         createTable(catalogName, databaseName, 'metacat_all_types')
