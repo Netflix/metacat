@@ -107,13 +107,9 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
                 directSqlTable.lockIcebergTable(tableId, tableName);
                 try {
                     final TableInfo existingTableInfo = get(requestContext, tableInfo.getName());
-                    if (!isValidIcebergUpdate(existingTableInfo, tableInfo)) {
-                        throw new IllegalStateException("Invalid iceberg table metadata. "
-                            + "Existing metadata location does not match the given previous metadata location");
-                    } else {
-                        final Table existingTable = getHiveMetacatConverters().fromTableInfo(existingTableInfo);
-                        super.update(requestContext, existingTable, tableInfo);
-                    }
+                    validateIcebergUpdate(existingTableInfo, tableInfo);
+                    final Table existingTable = getHiveMetacatConverters().fromTableInfo(existingTableInfo);
+                    super.update(requestContext, existingTable, tableInfo);
                 } finally {
                     directSqlTable.unlockIcebergTable(tableId);
                     log.debug("Unlocked Iceberg table {}", tableName);
@@ -126,20 +122,27 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         }
     }
 
-    private boolean isValidIcebergUpdate(final TableInfo existingTableInfo, final TableInfo newTableInfo) {
+    private void validateIcebergUpdate(final TableInfo existingTableInfo, final TableInfo newTableInfo) {
         final Map<String, String> existingMetadata = existingTableInfo.getMetadata();
         final Map<String, String> newMetadata = newTableInfo.getMetadata();
         final String existingMetadataLocation = existingMetadata != null
             ? existingMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION) : null;
         final String previousMetadataLocation = newMetadata != null
             ? newMetadata.get(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION) : null;
-        if (StringUtils.isNotBlank(existingMetadataLocation)
-            && Objects.equals(existingMetadataLocation, previousMetadataLocation)) {
-            return true;
-        } else {
-            log.info("Invalid iceberg table metadata location (expected:{}, given:{})",
+        if (StringUtils.isBlank(existingMetadataLocation)) {
+            final String message = "Invalid iceberg table metadata location. Existing metadata location is empty.";
+            log.error(message);
+            throw new IllegalStateException(message);
+        } else if (StringUtils.isBlank(previousMetadataLocation)) {
+            final String message =
+                "Invalid iceberg table metadata location. Provided previous metadata location is empty.";
+            log.error(message);
+            throw new IllegalStateException(message);
+        } else if (!Objects.equals(existingMetadataLocation, previousMetadataLocation)) {
+            final String message = String.format("Invalid iceberg table metadata location (expected:%s, given:%s)",
                 existingMetadataLocation, previousMetadataLocation);
-            return false;
+            log.error(message);
+            throw new IllegalStateException(message);
         }
     }
 
