@@ -23,6 +23,7 @@ import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
+import com.netflix.metacat.common.exception.MetacatPreconditionFailedException;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonException;
 import feign.Response;
@@ -66,6 +67,8 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                     return new MetacatNotFoundException(message);
                 case 409: //CONFLICT
                     return new MetacatAlreadyExistsException(message);
+                case 412: // PRECONDITION_FAILED
+                    return new MetacatPreconditionFailedException(message);
                 case 500: //INTERNAL_SERVER_ERROR
                 case 503: //SERVICE_UNAVAILABLE
                     return new RetryableException(message, null);

@@ -40,6 +40,7 @@ import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
+import com.netflix.metacat.common.exception.MetacatPreconditionFailedException;
 import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.api.v1.PartitionV1;
 import com.netflix.metacat.common.server.monitoring.Metrics;
@@ -83,6 +84,7 @@ import org.apache.hadoop.hive.metastore.api.HeartbeatTxnRangeResponse;
 import org.apache.hadoop.hive.metastore.api.HiveObjectPrivilege;
 import org.apache.hadoop.hive.metastore.api.HiveObjectRef;
 import org.apache.hadoop.hive.metastore.api.Index;
+import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.LockRequest;
 import org.apache.hadoop.hive.metastore.api.LockResponse;
@@ -1708,6 +1710,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         } catch (MetacatNotFoundException e) {
             log.error(e.getMessage(), e);
             throw new NoSuchObjectException(e.getMessage());
+        } catch (MetacatPreconditionFailedException e) {
+            log.error(e.getMessage(), e);
+            throw new InvalidObjectException(e.getMessage());
         } catch (TException e) {
             log.error(e.getMessage(), e);
             throw e;
