@@ -139,7 +139,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             log.error(message);
             throw new IllegalStateException(message);
         } else if (!Objects.equals(existingMetadataLocation, previousMetadataLocation)) {
-            final String message = String.format("Invalid iceberg table metadata location (expected:%s, given:%s)",
+            final String message = String.format("Invalid iceberg table metadata location (expected:%s, provided:%s)",
                 existingMetadataLocation, previousMetadataLocation);
             log.error(message);
             throw new IllegalStateException(message);
