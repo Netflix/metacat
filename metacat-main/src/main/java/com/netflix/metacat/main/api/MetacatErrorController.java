@@ -33,6 +33,9 @@ import java.util.Map;
 
 /**
  * Error controller.
+ *
+ * @author amajumdar
+ * @since 1.2.0
  */
 @Controller
 @RequestMapping("${server.error.path:${error.path:/error}}")
