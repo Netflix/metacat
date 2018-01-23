@@ -19,12 +19,14 @@ package com.netflix.metacat.common.server.properties;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -60,6 +62,28 @@ public final class PropertyUtils {
                 .collect(Collectors.toList());
         } else {
             return Lists.newArrayList();
+        }
+    }
+
+    /**
+     * Convert a delimited string into a Set of {@code QualifiedName}.
+     *
+     * @param names     The list of names to split
+     * @param delimiter The delimiter to use for splitting
+     * @return The list of qualified names
+     */
+    static Set<QualifiedName> delimitedStringsToQualifiedNamesSet(
+        @Nonnull @NonNull final String names,
+        final char delimiter
+    ) {
+        if (StringUtils.isNotBlank(names)) {
+            return Splitter.on(delimiter)
+                .omitEmptyStrings()
+                .splitToList(names).stream()
+                .map(QualifiedName::fromString)
+                .collect(Collectors.toSet());
+        } else {
+            return Sets.newHashSet();
         }
     }
 }

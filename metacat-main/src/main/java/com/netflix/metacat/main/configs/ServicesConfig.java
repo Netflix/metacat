@@ -147,6 +147,7 @@ public class ServicesConfig {
      * @param eventBus            Internal event bus
      * @param converterUtil       utility to convert to/from Dto to connector resources
      * @param registry             registry handle
+     * @param config               configurations
      * @return The table service bean
      */
     @Bean
@@ -157,7 +158,8 @@ public class ServicesConfig {
         final UserMetadataService userMetadataService,
         final MetacatEventBus eventBus,
         final ConverterUtil converterUtil,
-        final Registry registry
+        final Registry registry,
+        final Config config
     ) {
         return new TableServiceImpl(
             connectorManager,
@@ -166,7 +168,8 @@ public class ServicesConfig {
             userMetadataService,
             eventBus,
             converterUtil,
-            registry
+            registry,
+            config
         );
     }
 

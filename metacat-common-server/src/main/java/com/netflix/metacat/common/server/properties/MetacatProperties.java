@@ -30,6 +30,8 @@ public class MetacatProperties {
     @NonNull
     private Data data = new Data();
     @NonNull
+    private Definition definition = new Definition();
+    @NonNull
     private ElasticsearchProperties elasticsearch = new ElasticsearchProperties();
     @NonNull
     private EventProperties event = new EventProperties();

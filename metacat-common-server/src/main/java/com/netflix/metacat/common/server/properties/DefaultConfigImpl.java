@@ -22,6 +22,7 @@ import lombok.NonNull;
 
 import javax.annotation.Nonnull;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A default implementation of the config interface.
@@ -381,5 +382,15 @@ public class DefaultConfigImpl implements Config {
     @Override
     public boolean isSnsNotificationTopicPartitionEnabled() {
         return this.metacatProperties.getNotifications().getSns().getTopic().getPartition().isEnabled();
+    }
+
+    @Override
+    public boolean canDeleteTableDefinitionMetadata() {
+        return this.metacatProperties.getDefinition().getMetadata().getDelete().isEnableForTable();
+    }
+
+    @Override
+    public Set<QualifiedName> getNamesEnabledForDefinitionMetadataDelete() {
+        return this.metacatProperties.getDefinition().getMetadata().getDelete().getQualifiedNamesEnabledForDelete();
     }
 }
