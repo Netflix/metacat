@@ -71,7 +71,7 @@ public class PigTypeConverter implements ConnectorTypeConverter {
         try {
             Schema.stringifySchema(result, schema, DataType.GENERIC_WRITABLECOMPARABLE, Integer.MIN_VALUE);
         } catch (FrontendException e) {
-            throw new IllegalArgumentException(String.format("Invalid for Pig converter: '%s'", type));
+            throw new IllegalArgumentException(String.format("Invalid for Pig converter: '%s'", type.getDisplayName()));
         }
         return result.toString();
     }
