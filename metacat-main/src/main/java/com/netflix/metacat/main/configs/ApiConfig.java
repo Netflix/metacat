@@ -18,8 +18,10 @@
 package com.netflix.metacat.main.configs;
 
 import com.netflix.metacat.main.api.ApiFilter;
+import com.netflix.metacat.main.api.MetacatErrorController;
 import org.springframework.boot.autoconfigure.web.DefaultErrorAttributes;
 import org.springframework.boot.autoconfigure.web.ErrorAttributes;
+import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -99,5 +101,26 @@ public class ApiConfig extends WebMvcConfigurerAdapter {
                 return errorAttributes;
             }
         };
+    }
+
+    /**
+     * Returns the default error properties.
+     * @return default error properties.
+     */
+    @Bean
+    public ErrorProperties errorProperties() {
+        return new ErrorProperties();
+    }
+
+    /**
+     * Returns the error controller.
+     * @param errorAttributes error attributes
+     * @param errorProperties error properties
+     * @return error controller
+     */
+    @Bean
+    public MetacatErrorController metacatErrorController(final ErrorAttributes errorAttributes,
+                                                         final ErrorProperties errorProperties) {
+        return new MetacatErrorController(errorAttributes, errorProperties);
     }
 }
