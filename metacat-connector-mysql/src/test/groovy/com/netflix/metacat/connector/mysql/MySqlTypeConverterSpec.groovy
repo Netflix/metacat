@@ -59,7 +59,7 @@ class MySqlTypeConverterSpec extends Specification {
         "Dec ( 13 )"            | DecimalType.createDecimalType(13)
         "decimal"               | DecimalType.createDecimalType()
         "date"                  | BaseType.DATE
-        "datetime"              | BaseType.TIME
+        "datetime"              | BaseType.TIMESTAMP
         "time"                  | BaseType.TIME
         "timeStamp"             | BaseType.TIMESTAMP
         "char(42)"              | CharType.createCharType(42)

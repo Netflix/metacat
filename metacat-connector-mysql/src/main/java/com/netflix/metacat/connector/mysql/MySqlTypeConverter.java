@@ -78,9 +78,9 @@ public class MySqlTypeConverter extends JdbcTypeConverter {
                 return this.toMetacatDecimalType(splitType);
             case "date":
                 return BaseType.DATE;
-            case "datetime":
             case "time":
                 return this.toMetacatTimeType(splitType);
+            case "datetime":
             case "timestamp":
                 return this.toMetacatTimestampType(splitType);
             case "char":
