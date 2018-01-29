@@ -39,6 +39,7 @@ import java.util.Map;
 public class TableInfo extends BaseInfo {
     private List<FieldInfo> fields;
     private StorageInfo serde;
+    private ViewInfo view;
 
     /**
      * Constructor.
@@ -55,10 +56,12 @@ public class TableInfo extends BaseInfo {
         final AuditInfo auditInfo,
         final Map<String, String> metadata,
         final List<FieldInfo> fields,
-        final StorageInfo serde
+        final StorageInfo serde,
+        final ViewInfo view
     ) {
         super(name, auditInfo, metadata);
         this.fields = fields;
         this.serde = serde;
+        this.view = view;
     }
 }

@@ -23,6 +23,7 @@ import com.netflix.metacat.common.dto.AuditDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.FieldDto;
 import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
+import com.netflix.metacat.common.dto.ViewDto;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
@@ -34,6 +35,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
+import com.netflix.metacat.common.server.connectors.model.ViewInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
@@ -81,6 +83,7 @@ public class ConverterUtil {
                 mapping(PartitionDto.class, PartitionInfo.class)
                     .fields("name", "name", FieldsMappingOptions.copyByReference());
                 mapping(AuditDto.class, AuditInfo.class);
+                mapping(ViewDto.class, ViewInfo.class);
                 mapping(StorageDto.class, StorageInfo.class);
             }
         };
@@ -127,7 +130,7 @@ public class ConverterUtil {
                 field.setPos(index++);
             }
         }
-        return result;
+       return result;
     }
 
     /**
@@ -137,7 +140,7 @@ public class ConverterUtil {
      * @return connector table info
      */
     public TableInfo fromTableDto(final TableDto tableDto) {
-        return mapper.map(tableDto, TableInfo.class);
+       return mapper.map(tableDto, TableInfo.class);
     }
 
     /**
