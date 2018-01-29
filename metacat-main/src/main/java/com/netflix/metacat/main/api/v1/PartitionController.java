@@ -288,6 +288,7 @@ public class PartitionController implements PartitionV1 {
                 new Pageable(limit, offset),
                 includeUserMetadata,
                 includeUserMetadata,
+                false,
                 false
             )
         );
@@ -428,10 +429,12 @@ public class PartitionController implements PartitionV1 {
         String filterExpression = null;
         List<String> partitionNames = null;
         boolean includePartitionDetails = false;
+        boolean includeAuditOnly = false;
         if (getPartitionsRequestDto != null) {
             filterExpression = getPartitionsRequestDto.getFilter();
             partitionNames = getPartitionsRequestDto.getPartitionNames();
             includePartitionDetails = getPartitionsRequestDto.getIncludePartitionDetails();
+            includeAuditOnly = getPartitionsRequestDto.getIncludeAuditOnly();
         }
         return this.getPartitions(
             catalogName,
@@ -444,7 +447,8 @@ public class PartitionController implements PartitionV1 {
             offset,
             limit,
             includeUserMetadata,
-            includePartitionDetails
+            includePartitionDetails,
+            includeAuditOnly
         );
     }
 
@@ -510,10 +514,12 @@ public class PartitionController implements PartitionV1 {
         String filterExpression = null;
         List<String> partitionNames = null;
         boolean includePartitionDetails = false;
+        boolean includeAuditOnly = false;
         if (getPartitionsRequestDto != null) {
             filterExpression = getPartitionsRequestDto.getFilter();
             partitionNames = getPartitionsRequestDto.getPartitionNames();
             includePartitionDetails = getPartitionsRequestDto.getIncludePartitionDetails();
+            includeAuditOnly = getPartitionsRequestDto.getIncludeAuditOnly();
         }
         return this.getPartitions(
             catalogName,
@@ -527,7 +533,8 @@ public class PartitionController implements PartitionV1 {
             offset,
             limit,
             includeUserMetadata,
-            includePartitionDetails
+            includePartitionDetails,
+            includeAuditOnly
         );
     }
 
@@ -1346,7 +1353,8 @@ public class PartitionController implements PartitionV1 {
         @Nullable final Integer offset,
         @Nullable final Integer limit,
         final boolean includeUserMetadata,
-        final boolean includePartitionDetails
+        final boolean includePartitionDetails,
+        final boolean includeAuditOnly
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
@@ -1362,7 +1370,8 @@ public class PartitionController implements PartitionV1 {
                 new Pageable(limit, offset),
                 includeUserMetadata,
                 includeUserMetadata,
-                includePartitionDetails
+                includePartitionDetails,
+                includeAuditOnly
             )
         );
     }
@@ -1379,7 +1388,8 @@ public class PartitionController implements PartitionV1 {
         @Nullable final Integer offset,
         @Nullable final Integer limit,
         final boolean includeUserMetadata,
-        final boolean includePartitionDetails
+        final boolean includePartitionDetails,
+        final boolean includeAuditOnly
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName)

@@ -136,7 +136,8 @@ public class PartitionServiceImpl implements PartitionService {
         @Nullable final Pageable pageable,
         final boolean includeUserDefinitionMetadata,
         final boolean includeUserDataMetadata,
-        final boolean includePartitionDetails
+        final boolean includePartitionDetails,
+        final boolean includeAuditOnly
     ) {
         if (Strings.isNullOrEmpty(filter)
             && (pageable == null || !pageable.isPageable())
@@ -150,6 +151,7 @@ public class PartitionServiceImpl implements PartitionService {
         requestDto.setFilter(filter);
         requestDto.setIncludePartitionDetails(includePartitionDetails);
         requestDto.setPartitionNames(partitionNames);
+        requestDto.setIncludeAuditOnly(includeAuditOnly);
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         final List<PartitionInfo> resultInfo = service
             .getPartitions(connectorRequestContext, name,
@@ -532,7 +534,7 @@ public class PartitionServiceImpl implements PartitionService {
         final QualifiedName tableName = QualifiedName
             .ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
         final List<PartitionDto> dtos =
-            list(tableName, null, Lists.newArrayList(name.getPartitionName()), null, null, true, true, true);
+            list(tableName, null, Lists.newArrayList(name.getPartitionName()), null, null, true, true, true, true);
         if (!dtos.isEmpty()) {
             result = dtos.get(0);
         }

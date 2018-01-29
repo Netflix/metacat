@@ -38,4 +38,5 @@ public class PartitionListRequest {
     private Boolean includePartitionDetails = false;
     private Pageable pageable;
     private Sort sort;
+    private Boolean includeAuditOnly = false;
 }

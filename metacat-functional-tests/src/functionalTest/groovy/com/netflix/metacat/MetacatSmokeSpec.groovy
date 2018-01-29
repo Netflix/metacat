@@ -511,19 +511,53 @@ class MetacatSmokeSpec extends Specification {
             ]
         )
 
+        def partRequestDto2 = new PartitionsSaveRequestDto(
+            definitionMetadata: metacatJson.emptyObjectNode(),
+            partitions: [
+                new PartitionDto(
+                    name: QualifiedName.ofPartition(catalogName, databaseName, tableName, "one=2"),
+                    definitionMetadata: metacatJson.emptyObjectNode(),
+                    dataMetadata: metacatJson.emptyObjectNode(),
+                    dataExternal: true,
+                    audit: new AuditDto(
+                        createdDate: Instant.now().toDate(),
+                        lastModifiedDate: Instant.now().toDate()
+                    ),
+                    serde: new StorageDto(
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        uri: ""
+                    ),
+                )
+            ]
+        )
         when:
         createTable(catalogName, databaseName, tableName)
 
         partitionApi.savePartitions(catalogName, databaseName, tableName, partRequestDto)
+        if ( !tableName.contains('audit')) {
+            partitionApi.savePartitions(catalogName, databaseName, tableName, partRequestDto2)
+        }
+
         def partkeys = partitionApi.getPartitionKeys(catalogName, databaseName, tableName,null, null, null, null, null)
+        //test the includeAuditOnly flag
+        def auditparts = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName,null, null, null, null,false,
+            new GetPartitionsRequestDto(includeAuditOnly: true))
+
         then:
         noExceptionThrown()
-        assert partkeys.size() == 1
+        assert partkeys.size() == 2
+
         assert partkeys.get(0).equals("one=1")
+
+        assert auditparts.size() == autoPartSize
+
+
         where:
-        catalogName                     | databaseName      | tableName
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'
-        'embedded-fast-hive-metastore'  | 'audit'           | 'fsmoke_db__part__audit_12345'
+        catalogName                     | databaseName      | tableName                       | autoPartSize
+        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'                          | 2
+        'embedded-fast-hive-metastore'  | 'audit'           | 'fsmoke_db__part__audit_12345'  | 1
     }
 
     @Unroll

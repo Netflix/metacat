@@ -138,7 +138,8 @@ public class DirectSqlGetPartition {
         };
         try {
             final Optional<QualifiedName> sourceTable
-                = getSourceTableName(tableName.getDatabaseName(), tableName.getTableName(), false);
+                = getSourceTableName(tableName.getDatabaseName(), tableName.getTableName(),
+                false);
             return sourceTable.map(
                 qualifiedName ->
                     jdbcTemplate.query(SQL.SQL_GET_AUDIT_TABLE_PARTITION_COUNT,
@@ -186,7 +187,7 @@ public class DirectSqlGetPartition {
                 partitionsRequest.getSort(),
                 partitionsRequest.getPageable(),
                 partitionsRequest.getIncludePartitionDetails(),
-                false
+                partitionsRequest.getIncludeAuditOnly()
             ).stream().map(PartitionHolder::getPartitionInfo).collect(Collectors.toList());
         } finally {
             this.fastServiceMetric.recordTimer(
@@ -223,7 +224,7 @@ public class DirectSqlGetPartition {
                 filterExpression,
                 sort,
                 pageable,
-                false);
+                partitionsRequest.getIncludeAuditOnly());
         } else {
             final ResultSetExtractor<List<String>> handler = rs -> {
                 final List<String> uris = Lists.newArrayList();
@@ -233,7 +234,8 @@ public class DirectSqlGetPartition {
                 return uris;
             };
             result = getHandlerResults(tableName.getDatabaseName(), tableName.getTableName(),
-                null, partitionNames, SQL.SQL_GET_PARTITIONS_URI, handler, sort, pageable, false);
+                null, partitionNames, SQL.SQL_GET_PARTITIONS_URI, handler, sort, pageable,
+                partitionsRequest.getIncludeAuditOnly());
         }
         this.fastServiceMetric.recordTimer(
             HiveMetrics.TagGetPartitionKeys.getMetricName(), registry.clock().wallTime() - start);
@@ -311,7 +313,7 @@ public class DirectSqlGetPartition {
                 filterExpression,
                 sort,
                 pageable,
-                false);
+                partitionsRequest.getIncludeAuditOnly());
         } else {
             final ResultSetExtractor<List<String>> handler = rs -> {
                 final List<String> names = Lists.newArrayList();
@@ -321,7 +323,8 @@ public class DirectSqlGetPartition {
                 return names;
             };
             result = getHandlerResults(tableName.getDatabaseName(), tableName.getTableName(),
-                null, partitionNames, SQL.SQL_GET_PARTITIONS_WITH_KEY, handler, sort, pageable, false);
+                null, partitionNames, SQL.SQL_GET_PARTITIONS_WITH_KEY,
+                handler, sort, pageable, partitionsRequest.getIncludeAuditOnly());
         }
         this.fastServiceMetric.recordTimer(
             HiveMetrics.TagGetPartitionKeys.getMetricName(), registry.clock().wallTime() - start);
@@ -933,7 +936,8 @@ public class DirectSqlGetPartition {
         }
         if (pageable != null && pageable.isPageable() && Strings.isNullOrEmpty(filterExpression)) {
             if (sort == null || !sort.hasSort()) {
-                queryBuilder.append(" order by p.part_id");
+                queryBuilder.append(" order by id");
+                //this must be id, which is used by AuditTable and regular table pagination
             }
             queryBuilder.append(" limit ").append(pageable.getOffset()).append(',').append(pageable.getLimit());
         }
@@ -955,16 +959,17 @@ public class DirectSqlGetPartition {
     @VisibleForTesting
     private static class SQL {
         static final String SQL_GET_PARTITIONS_WITH_KEY_URI =
-            "select p.PART_NAME as name, p.CREATE_TIME as dateCreated, sds.location uri"
+            //Add p.part_id as id to allow pagination using 'order by id'
+            "select p.part_id as id, p.PART_NAME as name, p.CREATE_TIME as dateCreated, sds.location uri"
                 + " from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID "
                 + "join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID";
         static final String SQL_GET_PARTITIONS_URI =
-            "select sds.location uri"
+            "select p.part_id as id, sds.location uri"
                 + " from PARTITIONS as p join TBLS as t on t.TBL_ID = p.TBL_ID "
                 + "join DBS as d on t.DB_ID = d.DB_ID join SDS as sds on p.SD_ID = sds.SD_ID";
 
         static final String SQL_GET_PARTITIONS_WITH_KEY =
-            "select p.PART_NAME as name from PARTITIONS as p"
+            "select p.part_id as id, p.PART_NAME as name from PARTITIONS as p"
                 + " join TBLS as t on t.TBL_ID = p.TBL_ID join DBS as d on t.DB_ID = d.DB_ID";
         static final String SQL_GET_PARTITIONS =
             "select p.part_id as id, p.PART_NAME as name, p.CREATE_TIME as dateCreated,"
@@ -1005,7 +1010,7 @@ public class DirectSqlGetPartition {
                 + "select pkey_name, pkey_type, integer_idx from PARTITION_KEYS as p1 "
                 + "join TBLS as t1 on t1.TBL_ID = p1.TBL_ID join DBS as d1 "
                 + "on t1.DB_ID = d1.DB_ID where d1.NAME = ? and t1.TBL_NAME = ? order by integer_idx "
-                + ") as tmp"
+                + ") as tmp "
                 + "UNION "
                 + "select pkey_name, pkey_type from PARTITION_KEYS as p2 "
                 + "join TBLS as t2 on t2.TBL_ID = p2.TBL_ID join DBS as d2 "

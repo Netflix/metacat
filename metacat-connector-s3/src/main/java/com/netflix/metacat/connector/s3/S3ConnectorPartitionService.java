@@ -240,7 +240,9 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
     }
 
     @Override
-    public int getPartitionCount(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName table) {
+    public int getPartitionCount(@Nonnull final ConnectorRequestContext context,
+                                 @Nonnull final QualifiedName table
+    ) {
         return partitionDao.count(catalogName, table.getDatabaseName(), table.getTableName()).intValue();
     }
 

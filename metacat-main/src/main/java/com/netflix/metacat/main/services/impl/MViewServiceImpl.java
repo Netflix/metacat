@@ -249,7 +249,7 @@ public class MViewServiceImpl implements MViewService {
     @Override
     public void snapshotPartitions(final QualifiedName name, @Nullable final String filter) {
         final List<PartitionDto> partitionDtos =
-            partitionService.list(name, filter, null, null, null, false, false, true);
+            partitionService.list(name, filter, null, null, null, false, false, true, true);
         if (partitionDtos != null && !partitionDtos.isEmpty()) {
             log.info("Snapshot partitions({}) for view {}.", partitionDtos.size(), name);
             final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
@@ -288,7 +288,7 @@ public class MViewServiceImpl implements MViewService {
             final List<String> partitionNames = partitionDtos.stream().map(
                 partitionDto -> partitionDto.getName().getPartitionName()).collect(Collectors.toList());
             final List<PartitionDto> existingPartitions = partitionService
-                .list(viewQName, null, partitionNames, null, null, false, false, false);
+                .list(viewQName, null, partitionNames, null, null, false, false, false, true);
             final Map<String, PartitionDto> existingPartitionsMap = existingPartitions.stream()
                 .collect(Collectors
                     .toMap(partitionDto -> partitionDto.getName().getPartitionName(), Function.identity()));
@@ -375,7 +375,7 @@ public class MViewServiceImpl implements MViewService {
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return partitionService
             .list(viewQName, filter, partitionNames, sort, pageable, includeUserMetadata, includeUserMetadata,
-                includePartitionDetails);
+                includePartitionDetails, true);
     }
 
     /**

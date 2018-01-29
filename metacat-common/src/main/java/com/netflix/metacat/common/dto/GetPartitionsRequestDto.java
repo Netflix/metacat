@@ -31,4 +31,11 @@ public class GetPartitionsRequestDto extends BaseDto {
     private String filter;
     private List<String> partitionNames;
     private Boolean includePartitionDetails = false;
+    /*
+    for audit tables with wap patterns
+    if true, getPartitionsForRequest will only return audit table's
+    own partitions. Metacat does not interpreate this flag for regular
+    table, i.e. they should always return their own partitions.
+    */
+    private Boolean includeAuditOnly = false;
 }
