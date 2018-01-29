@@ -226,7 +226,7 @@ public class ElasticSearchRefresh {
             final Pageable pageable = new Pageable(10000, offset);
             do {
                 final List<PartitionDto> partitionDtos =
-                    partitionService.list(tableName, null, null, sort, pageable, true, true, true);
+                    partitionService.list(tableName, null, null, sort, pageable, true, true, true, true);
                 count = partitionDtos.size();
                 if (!partitionDtos.isEmpty()) {
                     final List<List<PartitionDto>> partitionedPartitionDtos = Lists.partition(partitionDtos, 1000);

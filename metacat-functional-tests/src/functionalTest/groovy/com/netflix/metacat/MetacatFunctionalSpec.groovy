@@ -1178,7 +1178,7 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getAllDatabases(TestCatalogs.getCanCreateTable(TestCatalogs.ALL))
     }
 
-    def 'test get and save AUDIT table partition'() {
+    def 'get and save partitions() for AUDIT table partition'() {
         given:
         def tableName = "test_wap_table".toString()
         def olddate = new Date(1500000000)
@@ -1370,7 +1370,8 @@ class MetacatFunctionalSpec extends Specification {
         then:
         response
         when:
-        def partitions = partitionApi.getPartitions(catalogName, "audit", auditableName,null, null, null, null, null, true)
+        //include limit to test pagination
+        def partitions = partitionApi.getPartitions(catalogName, "audit", auditableName,null, null, null, null, 10, true)
         def audit_part = partitions.find{item -> item.name.partitionName.equals("field1=1/p=2")}
 
         then:
@@ -1378,7 +1379,6 @@ class MetacatFunctionalSpec extends Specification {
         // of overlapped partitions
         partitions.size() >= 3
         audit_part.serde.uri.equals(dataUri +"_auditpart")
-
 
         //test save and update partitions
         when:
@@ -1520,10 +1520,16 @@ class MetacatFunctionalSpec extends Specification {
         when:
         partitions = partitionApi.getPartitions(catalogName, "audit", auditableName,null, null, null, null, null, true)
         audit_part = partitions.find{item -> item.name.partitionName.equals("field1=1/p=2")}
+        try {
+            api.deleteTable(catalogName, "audit", auditableName)
+            api.deleteTable(catalogName, "test_db", tableName)
+        }catch(Exception e) {
+        }
 
         then:
         partitions
         audit_part.dataMetadata.findValue('data_field_new').intValue() == 10
+
         where:
         catalog << TestCatalogs.supportAUDITTables(TestCatalogs.ALL);
     }

@@ -40,6 +40,8 @@ public interface PartitionService extends MetacatService<PartitionDto> {
      * @param includeUserDefinitionMetadata if true, includes the definition metadata
      * @param includeUserDataMetadata       if true, includes the data metadata
      * @param includePartitionDetails       if true, includes parameter details
+     * @param includeAuditOnly              if true, include audit table self's partitions. this flag does not
+     *                                      matter for other tables
      * @return list of partitions
      */
     List<PartitionDto> list(
@@ -50,7 +52,8 @@ public interface PartitionService extends MetacatService<PartitionDto> {
         @Nullable Pageable pageable,
         boolean includeUserDefinitionMetadata,
         boolean includeUserDataMetadata,
-        boolean includePartitionDetails);
+        boolean includePartitionDetails,
+        boolean includeAuditOnly);
 
     /**
      * Partition count for the given table name.
