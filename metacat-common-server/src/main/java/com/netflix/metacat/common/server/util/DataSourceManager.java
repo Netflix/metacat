@@ -19,6 +19,7 @@ import org.apache.tomcat.jdbc.pool.DataSourceFactory;
 import org.apache.tomcat.jdbc.pool.DataSourceProxy;
 
 import javax.annotation.PreDestroy;
+import javax.management.ObjectName;
 import javax.sql.DataSource;
 import java.util.Iterator;
 import java.util.Map;
@@ -96,6 +97,11 @@ public final class DataSourceManager {
             if (!dataSourceProperties.isEmpty()) {
                 try {
                     final DataSource dataSource = new DataSourceFactory().createDataSource(dataSourceProperties);
+                    //
+                    // Explicitly registering the datasource with the JMX server bean.
+                    //
+                    ((org.apache.tomcat.jdbc.pool.DataSource) dataSource)
+                        .preRegister(null, new ObjectName(String.format("jdbc.pool:name=%s", catalogName)));
                     dataSources.put(catalogName, dataSource);
                 } catch (Exception e) {
                     throw new RuntimeException(String
