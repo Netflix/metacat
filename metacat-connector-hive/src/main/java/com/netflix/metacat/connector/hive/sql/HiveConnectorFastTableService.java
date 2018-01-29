@@ -149,6 +149,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private boolean isIcebergTable(final TableInfo tableInfo) {
         return tableInfo.getMetadata() != null
             && tableInfo.getMetadata().containsKey(DirectSqlTable.PARAM_TABLE_TYPE)
-            && DirectSqlTable.ICEBERG_TABLE_TYPE.equals(tableInfo.getMetadata().get(DirectSqlTable.PARAM_TABLE_TYPE));
+            && DirectSqlTable.ICEBERG_TABLE_TYPE
+            .equalsIgnoreCase(tableInfo.getMetadata().get(DirectSqlTable.PARAM_TABLE_TYPE));
     }
 }

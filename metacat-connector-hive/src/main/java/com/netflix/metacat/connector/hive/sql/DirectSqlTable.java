@@ -166,7 +166,7 @@ public class DirectSqlTable {
                 new SqlParameterValue[] {new SqlParameterValue(Types.BIGINT, tableId),
                     new SqlParameterValue(Types.VARCHAR, PARAM_TABLE_TYPE), }, String.class);
         } catch (EmptyResultDataAccessException ignored) { }
-        if (tableType == null || !ICEBERG_TABLE_TYPE.equals(tableType)) {
+        if (tableType == null || !ICEBERG_TABLE_TYPE.equalsIgnoreCase(tableType)) {
             final String message = String.format("Originally table %s is not of type iceberg", tableName);
             log.info(message);
             throw new InvalidMetaException(tableName, message, null);
