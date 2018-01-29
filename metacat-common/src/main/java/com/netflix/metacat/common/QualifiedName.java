@@ -79,6 +79,21 @@ public final class QualifiedName implements Serializable {
         }
     }
 
+    private QualifiedName(
+        @NonNull final String catalogName,
+        @Nullable final String databaseName,
+        @Nullable final String tableName,
+        @Nullable final String partitionName,
+        @Nullable final String viewName,
+        @NonNull final Type type) {
+        this.catalogName = catalogName;
+        this.databaseName = databaseName;
+        this.partitionName = partitionName;
+        this.tableName = tableName;
+        this.viewName = viewName;
+        this.type = type;
+    }
+
     /**
      * Creates the name from the json.
      *
@@ -163,6 +178,19 @@ public final class QualifiedName implements Serializable {
             default:
                 throw new IllegalArgumentException("Unable to convert '" + s + "' into a qualifiedDefinition");
         }
+    }
+
+    /**
+     * Returns a copy of this qualified name with the database/table/view names in upper case.
+     * @return QualifiedName
+     */
+    public QualifiedName cloneWithUpperCase() {
+        return new QualifiedName(catalogName,
+            databaseName == null ? null : databaseName.toUpperCase(),
+            tableName == null ? null : tableName.toUpperCase(),
+            partitionName,
+            viewName == null ? null : viewName.toUpperCase(),
+            type);
     }
 
     /**

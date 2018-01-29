@@ -111,7 +111,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> this.connection
         1 * this.connection.getMetaData() >> schemaMetadata
-        1 * schemaMetadata.getSchemas() >> schemaResultSet
+        1 * schemaMetadata.getSchemas(_,_) >> schemaResultSet
         3 * schemaResultSet.next() >>> [true, true, false]
         2 * schemaResultSet.getString("TABLE_SCHEM") >>> ["a", "b"]
         databases.size() == 2
@@ -130,7 +130,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> this.connection
         1 * this.connection.getMetaData() >> dbMetadata
-        1 * dbMetadata.getSchemas() >> schemaResultSet
+        1 * dbMetadata.getSchemas(_,_) >> schemaResultSet
         6 * schemaResultSet.next() >>> [true, true, true, true, true, false]
         5 * schemaResultSet.getString("TABLE_SCHEM") >>> ["a", "b", "c", "d", "e"]
         databases.size() == 5
@@ -176,7 +176,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> this.connection
         1 * this.connection.getMetaData() >> dbMetadata
-        1 * dbMetadata.getSchemas() >> schemaResultSet
+        1 * dbMetadata.getSchemas(_,_) >> schemaResultSet
         4 * schemaResultSet.next() >>> [true, true, true, false]
         3 * schemaResultSet.getString("TABLE_SCHEM") >>> ["a", "c", "b"]
         databases.size() == 3
@@ -198,7 +198,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> this.connection
         1 * this.connection.getMetaData() >> dbMetadata
-        1 * dbMetadata.getSchemas() >> schemaResultSet
+        1 * dbMetadata.getSchemas(_,_) >> schemaResultSet
         4 * schemaResultSet.next() >>> [true, true, true, false]
         3 * schemaResultSet.getString("TABLE_SCHEM") >>> ["a", "c", "b"]
         databases.size() == 3
@@ -221,7 +221,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> this.connection
         1 * this.connection.getMetaData() >> dbMetadata
-        1 * dbMetadata.getSchemas() >> schemaResultSet
+        1 * dbMetadata.getSchemas(_,_) >> schemaResultSet
         4 * schemaResultSet.next() >>> [true, true, true, false]
         3 * schemaResultSet.getString("TABLE_SCHEM") >>> ["a", "c", "b"]
         databases.size() == 1
@@ -242,7 +242,7 @@ class JdbcConnectorDatabaseServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> this.connection
         1 * this.connection.getMetaData() >> dbMetadata
-        1 * dbMetadata.getSchemas() >> schemaResultSet
+        1 * dbMetadata.getSchemas(_,_) >> schemaResultSet
         4 * schemaResultSet.next() >>> [true, true, true, false]
         3 * schemaResultSet.getString("TABLE_SCHEM") >>> ["a", "c", "b"]
         databases.size() == 0

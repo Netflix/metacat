@@ -143,6 +143,7 @@ configure(javaProjects) {
             dependency("org.spockframework:spock-spring:1.1-groovy-2.4")
             /**es 5.4.1 dependencies*/
             dependency("org.elasticsearch.client:transport:5.4.1")
+            dependency("net.snowflake:snowflake-jdbc:3.4.2")
         }
     }
 

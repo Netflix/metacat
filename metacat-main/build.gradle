@@ -69,6 +69,7 @@ dependencies {
     runtime(project(":metacat-connector-mysql"))
     runtime(project(":metacat-connector-postgresql"))
     runtime(project(":metacat-connector-redshift"))
+    runtime(project(":metacat-connector-snowflake"))
     runtime(project(":metacat-connector-s3"))
     runtime(project(":metacat-connector-druid"))
 
