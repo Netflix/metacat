@@ -112,7 +112,7 @@ public class DirectSqlGetPartition {
         this.jdbcTemplate = jdbcTemplate;
         this.fastServiceMetric = fastServiceMetric;
         this.isAuditProcessingEnabled = Boolean.valueOf(connectorContext.getConfiguration()
-            .getOrDefault(HiveConfigConstants.ENABLE_AUDIT_PROCESSING, "false"));
+            .getOrDefault(HiveConfigConstants.ENABLE_AUDIT_PROCESSING, "true"));
     }
 
     /**

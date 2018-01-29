@@ -568,6 +568,51 @@ class MetacatThriftFunctionalSpec extends Specification {
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
     }
 
+    def 'createTable: can create a tableview test'() {
+        given:
+        def catalog = TestCatalogs.findByQualifiedName(name)
+        def thrift = METASTORES.get(catalog.thriftUri)
+        def now = new Date()
+        def tableName = "partitioned_tbl_$BATCH_ID".toString()
+        def viewName = "view_partitioned_tbl_$BATCH_ID".toString()
+        def owner = 'owner_name'
+
+        def table = new Table(name.databaseName, viewName)
+        table.owner = owner
+        table.tableType = TableType.VIRTUAL_VIEW
+        //table.sd.location = "file:/tmp/dummy"
+        table.viewOriginalText = 'SELECT * FROM ' + name.databaseName + "." + tableName;
+        table.viewExpandedText = table.viewOriginalText
+
+        when:
+        def tables = thrift.getAllTables(name.databaseName)
+
+        then:
+        !tables.contains(viewName)
+
+        when:
+        thrift.createTable(table)
+        tables = thrift.getAllTables(name.databaseName)
+
+        then:
+        tables.contains(table.tableName)
+
+        when:
+        def resultTbl = thrift.getTable(table.dbName, table.tableName)
+
+        then:
+        resultTbl.tableName == viewName
+        resultTbl.dbName == name.databaseName
+        resultTbl.owner == owner
+        resultTbl.tableType == TableType.VIRTUAL_VIEW
+        resultTbl.viewOriginalText != null
+        resultTbl.viewExpandedText != null
+        catalog.createdTables << QualifiedName.ofTable(name.catalogName, name.databaseName, viewName)
+
+        where:
+        name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
+    }
+
     def 'createTable: can create a unpartitioned table in #name'() {
         given:
         def catalog = TestCatalogs.findByQualifiedName(name)

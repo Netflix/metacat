@@ -68,6 +68,9 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
     private QualifiedName name;
     @ApiModelProperty(value = "serialization/deserialization info about the table")
     private StorageDto serde;
+    @ApiModelProperty(value = "Hive virtual view info.")
+    //Naming as view required by dozer mapping
+    private ViewDto view;
 
     @Nonnull
     @Override

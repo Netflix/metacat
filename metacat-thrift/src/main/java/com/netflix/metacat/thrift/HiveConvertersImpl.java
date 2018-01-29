@@ -29,6 +29,8 @@ import com.netflix.metacat.common.dto.FieldDto;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.dto.ViewDto;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -119,7 +121,8 @@ public class HiveConvertersImpl implements HiveConverters {
             .map(field -> this.hiveToMetacatField(field, true))
             .forEachOrdered(allFields::add);
         dto.setFields(allFields);
-
+        dto.setView(new ViewDto(table.getViewOriginalText(),
+            table.getViewExpandedText()));
         return dto;
     }
 
@@ -191,9 +194,7 @@ public class HiveConvertersImpl implements HiveConverters {
             params = dto.getMetadata();
         }
         table.setParameters(params);
-
-        // TODO get this
-        table.setTableType("EXTERNAL_TABLE");
+        updateTableTypeAndViewInfo(dto, table);
 
         table.setSd(fromStorageDto(storageDto));
         final StorageDescriptor sd = table.getSd();
@@ -218,6 +219,17 @@ public class HiveConvertersImpl implements HiveConverters {
             sd.setCols(nonPartitionFields);
         }
         return table;
+    }
+
+    private void updateTableTypeAndViewInfo(final TableDto dto, final Table table) {
+        final ViewDto viewDto = dto.getView();
+        if (null == dto.getView() || Strings.isNullOrEmpty(viewDto.getViewOriginalText())) {
+            table.setTableType(TableType.EXTERNAL_TABLE.name());
+            return;
+        }
+        table.setTableType(TableType.VIRTUAL_VIEW.name());
+        table.setViewOriginalText(viewDto.getViewOriginalText());
+        table.setViewExpandedText(viewDto.getViewExpandedText());
     }
 
     private StorageDto toStorageDto(@Nullable final StorageDescriptor sd, final String owner) {

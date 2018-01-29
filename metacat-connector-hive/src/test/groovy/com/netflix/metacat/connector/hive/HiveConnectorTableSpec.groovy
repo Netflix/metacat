@@ -27,6 +27,7 @@ import com.netflix.metacat.common.server.connectors.exception.*
 import com.netflix.metacat.common.server.connectors.model.AuditInfo
 import com.netflix.metacat.common.server.connectors.model.StorageInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
+import com.netflix.metacat.common.server.connectors.model.ViewInfo
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
@@ -132,6 +133,34 @@ class HiveConnectorTableSpec extends Specification {
                 .serde(StorageInfo.builder().serializationLib('org.apache.hadoop.hive.ql.io.orc.OrcSerde').outputFormat('org.apache.hadoop.hive.ql.io.orc.OrcInputFormat').build()).build())
         then:
         noExceptionThrown()
+    }
+
+    def "Test for create virtual view"() {
+        when:
+        hiveConnectorTableService.create(connectorRequestContext,
+            TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testingview"))
+                .view(ViewInfo.builder().viewOriginalText("test sql").build())
+                .serde(StorageInfo.builder().serializationLib('org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe')
+                .outputFormat('org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat')
+                .build()).build())
+        then:
+        noExceptionThrown()
+    }
+
+    def "Test for create virtual view with missing viewText"() {
+        def client = Mock(MetacatHiveClient)
+        def hiveConnectorTableService = new HiveConnectorTableService("testhive", client, hiveConnectorDatabaseService, new HiveConnectorInfoConverter(new HiveTypeConverter()), connectorContext)
+
+        when:
+        hiveConnectorTableService.create(connectorRequestContext,
+            TableInfo.builder().name(QualifiedName.ofTable("testhive", "test1", "testingview"))
+                .view(ViewInfo.builder().viewOriginalText("").build())
+                .serde(StorageInfo.builder().serializationLib('org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe')
+                .outputFormat('org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat')
+                .build()).build())
+        then:
+        1 * client.createTable(_) >> { throw new MetaException() }
+        thrown InvalidMetaException
     }
 
     @Unroll

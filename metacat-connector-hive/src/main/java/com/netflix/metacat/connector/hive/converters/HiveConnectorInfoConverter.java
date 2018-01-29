@@ -26,12 +26,14 @@ import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
+import com.netflix.metacat.common.server.connectors.model.ViewInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -73,6 +75,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
 
     /**
      * Converts epoch time to Date.
+     *
      * @param seconds time in seconds
      * @return Date
      */
@@ -151,10 +154,20 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
             .map(field -> hiveToMetacatField(field, true))
             .forEachOrdered(allFields::add);
         final AuditInfo auditInfo = AuditInfo.builder().createdDate(creationDate).build();
-        return TableInfo.builder()
-            .serde(toStorageInfo(table.getSd(), table.getOwner())).fields(allFields)
-            .metadata(table.getParameters()).name(name).auditInfo(auditInfo)
-            .build();
+        if (null != table.getTableType() && table.getTableType().equals(TableType.VIRTUAL_VIEW.name())) {
+            return TableInfo.builder()
+                .serde(toStorageInfo(table.getSd(), table.getOwner())).fields(allFields)
+                .metadata(table.getParameters()).name(name).auditInfo(auditInfo)
+                .view(ViewInfo.builder().
+                    viewOriginalText(table.getViewOriginalText())
+                    .viewExpandedText(table.getViewExpandedText()).build()
+                ).build();
+        } else {
+            return TableInfo.builder()
+                .serde(toStorageInfo(table.getSd(), table.getOwner())).fields(allFields)
+                .metadata(table.getParameters()).name(name).auditInfo(auditInfo)
+                .build();
+        }
     }
 
     /**
@@ -196,6 +209,11 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         }
         final StorageDescriptor sd = fromStorageInfo(storageInfo, nonPartitionFields);
 
+        final ViewInfo viewInfo = tableInfo.getView();
+        final String tableType = (null != viewInfo
+            && !Strings.isNullOrEmpty(viewInfo.getViewOriginalText()))
+            ? TableType.VIRTUAL_VIEW.name() : TableType.EXTERNAL_TABLE.name();
+
         return new Table(tableName,
             databaseName,
             owner,
@@ -205,9 +223,11 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
             sd,
             partitionFields,
             params,
-            null,
-            null,
-            "EXTERNAL_TABLE");
+            tableType.equals(TableType.VIRTUAL_VIEW.name())
+                ? tableInfo.getView().getViewOriginalText() : null,
+            tableType.equals(TableType.VIRTUAL_VIEW.name())
+                ? tableInfo.getView().getViewExpandedText() : null,
+            tableType);
     }
 
     /**

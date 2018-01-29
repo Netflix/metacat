@@ -41,13 +41,27 @@ class ConverterUtilSpec extends Specification {
         then:
         dto != resultDto
     }
-
+    
     def testTableConversion() {
         given:
         def dto = new TableDto(name: QualifiedName.ofTable('prodhive', 'amajumdar', 'part'),
             audit: new AuditDto('test', new Date(), 'test', new Date()),
             fields: [new FieldDto(null, 'esn', true, 0, 'string', 'string', false, null, null, false, false)],
             serde: new StorageDto(owner: 'test'))
+        when:
+        def info = converter.fromTableDto(dto)
+        def resultDto = converter.toTableDto(info)
+        then:
+        dto == resultDto
+    }
+
+    def testTableViewConversion() {
+        given:
+        def dto = new TableDto(name: QualifiedName.ofTable('prodhive', 'amajumdar', 'part'),
+            audit: new AuditDto('test', new Date(), 'test', new Date()),
+            fields: [new FieldDto(null, 'esn', true, 0, 'string', 'string', false, null, null, false, false)],
+            serde: new StorageDto(owner: 'test'),
+            view: new ViewDto("select test", "select test2"))
         when:
         def info = converter.fromTableDto(dto)
         def resultDto = converter.toTableDto(info)
