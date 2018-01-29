@@ -152,7 +152,7 @@ public class JdbcConnectorDatabaseService implements ConnectorDatabaseService {
             final List<QualifiedName> names = Lists.newArrayList();
 
             try (final ResultSet schemas = prefix == null || StringUtils.isEmpty(prefix.getDatabaseName())
-                ? metaData.getSchemas()
+                ? metaData.getSchemas(connection.getCatalog(), null)
                 : metaData
                 .getSchemas(
                     connection.getCatalog(),
