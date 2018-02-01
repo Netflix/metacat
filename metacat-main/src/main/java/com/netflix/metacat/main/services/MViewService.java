@@ -17,6 +17,7 @@ package com.netflix.metacat.main.services;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
@@ -118,18 +119,17 @@ public interface MViewService extends MetacatService<TableDto> {
      * Returns a list of partition names.
      *
      * @param name           view name
-     * @param filter         filter expression
-     * @param partitionNames names
      * @param sort           sort info
      * @param pageable       pagination info
+     * @param getPartitionsRequestDto get partition request dto
      * @return list of partition names
      */
     List<String> getPartitionKeys(
         QualifiedName name,
-        @Nullable String filter,
-        @Nullable List<String> partitionNames,
         @Nullable Sort sort,
-        @Nullable Pageable pageable);
+        @Nullable Pageable pageable,
+        @Nullable GetPartitionsRequestDto getPartitionsRequestDto
+        );
 
     /**
      * Returns a list of partition uris.

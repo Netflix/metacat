@@ -425,24 +425,21 @@ public class PartitionServiceImpl implements PartitionService {
     @Override
     public List<String> getPartitionKeys(
         final QualifiedName name,
-        @Nullable final String filter,
-        @Nullable final List<String> partitionNames,
         @Nullable final Sort sort,
-        @Nullable final Pageable pageable
+        @Nullable final Pageable pageable,
+        @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
         List<String> result = Lists.newArrayList();
         if (tableService.exists(name)) {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
             final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
-            final GetPartitionsRequestDto requestDto =
-                new GetPartitionsRequestDto(filter, partitionNames, false, false);
             final ConnectorRequestContext connectorRequestContext
                 = converterUtil.toConnectorContext(metacatRequestContext);
             try {
                 result = service.getPartitionKeys(
                     connectorRequestContext,
                     name,
-                    converterUtil.toPartitionListRequest(requestDto, pageable, sort)
+                    converterUtil.toPartitionListRequest(getPartitionsRequestDto, pageable, sort)
                 );
             } catch (final UnsupportedOperationException uoe) {
                 log.debug("Catalog {} doesn't support getPartitionKeys. Ignoring.", name.getCatalogName());

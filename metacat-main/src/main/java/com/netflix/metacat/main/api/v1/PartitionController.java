@@ -580,12 +580,11 @@ public class PartitionController implements PartitionV1 {
             catalogName,
             databaseName,
             tableName,
-            filter,
-            null,
             sortBy,
             sortOrder,
             offset,
-            limit
+            limit,
+            new GetPartitionsRequestDto(filter, null, false, false)
         );
     }
 
@@ -649,12 +648,11 @@ public class PartitionController implements PartitionV1 {
             databaseName,
             tableName,
             viewName,
-            filter,
-            null,
             sortBy,
             sortOrder,
             offset,
-            limit
+            limit,
+            new GetPartitionsRequestDto(filter, null, false, true)
         );
     }
 
@@ -711,22 +709,15 @@ public class PartitionController implements PartitionV1 {
         @ApiParam(value = "Request containing the filter expression for the partitions")
         @Nullable @RequestBody(required = false) final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
-        String filterExpression = null;
-        List<String> partitionNames = null;
-        if (getPartitionsRequestDto != null) {
-            filterExpression = getPartitionsRequestDto.getFilter();
-            partitionNames = getPartitionsRequestDto.getPartitionNames();
-        }
         return this._getPartitionKeys(
             catalogName,
             databaseName,
             tableName,
-            filterExpression,
-            partitionNames,
             sortBy,
             sortOrder,
             offset,
-            limit
+            limit,
+            getPartitionsRequestDto
         );
     }
 
@@ -786,23 +777,16 @@ public class PartitionController implements PartitionV1 {
         @ApiParam(value = "Request containing the filter expression for the partitions")
         @Nullable @RequestBody(required = false) final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
-        String filterExpression = null;
-        List<String> partitionNames = null;
-        if (getPartitionsRequestDto != null) {
-            filterExpression = getPartitionsRequestDto.getFilter();
-            partitionNames = getPartitionsRequestDto.getPartitionNames();
-        }
         return this._getMViewPartitionKeys(
             catalogName,
             databaseName,
             tableName,
             viewName,
-            filterExpression,
-            partitionNames,
             sortBy,
             sortOrder,
             offset,
-            limit
+            limit,
+            getPartitionsRequestDto
         );
     }
 
@@ -1424,12 +1408,11 @@ public class PartitionController implements PartitionV1 {
         final String databaseName,
         final String tableName,
         final String viewName,
-        @Nullable final String filter,
-        @Nullable final List<String> partitionNames,
         @Nullable final String sortBy,
         @Nullable final SortOrder sortOrder,
         @Nullable final Integer offset,
-        @Nullable final Integer limit
+        @Nullable final Integer limit,
+        @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName)
@@ -1439,10 +1422,9 @@ public class PartitionController implements PartitionV1 {
             "getMViewPartitionKeys",
             () -> this.mViewService.getPartitionKeys(
                 name,
-                filter,
-                partitionNames,
                 new Sort(sortBy, sortOrder),
-                new Pageable(limit, offset)
+                new Pageable(limit, offset),
+                getPartitionsRequestDto
             )
         );
     }
@@ -1481,12 +1463,11 @@ public class PartitionController implements PartitionV1 {
         final String catalogName,
         final String databaseName,
         final String tableName,
-        @Nullable final String filter,
-        @Nullable final List<String> partitionNames,
         @Nullable final String sortBy,
         @Nullable final SortOrder sortOrder,
         @Nullable final Integer offset,
-        @Nullable final Integer limit
+        @Nullable final Integer limit,
+        @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
@@ -1496,10 +1477,9 @@ public class PartitionController implements PartitionV1 {
             "getPartitionKeys",
             () -> partitionService.getPartitionKeys(
                 name,
-                filter,
-                partitionNames,
                 new Sort(sortBy, sortOrder),
-                new Pageable(limit, offset)
+                new Pageable(limit, offset),
+                getPartitionsRequestDto
             )
         );
     }

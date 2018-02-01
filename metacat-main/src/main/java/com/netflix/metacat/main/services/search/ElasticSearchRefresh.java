@@ -258,7 +258,6 @@ public class ElasticSearchRefresh {
     }
 
     private Void partitionsCleanUp(final QualifiedName tableName, final List<QualifiedName> excludeQualifiedNames) {
-        try {
             final List<PartitionDto> unmarkedPartitionDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames(
                 ElasticSearchDoc.Type.partition.name(),
                 Lists.newArrayList(tableName), refreshMarker, excludeQualifiedNames, PartitionDto.class);
@@ -269,7 +268,8 @@ public class ElasticSearchRefresh {
                     final List<String> unmarkedPartitionNames = unmarkedPartitionDtos.stream()
                         .map(p -> p.getDefinitionName().getPartitionName()).collect(Collectors.toList());
                     final Set<String> existingUnmarkedPartitionNames = Sets.newHashSet(
-                        partitionService.getPartitionKeys(tableName, null, unmarkedPartitionNames, null, null));
+                        partitionService.getPartitionKeys(tableName, null, null,
+                            new GetPartitionsRequestDto(null, unmarkedPartitionNames, false, true)));
                     final List<String> partitionIds = unmarkedPartitionDtos.stream()
                         .filter(p -> !existingUnmarkedPartitionNames.contains(
                             p.getDefinitionName().getPartitionName()))
@@ -290,9 +290,6 @@ public class ElasticSearchRefresh {
                 }
                 log.info("End deleting unmarked partitions for table {}", tableName);
             }
-        } catch (Exception e) {
-            log.warn("Failed getting the unmarked partitions for table {}", tableName);
-        }
         return null;
     }
 
