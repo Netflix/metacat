@@ -282,14 +282,11 @@ public class PartitionController implements PartitionV1 {
             "getPartitions",
             () -> this.partitionService.list(
                 name,
-                filter,
-                null,
                 new Sort(sortBy, sortOrder),
                 new Pageable(limit, offset),
                 includeUserMetadata,
                 includeUserMetadata,
-                false,
-                false
+                new GetPartitionsRequestDto(filter, null, false, false)
             )
         );
     }
@@ -426,29 +423,17 @@ public class PartitionController implements PartitionV1 {
         @ApiParam(value = "Request containing the filter expression for the partitions")
         @Nullable @RequestBody(required = false) final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
-        String filterExpression = null;
-        List<String> partitionNames = null;
-        boolean includePartitionDetails = false;
-        boolean includeAuditOnly = false;
-        if (getPartitionsRequestDto != null) {
-            filterExpression = getPartitionsRequestDto.getFilter();
-            partitionNames = getPartitionsRequestDto.getPartitionNames();
-            includePartitionDetails = getPartitionsRequestDto.getIncludePartitionDetails();
-            includeAuditOnly = getPartitionsRequestDto.getIncludeAuditOnly();
-        }
+
         return this.getPartitions(
             catalogName,
             databaseName,
             tableName,
-            filterExpression,
-            partitionNames,
             sortBy,
             sortOrder,
             offset,
             limit,
             includeUserMetadata,
-            includePartitionDetails,
-            includeAuditOnly
+            getPartitionsRequestDto
         );
     }
 
@@ -1346,32 +1331,28 @@ public class PartitionController implements PartitionV1 {
         final String catalogName,
         final String databaseName,
         final String tableName,
-        @Nullable final String filter,
-        @Nullable final List<String> partitionNames,
         @Nullable final String sortBy,
         @Nullable final SortOrder sortOrder,
         @Nullable final Integer offset,
         @Nullable final Integer limit,
         final boolean includeUserMetadata,
-        final boolean includePartitionDetails,
-        final boolean includeAuditOnly
+        final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
+
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
+
         return this.requestWrapper.processRequest(
             name,
             "getPartitions",
             () -> partitionService.list(
                 name,
-                filter,
-                partitionNames,
                 new Sort(sortBy, sortOrder),
                 new Pageable(limit, offset),
                 includeUserMetadata,
                 includeUserMetadata,
-                includePartitionDetails,
-                includeAuditOnly
+                getPartitionsRequestDto
             )
         );
     }

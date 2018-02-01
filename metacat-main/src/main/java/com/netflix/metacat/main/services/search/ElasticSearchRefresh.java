@@ -30,6 +30,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.CatalogMappingDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
+import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
 import com.netflix.metacat.common.dto.HasMetadata;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
@@ -226,7 +227,8 @@ public class ElasticSearchRefresh {
             final Pageable pageable = new Pageable(10000, offset);
             do {
                 final List<PartitionDto> partitionDtos =
-                    partitionService.list(tableName, null, null, sort, pageable, true, true, true, true);
+                    partitionService.list(tableName, sort, pageable, true, true,
+                        new GetPartitionsRequestDto(null, null, true, true));
                 count = partitionDtos.size();
                 if (!partitionDtos.isEmpty()) {
                     final List<List<PartitionDto>> partitionedPartitionDtos = Lists.partition(partitionDtos, 1000);
@@ -374,9 +376,9 @@ public class ElasticSearchRefresh {
         //
         elasticSearchUtil.refresh();
         final MetacatRequestContext context = MetacatRequestContext.builder().userName("admin").
-                                                                    clientAppName("metacat-refresh")
-                                                                    .apiUri("esRefresh")
-                                                                    .scheme("internal").build();
+            clientAppName("metacat-refresh")
+            .apiUri("esRefresh")
+            .scheme("internal").build();
 
 
         final List<DatabaseDto> unmarkedDatabaseDtos = elasticSearchUtil

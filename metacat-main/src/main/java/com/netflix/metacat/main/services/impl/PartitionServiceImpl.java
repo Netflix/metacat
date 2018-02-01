@@ -130,16 +130,21 @@ public class PartitionServiceImpl implements PartitionService {
     @Override
     public List<PartitionDto> list(
         final QualifiedName name,
-        @Nullable final String filter,
-        @Nullable final List<String> partitionNames,
         @Nullable final Sort sort,
         @Nullable final Pageable pageable,
         final boolean includeUserDefinitionMetadata,
         final boolean includeUserDataMetadata,
-        final boolean includePartitionDetails,
-        final boolean includeAuditOnly
+        final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
-        if (Strings.isNullOrEmpty(filter)
+
+        String filterExpression = null;
+        List<String> partitionNames = null;
+        if (getPartitionsRequestDto != null) {
+            filterExpression = getPartitionsRequestDto.getFilter();
+            partitionNames = getPartitionsRequestDto.getPartitionNames();
+        }
+
+        if (Strings.isNullOrEmpty(filterExpression)
             && (pageable == null || !pageable.isPageable())
             && (partitionNames == null || partitionNames.isEmpty())
             && config.getNamesToThrowErrorOnListPartitionsWithNoFilter().contains(name)) {
@@ -147,15 +152,11 @@ public class PartitionServiceImpl implements PartitionService {
         }
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
-        final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
-        requestDto.setFilter(filter);
-        requestDto.setIncludePartitionDetails(includePartitionDetails);
-        requestDto.setPartitionNames(partitionNames);
-        requestDto.setIncludeAuditOnly(includeAuditOnly);
+
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         final List<PartitionInfo> resultInfo = service
             .getPartitions(connectorRequestContext, name,
-                converterUtil.toPartitionListRequest(requestDto, pageable, sort));
+                converterUtil.toPartitionListRequest(getPartitionsRequestDto, pageable, sort));
         List<PartitionDto> result = Lists.newArrayList();
         if (resultInfo != null && !resultInfo.isEmpty()) {
             result = resultInfo.stream().map(converterUtil::toPartitionDto).collect(Collectors.toList());
@@ -170,7 +171,7 @@ public class PartitionServiceImpl implements PartitionService {
                 this.partitionGetDistSummary.withTags(name.parts())).record(result.size());
 
             log.info("Got {} partitions for {} using filter: {} and partition names: {}",
-                result.size(), name, filter,
+                result.size(), name, filterExpression,
                 partitionNames);
             if (includeUserDefinitionMetadata || includeUserDataMetadata) {
                 final List<ListenableFuture<Map<String, ObjectNode>>> futures = Lists.newArrayList();
@@ -287,9 +288,8 @@ public class PartitionServiceImpl implements PartitionService {
             eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
             registry.distributionSummary(
                 this.partitionDeleteDistSummary.withTags(name.parts())).record(partitionIdsForDeletes.size());
-            final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
-            requestDto.setIncludePartitionDetails(false);
-            requestDto.setPartitionNames(partitionIdsForDeletes);
+            final GetPartitionsRequestDto requestDto =
+                new GetPartitionsRequestDto(null, partitionIdsForDeletes, false, true);
             final List<PartitionInfo> deletePartitionInfos = service.getPartitions(connectorRequestContext, name,
                 converterUtil.toPartitionListRequest(requestDto, null, null));
             if (deletePartitionInfos != null) {
@@ -343,9 +343,7 @@ public class PartitionServiceImpl implements PartitionService {
             eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
             final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
             // Get the partitions before calling delete
-            final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
-            requestDto.setIncludePartitionDetails(false);
-            requestDto.setPartitionNames(partitionIds);
+            final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto(null, partitionIds, false, true);
             final ConnectorRequestContext connectorRequestContext
                 = converterUtil.toConnectorContext(metacatRequestContext);
             final List<PartitionInfo> partitionInfos = service.getPartitions(connectorRequestContext, name,
@@ -436,9 +434,8 @@ public class PartitionServiceImpl implements PartitionService {
         if (tableService.exists(name)) {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
             final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
-            final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
-            requestDto.setFilter(filter);
-            requestDto.setPartitionNames(partitionNames);
+            final GetPartitionsRequestDto requestDto =
+                new GetPartitionsRequestDto(filter, partitionNames, false, false);
             final ConnectorRequestContext connectorRequestContext
                 = converterUtil.toConnectorContext(metacatRequestContext);
             try {
@@ -469,9 +466,8 @@ public class PartitionServiceImpl implements PartitionService {
         if (tableService.exists(name)) {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
             final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
-            final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto();
-            requestDto.setFilter(filter);
-            requestDto.setPartitionNames(partitionNames);
+            final GetPartitionsRequestDto requestDto =
+                new GetPartitionsRequestDto(filter, partitionNames, false, true);
             final ConnectorRequestContext connectorRequestContext
                 = converterUtil.toConnectorContext(metacatRequestContext);
             try {
@@ -534,7 +530,8 @@ public class PartitionServiceImpl implements PartitionService {
         final QualifiedName tableName = QualifiedName
             .ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
         final List<PartitionDto> dtos =
-            list(tableName, null, Lists.newArrayList(name.getPartitionName()), null, null, true, true, true, true);
+            list(tableName, null, null, true, true,
+                new GetPartitionsRequestDto(null, Lists.newArrayList(name.getPartitionName()), true, true));
         if (!dtos.isEmpty()) {
             result = dtos.get(0);
         }
