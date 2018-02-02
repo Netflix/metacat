@@ -505,7 +505,7 @@ class MetacatSmokeSpec extends Specification {
                         inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
                         outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
                         serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
-                        uri: ""
+                        uri: "file://tmp/file/"
                     ),
                 )
             ]
@@ -527,7 +527,7 @@ class MetacatSmokeSpec extends Specification {
                         inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
                         outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
                         serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
-                        uri: ""
+                        uri: "file://tmp/file2/"
                     ),
                 )
             ]
@@ -543,20 +543,29 @@ class MetacatSmokeSpec extends Specification {
         def partkeys = partitionApi.getPartitionKeys(catalogName, databaseName, tableName,null, null, null, null, null)
         def partkeys2 = partitionApi.getPartitionKeysForRequest(catalogName, databaseName, tableName,null, null, null, null,
             new GetPartitionsRequestDto())
-
+        def partUris = partitionApi.getPartitionUris(catalogName, databaseName, tableName,null, null, null, null, null)
+        def partUris2 = partitionApi.getPartitionUrisForRequest(catalogName, databaseName, tableName,null, null, null, null,
+            new GetPartitionsRequestDto())
         //test the includeAuditOnly flag
         def auditparts = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName,null, null, null, null,false,
             new GetPartitionsRequestDto(includeAuditOnly: true))
 
         def auditpartkeys = partitionApi.getPartitionKeysForRequest(catalogName, databaseName, tableName,null, null, null, null,
             new GetPartitionsRequestDto(includeAuditOnly: true))
+
+        def auditpartUris = partitionApi.getPartitionUrisForRequest(catalogName, databaseName, tableName,null, null, null, null,
+            new GetPartitionsRequestDto(includeAuditOnly: true))
         then:
         noExceptionThrown()
         assert partkeys.size() == 2
+        assert partUris.size() == partkeys.size()
+        assert partUris2.size() == partkeys.size()
+
         assert partkeys.get(0).equals("one=1")
         assert partkeys2.size() == partkeys.size()
         assert auditparts.size() == auditOnlyPartSize
         assert auditpartkeys.size() == auditOnlyPartSize
+        assert auditpartUris.size() == auditOnlyPartSize
 
         where:
         catalogName                     | databaseName      | tableName                       | auditOnlyPartSize

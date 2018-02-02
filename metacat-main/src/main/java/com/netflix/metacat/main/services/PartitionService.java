@@ -112,16 +112,14 @@ public interface PartitionService extends MetacatService<PartitionDto> {
      * Returns a list of partition uris.
      *
      * @param name           table name
-     * @param filter         filter expression
-     * @param partitionNames names
      * @param sort           sort info
      * @param pageable       pagination info
+     * @param getPartitionsRequestDto get partition request dto
      * @return list of partition uris
      */
     List<String> getPartitionUris(
         QualifiedName name,
-        @Nullable String filter,
-        @Nullable List<String> partitionNames,
         @Nullable Sort sort,
-        @Nullable Pageable pageable);
+        @Nullable Pageable pageable,
+        @Nullable GetPartitionsRequestDto getPartitionsRequestDto);
 }

@@ -400,13 +400,12 @@ public class MViewServiceImpl implements MViewService {
      */
     @Override
     public List<String> getPartitionUris(final QualifiedName name,
-                                         @Nullable final String filter,
-                                         @Nullable final List<String> partitionNames,
                                          @Nullable final Sort sort,
-                                         @Nullable final Pageable pageable) {
+                                         @Nullable final Pageable pageable,
+                                         @Nullable final GetPartitionsRequestDto getPartitionsRequestDto) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
-        return partitionService.getPartitionUris(viewQName, filter, partitionNames, sort, pageable);
+        return partitionService.getPartitionUris(viewQName, sort, pageable, getPartitionsRequestDto);
     }
 
     /**
