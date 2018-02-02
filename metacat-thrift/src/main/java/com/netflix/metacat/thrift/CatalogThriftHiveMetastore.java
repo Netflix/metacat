@@ -1015,9 +1015,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     }
 
     private PartitionDto getPartitionDtoByName(final TableDto tableDto, final String partName) throws TException {
-        final GetPartitionsRequestDto dto = new GetPartitionsRequestDto();
-        dto.setIncludePartitionDetails(true);
-        dto.setPartitionNames(ImmutableList.of(partName));
+        final GetPartitionsRequestDto dto = new GetPartitionsRequestDto(null, ImmutableList.of(partName), true, false);
         final List<PartitionDto> partitionDtos = partV1.getPartitionsForRequest(
             catalogName, tableDto.getName().getDatabaseName(), tableDto.getName().getTableName(), null, null, null,
             null, false, dto);
@@ -1156,9 +1154,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             final String databaseName = normalizeIdentifier(dbName);
             final String tableName = normalizeIdentifier(tblName);
             final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
-            final GetPartitionsRequestDto dto = new GetPartitionsRequestDto();
-            dto.setIncludePartitionDetails(true);
-            dto.setPartitionNames(names);
+            final GetPartitionsRequestDto dto = new GetPartitionsRequestDto(null, names, true, false);
             final List<PartitionDto> metacatPartitions =
                 partV1.getPartitionsForRequest(catalogName, databaseName, tableName, null,
                     null, null, null, false, dto);

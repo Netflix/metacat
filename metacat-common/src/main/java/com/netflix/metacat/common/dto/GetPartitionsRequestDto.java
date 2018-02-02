@@ -17,8 +17,10 @@
  */
 package com.netflix.metacat.common.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -26,6 +28,8 @@ import java.util.List;
  * Partition get request.
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 public class GetPartitionsRequestDto extends BaseDto {
     private String filter;

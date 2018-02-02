@@ -15,6 +15,7 @@
 package com.netflix.metacat.main.services;
 
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
@@ -33,27 +34,20 @@ public interface PartitionService extends MetacatService<PartitionDto> {
      * Returns the list of partitions.
      *
      * @param name                          table name
-     * @param filter                        filter expression
-     * @param partitionNames                partition names to include
      * @param sort                          sort info
      * @param pageable                      pagination info
      * @param includeUserDefinitionMetadata if true, includes the definition metadata
      * @param includeUserDataMetadata       if true, includes the data metadata
-     * @param includePartitionDetails       if true, includes parameter details
-     * @param includeAuditOnly              if true, include audit table self's partitions. this flag does not
-     *                                      matter for other tables
+     * @param getPartitionsRequestDto       getPartitionsRequestDto
      * @return list of partitions
      */
     List<PartitionDto> list(
         QualifiedName name,
-        @Nullable String filter,
-        @Nullable List<String> partitionNames,
         @Nullable Sort sort,
         @Nullable Pageable pageable,
         boolean includeUserDefinitionMetadata,
         boolean includeUserDataMetadata,
-        boolean includePartitionDetails,
-        boolean includeAuditOnly);
+        GetPartitionsRequestDto getPartitionsRequestDto);
 
     /**
      * Partition count for the given table name.
@@ -103,33 +97,29 @@ public interface PartitionService extends MetacatService<PartitionDto> {
      * Returns a list of partition names.
      *
      * @param name           table name
-     * @param filter         filter expression
-     * @param partitionNames names
      * @param sort           sort info
      * @param pageable       pagination info
+     * @param getPartitionsRequestDto get partition request dto
      * @return list of partition names
      */
     List<String> getPartitionKeys(
         QualifiedName name,
-        @Nullable String filter,
-        @Nullable List<String> partitionNames,
         @Nullable Sort sort,
-        @Nullable Pageable pageable);
+        @Nullable Pageable pageable,
+        @Nullable GetPartitionsRequestDto getPartitionsRequestDto);
 
     /**
      * Returns a list of partition uris.
      *
      * @param name           table name
-     * @param filter         filter expression
-     * @param partitionNames names
      * @param sort           sort info
      * @param pageable       pagination info
+     * @param getPartitionsRequestDto get partition request dto
      * @return list of partition uris
      */
     List<String> getPartitionUris(
         QualifiedName name,
-        @Nullable String filter,
-        @Nullable List<String> partitionNames,
         @Nullable Sort sort,
-        @Nullable Pageable pageable);
+        @Nullable Pageable pageable,
+        @Nullable GetPartitionsRequestDto getPartitionsRequestDto);
 }

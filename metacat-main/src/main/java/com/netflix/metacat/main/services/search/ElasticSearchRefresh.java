@@ -30,6 +30,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.CatalogMappingDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
+import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
 import com.netflix.metacat.common.dto.HasMetadata;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
@@ -226,7 +227,8 @@ public class ElasticSearchRefresh {
             final Pageable pageable = new Pageable(10000, offset);
             do {
                 final List<PartitionDto> partitionDtos =
-                    partitionService.list(tableName, null, null, sort, pageable, true, true, true, true);
+                    partitionService.list(tableName, sort, pageable, true, true,
+                        new GetPartitionsRequestDto(null, null, true, true));
                 count = partitionDtos.size();
                 if (!partitionDtos.isEmpty()) {
                     final List<List<PartitionDto>> partitionedPartitionDtos = Lists.partition(partitionDtos, 1000);
@@ -256,7 +258,6 @@ public class ElasticSearchRefresh {
     }
 
     private Void partitionsCleanUp(final QualifiedName tableName, final List<QualifiedName> excludeQualifiedNames) {
-        try {
             final List<PartitionDto> unmarkedPartitionDtos = elasticSearchUtil.getQualifiedNamesByMarkerByNames(
                 ElasticSearchDoc.Type.partition.name(),
                 Lists.newArrayList(tableName), refreshMarker, excludeQualifiedNames, PartitionDto.class);
@@ -267,7 +268,8 @@ public class ElasticSearchRefresh {
                     final List<String> unmarkedPartitionNames = unmarkedPartitionDtos.stream()
                         .map(p -> p.getDefinitionName().getPartitionName()).collect(Collectors.toList());
                     final Set<String> existingUnmarkedPartitionNames = Sets.newHashSet(
-                        partitionService.getPartitionKeys(tableName, null, unmarkedPartitionNames, null, null));
+                        partitionService.getPartitionKeys(tableName, null, null,
+                            new GetPartitionsRequestDto(null, unmarkedPartitionNames, false, true)));
                     final List<String> partitionIds = unmarkedPartitionDtos.stream()
                         .filter(p -> !existingUnmarkedPartitionNames.contains(
                             p.getDefinitionName().getPartitionName()))
@@ -288,9 +290,6 @@ public class ElasticSearchRefresh {
                 }
                 log.info("End deleting unmarked partitions for table {}", tableName);
             }
-        } catch (Exception e) {
-            log.warn("Failed getting the unmarked partitions for table {}", tableName);
-        }
         return null;
     }
 
@@ -374,9 +373,9 @@ public class ElasticSearchRefresh {
         //
         elasticSearchUtil.refresh();
         final MetacatRequestContext context = MetacatRequestContext.builder().userName("admin").
-                                                                    clientAppName("metacat-refresh")
-                                                                    .apiUri("esRefresh")
-                                                                    .scheme("internal").build();
+            clientAppName("metacat-refresh")
+            .apiUri("esRefresh")
+            .scheme("internal").build();
 
 
         final List<DatabaseDto> unmarkedDatabaseDtos = elasticSearchUtil

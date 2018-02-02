@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
@@ -249,7 +250,8 @@ public class MViewServiceImpl implements MViewService {
     @Override
     public void snapshotPartitions(final QualifiedName name, @Nullable final String filter) {
         final List<PartitionDto> partitionDtos =
-            partitionService.list(name, filter, null, null, null, false, false, true, true);
+            partitionService.list(name, null, null, false, false,
+                new GetPartitionsRequestDto(filter, null, true, true));
         if (partitionDtos != null && !partitionDtos.isEmpty()) {
             log.info("Snapshot partitions({}) for view {}.", partitionDtos.size(), name);
             final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
@@ -287,8 +289,9 @@ public class MViewServiceImpl implements MViewService {
         if (merge) {
             final List<String> partitionNames = partitionDtos.stream().map(
                 partitionDto -> partitionDto.getName().getPartitionName()).collect(Collectors.toList());
-            final List<PartitionDto> existingPartitions = partitionService
-                .list(viewQName, null, partitionNames, null, null, false, false, false, true);
+            final List<PartitionDto> existingPartitions =
+                partitionService.list(viewQName, null, null, false, false,
+                    new GetPartitionsRequestDto(null, partitionNames, false, true));
             final Map<String, PartitionDto> existingPartitionsMap = existingPartitions.stream()
                 .collect(Collectors
                     .toMap(partitionDto -> partitionDto.getName().getPartitionName(), Function.identity()));
@@ -373,9 +376,8 @@ public class MViewServiceImpl implements MViewService {
     ) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
-        return partitionService
-            .list(viewQName, filter, partitionNames, sort, pageable, includeUserMetadata, includeUserMetadata,
-                includePartitionDetails, true);
+        return partitionService.list(viewQName, sort, pageable, includeUserMetadata, includeUserMetadata,
+            new GetPartitionsRequestDto(filter, partitionNames, includePartitionDetails, true));
     }
 
     /**
@@ -383,14 +385,14 @@ public class MViewServiceImpl implements MViewService {
      */
     @Override
     public List<String> getPartitionKeys(
-         final QualifiedName name,
-         @Nullable final String filter,
-         @Nullable final List<String> partitionNames,
-         @Nullable final Sort sort,
-         @Nullable final Pageable pageable) {
+        final QualifiedName name,
+        @Nullable final Sort sort,
+        @Nullable final Pageable pageable,
+        @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
+    ) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
-        return partitionService.getPartitionKeys(viewQName, filter, partitionNames, sort, pageable);
+        return partitionService.getPartitionKeys(viewQName, sort, pageable, getPartitionsRequestDto);
     }
 
     /**
@@ -398,13 +400,12 @@ public class MViewServiceImpl implements MViewService {
      */
     @Override
     public List<String> getPartitionUris(final QualifiedName name,
-                                         @Nullable final String filter,
-                                         @Nullable final List<String> partitionNames,
                                          @Nullable final Sort sort,
-                                         @Nullable final Pageable pageable) {
+                                         @Nullable final Pageable pageable,
+                                         @Nullable final GetPartitionsRequestDto getPartitionsRequestDto) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
-        return partitionService.getPartitionUris(viewQName, filter, partitionNames, sort, pageable);
+        return partitionService.getPartitionUris(viewQName, sort, pageable, getPartitionsRequestDto);
     }
 
     /**
