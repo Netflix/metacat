@@ -130,7 +130,7 @@ public class ConverterUtil {
                 field.setPos(index++);
             }
         }
-       return result;
+        return result;
     }
 
     /**
@@ -140,7 +140,7 @@ public class ConverterUtil {
      * @return connector table info
      */
     public TableInfo fromTableDto(final TableDto tableDto) {
-       return mapper.map(tableDto, TableInfo.class);
+        return mapper.map(tableDto, TableInfo.class);
     }
 
     /**
@@ -183,10 +183,20 @@ public class ConverterUtil {
      */
     public PartitionListRequest toPartitionListRequest(final GetPartitionsRequestDto partitionsRequestDto,
                                                        final Pageable pageable, final Sort sort) {
-        final PartitionListRequest result = mapper.map(partitionsRequestDto, PartitionListRequest.class);
-        result.setPageable(pageable);
-        result.setSort(sort);
-        return result;
+        if (partitionsRequestDto != null) {
+            if (partitionsRequestDto.getIncludePartitionDetails() == null) {
+                partitionsRequestDto.setIncludePartitionDetails(false);
+            }
+            if (partitionsRequestDto.getIncludeAuditOnly() == null) {
+                partitionsRequestDto.setIncludeAuditOnly(false);
+            }
+            final PartitionListRequest result = mapper.map(partitionsRequestDto, PartitionListRequest.class);
+            result.setPageable(pageable);
+            result.setSort(sort);
+            return result;
+        } else {
+            return new PartitionListRequest(null, null, false, pageable, sort, false);
+        }
     }
 
     /**

@@ -33,6 +33,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
+import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
@@ -134,15 +135,20 @@ public class PartitionServiceImpl implements PartitionService {
         @Nullable final Pageable pageable,
         final boolean includeUserDefinitionMetadata,
         final boolean includeUserDataMetadata,
-        final GetPartitionsRequestDto getPartitionsRequestDto
+        @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
+        // the conversion will handle getPartitionsRequestDto as null case
+        final PartitionListRequest partitionListRequest =
+            converterUtil.toPartitionListRequest(getPartitionsRequestDto, pageable, sort);
 
-        String filterExpression = null;
-        List<String> partitionNames = null;
-        if (getPartitionsRequestDto != null) {
-            filterExpression = getPartitionsRequestDto.getFilter();
-            partitionNames = getPartitionsRequestDto.getPartitionNames();
-        }
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
+        final List<PartitionInfo> resultInfo = service
+            .getPartitions(connectorRequestContext, name, partitionListRequest);
+
+        final String filterExpression = partitionListRequest.getFilter();
+        final List<String> partitionNames = partitionListRequest.getPartitionNames();
 
         if (Strings.isNullOrEmpty(filterExpression)
             && (pageable == null || !pageable.isPageable())
@@ -150,13 +156,7 @@ public class PartitionServiceImpl implements PartitionService {
             && config.getNamesToThrowErrorOnListPartitionsWithNoFilter().contains(name)) {
             throw new IllegalArgumentException(String.format("No filter or limit specified for table %s", name));
         }
-        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
 
-        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
-        final List<PartitionInfo> resultInfo = service
-            .getPartitions(connectorRequestContext, name,
-                converterUtil.toPartitionListRequest(getPartitionsRequestDto, pageable, sort));
         List<PartitionDto> result = Lists.newArrayList();
         if (resultInfo != null && !resultInfo.isEmpty()) {
             result = resultInfo.stream().map(converterUtil::toPartitionDto).collect(Collectors.toList());

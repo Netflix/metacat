@@ -367,17 +367,15 @@ public class MViewServiceImpl implements MViewService {
     @Override
     public List<PartitionDto> listPartitions(
         final QualifiedName name,
-        @Nullable final String filter,
-        @Nullable final List<String> partitionNames,
         @Nullable final Sort sort,
         @Nullable final Pageable pageable,
         final boolean includeUserMetadata,
-        final boolean includePartitionDetails
+        @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         return partitionService.list(viewQName, sort, pageable, includeUserMetadata, includeUserMetadata,
-            new GetPartitionsRequestDto(filter, partitionNames, includePartitionDetails, true));
+            getPartitionsRequestDto);
     }
 
     /**

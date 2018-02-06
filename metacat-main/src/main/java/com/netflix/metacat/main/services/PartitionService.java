@@ -47,7 +47,7 @@ public interface PartitionService extends MetacatService<PartitionDto> {
         @Nullable Pageable pageable,
         boolean includeUserDefinitionMetadata,
         boolean includeUserDataMetadata,
-        GetPartitionsRequestDto getPartitionsRequestDto);
+        @Nullable GetPartitionsRequestDto getPartitionsRequestDto);
 
     /**
      * Partition count for the given table name.
