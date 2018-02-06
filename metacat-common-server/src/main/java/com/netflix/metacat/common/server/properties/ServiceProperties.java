@@ -118,6 +118,7 @@ public class ServiceProperties {
                     @Data
                     public static class No {
                         private String filter;
+                        private java.util.List<QualifiedName> filterList;
 
                         /**
                          * Get the filter list as a list of qualified names.
@@ -125,11 +126,11 @@ public class ServiceProperties {
                          * @return The filtered list
                          */
                         public java.util.List<QualifiedName> getFilterAsListOfQualifiedNames() {
-                            if (this.filter != null) {
-                                return PropertyUtils.delimitedStringsToQualifiedNamesList(filter, ',');
-                            } else {
-                                return Lists.newArrayList();
+                            if (filterList == null) {
+                                filterList = filter == null ? Lists.newArrayList()
+                                    : PropertyUtils.delimitedStringsToQualifiedNamesList(filter, ',');
                             }
+                            return  filterList;
                         }
                     }
                 }
