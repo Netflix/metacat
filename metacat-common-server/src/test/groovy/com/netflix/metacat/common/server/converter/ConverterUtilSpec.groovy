@@ -4,6 +4,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
+import org.dozer.MappingException
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -40,8 +41,18 @@ class ConverterUtilSpec extends Specification {
         resultDto = converter.toDatabaseDto(info)
         then:
         dto != resultDto
+
+        when:
+        converter.fromDatabaseDto(null)
+        then:
+        thrown MappingException
+
+        when:
+        converter.toDatabaseDto(null)
+        then:
+        thrown MappingException
     }
-    
+
     def testTableConversion() {
         given:
         def dto = new TableDto(name: QualifiedName.ofTable('prodhive', 'amajumdar', 'part'),
@@ -67,6 +78,15 @@ class ConverterUtilSpec extends Specification {
         def resultDto = converter.toTableDto(info)
         then:
         dto == resultDto
+        when:
+        converter.fromTableDto(null)
+        then:
+        thrown MappingException
+
+        when:
+        converter.toTableDto(null)
+        then:
+        thrown MappingException
     }
 
     def testPartitionConversion() {
@@ -79,5 +99,44 @@ class ConverterUtilSpec extends Specification {
         def resultDto = converter.toPartitionDto(info)
         then:
         dto == resultDto
+        when:
+        converter.fromPartitionDto(null)
+        then:
+        thrown MappingException
+        when:
+        converter.toPartitionDto(null)
+        then:
+        thrown MappingException
+    }
+
+    def testPartitionListRequestConversion() {
+        given:
+        def dto = new GetPartitionsRequestDto(null, null, false, false);
+        def sort = new Sort()
+        def pagable = new Pageable()
+        when:
+        def req = converter.toPartitionListRequest(dto, pagable, sort)
+        then:
+        req.getFilter() == dto.getFilter()
+        req.getPartitionNames() == dto.getPartitionNames()
+        req.getIncludeAuditOnly() == dto.getIncludeAuditOnly()
+        req.getIncludePartitionDetails() == dto.getIncludePartitionDetails()
+
+        when:
+        req = converter.toPartitionListRequest(null, pagable, sort)
+        then:
+        req.getFilter() == dto.getFilter()
+        req.getPartitionNames() == dto.getPartitionNames()
+        req.getIncludeAuditOnly() == dto.getIncludeAuditOnly()
+        req.getIncludePartitionDetails() == dto.getIncludePartitionDetails()
+
+        when:
+        req = converter.toPartitionListRequest(new GetPartitionsRequestDto(), pagable, sort)
+        then:
+        req.getFilter() == dto.getFilter()
+        req.getPartitionNames() == dto.getPartitionNames()
+        req.getIncludeAuditOnly() == dto.getIncludeAuditOnly()
+        req.getIncludePartitionDetails() == dto.getIncludePartitionDetails()
+
     }
 }

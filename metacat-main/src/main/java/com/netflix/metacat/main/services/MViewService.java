@@ -98,22 +98,18 @@ public interface MViewService extends MetacatService<TableDto> {
      * Returns the list of partitions.
      *
      * @param name                    view name
-     * @param filter                  filter expression
-     * @param partitionNames          partition names to include
      * @param sort                    sort info
      * @param pageable                pagination info
      * @param includeUserMetadata     if true, includes the user metadata
-     * @param includePartitionDetails if true, includes parameter details
+     * @param getPartitionsRequestDto  get partitions request
      * @return list of partitions
      */
     List<PartitionDto> listPartitions(
         QualifiedName name,
-        @Nullable String filter,
-        @Nullable List<String> partitionNames,
         @Nullable Sort sort,
         @Nullable Pageable pageable,
         boolean includeUserMetadata,
-        boolean includePartitionDetails);
+        @Nullable GetPartitionsRequestDto getPartitionsRequestDto);
 
     /**
      * Returns a list of partition names.

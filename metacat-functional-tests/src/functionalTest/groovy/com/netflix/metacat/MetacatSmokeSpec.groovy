@@ -542,10 +542,15 @@ class MetacatSmokeSpec extends Specification {
 
         def partkeys = partitionApi.getPartitionKeys(catalogName, databaseName, tableName,null, null, null, null, null)
         def partkeys2 = partitionApi.getPartitionKeysForRequest(catalogName, databaseName, tableName,null, null, null, null,
-            new GetPartitionsRequestDto())
+            new GetPartitionsRequestDto(null, null, null, null))
+
         def partUris = partitionApi.getPartitionUris(catalogName, databaseName, tableName,null, null, null, null, null)
         def partUris2 = partitionApi.getPartitionUrisForRequest(catalogName, databaseName, tableName,null, null, null, null,
-            new GetPartitionsRequestDto())
+            new GetPartitionsRequestDto(null, null, null, null))
+
+        def partUris3 = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName,null, null, null, null,false,
+            new GetPartitionsRequestDto(null, null, null, null))
+
         //test the includeAuditOnly flag
         def auditparts = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName,null, null, null, null,false,
             new GetPartitionsRequestDto(includeAuditOnly: true))
@@ -560,6 +565,7 @@ class MetacatSmokeSpec extends Specification {
         assert partkeys.size() == 2
         assert partUris.size() == partkeys.size()
         assert partUris2.size() == partkeys.size()
+        assert partUris3.size() == partkeys.size() //test the includeAuditOnly and includepartionDetails can be null
 
         assert partkeys.get(0).equals("one=1")
         assert partkeys2.size() == partkeys.size()
