@@ -137,16 +137,9 @@ public class PartitionServiceImpl implements PartitionService {
         final boolean includeUserDataMetadata,
         @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
-        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
         // the conversion will handle getPartitionsRequestDto as null case
         final PartitionListRequest partitionListRequest =
             converterUtil.toPartitionListRequest(getPartitionsRequestDto, pageable, sort);
-
-        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
-        final List<PartitionInfo> resultInfo = service
-            .getPartitions(connectorRequestContext, name, partitionListRequest);
-
         final String filterExpression = partitionListRequest.getFilter();
         final List<String> partitionNames = partitionListRequest.getPartitionNames();
 
@@ -156,6 +149,14 @@ public class PartitionServiceImpl implements PartitionService {
             && config.getNamesToThrowErrorOnListPartitionsWithNoFilter().contains(name)) {
             throw new IllegalArgumentException(String.format("No filter or limit specified for table %s", name));
         }
+
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
+
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
+        final List<PartitionInfo> resultInfo = service
+            .getPartitions(connectorRequestContext, name, partitionListRequest);
+
 
         List<PartitionDto> result = Lists.newArrayList();
         if (resultInfo != null && !resultInfo.isEmpty()) {
