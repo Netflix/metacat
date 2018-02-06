@@ -57,6 +57,7 @@ public class Definition {
         public static class Delete {
             private boolean enableForTable = true;
             private String enableDeleteForQualifiedNames;
+            private Set<QualifiedName> enableDeleteForQualifiedNamesSet;
 
             /**
              * Get the names stored in the variable as a List of fully qualified names.
@@ -65,8 +66,11 @@ public class Definition {
              */
             @JsonIgnore
             public Set<QualifiedName> getQualifiedNamesEnabledForDelete() {
-                return PropertyUtils.delimitedStringsToQualifiedNamesSet(this.enableDeleteForQualifiedNames,
-                    ',');
+                if (enableDeleteForQualifiedNamesSet ==  null) {
+                    enableDeleteForQualifiedNamesSet =
+                        PropertyUtils.delimitedStringsToQualifiedNamesSet(this.enableDeleteForQualifiedNames, ',');
+                }
+                return enableDeleteForQualifiedNamesSet;
             }
         }
     }

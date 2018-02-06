@@ -124,6 +124,7 @@ public class ElasticsearchProperties {
         public static class Include {
             private String catalogs;
             private String databases;
+            private List<QualifiedName> databasesList;
 
             /**
              * Get the databases stored in the variable as a List of fully qualified names.
@@ -132,9 +133,12 @@ public class ElasticsearchProperties {
              */
             @JsonIgnore
             public List<QualifiedName> getDatabasesAsListOfQualfiedNames() {
-                return this.databases == null
-                    ? Lists.newArrayList()
-                    : PropertyUtils.delimitedStringsToQualifiedNamesList(this.databases, ',');
+                if (databasesList == null) {
+                    databasesList = this.databases == null
+                        ? Lists.newArrayList()
+                        : PropertyUtils.delimitedStringsToQualifiedNamesList(this.databases, ',');
+                }
+                return databasesList;
             }
         }
 
@@ -159,6 +163,7 @@ public class ElasticsearchProperties {
             @Data
             public static class Qualified {
                 private String names;
+                private List<QualifiedName> namesList;
 
                 /**
                  * Get the names stored in the variable as a List of fully qualified names.
@@ -167,9 +172,12 @@ public class ElasticsearchProperties {
                  */
                 @JsonIgnore
                 public List<QualifiedName> getNamesAsListOfQualifiedNames() {
-                    return this.names == null
-                        ? Lists.newArrayList()
-                        : PropertyUtils.delimitedStringsToQualifiedNamesList(this.names, ',');
+                    if (namesList == null) {
+                        namesList = this.names == null
+                            ? Lists.newArrayList()
+                            : PropertyUtils.delimitedStringsToQualifiedNamesList(this.names, ',');
+                    }
+                    return namesList;
                 }
             }
         }
