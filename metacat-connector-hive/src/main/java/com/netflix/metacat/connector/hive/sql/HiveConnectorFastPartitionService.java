@@ -249,7 +249,14 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     }
 
     private void copyTableSdToPartitionInfoSd(final PartitionInfo partitionInfo, final Table table) {
-        final StorageInfo sd = partitionInfo.getSerde();
+        StorageInfo sd = partitionInfo.getSerde();
+        //
+        // Partitions can be provided in the request without the storage information.
+        //
+        if (sd == null) {
+            sd = new StorageInfo();
+            partitionInfo.setSerde(sd);
+        }
         final StorageDescriptor tableSd = table.getSd();
 
         if (StringUtils.isBlank(sd.getInputFormat())) {

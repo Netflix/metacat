@@ -659,6 +659,38 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
+    def "Test save partitions for #catalogName/#databaseName/#tableName with serde set to null: #serdeNull and location set to null:#locationNull"() {
+        given:
+        def uri = isLocalEnv ? String.format("file:/tmp/%s/%s/%s", databaseName, tableName, partitionName) : String.format("s3://wh/%s/%s/%s", databaseName, tableName, partitionName)
+        createTable(catalogName, databaseName, tableName)
+        def partition = PigDataDtoProvider.getPartition(catalogName, databaseName, tableName, partitionName, uri)
+        if (locationNull) {
+            partition.getSerde().setUri(null)
+        }
+        if (serdeNull) {
+            partition.setSerde(null)
+        }
+        def request = new PartitionsSaveRequestDto(partitions: [partition])
+        partitionApi.savePartitions(catalogName, databaseName, tableName, request)
+        def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionName.replace('=', '="') + '"', null, null, null, null, false)
+        expect:
+        partitions.get(0).dataUri == uri
+        cleanup:
+        partitionApi.deletePartitions(catalogName, databaseName, tableName, [partitionName])
+        where:
+        catalogName                     | databaseName      | tableName | partitionName | serdeNull | locationNull
+        'embedded-hive-metastore'       | 'smoke_db7'       | 'part'    | 'one=xyz'     | true      | true
+        'embedded-hive-metastore'       | 'smoke_db7'       | 'part'    | 'one=xyz'     | true      | false
+        'embedded-hive-metastore'       | 'smoke_db7'       | 'part'    | 'one=xyz'     | false     | true
+        'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | true      | true
+        'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | true      | false
+        'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | false     | true
+        'hive-metastore'                | 'hsmoke_db7'      | 'part'    | 'one=xyz'     | true      | true
+        'hive-metastore'                | 'hsmoke_db7'      | 'part'    | 'one=xyz'     | true      | false
+        'hive-metastore'                | 'hsmoke_db7'      | 'part'    | 'one=xyz'     | false     | true
+    }
+
+    @Unroll
     def "Test catalog failure cases"() {
         when:
         api.getDatabase('invalid', 'invalid', false, false)
