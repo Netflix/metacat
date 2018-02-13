@@ -133,12 +133,16 @@ public class HiveConnectorTableService implements ConnectorTableService {
             metacatHiveClient.createTable(table);
         } catch (AlreadyExistsException exception) {
             throw new TableAlreadyExistsException(tableName, exception);
-        } catch (MetaException exception) {
-            throw new InvalidMetaException(tableName, exception);
-        } catch (NoSuchObjectException | InvalidObjectException exception) {
-            throw new DatabaseNotFoundException(
-                QualifiedName.ofDatabase(tableName.getCatalogName(),
-                    tableName.getDatabaseName()), exception);
+        } catch (MetaException | InvalidObjectException exception) {
+            //the NoSuchObjectException is converted into InvalidObjectException in hive client
+            if (exception.getMessage().startsWith(tableName.getDatabaseName())) {
+                throw new DatabaseNotFoundException(
+                    QualifiedName.ofDatabase(tableName.getCatalogName(),
+                        tableName.getDatabaseName()), exception);
+            } else {
+                //table name or column invalid defintion exception
+                throw new InvalidMetaException(tableName, exception);
+            }
         } catch (TException exception) {
             throw new ConnectorException(String.format("Failed create hive table %s", tableName), exception);
         }
