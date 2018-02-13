@@ -43,6 +43,7 @@ import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.sql.PartitionHolder;
 import lombok.Getter;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -313,15 +314,19 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
                 final String existingPartitionUri = getPartitionUri(existingPartitionHolder);
                 if (partitionUri == null || !partitionUri.equals(existingPartitionUri)) {
                     existingPartitionNames.add(partitionName);
+                    // We need to copy the existing partition info and
+                    if (partitionInfo.getSerde() == null) {
+                        partitionInfo.setSerde(new StorageInfo());
+                    }
+                    if (partitionInfo.getAudit() == null) {
+                        partitionInfo.setAudit(new AuditInfo());
+                    }
+                    if (StringUtils.isBlank(partitionUri)) {
+                        partitionInfo.getSerde().setUri(existingPartitionUri);
+                    }
                     //the partition exists, we should not do anything for the partition exists
                     //unless we alterifExists
                     if (partitionsSaveRequest.getAlterIfExists()) {
-                        if (partitionInfo.getSerde() == null) {
-                            partitionInfo.setSerde(new StorageInfo());
-                        }
-                        if (partitionInfo.getAudit() == null) {
-                            partitionInfo.setAudit(new AuditInfo());
-                        }
                         if (existingPartitionHolder.getPartition() != null) {
                             final Partition existingPartition = existingPartitionHolder.getPartition();
                             partitionInfo.getSerde().setParameters(existingPartition.getParameters());
