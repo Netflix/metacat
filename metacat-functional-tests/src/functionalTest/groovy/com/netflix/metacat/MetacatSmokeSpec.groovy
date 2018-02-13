@@ -36,13 +36,14 @@ import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.exception.MetacatPreconditionFailedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.*
 import feign.jaxrs.JAXRSContract
 import feign.slf4j.Slf4jLogger
 import groovy.sql.Sql
-import spock.lang.Ignore
 import org.joda.time.Instant
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -252,6 +253,7 @@ class MetacatSmokeSpec extends Specification {
         'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test_create_table' | true   | false   | null
         'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test_create_table' | false  | false   | null
         'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test_create_table1'| false  | true    | null
+        'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test.create_table1'| false  | true    | InvalidMetaException.class
         'hive-metastore'                | 'hsmoke_db1' | 'test_create_table' | true   | false   | null
         'hive-metastore'                | 'hsmoke_db1' | 'test_create_table' | false  | false   | null
         'hive-metastore'                | 'hsmoke_db1' | 'test_create_table1'| false  | true    | null

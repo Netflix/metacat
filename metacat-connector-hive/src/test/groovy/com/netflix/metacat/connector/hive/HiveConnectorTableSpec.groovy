@@ -159,7 +159,7 @@ class HiveConnectorTableSpec extends Specification {
                 .outputFormat('org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat')
                 .build()).build())
         then:
-        1 * client.createTable(_) >> { throw new MetaException() }
+        1 * client.createTable(_) >> { throw new MetaException("testing message") }
         thrown InvalidMetaException
     }
 
@@ -180,8 +180,9 @@ class HiveConnectorTableSpec extends Specification {
         exception                                                         | result
         new TException()                                                  | ConnectorException
         new org.apache.hadoop.hive.metastore.api.AlreadyExistsException() | TableAlreadyExistsException
-        new MetaException()                                               | InvalidMetaException
-        new InvalidObjectException()                                      | DatabaseNotFoundException
+        new MetaException("testing ")                                     | InvalidMetaException
+        new InvalidObjectException("not a valid object name")             | InvalidMetaException
+        new InvalidObjectException("test1")                               | DatabaseNotFoundException
     }
 
     @Unroll
