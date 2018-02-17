@@ -1,1 +1,1 @@
-world/world.sql
+\ir world/world.sql
