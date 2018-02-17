@@ -18,7 +18,9 @@
     </module>
 
     <!-- Checks that there is a newline at the end of each file. -->
-    <module name="NewlineAtEndOfFile"/>
+    <module name="NewlineAtEndOfFile">
+		<property name="lineSeparator" value="lf_cr_crlf"/>
+	</module>
 
     <!-- Implementation of a check that looks for a single line in any file type. -->
     <module name="RegexpSingleline">
