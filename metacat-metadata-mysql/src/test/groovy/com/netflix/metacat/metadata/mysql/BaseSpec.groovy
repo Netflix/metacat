@@ -16,19 +16,18 @@ package com.netflix.metacat.metadata.mysql
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
+import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor
+import com.netflix.metacat.common.server.usermetadata.MetadataInterceptorImpl
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.metacat.common.server.util.DataSourceManager
 import io.airlift.testing.mysql.TestingMySqlServer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
-import org.springframework.test.context.ContextConfiguration
-import org.springframework.test.context.support.AnnotationConfigContextLoader
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
@@ -62,7 +61,8 @@ class BaseSpec extends Specification {
                 new MetacatJsonLocator(),
                 new DefaultConfigImpl(
                     new MetacatProperties()
-                )
+                ),
+                new MetadataInterceptorImpl()
             )
         }
 

@@ -16,11 +16,14 @@ package com.netflix.metacat.metadata.mysql;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
+import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
+import com.netflix.metacat.common.server.usermetadata.MetadataInterceptorImpl;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,29 +42,41 @@ import javax.sql.DataSource;
 @ConditionalOnProperty(value = "metacat.mysqlmetadataservice.enabled", havingValue = "true")
 public class MySqlUserMetadataConfig {
 
+    /**
+     * business Metadata Manager.
+     * @return business Metadata Manager
+     */
+    @Bean
+    @ConditionalOnMissingBean(MetadataInterceptor.class)
+    public MetadataInterceptor businessMetadataManager(
+    ) {
+        return new MetadataInterceptorImpl();
+    }
 
     /**
      * User Metadata service.
      *
-     * @param jdbcTemplate  JDBC template
-     * @param config      System config to use
-     * @param metacatJson Json Utilities to use
+     * @param jdbcTemplate JDBC template
+     * @param config       System config to use
+     * @param metacatJson  Json Utilities to use
+     * @param metadataInterceptor  business metadata manager
      * @return User metadata service based on MySql
      */
     @Bean
     public UserMetadataService userMetadataService(
         @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
         final Config config,
-        final MetacatJson metacatJson
+        final MetacatJson metacatJson,
+        final MetadataInterceptor metadataInterceptor
     ) {
-        return new MysqlUserMetadataService(jdbcTemplate, metacatJson, config);
+        return new MysqlUserMetadataService(jdbcTemplate, metacatJson, config, metadataInterceptor);
     }
 
     /**
      * Lookup service.
      *
      * @param jdbcTemplate JDBC template
-     * @param config     System configuration to use
+     * @param config       System configuration to use
      * @return Lookup service backed by MySQL
      */
     @Bean
@@ -102,7 +117,7 @@ public class MySqlUserMetadataConfig {
      */
     @Bean
     public DataSource metadataDataSource(final DataSourceManager dataSourceManager,
-        final MetacatProperties metacatProperties) throws Exception {
+                                         final MetacatProperties metacatProperties) throws Exception {
         MySqlServiceUtil.loadMySqlDataSource(dataSourceManager,
             metacatProperties.getUsermetadata().getConfig().getLocation());
         return dataSourceManager.get(UserMetadataService.NAME_DATASOURCE);
