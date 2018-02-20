@@ -91,7 +91,7 @@ task expandWar(type: Copy) {
 task startMetacatCluster(type: Exec) {
     dependsOn 'expandWar'
     if (project.ext.startCluster) {
-        commandLine rootProject.file('scripts/start_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose.yml')
+        commandLine 'sh', rootProject.file('scripts/start_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose.yml')
     } else {
         commandLine '/bin/echo', 'skipping cluster start'
     }
@@ -99,7 +99,7 @@ task startMetacatCluster(type: Exec) {
 
 task stopMetacatCluster(type: Exec) {
     if (project.ext.stopCluster) {
-        commandLine rootProject.file('scripts/stop_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose.yml')
+        commandLine 'sh', rootProject.file('scripts/stop_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose.yml')
     } else {
         commandLine '/bin/echo', 'skipping cluster stop'
     }
@@ -119,7 +119,7 @@ task metacatPorts {
         def get_docker_port = { String label, int exposed_port ->
             new ByteArrayOutputStream().withStream { os ->
                 exec {
-                    commandLine rootProject.file('scripts/print_docker_port.sh'), "label=${label}", exposed_port
+                    commandLine 'sh', rootProject.file('scripts/print_docker_port.sh'), "label=${label}", exposed_port
                     standardOutput = os
                 }
                 return os.toString().trim()
