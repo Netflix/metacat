@@ -105,14 +105,14 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
-    public void softDeleteDataMetadatas(
+    public void softDeleteDataMetadata(
         final String user,
         @Nonnull final List<String> uris
     ) {
         try {
             final List<List<String>> subLists = Lists.partition(uris, config.getUserMetadataMaxInClauseItems());
             for (List<String> subUris : subLists) {
-                _softDeleteDataMetadatas(user, subUris);
+                _softDeleteDataMetadata(user, subUris);
             }
         } catch (Exception e) {
             final String message = String.format("Failed deleting the data metadata for %s", uris);
@@ -122,7 +122,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
-    public void deleteDataMetadatas(
+    public void deleteDataMetadata(
         @Nonnull final List<String> uris
     ) {
         deleteDataMetadatasWithBatch(uris, true);
@@ -139,7 +139,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         try {
             final List<List<String>> subLists = Lists.partition(uris, config.getUserMetadataMaxInClauseItems());
             for (List<String> subUris : subLists) {
-                _deleteDataMetadatas(subUris, removeDataMetadata);
+                _deleteDataMetadata(subUris, removeDataMetadata);
             }
         } catch (Exception e) {
             final String message = String.format("Failed deleting the data metadata for %s", uris);
@@ -149,14 +149,14 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
-    public void deleteDefinitionMetadatas(
+    public void deleteDefinitionMetadata(
         @Nonnull final List<QualifiedName> names
     ) {
         try {
             final List<List<QualifiedName>> subLists =
                 Lists.partition(names, config.getUserMetadataMaxInClauseItems());
             for (List<QualifiedName> subNames : subLists) {
-                _deleteDefinitionMetadatas(subNames);
+                _deleteDefinitionMetadata(subNames);
             }
         } catch (Exception e) {
             final String message = String.format("Failed deleting the definition metadata for %s", names);
@@ -166,7 +166,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
-    public void deleteMetadatas(final String userId, final List<HasMetadata> holders) {
+    public void deleteMetadata(final String userId, final List<HasMetadata> holders) {
         try {
             final List<List<HasMetadata>> subLists =
                 Lists.partition(holders, config.getUserMetadataMaxInClauseItems());
@@ -176,14 +176,14 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     .map(m -> ((HasDefinitionMetadata) m).getDefinitionName())
                     .collect(Collectors.toList());
                 if (!names.isEmpty()) {
-                    _deleteDefinitionMetadatas(names);
+                    _deleteDefinitionMetadata(names);
                 }
                 if (config.canSoftDeleteDataMetadata()) {
                     final List<String> uris = hasMetadatas.stream()
                         .filter(m -> m instanceof HasDataMetadata && ((HasDataMetadata) m).isDataExternal())
                         .map(m -> ((HasDataMetadata) m).getDataUri()).collect(Collectors.toList());
                     if (!uris.isEmpty()) {
-                        _softDeleteDataMetadatas(userId, uris);
+                        _softDeleteDataMetadata(userId, uris);
                     }
                 }
             }
@@ -199,7 +199,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param names names to delete
      */
     @SuppressWarnings("checkstyle:methodname")
-    private void _deleteDefinitionMetadatas(
+    private void _deleteDefinitionMetadata(
         @Nullable final List<QualifiedName> names
     ) {
         if (names != null && !names.isEmpty()) {
@@ -233,8 +233,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      */
 
     @SuppressWarnings("checkstyle:methodname")
-    private void _softDeleteDataMetadatas(final String userId,
-                                          @Nullable final List<String> uris) {
+    private void _softDeleteDataMetadata(final String userId,
+                                         @Nullable final List<String> uris) {
         if (uris != null && !uris.isEmpty()) {
             final List<String> paramVariables = uris.stream().map(s -> "?").collect(Collectors.toList());
             final String[] aUris = uris.toArray(new String[0]);
@@ -266,7 +266,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param removeDataMetadata flag to remove data meta data
      */
     @SuppressWarnings("checkstyle:methodname")
-    private void _deleteDataMetadatas(
+    private void _deleteDataMetadata(
         @Nullable final List<String> uris,
         final boolean removeDataMetadata
     ) {
@@ -578,7 +578,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
-    public void saveMetadatas(final String user, final List<? extends HasMetadata> metadatas, final boolean merge) {
+    public void saveMetadata(final String user, final List<? extends HasMetadata> metadatas, final boolean merge) {
         try {
             @SuppressWarnings("unchecked") final List<List<HasMetadata>> subLists = Lists.partition(
                 (List<HasMetadata>) metadatas,
@@ -699,7 +699,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DefinitionMetadataDto> searchDefinitionMetadatas(
+    public List<DefinitionMetadataDto> searchDefinitionMetadata(
         @Nullable final Set<String> propertyNames,
         @Nullable final String type,
         @Nullable final String name,

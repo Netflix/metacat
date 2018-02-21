@@ -283,7 +283,7 @@ public class ElasticSearchRefresh {
                                 p -> !existingUnmarkedPartitionNames.contains(
                                     p.getDefinitionName().getPartitionName()))
                             .collect(Collectors.toList());
-                        userMetadataService.deleteMetadatas("admin", deletePartitionDtos);
+                        userMetadataService.deleteMetadata("admin", deletePartitionDtos);
                     }
                 } catch (Exception e) {
                     log.warn("Failed deleting the unmarked partitions for table {}", tableName);
@@ -408,7 +408,7 @@ public class ElasticSearchRefresh {
                     final List<String> deleteDatabaseNames = deleteDatabaseQualifiedNames.stream().map(
                         QualifiedName::toString).collect(Collectors.toList());
                     log.info("Deleting databases({}): {}", deleteDatabaseNames.size(), deleteDatabaseNames);
-                    userMetadataService.deleteDefinitionMetadatas(deleteDatabaseQualifiedNames);
+                    userMetadataService.deleteDefinitionMetadata(deleteDatabaseQualifiedNames);
                     elasticSearchUtil.softDelete("database", deleteDatabaseNames, context);
                 }
                 log.info("End: Delete unmarked databases({})", unmarkedDatabaseDtos.size());
@@ -446,7 +446,7 @@ public class ElasticSearchRefresh {
                     final List<String> deleteTableNames = deleteTableDtos.stream().map(
                         dto -> dto.getName().toString()).collect(Collectors.toList());
                     log.info("Deleting tables({}): {}", deleteTableNames.size(), deleteTableNames);
-                    userMetadataService.deleteMetadatas("admin", Lists.newArrayList(deleteTableDtos));
+                    userMetadataService.deleteMetadata("admin", Lists.newArrayList(deleteTableDtos));
 
                     // Publish event. Elasticsearch event handler will take care of updating the index already
                     // TODO: Re-evaluate events vs. direct calls for these types of situations like in Genie

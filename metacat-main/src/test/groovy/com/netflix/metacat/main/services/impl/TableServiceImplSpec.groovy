@@ -63,32 +63,32 @@ class TableServiceImplSpec extends Specification {
         service.deleteAndReturn(name, false)
         then:
         1 * config.canDeleteTableDefinitionMetadata() >> true
-        1 * usermetadataService.deleteMetadatas(_,_)
-        0 * usermetadataService.softDeleteDataMetadatas(_,_)
+        1 * usermetadataService.deleteMetadata(_,_)
+        0 * usermetadataService.softDeleteDataMetadata(_,_)
         noExceptionThrown()
         when:
         service.deleteAndReturn(name, false)
         then:
         1 * config.canDeleteTableDefinitionMetadata() >> false
         1 * config.getNamesEnabledForDefinitionMetadataDelete() >> [QualifiedName.fromString('a')]
-        1 * usermetadataService.deleteMetadatas(_,_)
-        0 * usermetadataService.softDeleteDataMetadatas(_,_)
+        1 * usermetadataService.deleteMetadata(_,_)
+        0 * usermetadataService.softDeleteDataMetadata(_,_)
         noExceptionThrown()
         when:
         service.deleteAndReturn(name, false)
         then:
         1 * config.canDeleteTableDefinitionMetadata() >> false
         1 * config.getNamesEnabledForDefinitionMetadataDelete() >> [QualifiedName.fromString('a/b')]
-        1 * usermetadataService.deleteMetadatas(_,_)
-        0 * usermetadataService.softDeleteDataMetadatas(_,_)
+        1 * usermetadataService.deleteMetadata(_,_)
+        0 * usermetadataService.softDeleteDataMetadata(_,_)
         noExceptionThrown()
         when:
         service.deleteAndReturn(name, false)
         then:
         1 * config.canDeleteTableDefinitionMetadata() >> false
         1 * config.getNamesEnabledForDefinitionMetadataDelete() >> [QualifiedName.fromString('a/b/c')]
-        1 * usermetadataService.deleteMetadatas(_,_)
-        0 * usermetadataService.softDeleteDataMetadatas(_,_)
+        1 * usermetadataService.deleteMetadata(_,_)
+        0 * usermetadataService.softDeleteDataMetadata(_,_)
         noExceptionThrown()
         when:
         service.deleteAndReturn(name, false)
@@ -96,8 +96,8 @@ class TableServiceImplSpec extends Specification {
         1 * config.canDeleteTableDefinitionMetadata() >> false
         1 * config.getNamesEnabledForDefinitionMetadataDelete() >> []
         1 * config.canSoftDeleteDataMetadata() >> true
-        0 * usermetadataService.deleteMetadatas(_,_)
-        1 * usermetadataService.softDeleteDataMetadatas(_,_)
+        0 * usermetadataService.deleteMetadata(_,_)
+        1 * usermetadataService.softDeleteDataMetadata(_,_)
         noExceptionThrown()
         when:
         service.deleteAndReturn(name, false)
@@ -105,8 +105,8 @@ class TableServiceImplSpec extends Specification {
         1 * config.canDeleteTableDefinitionMetadata() >> false
         1 * config.getNamesEnabledForDefinitionMetadataDelete() >> [QualifiedName.fromString('a/c')]
         1 * config.canSoftDeleteDataMetadata() >> true
-        0 * usermetadataService.deleteMetadatas(_,_)
-        1 * usermetadataService.softDeleteDataMetadatas(_,_)
+        0 * usermetadataService.deleteMetadata(_,_)
+        1 * usermetadataService.softDeleteDataMetadata(_,_)
         noExceptionThrown()
     }
 }

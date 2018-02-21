@@ -170,7 +170,7 @@ public class MetadataController {
         }
         return requestWrapper.processRequest(
             "getDefinitionMetadataList",
-            () -> this.userMetadataService.searchDefinitionMetadatas(
+            () -> this.userMetadataService.searchDefinitionMetadata(
                 localDataProperties,
                 type,
                 name,

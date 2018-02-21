@@ -192,12 +192,12 @@ public class TableServiceImpl implements TableService {
         if (canDeleteMetadata(name)) {
             // Delete the metadata.  Type doesn't matter since we discard the result
             log.info("Deleting user metadata for table {}", name);
-            userMetadataService.deleteMetadatas(metacatRequestContext.getUserName(), Lists.newArrayList(tableDto));
+            userMetadataService.deleteMetadata(metacatRequestContext.getUserName(), Lists.newArrayList(tableDto));
             log.info("Deleting tags for table {}", name);
             tagService.delete(name, false);
         } else {
             if (config.canSoftDeleteDataMetadata() && tableDto.isDataExternal()) {
-                userMetadataService.softDeleteDataMetadatas(metacatRequestContext.getUserName(),
+                userMetadataService.softDeleteDataMetadata(metacatRequestContext.getUserName(),
                     Lists.newArrayList(tableDto.getDataUri()));
             }
         }

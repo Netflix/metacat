@@ -52,7 +52,7 @@ public interface UserMetadataService {
      *
      * @param uris list of uris.
      */
-    default void deleteDataMetadatas(List<String> uris) {
+    default void deleteDataMetadata(List<String> uris) {
     }
 
     /**
@@ -69,7 +69,7 @@ public interface UserMetadataService {
      * @param userId user name
      * @param uris   list of uris
      */
-    default void softDeleteDataMetadatas(String userId, List<String> uris) {
+    default void softDeleteDataMetadata(String userId, List<String> uris) {
     }
 
     /**
@@ -77,7 +77,7 @@ public interface UserMetadataService {
      *
      * @param names list of names
      */
-    default void deleteDefinitionMetadatas(List<QualifiedName> names) {
+    default void deleteDefinitionMetadata(List<QualifiedName> names) {
     }
 
     /**
@@ -86,7 +86,7 @@ public interface UserMetadataService {
      * @param userId  username
      * @param holders metadatas
      */
-    default void deleteMetadatas(String userId, List<HasMetadata> holders) {
+    default void deleteMetadata(String userId, List<HasMetadata> holders) {
     }
 
     /**
@@ -249,7 +249,7 @@ public interface UserMetadataService {
      * @param holders metadatas
      * @param merge   if true, will merge with existing metadata
      */
-    default void saveMetadatas(String user, List<? extends HasMetadata> holders, boolean merge) {
+    default void saveMetadata(String user, List<? extends HasMetadata> holders, boolean merge) {
     }
 
     /**
@@ -264,7 +264,7 @@ public interface UserMetadataService {
      * @param limit         size of the list
      * @return list of definition metadata
      */
-    default List<DefinitionMetadataDto> searchDefinitionMetadatas(
+    default List<DefinitionMetadataDto> searchDefinitionMetadata(
         @Nullable Set<String> propertyNames,
         @Nullable String type,
         @Nullable String name,

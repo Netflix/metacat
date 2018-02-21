@@ -58,7 +58,7 @@ class MViewServiceEventHandlerSpec extends Specification {
         1 * mViewService.list(name) >> [new NameDateDto(name:viewName)]
         1 * mViewService.deleteAndReturn(viewName)
         1 * userMetadataService.getDescendantDefinitionNames(name) >> [name]
-        1 * userMetadataService.deleteDefinitionMetadatas(_)
+        1 * userMetadataService.deleteDefinitionMetadata(_)
     }
 
     def testMetacatRenameTablePostEventHandler() {
