@@ -32,28 +32,28 @@ class MetadataServiceSpec extends Specification {
         then:
         1 * helper.getService(name) >> tableService
         1 * tableService.get(name)
-        1 * mService.deleteDefinitionMetadatas([name])
+        1 * mService.deleteDefinitionMetadata([name])
         when:
         service.deleteDefinitionMetadata(name, true, context)
         then:
         1 * helper.getService(name) >> tableService
         0 * tableService.get(name)
-        1 * mService.deleteDefinitionMetadatas([name])
+        1 * mService.deleteDefinitionMetadata([name])
     }
 
     def testDeleteObsoleteDefinitionMetadata() {
         when:
         service.cleanUpObsoleteDefinitionMetadata()
         then:
-        1 * mService.searchDefinitionMetadatas(_,_,_,_,_,_,_) >> [new DefinitionMetadataDto(name: name)]
+        1 * mService.searchDefinitionMetadata(_,_,_,_,_,_,_) >> [new DefinitionMetadataDto(name: name)]
         1 * helper.getService(name) >> tableService
         1 * tableService.get(name)
-        1 * mService.deleteDefinitionMetadatas([name])
+        1 * mService.deleteDefinitionMetadata([name])
         when:
         service.cleanUpObsoleteDefinitionMetadata()
         then:
-        2 * mService.searchDefinitionMetadatas(_,_,_,_,_,_,_) >>> [[new DefinitionMetadataDto(name: name)] * 10000, [new DefinitionMetadataDto(name: name)]]
+        2 * mService.searchDefinitionMetadata(_,_,_,_,_,_,_) >>> [[new DefinitionMetadataDto(name: name)] * 10000, [new DefinitionMetadataDto(name: name)]]
         helper.getService(name) >> tableService
-        10001 * mService.deleteDefinitionMetadatas(_)
+        10001 * mService.deleteDefinitionMetadata(_)
     }
 }

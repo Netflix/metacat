@@ -256,7 +256,7 @@ public class PartitionServiceImpl implements PartitionService {
             new MetacatSaveTablePartitionMetadataOnlyPreEvent(name, metacatRequestContext, this, dto));
         // Save metadata
         log.info("Saving metadata only for partitions for {}", name);
-        userMetadataService.saveMetadatas(metacatRequestContext.getUserName(), partitionDtos, true);
+        userMetadataService.saveMetadata(metacatRequestContext.getUserName(), partitionDtos, true);
         eventBus.postSync(
             new MetacatSaveTablePartitionMetadataOnlyPostEvent(
                 name, metacatRequestContext, this, partitionDtos, new PartitionsSaveResponseDto()));
@@ -312,7 +312,7 @@ public class PartitionServiceImpl implements PartitionService {
             deleteMetadatas(metacatRequestContext.getUserName(), deletePartitions);
         }
         final long start = registry.clock().wallTime();
-        userMetadataService.saveMetadatas(metacatRequestContext.getUserName(), partitionDtos, true);
+        userMetadataService.saveMetadata(metacatRequestContext.getUserName(), partitionDtos, true);
         final long duration = registry.clock().wallTime() - start;
         log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
         registry.timer(registry.createId(Metrics.TimerSavePartitionMetadata.getMetricName()).withTags(name.parts()))
@@ -369,7 +369,7 @@ public class PartitionServiceImpl implements PartitionService {
 
     private void deleteMetadatas(final String userId, final List<HasMetadata> partitions) {
         // Spawning off since this is a time consuming task
-        threadServiceManager.getExecutor().submit(() -> userMetadataService.deleteMetadatas(userId, partitions));
+        threadServiceManager.getExecutor().submit(() -> userMetadataService.deleteMetadata(userId, partitions));
     }
 
     /**

@@ -76,7 +76,7 @@ public class MViewServiceEventHandler {
             try {
                 final List<QualifiedName> names = userMetadataService.getDescendantDefinitionNames(name);
                 if (names != null && !names.isEmpty()) {
-                    userMetadataService.deleteDefinitionMetadatas(names);
+                    userMetadataService.deleteDefinitionMetadata(names);
                 }
             } catch (Exception e) {
                 log.warn("Failed cleaning partition definition metadata after deleting table {}", name);

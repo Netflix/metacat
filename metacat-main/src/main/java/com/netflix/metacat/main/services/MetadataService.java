@@ -119,7 +119,7 @@ public class MetadataService {
                             .filter(s -> uriQualifiedNames.get(s) == null || uriQualifiedNames.get(s).size() == 0)
                             .collect(Collectors.toList());
                         log.info("Start deleting data metadata: {}", canDeleteMetadataForUris.size());
-                        userMetadataService.deleteDataMetadatas(canDeleteMetadataForUris);
+                        userMetadataService.deleteDataMetadata(canDeleteMetadataForUris);
                         userMetadataService.deleteDataMetadataDeletes(subUris);
                         MetacatContextManager.removeContext();
                     });
@@ -149,7 +149,7 @@ public class MetadataService {
         final ListeningExecutorService service = threadServiceManager.getExecutor();
         int totalDeletes = 0;
         while (offset == 0 || dtos.size() == limit) {
-            dtos = userMetadataService.searchDefinitionMetadatas(null, null, null,
+            dtos = userMetadataService.searchDefinitionMetadata(null, null, null,
                 "id", null, offset, limit);
             int deletes = 0;
             final List<ListenableFuture<Boolean>> futures = dtos.stream().map(dto ->
@@ -193,7 +193,7 @@ public class MetadataService {
                 } else {
                     this.helper.postPreDeleteEvent(name, metacatRequestContext);
                 }
-                this.userMetadataService.deleteDefinitionMetadatas(Lists.newArrayList(name));
+                this.userMetadataService.deleteDefinitionMetadata(Lists.newArrayList(name));
                 this.tagService.delete(name, false);
                 log.info("Deleted definition metadata for {}", name);
                 if (dto != null) {

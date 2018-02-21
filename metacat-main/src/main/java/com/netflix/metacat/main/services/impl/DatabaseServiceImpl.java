@@ -150,7 +150,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         // Delete definition metadata if it exists
         if (userMetadataService.getDefinitionMetadata(name).isPresent()) {
             log.info("Deleting user metadata for schema {}", name);
-            userMetadataService.deleteDefinitionMetadatas(ImmutableList.of(name));
+            userMetadataService.deleteDefinitionMetadata(ImmutableList.of(name));
         }
         eventBus.postAsync(new MetacatDeleteDatabasePostEvent(name, metacatRequestContext, this, dto));
     }
