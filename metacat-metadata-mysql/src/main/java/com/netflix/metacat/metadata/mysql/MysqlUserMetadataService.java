@@ -25,8 +25,10 @@ import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.HasMetadata;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonException;
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetadataException;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
+import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
@@ -48,11 +50,11 @@ import java.util.stream.Collectors;
 
 /**
  * User metadata service.
- *
+ * <p>
  * Definition metadata (business metadata about the logical schema definition) is stored in two tables. Definition
  * metadata about the partitions are stored in 'partition_definition_metadata' table. Definition metadata about the
  * catalogs, databases and tables are stored in 'definition_metadata' table.
- *
+ * <p>
  * Data metadata (metadata about the data stored in the location referred by the schema). This information is stored in
  * 'data_metadata' table.
  */
@@ -64,22 +66,26 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     private final MetacatJson metacatJson;
     private final Config config;
     private JdbcTemplate jdbcTemplate;
+    private final MetadataInterceptor metadataInterceptor;
 
     /**
      * Constructor.
      *
-     * @param jdbcTemplate  jdbc template
-     * @param metacatJson json utility
-     * @param config      config
+     * @param jdbcTemplate jdbc template
+     * @param metacatJson  json utility
+     * @param metadataInterceptor business metadata manager
+     * @param config       config
      */
     public MysqlUserMetadataService(
         final JdbcTemplate jdbcTemplate,
         final MetacatJson metacatJson,
-        final Config config
+        final Config config,
+        final MetadataInterceptor metadataInterceptor
     ) {
         this.metacatJson = metacatJson;
         this.config = config;
         this.jdbcTemplate = jdbcTemplate;
+        this.metadataInterceptor = metadataInterceptor;
     }
 
     @Override
@@ -94,7 +100,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Override
     public void populateMetadata(final HasMetadata holder, final ObjectNode definitionMetadata,
-        final ObjectNode dataMetadata) {
+                                 final ObjectNode dataMetadata) {
         super.populateMetadata(holder, definitionMetadata, dataMetadata);
     }
 
@@ -228,7 +234,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @SuppressWarnings("checkstyle:methodname")
     private void _softDeleteDataMetadatas(final String userId,
-                                         @Nullable final List<String> uris) {
+                                          @Nullable final List<String> uris) {
         if (uris != null && !uris.isEmpty()) {
             final List<String> paramVariables = uris.stream().map(s -> "?").collect(Collectors.toList());
             final String[] aUris = uris.toArray(new String[0]);
@@ -309,9 +315,11 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @Transactional(readOnly = true)
     public Optional<ObjectNode> getDefinitionMetadata(
         @Nonnull final QualifiedName name) {
-        return getJsonForKey(
+        final Optional<ObjectNode> retData = getJsonForKey(
             name.isPartitionDefinition() ? SQL.GET_PARTITION_DEFINITION_METADATA : SQL.GET_DEFINITION_METADATA,
             name.toString());
+        retData.ifPresent(objectNode -> this.metadataInterceptor.onRead(this, name, objectNode));
+        return retData;
     }
 
     @Override
@@ -425,7 +433,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 }
                 return null;
             };
-           jdbcTemplate.query(query, aKeys, handler);
+            jdbcTemplate.query(query, aKeys, handler);
         } catch (Exception e) {
             final String message = String.format("Failed to get data for %s", keys);
             log.error(message, e);
@@ -519,18 +527,26 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     public void saveDefinitionMetadata(
         @Nonnull final QualifiedName name,
         @Nonnull final String userId,
-        @Nonnull final Optional<ObjectNode> metadata, final boolean merge) {
+        @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
+        throws InvalidMetadataException {
         final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
         final int count;
         if (existingData.isPresent() && metadata.isPresent()) {
-            final ObjectNode merged = existingData.get();
+            ObjectNode merged = existingData.get();
             if (merge) {
                 metacatJson.mergeIntoPrimary(merged, metadata.get());
+            } else {
+                merged = metadata.get();
             }
+
+            metadataInterceptor.onWrite(this, name, metadata.get());
             count = executeUpdateForKey(
                 name.isPartitionDefinition()
                     ? SQL.UPDATE_PARTITION_DEFINITION_METADATA : SQL.UPDATE_DEFINITION_METADATA,
-                merged.toString(), userId, name.toString());
+                merged.toString(),
+                userId,
+                name.toString());
+
         } else {
             count = metadata.map(jsonNodes -> executeUpdateForKey(
                 name.isPartitionDefinition()
@@ -618,7 +634,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                                 }
                             } else {
                                 metacatJson.mergeIntoPrimary(oNode, oDef.getDefinitionMetadata());
-                                final Object[] o = new Object[]{metacatJson.toJsonString(oNode), user, name };
+                                final Object[] o = new Object[]{metacatJson.toJsonString(oNode), user, name};
                                 if (qualifiedName.isPartitionDefinition()) {
                                     updatePartitionDefinitionMetadatas.add(o);
                                 } else {
@@ -745,7 +761,11 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     final String definitionName = rs.getString("name");
                     final String data = rs.getString("data");
                     final DefinitionMetadataDto definitionMetadataDto = new DefinitionMetadataDto();
+                    final QualifiedName metadataName = QualifiedName.fromString(definitionName);
                     definitionMetadataDto.setName(QualifiedName.fromString(definitionName));
+                    //Apply business logic
+                    final ObjectNode node = metacatJson.parseJsonObject(data);
+                    metadataInterceptor.onRead(this, metadataName, node);
                     definitionMetadataDto.setDefinitionMetadata(metacatJson.parseJsonObject(data));
                     result.add(definitionMetadataDto);
                 }

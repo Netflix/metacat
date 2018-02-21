@@ -32,6 +32,7 @@ class MysqlUserMetadataServiceSpec extends BaseSpec {
         def qualifiedName = QualifiedName.ofTable(catalogName, databaseName, tableName)
         def userName = "amajumdar"
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, userName, 's3:/a/b')
+        def table2 = DataDtoProvider.getTable(catalogName, databaseName, tableName, "overrideUser", 's3:/a/b')
         def tables = DataDtoProvider.getTables(catalogName, databaseName, tableName, userName, 's3:/a/b', 5)
         def partitions = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, partitionName, 's3:/a/b', 5)
         def uris = ['s3:/a/b0', 's3:/a/b1', 's3:/a/b2', 's3:/a/b3', 's3:/a/b4'] as List<String>
@@ -41,9 +42,15 @@ class MysqlUserMetadataServiceSpec extends BaseSpec {
                      , QualifiedName.ofTable(catalogName, databaseName, tableName + '3')
                      , QualifiedName.ofTable(catalogName, databaseName, tableName + '4')] as List<QualifiedName>
         when:
-        mysqlUserMetadataService.saveMetadata(userName, table, true)
+        mysqlUserMetadataService.saveMetadata(userName, table2, true)
         then:
         mysqlUserMetadataService.getDefinitionMetadata(qualifiedName).isPresent()
+        when:
+        mysqlUserMetadataService.saveMetadata(userName, table, false)
+        then:
+        mysqlUserMetadataService.getDefinitionMetadata(qualifiedName).isPresent()
+        mysqlUserMetadataService.getDefinitionMetadata(qualifiedName).get().findValue('userId').toString().equals("\"amajumdar\"")
+
         when:
         mysqlUserMetadataService.deleteMetadatas("test", Lists.newArrayList(table))
         then:
