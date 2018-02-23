@@ -21,6 +21,7 @@ import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
+import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionMetadataOnlyPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,14 @@ public class DefaultNotificationServiceImpl implements NotificationService {
      */
     @Override
     public void notifyOfPartitionDeletion(final MetacatDeleteTablePartitionPostEvent event) {
+        log.debug(event.toString());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void notifyOfPartitionMetdataDataSaveOnly(final MetacatSaveTablePartitionMetadataOnlyPostEvent event) {
         log.debug(event.toString());
     }
 

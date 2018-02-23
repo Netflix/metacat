@@ -42,6 +42,7 @@ import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
+import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionMetadataOnlyPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
@@ -134,6 +135,15 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 log.debug("Published create partition message {} on {}", message, this.partitionTopicArn);
             }
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @EventListener
+    public void notifyOfPartitionMetdataDataSaveOnly(final MetacatSaveTablePartitionMetadataOnlyPostEvent event) {
+        log.debug("Received SaveTablePartitionMetadataOnlyPostEvent {}", event);
     }
 
     /**
