@@ -52,5 +52,10 @@ public enum SNSMessageType {
     /**
      * When a partition is deleted.
      */
-    PARTITION_DELETE
+    PARTITION_DELETE,
+
+    /**
+     * When a partition metadata is saved only.
+     */
+    PARTITION_METADATAONLY_SAVE
 }

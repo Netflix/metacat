@@ -21,6 +21,7 @@ import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
+import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionMetadataOnlyPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 
@@ -34,14 +35,21 @@ import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 public interface NotificationService {
 
     /**
-     * Publish information about a partition being added.
+     * Publish information about partitions being added.
      *
      * @param event The event passed within the JVM after a partition has been successfully added
      */
     void notifyOfPartitionAddition(MetacatSaveTablePartitionPostEvent event);
 
     /**
-     * Publish information about a partition being deleted.
+     * Publish information about partition metadata save only.
+     *
+     * @param event The event passed within the JVM after a partition has been successfully added
+     */
+    void notifyOfPartitionMetdataDataSaveOnly(MetacatSaveTablePartitionMetadataOnlyPostEvent event);
+
+    /**
+     * Publish information about partitions being deleted.
      *
      * @param event The event passed within the JVM after a partition has been successfully deleted
      */

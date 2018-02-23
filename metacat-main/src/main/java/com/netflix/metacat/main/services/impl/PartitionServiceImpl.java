@@ -317,13 +317,16 @@ public class PartitionServiceImpl implements PartitionService {
         log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
         registry.timer(registry.createId(Metrics.TimerSavePartitionMetadata.getMetricName()).withTags(name.parts()))
             .record(duration, TimeUnit.MILLISECONDS);
-        eventBus.postAsync(
-            new MetacatSaveTablePartitionPostEvent(name, metacatRequestContext, this, partitionDtos, result));
+        //publish the delete and save in order
+        //TODO: create MetacatUpdateTablePartitionEvents, only publish one partitionUpdateEvent here.
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
             eventBus.postAsync(
                 new MetacatDeleteTablePartitionPostEvent(name,
                     metacatRequestContext, this, partitionIdsForDeletes));
         }
+        eventBus.postAsync(
+            new MetacatSaveTablePartitionPostEvent(name, metacatRequestContext, this, partitionDtos, result));
+
         return result;
     }
 
