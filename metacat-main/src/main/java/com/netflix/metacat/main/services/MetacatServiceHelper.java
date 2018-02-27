@@ -239,7 +239,7 @@ public class MetacatServiceHelper {
                     name,
                     metacatRequestContext,
                     this,
-                    Lists.newArrayList(name.getPartitionName())
+                    Lists.newArrayList(PartitionDto.builder().name(name).build())
                 )
             );
         } else if (name.isViewDefinition()) {
