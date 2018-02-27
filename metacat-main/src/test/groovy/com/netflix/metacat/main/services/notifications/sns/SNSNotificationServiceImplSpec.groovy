@@ -112,11 +112,11 @@ class SNSNotificationServiceImplSpec extends Specification {
 
     def "Will Notify On Partition Deletion"() {
         def partitions = Lists.newArrayList(
-            UUID.randomUUID().toString(),
-            UUID.randomUUID().toString(),
-            UUID.randomUUID().toString(),
-            UUID.randomUUID().toString(),
-            UUID.randomUUID().toString()
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', UUID.randomUUID().toString())).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  UUID.randomUUID().toString())).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  UUID.randomUUID().toString())).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', UUID.randomUUID().toString())).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  UUID.randomUUID().toString())).build()
         )
 
         def event = new MetacatDeleteTablePartitionPostEvent(

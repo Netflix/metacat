@@ -57,6 +57,7 @@ import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -282,6 +283,7 @@ public class PartitionServiceImpl implements PartitionService {
         final QualifiedName name, final List<PartitionDto> partitionDtos) {
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         List<HasMetadata> deletePartitions = Lists.newArrayList();
+        List<PartitionDto> deletePartitionDtos = Lists.newArrayList();
         registry.distributionSummary(
             this.partitionAddDistSummary.withTags(name.parts())).record(partitionDtos.size());
         final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
@@ -294,8 +296,9 @@ public class PartitionServiceImpl implements PartitionService {
             final List<PartitionInfo> deletePartitionInfos = service.getPartitions(connectorRequestContext, name,
                 converterUtil.toPartitionListRequest(requestDto, null, null));
             if (deletePartitionInfos != null) {
-                deletePartitions = deletePartitionInfos.stream().map(converterUtil::toPartitionDto)
-                    .collect(Collectors.toList());
+                deletePartitionDtos = deletePartitionInfos.stream()
+                    .map(converterUtil::toPartitionDto).collect(Collectors.toList());
+                deletePartitions = new ArrayList<>(deletePartitions);
             }
         }
 
@@ -322,7 +325,7 @@ public class PartitionServiceImpl implements PartitionService {
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
             eventBus.postAsync(
                 new MetacatDeleteTablePartitionPostEvent(name,
-                    metacatRequestContext, this, partitionIdsForDeletes));
+                    metacatRequestContext, this, deletePartitionDtos));
         }
         eventBus.postAsync(
             new MetacatSaveTablePartitionPostEvent(name, metacatRequestContext, this, partitionDtos, result));
@@ -353,8 +356,10 @@ public class PartitionServiceImpl implements PartitionService {
             final List<PartitionInfo> partitionInfos = service.getPartitions(connectorRequestContext, name,
                 converterUtil.toPartitionListRequest(requestDto, null, null));
             List<HasMetadata> partitions = Lists.newArrayList();
+            List<PartitionDto> partitionDtos = Lists.newArrayList();
             if (partitionInfos != null) {
-                partitions = partitionInfos.stream().map(converterUtil::toPartitionDto).collect(Collectors.toList());
+                partitionDtos = partitionInfos.stream().map(converterUtil::toPartitionDto).collect(Collectors.toList());
+                partitions = new ArrayList<>(partitions);
             }
             log.info("Deleting partitions with names {} for {}", partitionIds, name);
             service.deletePartitions(connectorRequestContext, name, partitionIds);
@@ -365,7 +370,7 @@ public class PartitionServiceImpl implements PartitionService {
                 deleteMetadatas(metacatRequestContext.getUserName(), partitions);
             }
             eventBus.postAsync(
-                new MetacatDeleteTablePartitionPostEvent(name, metacatRequestContext, this, partitionIds)
+                new MetacatDeleteTablePartitionPostEvent(name, metacatRequestContext, this, partitionDtos)
             );
         }
     }
