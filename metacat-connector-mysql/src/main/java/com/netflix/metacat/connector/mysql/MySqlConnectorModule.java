@@ -42,20 +42,20 @@ import java.util.Map;
  */
 public class MySqlConnectorModule extends AbstractModule {
 
-    private final String name;
+    private final String catalogShardName;
     private final Map<String, String> configuration;
 
     /**
      * Constructor.
      *
-     * @param name          The name of the catalog this module is associated will be associated with
-     * @param configuration The connector configuration
+     * @param catalogShardName  catalog shard name
+     * @param configuration     connector configuration
      */
     MySqlConnectorModule(
-        @Nonnull @NonNull final String name,
+        @Nonnull @NonNull final String catalogShardName,
         @Nonnull @NonNull final Map<String, String> configuration
     ) {
-        this.name = name;
+        this.catalogShardName = catalogShardName;
         this.configuration = configuration;
     }
 
@@ -64,8 +64,8 @@ public class MySqlConnectorModule extends AbstractModule {
      */
     @Override
     protected void configure() {
-        this.bind(DataSource.class)
-            .toInstance(DataSourceManager.get().load(this.name, this.configuration).get(this.name));
+        this.bind(DataSource.class).toInstance(DataSourceManager.get()
+            .load(this.catalogShardName, this.configuration).get(this.catalogShardName));
         this.bind(JdbcTypeConverter.class).to(MySqlTypeConverter.class).in(Scopes.SINGLETON);
         this.bind(JdbcExceptionMapper.class).to(MySqlExceptionMapper.class).in(Scopes.SINGLETON);
         this.bind(ConnectorDatabaseService.class)

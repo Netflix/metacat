@@ -59,6 +59,8 @@ class HiveConnectorTableSpec extends Specification {
         new HiveConnectorInfoConverter(new HiveTypeConverter()),
         new ConnectorContext(
             "testHive",
+            "testHive",
+            "hive",
             Mock(Config),
             Mock(Registry),
             ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
@@ -69,6 +71,8 @@ class HiveConnectorTableSpec extends Specification {
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(
         "testHive",
+        "testHive",
+        "hive",
         Mock(Config),
         Mock(Registry),
         ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")

@@ -152,7 +152,7 @@ public class PartitionServiceImpl implements PartitionService {
         }
 
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
+        final ConnectorPartitionService service = connectorManager.getPartitionService(name);
 
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         final List<PartitionInfo> resultInfo = service
@@ -207,7 +207,7 @@ public class PartitionServiceImpl implements PartitionService {
         Integer result = 0;
         if (tableService.exists(name)) {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-            final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
+            final ConnectorPartitionService service = connectorManager.getPartitionService(name);
             final ConnectorRequestContext connectorRequestContext
                 = converterUtil.toConnectorContext(metacatRequestContext);
             result = service.getPartitionCount(connectorRequestContext, name);
@@ -221,7 +221,7 @@ public class PartitionServiceImpl implements PartitionService {
     @Override
     public PartitionsSaveResponseDto save(final QualifiedName name, final PartitionsSaveRequestDto dto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
+        final ConnectorPartitionService service = connectorManager.getPartitionService(name);
         final List<PartitionDto> partitionDtos = dto.getPartitions();
         // If no partitions are passed, then return
         if (partitionDtos == null || partitionDtos.isEmpty()) {
@@ -348,7 +348,7 @@ public class PartitionServiceImpl implements PartitionService {
             final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
             dto.setPartitionIdsForDeletes(partitionIds);
             eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
-            final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
+            final ConnectorPartitionService service = connectorManager.getPartitionService(name);
             // Get the partitions before calling delete
             final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto(null, partitionIds, false, true);
             final ConnectorRequestContext connectorRequestContext
@@ -397,10 +397,8 @@ public class PartitionServiceImpl implements PartitionService {
         final Map<String, List<QualifiedName>> result = Maps.newConcurrentMap();
         final List<ListenableFuture<Void>> futures = Lists.newArrayList();
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        catalogService.getCatalogNames().forEach(catalog -> {
+        connectorManager.getPartitionServices().forEach(service -> {
             futures.add(threadServiceManager.getExecutor().submit(() -> {
-                final ConnectorPartitionService service =
-                    connectorManager.getPartitionService(catalog.getCatalogName());
                 final ConnectorRequestContext connectorRequestContext
                     = converterUtil.toConnectorContext(metacatRequestContext);
                 try {
@@ -415,7 +413,7 @@ public class PartitionServiceImpl implements PartitionService {
                         }
                     });
                 } catch (final UnsupportedOperationException uoe) {
-                    log.debug("Catalog {} doesn't support getPartitionNames. Ignoring.", catalog.getCatalogName());
+                    log.debug("Partition service doesn't support getPartitionNames. Ignoring.");
                 }
                 return null;
             }));
@@ -441,7 +439,7 @@ public class PartitionServiceImpl implements PartitionService {
         List<String> result = Lists.newArrayList();
         if (tableService.exists(name)) {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-            final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
+            final ConnectorPartitionService service = connectorManager.getPartitionService(name);
             final ConnectorRequestContext connectorRequestContext
                 = converterUtil.toConnectorContext(metacatRequestContext);
             try {
@@ -470,7 +468,7 @@ public class PartitionServiceImpl implements PartitionService {
         List<String> result = Lists.newArrayList();
         if (tableService.exists(name)) {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-            final ConnectorPartitionService service = connectorManager.getPartitionService(name.getCatalogName());
+            final ConnectorPartitionService service = connectorManager.getPartitionService(name);
             final ConnectorRequestContext connectorRequestContext
                 = converterUtil.toConnectorContext(metacatRequestContext);
             try {

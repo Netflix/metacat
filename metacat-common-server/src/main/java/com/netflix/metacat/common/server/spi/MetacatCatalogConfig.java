@@ -15,6 +15,7 @@ package com.netflix.metacat.common.server.spi;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import lombok.Getter;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.Map;
 /**
  * Catalog config.
  */
-// TODO: Move/refactor into connectors?
+@Getter
 public final class MetacatCatalogConfig {
     private static final Splitter COMMA_LIST_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
     private final boolean includeViewsWithTables;
@@ -31,14 +32,17 @@ public final class MetacatCatalogConfig {
     private final List<String> schemaWhitelist;
     private final int thriftPort;
     private final String type;
+    private final String catalogName;
 
     private MetacatCatalogConfig(
         final String type,
+        final String catalogName,
         final boolean includeViewsWithTables,
         final List<String> schemaWhitelist,
         final List<String> schemaBlacklist,
         final int thriftPort) {
         this.type = type;
+        this.catalogName = catalogName;
         this.includeViewsWithTables = includeViewsWithTables;
         this.schemaBlacklist = schemaBlacklist;
         this.schemaWhitelist = schemaWhitelist;
@@ -49,10 +53,11 @@ public final class MetacatCatalogConfig {
      * Creates the config.
      *
      * @param type       type
+     * @param catalogName catalog name
      * @param properties properties
      * @return config
      */
-    public static MetacatCatalogConfig createFromMapAndRemoveProperties(final String type,
+    public static MetacatCatalogConfig createFromMapAndRemoveProperties(final String type, final String catalogName,
                                                                         final Map<String, String> properties) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(type), "type is required");
         final String catalogType =
@@ -72,28 +77,8 @@ public final class MetacatCatalogConfig {
             thriftPort = Integer.parseInt(properties.remove(Keys.THRIFT_PORT));
         }
 
-        return new MetacatCatalogConfig(catalogType, includeViewsWithTables, schemaWhitelist, schemaBlacklist,
-            thriftPort);
-    }
-
-    public List<String> getSchemaBlacklist() {
-        return schemaBlacklist;
-    }
-
-    public List<String> getSchemaWhitelist() {
-        return schemaWhitelist;
-    }
-
-    public int getThriftPort() {
-        return thriftPort;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public boolean isIncludeViewsWithTables() {
-        return includeViewsWithTables;
+        return new MetacatCatalogConfig(catalogType, catalogName, includeViewsWithTables, schemaWhitelist,
+            schemaBlacklist, thriftPort);
     }
 
     public boolean isThriftInterfaceRequested() {
@@ -104,6 +89,17 @@ public final class MetacatCatalogConfig {
      * Properties in the catalog.
      */
     public static class Keys {
+        /**
+         * Catalog name. Usually catalog name is derived from the name of the catalog properties file.
+         * One could also specify it in the properties under the property name <code>catalog.name</code>.
+         * For example, if a catalog has two shards with catalog defined in two property files,
+         * then we can have the <code>catalog.name</code> set to one name.
+         */
+        public static final String CATALOG_NAME = "catalog.name";
+        /**
+         * Connector type.
+         */
+        public static final String CONNECTOR_NAME = "connector.name";
         /**
          * Catalog type.
          */

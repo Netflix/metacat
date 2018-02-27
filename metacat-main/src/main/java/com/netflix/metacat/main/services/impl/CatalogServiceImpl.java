@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.main.services.impl;
 
+import com.google.common.collect.Lists;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
@@ -32,7 +33,7 @@ import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
 
 import javax.annotation.Nonnull;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -70,20 +71,29 @@ public class CatalogServiceImpl implements CatalogService {
     @Nonnull
     @Override
     public CatalogDto get(final QualifiedName name) {
-        final MetacatCatalogConfig config = connectorManager.getCatalogConfig(name);
-
+        final Set<MetacatCatalogConfig> configs = connectorManager.getCatalogConfigs(name.getCatalogName());
         final CatalogDto result = new CatalogDto();
         result.setName(name);
-        result.setType(config.getType());
         final ConnectorRequestContext context = converterUtil.toConnectorContext(MetacatContextManager.getContext());
-        result.setDatabases(
-            connectorManager.getDatabaseService(name.getCatalogName()).listNames(context, name, null, null, null)
-                .stream().map(QualifiedName::getDatabaseName)
-                .filter(s -> config.getSchemaBlacklist().isEmpty() || !config.getSchemaBlacklist().contains(s))
-                .filter(s -> config.getSchemaWhitelist().isEmpty() || config.getSchemaWhitelist().contains(s))
-                .sorted(String.CASE_INSENSITIVE_ORDER)
-                .collect(Collectors.toList())
-        );
+        final List<String> databases = Lists.newArrayList();
+        configs.forEach(config -> {
+            QualifiedName qName = name;
+            if (config.getSchemaWhitelist().isEmpty()) {
+                result.setType(config.getType());
+            } else {
+                qName = QualifiedName.ofDatabase(name.getCatalogName(), config.getSchemaWhitelist().get(0));
+            }
+            databases.addAll(
+                connectorManager.getDatabaseService(qName).listNames(context, name, null, null, null)
+                    .stream().map(QualifiedName::getDatabaseName)
+                    .filter(s -> config.getSchemaBlacklist().isEmpty() || !config.getSchemaBlacklist().contains(s))
+                    .filter(s -> config.getSchemaWhitelist().isEmpty() || config.getSchemaWhitelist().contains(s))
+                    .sorted(String.CASE_INSENSITIVE_ORDER)
+                    .collect(Collectors.toList())
+            );
+        });
+        result.setDatabases(databases);
+
         userMetadataService.populateMetadata(result);
         return result;
     }
@@ -94,13 +104,13 @@ public class CatalogServiceImpl implements CatalogService {
     @Nonnull
     @Override
     public List<CatalogMappingDto> getCatalogNames() {
-        final Map<String, MetacatCatalogConfig> catalogs = connectorManager.getCatalogs();
-        if (catalogs.isEmpty()) {
+        if (connectorManager.getCatalogs().isEmpty()) {
             throw new MetacatNotFoundException("Unable to locate any catalogs");
         }
 
-        return catalogs.entrySet().stream()
-            .map(entry -> new CatalogMappingDto(entry.getKey(), entry.getValue().getType()))
+        return connectorManager.getCatalogs().stream()
+            .map(catalog -> new CatalogMappingDto(catalog.getCatalogName(), catalog.getType()))
+            .distinct()
             .collect(Collectors.toList());
     }
 
@@ -111,7 +121,7 @@ public class CatalogServiceImpl implements CatalogService {
     public void update(final QualifiedName name, final CreateCatalogDto createCatalogDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
-        connectorManager.getCatalogConfig(name);
+        connectorManager.getCatalogConfigs(name.getCatalogName());
         userMetadataService.saveMetadata(metacatRequestContext.getUserName(), createCatalogDto, true);
         eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
     }

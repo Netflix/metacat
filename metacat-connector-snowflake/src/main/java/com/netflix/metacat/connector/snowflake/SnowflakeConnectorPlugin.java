@@ -48,11 +48,9 @@ public class SnowflakeConnectorPlugin implements ConnectorPlugin {
      * {@inheritDoc}
      */
     @Override
-    public ConnectorFactory create(
-        @Nonnull @NonNull final String connectorName,
-        @Nonnull @NonNull final ConnectorContext connectorContext
-    ) {
-        return new SnowflakeConnectorFactory(connectorName, connectorContext.getConfiguration());
+    public ConnectorFactory create(@Nonnull @NonNull final ConnectorContext connectorContext) {
+        return new SnowflakeConnectorFactory(connectorContext.getCatalogName(),
+            connectorContext.getCatalogShardName(), connectorContext.getConfiguration());
     }
 
     /**

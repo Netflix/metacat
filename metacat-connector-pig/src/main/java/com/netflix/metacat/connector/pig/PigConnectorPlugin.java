@@ -43,10 +43,7 @@ public class PigConnectorPlugin implements ConnectorPlugin {
     }
 
     @Override
-    public ConnectorFactory create(
-        @Nonnull final String connectorName,
-        @Nonnull @NonNull final ConnectorContext connectorContext
-    ) {
+    public ConnectorFactory create(@Nonnull @NonNull final ConnectorContext connectorContext) {
         return null;
     }
 

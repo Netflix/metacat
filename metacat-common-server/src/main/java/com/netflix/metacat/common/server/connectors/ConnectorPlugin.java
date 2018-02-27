@@ -36,14 +36,10 @@ public interface ConnectorPlugin {
     /**
      * Returns the service implementation for the type.
      *
-     * @param connectorName connector name. This is also the catalog name.
      * @param connectorContext      registry for spectator
      * @return connector factory
      */
-    ConnectorFactory create(
-        String connectorName,
-        ConnectorContext connectorContext
-    );
+    ConnectorFactory create(ConnectorContext connectorContext);
 
     /**
      * Returns the type convertor of the connector.

@@ -57,11 +57,18 @@ public interface ConnectorFactory {
     }
 
     /**
-     * Returns the name of the connector.
+     * Returns the name of the catalog.
      *
-     * @return Returns the name of the connector.
+     * @return Returns the name of the catalog.
      */
     String getName();
+
+    /**
+     * Returns the name of the catalog shard.
+     *
+     * @return Returns the name of the catalog shard.
+     */
+    String getCatalogShardName();
 
     /**
      * Shuts down the factory.

@@ -12,6 +12,7 @@
  */
 package com.netflix.metacat.main.services;
 
+import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.thrift.CatalogThriftService;
 import com.netflix.metacat.thrift.CatalogThriftServiceFactory;
@@ -45,10 +46,9 @@ public class MetacatThriftService {
 
     protected List<CatalogThriftService> getCatalogThriftServices() {
         return connectorManager.getCatalogs()
-            .entrySet()
             .stream()
-            .filter(entry -> entry.getValue().isThriftInterfaceRequested())
-            .map(entry -> thriftServiceFactory.create(entry.getKey(), entry.getValue().getThriftPort()))
+            .filter(MetacatCatalogConfig::isThriftInterfaceRequested)
+            .map(catalog -> thriftServiceFactory.create(catalog.getCatalogName(), catalog.getThriftPort()))
             .collect(Collectors.toList());
     }
 

@@ -47,20 +47,20 @@ public class CassandraConnectorModule extends AbstractModule {
     private static final String USERNAME_KEY = "cassandra.username";
     private static final String PASSWORD_KEY = "cassandra.password";
 
-    private final String name;
+    private final String catalogShardName;
     private final Map<String, String> configuration;
 
     /**
      * Constructor.
      *
-     * @param name          The name of the catalog this module is associated will be associated with
-     * @param configuration The connector configuration
+     * @param catalogShardName  catalog shard name
+     * @param configuration     connector configuration
      */
     CassandraConnectorModule(
-        @Nonnull @NonNull final String name,
+        @Nonnull @NonNull final String catalogShardName,
         @Nonnull @NonNull final Map<String, String> configuration
     ) {
-        this.name = name;
+        this.catalogShardName = catalogShardName;
         this.configuration = configuration;
     }
 
@@ -90,7 +90,7 @@ public class CassandraConnectorModule extends AbstractModule {
     @Provides
     @Singleton
     Cluster provideCluster() {
-        final Cluster.Builder builder = Cluster.builder().withClusterName(this.name);
+        final Cluster.Builder builder = Cluster.builder().withClusterName(this.catalogShardName);
 
         // Contact points are required
         final String contactPointsString = this.configuration.get(CONTACT_POINTS_KEY);

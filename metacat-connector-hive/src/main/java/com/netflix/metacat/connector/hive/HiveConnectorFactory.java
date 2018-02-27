@@ -43,16 +43,18 @@ public class HiveConnectorFactory extends SpringConnectorFactory {
     /**
      * Constructor.
      *
-     * @param catalogName      connector name. Also the catalog name.
+     * @param catalogName      catalog name.
+     * @param catalogShardName catalog shard name
      * @param infoConverter    hive info converter
      * @param connectorContext connector config
      */
     HiveConnectorFactory(
         final String catalogName,
+        final String catalogShardName,
         final HiveConnectorInfoConverter infoConverter,
         final ConnectorContext connectorContext
     ) {
-        super(catalogName, infoConverter, connectorContext);
+        super(catalogName, catalogShardName, infoConverter, connectorContext);
         final boolean useLocalMetastore = Boolean.parseBoolean(
             connectorContext.getConfiguration()
                 .getOrDefault(HiveConfigConstants.USE_EMBEDDED_METASTORE, "false")

@@ -24,7 +24,8 @@ import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Plugin Manager.
+ * Plugin Manager. This loads the connector plugins using the ServiceLoader.
+ * Connector plugins need to be loaded before loading the catalogs.
  */
 @Slf4j
 public class PluginManager {

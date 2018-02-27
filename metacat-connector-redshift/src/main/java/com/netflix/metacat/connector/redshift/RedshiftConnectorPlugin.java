@@ -48,11 +48,9 @@ public class RedshiftConnectorPlugin implements ConnectorPlugin {
      * {@inheritDoc}
      */
     @Override
-    public ConnectorFactory create(
-        @Nonnull @NonNull final String connectorName,
-        @Nonnull @NonNull final ConnectorContext connectorContext
-    ) {
-        return new RedshiftConnectorFactory(connectorName, connectorContext.getConfiguration());
+    public ConnectorFactory create(@Nonnull @NonNull final ConnectorContext connectorContext) {
+        return new RedshiftConnectorFactory(connectorContext.getCatalogName(),
+            connectorContext.getCatalogShardName(), connectorContext.getConfiguration());
     }
 
     /**

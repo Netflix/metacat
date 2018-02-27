@@ -423,7 +423,7 @@ public class MViewServiceImpl implements MViewService {
     public List<NameDateDto> list(final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final QualifiedName viewDbName = QualifiedName.ofDatabase(name.getCatalogName(), VIEW_DB_NAME);
-        final ConnectorTableService service = connectorManager.getTableService(name.getCatalogName());
+        final ConnectorTableService service = connectorManager.getTableService(viewDbName);
 
         List<QualifiedName> tableNames = Lists.newArrayList();
         try {

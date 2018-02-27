@@ -34,7 +34,7 @@ class DirectSqlGetPartitionSpec extends Specification {
     def config = new DefaultConfigImpl(new MetacatProperties())
     def converter = new ConverterUtil(new DozerTypeConverter(new TypeConverterFactory(config)))
     def registry = new NoopRegistry()
-    def context = new ConnectorContext("test", config, registry, Maps.newHashMap())
+    def context = new ConnectorContext('test', 'test', 'hive', config, registry, Maps.newHashMap())
     def metric = new HiveConnectorFastServiceMetric(registry)
     def jdbcTemplate = Mock(JdbcTemplate)
     def service = new DirectSqlGetPartition(context, new ThreadServiceManager(registry, config), jdbcTemplate, metric)

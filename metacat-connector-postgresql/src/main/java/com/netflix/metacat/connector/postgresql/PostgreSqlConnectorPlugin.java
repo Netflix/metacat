@@ -48,11 +48,9 @@ public class PostgreSqlConnectorPlugin implements ConnectorPlugin {
      * {@inheritDoc}
      */
     @Override
-    public ConnectorFactory create(
-        @Nonnull @NonNull final String connectorName,
-        @Nonnull @NonNull final ConnectorContext connectorContext
-    ) {
-        return new PostgreSqlConnectorFactory(connectorName, connectorContext.getConfiguration());
+    public ConnectorFactory create(@Nonnull @NonNull final ConnectorContext connectorContext) {
+        return new PostgreSqlConnectorFactory(connectorContext.getCatalogName(),
+            connectorContext.getCatalogShardName(), connectorContext.getConfiguration());
     }
 
     /**

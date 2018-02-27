@@ -48,11 +48,9 @@ public class MySqlConnectorPlugin implements ConnectorPlugin {
      * {@inheritDoc}
      */
     @Override
-    public ConnectorFactory create(
-        @Nonnull @NonNull final String connectorName,
-        @Nonnull @NonNull final ConnectorContext connectorContext
-    ) {
-        return new MySqlConnectorFactory(connectorName, connectorContext.getConfiguration());
+    public ConnectorFactory create(@Nonnull @NonNull final ConnectorContext connectorContext) {
+        return new MySqlConnectorFactory(connectorContext.getCatalogName(),
+            connectorContext.getCatalogShardName(), connectorContext.getConfiguration());
     }
 
     /**

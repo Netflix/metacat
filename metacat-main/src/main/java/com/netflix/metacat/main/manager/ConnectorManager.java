@@ -27,8 +27,9 @@
 package com.netflix.metacat.main.manager;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Table;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
@@ -41,26 +42,39 @@ import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.connectors.exception.CatalogNotFoundException;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import javax.annotation.PreDestroy;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Connector manager.
  */
 @Slf4j
 public class ConnectorManager {
+    private static final String EMPTY_STRING = "";
     // Map of connector plugins registered.
     private final ConcurrentMap<String, ConnectorPlugin> plugins = new ConcurrentHashMap<>();
-    // Map of connector factories registered.
-    private final ConcurrentMap<String, ConnectorFactory> connectorFactories = new ConcurrentHashMap<>();
-    // Map of catalogs registered.
-    private final ConcurrentHashMap<String, MetacatCatalogConfig> catalogs = new ConcurrentHashMap<>();
+    /**
+     * Table of catalog name, database name to catalog data stores. Usually there is a one-to-one mapping between the
+     * catalog name and the data store. In this case the table will have the databse name as null. If there are multiple
+     * catalogs addressed by the same <code>catalog.name</code> pointing to shards of a data store, then there will be
+     * multiple entries in this table. An entry will be identified using the catalog name and the database name.
+     */
+    private final Table<String, String, CatalogHolder> catalogs = HashBasedTable.create();
+    private final Set<MetacatCatalogConfig> catalogConfigs = Sets.newHashSet();
+    private final Set<ConnectorDatabaseService> databaseServices = Sets.newHashSet();
+    private final Set<ConnectorTableService> tableServices = Sets.newHashSet();
+    private final Set<ConnectorPartitionService> partitionServices = Sets.newHashSet();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final Config config;
 
@@ -81,12 +95,11 @@ public class ConnectorManager {
         if (stopped.getAndSet(true)) {
             return;
         }
-
-        connectorFactories.values().forEach(connectorFactory -> {
+        catalogs.values().forEach(catalogHolder -> {
             try {
-                connectorFactory.stop();
+                catalogHolder.getConnectorFactory().stop();
             } catch (Throwable t) {
-                log.error("Error shutting down connector: {}", connectorFactory.getName(), t);
+                log.error("Error shutting down connector: {}", catalogHolder.getConnectorFactory().getName(), t);
             }
         });
     }
@@ -103,29 +116,89 @@ public class ConnectorManager {
     /**
      * Creates a connection for the given catalog.
      *
-     * @param catalogName      catalog name
-     * @param connectorType    connector type
      * @param connectorContext metacat connector properties
      */
-    public synchronized void createConnection(final String catalogName,
-                                              final String connectorType,
-                                              final ConnectorContext connectorContext) {
+    public synchronized void createConnection(final ConnectorContext connectorContext) {
         Preconditions.checkState(!stopped.get(), "ConnectorManager is stopped");
+        final String connectorType = connectorContext.getConnectorType();
+        final String catalogName = connectorContext.getCatalogName();
         final ConnectorPlugin connectorPlugin = plugins.get(connectorType);
         if (connectorPlugin != null) {
-            Preconditions
-                .checkState(!connectorFactories.containsKey(catalogName), "A connector %s already exists", catalogName);
-            final ConnectorFactory connectorFactory =
-                connectorPlugin.create(catalogName, connectorContext);
-            connectorFactories.put(catalogName, connectorFactory);
-
             final MetacatCatalogConfig catalogConfig =
-                MetacatCatalogConfig.createFromMapAndRemoveProperties(connectorType,
+                MetacatCatalogConfig.createFromMapAndRemoveProperties(connectorType, catalogName,
                     connectorContext.getConfiguration());
-            catalogs.put(catalogName, catalogConfig);
+            final List<String> databaseNames = catalogConfig.getSchemaWhitelist();
+            if (databaseNames.isEmpty()) {
+                Preconditions.checkState(!catalogs.contains(catalogName, EMPTY_STRING),
+                    "A catalog with name %s already exists", catalogName);
+            } else {
+                databaseNames.forEach(databaseName -> {
+                    Preconditions.checkState(!catalogs.contains(catalogName, databaseName),
+                        "A catalog with name %s for database %s already exists", catalogName, databaseName);
+                });
+            }
+            catalogConfigs.add(catalogConfig);
+            final ConnectorFactory connectorFactory = connectorPlugin.create(connectorContext);
+            try {
+                databaseServices.add(connectorFactory.getDatabaseService());
+            } catch (UnsupportedOperationException e) {
+                log.debug("Catalog {} doesn't support getDatabaseService. Ignoring.", catalogName);
+            }
+            try {
+                tableServices.add(connectorFactory.getTableService());
+            } catch (UnsupportedOperationException e) {
+                log.debug("Catalog {} doesn't support getTableService. Ignoring.", catalogName);
+            }
+            try {
+                partitionServices.add(connectorFactory.getPartitionService());
+            } catch (UnsupportedOperationException e) {
+                log.debug("Catalog {} doesn't support getPartitionService. Ignoring.", catalogName);
+            }
+            final CatalogHolder catalogHolder = new CatalogHolder(catalogConfig, connectorFactory);
+            if (databaseNames.isEmpty()) {
+                catalogs.put(catalogName, EMPTY_STRING, catalogHolder);
+            } else {
+                databaseNames.forEach(databaseName -> {
+                    catalogs.put(catalogName, databaseName, catalogHolder);
+                });
+            }
         } else {
             log.warn("No plugin for connector with type {}", connectorType);
         }
+    }
+
+    /**
+     * Returns a set of catalog holders.
+     *
+     * @param catalogName catalog name
+     * @return catalog holders
+     */
+    @Nonnull
+    private Set<CatalogHolder> getCatalogHolders(final String catalogName) {
+        final Map<String, CatalogHolder> result =  catalogs.row(catalogName);
+        if (result.isEmpty()) {
+            throw new CatalogNotFoundException(catalogName);
+        } else {
+            return Sets.newHashSet(result.values());
+        }
+    }
+
+    /**
+     * Returns the catalog holder.
+     *
+     * @param name name
+     * @return catalog holder
+     */
+    @Nonnull
+    private CatalogHolder getCatalogHolder(final QualifiedName name) {
+        final String catalogName = name.getCatalogName();
+        final String databaseName = name.isDatabaseDefinition() ? name.getDatabaseName() : EMPTY_STRING;
+        final CatalogHolder result =  catalogs.contains(catalogName, databaseName)
+            ? catalogs.get(catalogName, databaseName) : catalogs.get(catalogName, EMPTY_STRING);
+        if (result == null) {
+            throw new CatalogNotFoundException(catalogName);
+        }
+        return result;
     }
 
     /**
@@ -136,44 +209,34 @@ public class ConnectorManager {
      */
     @Nonnull
     public MetacatCatalogConfig getCatalogConfig(final QualifiedName name) {
-        return getCatalogConfig(name.getCatalogName());
+        return getCatalogHolder(name).getCatalogConfig();
     }
 
     /**
      * Returns the catalog config.
      *
-     * @param catalogName catalog name
+     * @param name name
      * @return catalog config
      */
     @Nonnull
-    public MetacatCatalogConfig getCatalogConfig(final String catalogName) {
-        if (Strings.isNullOrEmpty(catalogName)) {
-            throw new IllegalArgumentException("catalog-name is required");
-        }
-        if (!catalogs.containsKey(catalogName)) {
-            throw new CatalogNotFoundException(catalogName);
-        }
-        return catalogs.get(catalogName);
+    public Set<MetacatCatalogConfig> getCatalogConfigs(final String name) {
+        return getCatalogHolders(name).stream().map(CatalogHolder::getCatalogConfig).collect(Collectors.toSet());
     }
 
     @Nonnull
-    public Map<String, MetacatCatalogConfig> getCatalogs() {
-        return ImmutableMap.copyOf(catalogs);
+    public Set<MetacatCatalogConfig> getCatalogs() {
+        return catalogConfigs;
     }
 
     /**
-     * Returns the connector factory for the given <code>catalogName</code>.
+     * Returns the connector factory for the given <code>name</code>.
      *
-     * @param catalogName catalog name
-     * @return Returns the connector factory for the given <code>catalogName</code>
+     * @param name qualified name
+     * @return Returns the connector factory for the given <code>name</code>
      */
-    private ConnectorFactory getConnectorFactory(final String catalogName) {
-        Preconditions.checkNotNull(catalogName, "catalogName is null");
-        final ConnectorFactory result = connectorFactories.get(catalogName);
-        if (result == null) {
-            throw new CatalogNotFoundException(catalogName);
-        }
-        return result;
+    private ConnectorFactory getConnectorFactory(final QualifiedName name) {
+        Preconditions.checkNotNull(name, "Name is null");
+        return getCatalogHolder(name).getConnectorFactory();
     }
 
     /**
@@ -190,33 +253,60 @@ public class ConnectorManager {
     }
 
     /**
-     * Returns the connector database service for the given <code>catalogName</code>.
+     * Returns all the connector database services.
      *
-     * @param catalogName catalog name
-     * @return Returns the connector database service for the given <code>catalogName</code>
+     * @return Returns all the connector database services registered in the system.
      */
-    public ConnectorDatabaseService getDatabaseService(final String catalogName) {
-        return getConnectorFactory(catalogName).getDatabaseService();
+    public Set<ConnectorDatabaseService> getDatabaseServices() {
+        return databaseServices;
     }
 
     /**
-     * Returns the connector table service for the given <code>catalogName</code>.
+     * Returns all the connector table services.
      *
-     * @param catalogName catalog name
-     * @return Returns the connector table service for the given <code>catalogName</code>
+     * @return Returns all the connector table services registered in the system.
      */
-    public ConnectorTableService getTableService(final String catalogName) {
-        return getConnectorFactory(catalogName).getTableService();
+    public Set<ConnectorTableService> getTableServices() {
+        return tableServices;
     }
 
     /**
-     * Returns the connector partition service for the given <code>catalogName</code>.
+     * Returns all the connector partition services.
      *
-     * @param catalogName catalog name
-     * @return Returns the connector partition service for the given <code>catalogName</code>
+     * @return Returns all the connector partition services registered in the system.
      */
-    public ConnectorPartitionService getPartitionService(final String catalogName) {
-        return getConnectorFactory(catalogName).getPartitionService();
+    public Set<ConnectorPartitionService> getPartitionServices() {
+        return partitionServices;
+    }
+
+    /**
+     * Returns the connector database service for the given <code>name</code>.
+     *
+     * @param name qualified name
+     * @return Returns the connector database service for the given <code>name</code>
+     */
+    public ConnectorDatabaseService getDatabaseService(final QualifiedName name) {
+        return getConnectorFactory(name).getDatabaseService();
+    }
+
+    /**
+     * Returns the connector table service for the given <code>name</code>.
+     *
+     * @param name qualified name
+     * @return Returns the connector table service for the given <code>name</code>
+     */
+    public ConnectorTableService getTableService(final QualifiedName name) {
+        return getConnectorFactory(name).getTableService();
+    }
+
+    /**
+     * Returns the connector partition service for the given <code>name</code>.
+     *
+     * @param name qualified name
+     * @return Returns the connector partition service for the given <code>name</code>
+     */
+    public ConnectorPartitionService getPartitionService(final QualifiedName name) {
+        return getConnectorFactory(name).getPartitionService();
     }
 
     /**
@@ -237,5 +327,15 @@ public class ConnectorManager {
      */
     public ConnectorInfoConverter getInfoConverter(final String connectorType) {
         return getPlugin(connectorType).getInfoConverter();
+    }
+
+    /**
+     * A Holder class holding the catalog's config and connector factory.
+     */
+    @Data
+    @AllArgsConstructor
+    private static class CatalogHolder {
+        private final MetacatCatalogConfig catalogConfig;
+        private final ConnectorFactory connectorFactory;
     }
 }

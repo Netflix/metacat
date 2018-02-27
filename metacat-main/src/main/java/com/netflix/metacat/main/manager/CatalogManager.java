@@ -38,7 +38,15 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Catalog manager.
+ * Catalog manager. This loads the catalogs defined as .properties files under the location defined by config property
+ * <code>metacat.plugin.config.location</code>.
+ * Usually there is a one-to-one mapping between a catalog and a data store. We could also have data stores
+ * (mostly sharded) addressed by a single catalog name.
+ * If a data store is sharded and needs to be represented by a single catalog name, then we will have multiple catalog
+ * property files, each referencing to its physical data store and having the same <code>catalog.name</code>.
+ * In this case, <code>catalog.name</code> and <code>metacat.schema.whitelist</code> will be used to point to the right
+ * data store. A catalog with no <code>metacat.schema.whitelist</code> setting will be the default catalog representing
+ * all databases for the <code>catalog.name</code>.
  */
 @Slf4j
 public class CatalogManager implements HealthIndicator {
@@ -84,9 +92,11 @@ public class CatalogManager implements HealthIndicator {
         // If catalogs are loaded we'll just report up
         final Health.Builder builder = this.catalogsLoaded.get() ? Health.up() : Health.outOfService();
 
-        for (final Map.Entry<String, MetacatCatalogConfig> entry : this.connectorManager.getCatalogs().entrySet()) {
-            builder.withDetail(entry.getKey(), entry.getValue().getType());
-        }
+        this.connectorManager.getCatalogs().forEach(catalog -> {
+            final String key = catalog.getSchemaWhitelist().isEmpty() ? catalog.getCatalogName()
+                : String.format("%s:%s", catalog.getCatalogName(), catalog.getSchemaWhitelist());
+            builder.withDetail(key, catalog.getType());
+        });
 
         return builder.build();
     }
@@ -114,17 +124,23 @@ public class CatalogManager implements HealthIndicator {
         log.info("-- Loading catalog {} --", file);
         final Map<String, String> properties = new HashMap<>(this.loadProperties(file));
 
-        final String connectorType = properties.remove("connector.name");
+        final String connectorType = properties.remove(MetacatCatalogConfig.Keys.CONNECTOR_NAME);
         Preconditions.checkState(
             connectorType != null,
             "Catalog configuration %s does not contain connector.name",
             file.getAbsoluteFile()
         );
 
-        final String catalogName = Files.getNameWithoutExtension(file.getName());
-        final ConnectorContext connectorContext = new ConnectorContext(catalogName, config, registry, properties);
-        this.connectorManager.createConnection(catalogName, connectorType, connectorContext);
-        log.info("-- Added catalog {} using connector {} --", catalogName, connectorType);
+        // Catalog shard name should be unique. Usually the catalog name is same as the catalog shard name.
+        // If multiple catalog property files refer the same catalog name, then there will be multiple shard names
+        // with the same catalog name.
+        final String catalogShardName = Files.getNameWithoutExtension(file.getName());
+        // If catalog name is not specified, then use the catalog shard name.
+        final String catalogName = properties.getOrDefault(MetacatCatalogConfig.Keys.CATALOG_NAME, catalogShardName);
+        final ConnectorContext connectorContext =
+            new ConnectorContext(catalogName, catalogShardName, connectorType, config, registry, properties);
+        this.connectorManager.createConnection(connectorContext);
+        log.info("-- Added catalog {} shard {} using connector {} --", catalogName, catalogShardName, connectorType);
     }
 
     private List<File> listFiles(final File installedPluginsDir) {
