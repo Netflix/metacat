@@ -33,24 +33,24 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 public class DefaultConnectorFactory implements ConnectorFactory {
 
-    private final String name;
+    private final String catalogName;
     private final String catalogShardName;
     private final Injector injector;
 
     /**
      * Constructor.
      *
-     * @param name              catalog name
+     * @param catalogName       catalog name
      * @param catalogShardName  catalog shard name
      * @param modules           The connector modules to create
      */
     public DefaultConnectorFactory(
-        final String name,
+        final String catalogName,
         final String catalogShardName,
         final Iterable<? extends Module> modules
     ) {
-        log.info("Creating connector factory for catalog {}", name);
-        this.name = name;
+        log.info("Creating connector factory for catalog {}", catalogName);
+        this.catalogName = catalogName;
         this.catalogShardName = catalogShardName;
         this.injector = Guice.createInjector(modules);
     }

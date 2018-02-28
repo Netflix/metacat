@@ -91,7 +91,7 @@ public abstract class SpringConnectorFactory implements ConnectorFactory {
      * {@inheritDoc}
      */
     @Override
-    public String getName() {
+    public String getCatalogName() {
         return this.catalogName;
     }
 

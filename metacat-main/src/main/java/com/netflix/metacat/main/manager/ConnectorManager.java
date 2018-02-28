@@ -99,7 +99,7 @@ public class ConnectorManager {
             try {
                 catalogHolder.getConnectorFactory().stop();
             } catch (Throwable t) {
-                log.error("Error shutting down connector: {}", catalogHolder.getConnectorFactory().getName(), t);
+                log.error("Error shutting down connector: {}", catalogHolder.getConnectorFactory().getCatalogName(), t);
             }
         });
     }

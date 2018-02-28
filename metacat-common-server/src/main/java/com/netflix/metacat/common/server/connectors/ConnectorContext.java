@@ -35,7 +35,7 @@ public class ConnectorContext {
      */
     private final String catalogShardName;
     /**
-     * Catalog type.
+     * Connector type.
      */
     private final String connectorType;
     /**
