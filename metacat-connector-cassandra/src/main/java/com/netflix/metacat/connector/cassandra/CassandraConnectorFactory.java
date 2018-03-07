@@ -36,14 +36,17 @@ class CassandraConnectorFactory extends DefaultConnectorFactory {
     /**
      * Constructor.
      *
-     * @param name          The catalog name
-     * @param configuration The catalog configuration
+     * @param name              The catalog name
+     * @param catalogShardName  The catalog shard name
+     * @param configuration     The catalog configuration
      */
     CassandraConnectorFactory(
         @Nonnull @NonNull final String name,
+        @Nonnull @NonNull final String catalogShardName,
         @Nonnull @NonNull final Map<String, String> configuration
     ) {
-        super(name, Lists.newArrayList(new CassandraConnectorModule(name, configuration)));
+        super(name, catalogShardName,
+            Lists.newArrayList(new CassandraConnectorModule(catalogShardName, configuration)));
     }
 
     /**

@@ -32,7 +32,8 @@ import java.util.Map;
  * s3 connector factory.
  */
 public class S3ConnectorFactory implements ConnectorFactory {
-    private final String name;
+    private final String catalogName;
+    private final String catalogShardName;
     private final Map<String, String> configuration;
     private final S3ConnectorInfoConverter infoConverter;
     private ConnectorDatabaseService databaseService;
@@ -43,15 +44,19 @@ public class S3ConnectorFactory implements ConnectorFactory {
 
     /**
      * Constructor.
-     * @param name connector name. Also the catalog name.
-     * @param configuration configuration properties
-     * @param infoConverter S3 info converter
+     * @param catalogName       catalog name.
+     * @param catalogShardName  catalog shard name
+     * @param configuration     configuration properties
+     * @param infoConverter     S3 info converter
      */
-    public S3ConnectorFactory(final String name, final Map<String, String> configuration,
-        final S3ConnectorInfoConverter infoConverter) {
-        Preconditions.checkNotNull(name, "Catalog name is null");
+    public S3ConnectorFactory(final String catalogName, final String catalogShardName,
+                              final Map<String, String> configuration,
+                              final S3ConnectorInfoConverter infoConverter) {
+        Preconditions.checkNotNull(catalogName, "Catalog name is null");
+        Preconditions.checkNotNull(catalogShardName, "Catalog shard name is null");
         Preconditions.checkNotNull(configuration, "Catalog connector configuration is null");
-        this.name = name;
+        this.catalogName = catalogName;
+        this.catalogShardName = catalogShardName;
         this.configuration = configuration;
         this.infoConverter = infoConverter;
         init();
@@ -61,9 +66,9 @@ public class S3ConnectorFactory implements ConnectorFactory {
         //JPA module
         final Map<String, Object> props = Maps.newHashMap(configuration);
         props.put("hibernate.connection.datasource",
-            DataSourceManager.get().load(name, configuration).get(name));
+            DataSourceManager.get().load(catalogShardName, configuration).get(catalogShardName));
         final Module jpaModule = new JpaPersistModule("s3").properties(props);
-        final Module s3Module = new S3Module(name, configuration, infoConverter);
+        final Module s3Module = new S3Module(catalogName, configuration, infoConverter);
         final Injector injector = Guice.createInjector(jpaModule, s3Module);
         persistService = injector.getInstance(PersistService.class);
         persistService.start();
@@ -88,8 +93,13 @@ public class S3ConnectorFactory implements ConnectorFactory {
     }
 
     @Override
-    public String getName() {
-        return name;
+    public String getCatalogName() {
+        return catalogName;
+    }
+
+    @Override
+    public String getCatalogShardName() {
+        return catalogShardName;
     }
 
     @Override

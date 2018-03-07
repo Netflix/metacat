@@ -22,6 +22,7 @@ import com.google.common.collect.Maps
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig
 import com.netflix.spectator.api.Registry
+import org.assertj.core.util.Sets
 import org.springframework.boot.actuate.health.Status
 import spock.lang.Specification
 
@@ -35,12 +36,12 @@ class CatalogManagerSpec extends Specification {
     def "can report health accurately based on whether catalogs are loaded or not"() {
         def connectorManager = Mock(ConnectorManager) {
             2 * getCatalogs() >>> [
-                Maps.newHashMap(),
-                ImmutableMap.of(
-                    "testhive", MetacatCatalogConfig.createFromMapAndRemoveProperties("hive", Maps.newHashMap()),
-                    "prodhive", MetacatCatalogConfig.createFromMapAndRemoveProperties("hive", Maps.newHashMap()),
-                    "finance", MetacatCatalogConfig.createFromMapAndRemoveProperties("mysql", Maps.newHashMap())
-                )
+                [],
+                [
+                    MetacatCatalogConfig.createFromMapAndRemoveProperties("hive", "testhive", Maps.newHashMap()),
+                    MetacatCatalogConfig.createFromMapAndRemoveProperties("hive", "prodhive", Maps.newHashMap()),
+                    MetacatCatalogConfig.createFromMapAndRemoveProperties("mysql", "finance", Maps.newHashMap())
+                ]
             ]
         }
         def config = Mock(Config) {

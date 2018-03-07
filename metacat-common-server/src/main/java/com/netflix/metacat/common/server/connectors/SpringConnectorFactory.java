@@ -30,20 +30,20 @@ import org.springframework.core.env.StandardEnvironment;
  */
 
 public abstract class SpringConnectorFactory implements ConnectorFactory {
-    protected final String catalogName;
     protected final AnnotationConfigApplicationContext ctx;
+    private final String catalogName;
+    private final String catalogShardName;
 
     /**
      * Constructor.
      *
-     * @param catalogName            catalog name
      * @param connectorInfoConverter connector info converter
      * @param connectorContext       connector related config
      */
-    public SpringConnectorFactory(final String catalogName,
-                                  final ConnectorInfoConverter connectorInfoConverter,
+    public SpringConnectorFactory(final ConnectorInfoConverter connectorInfoConverter,
                                   final ConnectorContext connectorContext) {
-        this.catalogName = catalogName;
+        this.catalogName = connectorContext.getCatalogName();
+        this.catalogShardName = connectorContext.getCatalogShardName();
         this.ctx = new AnnotationConfigApplicationContext();
         this.ctx.setEnvironment(new StandardEnvironment());
         this.ctx.getBeanFactory().registerSingleton("ConnectorContext", connectorContext);
@@ -87,7 +87,15 @@ public abstract class SpringConnectorFactory implements ConnectorFactory {
      * {@inheritDoc}
      */
     @Override
-    public String getName() {
+    public String getCatalogName() {
         return this.catalogName;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getCatalogShardName() {
+        return catalogShardName;
     }
 }

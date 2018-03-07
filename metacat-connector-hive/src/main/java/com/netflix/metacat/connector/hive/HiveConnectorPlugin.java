@@ -48,12 +48,8 @@ public class HiveConnectorPlugin implements ConnectorPlugin {
      * {@inheritDoc}
      */
     @Override
-    public ConnectorFactory create(
-        final String catalogName,
-        final ConnectorContext connectorContext
-    ) {
+    public ConnectorFactory create(final ConnectorContext connectorContext) {
         return new HiveConnectorFactory(
-            catalogName,
             INFO_CONVERTER_HIVE,
             connectorContext
         );

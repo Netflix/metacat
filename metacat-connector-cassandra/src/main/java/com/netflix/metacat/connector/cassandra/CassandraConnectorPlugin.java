@@ -48,11 +48,9 @@ public class CassandraConnectorPlugin implements ConnectorPlugin {
      * {@inheritDoc}
      */
     @Override
-    public ConnectorFactory create(
-        @Nonnull @NonNull final String connectorName,
-        @Nonnull @NonNull final ConnectorContext connectorContext
-    ) {
-        return new CassandraConnectorFactory(connectorName, connectorContext.getConfiguration());
+    public ConnectorFactory create(@Nonnull @NonNull final ConnectorContext connectorContext) {
+        return new CassandraConnectorFactory(connectorContext.getCatalogName(),
+            connectorContext.getCatalogShardName(), connectorContext.getConfiguration());
     }
 
     /**

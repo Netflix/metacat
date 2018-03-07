@@ -50,13 +50,13 @@ public final class DataSourceManager {
     /**
      * Initialize a data source and store it.
      *
-     * @param catalogName catalog name
+     * @param name catalog name
      * @param properties  properties
      * @return DataSourceManager
      */
-    public DataSourceManager load(final String catalogName, final Map<String, String> properties) {
-        if (dataSources.get(catalogName) == null) {
-            createDataSource(catalogName, properties);
+    public DataSourceManager load(final String name, final Map<String, String> properties) {
+        if (dataSources.get(name) == null) {
+            createDataSource(name, properties);
         }
         return this;
     }
@@ -78,15 +78,15 @@ public final class DataSourceManager {
     /**
      * Returns the data source loaded for the given catalog.
      *
-     * @param catalogName catalog name
+     * @param name catalog name
      * @return DataSource
      */
-    public DataSource get(final String catalogName) {
-        return dataSources.get(catalogName);
+    public DataSource get(final String name) {
+        return dataSources.get(name);
     }
 
-    private synchronized void createDataSource(final String catalogName, final Map props) {
-        if (dataSources.get(catalogName) == null) {
+    private synchronized void createDataSource(final String name, final Map props) {
+        if (dataSources.get(name) == null) {
             final Properties dataSourceProperties = new Properties();
             props.forEach((key, value) -> {
                 final String prop = String.valueOf(key);
@@ -101,11 +101,11 @@ public final class DataSourceManager {
                     // Explicitly registering the datasource with the JMX server bean.
                     //
                     ((org.apache.tomcat.jdbc.pool.DataSource) dataSource)
-                        .preRegister(null, new ObjectName(String.format("jdbc.pool:name=%s", catalogName)));
-                    dataSources.put(catalogName, dataSource);
+                        .preRegister(null, new ObjectName(String.format("jdbc.pool:name=%s", name)));
+                    dataSources.put(name, dataSource);
                 } catch (Exception e) {
                     throw new RuntimeException(String
-                        .format("Failed to load the data source for catalog %s with error [%s]", catalogName,
+                        .format("Failed to load the data source for catalog %s with error [%s]", name,
                             e.getMessage()), e);
                 }
             }

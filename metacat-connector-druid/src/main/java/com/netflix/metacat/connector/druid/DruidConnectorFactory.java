@@ -35,15 +35,13 @@ public class DruidConnectorFactory extends SpringConnectorFactory {
     /**
      * Constructor.
      *
-     * @param catalogName      catalog name.
      * @param connectorContext connector config
      */
     DruidConnectorFactory(
-        final String catalogName,
         final DruidConnectorInfoConverter druidConnectorInfoConverter,
         final ConnectorContext connectorContext
     ) {
-        super(catalogName, druidConnectorInfoConverter, connectorContext);
+        super(druidConnectorInfoConverter, connectorContext);
         super.registerClazz(DruidConnectorConfig.class, DruidHttpClientConfig.class);
         super.refresh();
     }

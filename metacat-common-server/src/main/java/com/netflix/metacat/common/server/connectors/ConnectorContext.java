@@ -31,6 +31,14 @@ public class ConnectorContext {
      */
     private final String catalogName;
     /**
+     * Catalog shard name.
+     */
+    private final String catalogShardName;
+    /**
+     * Connector type.
+     */
+    private final String connectorType;
+    /**
      * Metacat config.
      */
     private final Config config;

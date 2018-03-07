@@ -33,13 +33,15 @@ class RedshiftConnectorFactory extends DefaultConnectorFactory {
     /**
      * Constructor.
      *
-     * @param name          The catalog name
-     * @param configuration The catalog configuration
+     * @param name              catalog name
+     * @param catalogShardName  catalog shard name
+     * @param configuration     catalog configuration
      */
     RedshiftConnectorFactory(
         final String name,
+        final String catalogShardName,
         final Map<String, String> configuration
     ) {
-        super(name, Lists.newArrayList(new RedshiftConnectorModule(name, configuration)));
+        super(name, catalogShardName, Lists.newArrayList(new RedshiftConnectorModule(catalogShardName, configuration)));
     }
 }

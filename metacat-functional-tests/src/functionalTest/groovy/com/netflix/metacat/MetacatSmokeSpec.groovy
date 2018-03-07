@@ -200,6 +200,7 @@ class MetacatSmokeSpec extends Specification {
         catalogName                     | databaseName | error
         'embedded-hive-metastore'       | 'smoke_db0'  | null
         'embedded-fast-hive-metastore'  | 'fsmoke_db0' | null
+        'embedded-fast-hive-metastore'  | 'shard1'     | null
         'hive-metastore'                | 'hsmoke_db0' | null
         's3-mysql-db'                   | 'smoke_db0'  | null
         'invalid-catalog'               | 'smoke_db0'  | MetacatNotFoundException.class
@@ -254,6 +255,10 @@ class MetacatSmokeSpec extends Specification {
         'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test_create_table' | false  | false   | null
         'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test_create_table1'| false  | true    | null
         'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test.create_table1'| false  | true    | InvalidMetaException.class
+        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table' | true   | false   | null
+        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table' | false  | false   | null
+        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table1'| false  | true    | null
+        'embedded-fast-hive-metastore'  | 'shard'      | 'test.create_table1'| false  | true    | InvalidMetaException.class
         'hive-metastore'                | 'hsmoke_db1' | 'test_create_table' | true   | false   | null
         'hive-metastore'                | 'hsmoke_db1' | 'test_create_table' | false  | false   | null
         'hive-metastore'                | 'hsmoke_db1' | 'test_create_table1'| false  | true    | null
@@ -321,6 +326,7 @@ class MetacatSmokeSpec extends Specification {
         catalogName                     | databaseName  | tableName             | result
         'embedded-hive-metastore'       | 'smoke_ddb1'  | 'test_create_table'   | 0
         'embedded-fast-hive-metastore'  | 'fsmoke_ddb1' | 'test_create_table'   | 0
+        'embedded-fast-hive-metastore'  | 'shard'       | 'test_create_table'   | 0
         'hive-metastore'                | 'hsmoke_ddb'  | 'test_create_table'   | 0
         'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table1'  | 0
         'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table2'  | 1
@@ -344,6 +350,7 @@ class MetacatSmokeSpec extends Specification {
         catalogName                     | databaseName
         'embedded-hive-metastore'       | 'smoke_db1'
         'embedded-fast-hive-metastore'  | 'fsmoke_db1'
+        'embedded-fast-hive-metastore'  | 'shard'
         'hive-metastore'                | 'hsmoke_db1'
         's3-mysql-db'                   | 'smoke_db1'
     }
@@ -367,6 +374,8 @@ class MetacatSmokeSpec extends Specification {
         catalogName                     | databaseName | tableName
         'embedded-hive-metastore'       | 'smoke_db2'  | 'part'
         'embedded-fast-hive-metastore'  | 'fsmoke_db2' | 'part'
+        'embedded-fast-hive-metastore'  | 'shard'      | 'part'
+        'embedded-fast-hive-metastore'  | 'shard1'     | 'part'
         'hive-metastore'                | 'hsmoke_db2' | 'part'
         's3-mysql-db'                   | 'smoke_db2'  | 'part'
         's3-mysql-db'                   | 'smoke_db2'  | 'PART'
@@ -395,6 +404,7 @@ class MetacatSmokeSpec extends Specification {
         catalogName                     | databaseName | tableName           | error | newTableName
         'embedded-hive-metastore'       | 'smoke_db3'  | 'test_create_table' | null  | 'test_create_table1'
         'embedded-fast-hive-metastore'  | 'fsmoke_db3' | 'test_create_table' | null  | 'test_create_table1'
+        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table' | null  | 'test_create_table1'
         'hive-metastore'                | 'hsmoke_db3' | 'test_create_table' | null  | 'test_create_table1'
     }
 
@@ -429,10 +439,13 @@ class MetacatSmokeSpec extends Specification {
         'embedded-hive-metastore'       | 'smoke_db4'  | 'part'              | 'part_view' | null                           | true
         'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'part'              | 'part_view' | null                           | false
         'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'part'              | 'part_view' | null                           | true
+        'embedded-fast-hive-metastore'  | 'shard'      | 'part'              | 'part_view' | null                           | false
+        'embedded-fast-hive-metastore'  | 'shard'      | 'part'              | 'part_view' | null                           | true
         'hive-metastore'                | 'hsmoke_db4' | 'part'              | 'part_view' | null                           | false
         'hive-metastore'                | 'hsmoke_db4' | 'part'              | 'part_view' | null                           | true
         'embedded-hive-metastore'       | 'smoke_db4'  | 'metacat_all_types' | 'part_view' | null                           | false
         'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'metacat_all_types' | 'part_view' | null                           | false
+        'embedded-fast-hive-metastore'  | 'shard'      | 'metacat_all_types' | 'part_view' | null                           | false
         's3-mysql-db'                   | 'smoke_db4'  | 'part'              | 'part_view' | null                           | false
         'xyz'                           | 'smoke_db4'  | 'z'                 | 'part_view' | MetacatNotFoundException.class | false
     }
@@ -467,6 +480,8 @@ class MetacatSmokeSpec extends Specification {
         'embedded-hive-metastore'       | 'smoke_db4'    | 'part'              | 'part_view' | null                           | true
         'embedded-fast-hive-metastore'  | 'fsmoke_db4'   | 'part'              | 'part_view' | null                           | false
         'embedded-fast-hive-metastore'  | 'fsmoke_db4'   | 'part'              | 'part_view' | null                           | true
+        'embedded-fast-hive-metastore'  | 'shard'        | 'part'              | 'part_view' | null                           | false
+        'embedded-fast-hive-metastore'  | 'shard'        | 'part'              | 'part_view' | null                           | true
         'hive-metastore'                | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | false
         'hive-metastore'                | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | true
         'embedded-hive-metastore'       | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
@@ -485,6 +500,7 @@ class MetacatSmokeSpec extends Specification {
         catalogName                     | databaseName      | tableName
         'embedded-hive-metastore'       | 'smoke_db'        | 'part'
         'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'
+        'embedded-fast-hive-metastore'  | 'shard'           | 'part'
         'hive-metastore'                | 'hsmoke_db'       | 'part'
         's3-mysql-db'                   | 'smoke_db'        | 'part'
     }
@@ -649,6 +665,13 @@ class MetacatSmokeSpec extends Specification {
         'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
         'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | true   | true  | null
         'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
+        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
+        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
+        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
+        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | true   | false | null
+        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
+        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | true   | true  | null
+        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
         'hive-metastore'                | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
         'hive-metastore'                | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
         'hive-metastore'                | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
@@ -687,6 +710,9 @@ class MetacatSmokeSpec extends Specification {
         'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | true      | true
         'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | true      | false
         'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | false     | true
+        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | true      | true
+        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | true      | false
+        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | false     | true
         'hive-metastore'                | 'hsmoke_db7'      | 'part'    | 'one=xyz'     | true      | true
         'hive-metastore'                | 'hsmoke_db7'      | 'part'    | 'one=xyz'     | true      | false
         'hive-metastore'                | 'hsmoke_db7'      | 'part'    | 'one=xyz'     | false     | true
@@ -953,6 +979,8 @@ class MetacatSmokeSpec extends Specification {
         'embedded-hive-metastore'       | 'smoke_db6'  | 'part'    | ['test', 'unused'] as Set<String> | false
         'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test'] as Set<String>           | true
         'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test', 'unused'] as Set<String> | false
+        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test'] as Set<String>           | true
+        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test', 'unused'] as Set<String> | false
         'hive-metastore'                | 'hsmoke_db6' | 'part'    | ['test'] as Set<String>           | true
         'hive-metastore'                | 'hsmoke_db6' | 'part'    | ['test', 'unused'] as Set<String> | false
         's3-mysql-db'                   | 'smoke_db6'  | 'part'    | ['test'] as Set<String>           | true

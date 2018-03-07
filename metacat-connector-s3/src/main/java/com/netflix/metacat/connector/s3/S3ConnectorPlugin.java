@@ -48,10 +48,8 @@ public class S3ConnectorPlugin implements ConnectorPlugin {
      * {@inheritDoc}
      */
     @Override
-    public ConnectorFactory create(
-        @Nonnull final String connectorName,
-        @Nonnull @NonNull final ConnectorContext connectorContext) {
-        return new S3ConnectorFactory(connectorName,
+    public ConnectorFactory create(@Nonnull @NonNull final ConnectorContext connectorContext) {
+        return new S3ConnectorFactory(connectorContext.getCatalogName(), connectorContext.getCatalogShardName(),
             connectorContext.getConfiguration(), (S3ConnectorInfoConverter) getInfoConverter());
     }
 

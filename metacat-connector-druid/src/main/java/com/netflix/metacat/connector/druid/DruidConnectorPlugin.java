@@ -43,11 +43,9 @@ public class DruidConnectorPlugin implements ConnectorPlugin {
      * {@inheritDoc}
      */
     @Override
-    public ConnectorFactory create(
-        final String catalogName,
-        final ConnectorContext connectorContext
-    ) {
-        return new DruidConnectorFactory(catalogName, new DruidConnectorInfoConverter(catalogName), connectorContext);
+    public ConnectorFactory create(final ConnectorContext connectorContext) {
+        return new DruidConnectorFactory(
+            new DruidConnectorInfoConverter(connectorContext.getCatalogName()), connectorContext);
     }
 
     /**

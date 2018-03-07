@@ -89,7 +89,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.postSync(new MetacatCreateDatabasePreEvent(name, metacatRequestContext, this));
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
-        connectorManager.getDatabaseService(name.getCatalogName()).create(connectorRequestContext,
+        connectorManager.getDatabaseService(name).create(connectorRequestContext,
             converterUtil.fromDatabaseDto(dto));
         if (dto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for schema {}", name);
@@ -113,7 +113,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         try {
             final ConnectorRequestContext connectorRequestContext
                 = converterUtil.toConnectorContext(metacatRequestContext);
-            connectorManager.getDatabaseService(name.getCatalogName())
+            connectorManager.getDatabaseService(name)
                 .update(connectorRequestContext, converterUtil.fromDatabaseDto(dto));
         } catch (UnsupportedOperationException ignored) {
         }
@@ -145,7 +145,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         final DatabaseDto dto = get(name, true, true);
         eventBus.postSync(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, this, dto));
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
-        connectorManager.getDatabaseService(name.getCatalogName()).delete(connectorRequestContext, name);
+        connectorManager.getDatabaseService(name).delete(connectorRequestContext, name);
 
         // Delete definition metadata if it exists
         if (userMetadataService.getDefinitionMetadata(name).isPresent()) {
@@ -171,13 +171,13 @@ public class DatabaseServiceImpl implements DatabaseService {
         final boolean includeTableNames) {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final MetacatCatalogConfig config = connectorManager.getCatalogConfig(name.getCatalogName());
-        final ConnectorDatabaseService service = connectorManager.getDatabaseService(name.getCatalogName());
-        final ConnectorTableService tableService = connectorManager.getTableService(name.getCatalogName());
+        final MetacatCatalogConfig config = connectorManager.getCatalogConfig(name);
+        final ConnectorDatabaseService service = connectorManager.getDatabaseService(name);
+        final ConnectorTableService tableService = connectorManager.getTableService(name);
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
 
         final DatabaseDto dto = converterUtil.toDatabaseDto(service.get(connectorRequestContext, name));
-        dto.setType(connectorManager.getCatalogConfig(name).getType());
+        dto.setType(config.getType());
         if (includeTableNames) {
             final List<QualifiedName> tableNames = tableService
                 .listNames(connectorRequestContext, name, null, null, null);

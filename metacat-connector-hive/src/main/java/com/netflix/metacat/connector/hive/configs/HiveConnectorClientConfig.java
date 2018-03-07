@@ -53,7 +53,7 @@ public class HiveConnectorClientConfig {
             final HiveConf conf = this.getDefaultConf();
             connectorContext.getConfiguration().forEach(conf::set);
             DataSourceManager.get().load(
-                connectorContext.getCatalogName(),
+                connectorContext.getCatalogShardName(),
                 connectorContext.getConfiguration()
             );
             return new EmbeddedHiveClient(
@@ -107,10 +107,10 @@ public class HiveConnectorClientConfig {
         final HiveConf conf = this.getDefaultConf();
         connectorContext.getConfiguration().forEach(conf::set);
         DataSourceManager.get().load(
-            connectorContext.getCatalogName(),
+            connectorContext.getCatalogShardName(),
             connectorContext.getConfiguration()
         );
-        return DataSourceManager.get().get(connectorContext.getCatalogName());
+        return DataSourceManager.get().get(connectorContext.getCatalogShardName());
     }
 
     /**
