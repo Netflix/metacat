@@ -57,8 +57,10 @@ public final class MetacatCatalogConfig {
      * @param properties properties
      * @return config
      */
-    public static MetacatCatalogConfig createFromMapAndRemoveProperties(final String type, final String catalogName,
-                                                                        final Map<String, String> properties) {
+    public static MetacatCatalogConfig createFromMapAndRemoveProperties(
+        final String type,
+        final String catalogName,
+        final Map<String, String> properties) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(type), "type is required");
         final String catalogType =
             properties.containsKey(Keys.CATALOG_TYPE) ? properties.remove(Keys.CATALOG_TYPE) : type;

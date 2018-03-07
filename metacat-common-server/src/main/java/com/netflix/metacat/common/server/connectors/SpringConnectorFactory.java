@@ -37,17 +37,13 @@ public abstract class SpringConnectorFactory implements ConnectorFactory {
     /**
      * Constructor.
      *
-     * @param catalogName            catalog name
-     * @param catalogShardName       catalog shard name
      * @param connectorInfoConverter connector info converter
      * @param connectorContext       connector related config
      */
-    public SpringConnectorFactory(final String catalogName,
-                                  final String catalogShardName,
-                                  final ConnectorInfoConverter connectorInfoConverter,
+    public SpringConnectorFactory(final ConnectorInfoConverter connectorInfoConverter,
                                   final ConnectorContext connectorContext) {
-        this.catalogName = catalogName;
-        this.catalogShardName = catalogShardName;
+        this.catalogName = connectorContext.getCatalogName();
+        this.catalogShardName = connectorContext.getCatalogShardName();
         this.ctx = new AnnotationConfigApplicationContext();
         this.ctx.setEnvironment(new StandardEnvironment());
         this.ctx.getBeanFactory().registerSingleton("ConnectorContext", connectorContext);

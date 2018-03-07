@@ -50,8 +50,6 @@ public class HiveConnectorPlugin implements ConnectorPlugin {
     @Override
     public ConnectorFactory create(final ConnectorContext connectorContext) {
         return new HiveConnectorFactory(
-            connectorContext.getCatalogName(),
-            connectorContext.getCatalogShardName(),
             INFO_CONVERTER_HIVE,
             connectorContext
         );

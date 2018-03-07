@@ -122,6 +122,7 @@ public class ConnectorManager {
         Preconditions.checkState(!stopped.get(), "ConnectorManager is stopped");
         final String connectorType = connectorContext.getConnectorType();
         final String catalogName = connectorContext.getCatalogName();
+        final String catalogShardName = connectorContext.getCatalogShardName();
         final ConnectorPlugin connectorPlugin = plugins.get(connectorType);
         if (connectorPlugin != null) {
             final MetacatCatalogConfig catalogConfig =
@@ -142,17 +143,18 @@ public class ConnectorManager {
             try {
                 databaseServices.add(connectorFactory.getDatabaseService());
             } catch (UnsupportedOperationException e) {
-                log.debug("Catalog {} doesn't support getDatabaseService. Ignoring.", catalogName);
+                log.debug("Catalog {}:{} doesn't support getDatabaseService. Ignoring.", catalogName, catalogShardName);
             }
             try {
                 tableServices.add(connectorFactory.getTableService());
             } catch (UnsupportedOperationException e) {
-                log.debug("Catalog {} doesn't support getTableService. Ignoring.", catalogName);
+                log.debug("Catalog {}:{} doesn't support getTableService. Ignoring.", catalogName, catalogShardName);
             }
             try {
                 partitionServices.add(connectorFactory.getPartitionService());
             } catch (UnsupportedOperationException e) {
-                log.debug("Catalog {} doesn't support getPartitionService. Ignoring.", catalogName);
+                log.debug("Catalog {}:{} doesn't support getPartitionService. Ignoring.",
+                    catalogName, catalogShardName);
             }
             final CatalogHolder catalogHolder = new CatalogHolder(catalogConfig, connectorFactory);
             if (databaseNames.isEmpty()) {

@@ -44,7 +44,7 @@ public class DruidConnectorPlugin implements ConnectorPlugin {
      */
     @Override
     public ConnectorFactory create(final ConnectorContext connectorContext) {
-        return new DruidConnectorFactory(connectorContext.getCatalogName(), connectorContext.getCatalogShardName(),
+        return new DruidConnectorFactory(
             new DruidConnectorInfoConverter(connectorContext.getCatalogName()), connectorContext);
     }
 
