@@ -141,12 +141,22 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             if (fieldInfos.isEmpty() && !exists(context, name)) {
                 throw new TableNotFoundException(name);
             }
+            // Set table details
+            final TableInfo result = TableInfo.builder().name(name).fields(fields.build()).build();
+            setTableInfoDetails(connection, result);
             log.debug("Finished getting table metadata for qualified name {} for request {}", name, context);
-            return TableInfo.builder().name(name).fields(fields.build()).build();
+            return result;
         } catch (final SQLException se) {
             throw this.exceptionMapper.toConnectorException(se, name);
         }
     }
+
+    /**
+     * Set the table info details, if any.
+     * @param connection db connection
+     * @param tableInfo table info
+     */
+    protected void setTableInfoDetails(final Connection connection, final TableInfo tableInfo) throws SQLException { }
 
     /**
      * {@inheritDoc}

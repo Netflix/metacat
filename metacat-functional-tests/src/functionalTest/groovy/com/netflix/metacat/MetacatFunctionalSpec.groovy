@@ -1574,6 +1574,7 @@ class MetacatFunctionalSpec extends Specification {
 
         then:
         table != null
+        !TestCatalogs.findByCatalogName(catalogName).validateCreatedDate || table.getAudit().getCreatedDate() != null
 
         where:
         name << TestCatalogs.getAllTables(TestCatalogs.ALL)

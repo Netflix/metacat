@@ -29,6 +29,10 @@ import spock.lang.Unroll
 
 import javax.sql.DataSource
 import java.sql.Connection
+import java.sql.Date
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.SQLException
 import java.sql.Statement
 
 /**
@@ -128,6 +132,38 @@ class SnowflakeConnectorTableServiceSpec extends Specification {
         1 * statement.executeUpdate(
             "ALTER TABLE C RENAME TO D"
         )
+    }
+
+    def "set table details"() {
+        given:
+        def connection = Mock(Connection)
+        def statement = Mock(PreparedStatement)
+        def rs = Mock(ResultSet)
+        def name = QualifiedName.ofTable("a", "b", "c")
+        def date = new Date(1,1,1)
+        when:
+        def table = TableInfo.builder().name(name).build()
+        this.service.setTableInfoDetails(connection, table)
+        then:
+        1 * connection.prepareStatement(_) >> statement
+        1 * statement.executeQuery() >> rs
+        1 * rs.next() >> true
+        2 * rs.getDate(_) >> date
+        table.getAudit().getCreatedDate() != null
+        when:
+        this.service.setTableInfoDetails(connection, table)
+        then:
+        1 * connection.prepareStatement(_) >> statement
+        1 * statement.executeQuery() >> {throw new SQLException()}
+        thrown(SQLException)
+        when:
+        table = TableInfo.builder().name(name).build()
+        this.service.setTableInfoDetails(connection, table)
+        then:
+        1 * connection.prepareStatement(_) >> statement
+        1 * statement.executeQuery() >> rs
+        1 * rs.next() >> false
+        table.getAudit() == null
     }
 
     @Unroll
