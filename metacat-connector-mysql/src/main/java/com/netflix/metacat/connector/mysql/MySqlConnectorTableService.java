@@ -13,7 +13,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Date;
 
 /**
  * Mysql table service implementation.
@@ -22,7 +21,8 @@ import java.util.Date;
  * @since 1.2.0
  */
 public class MySqlConnectorTableService extends JdbcConnectorTableService {
-
+    private static final String COL_CREATE_TIME = "create_time";
+    private static final String COL_UPDATE_TIME = "update_time";
     private static final String SQL_GET_AUDIT_INFO
         = "select create_time, update_time from information_schema.tables where table_schema=? and table_name=?";
     /**
@@ -53,10 +53,9 @@ public class MySqlConnectorTableService extends JdbcConnectorTableService {
             statement.setString(2, tableName.getTableName());
             try (final ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    final Date createdDate = resultSet.getDate("create_time");
-                    final Date updatedDate = resultSet.getDate("update_time");
                     final AuditInfo auditInfo =
-                        AuditInfo.builder().createdDate(createdDate).lastModifiedDate(updatedDate).build();
+                        AuditInfo.builder().createdDate(resultSet.getDate(COL_CREATE_TIME))
+                            .lastModifiedDate(resultSet.getDate(COL_UPDATE_TIME)).build();
                     tableInfo.setAudit(auditInfo);
                 }
             }
