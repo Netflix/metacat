@@ -39,6 +39,7 @@ class TestCatalogs {
         List<QualifiedName> preExistingTables = []
         String thriftUri
         String type
+        boolean validateCreatedDate = true
         boolean validateWithHive = true
         boolean validateFilterExpressionBasedOnPartitionKeyType = true
     }
@@ -121,6 +122,7 @@ class TestCatalogs {
                 QualifiedName.ofTable('postgresql-96-db', 'public', 'Country'),
                 QualifiedName.ofTable('postgresql-96-db', 'public', 'countrylanguage'),
             ],
+            validateCreatedDate: false,
             type: 'postgresql',
         ),
         new TestCatalog(
@@ -138,6 +140,7 @@ class TestCatalogs {
                 QualifiedName.ofTable('cassandra-310', 'real_estate', 'houses'),
                 QualifiedName.ofTable('cassandra-310', 'real_estate', 'apartments'),
             ],
+            validateCreatedDate: false,
             type: 'cassandra',
         ),
     ]
