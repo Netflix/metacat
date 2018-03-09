@@ -318,6 +318,8 @@ class MetacatSmokeSpec extends Specification {
         createTable(catalogName, databaseName, tableName)
         api.deleteTable(catalogName, databaseName, tableName)
         def definitions = metadataApi.getDefinitionMetadataList(null, null, null, null, null, null, name,null)
+        createTable(catalogName, databaseName, tableName)
+        api.deleteTable(catalogName, databaseName, tableName)
         expect:
         definitions.size() == result
         cleanup:

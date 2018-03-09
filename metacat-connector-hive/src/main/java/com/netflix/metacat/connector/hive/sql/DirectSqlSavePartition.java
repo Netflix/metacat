@@ -322,6 +322,34 @@ public class DirectSqlSavePartition {
                 rs.getLong("serde_id")));
     }
 
+    /**
+     * Delete all the partitions for the given table <code>tableQName</code>.
+     *
+     * @param tableQName     table name
+     */
+    public void delete(final QualifiedName tableQName) {
+        final long start = registry.clock().wallTime();
+        try {
+            List<PartitionSequenceIds> partitionSequenceIds = getPartitionSequenceIds(tableQName);
+            while (!partitionSequenceIds.isEmpty()) {
+                _delete(partitionSequenceIds);
+                partitionSequenceIds = getPartitionSequenceIds(tableQName);
+            }
+        } finally {
+            this.fastServiceMetric.recordTimer(
+                HiveMetrics.TagDropHivePartitions.getMetricName(), registry.clock().wallTime() - start);
+        }
+    }
+
+    private List<PartitionSequenceIds> getPartitionSequenceIds(final QualifiedName tableQName) {
+        return jdbcTemplate.query(
+            String.format(SQL.PARTITIONS_SELECT_ALL, batchSize),
+            new Object[]{tableQName.getDatabaseName(), tableQName.getTableName()},
+            new int[]{Types.VARCHAR, Types.VARCHAR},
+            (rs, rowNum) -> new PartitionSequenceIds(rs.getLong("part_id"), rs.getLong("sd_id"),
+                rs.getLong("serde_id")));
+    }
+
     @SuppressWarnings("checkstyle:methodname")
     private void _delete(final List<PartitionSequenceIds> subPartitionIds) {
         final List<String> paramVariables = subPartitionIds.stream().map(s -> "?").collect(Collectors.toList());
@@ -418,6 +446,10 @@ public class DirectSqlSavePartition {
             "INSERT INTO PARTITION_KEY_VALS(PART_ID,PART_KEY_VAL,INTEGER_IDX) VALUES (?,?,?)";
         static final String PARTITION_KEY_VALS_DELETES =
             "DELETE FROM PARTITION_KEY_VALS WHERE PART_ID in (%s)";
+        static final String PARTITIONS_SELECT_ALL =
+            "SELECT P.PART_ID, P.SD_ID, S.SERDE_ID FROM DBS D JOIN TBLS T ON D.DB_ID=T.DB_ID "
+                + "JOIN PARTITIONS P ON T.TBL_ID=P.TBL_ID JOIN SDS S ON P.SD_ID=S.SD_ID "
+                + "WHERE D.NAME=? and T.TBL_NAME=? limit %d";
         static final String PARTITIONS_SELECT =
             "SELECT P.PART_ID, P.SD_ID, S.SERDE_ID FROM DBS D JOIN TBLS T ON D.DB_ID=T.DB_ID "
                 + "JOIN PARTITIONS P ON T.TBL_ID=P.TBL_ID JOIN SDS S ON P.SD_ID=S.SD_ID "

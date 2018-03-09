@@ -22,12 +22,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -60,23 +62,27 @@ public class DirectSqlTable {
     private final JdbcTemplate jdbcTemplate;
     private final HiveConnectorFastServiceMetric fastServiceMetric;
     private final String catalogName;
+    private final DirectSqlSavePartition directSqlSavePartition;
 
     /**
      * Constructor.
      *
-     * @param connectorContext     server context
-     * @param jdbcTemplate         JDBC template
-     * @param fastServiceMetric    fast service metric
+     * @param connectorContext       server context
+     * @param jdbcTemplate           JDBC template
+     * @param fastServiceMetric      fast service metric
+     * @param directSqlSavePartition direct sql partition service
      */
     public DirectSqlTable(
         final ConnectorContext connectorContext,
         final JdbcTemplate jdbcTemplate,
-        final HiveConnectorFastServiceMetric fastServiceMetric
+        final HiveConnectorFastServiceMetric fastServiceMetric,
+        final DirectSqlSavePartition directSqlSavePartition
     ) {
         this.catalogName = connectorContext.getCatalogName();
         this.registry = connectorContext.getRegistry();
         this.jdbcTemplate = jdbcTemplate;
         this.fastServiceMetric = fastServiceMetric;
+        this.directSqlSavePartition = directSqlSavePartition;
     }
 
     /**
@@ -222,6 +228,54 @@ public class DirectSqlTable {
         }
     }
 
+    /**
+     * Deletes all the table related information from the store.
+     * @param tableName table name
+     */
+    public void delete(final QualifiedName tableName) {
+        try {
+            final TableSequenceIds ids = getSequenceIds(tableName);
+            directSqlSavePartition.delete(tableName);
+            jdbcTemplate.update(SQL.UPDATE_SDS_CD, new SqlParameterValue(Types.BIGINT, null),
+                new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
+            jdbcTemplate.update(SQL.UPDATE_SDS_SERDE, new SqlParameterValue(Types.BIGINT, null),
+                new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
+            jdbcTemplate.update(SQL.DELETE_COLUMNS_V2, new SqlParameterValue(Types.BIGINT, ids.getCdId()));
+            jdbcTemplate.update(SQL.DELETE_CDS, new SqlParameterValue(Types.BIGINT, ids.getCdId()));
+            jdbcTemplate.update(SQL.DELETE_PARTITION_KEYS, new SqlParameterValue(Types.BIGINT, ids.getTableId()));
+            jdbcTemplate.update(SQL.DELETE_TABLE_PARAMS, new SqlParameterValue(Types.BIGINT, ids.getTableId()));
+            jdbcTemplate.update(SQL.DELETE_TAB_COL_STATS, new SqlParameterValue(Types.BIGINT, ids.getTableId()));
+            jdbcTemplate.update(SQL.UPDATE_TABLE_SD, new SqlParameterValue(Types.BIGINT, null),
+                new SqlParameterValue(Types.BIGINT, ids.getTableId()));
+            jdbcTemplate.update(SQL.DELETE_SKEWED_COL_NAMES, new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
+            jdbcTemplate.update(SQL.DELETE_BUCKETING_COLS, new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
+            jdbcTemplate.update(SQL.DELETE_SORT_COLS, new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
+            jdbcTemplate.update(SQL.DELETE_SD_PARAMS, new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
+            jdbcTemplate.update(SQL.DELETE_SKEWED_COL_VALUE_LOC_MAP,
+                new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
+            jdbcTemplate.update(SQL.DELETE_SKEWED_VALUES, new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
+            jdbcTemplate.update(SQL.DELETE_SERDE_PARAMS, new SqlParameterValue(Types.BIGINT, ids.getSerdeId()));
+            jdbcTemplate.update(SQL.DELETE_SERDES, new SqlParameterValue(Types.BIGINT, ids.getSerdeId()));
+            jdbcTemplate.update(SQL.DELETE_SDS, new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
+            jdbcTemplate.update(SQL.DELETE_TBLS, new SqlParameterValue(Types.BIGINT, ids.getTableId()));
+        } catch (DataAccessException e) {
+            throw new ConnectorException(String.format("Failed delete hive table %s", tableName), e);
+        }
+    }
+
+    private TableSequenceIds getSequenceIds(final QualifiedName tableName) {
+        try {
+            return jdbcTemplate.queryForObject(
+                SQL.TABLE_SEQUENCE_IDS,
+                new Object[]{tableName.getDatabaseName(), tableName.getTableName()},
+                new int[]{Types.VARCHAR, Types.VARCHAR},
+                (rs, rowNum) -> new TableSequenceIds(rs.getLong("tbl_id"), rs.getLong("cd_id"),
+                    rs.getLong("sd_id"), rs.getLong("serde_id")));
+        } catch (EmptyResultDataAccessException e) {
+            throw new TableNotFoundException(tableName);
+        }
+    }
+
     @VisibleForTesting
     private static class SQL {
         static final String GET_TABLE_NAMES_BY_URI =
@@ -237,5 +291,26 @@ public class DirectSqlTable {
             "update TABLE_PARAMS set param_value=? WHERE tbl_id=? and param_key=?";
         static final String INSERT_TABLE_PARAMS =
             "insert into TABLE_PARAMS(tbl_id,param_key,param_value) values (?,?,?)";
+        static final String UPDATE_SDS_CD = "UPDATE SDS SET CD_ID=? WHERE SD_ID=?";
+        static final String DELETE_COLUMNS_V2 = "DELETE FROM COLUMNS_V2 WHERE CD_ID=?";
+        static final String DELETE_CDS = "DELETE FROM CDS WHERE CD_ID=?";
+        static final String DELETE_PARTITION_KEYS = "DELETE FROM PARTITION_KEYS WHERE TBL_ID=?";
+        static final String DELETE_TABLE_PARAMS = "DELETE FROM TABLE_PARAMS WHERE TBL_ID=?";
+        static final String DELETE_TAB_COL_STATS = "DELETE FROM TAB_COL_STATS WHERE TBL_ID=?";
+        static final String UPDATE_TABLE_SD = "UPDATE TBLS SET SD_ID=? WHERE TBL_ID=?";
+        static final String DELETE_SKEWED_COL_NAMES = "DELETE FROM SKEWED_COL_NAMES WHERE SD_ID=?";
+        static final String DELETE_BUCKETING_COLS = "DELETE FROM BUCKETING_COLS WHERE SD_ID=?";
+        static final String DELETE_SORT_COLS = "DELETE FROM SORT_COLS WHERE SD_ID=?";
+        static final String DELETE_SD_PARAMS = "DELETE FROM SD_PARAMS WHERE SD_ID=?";
+        static final String DELETE_SKEWED_COL_VALUE_LOC_MAP = "DELETE FROM SKEWED_COL_VALUE_LOC_MAP WHERE SD_ID=?";
+        static final String DELETE_SKEWED_VALUES = "DELETE FROM SKEWED_VALUES WHERE SD_ID_OID=?";
+        static final String UPDATE_SDS_SERDE = "UPDATE SDS SET SERDE_ID=? WHERE SD_ID=?";
+        static final String DELETE_SERDE_PARAMS = "DELETE FROM SERDE_PARAMS WHERE SERDE_ID=?";
+        static final String DELETE_SERDES = "DELETE FROM SERDES WHERE SERDE_ID=?";
+        static final String DELETE_SDS = "DELETE FROM SDS WHERE SD_ID=?";
+        static final String DELETE_TBLS = "DELETE FROM TBLS WHERE TBL_ID=?";
+        static final String TABLE_SEQUENCE_IDS = "select t.tbl_id, s.sd_id, s.cd_id, s.serde_id"
+            + " from DBS d join TBLS t on d.db_id=t.db_id join SDS s on t.sd_id=s.sd_id"
+            + " where d.name=? and t.tbl_name=?";
     }
 }

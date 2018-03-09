@@ -17,6 +17,8 @@ package com.netflix.metacat.connector.hive.sql;
 
 import lombok.Data;
 
+import javax.annotation.Nullable;
+
 /**
  * Class representing the ids for a table.
  *
@@ -26,4 +28,33 @@ import lombok.Data;
 public class TableSequenceIds {
     private final Long tableId;
     private final Long cdId;
+    private final Long sdsId;
+    private final Long serdeId;
+
+    /**
+     * Constructor.
+     * @param tableId table id
+     * @param cdId column id
+     */
+    public TableSequenceIds(final Long tableId,
+                            final Long cdId) {
+        this(tableId, cdId, null, null);
+    }
+
+    /**
+     * Constructor.
+     * @param tableId table id
+     * @param cdId column id
+     * @param sdsId sds id
+     * @param serdeId serde id
+     */
+    public TableSequenceIds(final Long tableId,
+                            final Long cdId,
+                            @Nullable final Long sdsId,
+                            @Nullable final Long serdeId) {
+        this.tableId = tableId;
+        this.cdId = cdId;
+        this.sdsId = sdsId;
+        this.serdeId = serdeId;
+    }
 }

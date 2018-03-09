@@ -152,4 +152,12 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             && DirectSqlTable.ICEBERG_TABLE_TYPE
             .equalsIgnoreCase(tableInfo.getMetadata().get(DirectSqlTable.PARAM_TABLE_TYPE));
     }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public void delete(final ConnectorRequestContext requestContext, final QualifiedName name) {
+        directSqlTable.delete(name);
+    }
 }

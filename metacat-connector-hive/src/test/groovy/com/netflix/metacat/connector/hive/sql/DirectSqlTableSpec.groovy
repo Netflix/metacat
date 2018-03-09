@@ -3,11 +3,15 @@ package com.netflix.metacat.connector.hive.sql
 import com.google.common.collect.Maps
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric
 import com.netflix.spectator.api.NoopRegistry
+import org.springframework.dao.CannotAcquireLockException
+import org.springframework.dao.DataAccessException
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import spock.lang.Specification
@@ -25,7 +29,8 @@ class DirectSqlTableSpec extends Specification {
     def context = new ConnectorContext('test', 'test', 'hive', config, registry, Maps.newHashMap())
     def metric = new HiveConnectorFastServiceMetric(registry)
     def jdbcTemplate = Mock(JdbcTemplate)
-    def service = new DirectSqlTable(context, jdbcTemplate, metric)
+    def directSqlSavePartition = Mock(DirectSqlSavePartition)
+    def service = new DirectSqlTable(context, jdbcTemplate, metric, directSqlSavePartition)
     def catalogName = 'c'
     def databaseName = 'd'
     def tableName = 't'
@@ -119,5 +124,24 @@ class DirectSqlTableSpec extends Specification {
         then:
         1 * jdbcTemplate.update(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_) >> {throw new Exception()}
         thrown(Exception)
+    }
+
+    def "Test delete table"() {
+        when:
+        service.delete(qualifiedName)
+        then:
+        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_SEQUENCE_IDS,_,_,_) >> {throw new EmptyResultDataAccessException(1)}
+        thrown(TableNotFoundException)
+        when:
+        service.delete(qualifiedName)
+        then:
+        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_SEQUENCE_IDS,_,_,_) >> new TableSequenceIds(1,1,1,1)
+        1 * directSqlSavePartition.delete(qualifiedName) >> {throw new CannotAcquireLockException('a')}
+        thrown(ConnectorException)
+        when:
+        service.delete(qualifiedName)
+        then:
+        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_SEQUENCE_IDS,_,_,_) >> new TableSequenceIds(1,1,1,1)
+        noExceptionThrown()
     }
 }
