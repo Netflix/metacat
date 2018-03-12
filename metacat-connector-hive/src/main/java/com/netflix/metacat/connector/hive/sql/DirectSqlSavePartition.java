@@ -343,7 +343,7 @@ public class DirectSqlSavePartition {
 
     private List<PartitionSequenceIds> getPartitionSequenceIds(final QualifiedName tableQName) {
         return jdbcTemplate.query(
-            String.format(SQL.PARTITIONS_SELECT_ALL, batchSize),
+            String.format(SQL.PARTITIONS_SELECT_ALL, this.batchSize),
             new Object[]{tableQName.getDatabaseName(), tableQName.getTableName()},
             new int[]{Types.VARCHAR, Types.VARCHAR},
             (rs, rowNum) -> new PartitionSequenceIds(rs.getLong("part_id"), rs.getLong("sd_id"),

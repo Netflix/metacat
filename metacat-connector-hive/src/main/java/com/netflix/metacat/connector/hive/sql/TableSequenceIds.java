@@ -15,7 +15,7 @@
  */
 package com.netflix.metacat.connector.hive.sql;
 
-import lombok.Data;
+import lombok.Getter;
 
 import javax.annotation.Nullable;
 
@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
  *
  * @author amajumdar
  */
-@Data
+@Getter
 public class TableSequenceIds {
     private final Long tableId;
     private final Long cdId;
