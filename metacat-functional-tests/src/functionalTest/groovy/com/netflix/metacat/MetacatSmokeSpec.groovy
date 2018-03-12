@@ -316,6 +316,8 @@ class MetacatSmokeSpec extends Specification {
         given:
         def name = catalogName + '/' + databaseName + '/' + tableName
         createTable(catalogName, databaseName, tableName)
+        def partitions = PigDataDtoProvider.getPartitions(catalogName, databaseName, tableName, 'field1=xyz/field3=abc', isLocalEnv ? 'file:/tmp/abc' : null, count)
+        partitionApi.savePartitions(catalogName, databaseName, tableName, new PartitionsSaveRequestDto(partitions: partitions))
         api.deleteTable(catalogName, databaseName, tableName)
         def definitions = metadataApi.getDefinitionMetadataList(null, null, null, null, null, null, name,null)
         expect:
@@ -323,14 +325,21 @@ class MetacatSmokeSpec extends Specification {
         cleanup:
         metadataApi.deleteDefinitionMetadata(name, true)
         where:
-        catalogName                     | databaseName  | tableName             | result
-        'embedded-hive-metastore'       | 'smoke_ddb1'  | 'test_create_table'   | 0
-        'embedded-fast-hive-metastore'  | 'fsmoke_ddb1' | 'test_create_table'   | 0
-        'embedded-fast-hive-metastore'  | 'shard'       | 'test_create_table'   | 0
-        'hive-metastore'                | 'hsmoke_ddb'  | 'test_create_table'   | 0
-        'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table1'  | 0
-        'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table2'  | 1
-        's3-mysql-db'                   | 'smoke_ddb1'  | 'test_create_table'   | 0
+        catalogName                     | databaseName  | tableName             | count     | result
+        'embedded-hive-metastore'       | 'smoke_ddb1'  | 'test_create_table'   | 15        | 0
+        'embedded-fast-hive-metastore'  | 'fsmoke_ddb1' | 'test_create_table'   | 15        | 0
+        'embedded-fast-hive-metastore'  | 'shard'       | 'test_create_table'   | 15        | 0
+        'hive-metastore'                | 'hsmoke_ddb'  | 'test_create_table'   | 15        | 0
+        'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table1'  | 15        | 0
+        'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table2'  | 15        | 1
+        's3-mysql-db'                   | 'smoke_ddb1'  | 'test_create_table'   | 15        | 0
+        'embedded-hive-metastore'       | 'smoke_ddb1'  | 'test_create_table'   | 10        | 0
+        'embedded-fast-hive-metastore'  | 'fsmoke_ddb1' | 'test_create_table'   | 10        | 0
+        'embedded-fast-hive-metastore'  | 'shard'       | 'test_create_table'   | 10        | 0
+        'hive-metastore'                | 'hsmoke_ddb'  | 'test_create_table'   | 10        | 0
+        'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table1'  | 10        | 0
+        'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table2'  | 10        | 1
+        's3-mysql-db'                   | 'smoke_ddb1'  | 'test_create_table'   | 10        | 0
     }
 
     @Unroll
@@ -957,6 +966,15 @@ class MetacatSmokeSpec extends Specification {
         'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 0
         'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 10
         'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 5
+        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 15    | 0
+        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 15    | 15
+        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 15    | 5
+        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 0
+        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 15
+        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 5
+        'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 0
+        'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 15
+        'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 5
     }
 
     @Unroll
