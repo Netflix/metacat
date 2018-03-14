@@ -240,6 +240,26 @@ public class DirectSqlTable {
                 new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
             jdbcTemplate.update(SQL.UPDATE_SDS_SERDE, new SqlParameterValue(Types.BIGINT, null),
                 new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
+            //
+            // Ignore the error. We should be ignoring the error when table does not exist.
+            // In certain hive metastore versions, these tables might not be present.
+            // TODO: Better handle this non-existing tables.
+            //
+            try {
+                jdbcTemplate.update(SQL.DELETE_COLUMNS_OLD, new SqlParameterValue(Types.BIGINT, ids.getSdsId()));
+            } catch (DataAccessException ignored) {
+                log.debug("Ignore. Probably table COLUMNS_OLD does not exist.");
+            }
+            try {
+                jdbcTemplate.update(SQL.DELETE_TBL_PRIVS, new SqlParameterValue(Types.BIGINT, ids.getTableId()));
+            } catch (DataAccessException ignored) {
+                log.debug("Ignore. Probably table TBL_PRIVS does not exist.");
+            }
+            try {
+                jdbcTemplate.update(SQL.DELETE_TBL_COL_PRIVS, new SqlParameterValue(Types.BIGINT, ids.getTableId()));
+            } catch (DataAccessException ignored) {
+                log.debug("Ignore. Probably table TBL_COL_PRIVS does not exist.");
+            }
             jdbcTemplate.update(SQL.DELETE_COLUMNS_V2, new SqlParameterValue(Types.BIGINT, ids.getCdId()));
             jdbcTemplate.update(SQL.DELETE_CDS, new SqlParameterValue(Types.BIGINT, ids.getCdId()));
             jdbcTemplate.update(SQL.DELETE_PARTITION_KEYS, new SqlParameterValue(Types.BIGINT, ids.getTableId()));
@@ -292,6 +312,7 @@ public class DirectSqlTable {
         static final String INSERT_TABLE_PARAMS =
             "insert into TABLE_PARAMS(tbl_id,param_key,param_value) values (?,?,?)";
         static final String UPDATE_SDS_CD = "UPDATE SDS SET CD_ID=? WHERE SD_ID=?";
+        static final String DELETE_COLUMNS_OLD = "DELETE FROM COLUMNS_OLD WHERE SD_ID=?";
         static final String DELETE_COLUMNS_V2 = "DELETE FROM COLUMNS_V2 WHERE CD_ID=?";
         static final String DELETE_CDS = "DELETE FROM CDS WHERE CD_ID=?";
         static final String DELETE_PARTITION_KEYS = "DELETE FROM PARTITION_KEYS WHERE TBL_ID=?";
@@ -308,6 +329,8 @@ public class DirectSqlTable {
         static final String DELETE_SERDE_PARAMS = "DELETE FROM SERDE_PARAMS WHERE SERDE_ID=?";
         static final String DELETE_SERDES = "DELETE FROM SERDES WHERE SERDE_ID=?";
         static final String DELETE_SDS = "DELETE FROM SDS WHERE SD_ID=?";
+        static final String DELETE_TBL_PRIVS = "DELETE FROM TBL_PRIVS WHERE TBL_ID=?";
+        static final String DELETE_TBL_COL_PRIVS = "DELETE FROM TBL_COL_PRIVS WHERE TBL_ID=?";
         static final String DELETE_TBLS = "DELETE FROM TBLS WHERE TBL_ID=?";
         static final String TABLE_SEQUENCE_IDS = "select t.tbl_id, s.sd_id, s.cd_id, s.serde_id"
             + " from DBS d join TBLS t on d.db_id=t.db_id join SDS s on t.sd_id=s.sd_id"
