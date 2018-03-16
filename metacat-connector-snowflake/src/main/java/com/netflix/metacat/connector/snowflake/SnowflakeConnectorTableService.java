@@ -27,6 +27,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorTableService;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -34,7 +35,6 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -43,6 +43,7 @@ import java.util.List;
  * @author amajumdar
  * @since 1.2.0
  */
+@Slf4j
 public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     private static final String COL_CREATED = "CREATED";
     private static final String COL_LAST_ALTERED = "LAST_ALTERED";
@@ -137,7 +138,7 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
      * {@inheritDoc}
      */
     @Override
-    protected void setTableInfoDetails(final Connection connection, final TableInfo tableInfo) throws SQLException {
+    protected void setTableInfoDetails(final Connection connection, final TableInfo tableInfo) {
         final QualifiedName tableName = getSnowflakeName(tableInfo.getName());
         try (
             final PreparedStatement statement = connection.prepareStatement(SQL_GET_AUDIT_INFO)
@@ -153,6 +154,8 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
                     tableInfo.setAudit(auditInfo);
                 }
             }
+        } catch (final Exception ignored) {
+            log.info("Ignoring. Error getting the audit info for table {}", tableName);
         }
     }
 }

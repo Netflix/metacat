@@ -25,6 +25,7 @@ import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
@@ -147,7 +148,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             log.debug("Finished getting table metadata for qualified name {} for request {}", name, context);
             return result;
         } catch (final SQLException se) {
-            throw this.exceptionMapper.toConnectorException(se, name);
+            throw new ConnectorException(se.getMessage(), se);
         }
     }
 
@@ -156,7 +157,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
      * @param connection db connection
      * @param tableInfo table info
      */
-    protected void setTableInfoDetails(final Connection connection, final TableInfo tableInfo) throws SQLException { }
+    protected void setTableInfoDetails(final Connection connection, final TableInfo tableInfo) { }
 
     /**
      * {@inheritDoc}
