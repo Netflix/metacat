@@ -7,12 +7,12 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorTableService;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /**
  * Mysql table service implementation.
@@ -20,6 +20,7 @@ import java.sql.SQLException;
  * @author amajumdar
  * @since 1.2.0
  */
+@Slf4j
 public class MySqlConnectorTableService extends JdbcConnectorTableService {
     private static final String COL_CREATE_TIME = "create_time";
     private static final String COL_UPDATE_TIME = "update_time";
@@ -44,7 +45,7 @@ public class MySqlConnectorTableService extends JdbcConnectorTableService {
      * {@inheritDoc}
      */
     @Override
-    protected void setTableInfoDetails(final Connection connection, final TableInfo tableInfo) throws SQLException {
+    protected void setTableInfoDetails(final Connection connection, final TableInfo tableInfo) {
         final QualifiedName tableName = tableInfo.getName();
         try (
             final PreparedStatement statement = connection.prepareStatement(SQL_GET_AUDIT_INFO)
@@ -59,6 +60,8 @@ public class MySqlConnectorTableService extends JdbcConnectorTableService {
                     tableInfo.setAudit(auditInfo);
                 }
             }
+        } catch (final Exception ignored) {
+            log.debug("Ignoring. Error getting the create_time for table {}", tableName);
         }
     }
 }

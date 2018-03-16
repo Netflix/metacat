@@ -155,7 +155,7 @@ class SnowflakeConnectorTableServiceSpec extends Specification {
         then:
         1 * connection.prepareStatement(_) >> statement
         1 * statement.executeQuery() >> {throw new SQLException()}
-        thrown(SQLException)
+        noExceptionThrown()
         when:
         table = TableInfo.builder().name(name).build()
         this.service.setTableInfoDetails(connection, table)
