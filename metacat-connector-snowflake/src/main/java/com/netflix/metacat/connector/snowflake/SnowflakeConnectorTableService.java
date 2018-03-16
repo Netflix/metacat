@@ -155,7 +155,7 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
                 }
             }
         } catch (final Exception ignored) {
-            log.debug("Ignoring. Error getting the create_time for table {}", tableName);
+            log.info("Ignoring. Error getting the audit info for table {}", tableName);
         }
     }
 }
