@@ -19,6 +19,7 @@
 package com.netflix.metacat.main.services.impl
 
 import com.netflix.metacat.common.QualifiedName
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.ConnectorTableService
 import com.netflix.metacat.common.server.converter.ConverterUtil
 import com.netflix.metacat.common.server.events.MetacatEventBus
@@ -27,6 +28,7 @@ import com.netflix.metacat.common.server.usermetadata.TagService
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.metacat.main.manager.ConnectorManager
 import com.netflix.metacat.main.services.DatabaseService
+import com.netflix.metacat.main.services.GetTableServiceParameters
 import com.netflix.metacat.main.services.TableService
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.spectator.api.NoopRegistry
@@ -54,10 +56,39 @@ class TableServiceImplSpec extends Specification {
     def setup() {
         connectorManager.getTableService(_) >> connectorTableService
         converterUtil.toTableDto(_) >> tableDto
+        converterUtil.toConnectorContext(_) >> Mock(ConnectorRequestContext)
         usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
         usermetadataService.getDataMetadata(_) >> Optional.empty()
-        service = new TableServiceImpl(connectorManager, databaseService, tagService, usermetadataService, eventBus, converterUtil, registry, config)
+        usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
+        service = new TableServiceImpl(connectorManager, databaseService, tagService,
+            usermetadataService, eventBus, converterUtil, registry, config)
     }
+
+    def testTableGet() {
+        when:
+        service.get(name,GetTableServiceParameters.builder().
+            disableOnReadMetadataIntercetor(false)
+            .includeDataMetadata(true)
+            .includeDefinitionMetadata(true)
+            .build())
+        then:
+        1 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
+        1 * usermetadataService.getDataMetadata(_) >> Optional.empty()
+        0 * usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
+
+        when:
+        service.get(name,GetTableServiceParameters.builder().
+            disableOnReadMetadataIntercetor(true)
+            .includeDataMetadata(true)
+            .includeDefinitionMetadata(true)
+            .build())
+        then:
+        1 * usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
+        1 * usermetadataService.getDataMetadata(_) >> Optional.empty()
+        0 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
+
+    }
+
     def testDeleteAndReturn() {
         when:
         service.deleteAndReturn(name, false)

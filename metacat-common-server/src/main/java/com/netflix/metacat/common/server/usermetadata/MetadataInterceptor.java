@@ -39,10 +39,11 @@ public interface MetadataInterceptor {
      * @param userMetadataService user metadata service
      * @param name                qualified name
      * @param objectNode          input metadata object node
+     * @param getMetadataInterceptorParameters  get Metadata Interceptor Parameters
      */
     default void onRead(final UserMetadataService userMetadataService,
-                                       final QualifiedName name,
-                                       @Nullable final ObjectNode objectNode) {
+                        final QualifiedName name, @Nullable final ObjectNode objectNode,
+                        final GetMetadataInterceptorParameters getMetadataInterceptorParameters) {
     }
 
     /**
@@ -53,8 +54,7 @@ public interface MetadataInterceptor {
      * @throws InvalidMetadataException business validation exception
      */
     default void onWrite(final UserMetadataService userMetadataService,
-                        final QualifiedName name,
-                        final ObjectNode objectNode)
+                         final QualifiedName name, final ObjectNode objectNode)
         throws InvalidMetadataException {
     }
 }

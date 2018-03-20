@@ -21,11 +21,10 @@ import com.netflix.metacat.common.dto.DatabaseDto;
  */
 public interface DatabaseService extends MetacatService<DatabaseDto> {
     /**
-     * Gets the database for the given name.
-     * @param name name
-     * @param includeUserMetadata if true, will also include the user metadata
-     * @param includeTableNames   if true, include the list of table names
-     * @return database info
+     * Gets the database with the given name.
+     * @param name qualified name of the table
+     * @param getDatabaseServiceParameters  get table request
+     * @return database info with the given name
      */
-    DatabaseDto get(QualifiedName name, boolean includeUserMetadata, boolean includeTableNames);
+    DatabaseDto get(QualifiedName name, GetDatabaseServiceParameters getDatabaseServiceParameters);
 }

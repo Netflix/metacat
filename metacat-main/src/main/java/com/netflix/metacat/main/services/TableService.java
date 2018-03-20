@@ -37,21 +37,10 @@ public interface TableService extends MetacatService<TableDto> {
     /**
      * Returns the table with the given name.
      * @param name qualified name of the table
-     * @param includeUserMetadata if true, the table will include the user metadata
+     * @param getTableServiceParameters  get table parameters
      * @return Returns the table with the given name
      */
-    Optional<TableDto> get(QualifiedName name, boolean includeUserMetadata);
-
-    /**
-     * Returns the table with the given name.
-     * @param name qualified name of the table
-     * @param includeInfo if true, the table will include the main table metadata
-     * @param includeDefinitionMetadata if true, the table will include the user definition metadata
-     * @param includeDataMetadata if true, the table will include the user data metadata
-     * @return Returns the table with the given name
-     */
-    Optional<TableDto> get(QualifiedName name, boolean includeInfo,
-        boolean includeDefinitionMetadata, boolean includeDataMetadata);
+    Optional<TableDto> get(QualifiedName name, GetTableServiceParameters getTableServiceParameters);
 
     /**
      * Rename the table from <code>oldName</code> to <code>newName</code>.

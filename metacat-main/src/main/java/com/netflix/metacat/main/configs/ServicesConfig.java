@@ -95,7 +95,7 @@ public class ServicesConfig {
      * The catalog service bean.
      *
      * @param connectorManager    Connector manager to use
-     * @param userMetadataService User metadata service to use
+     * @param userMetadataService  User metadata service
      * @param metacatEventBus     Event bus to use
      * @param converterUtil       Converter utilities
      * @return Catalog service implementation
@@ -218,7 +218,7 @@ public class ServicesConfig {
      * @param connectorManager    connector manager
      * @param tableService        table service
      * @param partitionService    partition service
-     * @param userMetadataService user metadata service
+     * @param userMetadataService  user metadata service
      * @param eventBus            Internal event bus
      * @param converterUtil       utility to convert to/from Dto to connector resources
      * @return The MViewService implementation to use
