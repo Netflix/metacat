@@ -25,9 +25,11 @@ import com.netflix.metacat.common.dto.DataMetadataDto;
 import com.netflix.metacat.common.dto.DataMetadataGetRequestDto;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
 import com.netflix.metacat.common.dto.SortOrder;
+import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.api.RequestWrapper;
+import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.MetadataService;
 import io.swagger.annotations.Api;
@@ -168,18 +170,36 @@ public class MetadataController {
         if (lifetime) {
             localDataProperties.add("lifetime");
         }
+
         return requestWrapper.processRequest(
             "getDefinitionMetadataList",
             () -> this.userMetadataService.searchDefinitionMetadata(
                 localDataProperties,
                 type,
                 name,
+                getTableDto(name),
                 sortBy,
                 sortOrder != null ? sortOrder.name() : null,
                 offset,
                 limit
             )
         );
+    }
+
+    private TableDto getTableDto(@Nullable final String name) {
+        Optional<TableDto> optionalTableDto = Optional.empty();
+        if (name != null) {
+            final QualifiedName qualifiedName = QualifiedName.fromString(name);
+            if (qualifiedName.isTableDefinition()) {
+                optionalTableDto = this.metadataService.getTableService().get(qualifiedName, GetTableServiceParameters
+                    .builder().disableOnReadMetadataIntercetor(true)
+                    .includeInfo(true)
+                    .includeDefinitionMetadata(false)
+                    .includeDataMetadata(false)
+                    .build());
+            }
+        }
+        return optionalTableDto.isPresent() ? optionalTableDto.get() : null;
     }
 
     /**

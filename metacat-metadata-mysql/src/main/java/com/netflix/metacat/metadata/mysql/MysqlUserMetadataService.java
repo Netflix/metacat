@@ -28,9 +28,11 @@ import com.netflix.metacat.common.json.MetacatJsonException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetadataException;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
+import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -62,7 +64,6 @@ import java.util.stream.Collectors;
 @SuppressFBWarnings
 @Transactional("metadataTxManager")
 public class MysqlUserMetadataService extends BaseUserMetadataService {
-
     private final MetacatJson metacatJson;
     private final Config config;
     private JdbcTemplate jdbcTemplate;
@@ -71,16 +72,17 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     /**
      * Constructor.
      *
-     * @param jdbcTemplate jdbc template
-     * @param metacatJson  json utility
-     * @param metadataInterceptor business metadata manager
-     * @param config       config
+     * @param jdbcTemplate        jdbc template
+     * @param metacatJson         json utility
+     * @param config              config
+     * @param metadataInterceptor metadata interceptor
      */
     public MysqlUserMetadataService(
         final JdbcTemplate jdbcTemplate,
         final MetacatJson metacatJson,
         final Config config,
         final MetadataInterceptor metadataInterceptor
+
     ) {
         this.metacatJson = metacatJson;
         this.config = config;
@@ -94,15 +96,24 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
-    public void populateMetadata(final HasMetadata holder) {
-        super.populateMetadata(holder);
-    }
-
-    @Override
     public void populateMetadata(final HasMetadata holder, final ObjectNode definitionMetadata,
                                  final ObjectNode dataMetadata) {
         super.populateMetadata(holder, definitionMetadata, dataMetadata);
     }
+
+    @Nonnull
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ObjectNode> getDefinitionMetadataWithInterceptor(
+        @Nonnull final QualifiedName name,
+        final GetMetadataInterceptorParameters getMetadataInterceptorParameters) {
+        //not applying interceptor
+        final Optional<ObjectNode> retData = getDefinitionMetadata(name);
+        retData.ifPresent(objectNode ->
+            this.metadataInterceptor.onRead(this, name, objectNode, getMetadataInterceptorParameters));
+        return retData;
+    }
+
 
     @Override
     public void softDeleteDataMetadata(
@@ -318,7 +329,6 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         final Optional<ObjectNode> retData = getJsonForKey(
             name.isPartitionDefinition() ? SQL.GET_PARTITION_DEFINITION_METADATA : SQL.GET_DEFINITION_METADATA,
             name.toString());
-        retData.ifPresent(objectNode -> this.metadataInterceptor.onRead(this, name, objectNode));
         return retData;
     }
 
@@ -355,6 +365,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         return result;
     }
 
+    //TODO: For partition metadata, add interceptor if needed
     @Nonnull
     @Override
     @Transactional(readOnly = true)
@@ -538,8 +549,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             } else {
                 merged = metadata.get();
             }
-
-            metadataInterceptor.onWrite(this, name, metadata.get());
+            //apply interceptor to change the object node
+            this.metadataInterceptor.onWrite(this, name, merged);
             count = executeUpdateForKey(
                 name.isPartitionDefinition()
                     ? SQL.UPDATE_PARTITION_DEFINITION_METADATA : SQL.UPDATE_DEFINITION_METADATA,
@@ -548,6 +559,10 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 name.toString());
 
         } else {
+            //apply interceptor to change the object node
+            if (metadata.isPresent()) {
+                this.metadataInterceptor.onWrite(this, name, metadata.get());
+            }
             count = metadata.map(jsonNodes -> executeUpdateForKey(
                 name.isPartitionDefinition()
                     ? SQL.INSERT_PARTITION_DEFINITION_METADATA : SQL.INSERT_DEFINITION_METADATA,
@@ -703,57 +718,24 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         @Nullable final Set<String> propertyNames,
         @Nullable final String type,
         @Nullable final String name,
+        @Nullable final HasMetadata holder,
         @Nullable final String sortBy,
         @Nullable final String sortOrder,
         @Nullable final Integer offset,
         @Nullable final Integer limit
     ) {
         final List<DefinitionMetadataDto> result = Lists.newArrayList();
-        final StringBuilder query = new StringBuilder(SQL.SEARCH_DEFINITION_METADATAS);
-        final List<SqlParameterValue> paramList = Lists.newArrayList();
-        if (type != null) {
-            String typeRegex = null;
-            switch (type) {
-                case "database":
-                    typeRegex = "^[^/]*/[^/]*$";
-                    break;
-                case "table":
-                    typeRegex = "^[^/]*/[^/]*/[^/]*$";
-                    break;
-                case "partition":
-                    typeRegex = "^[^/]*/[^/]*/[^/]*/.*$";
-                    break;
-                default:
-            }
-            if (typeRegex != null) {
-                query.append(" and name rlike ?");
-                paramList.add(new SqlParameterValue(Types.VARCHAR, typeRegex));
-            }
-        }
-        if (propertyNames != null && !propertyNames.isEmpty()) {
-            propertyNames.forEach(propertyName -> {
-                query.append(" and data like ?");
-                paramList.add(new SqlParameterValue(Types.VARCHAR, "%\"" + propertyName + "\":%"));
-            });
-        }
-        if (!Strings.isNullOrEmpty(name)) {
-            query.append(" and name like ?");
-            paramList.add(new SqlParameterValue(Types.VARCHAR, name));
-        }
-        if (!Strings.isNullOrEmpty(sortBy)) {
-            query.append(" order by ").append(sortBy);
-            if (!Strings.isNullOrEmpty(sortOrder)) {
-                query.append(" ").append(sortOrder);
-            }
-        }
-        if (limit != null) {
-            query.append(" limit ");
-            if (offset != null) {
-                query.append(offset).append(",");
-            }
-            query.append(limit);
-        }
-        final SqlParameterValue[] params = new SqlParameterValue[paramList.size()];
+        final SearchMetadataQuery queryObj = new SearchMetadataQuery(SQL.SEARCH_DEFINITION_METADATAS)
+            .buildSearchMetadataQuery(
+                propertyNames,
+                type,
+                name,
+                sortBy,
+                sortOrder,
+                offset,
+                limit
+            );
+
         try {
             // Handler for reading the result set
             final ResultSetExtractor<Void> handler = rs -> {
@@ -765,19 +747,21 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     definitionMetadataDto.setName(QualifiedName.fromString(definitionName));
                     //Apply business logic
                     final ObjectNode node = metacatJson.parseJsonObject(data);
-                    metadataInterceptor.onRead(this, metadataName, node);
+                    this.metadataInterceptor.onRead(this, metadataName,
+                        node, GetMetadataInterceptorParameters.builder().hasMetadata(holder).build());
                     definitionMetadataDto.setDefinitionMetadata(metacatJson.parseJsonObject(data));
                     result.add(definitionMetadataDto);
                 }
                 return null;
             };
-            jdbcTemplate.query(query.toString(), paramList.toArray(params), handler);
+            jdbcTemplate.query(queryObj.getSearchQuery().toString(), queryObj.getSearchParamList().toArray(), handler);
         } catch (Exception e) {
             log.error("Failed to search definition data", e);
             throw new UserMetadataServiceException("Failed to search definition data", e);
         }
         return result;
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -824,7 +808,72 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
-    private static class SQL {
+    /**
+     * Inner help class for generating the search definition/business metadata.
+     */
+    @Data
+    class SearchMetadataQuery {
+        private StringBuilder searchQuery;
+        private List<SqlParameterValue> searchParamList = Lists.newArrayList();
+
+        SearchMetadataQuery(final String querySQL) {
+            this.searchQuery = new StringBuilder(querySQL);
+        }
+
+        SearchMetadataQuery buildSearchMetadataQuery(@Nullable final Set<String> propertyNames,
+                                                     @Nullable final String type,
+                                                     @Nullable final String name,
+                                                     @Nullable final String sortBy,
+                                                     @Nullable final String sortOrder,
+                                                     @Nullable final Integer offset,
+                                                     @Nullable final Integer limit) {
+            if (type != null) {
+                String typeRegex = null;
+                switch (type) {
+                    case "database":
+                        typeRegex = "^[^/]*/[^/]*$";
+                        break;
+                    case "table":
+                        typeRegex = "^[^/]*/[^/]*/[^/]*$";
+                        break;
+                    case "partition":
+                        typeRegex = "^[^/]*/[^/]*/[^/]*/.*$";
+                        break;
+                    default:
+                }
+                if (typeRegex != null) {
+                    this.searchQuery.append(" and name rlike ?");
+                    this.searchParamList.add(new SqlParameterValue(Types.VARCHAR, typeRegex));
+                }
+            }
+            if (propertyNames != null && !propertyNames.isEmpty()) {
+                propertyNames.forEach(propertyName -> {
+                    this.searchQuery.append(" and data like ?");
+                    searchParamList.add(new SqlParameterValue(Types.VARCHAR, "%\"" + propertyName + "\":%"));
+                });
+            }
+            if (!Strings.isNullOrEmpty(name)) {
+                this.searchQuery.append(" and name like ?");
+                this.searchParamList.add(new SqlParameterValue(Types.VARCHAR, name));
+            }
+            if (!Strings.isNullOrEmpty(sortBy)) {
+                this.searchQuery.append(" order by ").append(sortBy);
+                if (!Strings.isNullOrEmpty(sortOrder)) {
+                    this.searchQuery.append(" ").append(sortOrder);
+                }
+            }
+            if (limit != null) {
+                this.searchQuery.append(" limit ");
+                if (offset != null) {
+                    this.searchQuery.append(offset).append(",");
+                }
+                this.searchQuery.append(limit);
+            }
+            return this;
+        }
+    }
+
+    protected static class SQL {
         static final String SOFT_DELETE_DATA_METADATA =
             "insert into data_metadata_delete(id, created_by,date_created) values (?,?, now())";
         static final String GET_DATA_METADATA_IDS =

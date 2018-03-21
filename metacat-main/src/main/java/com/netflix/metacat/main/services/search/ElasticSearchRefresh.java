@@ -47,6 +47,8 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
+import com.netflix.metacat.main.services.GetDatabaseServiceParameters;
+import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.spectator.api.Registry;
@@ -389,7 +391,12 @@ public class ElasticSearchRefresh {
                     boolean result = false;
                     try {
                         unmarkedDatabaseNames.add(databaseDto.getName().toString());
-                        final DatabaseDto dto = databaseService.get(databaseDto.getName(), false, false);
+                        final DatabaseDto dto = databaseService.get(databaseDto.getName(),
+                            GetDatabaseServiceParameters.builder()
+                                .includeUserMetadata(false)
+                                .includeTableNames(false)
+                                .disableOnReadMetadataIntercetor(false)
+                                .build());
                         if (dto == null) {
                             result = true;
                         }
@@ -432,7 +439,13 @@ public class ElasticSearchRefresh {
                     boolean result = false;
                     try {
                         unmarkedTableNames.add(tableDto.getName().toString());
-                        final Optional<TableDto> dto = tableService.get(tableDto.getName(), false);
+                        final Optional<TableDto> dto = tableService.get(tableDto.getName(),
+                            GetTableServiceParameters.builder()
+                                .includeDataMetadata(false)
+                                .disableOnReadMetadataIntercetor(false)
+                                .includeInfo(true)
+                                .includeDefinitionMetadata(false)
+                                .build());
                         if (!dto.isPresent()) {
                             result = true;
                         }
@@ -688,10 +701,20 @@ public class ElasticSearchRefresh {
     }
 
     protected DatabaseDto getDatabase(final QualifiedName databaseName) {
-        return databaseService.get(databaseName, true, true);
+        return databaseService.get(databaseName,
+            GetDatabaseServiceParameters.builder()
+                .disableOnReadMetadataIntercetor(false)
+                .includeTableNames(true)
+                .includeUserMetadata(true)
+                .build());
     }
 
     protected Optional<TableDto> getTable(final QualifiedName tableName) {
-        return tableService.get(tableName, true);
+        return tableService.get(tableName, GetTableServiceParameters.builder()
+            .disableOnReadMetadataIntercetor(false)
+            .includeInfo(true)
+            .includeDefinitionMetadata(true)
+            .includeDataMetadata(true)
+            .build());
     }
 }

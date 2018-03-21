@@ -63,9 +63,10 @@ public interface MViewService extends MetacatService<TableDto> {
      * Get the view for the given name.
      *
      * @param name name
+     * @param parameters getTable parameters
      * @return view
      */
-    Optional<TableDto> getOpt(QualifiedName name);
+    Optional<TableDto> getOpt(QualifiedName name, GetTableServiceParameters parameters);
 
     /**
      * Copy partitions from the given table name.

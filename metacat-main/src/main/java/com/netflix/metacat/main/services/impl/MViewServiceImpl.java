@@ -43,7 +43,9 @@ import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatSaveMViewPartitionPreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateMViewPreEvent;
+import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.main.manager.ConnectorManager;
+import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
@@ -80,7 +82,7 @@ public class MViewServiceImpl implements MViewService {
      * @param connectorManager    connector manager
      * @param tableService        table service
      * @param partitionService    partition service
-     * @param userMetadataService user metadata service
+     * @param userMetadataService user metadata interceptor service
      * @param eventBus            Internal event bus
      * @param converterUtil       utility to convert to/from Dto to connector resources
      */
@@ -122,7 +124,13 @@ public class MViewServiceImpl implements MViewService {
         log.info("Get the table {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.postSync(new MetacatCreateMViewPreEvent(name, metacatRequestContext, this, snapshot, filter));
-        final Optional<TableDto> oTable = tableService.get(name, false);
+        final Optional<TableDto> oTable = tableService.get(name,
+            GetTableServiceParameters.builder()
+                .includeDataMetadata(false)
+                .includeDefinitionMetadata(false)
+                .disableOnReadMetadataIntercetor(true) //turn off for optimization
+                .includeInfo(true)
+                .build());
         if (oTable.isPresent()) {
             final TableDto table = oTable.get();
             final String viewName = createViewName(name);
@@ -131,7 +139,14 @@ public class MViewServiceImpl implements MViewService {
             log.info("Check if the view table {} exists.", targetName);
             Optional<TableDto> oViewTable = Optional.empty();
             try {
-                oViewTable = tableService.get(targetName, false);
+                //read the original view back
+                oViewTable = tableService.get(targetName,
+                    GetTableServiceParameters.builder()
+                        .includeDataMetadata(false)
+                        .includeDefinitionMetadata(false)
+                        .disableOnReadMetadataIntercetor(false)
+                        .includeInfo(true)
+                        .build());
             } catch (NotFoundException ignored) {
 
             }
@@ -206,7 +221,12 @@ public class MViewServiceImpl implements MViewService {
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         log.info("Updating view {}.", viewQName);
         tableService.update(viewQName, tableDto);
-        final TableDto updatedDto = getOpt(name).orElseThrow(() -> new IllegalStateException("should exist"));
+        final TableDto updatedDto = getOpt(name, GetTableServiceParameters.builder()
+            .includeInfo(true)
+            .includeDefinitionMetadata(false)
+            .includeDataMetadata(false)
+            .disableOnReadMetadataIntercetor(false)
+            .build()).orElseThrow(() -> new IllegalStateException("should exist"));
         eventBus.postAsync(new MetacatUpdateMViewPostEvent(name, metacatRequestContext, this, updatedDto));
         return updatedDto;
     }
@@ -225,10 +245,10 @@ public class MViewServiceImpl implements MViewService {
      * {@inheritDoc}
      */
     @Override
-    public Optional<TableDto> getOpt(final QualifiedName name) {
+    public Optional<TableDto> getOpt(final QualifiedName name, final GetTableServiceParameters tableParameters) {
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
-        final Optional<TableDto> result = tableService.get(viewQName, false);
+        final Optional<TableDto> result = tableService.get(viewQName, tableParameters);
 
         //
         // User definition metadata of the underlying table is returned
@@ -238,8 +258,11 @@ public class MViewServiceImpl implements MViewService {
             table.setName(name);
             final QualifiedName tableName = QualifiedName
                 .ofTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName());
-            final Optional<ObjectNode> definitionMetadata = userMetadataService.getDefinitionMetadata(tableName);
-            definitionMetadata.ifPresent(jsonNodes -> userMetadataService.populateMetadata(table, jsonNodes, null));
+            final Optional<ObjectNode> definitionMetadata =
+                userMetadataService.getDefinitionMetadataWithInterceptor(tableName,
+                    GetMetadataInterceptorParameters.builder().hasMetadata(table).build());
+            definitionMetadata.ifPresent(
+                jsonNodes -> userMetadataService.populateMetadata(table, jsonNodes, null));
         }
         return result;
     }

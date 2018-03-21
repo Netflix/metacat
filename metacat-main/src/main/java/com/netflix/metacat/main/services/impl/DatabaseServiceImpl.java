@@ -37,6 +37,7 @@ import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
+import com.netflix.metacat.main.services.GetDatabaseServiceParameters;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
@@ -53,17 +54,18 @@ public class DatabaseServiceImpl implements DatabaseService {
     private final CatalogService catalogService;
     private final ConnectorManager connectorManager;
     private final UserMetadataService userMetadataService;
+
     private final MetacatEventBus eventBus;
     private final ConverterUtil converterUtil;
 
     /**
      * Constructor.
      *
-     * @param catalogService      catalog service
-     * @param connectorManager    connector manager
-     * @param userMetadataService user metadata service
-     * @param eventBus            internal event bus
-     * @param converterUtil       utility to convert to/from Dto to connector resources
+     * @param catalogService                 catalog service
+     * @param connectorManager               connector manager
+     * @param userMetadataService            user metadata service
+     * @param eventBus                       internal event bus
+     * @param converterUtil                  utility to convert to/from Dto to connector resources
      */
     public DatabaseServiceImpl(
         final CatalogService catalogService,
@@ -96,7 +98,12 @@ public class DatabaseServiceImpl implements DatabaseService {
             userMetadataService.saveDefinitionMetadata(name, metacatRequestContext.getUserName(),
                 Optional.of(dto.getDefinitionMetadata()), true);
         }
-        final DatabaseDto createdDto = get(name, dto.getDefinitionMetadata() != null, true);
+        final DatabaseDto createdDto = get(name,
+            GetDatabaseServiceParameters.builder()
+                .disableOnReadMetadataIntercetor(true)
+                .includeUserMetadata(dto.getDefinitionMetadata() != null)
+                .includeTableNames(true)
+                .build());
         eventBus.postAsync(new MetacatCreateDatabasePostEvent(name, metacatRequestContext, this, createdDto));
         return createdDto;
     }
@@ -142,7 +149,11 @@ public class DatabaseServiceImpl implements DatabaseService {
         validate(name);
         log.info("Dropping schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final DatabaseDto dto = get(name, true, true);
+        final DatabaseDto dto = get(name, GetDatabaseServiceParameters.builder()
+            .disableOnReadMetadataIntercetor(false)
+            .includeUserMetadata(true)
+            .includeTableNames(true)
+            .build());
         eventBus.postSync(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, this, dto));
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         connectorManager.getDatabaseService(name).delete(connectorRequestContext, name);
@@ -160,15 +171,20 @@ public class DatabaseServiceImpl implements DatabaseService {
      */
     @Override
     public DatabaseDto get(final QualifiedName name) {
-        return get(name, true, true);
+        return get(name,
+            GetDatabaseServiceParameters.builder()
+                .includeUserMetadata(true)
+                .includeTableNames(true)
+                .disableOnReadMetadataIntercetor(false)
+                .build());
+
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public DatabaseDto get(final QualifiedName name, final boolean includeUserMetadata,
-        final boolean includeTableNames) {
+    public DatabaseDto get(final QualifiedName name, final GetDatabaseServiceParameters getDatabaseServiceParameters) {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final MetacatCatalogConfig config = connectorManager.getCatalogConfig(name);
@@ -178,7 +194,7 @@ public class DatabaseServiceImpl implements DatabaseService {
 
         final DatabaseDto dto = converterUtil.toDatabaseDto(service.get(connectorRequestContext, name));
         dto.setType(config.getType());
-        if (includeTableNames) {
+        if (getDatabaseServiceParameters.isIncludeTableNames()) {
             final List<QualifiedName> tableNames = tableService
                 .listNames(connectorRequestContext, name, null, null, null);
             List<QualifiedName> viewNames = Collections.emptyList();
@@ -201,9 +217,10 @@ public class DatabaseServiceImpl implements DatabaseService {
                     .collect(Collectors.toList())
             );
         }
-        if (includeUserMetadata) {
+        if (getDatabaseServiceParameters.isIncludeUserMetadata()) {
             log.info("Populate user metadata for schema {}", name);
-            userMetadataService.populateMetadata(dto);
+            userMetadataService.populateMetadata(dto,
+                getDatabaseServiceParameters.isDisableOnReadMetadataIntercetor());
         }
 
         return dto;

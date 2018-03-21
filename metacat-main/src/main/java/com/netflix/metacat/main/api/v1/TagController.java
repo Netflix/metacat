@@ -24,6 +24,7 @@ import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.api.RequestWrapper;
+import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.TableService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -236,11 +237,21 @@ public class TagController {
                     throw new TableNotFoundException(name);
                 }
                 final TableDto oldTable = this.tableService
-                    .get(name, true)
+                    .get(name, GetTableServiceParameters.builder()
+                        .includeInfo(true)
+                        .includeDataMetadata(true)
+                        .includeDefinitionMetadata(true)
+                        .disableOnReadMetadataIntercetor(false)
+                        .build())
                     .orElseThrow(IllegalStateException::new);
                 final Set<String> result = this.tagService.setTableTags(name, tags, true);
                 final TableDto currentTable = this.tableService
-                    .get(name, true)
+                    .get(name, GetTableServiceParameters.builder()
+                                .includeInfo(true)
+                                .includeDataMetadata(true)
+                                .includeDefinitionMetadata(true)
+                                .disableOnReadMetadataIntercetor(false)
+                                .build())
                     .orElseThrow(IllegalStateException::new);
                 this.eventBus.postAsync(
                     new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, currentTable)
@@ -309,11 +320,20 @@ public class TagController {
                     throw new TableNotFoundException(name);
                 }
                 final TableDto oldTable = this.tableService
-                    .get(name, true)
+                    .get(name, GetTableServiceParameters.builder()
+                        .includeInfo(true)
+                        .includeDataMetadata(true)
+                        .includeDefinitionMetadata(true)
+                        .disableOnReadMetadataIntercetor(false)
+                        .build())
                     .orElseThrow(IllegalStateException::new);
                 this.tagService.removeTableTags(name, deleteAll, tags, true);
                 final TableDto currentTable = this.tableService
-                    .get(name, true)
+                    .get(name, GetTableServiceParameters.builder().includeInfo(true)
+                        .includeDataMetadata(true)
+                        .includeDefinitionMetadata(true)
+                        .disableOnReadMetadataIntercetor(false)
+                        .build())
                     .orElseThrow(IllegalStateException::new);
 
                 this.eventBus.postAsync(

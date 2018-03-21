@@ -31,6 +31,7 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.spectator.api.Registry;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 
@@ -42,9 +43,11 @@ import java.util.stream.Stream;
 
 /**
  * Metadata Service. This class includes any common services for the user metadata.
+ *
  * @author amajumdar
  */
 @Slf4j
+@Getter
 public class MetadataService {
     private final Config config;
     private final TableService tableService;
@@ -56,18 +59,22 @@ public class MetadataService {
 
     /**
      * Constructor.
-     * @param config                configuration
-     * @param tableService          table service
-     * @param partitionService      partition service
-     * @param userMetadataService   usermetadata service
-     * @param tagService            tag service
-     * @param helper                service helper
-     * @param registry              registry
+     *
+     * @param config              configuration
+     * @param tableService        table service
+     * @param partitionService    partition service
+     * @param userMetadataService user metadata service
+     * @param tagService          tag service
+     * @param helper              service helper
+     * @param registry            registry
      */
-    public MetadataService(final Config config, final TableService tableService,
-        final PartitionService partitionService,
-        final UserMetadataService userMetadataService, final TagService tagService,
-        final MetacatServiceHelper helper, final Registry registry) {
+    public MetadataService(final Config config,
+                           final TableService tableService,
+                           final PartitionService partitionService,
+                           final UserMetadataService userMetadataService,
+                           final TagService tagService,
+                           final MetacatServiceHelper helper,
+                           final Registry registry) {
         this.config = config;
         this.tableService = tableService;
         this.partitionService = partitionService;
@@ -149,7 +156,7 @@ public class MetadataService {
         final ListeningExecutorService service = threadServiceManager.getExecutor();
         int totalDeletes = 0;
         while (offset == 0 || dtos.size() == limit) {
-            dtos = userMetadataService.searchDefinitionMetadata(null, null, null,
+            dtos = userMetadataService.searchDefinitionMetadata(null, null, null, null,
                 "id", null, offset, limit);
             int deletes = 0;
             final List<ListenableFuture<Boolean>> futures = dtos.stream().map(dto ->
@@ -171,13 +178,14 @@ public class MetadataService {
 
     /**
      * Deletes definition metadata for the given <code>name</code>.
-     * @param name qualified name
-     * @param force If true, deletes the metadata without checking if the database/table/partition exists
+     *
+     * @param name                  qualified name
+     * @param force                 If true, deletes the metadata without checking if database/table/partition exists
      * @param metacatRequestContext request context
      * @return true if deleted
      */
     public boolean deleteDefinitionMetadata(final QualifiedName name, final boolean force,
-        final MetacatRequestContext metacatRequestContext) {
+                                            final MetacatRequestContext metacatRequestContext) {
         try {
             final MetacatService service = this.helper.getService(name);
             BaseDto dto = null;

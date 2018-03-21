@@ -72,6 +72,7 @@ public class MySqlUserMetadataConfig {
         return new MysqlUserMetadataService(jdbcTemplate, metacatJson, config, metadataInterceptor);
     }
 
+
     /**
      * Lookup service.
      *

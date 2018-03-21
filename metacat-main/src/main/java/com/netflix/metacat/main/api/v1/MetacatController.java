@@ -29,8 +29,10 @@ import com.netflix.metacat.common.server.connectors.exception.TableNotFoundExcep
 import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
+import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.main.services.GetDatabaseServiceParameters;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -68,7 +70,6 @@ import java.util.Optional;
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
 public class MetacatController implements MetacatV1 {
-
     private final CatalogService catalogService;
     private final DatabaseService databaseService;
     private final MViewService mViewService;
@@ -578,7 +579,12 @@ public class MetacatController implements MetacatV1 {
         return this.requestWrapper.processRequest(
             name,
             "getDatabase",
-            () -> databaseService.get(name, includeUserMetadata, includeTableNames)
+            () -> databaseService.get(name,
+                GetDatabaseServiceParameters.builder()
+                    .includeUserMetadata(includeUserMetadata)
+                    .includeTableNames(includeTableNames)
+                    .disableOnReadMetadataIntercetor(false)
+                    .build())
         );
     }
 
@@ -643,9 +649,12 @@ public class MetacatController implements MetacatV1 {
             () -> {
                 final Optional<TableDto> table = this.tableService.get(
                     name,
-                    includeInfo,
-                    includeDefinitionMetadata,
-                    includeDataMetadata
+                    GetTableServiceParameters.builder()
+                        .includeInfo(includeInfo)
+                        .includeDefinitionMetadata(includeDefinitionMetadata)
+                        .includeDataMetadata(includeDataMetadata)
+                        .disableOnReadMetadataIntercetor(false)
+                        .build()
                 );
                 return table.orElseThrow(() -> new TableNotFoundException(name));
             }
@@ -785,7 +794,13 @@ public class MetacatController implements MetacatV1 {
             name,
             "getMView",
             () -> {
-                final Optional<TableDto> table = this.mViewService.getOpt(name);
+                final Optional<TableDto> table = this.mViewService.getOpt(name,
+                    GetTableServiceParameters.builder()
+                        .includeDataMetadata(true)
+                        .includeDefinitionMetadata(true)
+                        .includeInfo(true)
+                        .disableOnReadMetadataIntercetor(false)
+                        .build());
                 return table.orElseThrow(() -> new MetacatNotFoundException("Unable to find view: " + name));
             }
         );

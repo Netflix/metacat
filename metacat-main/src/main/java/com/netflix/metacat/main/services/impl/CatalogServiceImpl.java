@@ -93,8 +93,7 @@ public class CatalogServiceImpl implements CatalogService {
             );
         });
         result.setDatabases(databases);
-
-        userMetadataService.populateMetadata(result);
+        userMetadataService.populateMetadata(result, false);
         return result;
     }
 

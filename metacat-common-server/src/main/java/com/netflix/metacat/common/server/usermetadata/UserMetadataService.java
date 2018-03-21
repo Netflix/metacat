@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * User metadata service API.
  *
- * @author amajumdar
+ * @author amajumdar,zhenl
  */
 public interface UserMetadataService {
     /**
@@ -111,12 +111,28 @@ public interface UserMetadataService {
     }
 
     /**
-     * Returns the definition metadata for the given name.
+     * Returns the definition metadata for the given name. This method is used for internal query without
+     * applying interceptor.
      *
      * @param name name
      * @return definition metadata for the given name
      */
     default Optional<ObjectNode> getDefinitionMetadata(QualifiedName name) {
+        return Optional.empty();
+    }
+
+    /**
+     * Returns the definition metadata for the given name after applying interceptor. This method should be used for
+     * all the calls return to outside. We assume that all the REST apis ( get, update, search, create) will return
+     * the same result of a table.
+     * @param name                             name
+     * @param getMetadataInterceptorParameters get Metadata Interceptor parameters
+     * @return definition metadata for the given name
+     */
+    @Nonnull
+    default Optional<ObjectNode> getDefinitionMetadataWithInterceptor(
+        QualifiedName name,
+        GetMetadataInterceptorParameters getMetadataInterceptorParameters) {
         return Optional.empty();
     }
 
@@ -141,7 +157,8 @@ public interface UserMetadataService {
     }
 
     /**
-     * Returns a map of name to definition metadata.
+     * Returns a map of name to definition metadata. This is used for partitions only. We do not apply interceptor
+     * for partition level definition metadata.
      *
      * @param names list of names
      * @return map of name to definition metadata
@@ -168,7 +185,7 @@ public interface UserMetadataService {
     }
 
     /**
-     * Saves definition metadata.
+     * Saves definition metadata with interceptor applied.
      *
      * @param name     name
      * @param userId   username
@@ -197,8 +214,9 @@ public interface UserMetadataService {
      * Populate the metadata.
      *
      * @param holder metadata
+     * @param disableInterceptor diable interceptor
      */
-    default void populateMetadata(HasMetadata holder) {
+    default void populateMetadata(HasMetadata holder, boolean disableInterceptor) {
     }
 
     /**
@@ -258,6 +276,7 @@ public interface UserMetadataService {
      * @param propertyNames names
      * @param type          type
      * @param name          name
+     * @param holder        dto
      * @param sortBy        sort column
      * @param sortOrder     sort order
      * @param offset        offset
@@ -268,6 +287,7 @@ public interface UserMetadataService {
         @Nullable Set<String> propertyNames,
         @Nullable String type,
         @Nullable String name,
+        @Nullable HasMetadata holder,
         @Nullable String sortBy,
         @Nullable String sortOrder,
         @Nullable Integer offset,

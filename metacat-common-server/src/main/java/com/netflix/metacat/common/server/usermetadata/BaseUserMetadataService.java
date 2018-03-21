@@ -48,7 +48,6 @@ public abstract class BaseUserMetadataService implements UserMetadataService {
                 saveDefinitionMetadata(defDto.getDefinitionName(), userId, Optional.of(newMetadata), merge);
             }
         }
-
         if (holder instanceof HasDataMetadata) {
             final HasDataMetadata dataDto = (HasDataMetadata) holder;
 
@@ -67,7 +66,7 @@ public abstract class BaseUserMetadataService implements UserMetadataService {
      * @param holder metadata
      */
     @Override
-    public void populateMetadata(final HasMetadata holder) {
+    public void populateMetadata(final HasMetadata holder, final boolean disableIntercetpor) {
         Optional<ObjectNode> metadata = Optional.empty();
         if (holder instanceof HasDataMetadata) {
             final HasDataMetadata dataDto = (HasDataMetadata) holder;
@@ -78,7 +77,9 @@ public abstract class BaseUserMetadataService implements UserMetadataService {
         Optional<ObjectNode> definitionMetadata = Optional.empty();
         if (holder instanceof HasDefinitionMetadata) {
             final HasDefinitionMetadata definitionDto = (HasDefinitionMetadata) holder;
-            definitionMetadata = getDefinitionMetadata(definitionDto.getDefinitionName());
+            definitionMetadata = disableIntercetpor ? this.getDefinitionMetadata(definitionDto.getDefinitionName())
+                : this.getDefinitionMetadataWithInterceptor(definitionDto.getDefinitionName(),
+                GetMetadataInterceptorParameters.builder().hasMetadata(holder).build());
         }
         populateMetadata(holder, definitionMetadata.orElse(null), metadata.orElse(null));
     }

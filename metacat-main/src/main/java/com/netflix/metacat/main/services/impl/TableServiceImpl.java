@@ -42,11 +42,13 @@ import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.DatabaseService;
+import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
@@ -83,8 +85,8 @@ public class TableServiceImpl implements TableService {
      * @param userMetadataService user metadata service
      * @param eventBus            Internal event bus
      * @param converterUtil       utility to convert to/from Dto to connector resources
-     * @param registry             registry handle
-     * @param config               configurations
+     * @param registry            registry handle
+     * @param config              configurations
      */
     public TableServiceImpl(
         final ConnectorManager connectorManager,
@@ -133,7 +135,12 @@ public class TableServiceImpl implements TableService {
                 .record(duration, TimeUnit.MILLISECONDS);
             tag(name, tableDto.getDefinitionMetadata());
         }
-        final TableDto dto = get(name, true).orElseThrow(() -> new IllegalStateException("Should exist"));
+        final TableDto dto = get(name, GetTableServiceParameters.builder()
+            .disableOnReadMetadataIntercetor(false)
+            .includeInfo(true)
+            .includeDataMetadata(true)
+            .includeDefinitionMetadata(true)
+            .build()).orElseThrow(() -> new IllegalStateException("Should exist"));
         eventBus.postAsync(new MetacatCreateTablePostEvent(name, metacatRequestContext, this, dto));
         return dto;
     }
@@ -174,7 +181,13 @@ public class TableServiceImpl implements TableService {
         eventBus.postSync(new MetacatDeleteTablePreEvent(name, metacatRequestContext, this));
         validate(name);
         final ConnectorTableService service = connectorManager.getTableService(name);
-        final Optional<TableDto> oTable = get(name, true);
+        final Optional<TableDto> oTable = get(name,
+            GetTableServiceParameters.builder()
+                .includeInfo(true)
+                .disableOnReadMetadataIntercetor(false)
+                .includeDefinitionMetadata(true)
+                .includeDataMetadata(true)
+                .build());
         if (oTable.isPresent()) {
             log.info("Drop table {}", name);
             final ConnectorRequestContext connectorRequestContext
@@ -210,6 +223,7 @@ public class TableServiceImpl implements TableService {
      * 1. If the system is configured to delete deifnition metadata.
      * 2. If the system is configured not to but the tableName is configured to either explicitly or if the
      * table's database/catalog is configure to.
+     *
      * @param tableName table name
      * @return whether or not to delete definition metadata
      */
@@ -220,6 +234,7 @@ public class TableServiceImpl implements TableService {
     /**
      * Returns true if tableName is enabled for deifnition metadata delete either explicitly or if the
      * table's database/catalog is configure to.
+     *
      * @param tableName table name
      * @return whether or not to delete definition metadata
      */
@@ -227,7 +242,7 @@ public class TableServiceImpl implements TableService {
         final Set<QualifiedName> enableDeleteForQualifiedNames = config.getNamesEnabledForDefinitionMetadataDelete();
         return enableDeleteForQualifiedNames.contains(tableName)
             || enableDeleteForQualifiedNames.contains(
-                QualifiedName.ofDatabase(tableName.getCatalogName(), tableName.getDatabaseName()))
+            QualifiedName.ofDatabase(tableName.getCatalogName(), tableName.getDatabaseName()))
             || enableDeleteForQualifiedNames.contains(QualifiedName.ofCatalog(tableName.getCatalogName()));
     }
 
@@ -235,40 +250,37 @@ public class TableServiceImpl implements TableService {
      * {@inheritDoc}
      */
     @Override
-    public Optional<TableDto> get(final QualifiedName name, final boolean includeUserMetadata) {
-        return get(name, true, includeUserMetadata, includeUserMetadata);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Optional<TableDto> get(final QualifiedName name, final boolean includeInfo,
-        final boolean includeDefinitionMetadata, final boolean includeDataMetadata) {
+    public Optional<TableDto> get(final QualifiedName name, final GetTableServiceParameters getTableServiceParameters) {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         final ConnectorTableService service = connectorManager.getTableService(name);
+        final TableDto tableInternal;
         final TableDto table;
-        if (includeInfo) {
-            try {
-                table = converterUtil.toTableDto(service.get(connectorRequestContext, name));
-            } catch (NotFoundException ignored) {
-                return Optional.empty();
-            }
+        try {
+            tableInternal = converterUtil.toTableDto(service.get(connectorRequestContext, name));
+        } catch (NotFoundException ignored) {
+            return Optional.empty();
+        }
+        if (getTableServiceParameters.isIncludeInfo()) {
+            table = tableInternal;
         } else {
             table = new TableDto();
             table.setName(name);
         }
 
-        if (includeDefinitionMetadata) {
-            final Optional<ObjectNode> definitionMetadata = userMetadataService.getDefinitionMetadata(name);
+        if (getTableServiceParameters.isIncludeDefinitionMetadata()) {
+            final Optional<ObjectNode> definitionMetadata =
+                (getTableServiceParameters.isDisableOnReadMetadataIntercetor())
+                    ? userMetadataService.getDefinitionMetadata(name)
+                    : userMetadataService.getDefinitionMetadataWithInterceptor(name,
+                    GetMetadataInterceptorParameters.builder().hasMetadata(tableInternal).build());
             definitionMetadata.ifPresent(table::setDefinitionMetadata);
         }
 
-        if (includeDataMetadata) {
+        if (getTableServiceParameters.isIncludeDataMetadata()) {
             TableDto dto = table;
-            if (!includeInfo) {
+            if (!getTableServiceParameters.isIncludeInfo()) {
                 try {
                     dto = converterUtil.toTableDto(service.get(connectorRequestContext, name));
                 } catch (NotFoundException ignored) {
@@ -280,7 +292,6 @@ public class TableServiceImpl implements TableService {
                 dataMetadata.ifPresent(table::setDataMetadata);
             }
         }
-
         return Optional.of(table);
     }
 
@@ -297,7 +308,12 @@ public class TableServiceImpl implements TableService {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(oldName);
 
-        final TableDto oldTable = get(oldName, true).orElseThrow(() -> new TableNotFoundException(oldName));
+        final TableDto oldTable = get(oldName, GetTableServiceParameters.builder()
+            .includeInfo(true)
+            .disableOnReadMetadataIntercetor(false)
+            .includeDefinitionMetadata(true)
+            .includeDataMetadata(true)
+            .build()).orElseThrow(() -> new TableNotFoundException(oldName));
         if (oldTable != null) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
             eventBus.postSync(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, this, newName));
@@ -311,7 +327,13 @@ public class TableServiceImpl implements TableService {
             userMetadataService.renameDefinitionMetadataKey(oldName, newName);
             tagService.rename(oldName, newName.getTableName());
 
-            final TableDto dto = get(newName, true).orElseThrow(() -> new IllegalStateException("should exist"));
+            final TableDto dto = get(newName, GetTableServiceParameters.builder()
+                .includeInfo(true)
+                .disableOnReadMetadataIntercetor(false)
+                .includeDefinitionMetadata(true)
+                .includeDataMetadata(true)
+                .build()).orElseThrow(() -> new IllegalStateException("should exist"));
+
             eventBus.postAsync(
                 new MetacatRenameTablePostEvent(oldName, metacatRequestContext, this, oldTable, dto, isMView));
         }
@@ -333,7 +355,12 @@ public class TableServiceImpl implements TableService {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name);
-        final TableDto oldTable = get(name, true).orElseThrow(() -> new TableNotFoundException(name));
+        final TableDto oldTable = get(name, GetTableServiceParameters.builder()
+            .disableOnReadMetadataIntercetor(false)
+            .includeInfo(true)
+            .includeDataMetadata(true)
+            .includeDefinitionMetadata(true)
+            .build()).orElseThrow(() -> new TableNotFoundException(name));
         eventBus.postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, this, oldTable, tableDto));
         //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
         if (isTableInfoProvided(tableDto)) {
@@ -356,7 +383,13 @@ public class TableServiceImpl implements TableService {
             registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
                 .record(duration, TimeUnit.MILLISECONDS);
         }
-        final TableDto updatedDto = get(name, true).orElseThrow(() -> new IllegalStateException("should exist"));
+        final TableDto updatedDto = get(name,
+            GetTableServiceParameters.builder()
+                .disableOnReadMetadataIntercetor(false)
+                .includeInfo(true)
+                .includeDataMetadata(true)
+                .includeDefinitionMetadata(true)
+                .build()).orElseThrow(() -> new IllegalStateException("should exist"));
         eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, updatedDto));
         return updatedDto;
     }
@@ -385,7 +418,13 @@ public class TableServiceImpl implements TableService {
      */
     @Override
     public TableDto get(final QualifiedName name) {
-        final Optional<TableDto> dto = get(name, true);
+        //this is used for different purpose, need to change the ineral calls
+        final Optional<TableDto> dto = get(name, GetTableServiceParameters.builder()
+            .includeInfo(true)
+            .includeDefinitionMetadata(true)
+            .includeDataMetadata(true)
+            .disableOnReadMetadataIntercetor(false)
+            .build());
         return dto.orElse(null);
     }
 
@@ -399,12 +438,24 @@ public class TableServiceImpl implements TableService {
             throw new MetacatNotSupportedException("Cannot copy a table from a different source");
         }
         // Error out when source table does not exists
-        final Optional<TableDto> oTable = get(sourceName, false);
+        final Optional<TableDto> oTable = get(sourceName,
+            GetTableServiceParameters.builder()
+                .includeInfo(true)
+                .disableOnReadMetadataIntercetor(true)
+                .includeDataMetadata(false)
+                .includeDefinitionMetadata(false)
+                .build());
         if (!oTable.isPresent()) {
             throw new TableNotFoundException(sourceName);
         }
         // Error out when target table already exists
-        final Optional<TableDto> oTargetTable = get(targetName, false);
+        final Optional<TableDto> oTargetTable = get(targetName,
+            GetTableServiceParameters.builder()
+                .disableOnReadMetadataIntercetor(true)
+                .includeInfo(true)
+                .includeDataMetadata(false)
+                .includeDefinitionMetadata(false)
+                .build());
         if (oTargetTable.isPresent()) {
             throw new TableNotFoundException(targetName);
         }
@@ -447,13 +498,17 @@ public class TableServiceImpl implements TableService {
      */
     @Override
     public void saveMetadata(final QualifiedName name, final ObjectNode definitionMetadata,
-        final ObjectNode dataMetadata) {
+                             final ObjectNode dataMetadata) {
         validate(name);
-        final Optional<TableDto> tableDtoOptional = get(name, false);
+        final Optional<TableDto> tableDtoOptional = get(name, GetTableServiceParameters.builder().includeInfo(true)
+            .disableOnReadMetadataIntercetor(true)
+            .includeDefinitionMetadata(false)
+            .includeDataMetadata(false)
+            .build());
         if (tableDtoOptional.isPresent()) {
             final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
             final TableDto tableDto = tableDtoOptional.get();
-            tableDto.setDefinitionMetadata(definitionMetadata);
+            tableDto.setDefinitionMetadata(definitionMetadata); //override the previous one
             tableDto.setDataMetadata(dataMetadata);
             log.info("Saving user metadata for table {}", name);
             userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);

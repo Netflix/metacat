@@ -162,7 +162,7 @@ public class ElasticSearchConfig {
      * @param databaseService     Database service
      * @param tableService        Table service
      * @param partitionService    Partition service
-     * @param userMetadataService User metadata service
+     * @param userMetadataService User metadata  service
      * @param tagService          Tag service
      * @param elasticSearchUtil   ElasticSearch client wrapper
      * @param registry            registry of spectator
