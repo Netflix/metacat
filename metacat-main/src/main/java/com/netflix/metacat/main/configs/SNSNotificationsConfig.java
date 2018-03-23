@@ -60,7 +60,7 @@ public class SNSNotificationsConfig {
     @Bean
     @ConditionalOnMissingBean(AmazonSNSAsync.class)
     public AmazonSNSAsync amazonSNS(final Config config, final Registry registry) {
-        final ExecutorService executor = Executors.newFixedThreadPool(config.getSNSClientThreadCount(),
+        final ExecutorService executor = Executors.newFixedThreadPool(config.getSnsClientThreadCount(),
             new ThreadFactoryBuilder().setNameFormat("metacat-sns-pool-%d").build());
         RegistryUtil.registerThreadPool(registry, "metacat-sns-pool", (ThreadPoolExecutor) executor);
         return new AmazonSNSAsyncClient(DefaultAWSCredentialsProviderChain.getInstance(), executor);

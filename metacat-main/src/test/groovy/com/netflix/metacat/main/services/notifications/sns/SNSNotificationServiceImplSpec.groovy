@@ -88,8 +88,11 @@ class SNSNotificationServiceImplSpec extends Specification {
 
 
     def "Will Notify On Partition Creation"() {
-        def partitions = Lists.newArrayList(new PartitionDto(), new PartitionDto(), new PartitionDto())
-
+        def partitions = Lists.newArrayList(
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', UUID.randomUUID().toString())).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  UUID.randomUUID().toString())).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  UUID.randomUUID().toString())).build(),
+        )
         def event = new MetacatSaveTablePartitionPostEvent(
             this.qName,
             this.requestContext,
@@ -108,6 +111,8 @@ class SNSNotificationServiceImplSpec extends Specification {
         1 * this.client.publishAsync(this.tableArn, _ as String, _ as AsyncHandler)
         4 * this.timer.record(_ as Long, _ as TimeUnit)
         1 * config.isSnsNotificationTopicPartitionEnabled() >> true
+        1 * config.isSnsNotificationAttachPartitionIdsEnabled() >> true
+        1 * config.getSnsNotificationAttachPartitionIdMax() >> 100
     }
 
     def "Will Notify On Partition Deletion"() {
@@ -136,6 +141,8 @@ class SNSNotificationServiceImplSpec extends Specification {
         1 * this.client.publishAsync(this.tableArn, _ as String, _ as AsyncHandler)
         6 * this.timer.record(_ as Long, _ as TimeUnit)
         1 * config.isSnsNotificationTopicPartitionEnabled() >> true
+        1 * config.isSnsNotificationAttachPartitionIdsEnabled() >> true
+        1 * config.getSnsNotificationAttachPartitionIdMax() >> 100
     }
 
     def "Will Notify On Table Creation"() {

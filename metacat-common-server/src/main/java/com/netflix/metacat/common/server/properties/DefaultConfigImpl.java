@@ -375,13 +375,29 @@ public class DefaultConfigImpl implements Config {
     }
 
     @Override
-    public int getSNSClientThreadCount() {
+    public int getSnsClientThreadCount() {
         return this.metacatProperties.getNotifications().getSns().getThreadCount();
     }
 
     @Override
     public boolean isSnsNotificationTopicPartitionEnabled() {
         return this.metacatProperties.getNotifications().getSns().getTopic().getPartition().isEnabled();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isSnsNotificationAttachPartitionIdsEnabled() {
+        return this.metacatProperties.getNotifications().getSns().getAttachPartitionIds().isEnabled();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getSnsNotificationAttachPartitionIdMax() {
+        return this.metacatProperties.getNotifications().getSns().getAttachPartitionIds().getMaxPartitionIdNumber();
     }
 
     @Override

@@ -38,14 +38,18 @@ public interface Config {
 
     /**
      * Enable publishing partitions to elastic search.
+     *
      * @return true if publishing partitions to elastic search is enabled
      */
     boolean isElasticSearchPublishPartitionEnabled();
+
     /**
      * Enable publishing metacat es error logs to elastic search.
+     *
      * @return true if publishing metacat es error logs to elastic search is enabled
      */
     boolean isElasticSearchPublishMetacatLogEnabled();
+
     /**
      * Elastic search cluster name.
      *
@@ -294,9 +298,10 @@ public interface Config {
 
     /**
      * Get the size of the thread pool used by SNS client.
+     *
      * @return size of the thread pool used by SNS client
      */
-    int getSNSClientThreadCount();
+    int getSnsClientThreadCount();
 
     /**
      * Whether or not notifications should be published to SNS Partition topic. If this is enabled, the
@@ -305,6 +310,20 @@ public interface Config {
      * @return Whether SNS notifications to partitions topic should be enabled
      */
     boolean isSnsNotificationTopicPartitionEnabled();
+
+    /**
+     * Enable attaching the partition ids in the payload.
+     *
+     * @return whether the partition ids in the payload.
+     */
+    boolean isSnsNotificationAttachPartitionIdsEnabled();
+
+    /**
+     * The number of max partition ids in the payload.
+     *
+     * @return The number of max partition ids in the payload.
+     */
+    int getSnsNotificationAttachPartitionIdMax();
 
     /**
      * Whether or not to delete definition metadata for tables.

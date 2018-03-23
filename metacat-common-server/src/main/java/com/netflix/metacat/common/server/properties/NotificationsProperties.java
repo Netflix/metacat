@@ -43,6 +43,7 @@ public class NotificationsProperties {
         private boolean enabled;  // false is default in Java no need to initialize
         private int threadCount = 50;
         private Topic topic = new Topic();
+        private AttachPartitionIds attachPartitionIds = new AttachPartitionIds();
 
         /**
          * SNS Topic settings.
@@ -80,6 +81,18 @@ public class NotificationsProperties {
                 private String arn; // Default to null
                 private boolean enabled = true;
             }
+        }
+
+        /**
+         * SNS Table PartitionUpdate payload setting.
+         *
+         * @author zhenl
+         * @since 1.2.1
+         */
+        @Data
+        public static class AttachPartitionIds {
+            private boolean enabled = true; //default to true
+            private int maxPartitionIdNumber = 200;
         }
     }
 }
