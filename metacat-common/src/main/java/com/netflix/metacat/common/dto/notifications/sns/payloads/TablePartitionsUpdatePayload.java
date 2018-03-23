@@ -23,6 +23,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.util.List;
+
 /**
  * Information about how the partitions have changed when a table was updated.
  *
@@ -35,19 +37,30 @@ import lombok.ToString;
 public class TablePartitionsUpdatePayload {
     private final int numCreatedPartitions;
     private final int numDeletedPartitions;
+    private final List<String> createdPartitionIds;
+    private final List<String> deletedPartitionIds;
+    private final String message;
 
     /**
      * Constructor.
      *
      * @param numCreatedPartitions The number of partitions that were created for the table
      * @param numDeletedPartitions The number of partitions that were deleted from the table
+     * @param createdPartitionIds The partition ids that were created for the table
+     * @param deletedPartitionIds The partition ids that were deleted from the table
+     * @param message The message about the partition ids.
      */
     @JsonCreator
     public TablePartitionsUpdatePayload(
         @JsonProperty("numCreatedPartitions") final int numCreatedPartitions,
-        @JsonProperty("numDeletedPartitions") final int numDeletedPartitions
-    ) {
+        @JsonProperty("numDeletedPartitions") final int numDeletedPartitions,
+        @JsonProperty("createdPartitionIds") final List<String> createdPartitionIds,
+        @JsonProperty("deletedPartitionIds") final List<String> deletedPartitionIds,
+        @JsonProperty("message") final String message) {
         this.numCreatedPartitions = numCreatedPartitions;
         this.numDeletedPartitions = numDeletedPartitions;
+        this.createdPartitionIds = createdPartitionIds;
+        this.deletedPartitionIds = deletedPartitionIds;
+        this.message = message;
     }
 }
