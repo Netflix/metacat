@@ -130,6 +130,27 @@
                 }
               }
             },
+            "data_management": {
+              "properties": {
+                "campaign": {
+                  "type": "nested",
+                  "properties": {
+                    "created_utc_date": {
+                      "type": "date"
+                    },
+                    "updated_utc_date": {
+                      "type": "date"
+                    },
+                    "name": {
+                      "type": "keyword"
+                    },
+                    "action": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            },
             "lifetime": {
               "properties": {
                 "partitionedBy": {

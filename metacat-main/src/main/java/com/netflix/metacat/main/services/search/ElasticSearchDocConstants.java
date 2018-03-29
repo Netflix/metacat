@@ -84,6 +84,11 @@ final class ElasticSearchDocConstants {
      */
     static final String DEFINITION_METADATA_TABLE_DESCRIPTION = "table_description";
 
+    /**
+     * DEFINITION_DATA_MANAGEMENT.
+     */
+    static final String  DEFINITION_DATA_MANAGEMENT = "data_management";
+
     private ElasticSearchDocConstants() {
 
     }

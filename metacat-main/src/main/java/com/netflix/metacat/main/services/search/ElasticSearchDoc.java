@@ -49,6 +49,7 @@ public class ElasticSearchDoc {
         ElasticSearchDocConstants.DEFINITION_METADATA_DATA_CATEGORY,
         ElasticSearchDocConstants.DEFINITION_METADATA_JOB,
         ElasticSearchDocConstants.DEFINITION_METADATA_TABLE_DESCRIPTION,
+        ElasticSearchDocConstants.DEFINITION_DATA_MANAGEMENT,
     };
 
     private String id;
