@@ -466,7 +466,7 @@ public class ElasticSearchRefresh {
                     deleteTableDtos.forEach(
                         tableDto -> {
                             tagService.delete(tableDto.getName(), false);
-                            this.eventBus.postAsync(
+                            this.eventBus.post(
                                 new MetacatDeleteTablePostEvent(tableDto.getName(), context, this, tableDto)
                             );
                         }

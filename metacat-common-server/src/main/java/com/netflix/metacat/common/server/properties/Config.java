@@ -38,18 +38,14 @@ public interface Config {
 
     /**
      * Enable publishing partitions to elastic search.
-     *
      * @return true if publishing partitions to elastic search is enabled
      */
     boolean isElasticSearchPublishPartitionEnabled();
-
     /**
      * Enable publishing metacat es error logs to elastic search.
-     *
      * @return true if publishing metacat es error logs to elastic search is enabled
      */
     boolean isElasticSearchPublishMetacatLogEnabled();
-
     /**
      * Elastic search cluster name.
      *
@@ -297,11 +293,18 @@ public interface Config {
     String getSnsTopicPartitionArn();
 
     /**
-     * Get the size of the thread pool used by SNS client.
+     * Get the fallback AWS ARN for the SNS topic to publish to for table related notifications.
      *
-     * @return size of the thread pool used by SNS client
+     * @return The table topic ARN or null if no property set
      */
-    int getSnsClientThreadCount();
+    String getFallbackSnsTopicTableArn();
+
+    /**
+     * Get the fallback AWS ARN for the SNS topic to publish to for partition related notifications.
+     *
+     * @return The partition topic ARN or null if no property set
+     */
+    String getFallbackSnsTopicPartitionArn();
 
     /**
      * Whether or not notifications should be published to SNS Partition topic. If this is enabled, the

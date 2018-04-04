@@ -253,12 +253,12 @@ public class PartitionServiceImpl implements PartitionService {
         final QualifiedName name, final List<PartitionDto> partitionDtos) {
         registry.distributionSummary(
             this.partitionMetadataOnlyAddDistSummary.withTags(name.parts())).record(partitionDtos.size());
-        eventBus.postSync(
+        eventBus.post(
             new MetacatSaveTablePartitionMetadataOnlyPreEvent(name, metacatRequestContext, this, dto));
         // Save metadata
         log.info("Saving metadata only for partitions for {}", name);
         userMetadataService.saveMetadata(metacatRequestContext.getUserName(), partitionDtos, true);
-        eventBus.postSync(
+        eventBus.post(
             new MetacatSaveTablePartitionMetadataOnlyPostEvent(
                 name, metacatRequestContext, this, partitionDtos, new PartitionsSaveResponseDto()));
         //empty saveResponseDto is returned for optimization purpose
@@ -288,7 +288,7 @@ public class PartitionServiceImpl implements PartitionService {
             this.partitionAddDistSummary.withTags(name.parts())).record(partitionDtos.size());
         final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
-            eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
+            eventBus.post(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
             registry.distributionSummary(
                 this.partitionDeleteDistSummary.withTags(name.parts())).record(partitionIdsForDeletes.size());
             final GetPartitionsRequestDto requestDto =
@@ -303,7 +303,7 @@ public class PartitionServiceImpl implements PartitionService {
         }
 
         // Save all the new and updated partitions
-        eventBus.postSync(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, this, dto));
+        eventBus.post(new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, this, dto));
         log.info("Saving partitions for {} ({})", name, partitionDtos.size());
         final PartitionsSaveResponseDto result = converterUtil.toPartitionsSaveResponseDto(
             service.savePartitions(connectorRequestContext, name, converterUtil.toPartitionsSaveRequest(dto)));
@@ -323,11 +323,11 @@ public class PartitionServiceImpl implements PartitionService {
         //publish the delete and save in order
         //TODO: create MetacatUpdateTablePartitionEvents, only publish one partitionUpdateEvent here.
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
-            eventBus.postAsync(
+            eventBus.post(
                 new MetacatDeleteTablePartitionPostEvent(name,
                     metacatRequestContext, this, deletePartitionDtos));
         }
-        eventBus.postAsync(
+        eventBus.post(
             new MetacatSaveTablePartitionPostEvent(name, metacatRequestContext, this, partitionDtos, result));
 
         return result;
@@ -347,7 +347,7 @@ public class PartitionServiceImpl implements PartitionService {
         if (!partitionIds.isEmpty()) {
             final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
             dto.setPartitionIdsForDeletes(partitionIds);
-            eventBus.postSync(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
+            eventBus.post(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
             final ConnectorPartitionService service = connectorManager.getPartitionService(name);
             // Get the partitions before calling delete
             final GetPartitionsRequestDto requestDto = new GetPartitionsRequestDto(null, partitionIds, false, true);
@@ -369,7 +369,7 @@ public class PartitionServiceImpl implements PartitionService {
             if (!partitions.isEmpty()) {
                 deleteMetadatas(metacatRequestContext.getUserName(), partitions);
             }
-            eventBus.postAsync(
+            eventBus.post(
                 new MetacatDeleteTablePartitionPostEvent(name, metacatRequestContext, this, partitionDtos)
             );
         }

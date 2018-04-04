@@ -375,8 +375,13 @@ public class DefaultConfigImpl implements Config {
     }
 
     @Override
-    public int getSnsClientThreadCount() {
-        return this.metacatProperties.getNotifications().getSns().getThreadCount();
+    public String getFallbackSnsTopicTableArn() {
+        return this.metacatProperties.getNotifications().getSns().getTopic().getTable().getFallbackArn();
+    }
+
+    @Override
+    public String getFallbackSnsTopicPartitionArn() {
+        return this.metacatProperties.getNotifications().getSns().getTopic().getPartition().getFallbackArn();
     }
 
     @Override

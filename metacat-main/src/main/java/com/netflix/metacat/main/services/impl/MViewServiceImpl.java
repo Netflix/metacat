@@ -123,7 +123,7 @@ public class MViewServiceImpl implements MViewService {
         // Get the table
         log.info("Get the table {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatCreateMViewPreEvent(name, metacatRequestContext, this, snapshot, filter));
+        eventBus.post(new MetacatCreateMViewPreEvent(name, metacatRequestContext, this, snapshot, filter));
         final Optional<TableDto> oTable = tableService.get(name,
             GetTableServiceParameters.builder()
                 .includeDataMetadata(false)
@@ -159,7 +159,7 @@ public class MViewServiceImpl implements MViewService {
             if (snapshot) {
                 snapshotPartitions(name, filter);
             }
-            eventBus.postAsync(
+            eventBus.post(
                 new MetacatCreateMViewPostEvent(name, metacatRequestContext, this, result, snapshot, filter)
             );
         } else {
@@ -183,12 +183,12 @@ public class MViewServiceImpl implements MViewService {
     @Override
     public TableDto deleteAndReturn(final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatDeleteMViewPreEvent(name, metacatRequestContext, this));
+        eventBus.post(new MetacatDeleteMViewPreEvent(name, metacatRequestContext, this));
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         log.info("Deleting view {}.", viewQName);
         final TableDto deletedDto = tableService.deleteAndReturn(viewQName, true);
-        eventBus.postAsync(new MetacatDeleteMViewPostEvent(name, metacatRequestContext, this, deletedDto));
+        eventBus.post(new MetacatDeleteMViewPostEvent(name, metacatRequestContext, this, deletedDto));
         return deletedDto;
     }
 
@@ -216,7 +216,7 @@ public class MViewServiceImpl implements MViewService {
     @Override
     public TableDto updateAndReturn(final QualifiedName name, final TableDto tableDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatUpdateMViewPreEvent(name, metacatRequestContext, this, tableDto));
+        eventBus.post(new MetacatUpdateMViewPreEvent(name, metacatRequestContext, this, tableDto));
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         log.info("Updating view {}.", viewQName);
@@ -227,7 +227,7 @@ public class MViewServiceImpl implements MViewService {
             .includeDataMetadata(false)
             .disableOnReadMetadataIntercetor(false)
             .build()).orElseThrow(() -> new IllegalStateException("should exist"));
-        eventBus.postAsync(new MetacatUpdateMViewPostEvent(name, metacatRequestContext, this, updatedDto));
+        eventBus.post(new MetacatUpdateMViewPostEvent(name, metacatRequestContext, this, updatedDto));
         return updatedDto;
     }
 
@@ -304,10 +304,10 @@ public class MViewServiceImpl implements MViewService {
                 .ofPartition(viewQName.getCatalogName(), viewQName.getDatabaseName(), viewQName.getTableName(),
                     partitionDto.getName().getPartitionName())));
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatSaveMViewPartitionPreEvent(name, metacatRequestContext, this, dto));
+        eventBus.post(new MetacatSaveMViewPartitionPreEvent(name, metacatRequestContext, this, dto));
         final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
-            eventBus.postSync(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, this, dto));
+            eventBus.post(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, this, dto));
         }
         if (merge) {
             final List<String> partitionNames = partitionDtos.stream().map(
@@ -329,11 +329,11 @@ public class MViewServiceImpl implements MViewService {
         } else {
             result = partitionService.save(viewQName, dto);
         }
-        eventBus.postAsync(
+        eventBus.post(
             new MetacatSaveMViewPartitionPostEvent(name, metacatRequestContext, this, dto.getPartitions())
         );
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
-            eventBus.postAsync(
+            eventBus.post(
                 new MetacatDeleteMViewPartitionPostEvent(name, metacatRequestContext, this, partitionIdsForDeletes)
             );
         }
@@ -375,11 +375,11 @@ public class MViewServiceImpl implements MViewService {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
         dto.setPartitionIdsForDeletes(partitionIds);
-        eventBus.postSync(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, this, dto));
+        eventBus.post(new MetacatDeleteMViewPartitionPreEvent(name, metacatRequestContext, this, dto));
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         partitionService.delete(viewQName, partitionIds);
-        eventBus.postAsync(
+        eventBus.post(
             new MetacatDeleteMViewPartitionPostEvent(name, metacatRequestContext, this, partitionIds)
         );
     }

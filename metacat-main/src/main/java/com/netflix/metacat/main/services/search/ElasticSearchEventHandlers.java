@@ -20,6 +20,7 @@ import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.json.MetacatJsonLocator;
+import com.netflix.metacat.common.server.events.AsyncListener;
 import com.netflix.metacat.common.server.events.MetacatCreateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteDatabasePostEvent;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
  * Event handlers for elastic search indexing.
  */
 @Slf4j
+@AsyncListener
 public class ElasticSearchEventHandlers {
     private final ElasticSearchUtil es;
     private final MetacatJsonLocator metacatJsonLocator;

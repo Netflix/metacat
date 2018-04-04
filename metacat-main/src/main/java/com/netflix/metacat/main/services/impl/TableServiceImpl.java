@@ -120,7 +120,7 @@ public class TableServiceImpl implements TableService {
         //
         setOwnerIfNull(tableDto, metacatRequestContext.getUserName());
         log.info("Creating table {}", name);
-        eventBus.postSync(new MetacatCreateTablePreEvent(name, metacatRequestContext, this, tableDto));
+        eventBus.post(new MetacatCreateTablePreEvent(name, metacatRequestContext, this, tableDto));
         final ConnectorTableService service = connectorManager.getTableService(name);
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         service.create(connectorRequestContext, converterUtil.fromTableDto(tableDto));
@@ -141,7 +141,7 @@ public class TableServiceImpl implements TableService {
             .includeDataMetadata(true)
             .includeDefinitionMetadata(true)
             .build()).orElseThrow(() -> new IllegalStateException("Should exist"));
-        eventBus.postAsync(new MetacatCreateTablePostEvent(name, metacatRequestContext, this, dto));
+        eventBus.post(new MetacatCreateTablePostEvent(name, metacatRequestContext, this, dto));
         return dto;
     }
 
@@ -178,7 +178,7 @@ public class TableServiceImpl implements TableService {
     @Override
     public TableDto deleteAndReturn(final QualifiedName name, final boolean isMView) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatDeleteTablePreEvent(name, metacatRequestContext, this));
+        eventBus.post(new MetacatDeleteTablePreEvent(name, metacatRequestContext, this));
         validate(name);
         final ConnectorTableService service = connectorManager.getTableService(name);
         final Optional<TableDto> oTable = get(name,
@@ -214,7 +214,7 @@ public class TableServiceImpl implements TableService {
                     Lists.newArrayList(tableDto.getDataUri()));
             }
         }
-        eventBus.postAsync(new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, tableDto, isMView));
+        eventBus.post(new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, tableDto, isMView));
         return tableDto;
     }
 
@@ -316,7 +316,7 @@ public class TableServiceImpl implements TableService {
             .build()).orElseThrow(() -> new TableNotFoundException(oldName));
         if (oldTable != null) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
-            eventBus.postSync(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, this, newName));
+            eventBus.post(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, this, newName));
             try {
                 log.info("Renaming {} {} to {}", isMView ? "view" : "table", oldName, newName);
                 final ConnectorRequestContext connectorRequestContext
@@ -334,7 +334,7 @@ public class TableServiceImpl implements TableService {
                 .includeDataMetadata(true)
                 .build()).orElseThrow(() -> new IllegalStateException("should exist"));
 
-            eventBus.postAsync(
+            eventBus.post(
                 new MetacatRenameTablePostEvent(oldName, metacatRequestContext, this, oldTable, dto, isMView));
         }
     }
@@ -361,7 +361,7 @@ public class TableServiceImpl implements TableService {
             .includeDataMetadata(true)
             .includeDefinitionMetadata(true)
             .build()).orElseThrow(() -> new TableNotFoundException(name));
-        eventBus.postSync(new MetacatUpdateTablePreEvent(name, metacatRequestContext, this, oldTable, tableDto));
+        eventBus.post(new MetacatUpdateTablePreEvent(name, metacatRequestContext, this, oldTable, tableDto));
         //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
         if (isTableInfoProvided(tableDto)) {
             try {
@@ -390,7 +390,7 @@ public class TableServiceImpl implements TableService {
                 .includeDataMetadata(true)
                 .includeDefinitionMetadata(true)
                 .build()).orElseThrow(() -> new IllegalStateException("should exist"));
-        eventBus.postAsync(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, updatedDto));
+        eventBus.post(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, updatedDto));
         return updatedDto;
     }
 

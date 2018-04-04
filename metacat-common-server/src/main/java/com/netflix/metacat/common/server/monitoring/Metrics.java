@@ -31,8 +31,7 @@ public enum Metrics {
     /**
      * Events.
      */
-    CounterEventAsync(Component.events, Type.counter, "async"),
-    CounterEventSync(Component.events, Type.counter, "sync"),
+    CounterEventPublish(Component.events, Type.counter, "publish"),
 
     /**
      * thrift request.
@@ -65,6 +64,7 @@ public enum Metrics {
     CounterSNSNotificationTableRename(Component.notifications, Type.counter, "table.Rename"),
     CounterSNSNotificationTableUpdate(Component.notifications, Type.counter, "table.Update"),
     CounterSNSNotificationPublishMessageSizeExceeded(Component.notifications, Type.counter, "publish.message.size.exceeded"),
+    CounterSNSNotificationPublishFallback(Component.notifications, Type.counter, "publish.fallback"),
     CounterSNSNotificationPublishPartitionIdNumberExceeded(Component.notifications, Type.counter, "publish.partitionid.number.exceeded"),
 
     /**
