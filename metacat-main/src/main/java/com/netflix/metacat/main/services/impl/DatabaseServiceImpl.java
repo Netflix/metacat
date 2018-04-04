@@ -89,7 +89,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         validate(name);
         log.info("Creating schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatCreateDatabasePreEvent(name, metacatRequestContext, this));
+        eventBus.post(new MetacatCreateDatabasePreEvent(name, metacatRequestContext, this));
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         connectorManager.getDatabaseService(name).create(connectorRequestContext,
             converterUtil.fromDatabaseDto(dto));
@@ -104,7 +104,7 @@ public class DatabaseServiceImpl implements DatabaseService {
                 .includeUserMetadata(dto.getDefinitionMetadata() != null)
                 .includeTableNames(true)
                 .build());
-        eventBus.postAsync(new MetacatCreateDatabasePostEvent(name, metacatRequestContext, this, createdDto));
+        eventBus.post(new MetacatCreateDatabasePostEvent(name, metacatRequestContext, this, createdDto));
         return createdDto;
     }
 
@@ -116,7 +116,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         validate(name);
         log.info("Updating schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
+        eventBus.post(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
         try {
             final ConnectorRequestContext connectorRequestContext
                 = converterUtil.toConnectorContext(metacatRequestContext);
@@ -129,7 +129,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             userMetadataService.saveDefinitionMetadata(name, metacatRequestContext.getUserName(),
                 Optional.of(dto.getDefinitionMetadata()), true);
         }
-        eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
+        eventBus.post(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
     }
 
     /**
@@ -154,7 +154,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             .includeUserMetadata(true)
             .includeTableNames(true)
             .build());
-        eventBus.postSync(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, this, dto));
+        eventBus.post(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, this, dto));
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         connectorManager.getDatabaseService(name).delete(connectorRequestContext, name);
 
@@ -163,7 +163,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             log.info("Deleting user metadata for schema {}", name);
             userMetadataService.deleteDefinitionMetadata(ImmutableList.of(name));
         }
-        eventBus.postAsync(new MetacatDeleteDatabasePostEvent(name, metacatRequestContext, this, dto));
+        eventBus.post(new MetacatDeleteDatabasePostEvent(name, metacatRequestContext, this, dto));
     }
 
     /**

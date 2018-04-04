@@ -19,6 +19,7 @@ package com.netflix.metacat.main.services;
 
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.server.events.AsyncListener;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.properties.Config;
@@ -37,6 +38,7 @@ import java.util.List;
  */
 @Slf4j
 @Component
+@AsyncListener
 public class MViewServiceEventHandler {
     private final Config config;
     private final MViewService mViewService;

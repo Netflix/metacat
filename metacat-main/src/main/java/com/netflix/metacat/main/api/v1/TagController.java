@@ -253,7 +253,7 @@ public class TagController {
                                 .disableOnReadMetadataIntercetor(false)
                                 .build())
                     .orElseThrow(IllegalStateException::new);
-                this.eventBus.postAsync(
+                this.eventBus.post(
                     new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, currentTable)
                 );
                 return result;
@@ -336,7 +336,7 @@ public class TagController {
                         .build())
                     .orElseThrow(IllegalStateException::new);
 
-                this.eventBus.postAsync(
+                this.eventBus.post(
                     new MetacatUpdateTablePostEvent(
                         name,
                         metacatRequestContext,

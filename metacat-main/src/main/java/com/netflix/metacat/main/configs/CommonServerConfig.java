@@ -27,20 +27,17 @@ import com.netflix.metacat.common.server.converter.DozerTypeConverter;
 import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import com.netflix.metacat.common.server.events.MetacatApplicationEventMulticaster;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
+import com.netflix.metacat.common.server.events.MetacatEventListenerFactory;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.common.server.util.DataSourceManager;
-import com.netflix.metacat.common.server.util.RegistryUtil;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.spectator.api.Registry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.event.ApplicationEventMulticaster;
-import org.springframework.context.event.SimpleApplicationEventMulticaster;
-import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.core.task.TaskExecutor;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.context.event.EventListenerFactory;
 
 /**
  * Common configuration for Metacat based on classes found in the common server module.
@@ -101,45 +98,24 @@ public class CommonServerConfig {
 
     /**
      * The application event multicaster to use.
-     *
-     * @param asyncEventMulticaster The asynchronous event publisher
-     * @return The application event multicaster to use.
-     */
-    @Bean
-    public MetacatApplicationEventMulticaster applicationEventMulticaster(
-        final ApplicationEventMulticaster asyncEventMulticaster
-    ) {
-        return new MetacatApplicationEventMulticaster(asyncEventMulticaster);
-    }
-
-    /**
-     * Get a task executor for executing tasks asynchronously that don't need to be scheduled at a recurring rate.
-     *
      * @param registry         registry for spectator
      * @param metacatProperties The metacat properties to get number of executor threads from.
      *                          Likely best to do one more than number of CPUs
-     * @return The task executor the system to use
+     * @return The application event multicaster to use.
      */
     @Bean
-    public AsyncTaskExecutor taskExecutor(final Registry registry, final MetacatProperties metacatProperties) {
-        final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(metacatProperties.getEvent().getBus().getExecutor().getThread().getCount());
-        executor.initialize();
-        RegistryUtil.registerThreadPool(registry, "metacat.event.pool", executor.getThreadPoolExecutor());
-        return executor;
+    public MetacatApplicationEventMulticaster applicationEventMulticaster(final Registry registry,
+                                                                          final MetacatProperties metacatProperties) {
+        return new MetacatApplicationEventMulticaster(registry, metacatProperties);
     }
 
     /**
-     * A multicast (async) event publisher to replace the synchronous one used by Spring via the ApplicationContext.
-     *
-     * @param taskExecutor The task executor to use
-     * @return The application event multicaster to use
+     * Default event listener factory.
+     * @return The application event multicaster to use.
      */
-    @Bean
-    public ApplicationEventMulticaster asyncEventMulticaster(final TaskExecutor taskExecutor) {
-        final SimpleApplicationEventMulticaster applicationEventMulticaster = new SimpleApplicationEventMulticaster();
-        applicationEventMulticaster.setTaskExecutor(taskExecutor);
-        return applicationEventMulticaster;
+    @Bean(AnnotationConfigUtils.EVENT_LISTENER_FACTORY_BEAN_NAME)
+    public EventListenerFactory eventListenerFactory() {
+        return new MetacatEventListenerFactory();
     }
 
     /**

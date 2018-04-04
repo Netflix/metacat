@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.main.services.notifications.sns;
 
+import com.google.common.base.Throwables;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.notifications.sns.SNSMessage;
 import com.netflix.metacat.common.server.monitoring.Metrics;
@@ -74,6 +75,12 @@ public class SNSNotificationMetric {
         this.counterHashMap.put(Metrics.CounterSNSNotificationPublishMessageSizeExceeded.getMetricName(),
             registry.counter(
                 registry.createId(Metrics.CounterSNSNotificationPublishMessageSizeExceeded.getMetricName())));
+        this.counterHashMap.put(Metrics.CounterSNSNotificationPartitionAdd.getMetricName(),
+            registry.counter(
+                registry.createId(Metrics.CounterSNSNotificationPartitionAdd.getMetricName())));
+        this.counterHashMap.put(Metrics.CounterSNSNotificationPublishFallback.getMetricName(),
+            registry.counter(
+                registry.createId(Metrics.CounterSNSNotificationPublishFallback.getMetricName())));
     }
 
     void counterIncrement(final String counterKey) {
@@ -95,6 +102,7 @@ public class SNSNotificationMetric {
         final Map<String, String> tags = new HashMap<>(name.parts());
         tags.putAll(Metrics.tagStatusFailureMap);
         this.registry.counter(this.registry.createId(counterKey).withTags(tags)).increment();
+        Throwables.propagate(e);
     }
 
     void recordTime(final SNSMessage<?> message, final String timeName) {

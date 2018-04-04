@@ -1,6 +1,8 @@
 package com.netflix.metacat.common.server.events
 
+import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.spectator.api.NoopRegistry
+import com.netflix.spectator.api.Registry
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationEvent
@@ -35,25 +37,33 @@ class MetacatEventBusIntegrationSpec extends Specification {
 
         @Bean
         MetacatApplicationEventMulticaster applicationEventMulticaster(
-            final ApplicationEventMulticaster asyncEventMulticaster
+            final Registry registry
         ) {
 
-            return factory.Spy(MetacatApplicationEventMulticaster, constructorArgs:[asyncEventMulticaster]);
+            return factory.Spy(MetacatApplicationEventMulticaster, constructorArgs:[registry, new MetacatProperties()]);
         }
 
         @Bean
-        ApplicationEventMulticaster asyncEventMulticaster() {
-            def multicaster = new SimpleApplicationEventMulticaster()
-            multicaster.setTaskExecutor(new SyncTaskExecutor())
-            return factory.Spy(multicaster)
+        Registry registry() {
+            return factory.Mock(Registry);
         }
 
         @Bean
         EventHandler eventHandler() {
             return factory.Mock(EventHandler);
         }
+
+        @Bean
+        AsyncEventHandler asyncEventHandler() {
+            return factory.Mock(AsyncEventHandler);
+        }
     }
     static class EventHandler {
+        @EventListener
+        public void post(ApplicationEvent event) {}
+    }
+    @AsyncListener
+    static class AsyncEventHandler {
         @EventListener
         public void post(ApplicationEvent event) {}
     }
@@ -64,22 +74,16 @@ class MetacatEventBusIntegrationSpec extends Specification {
     @Autowired
     MetacatApplicationEventMulticaster applicationEventMulticaster
     @Autowired
-    ApplicationEventMulticaster asyncEventMulticaster
-    @Autowired
     EventHandler eventHandler
+    @Autowired
+    AsyncEventHandler asyncEventHandler
     ApplicationEvent event = Mock(ApplicationEvent)
     def test() {
         when:
-        eventBus.postSync(event)
+        eventBus.post(event)
         then:
-        1 * applicationEventMulticaster.postSync(event)
-        0 * asyncEventMulticaster.multicastEvent(event)
+        1 * applicationEventMulticaster.post(event)
         1 * eventHandler.post(event)
-        when:
-        eventBus.postAsync(event)
-        then:
-        1 * applicationEventMulticaster.postAsync(event)
-        1 * asyncEventMulticaster.multicastEvent(event)
-        1 * eventHandler.post(event)
+        1 * asyncEventHandler.post(event)
     }
 }

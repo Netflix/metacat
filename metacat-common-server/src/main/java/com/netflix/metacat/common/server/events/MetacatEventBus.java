@@ -37,8 +37,8 @@ import javax.annotation.Nonnull;
 public class MetacatEventBus {
 
     private final MetacatApplicationEventMulticaster applicationEventMulticaster;
-    private final Counter eventAsyncCounter;
-    private final Counter eventSyncCounter;
+    private final Counter eventPublishCounter;
+
     /**
      * Constructor.
      *
@@ -50,29 +50,17 @@ public class MetacatEventBus {
         @Nonnull @NonNull final Registry registry
     ) {
         this.applicationEventMulticaster = applicationEventMulticaster;
-        this.eventAsyncCounter = registry.counter(Metrics.CounterEventAsync.getMetricName());
-        this.eventSyncCounter = registry.counter(Metrics.CounterEventSync.getMetricName());
+        this.eventPublishCounter = registry.counter(Metrics.CounterEventPublish.getMetricName());
     }
 
     /**
-     * Post event asynchronously.
+     * Post event.
      *
      * @param event event
      */
-    public void postAsync(final ApplicationEvent event) {
-        log.debug("Received request to post an event {} asynchronously", event);
-        this.eventAsyncCounter.increment();
-        this.applicationEventMulticaster.postAsync(event);
-    }
-
-    /**
-     * Post event synchronously.
-     *
-     * @param event event
-     */
-    public void postSync(final ApplicationEvent event) {
-        log.debug("Received request to post an event {} synchronously", event);
-        this.eventSyncCounter.increment();
-        this.applicationEventMulticaster.postSync(event);
+    public void post(final ApplicationEvent event) {
+        log.debug("Received request to post an event {}", event);
+        this.eventPublishCounter.increment();
+        this.applicationEventMulticaster.post(event);
     }
 }

@@ -68,6 +68,7 @@ public class NotificationsProperties {
             @Data
             public static class Table {
                 private String arn; // Default to null
+                private String fallbackArn; // Default to null
             }
 
             /**
@@ -79,6 +80,7 @@ public class NotificationsProperties {
             @Data
             public static class Partition {
                 private String arn; // Default to null
+                private String fallbackArn; // Default to null
                 private boolean enabled = true;
             }
         }

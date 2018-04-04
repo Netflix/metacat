@@ -118,19 +118,19 @@ public class MetacatServiceHelper {
             if (dto != null) {
                 partitionsSaveRequestDto.setPartitions(ImmutableList.of((PartitionDto) dto));
             }
-            this.eventBus.postSync(
+            this.eventBus.post(
                 new MetacatSaveTablePartitionPreEvent(name, metacatRequestContext, this, partitionsSaveRequestDto)
             );
         } else if (name.isViewDefinition()) {
-            this.eventBus.postSync(
+            this.eventBus.post(
                 new MetacatUpdateMViewPreEvent(name, metacatRequestContext, this, (TableDto) dto)
             );
         } else if (name.isTableDefinition()) {
-            this.eventBus.postSync(
+            this.eventBus.post(
                 new MetacatUpdateTablePreEvent(name, metacatRequestContext, this, (TableDto) dto, (TableDto) dto)
             );
         } else if (name.isDatabaseDefinition()) {
-            eventBus.postSync(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
+            eventBus.post(new MetacatUpdateDatabasePreEvent(name, metacatRequestContext, this));
         } else {
             throw new IllegalArgumentException(String.format("Invalid name %s", name));
         }
@@ -157,7 +157,7 @@ public class MetacatServiceHelper {
             }
             // This request neither added nor updated partitions
             final PartitionsSaveResponseDto partitionsSaveResponseDto = new PartitionsSaveResponseDto();
-            this.eventBus.postAsync(
+            this.eventBus.post(
                 new MetacatSaveTablePartitionPostEvent(
                     name,
                     metacatRequestContext,
@@ -173,7 +173,7 @@ public class MetacatServiceHelper {
                 this,
                 (TableDto) currentDto
             );
-            this.eventBus.postAsync(event);
+            this.eventBus.post(event);
         } else if (name.isTableDefinition()) {
             final MetacatUpdateTablePostEvent event = new MetacatUpdateTablePostEvent(
                 name,
@@ -182,9 +182,9 @@ public class MetacatServiceHelper {
                 (TableDto) oldDTo,
                 (TableDto) currentDto
             );
-            this.eventBus.postAsync(event);
+            this.eventBus.post(event);
         } else if (name.isDatabaseDefinition()) {
-            this.eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
+            this.eventBus.post(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
         } else {
             throw new IllegalArgumentException(String.format("Invalid name %s", name));
         }
@@ -205,19 +205,19 @@ public class MetacatServiceHelper {
         if (name.isPartitionDefinition()) {
             final PartitionsSaveRequestDto partitionsSaveRequestDto = new PartitionsSaveRequestDto();
             partitionsSaveRequestDto.setPartitionIdsForDeletes(Lists.newArrayList(name.getPartitionName()));
-            this.eventBus.postSync(
+            this.eventBus.post(
                 new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, partitionsSaveRequestDto)
             );
         } else if (name.isViewDefinition()) {
-            this.eventBus.postSync(
+            this.eventBus.post(
                 new MetacatDeleteMViewPreEvent(name, metacatRequestContext, this)
             );
         } else if (name.isTableDefinition()) {
-            this.eventBus.postSync(new MetacatDeleteTablePreEvent(name, metacatRequestContext, this));
+            this.eventBus.post(new MetacatDeleteTablePreEvent(name, metacatRequestContext, this));
         } else if (name.isDatabaseDefinition()) {
             final DatabaseDto dto = new DatabaseDto();
             dto.setName(name);
-            eventBus.postSync(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, this, dto));
+            eventBus.post(new MetacatDeleteDatabasePreEvent(name, metacatRequestContext, this, dto));
         } else {
             throw new IllegalArgumentException(String.format("Invalid name %s", name));
         }
@@ -234,7 +234,7 @@ public class MetacatServiceHelper {
         final MetacatRequestContext metacatRequestContext
     ) {
         if (name.isPartitionDefinition()) {
-            this.eventBus.postAsync(
+            this.eventBus.post(
                 new MetacatDeleteTablePartitionPostEvent(
                     name,
                     metacatRequestContext,
@@ -245,14 +245,14 @@ public class MetacatServiceHelper {
         } else if (name.isViewDefinition()) {
             final TableDto dto = new TableDto();
             dto.setName(name);
-            this.eventBus.postAsync(new MetacatDeleteMViewPostEvent(name, metacatRequestContext, this, dto));
+            this.eventBus.post(new MetacatDeleteMViewPostEvent(name, metacatRequestContext, this, dto));
         } else if (name.isTableDefinition()) {
             final TableDto dto = new TableDto();
             dto.setName(name);
-            this.eventBus.postAsync(new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, dto,
+            this.eventBus.post(new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, dto,
                 false));
         } else if (name.isDatabaseDefinition()) {
-            this.eventBus.postAsync(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
+            this.eventBus.post(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
         } else {
             throw new IllegalArgumentException(String.format("Invalid name %s", name));
         }
