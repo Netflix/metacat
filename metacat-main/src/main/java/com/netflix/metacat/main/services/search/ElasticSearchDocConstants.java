@@ -66,10 +66,15 @@ final class ElasticSearchDocConstants {
      * DEFINITION_METADATA_MODEL.
      */
     static final String DEFINITION_METADATA_MODEL = "model";
+    //TODO: remove after the data are fixed and copied to subjectAreas
     /**
      * DEFINITION_METADATA_SUBJECT_AREA.
      */
     static final String DEFINITION_METADATA_SUBJECT_AREA = "subject_area";
+    /**
+     * DEFINITION_METADATA_SUBJECT_AREAS.
+     */
+    static final String DEFINITION_METADATA_SUBJECT_AREAS = "subjectAreas";
     /**
      * DEFINITION_METADATA_DATA_CATEGORY.
      */
