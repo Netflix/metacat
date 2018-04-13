@@ -45,7 +45,8 @@ public class ElasticSearchDoc {
         ElasticSearchDocConstants.DEFINITION_METADATA_LIFECYCLE,
         ElasticSearchDocConstants.DEFINITION_METADATA_AUDIENCE,
         ElasticSearchDocConstants.DEFINITION_METADATA_MODEL,
-        ElasticSearchDocConstants.DEFINITION_METADATA_SUBJECT_AREA,
+        ElasticSearchDocConstants.DEFINITION_METADATA_SUBJECT_AREA, //TODO: remove after the data is moved
+        ElasticSearchDocConstants.DEFINITION_METADATA_SUBJECT_AREAS,
         ElasticSearchDocConstants.DEFINITION_METADATA_DATA_CATEGORY,
         ElasticSearchDocConstants.DEFINITION_METADATA_JOB,
         ElasticSearchDocConstants.DEFINITION_METADATA_TABLE_DESCRIPTION,
