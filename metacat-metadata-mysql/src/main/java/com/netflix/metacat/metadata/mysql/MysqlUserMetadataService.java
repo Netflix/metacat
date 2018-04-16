@@ -743,12 +743,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     final String definitionName = rs.getString("name");
                     final String data = rs.getString("data");
                     final DefinitionMetadataDto definitionMetadataDto = new DefinitionMetadataDto();
-                    final QualifiedName metadataName = QualifiedName.fromString(definitionName);
                     definitionMetadataDto.setName(QualifiedName.fromString(definitionName));
-                    //Apply business logic
-                    final ObjectNode node = metacatJson.parseJsonObject(data);
-                    this.metadataInterceptor.onRead(this, metadataName,
-                        node, GetMetadataInterceptorParameters.builder().hasMetadata(holder).build());
                     definitionMetadataDto.setDefinitionMetadata(metacatJson.parseJsonObject(data));
                     result.add(definitionMetadataDto);
                 }

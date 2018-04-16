@@ -126,7 +126,11 @@ public class MetadataController {
     }
 
     /**
-     * Returns the list of definition metadata.
+     * Returns the list of definition metadata. Client should be aware that
+     * this api does not apply the metadata read interceptor,
+     * it queries the original results from database. The definition metadata results from this API can
+     * be different from the table get API.
+     * TODO: we need to find a way to address the interceptor application or remove this API.
      *
      * @param sortBy         Sort the list by this value
      * @param sortOrder      Sorting order to use
