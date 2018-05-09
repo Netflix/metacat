@@ -22,8 +22,10 @@ import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.main.services.notifications.sns.SNSNotificationMetric;
 import com.netflix.metacat.main.services.notifications.sns.SNSNotificationServiceImpl;
+import com.netflix.metacat.main.services.notifications.sns.SNSNotificationServiceUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -59,10 +61,11 @@ public class SNSNotificationsConfig {
     /**
      * SNS Notification Publisher.
      *
-     * @param amazonSNS    The SNS client to use
-     * @param config       The system configuration abstraction to use
-     * @param objectMapper The object mapper to use
-     * @param snsNotificationMetric The sns notification metric
+     * @param amazonSNS                  The SNS client to use
+     * @param config                     The system configuration abstraction to use
+     * @param objectMapper               The object mapper to use
+     * @param snsNotificationMetric      The sns notification metric
+     * @param snsNotificationServiceUtil The SNS notification util
      * @return Configured Notification Service bean
      */
     @Bean
@@ -70,7 +73,8 @@ public class SNSNotificationsConfig {
         final AmazonSNS amazonSNS,
         final Config config,
         final ObjectMapper objectMapper,
-        final SNSNotificationMetric snsNotificationMetric
+        final SNSNotificationMetric snsNotificationMetric,
+        final SNSNotificationServiceUtil snsNotificationServiceUtil
     ) {
         final String tableArn = config.getSnsTopicTableArn();
         if (StringUtils.isEmpty(tableArn)) {
@@ -87,14 +91,27 @@ public class SNSNotificationsConfig {
 
         log.info("SNS notifications are enabled. Creating SNSNotificationServiceImpl bean.");
         return new SNSNotificationServiceImpl(amazonSNS,
-            tableArn, partitionArn, objectMapper, config, snsNotificationMetric);
+            tableArn, partitionArn, objectMapper, config, snsNotificationMetric, snsNotificationServiceUtil);
+    }
+
+    /**
+     * SNS Notification Service Util.
+     *
+     * @param userMetadataService user metadata service
+     * @return SNSNotificationServiceUtil
+     */
+    @Bean
+    public SNSNotificationServiceUtil snsNotificationServiceUtil(
+        final UserMetadataService userMetadataService
+    ) {
+        return new SNSNotificationServiceUtil(userMetadataService);
     }
 
     /**
      * SNS Notification Metric.
      *
      * @param registry registry for spectator
-     * @return  Notification Metric bean
+     * @return Notification Metric bean
      */
     @Bean
     public SNSNotificationMetric snsNotificationMetric(

@@ -24,7 +24,6 @@ import com.amazonaws.services.sns.model.PublishResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.diff.JsonDiff;
-import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.TableDto;
@@ -40,7 +39,6 @@ import com.netflix.metacat.common.dto.notifications.sns.payloads.UpdatePayload;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
-import com.netflix.metacat.common.server.events.MetacatEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionMetadataOnlyPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
@@ -54,8 +52,6 @@ import org.springframework.context.event.EventListener;
 import javax.annotation.Nullable;
 import javax.validation.constraints.Size;
 import java.util.UUID;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of the NotificationService using Amazon SNS.
@@ -65,25 +61,25 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class SNSNotificationServiceImpl implements NotificationService {
-    private static final String EXCEED_PARTITION_ID_ALLOWED_MAX_NUMBER = "Exceed partitionId allowed max number ";
-    private static final String PARTITION_ID_UNENABLED = "PartitionId attachment not enabled";
-    private static final String PARTITION_ID_ATTACHED = "PartitionId attached ";
     private final AmazonSNS client;
     private final String tableTopicArn;
     private final String partitionTopicArn;
     private final ObjectMapper mapper;
     private final Config config;
     private SNSNotificationMetric notificationMetric;
+    private SNSNotificationServiceUtil snsNotificationServiceUtil;
+
 
     /**
      * Constructor.
      *
-     * @param client             The SNS client to use to publish notifications
-     * @param tableTopicArn      The topic to publish table related notifications to
-     * @param partitionTopicArn  The topic to publish partition related notifications to
-     * @param mapper             The object mapper to use to convert objects to JSON strings
-     * @param config             The system config
-     * @param notificationMetric The SNS notification metric
+     * @param client                     The SNS client to use to publish notifications
+     * @param tableTopicArn              The topic to publish table related notifications to
+     * @param partitionTopicArn          The topic to publish partition related notifications to
+     * @param mapper                     The object mapper to use to convert objects to JSON strings
+     * @param config                     The system config
+     * @param notificationMetric         The SNS notification metric
+     * @param snsNotificationServiceUtil The SNS notification service util
      */
     public SNSNotificationServiceImpl(
         final AmazonSNS client,
@@ -91,7 +87,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
         @Size(min = 1) final String partitionTopicArn,
         final ObjectMapper mapper,
         final Config config,
-        final SNSNotificationMetric notificationMetric
+        final SNSNotificationMetric notificationMetric,
+        final SNSNotificationServiceUtil snsNotificationServiceUtil
     ) {
 
         this.client = client;
@@ -100,6 +97,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
         this.mapper = mapper;
         this.config = config;
         this.notificationMetric = notificationMetric;
+        this.snsNotificationServiceUtil = snsNotificationServiceUtil;
     }
 
     /**
@@ -115,10 +113,11 @@ public class SNSNotificationServiceImpl implements NotificationService {
         // Publish a global message stating how many partitions were updated for the table to the table topic
         final TablePartitionsUpdatePayload partitionsUpdatePayload;
         if (this.config.isSnsNotificationAttachPartitionIdsEnabled() && event.getPartitions() != null) {
-            partitionsUpdatePayload = createTablePartitionsUpdatePayload(event.getPartitions(), event, false);
+            partitionsUpdatePayload = this.snsNotificationServiceUtil.
+                createTablePartitionsUpdatePayload(event.getPartitions(), event);
         } else {
-            partitionsUpdatePayload = new TablePartitionsUpdatePayload(event.getPartitions().size(), 0,
-                Lists.newArrayList(), Lists.newArrayList(), PARTITION_ID_UNENABLED);
+            partitionsUpdatePayload = new TablePartitionsUpdatePayload(null, event.getPartitions().size(), 0,
+                SNSNotificationPartitionAddMsg.PARTITION_KEY_UNABLED.name());
         }
         final UpdateTablePartitionsMessage tableMessage = new UpdateTablePartitionsMessage(
             UUID.randomUUID().toString(),
@@ -130,6 +129,12 @@ public class SNSNotificationServiceImpl implements NotificationService {
             tableMessage, event.getName(),
             "Unable to publish table partition add notification",
             Metrics.CounterSNSNotificationTablePartitionAdd.getMetricName());
+        //publish the delete column key metric after publishing message
+        if (this.config.isSnsNotificationAttachPartitionIdsEnabled()) {
+                this.notificationMetric.recordPartitionLatestDeleteColumn(
+                    event.getName(), partitionsUpdatePayload.getLatestDeleteColumnValue(),
+                    partitionsUpdatePayload.getMessage());
+        }
         if (config.isSnsNotificationTopicPartitionEnabled()) {
             AddPartitionMessage message = null;
             for (final PartitionDto partition : event.getPartitions()) {
@@ -149,48 +154,6 @@ public class SNSNotificationServiceImpl implements NotificationService {
         }
     }
 
-    private TablePartitionsUpdatePayload createTablePartitionsUpdatePayload(
-        final List<PartitionDto> partitionDtos,
-        final MetacatEvent event,
-        final boolean deletePartition) {
-        final List<String> partitionIds;
-        final TablePartitionsUpdatePayload partitionsUpdatePayload;
-        final int maxPartIds = this.config.getSnsNotificationAttachPartitionIdMax();
-        if (partitionDtos.size() <= maxPartIds) {
-            partitionIds = partitionDtos
-                .stream().map(dto -> dto.getName().toString()).collect(Collectors.toList());
-            partitionsUpdatePayload = deletePartition ? new TablePartitionsUpdatePayload(
-                0,
-                partitionIds.size(),
-                Lists.newArrayList(),
-                partitionIds,
-                PARTITION_ID_ATTACHED + partitionIds.size())
-                : new TablePartitionsUpdatePayload(
-                partitionIds.size(),
-                0,
-                partitionIds,
-                Lists.newArrayList(),
-                PARTITION_ID_ATTACHED + partitionIds.size());
-
-        } else {
-            log.warn("Partition notification {} {} {} {} {}", event.getClass().getSimpleName(),
-                event.getName(), partitionDtos.size(), EXCEED_PARTITION_ID_ALLOWED_MAX_NUMBER, maxPartIds);
-            notificationMetric.getRegistry().counter(
-                Metrics.CounterSNSNotificationPublishPartitionIdNumberExceeded.getMetricName(),
-                event.getName().getCatalogName(),
-                event.getName().getDatabaseName(),
-                event.getName().getTableName(),
-                event.getClass().getSimpleName())
-                .increment();
-            partitionsUpdatePayload = new TablePartitionsUpdatePayload(
-                partitionDtos.size(),
-                0,
-                Lists.newArrayList(),
-                Lists.newArrayList(),
-                EXCEED_PARTITION_ID_ALLOWED_MAX_NUMBER + maxPartIds);
-        }
-        return partitionsUpdatePayload;
-    }
 
     /**
      * {@inheritDoc}
@@ -212,12 +175,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final long timestamp = event.getRequestContext().getTimestamp();
         final String requestId = event.getRequestContext().getId();
         final TablePartitionsUpdatePayload partitionsUpdatePayload;
-        if (this.config.isSnsNotificationAttachPartitionIdsEnabled() && event.getPartitions() != null) {
-            partitionsUpdatePayload = createTablePartitionsUpdatePayload(event.getPartitions(), event, true);
-        } else {
-            partitionsUpdatePayload = new TablePartitionsUpdatePayload(0, event.getPartitions().size(),
-                Lists.newArrayList(), Lists.newArrayList(), PARTITION_ID_UNENABLED);
-        }
+        partitionsUpdatePayload = new TablePartitionsUpdatePayload(null, 0, event.getPartitions().size(),
+            SNSNotificationPartitionAddMsg.PARTITION_KEY_UNABLED.name());
 
         final UpdateTablePartitionsMessage tableMessage = new UpdateTablePartitionsMessage(
             UUID.randomUUID().toString(),
@@ -393,7 +352,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
                         Metrics.CounterSNSNotificationPublishFallback.getMetricName());
                     publishNotification(fallbackArn, message, counterKey);
                 } else {
-                    throw  exception;
+                    throw exception;
                 }
             }
         } catch (Exception e) {

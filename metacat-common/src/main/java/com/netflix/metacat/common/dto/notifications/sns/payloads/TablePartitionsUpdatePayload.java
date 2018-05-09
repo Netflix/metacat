@@ -23,7 +23,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Information about how the partitions have changed when a table was updated.
@@ -35,32 +35,27 @@ import java.util.List;
 @ToString
 @EqualsAndHashCode
 public class TablePartitionsUpdatePayload {
+    private final String latestDeleteColumnValue;
     private final int numCreatedPartitions;
     private final int numDeletedPartitions;
-    private final List<String> createdPartitionIds;
-    private final List<String> deletedPartitionIds;
     private final String message;
 
     /**
      * Constructor.
-     *
+     * @param latestDeleteColumnValue The latest DeleteColumn value processed by microbot
      * @param numCreatedPartitions The number of partitions that were created for the table
      * @param numDeletedPartitions The number of partitions that were deleted from the table
-     * @param createdPartitionIds The partition ids that were created for the table
-     * @param deletedPartitionIds The partition ids that were deleted from the table
      * @param message The message about the partition ids.
      */
     @JsonCreator
     public TablePartitionsUpdatePayload(
+        @Nullable @JsonProperty("latestDeleteColumnValue") final String latestDeleteColumnValue,
         @JsonProperty("numCreatedPartitions") final int numCreatedPartitions,
         @JsonProperty("numDeletedPartitions") final int numDeletedPartitions,
-        @JsonProperty("createdPartitionIds") final List<String> createdPartitionIds,
-        @JsonProperty("deletedPartitionIds") final List<String> deletedPartitionIds,
         @JsonProperty("message") final String message) {
+        this.latestDeleteColumnValue = latestDeleteColumnValue;
         this.numCreatedPartitions = numCreatedPartitions;
         this.numDeletedPartitions = numDeletedPartitions;
-        this.createdPartitionIds = createdPartitionIds;
-        this.deletedPartitionIds = deletedPartitionIds;
         this.message = message;
     }
 }

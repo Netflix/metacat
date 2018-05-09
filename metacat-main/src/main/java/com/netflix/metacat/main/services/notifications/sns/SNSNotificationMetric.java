@@ -113,4 +113,18 @@ public class SNSNotificationMetric {
         );
         timer.record(this.registry.clock().wallTime() - message.getTimestamp(), TimeUnit.MILLISECONDS);
     }
+
+    void recordPartitionLatestDeleteColumn(final QualifiedName name,
+                                           @Nullable final String latestDeleteColumn,
+                                           final String message) {
+        final Map<String, String> tags = new HashMap<>(name.parts());
+        if (latestDeleteColumn != null) {
+            tags.put("latestDeleteColumn", latestDeleteColumn);
+        }
+        tags.put("message", message);
+        this.registry.counter(
+            this.registry.createId(Metrics.CounterSNSNotificationPartitionLatestDeleteColumnAdd.getMetricName())
+                .withTags(tags)).increment();
+
+    }
 }
