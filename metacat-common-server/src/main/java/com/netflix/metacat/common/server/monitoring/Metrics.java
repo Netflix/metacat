@@ -56,6 +56,7 @@ public enum Metrics {
      * Notifications.
      */
     CounterSNSNotificationPartitionAdd(Component.notifications, Type.counter, "partitionsAdd"),
+    CounterSNSNotificationPartitionLatestDeleteColumnAdd(Component.notifications, Type.counter, "partitionsLatestDeleteColumnAdd"),
     CounterSNSNotificationTablePartitionAdd(Component.notifications, Type.counter, "table.partitionsAdd"),
     CounterSNSNotificationPartitionDelete(Component.notifications, Type.counter, "partitionsDelete"),
     CounterSNSNotificationTablePartitionDelete(Component.notifications, Type.counter, "table.partitionsDelete"),

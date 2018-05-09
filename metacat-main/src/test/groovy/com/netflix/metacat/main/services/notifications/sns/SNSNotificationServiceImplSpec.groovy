@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.main.services.notifications.sns
 
-import com.amazonaws.handlers.AsyncHandler
 import com.amazonaws.services.sns.AmazonSNS
 import com.amazonaws.services.sns.model.NotFoundException
 import com.amazonaws.services.sns.model.PublishResult
@@ -28,6 +27,7 @@ import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.dto.notifications.sns.messages.*
 import com.netflix.metacat.common.server.events.*
 import com.netflix.metacat.common.server.properties.Config
+import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.spectator.api.*
 import spock.lang.Specification
 
@@ -63,6 +63,7 @@ class SNSNotificationServiceImplSpec extends Specification {
     def service;
     def clock = Mock(Clock)
     def result = Mock(PublishResult)
+    def userMetadata = Mock(UserMetadataService)
 
     def requestContext = MetacatRequestContext.builder().userName(UUID.randomUUID().toString())
         .clientAppName(UUID.randomUUID().toString())
@@ -84,11 +85,11 @@ class SNSNotificationServiceImplSpec extends Specification {
             this.partitionArn,
             this.mapper,
             this.config,
-            new SNSNotificationMetric(this.registry)
+            new SNSNotificationMetric(this.registry),
+            new SNSNotificationServiceUtil(userMetadata)
         )
         this.result.getMessageId() >> 'a'
     }
-
 
     def "Will Notify On Partition Creation"() {
         def partitions = Lists.newArrayList(
@@ -114,8 +115,8 @@ class SNSNotificationServiceImplSpec extends Specification {
         1 * this.client.publish(this.tableArn, _ as String) >> result
         8 * this.timer.record(_ as Long, _ as TimeUnit)
         1 * config.isSnsNotificationTopicPartitionEnabled() >> true
-        1 * config.isSnsNotificationAttachPartitionIdsEnabled() >> true
-        1 * config.getSnsNotificationAttachPartitionIdMax() >> 100
+        2 * config.isSnsNotificationAttachPartitionIdsEnabled() >> true
+        1 * this.userMetadata.getDefinitionMetadata(_) >> Optional.ofNullable(null)
     }
 
     def "Will Notify On Partition Deletion"() {
@@ -144,8 +145,6 @@ class SNSNotificationServiceImplSpec extends Specification {
         1 * this.client.publish(this.tableArn, _ as String) >> result
         12 * this.timer.record(_ as Long, _ as TimeUnit)
         1 * config.isSnsNotificationTopicPartitionEnabled() >> true
-        1 * config.isSnsNotificationAttachPartitionIdsEnabled() >> true
-        1 * config.getSnsNotificationAttachPartitionIdMax() >> 100
     }
 
     def "Will Notify On Table Creation"() {

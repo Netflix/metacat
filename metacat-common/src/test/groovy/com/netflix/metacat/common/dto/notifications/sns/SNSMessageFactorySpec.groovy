@@ -93,10 +93,9 @@ class SNSMessageFactorySpec extends Specification {
                 UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(),
                 new TablePartitionsUpdatePayload(
+                    UUID.randomUUID().toString(),
                     10,
                     15,
-                    new ArrayList<String>(),
-                    new ArrayList<String>(),
                     ""
                 )
             )
