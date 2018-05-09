@@ -27,14 +27,19 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
 import com.netflix.metacat.connector.jdbc.services.JdbcConnectorTableService;
+import com.netflix.metacat.connector.jdbc.services.JdbcConnectorUtils;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -47,6 +52,8 @@ import java.util.List;
 public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     private static final String COL_CREATED = "CREATED";
     private static final String COL_LAST_ALTERED = "LAST_ALTERED";
+    //only connect to DSE database in snowflakes
+    private static final String DSE = "DSE";
     private static final String SQL_GET_AUDIT_INFO
         = "select created, last_altered from information_schema.tables"
         + " where table_catalog=? and table_schema=? and table_name=?";
@@ -77,6 +84,7 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
 
     /**
      * Returns the snowflake represented name which is always uppercase.
+     *
      * @param name qualified name
      * @return qualified name
      */
@@ -141,12 +149,12 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     protected void setTableInfoDetails(final Connection connection, final TableInfo tableInfo) {
         final QualifiedName tableName = getSnowflakeName(tableInfo.getName());
         try (
-            final PreparedStatement statement = connection.prepareStatement(SQL_GET_AUDIT_INFO)
+            PreparedStatement statement = connection.prepareStatement(SQL_GET_AUDIT_INFO)
         ) {
             statement.setString(1, tableName.getDatabaseName());
             statement.setString(2, tableName.getDatabaseName());
             statement.setString(3, tableName.getTableName());
-            try (final ResultSet resultSet = statement.executeQuery()) {
+            try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     final AuditInfo auditInfo =
                         AuditInfo.builder().createdDate(resultSet.getDate(COL_CREATED))
@@ -157,5 +165,27 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
         } catch (final Exception ignored) {
             log.info("Ignoring. Error getting the audit info for table {}", tableName);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected ResultSet getTables(
+        @Nonnull @NonNull final Connection connection,
+        @Nonnull @NonNull final QualifiedName name,
+        @Nullable final QualifiedName prefix
+    ) throws SQLException {
+        final String schema = name.getDatabaseName();
+        final DatabaseMetaData metaData = connection.getMetaData();
+        return prefix == null || StringUtils.isEmpty(prefix.getTableName())
+            ? metaData.getTables(DSE, schema, null, TABLE_TYPES)
+            : metaData
+            .getTables(
+                DSE,
+                schema,
+                prefix.getTableName() + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH,
+                TABLE_TYPES
+            );
     }
 }
