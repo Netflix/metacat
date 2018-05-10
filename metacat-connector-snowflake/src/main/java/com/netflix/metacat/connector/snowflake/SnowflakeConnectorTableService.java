@@ -17,7 +17,6 @@
  */
 package com.netflix.metacat.connector.snowflake;
 
-import com.google.inject.Inject;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
@@ -34,6 +33,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -52,26 +53,27 @@ import java.util.List;
 public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     private static final String COL_CREATED = "CREATED";
     private static final String COL_LAST_ALTERED = "LAST_ALTERED";
-    //only connect to DSE database in snowflakes
-    private static final String DSE = "DSE";
     private static final String SQL_GET_AUDIT_INFO
         = "select created, last_altered from information_schema.tables"
         + " where table_catalog=? and table_schema=? and table_name=?";
-
+    private final String database;
     /**
      * Constructor.
      *
      * @param dataSource      the datasource to use to connect to the database
      * @param typeConverter   The type converter to use from the SQL type to Metacat canonical type
      * @param exceptionMapper The exception mapper to use
+     * @param database database name to connect
      */
     @Inject
     public SnowflakeConnectorTableService(
         final DataSource dataSource,
         final JdbcTypeConverter typeConverter,
-        final JdbcExceptionMapper exceptionMapper
+        final JdbcExceptionMapper exceptionMapper,
+        @Named("database") final String database
     ) {
         super(dataSource, typeConverter, exceptionMapper);
+        this.database = database;
     }
 
     /**
@@ -179,10 +181,10 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
         final String schema = name.getDatabaseName();
         final DatabaseMetaData metaData = connection.getMetaData();
         return prefix == null || StringUtils.isEmpty(prefix.getTableName())
-            ? metaData.getTables(DSE, schema, null, TABLE_TYPES)
+            ? metaData.getTables(this.database, schema, null, TABLE_TYPES)
             : metaData
             .getTables(
-                DSE,
+                this.database,
                 schema,
                 prefix.getTableName() + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH,
                 TABLE_TYPES

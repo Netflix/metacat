@@ -47,7 +47,7 @@ class SnowflakeConnectorTableServiceSpec extends Specification {
     def dataSource = Mock(DataSource)
     def typeConverter = Mock(JdbcTypeConverter)
     def exceptionMapper = Mock(JdbcExceptionMapper)
-    def service = new SnowflakeConnectorTableService(this.dataSource, this.typeConverter, this.exceptionMapper)
+    def service = new SnowflakeConnectorTableService(this.dataSource, this.typeConverter, this.exceptionMapper, "DSE")
 
     def "Can delete an uppercase table"() {
         def connection = Mock(Connection)
