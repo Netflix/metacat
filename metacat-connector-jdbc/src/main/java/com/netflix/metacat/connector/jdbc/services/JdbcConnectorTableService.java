@@ -56,7 +56,6 @@ import java.util.List;
 @Slf4j
 @Getter
 public class JdbcConnectorTableService implements ConnectorTableService {
-
     protected static final String[] TABLE_TYPES = {"TABLE", "VIEW"};
     static final String[] TABLE_TYPE = {"TABLE"};
     private static final String EMPTY = "";
@@ -154,10 +153,12 @@ public class JdbcConnectorTableService implements ConnectorTableService {
 
     /**
      * Set the table info details, if any.
+     *
      * @param connection db connection
-     * @param tableInfo table info
+     * @param tableInfo  table info
      */
-    protected void setTableInfoDetails(final Connection connection, final TableInfo tableInfo) { }
+    protected void setTableInfoDetails(final Connection connection, final TableInfo tableInfo) {
+    }
 
     /**
      * {@inheritDoc}
@@ -198,7 +199,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         try (Connection connection = this.dataSource.getConnection()) {
             connection.setSchema(database);
             final List<QualifiedName> names = Lists.newArrayList();
-            try (ResultSet tables = this.getTables(connection, name, prefix)) {
+            try (ResultSet tables = this.getTables(connection, name, prefix, null)) {
                 while (tables.next()) {
                     names.add(QualifiedName.ofTable(catalog, database, tables.getString("TABLE_NAME")));
                 }
@@ -272,8 +273,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         try (Connection connection = this.dataSource.getConnection()) {
             final String databaseName = name.getDatabaseName();
             connection.setSchema(databaseName);
-            final DatabaseMetaData metaData = connection.getMetaData();
-            final ResultSet rs = metaData.getTables(databaseName, databaseName, name.getTableName(), TABLE_TYPE);
+            final ResultSet rs = getTables(connection, name, null, name.getTableName());
             if (rs.next()) {
                 result = true;
             }
@@ -287,21 +287,23 @@ public class JdbcConnectorTableService implements ConnectorTableService {
      * Get the tables. See {@link java.sql.DatabaseMetaData#getTables(String, String, String, String[]) getTables} for
      * expected format of the ResultSet columns.
      *
-     * @param connection The database connection to use
-     * @param name       The qualified name of the database to get tables for
-     * @param prefix     An optional database table name prefix to search for
+     * @param connection       The database connection to use
+     * @param name             The qualified name of the database to get tables for
+     * @param prefix           An optional database table name prefix to search for
+     * @param tableNamePattern The table name pattern
      * @return The result set with columns as described in the getTables method from java.sql.DatabaseMetaData
      * @throws SQLException on query error
      */
     protected ResultSet getTables(
         @Nonnull @NonNull final Connection connection,
         @Nonnull @NonNull final QualifiedName name,
-        @Nullable final QualifiedName prefix
+        @Nullable final QualifiedName prefix,
+        @Nullable final String tableNamePattern
     ) throws SQLException {
         final String database = name.getDatabaseName();
         final DatabaseMetaData metaData = connection.getMetaData();
         return prefix == null || StringUtils.isEmpty(prefix.getTableName())
-            ? metaData.getTables(database, database, null, TABLE_TYPES)
+            ? metaData.getTables(database, database, tableNamePattern, TABLE_TYPES)
             : metaData
             .getTables(
                 database,
@@ -413,7 +415,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     /**
      * Get the SQL for dropping the given table.
      *
-     * @param name The fully qualified name of the table
+     * @param name           The fully qualified name of the table
      * @param finalTableName The final table name that should be dropped
      * @return The SQL to execute to drop the table
      */
