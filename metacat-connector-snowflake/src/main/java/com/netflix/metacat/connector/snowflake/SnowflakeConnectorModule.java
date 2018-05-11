@@ -41,7 +41,6 @@ import java.util.Map;
  */
 public class SnowflakeConnectorModule extends AbstractModule {
     private static final String DATABASE_KEY = "metacat.snowflake.database";
-    private static final String DSE = "DSE";
     private final String catalogShardName;
     private final Map<String, String> configuration;
     private final String database;
@@ -59,7 +58,7 @@ public class SnowflakeConnectorModule extends AbstractModule {
     ) {
         this.catalogShardName = catalogShardName;
         this.configuration = configuration;
-        this.database = configuration.getOrDefault(DATABASE_KEY, DSE);
+        this.database = configuration.getOrDefault(DATABASE_KEY, "");
     }
 
     /**
