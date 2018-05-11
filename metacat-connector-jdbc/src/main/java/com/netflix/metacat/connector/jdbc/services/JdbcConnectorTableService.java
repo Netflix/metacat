@@ -57,7 +57,7 @@ import java.util.List;
 @Getter
 public class JdbcConnectorTableService implements ConnectorTableService {
 
-    static final String[] TABLE_TYPES = {"TABLE", "VIEW"};
+    protected static final String[] TABLE_TYPES = {"TABLE", "VIEW"};
     static final String[] TABLE_TYPE = {"TABLE"};
     private static final String EMPTY = "";
     private static final String COMMA_SPACE = ", ";
