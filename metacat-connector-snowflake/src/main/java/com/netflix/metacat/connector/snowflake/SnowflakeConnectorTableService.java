@@ -34,7 +34,6 @@ import org.apache.commons.lang3.StringUtils;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -56,24 +55,20 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     private static final String SQL_GET_AUDIT_INFO
         = "select created, last_altered from information_schema.tables"
         + " where table_catalog=? and table_schema=? and table_name=?";
-    private final String database;
     /**
      * Constructor.
      *
      * @param dataSource      the datasource to use to connect to the database
      * @param typeConverter   The type converter to use from the SQL type to Metacat canonical type
      * @param exceptionMapper The exception mapper to use
-     * @param database database name to connect
      */
     @Inject
     public SnowflakeConnectorTableService(
         final DataSource dataSource,
         final JdbcTypeConverter typeConverter,
-        final JdbcExceptionMapper exceptionMapper,
-        @Named("database") final String database
+        final JdbcExceptionMapper exceptionMapper
     ) {
         super(dataSource, typeConverter, exceptionMapper);
-        this.database = database;
     }
 
     /**
@@ -176,15 +171,16 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     protected ResultSet getTables(
         @Nonnull @NonNull final Connection connection,
         @Nonnull @NonNull final QualifiedName name,
-        @Nullable final QualifiedName prefix
+        @Nullable final QualifiedName prefix,
+        @Nullable final String tablePattern
     ) throws SQLException {
         final String schema = name.getDatabaseName();
         final DatabaseMetaData metaData = connection.getMetaData();
         return prefix == null || StringUtils.isEmpty(prefix.getTableName())
-            ? metaData.getTables(this.database, schema, null, TABLE_TYPES)
+            ? metaData.getTables(connection.getCatalog(), schema, tablePattern, TABLE_TYPES)
             : metaData
             .getTables(
-                this.database,
+                connection.getCatalog(),
                 schema,
                 prefix.getTableName() + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH,
                 TABLE_TYPES

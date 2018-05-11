@@ -19,7 +19,6 @@ package com.netflix.metacat.connector.snowflake;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
-import com.google.inject.name.Names;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
@@ -40,10 +39,8 @@ import java.util.Map;
  * @since 1.2.0
  */
 public class SnowflakeConnectorModule extends AbstractModule {
-    private static final String DATABASE_KEY = "metacat.snowflake.database";
     private final String catalogShardName;
     private final Map<String, String> configuration;
-    private final String database;
 
     /**
      * Constructor.
@@ -58,7 +55,6 @@ public class SnowflakeConnectorModule extends AbstractModule {
     ) {
         this.catalogShardName = catalogShardName;
         this.configuration = configuration;
-        this.database = configuration.getOrDefault(DATABASE_KEY, "");
     }
 
     /**
@@ -66,7 +62,6 @@ public class SnowflakeConnectorModule extends AbstractModule {
      */
     @Override
     protected void configure() {
-        this.bind(String.class).annotatedWith(Names.named("database")).toInstance(this.database);
         this.bind(DataSource.class).toInstance(DataSourceManager.get()
             .load(this.catalogShardName, this.configuration).get(this.catalogShardName));
         this.bind(JdbcTypeConverter.class).to(SnowflakeTypeConverter.class).in(Scopes.SINGLETON);
