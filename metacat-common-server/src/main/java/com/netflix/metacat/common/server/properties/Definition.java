@@ -55,7 +55,7 @@ public class Definition {
          */
         @lombok.Data
         public static class Delete {
-            private boolean enableForTable;
+            private boolean enableForTable = true;
             private String enableDeleteForQualifiedNames;
             private Set<QualifiedName> enableDeleteForQualifiedNamesSet;
 
@@ -66,7 +66,7 @@ public class Definition {
              */
             @JsonIgnore
             public Set<QualifiedName> getQualifiedNamesEnabledForDelete() {
-                if (enableDeleteForQualifiedNamesSet == null) {
+                if (enableDeleteForQualifiedNamesSet ==  null) {
                     enableDeleteForQualifiedNamesSet =
                         PropertyUtils.delimitedStringsToQualifiedNamesSet(this.enableDeleteForQualifiedNames, ',');
                 }
