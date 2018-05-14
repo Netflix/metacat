@@ -269,6 +269,60 @@ class MetacatSmokeSpec extends Specification {
         'invalid-catalog'               | 'smoke_db1'  | 'z'                 | true   | false   | MetacatNotFoundException.class
     }
 
+    def "Test create/delete table for #catalogName/#databaseName/#tableName not delete usermetadata"() {
+        given:
+        def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
+        expect:
+        try {
+            try {api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+            } catch (Exception ignored) {
+            }
+
+            def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'amajumdar', uri)
+            if (!setUri) {
+                tableDto.getSerde().setUri(null)
+            }
+            if(setNull) {
+                tableDto.getSerde().setInputFormat(null)
+                tableDto.getSerde().setOutputFormat(null)
+                tableDto.getSerde().setSerializationLib(null)
+            }
+            tableDto.getDefinitionMetadata().set("hive", metacatJson.parseJsonObject('{"objectField": {}}'))
+            api.createTable(catalogName, databaseName, tableName, tableDto)
+            error == null
+        } catch (Exception e) {
+            e.class == error
+        }
+
+        if (!error) {
+            api.deleteTable(catalogName, databaseName, tableName)
+            //create table again
+            def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'amajumdar', uri)
+            if (!setUri) {
+                tableDto.getSerde().setUri(null)
+            }
+            if(setNull) {
+                tableDto.getSerde().setInputFormat(null)
+                tableDto.getSerde().setOutputFormat(null)
+                tableDto.getSerde().setSerializationLib(null)
+            }
+            api.createTable(catalogName, databaseName, tableName, tableDto)
+            def table2 = api.getTable(catalogName, databaseName, tableName, true, true, false)
+            assert table2.getDefinitionMetadata() != null
+            assert table2.getDefinitionMetadata().get("hive").get("objectField") !=null
+            assert table2.getDefinitionMetadata().get("hive").size() == 2
+
+        }
+        cleanup:
+        if (!error) {
+            api.deleteTable(catalogName, databaseName, tableName)
+        }
+
+        where:
+        catalogName                     | databaseName | tableName           | setUri | setNull | error
+        'embedded-fast-hive-metastore'  | 'fsmoke_db2' | 'test_create_table' | true   | false   | null
+    }
+
     @Unroll
     def "Test create/update iceberg table"() {
         given:

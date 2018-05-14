@@ -128,7 +128,7 @@ public class TableServiceImpl implements TableService {
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for table {}", name);
             final long start = registry.clock().wallTime();
-            userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, false);
+            userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
             final long duration = registry.clock().wallTime() - start;
             log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
             registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
