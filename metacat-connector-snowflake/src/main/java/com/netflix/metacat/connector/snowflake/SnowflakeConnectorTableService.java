@@ -55,6 +55,7 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     private static final String SQL_GET_AUDIT_INFO
         = "select created, last_altered from information_schema.tables"
         + " where table_catalog=? and table_schema=? and table_name=?";
+
     /**
      * Constructor.
      *
@@ -130,6 +131,13 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
                        @Nonnull final QualifiedName newName) {
         super.rename(context, getSnowflakeName(oldName), getSnowflakeName(newName));
     }
+    
+    @Override
+    protected Connection getConnection(@Nonnull @NonNull final String schema) throws SQLException {
+        final Connection connection = this.dataSource.getConnection();
+        connection.setSchema(connection.getCatalog());
+        return connection;
+    }
 
     /**
      * {@inheritDoc}
@@ -137,6 +145,19 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     @Override
     public boolean exists(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         return super.exists(context, getSnowflakeName(name));
+    }
+
+    @Override
+    protected ResultSet getColumns(
+        @Nonnull @NonNull final Connection connection,
+        @Nonnull @NonNull final QualifiedName name
+    ) throws SQLException {
+        return connection.getMetaData().getColumns(
+            connection.getCatalog(),
+            name.getDatabaseName(),
+            name.getTableName(),
+            JdbcConnectorUtils.MULTI_CHARACTER_SEARCH
+        );
     }
 
     /**
