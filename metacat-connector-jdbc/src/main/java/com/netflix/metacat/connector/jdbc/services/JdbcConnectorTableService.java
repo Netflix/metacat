@@ -65,9 +65,9 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     private static final char LEFT_PAREN = '(';
     private static final char RIGHT_PAREN = ')';
     private static final char SPACE = ' ';
-    private final DataSource dataSource;
-    private final JdbcTypeConverter typeConverter;
+    protected final DataSource dataSource;
     private final JdbcExceptionMapper exceptionMapper;
+    private final JdbcTypeConverter typeConverter;
 
     /**
      * Constructor.
@@ -95,8 +95,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         final String databaseName = name.getDatabaseName();
         final String tableName = name.getTableName();
         log.debug("Attempting to delete table {} from database {} for request {}", tableName, databaseName, context);
-        try (Connection connection = this.dataSource.getConnection()) {
-            connection.setSchema(databaseName);
+        try (Connection connection = this.getConnection(name.getDatabaseName())) {
             JdbcConnectorUtils.executeUpdate(connection, this.getDropTableSql(name, tableName));
             log.debug("Deleted table {} from database {} for request {}", tableName, databaseName, context);
         } catch (final SQLException se) {
@@ -111,9 +110,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     public TableInfo get(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         log.debug("Beginning to get table metadata for qualified name {} for request {}", name, context);
 
-        try (Connection connection = this.dataSource.getConnection()) {
-            final String database = name.getDatabaseName();
-            connection.setSchema(database);
+        try (Connection connection = this.getConnection(name.getDatabaseName())) {
             final ImmutableList.Builder<FieldInfo> fields = ImmutableList.builder();
             try (ResultSet columns = this.getColumns(connection, name)) {
                 while (columns.next()) {
@@ -196,8 +193,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         final String catalog = name.getCatalogName();
         final String database = name.getDatabaseName();
 
-        try (Connection connection = this.dataSource.getConnection()) {
-            connection.setSchema(database);
+        try (Connection connection = this.getConnection(database)) {
             final List<QualifiedName> names = Lists.newArrayList();
             try (ResultSet tables = this.getTables(connection, name, prefix, null)) {
                 while (tables.next()) {
@@ -248,7 +244,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
                 "Database names must match and they are " + oldDatabaseName + " and " + newDatabaseName
             );
         }
-        try (Connection connection = this.dataSource.getConnection()) {
+        try (Connection connection = this.getConnection(oldDatabaseName)) {
             connection.setSchema(oldDatabaseName);
             JdbcConnectorUtils.executeUpdate(
                 connection,
@@ -265,6 +261,12 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         } catch (final SQLException se) {
             throw this.exceptionMapper.toConnectorException(se, oldName);
         }
+    }
+
+    protected Connection getConnection(@Nonnull @NonNull final String schema) throws SQLException {
+        final Connection connection = this.dataSource.getConnection();
+        connection.setSchema(schema);
+        return connection;
     }
 
     @Override
@@ -398,7 +400,6 @@ public class JdbcConnectorTableService implements ConnectorTableService {
 
     /**
      * Build the SQL for renaming a table out of the components provided. SQL will be executed.
-     *
      * @param oldName           The fully qualified name for the current table
      * @param finalOldTableName The string for what the current table should be called in the sql
      * @param finalNewTableName The string for what the new name fo the table should be in the sql

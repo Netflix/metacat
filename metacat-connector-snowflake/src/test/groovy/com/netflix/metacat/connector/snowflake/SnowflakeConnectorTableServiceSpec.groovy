@@ -63,7 +63,8 @@ class SnowflakeConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.setSchema(database)
+        1 * connection.getCatalog() >> "dse"
+        1 * connection.setSchema(_)
         1 * statement.executeUpdate(
             "DROP TABLE " + table
         )
@@ -83,7 +84,8 @@ class SnowflakeConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
-        1 * connection.setSchema(database)
+        1 * connection.getCatalog() >> "dse"
+        1 * connection.setSchema(_)
         1 * statement.executeUpdate(
             "DROP TABLE " + table
         )
@@ -112,6 +114,8 @@ class SnowflakeConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
+        1 * connection.getCatalog() >> "dse"
+        2 * connection.setSchema(_)
         1 * statement.executeUpdate(
             "ALTER TABLE C RENAME TO D"
         )
@@ -129,6 +133,8 @@ class SnowflakeConnectorTableServiceSpec extends Specification {
         then:
         1 * this.dataSource.getConnection() >> connection
         1 * connection.createStatement() >> statement
+        1 * connection.getCatalog() >> "dse"
+        2 * connection.setSchema(_)
         1 * statement.executeUpdate(
             "ALTER TABLE C RENAME TO D"
         )
