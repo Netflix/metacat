@@ -195,7 +195,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
 
         try (Connection connection = this.getConnection(database)) {
             final List<QualifiedName> names = Lists.newArrayList();
-            try (ResultSet tables = this.getTables(connection, name, prefix, null)) {
+            try (ResultSet tables = this.getTables(connection, name, prefix)) {
                 while (tables.next()) {
                     names.add(QualifiedName.ofTable(catalog, database, tables.getString("TABLE_NAME")));
                 }
@@ -275,7 +275,8 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         try (Connection connection = this.dataSource.getConnection()) {
             final String databaseName = name.getDatabaseName();
             connection.setSchema(databaseName);
-            final ResultSet rs = getTables(connection, name, null, name.getTableName());
+            final DatabaseMetaData metaData = connection.getMetaData();
+            final ResultSet rs = metaData.getTables(databaseName, databaseName, name.getTableName(), TABLE_TYPE);
             if (rs.next()) {
                 result = true;
             }
@@ -292,20 +293,18 @@ public class JdbcConnectorTableService implements ConnectorTableService {
      * @param connection       The database connection to use
      * @param name             The qualified name of the database to get tables for
      * @param prefix           An optional database table name prefix to search for
-     * @param tableNamePattern The table name pattern
      * @return The result set with columns as described in the getTables method from java.sql.DatabaseMetaData
      * @throws SQLException on query error
      */
     protected ResultSet getTables(
         @Nonnull @NonNull final Connection connection,
         @Nonnull @NonNull final QualifiedName name,
-        @Nullable final QualifiedName prefix,
-        @Nullable final String tableNamePattern
+        @Nullable final QualifiedName prefix
     ) throws SQLException {
         final String database = name.getDatabaseName();
         final DatabaseMetaData metaData = connection.getMetaData();
         return prefix == null || StringUtils.isEmpty(prefix.getTableName())
-            ? metaData.getTables(database, database, tableNamePattern, TABLE_TYPES)
+            ? metaData.getTables(database, database, null, TABLE_TYPES)
             : metaData
             .getTables(
                 database,

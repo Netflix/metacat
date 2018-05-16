@@ -131,7 +131,7 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
                        @Nonnull final QualifiedName newName) {
         super.rename(context, getSnowflakeName(oldName), getSnowflakeName(newName));
     }
-    
+
     @Override
     protected Connection getConnection(@Nonnull @NonNull final String schema) throws SQLException {
         final Connection connection = this.dataSource.getConnection();
@@ -192,13 +192,12 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     protected ResultSet getTables(
         @Nonnull @NonNull final Connection connection,
         @Nonnull @NonNull final QualifiedName name,
-        @Nullable final QualifiedName prefix,
-        @Nullable final String tablePattern
+        @Nullable final QualifiedName prefix
     ) throws SQLException {
         final String schema = name.getDatabaseName();
         final DatabaseMetaData metaData = connection.getMetaData();
         return prefix == null || StringUtils.isEmpty(prefix.getTableName())
-            ? metaData.getTables(connection.getCatalog(), schema, tablePattern, TABLE_TYPES)
+            ? metaData.getTables(connection.getCatalog(), schema, null, TABLE_TYPES)
             : metaData
             .getTables(
                 connection.getCatalog(),
