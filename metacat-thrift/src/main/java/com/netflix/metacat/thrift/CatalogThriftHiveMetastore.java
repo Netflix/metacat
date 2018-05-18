@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.DatabaseCreateRequestDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.FieldDto;
 import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
@@ -84,6 +85,7 @@ import org.apache.hadoop.hive.metastore.api.HeartbeatTxnRangeResponse;
 import org.apache.hadoop.hive.metastore.api.HiveObjectPrivilege;
 import org.apache.hadoop.hive.metastore.api.HiveObjectRef;
 import org.apache.hadoop.hive.metastore.api.Index;
+import org.apache.hadoop.hive.metastore.api.InvalidInputException;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.LockRequest;
@@ -96,6 +98,7 @@ import org.apache.hadoop.hive.metastore.api.OpenTxnRequest;
 import org.apache.hadoop.hive.metastore.api.OpenTxnsResponse;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.PartitionEventType;
+import org.apache.hadoop.hive.metastore.api.PartitionListComposingSpec;
 import org.apache.hadoop.hive.metastore.api.PartitionSpec;
 import org.apache.hadoop.hive.metastore.api.PartitionsByExprRequest;
 import org.apache.hadoop.hive.metastore.api.PartitionsByExprResult;
@@ -117,10 +120,13 @@ import org.apache.hadoop.hive.metastore.api.TableStatsResult;
 import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
 import org.apache.hadoop.hive.metastore.api.Type;
 import org.apache.hadoop.hive.metastore.api.UnlockRequest;
+import org.apache.hadoop.hive.metastore.partition.spec.PartitionSpecProxy;
+import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -255,7 +261,18 @@ public class CatalogThriftHiveMetastore extends FacebookBase
 
     @Override
     public int add_partitions_pspec(final List<PartitionSpec> newParts) throws TException {
-        throw unimplemented("add_partitions_pspec", new Object[]{newParts});
+        if (newParts == null || newParts.isEmpty()) {
+            return 0;
+        }
+        final String dbName = newParts.get(0).getDbName();
+        final String tableName = newParts.get(0).getTableName();
+        return requestWrapper("add_partition", new Object[]{dbName, tableName}, () -> {
+            final PartitionSpecProxy partitionSpecProxy = PartitionSpecProxy.Factory.get(newParts);
+            final PartitionSpecProxy.PartitionIterator partitionIterator = partitionSpecProxy.getPartitionIterator();
+            final List<Partition> partitions = addPartitionsCore(dbName, tableName,
+                Lists.newArrayList(partitionIterator), false);
+            return partitions.size();
+        });
     }
 
     @Override
@@ -295,7 +312,15 @@ public class CatalogThriftHiveMetastore extends FacebookBase
      */
     @Override
     public void alter_database(final String dbname, final Database db) throws TException {
-        throw unimplemented("alter_database", new Object[]{dbname, db});
+        requestWrapper("update_database", new Object[]{db}, () -> {
+            if (dbname == null || db == null) {
+                throw new InvalidInputException("Invalid database request");
+            }
+            final DatabaseCreateRequestDto dto = new DatabaseCreateRequestDto();
+            dto.setMetadata(db.getParameters());
+            v1.updateDatabase(catalogName, normalizeIdentifier(dbname), dto);
+            return null;
+        });
     }
 
     /**
@@ -512,7 +537,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     public void create_database(final Database database) throws TException {
         requestWrapper("create_database", new Object[]{database}, () -> {
             final String dbName = normalizeIdentifier(database.getName());
-            v1.createDatabase(catalogName, dbName, null);
+            final DatabaseCreateRequestDto dto = new DatabaseCreateRequestDto();
+            dto.setMetadata(database.getParameters());
+            v1.createDatabase(catalogName, dbName, dto);
             return null;
         });
     }
@@ -592,7 +619,10 @@ public class CatalogThriftHiveMetastore extends FacebookBase
      */
     @Override
     public void drop_database(final String name, final boolean deleteData, final boolean cascade) throws TException {
-        throw unimplemented("drop_database", new Object[]{name, deleteData, cascade});
+        requestWrapper("drop_database", new Object[]{name}, () -> {
+            v1.deleteDatabase(catalogName, name);
+            return null;
+        });
     }
 
     /**
@@ -976,7 +1006,29 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     public List<PartitionSpec> get_part_specs_by_filter(final String dbName, final String tblName,
                                                         final String filter, final int maxParts)
         throws TException {
-        throw unimplemented("get_part_specs_by_filter", new Object[]{dbName, tblName, filter, maxParts});
+        //TODO: Handle the use case of grouping
+        return requestWrapper("get_partitions_pspec", new Object[]{dbName, tblName, filter, maxParts}, () -> {
+            final String databaseName = normalizeIdentifier(dbName);
+            final String tableName = normalizeIdentifier(tblName);
+            final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
+
+            final List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, dbName, tblName,
+                filter, null,
+                null, null, maxParts, false);
+            final List<Partition> partitions = Lists.newArrayListWithCapacity(metacatPartitions.size());
+            for (PartitionDto partition : metacatPartitions) {
+                partitions.add(hiveConverters.metacatToHivePartition(partition, tableDto));
+            }
+
+            final PartitionSpec pSpec = new PartitionSpec();
+            pSpec.setPartitionList(new PartitionListComposingSpec(partitions));
+            pSpec.setDbName(dbName);
+            pSpec.setTableName(tblName);
+            if (tableDto != null && tableDto.getSerde() != null) {
+                pSpec.setRootPath(tableDto.getSerde().getUri());
+            }
+            return Arrays.asList(pSpec);
+        });
     }
 
     /**
@@ -1095,18 +1147,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     public List<Partition> get_partitions(final String dbName, final String tblName, final short maxParts)
         throws TException {
         return requestWrapper("get_partitions", new Object[]{dbName, tblName, maxParts}, () -> {
-            final String databaseName = normalizeIdentifier(dbName);
-            final String tableName = normalizeIdentifier(tblName);
-            final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
-
-            final Integer maxValues = maxParts > 0 ? Short.toUnsignedInt(maxParts) : null;
-            final List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, dbName, tblName, null, null,
-                null, null, maxValues, false);
-            final List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
-            for (PartitionDto partition : metacatPartitions) {
-                result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
-            }
-            return result;
+            return getPartitionsByFilter(dbName, tblName, null, maxParts);
         });
     }
 
@@ -1115,7 +1156,21 @@ public class CatalogThriftHiveMetastore extends FacebookBase
      */
     @Override
     public PartitionsByExprResult get_partitions_by_expr(final PartitionsByExprRequest req) throws TException {
-        throw unimplemented("get_partitions_by_expr", new Object[]{req});
+        return requestWrapper("get_partitions_by_expr", new Object[]{req},
+            () -> {
+                String filter = null;
+                if (req.getExpr() != null) {
+                    filter = Utilities.deserializeExpressionFromKryo(req.getExpr()).getExprString();
+                }
+                if (req.getExpr() == null || filter != null) {
+                    //TODO: We need to handle the case for 'hasUnknownPartitions'
+                    final List<Partition> partitions =
+                        getPartitionsByFilter(req.getDbName(), req.getTblName(), filter, req.getMaxParts());
+                    return new PartitionsByExprResult(partitions, false);
+                } else {
+                    throw new MetaException("Failed to deserialize expression - ExprNodeDesc not present");
+                }
+            });
     }
 
     /**
@@ -1127,20 +1182,25 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         throws TException {
         return requestWrapper("get_partitions_by_filter", new Object[]{dbName, tblName, filter, maxParts},
             () -> {
-                final String databaseName = normalizeIdentifier(dbName);
-                final String tableName = normalizeIdentifier(tblName);
-                final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
-
-                final Integer maxValues = maxParts > 0 ? Short.toUnsignedInt(maxParts) : null;
-                final List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, dbName, tblName,
-                    filter, null,
-                    null, null, maxValues, false);
-                final List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
-                for (PartitionDto partition : metacatPartitions) {
-                    result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
-                }
-                return result;
+                return getPartitionsByFilter(dbName, tblName, filter, maxParts);
             });
+    }
+
+    private List<Partition> getPartitionsByFilter(final String dbName, final String tblName,
+                                                  @Nullable final String filter, final short maxParts) {
+        final String databaseName = normalizeIdentifier(dbName);
+        final String tableName = normalizeIdentifier(tblName);
+        final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
+
+        final Integer maxValues = maxParts > 0 ? Short.toUnsignedInt(maxParts) : null;
+        final List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, dbName, tblName,
+            filter, null,
+            null, null, maxValues, false);
+        final List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
+        for (PartitionDto partition : metacatPartitions) {
+            result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
+        }
+        return result;
     }
 
     /**
@@ -1211,7 +1271,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     @Override
     public List<PartitionSpec> get_partitions_pspec(final String dbName, final String tblName, final int maxParts)
         throws TException {
-        throw unimplemented("get_partitions_pspec", new Object[]{dbName, tblName, maxParts});
+        return get_part_specs_by_filter(dbName, tblName, null, maxParts);
     }
 
     /**

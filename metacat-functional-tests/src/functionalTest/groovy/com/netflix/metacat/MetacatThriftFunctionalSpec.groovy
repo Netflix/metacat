@@ -27,7 +27,6 @@ import org.apache.hadoop.hive.metastore.TableType
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.apache.hadoop.hive.metastore.api.Database
 import org.apache.hadoop.hive.metastore.api.FieldSchema
-import org.apache.hadoop.hive.metastore.api.InvalidOperationException
 import org.apache.hadoop.hive.metastore.api.SerDeInfo
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor
 import org.apache.hadoop.hive.ql.metadata.Hive
@@ -353,8 +352,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         resultDb.description == databaseName // currently the passed description is ignored on create
         resultDb.description != description
         resultDb.locationUri != locationUri // currently the passed location is ignored on create
-        !resultDb.parameters
-        resultDb.parameters != params // currently the passed params are ignored on created
+        resultDb.parameters == params
         catalog.createdDatabases << QualifiedName.ofDatabase(catalog.name, databaseName)
 
         where:
@@ -457,8 +455,8 @@ class MetacatThriftFunctionalSpec extends Specification {
         db.parameters['field_added'] = now.toString()
         thrift.alterDatabase(db.name, db)
 
-        then: 'TODO remove this once metacat implements alter_database and uncomment the following lines'
-        thrown(Exception)
+        then:
+        noExceptionThrown()
 
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
@@ -1108,9 +1106,16 @@ class MetacatThriftFunctionalSpec extends Specification {
         thrift.dropDatabase(name.databaseName, false, false, false)
 
         then:
-        def e = thrown(HiveException)
-        e.cause instanceof InvalidOperationException
-        e.message.contains('Not implemented yet: drop_database')
+        thrown(HiveException)
+
+        when:
+        thrift.getAllTables(name.databaseName).each {
+            thrift.dropTable(name.databaseName, it)
+        }
+        thrift.dropDatabase(name.databaseName, false, false, false)
+
+        then:
+        noExceptionThrown()
 
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))

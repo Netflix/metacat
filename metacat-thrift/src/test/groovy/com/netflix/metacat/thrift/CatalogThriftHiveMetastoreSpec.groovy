@@ -267,11 +267,41 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test add_partitions_pspec'() {
+        def id = Mock(Id)
+        def counter = Mock(Counter)
+        def registry = Mock(Registry)
+        def clock = Mock(Clock)
+        def timer = Mock(Timer)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ps = new PartitionSpec('db1', 't1', null)
+
         when:
         ms.add_partitions_pspec(null)
 
         then:
-        thrown(InvalidOperationException)
+        noExceptionThrown()
+
+        when:
+        ps.setPartitionList(new PartitionListComposingSpec([new Partition(dbName: 'db1', tableName: 't1')]))
+        def result = ms.add_partitions_pspec([ps])
+
+        then:
+        noExceptionThrown()
+        result == 1
+        1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(
+            name: QualifiedName.ofTable(catalogName, 'db1', 't1'),
+            fields: [
+                new FieldDto(name: 'pk1', partition_key: true),
+                new FieldDto(name: 'pk2', partition_key: true),
+                new FieldDto(name: 'k3', partition_key: false),
+            ]
+        )
+        registry.clock() >> clock
+        registry.timer(_) >> timer
+        timer.record(_, _) >> {}
+        registry.createId(_ as String) >> id
+        registry.counter(id) >> counter
+        counter.increment()
     }
 
     def 'test add_partitions_req'() {
@@ -338,11 +368,41 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test alter_database'() {
+        def id = Mock(Id)
+        def counter = Mock(Counter)
+        def registry = Mock(Registry)
+        def clock = Mock(Clock)
+        def timer = Mock(Timer)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+
         when:
         ms.alter_database(null, null)
 
         then:
-        thrown(InvalidOperationException)
+        thrown(InvalidInputException)
+        registry.clock() >> clock
+        registry.timer(_) >> timer
+        timer.record(_, _) >> {}
+        registry.createId(_ as String) >> id
+        registry.counter(id) >> counter
+        counter.increment()
+
+        when:
+        ms.alter_database(db, hiveDatabase)
+
+        then:
+        1 * metacatV1.updateDatabase(_, db, _)
+        registry.clock() >> clock
+        registry.timer(_) >> timer
+        timer.record(_, _) >> {}
+        registry.createId(_ as String) >> id
+        registry.counter(id) >> counter
+        counter.increment()
+
+        where:
+        db = 'db1'
+        tbl = 't1'
+        hiveDatabase = new Database(name: db)
     }
 
     def 'test alter_function'() {
@@ -807,7 +867,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         ms.create_database(hiveDatabase)
 
         then:
-        1 * metacatV1.createDatabase(_, db, null)
+        1 * metacatV1.createDatabase(_, db, _)
         registry.clock() >> clock
         registry.timer(_) >> timer
         timer.record(_, _) >> {}
@@ -919,11 +979,23 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_database'() {
+        def id = Mock(Id)
+        def counter = Mock(Counter)
+        def registry = Mock(Registry)
+        def clock = Mock(Clock)
+        def timer = Mock(Timer)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
         when:
-        ms.drop_database(null, true, true)
+        ms.drop_database('db', true, true)
 
         then:
-        thrown(InvalidOperationException)
+        1 * metacatV1.deleteDatabase(_,_)
+        registry.clock() >> clock
+        registry.timer(_) >> timer
+        timer.record(_, _) >> {}
+        registry.createId(_ as String) >> id
+        registry.counter(id) >> counter
+        counter.increment()
     }
 
     def 'test drop_function'() {
@@ -1547,11 +1619,29 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_part_specs_by_filter'() {
+        def id = Mock(Id)
+        def counter = Mock(Counter)
+        def registry = Mock(Registry)
+        def clock = Mock(Clock)
+        def timer = Mock(Timer)
+        def db = 'db'
+        def tbl = 't1'
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+
         when:
-        ms.get_part_specs_by_filter(null, null, null, 42)
+        ms.get_part_specs_by_filter(db, tbl, null, 2)
 
         then:
-        thrown(InvalidOperationException)
+        noExceptionThrown()
+        1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
+        1 * partitionV1.getPartitions(_, db, tbl, _, null, null, null, 2, false) >> []
+        0 * hiveConverters.metacatToHivePartition(_, _)
+        registry.clock() >> clock
+        registry.timer(_) >> timer
+        timer.record(_, _) >> {}
+        registry.createId(_ as String) >> id
+        registry.counter(id) >> counter
+        counter.increment()
     }
 
     def 'test get_partition no matches'() {
@@ -1873,14 +1963,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partitions_by_expr'() {
-        when:
-        ms.get_partitions_by_expr(null)
-
-        then:
-        thrown(InvalidOperationException)
-    }
-
-    def 'test get_partitions_by_filter'() {
         def id = Mock(Id)
         def counter = Mock(Counter)
         def registry = Mock(Registry)
@@ -1889,15 +1971,11 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
 
         when:
-        ms.get_partition_with_auth(db, tbl, partVals, null, null)
+        ms.get_partitions_by_expr(new PartitionsByExprRequest(db, tbl, null))
 
         then:
-        thrown(NoSuchObjectException)
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
-        1 * hiveConverters.getNameFromPartVals(_, _) >> 'a=pName'
-        1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, null, false, {
-            it.includePartitionDetails
-        })
+        1 * partitionV1.getPartitions(_, db, tbl, null, null, null, null, _, false) >> []
         0 * hiveConverters.metacatToHivePartition(_, _)
         registry.clock() >> clock
         registry.timer(_) >> timer
@@ -1909,7 +1987,33 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         where:
         db = 'db1'
         tbl = 't1'
-        partVals = ['pName']
+    }
+
+    def 'test get_partitions_by_filter'() {
+        def id = Mock(Id)
+        def counter = Mock(Counter)
+        def registry = Mock(Registry)
+        def clock = Mock(Clock)
+        def timer = Mock(Timer)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+
+        when:
+        ms.get_partitions_by_filter(db, tbl, null, (short)2)
+
+        then:
+        1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
+        1 * partitionV1.getPartitions(_, db, tbl, null, null, null, null, 2, false) >> []
+        0 * hiveConverters.metacatToHivePartition(_, _)
+        registry.clock() >> clock
+        registry.timer(_) >> timer
+        timer.record(_, _) >> {}
+        registry.createId(_ as String) >> id
+        registry.counter(id) >> counter
+        counter.increment()
+
+        where:
+        db = 'db1'
+        tbl = 't1'
     }
 
     def 'test get_partitions_by_names'() {
@@ -2020,11 +2124,29 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partitions_pspec'() {
+        def id = Mock(Id)
+        def counter = Mock(Counter)
+        def registry = Mock(Registry)
+        def clock = Mock(Clock)
+        def timer = Mock(Timer)
+        def db = 'db'
+        def tbl = 't1'
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+
         when:
-        ms.get_partitions_pspec(null, null, 42 as Short)
+        ms.get_partitions_pspec(db, tbl, 2)
 
         then:
-        thrown(InvalidOperationException)
+        noExceptionThrown()
+        1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
+        1 * partitionV1.getPartitions(_, db, tbl, _, null, null, null, 2, false) >> []
+        0 * hiveConverters.metacatToHivePartition(_, _)
+        registry.clock() >> clock
+        registry.timer(_) >> timer
+        timer.record(_, _) >> {}
+        registry.createId(_ as String) >> id
+        registry.counter(id) >> counter
+        counter.increment()
     }
 
     def 'test get_partitions_statistics_req'() {

@@ -29,10 +29,16 @@ import com.netflix.metacat.testdata.provider.DataDtoProvider
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import org.apache.hadoop.hive.metastore.api.Database
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
+import org.apache.hadoop.hive.ql.exec.FunctionRegistry
 import org.apache.hadoop.hive.ql.metadata.Hive
 import org.apache.hadoop.hive.ql.metadata.Partition
 import org.apache.hadoop.hive.ql.metadata.Table
+import org.apache.hadoop.hive.ql.plan.ExprNodeColumnDesc
+import org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc
+import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc
 import org.apache.hadoop.hive.ql.session.SessionState
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.slf4j.LoggerFactory
@@ -148,6 +154,57 @@ class MetacatSmokeThriftSpec extends Specification {
         client.createDatabase(new Database(databaseName, 'test_db1', null, null))
         then:
         thrown(AlreadyExistsException)
+        cleanup:
+        client.dropDatabase(databaseName)
+        where:
+        client << clients.values()
+        catalogName << clients.keySet()
+    }
+
+    @Unroll
+    def "Test update database for catalog #catalogName"() {
+        given:
+        def invalidDatabaseName = 'test_db1_invalid' + catalogName
+        def databaseName = 'test_db1_' + catalogName
+        client.createDatabase(new Database(databaseName, 'test_db1', null, null))
+        when:
+        client.alterDatabase(databaseName, new Database(databaseName, 'test_db1', null, null))
+        then:
+        def database = client.getDatabase(databaseName)
+        def databaseUri = database.locationUri
+        database != null && database.name == 'test_db1_' + catalogName
+        when:
+        client.alterDatabase(databaseName, new Database(databaseName, 'test_db1', databaseUri + 1, null))
+        then:
+        def uDatabase = client.getDatabase(databaseName)
+        //Database uri in hive does not get updated.
+        uDatabase != null && uDatabase.name == 'test_db1_' + catalogName && uDatabase.locationUri == databaseUri
+        when:
+        client.alterDatabase(invalidDatabaseName, new Database(invalidDatabaseName, 'test_db1', null, null))
+        then:
+        //Hive metsatore does not throw NoSuchObjectException
+        noExceptionThrown()
+        cleanup:
+        client.dropDatabase(databaseName)
+        where:
+        client << clients.values()
+        catalogName << clients.keySet()
+    }
+
+    @Unroll
+    def "Test drop database for catalog #catalogName"() {
+        given:
+        def invalidDatabaseName = 'test_db1_invalid' + catalogName
+        def databaseName = 'test_db1_' + catalogName
+        client.createDatabase(new Database(databaseName, 'test_db1', null, null))
+        when:
+        client.dropDatabase(databaseName)
+        then:
+        client.getDatabase(databaseName) == null
+        when:
+        client.dropDatabase(invalidDatabaseName)
+        then:
+        thrown(NoSuchObjectException)
         where:
         client << clients.values()
         catalogName << clients.keySet()
@@ -273,6 +330,65 @@ class MetacatSmokeThriftSpec extends Specification {
         ''      | "total between 1 and 20"               | 10
         ''      | "total not between 1 and 20"           | 0
         'end'   | "one='xyz' and (total=11 or total=12)" | 2
+    }
+
+    @Unroll
+    def "Test: Remote Thrift connector: getPartitions methods"() {
+        when:
+        def catalogName = 'remote'
+        def client = clients.get(catalogName)
+        def databaseName = 'test_db5_' + catalogName
+        def tableName = 'parts'
+        def hiveTable = createTable(client, catalogName, databaseName, tableName)
+        def uri = isLocalEnv ? 'file:/tmp/abc' : null;
+        def dto = converter.toTableDto(hiveConverter.toTableInfo(QualifiedName.ofTable(catalogName, databaseName, tableName), hiveTable.getTTable()))
+        def partitionDtos = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, 'one=xyz/total=1', uri, 10)
+        def partitions = partitionDtos.collect {
+            new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(it)))
+        }
+        def oneColType = TypeInfoFactory.getPrimitiveTypeInfo('string')
+        def totalColType = TypeInfoFactory.getPrimitiveTypeInfo('int')
+        def oneColExpr = new ExprNodeColumnDesc(oneColType, 'one', null, true)
+        def totalColExpr = new ExprNodeColumnDesc(totalColType, 'total', null, true)
+        def oneExpr = new ExprNodeGenericFuncDesc(TypeInfoFactory.booleanTypeInfo,
+            FunctionRegistry.getFunctionInfo('=').getGenericUDF(), Lists.newArrayList(oneColExpr, new ExprNodeConstantDesc(oneColType, 'xyz')))
+        def totalExpr = new ExprNodeGenericFuncDesc(TypeInfoFactory.booleanTypeInfo,
+            FunctionRegistry.getFunctionInfo('=').getGenericUDF(), Lists.newArrayList(totalColExpr, new ExprNodeConstantDesc(totalColType, 11)))
+        client.alterPartitions(databaseName + '.' + tableName, partitions)
+        then:
+        client.getPartitions(hiveTable, ['one':'xyz']).size() == 10
+        client.getPartitions(hiveTable, ['one':'xyz1']).size() == 0
+        client.getPartitions(hiveTable, ['one':'xyz','total':'11']).size() == 1
+        client.getPartitions(hiveTable, ['one':'xyz1','total':'1']).size() == 0
+        when:
+        def result = []
+        client.getPartitionsByExpr(hiveTable, oneExpr, client.getConf(), result)
+        def result1 = []
+        client.getPartitionsByExpr(hiveTable, totalExpr, client.getConf(), result1)
+        def oneExprInvalid = new ExprNodeGenericFuncDesc(TypeInfoFactory.booleanTypeInfo,
+            FunctionRegistry.getFunctionInfo('=').getGenericUDF(), Lists.newArrayList(oneColExpr, new ExprNodeConstantDesc(oneColType, 'xyz1')))
+        def totalExprInvalid = new ExprNodeGenericFuncDesc(TypeInfoFactory.booleanTypeInfo,
+            FunctionRegistry.getFunctionInfo('=').getGenericUDF(), Lists.newArrayList(totalColExpr, new ExprNodeConstantDesc(totalColType, 1)))
+        def oneExprAndTotalExpr = new ExprNodeGenericFuncDesc(TypeInfoFactory.booleanTypeInfo,
+            FunctionRegistry.getFunctionInfo('and').getGenericUDF(), Lists.newArrayList(oneExpr, totalExpr))
+
+        def result2 = []
+        client.getPartitionsByExpr(hiveTable, oneExprInvalid, client.getConf(), result2)
+        def result3 = []
+        client.getPartitionsByExpr(hiveTable, totalExprInvalid, client.getConf(), result3)
+        def result4 = []
+        client.getPartitionsByExpr(hiveTable, oneExprAndTotalExpr, client.getConf(), result4)
+        then:
+        result.size() == 10
+        result1.size() == 1
+        result2.size() == 0
+        result3.size() == 0
+        result4.size() == 1
+        cleanup:
+        def partitionNames = client.getPartitionNames(databaseName, tableName, (short) -1)
+        partitionNames.each {
+            client.dropPartition(databaseName, tableName, Lists.newArrayList(PartitionUtil.getPartitionKeyValues(it).values()), false)
+        }
     }
 
     @Unroll

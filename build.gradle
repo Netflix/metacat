@@ -144,6 +144,7 @@ configure(javaProjects) {
             /**es 5.4.1 dependencies*/
             dependency("org.elasticsearch.client:transport:5.4.1")
             dependency("net.snowflake:snowflake-jdbc:3.4.2")
+            dependency("com.esotericsoftware.kryo:kryo:2.22")
         }
     }
 
