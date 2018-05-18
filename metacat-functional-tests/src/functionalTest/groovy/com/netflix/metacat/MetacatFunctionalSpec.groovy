@@ -163,7 +163,7 @@ class MetacatFunctionalSpec extends Specification {
     def "create test_db"() {
         given:
         ObjectNode metadata = metacatJson.parseJsonObject('{"objectField": {}}')
-        def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
+        def dto = DatabaseCreateRequestDto.builder().definitionMetadata(metadata).build()
         String databaseName = "test_db_${catalog.name.replace('-', '_')}".toString()
         when:
         def catalogResponse = api.getCatalog(catalog.name)
@@ -180,7 +180,7 @@ class MetacatFunctionalSpec extends Specification {
 
     def 'createDatabase: nonexistent_catalog #metadataMessage fails'() {
         given:
-        def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
+        def dto = DatabaseCreateRequestDto.builder().definitionMetadata(metadata).build()
 
         when:
         api.createDatabase('nonexistent_catalog', 'does not matter', dto)
@@ -195,7 +195,7 @@ class MetacatFunctionalSpec extends Specification {
 
     def 'createDatabase: not support for #catalog.name of type #catalog.type'() {
         given:
-        def dto = new DatabaseCreateRequestDto()
+        def dto = DatabaseCreateRequestDto.builder().build()
 
         when:
         api.createDatabase(catalog.name, 'does_not_matter', dto)
@@ -210,7 +210,7 @@ class MetacatFunctionalSpec extends Specification {
     def 'createDatabase: can create a database in #catalog.name without metadata'() {
         given:
         ObjectNode metadata = null
-        def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
+        def dto = DatabaseCreateRequestDto.builder().definitionMetadata(metadata).build()
         String databaseName = "db_no_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
 
         when:
@@ -253,7 +253,7 @@ class MetacatFunctionalSpec extends Specification {
     def 'createDatabase: can create a database in #catalog.name with metadata'() {
         given:
         ObjectNode metadata = metacatJson.parseJsonObject('{"objectField": {}}')
-        def dto = new DatabaseCreateRequestDto(definitionMetadata: metadata)
+        def dto = DatabaseCreateRequestDto.builder().definitionMetadata(metadata).build()
         String databaseName = "db_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
 
         when:
@@ -301,7 +301,7 @@ class MetacatFunctionalSpec extends Specification {
         catalog.databases.contains(name.databaseName)
 
         when:
-        api.createDatabase(name.catalogName, name.databaseName, new DatabaseCreateRequestDto())
+        api.createDatabase(name.catalogName, name.databaseName, DatabaseCreateRequestDto.builder().build())
 
         then:
         thrown(MetacatAlreadyExistsException)
@@ -1339,7 +1339,7 @@ class MetacatFunctionalSpec extends Specification {
 
         when:
         try{
-            api.createDatabase(catalogName, "test_db", new DatabaseCreateRequestDto())
+            api.createDatabase(catalogName, "test_db", DatabaseCreateRequestDto.builder().build())
         }catch(Exception e) {}
         try {
             api.createTable(catalogName, "test_db", tableName, dto)
@@ -1348,7 +1348,7 @@ class MetacatFunctionalSpec extends Specification {
         //try to create the audit table
         dto.name = QualifiedName.ofTable(catalogName, "audit", auditableName)
         try {
-            api.createDatabase(catalogName, "audit", new DatabaseCreateRequestDto())
+            api.createDatabase(catalogName, "audit", DatabaseCreateRequestDto.builder().build())
         }catch(Exception e) {}
         try {
             api.createTable(catalogName, "audit", auditableName, dto)

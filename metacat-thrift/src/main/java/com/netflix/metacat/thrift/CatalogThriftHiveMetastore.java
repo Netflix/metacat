@@ -259,6 +259,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int add_partitions_pspec(final List<PartitionSpec> newParts) throws TException {
         if (newParts == null || newParts.isEmpty()) {
@@ -275,6 +278,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public AddPartitionsResult add_partitions_req(final AddPartitionsRequest request) throws TException {
         final String dbName = normalizeIdentifier(request.getDbName());
@@ -316,9 +322,8 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             if (dbname == null || db == null) {
                 throw new InvalidInputException("Invalid database request");
             }
-            final DatabaseCreateRequestDto dto = new DatabaseCreateRequestDto();
-            dto.setMetadata(db.getParameters());
-            v1.updateDatabase(catalogName, normalizeIdentifier(dbname), dto);
+            v1.updateDatabase(catalogName, normalizeIdentifier(dbname),
+                DatabaseCreateRequestDto.builder().metadata(db.getParameters()).build());
             return null;
         });
     }
@@ -537,9 +542,8 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     public void create_database(final Database database) throws TException {
         requestWrapper("create_database", new Object[]{database}, () -> {
             final String dbName = normalizeIdentifier(database.getName());
-            final DatabaseCreateRequestDto dto = new DatabaseCreateRequestDto();
-            dto.setMetadata(database.getParameters());
-            v1.createDatabase(catalogName, dbName, dto);
+            v1.createDatabase(catalogName, dbName,
+                DatabaseCreateRequestDto.builder().metadata(database.getParameters()).build());
             return null;
         });
     }
@@ -1161,15 +1165,14 @@ public class CatalogThriftHiveMetastore extends FacebookBase
                 String filter = null;
                 if (req.getExpr() != null) {
                     filter = Utilities.deserializeExpressionFromKryo(req.getExpr()).getExprString();
+                    if (filter == null) {
+                        throw new MetaException("Failed to deserialize expression - ExprNodeDesc not present");
+                    }
                 }
-                if (req.getExpr() == null || filter != null) {
-                    //TODO: We need to handle the case for 'hasUnknownPartitions'
-                    final List<Partition> partitions =
-                        getPartitionsByFilter(req.getDbName(), req.getTblName(), filter, req.getMaxParts());
-                    return new PartitionsByExprResult(partitions, false);
-                } else {
-                    throw new MetaException("Failed to deserialize expression - ExprNodeDesc not present");
-                }
+                //TODO: We need to handle the case for 'hasUnknownPartitions'
+                return new PartitionsByExprResult(
+                    getPartitionsByFilter(req.getDbName(), req.getTblName(), filter, req.getMaxParts()),
+                    false);
             });
     }
 

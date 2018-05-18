@@ -452,11 +452,14 @@ class MetacatThriftFunctionalSpec extends Specification {
         !db.parameters['field_added']
 
         when:
-        db.parameters['field_added'] = now.toString()
+        def fieldAddedValue = now.toString()
+        db.parameters['field_added'] = fieldAddedValue
         thrift.alterDatabase(db.name, db)
+        db = thrift.getDatabase(name.databaseName)
 
         then:
         noExceptionThrown()
+        db.parameters['field_added'] == fieldAddedValue
 
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
