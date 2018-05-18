@@ -20,17 +20,24 @@ package com.netflix.metacat.common.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Map;
 
 /**
  * Database create request.
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 public class DatabaseCreateRequestDto extends BaseDto {
     private static final long serialVersionUID = 6308417213106650174L;
@@ -38,6 +45,8 @@ public class DatabaseCreateRequestDto extends BaseDto {
     @ApiModelProperty(value = "metadata attached to the physical data")
     @JsonProperty
     private transient ObjectNode definitionMetadata;
+    @ApiModelProperty(value = "Any extra metadata properties of the database")
+    private Map<String, String> metadata;
 
     private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();

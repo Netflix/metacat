@@ -207,6 +207,28 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
+    def "Test update database for #catalogName/#databaseName"() {
+        given:
+        def metadata = ['a':'1']
+        def definitionMetadata = (ObjectNode) metacatJson.emptyObjectNode().set("owner", metacatJson.emptyObjectNode())
+        api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto(definitionMetadata: definitionMetadata))
+        api.updateDatabase(catalogName, databaseName, new DatabaseCreateRequestDto(metadata: metadata))
+        def database = api.getDatabase(catalogName, databaseName, true, true)
+        expect:
+        database != null
+        database.definitionMetadata == definitionMetadata
+        database.metadata == metadata
+        cleanup:
+        api.deleteDatabase(catalogName, databaseName)
+        where:
+        catalogName                     | databaseName
+        'embedded-hive-metastore'       | 'smoke_db0'
+        'embedded-fast-hive-metastore'  | 'fsmoke_db0'
+        'embedded-fast-hive-metastore'  | 'shard1'
+        'hive-metastore'                | 'hsmoke_db0'
+    }
+
+    @Unroll
     def "Test create table for #catalogName/#databaseName/#tableName(setUri:#setUri)"() {
         given:
         def updatedUri = String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'updated')

@@ -99,6 +99,19 @@ public interface MetacatV1 {
     );
 
     /**
+     * Updates the given database in the given catalog.
+     *
+     * @param catalogName              catalog name
+     * @param databaseName             database name
+     * @param databaseUpdateRequestDto database update request
+     */
+    void updateDatabase(
+        final String catalogName,
+        final String databaseName,
+        final DatabaseCreateRequestDto databaseUpdateRequestDto
+    );
+
+    /**
      * Creates a table.
      *
      * @param catalogName  catalog name
@@ -123,6 +136,14 @@ public interface MetacatV1 {
      * @return deleted <code>TableDto</code> table.
      */
     TableDto deleteTable(final String catalogName, final String databaseName, final String tableName);
+
+    /**
+     * Delete database.
+     *
+     * @param catalogName  catalog name
+     * @param databaseName database name
+     */
+    void deleteDatabase(final String catalogName, final String databaseName);
 
     /**
      * Get the database with the list of table names under it.

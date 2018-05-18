@@ -186,6 +186,7 @@ public class MetacatController implements MetacatV1 {
                 final DatabaseDto newDto = new DatabaseDto();
                 newDto.setName(name);
                 if (databaseCreateRequestDto != null) {
+                    newDto.setMetadata(databaseCreateRequestDto.getMetadata());
                     newDto.setDefinitionMetadata(databaseCreateRequestDto.getDefinitionMetadata());
                 }
                 this.databaseService.create(name, newDto);
@@ -900,7 +901,7 @@ public class MetacatController implements MetacatV1 {
         final QualifiedName name = this.requestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
         this.requestWrapper.processRequest(
             name,
-            "updateDatabase",
+            "updateCatalog",
             () -> {
                 createCatalogDto.setName(name);
                 this.catalogService.update(name, createCatalogDto);
@@ -956,6 +957,7 @@ public class MetacatController implements MetacatV1 {
             () -> {
                 final DatabaseDto newDto = new DatabaseDto();
                 newDto.setName(name);
+                newDto.setMetadata(databaseUpdateRequestDto.getMetadata());
                 newDto.setDefinitionMetadata(databaseUpdateRequestDto.getDefinitionMetadata());
                 this.databaseService.update(name, newDto);
                 return null;
