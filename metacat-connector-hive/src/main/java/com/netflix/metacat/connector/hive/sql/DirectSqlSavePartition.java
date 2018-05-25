@@ -373,6 +373,10 @@ public class DirectSqlSavePartition {
         jdbcTemplate.update(
             String.format(SQL.SERDE_PARAMS_DELETES, paramVariableString), (Object[]) serdeIds);
         jdbcTemplate.update(
+            String.format(SQL.BUCKETING_COLS_DELETES, paramVariableString), (Object[]) sdsIds);
+        jdbcTemplate.update(
+            String.format(SQL.SORT_COLS_DELETES, paramVariableString), (Object[]) sdsIds);
+        jdbcTemplate.update(
             String.format(SQL.SDS_DELETES, paramVariableString), (Object[]) sdsIds);
         jdbcTemplate.update(
             String.format(SQL.SERDES_DELETES, paramVariableString), (Object[]) serdeIds);
@@ -429,6 +433,10 @@ public class DirectSqlSavePartition {
         static final String SDS_UPDATE =
             "UPDATE SDS SET OUTPUT_FORMAT=?,IS_COMPRESSED=?,IS_STOREDASSUBDIRECTORIES=?,LOCATION=?, "
                 + "INPUT_FORMAT=? WHERE SD_ID=?";
+        static final String BUCKETING_COLS_DELETES =
+            "DELETE FROM BUCKETING_COLS WHERE SD_ID in (%s)";
+        static final String SORT_COLS_DELETES =
+            "DELETE FROM SORT_COLS WHERE SD_ID in (%s)";
         static final String SDS_DELETES =
             "DELETE FROM SDS WHERE SD_ID in (%s)";
         static final String PARTITIONS_INSERT =

@@ -98,7 +98,7 @@ class DirectSqlSavePartitionSpec extends Specification {
         service.delete(qualifiedName, partitionNames)
         then:
         1 * jdbcTemplate.query(_,_,_) >> [new PartitionSequenceIds()]
-        6 * jdbcTemplate.update(_,_)
+        8 * jdbcTemplate.update(_,_)
         noExceptionThrown()
     }
 
@@ -109,7 +109,7 @@ class DirectSqlSavePartitionSpec extends Specification {
         1 * jdbcTemplate.queryForObject(DirectSqlSavePartition.SQL.TABLE_SELECT,_,_) >> new TableSequenceIds(1,1)
         3 * jdbcTemplate.queryForObject(SequenceGeneration.SQL.SEQUENCE_NEXT_VAL_BYNAME,_,_)
         1 * jdbcTemplate.query(_,_,_) >> [new PartitionSequenceIds()]
-        9 * jdbcTemplate.update(_,_)
+        11 * jdbcTemplate.update(_,_)
         noExceptionThrown()
     }
 }
