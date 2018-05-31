@@ -190,6 +190,11 @@ public final class HiveConfigConstants {
      */
     public static final String METACAT_JDO_TIMEOUT = "metacat.jdo.timeout";
 
+    /**
+     * Configuration to convert a table to external on rename table.
+     */
+    public static final String ON_RENAME_CONVERT_TO_EXTERNAL = "metacat.on-rename-convert-to-external";
+
     private HiveConfigConstants() {
     }
 }
