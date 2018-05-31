@@ -374,6 +374,7 @@ class HiveConnectorTableSpec extends Specification {
             connectorRequestContext, QualifiedName.ofTable("testhive", "test1", "testtable1"),
             QualifiedName.ofTable("testhive", "test1", "testtable2"))
         then:
+        1 * client.getTableByName(_,_) >> new Table()
         1 * client.rename(_, _, _, _) >> { throw exception }
         thrown result
 

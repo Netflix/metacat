@@ -123,6 +123,10 @@ class MetacatSmokeSpec extends Specification {
     boolean isLocalEnv = Boolean.valueOf(System.getProperty("local", "true"))
 
     static createTable(String catalogName, String databaseName, String tableName) {
+        createTable(catalogName, databaseName, tableName, null)
+    }
+
+    static createTable(String catalogName, String databaseName, String tableName, String externalValue) {
         def catalog = api.getCatalog(catalogName)
         if (!catalog.databases.contains(databaseName)) {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
@@ -143,6 +147,9 @@ class MetacatSmokeSpec extends Specification {
                 newTable = PigDataDtoProvider.getMetacatAllTypesTable(catalogName, databaseName, owner, uri)
             } else {
                 newTable = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, owner, uri)
+            }
+            if (externalValue != null) {
+                newTable.getMetadata() == null? newTable.setMetadata(['EXTERNAL': externalValue]): newTable.getMetadata().put('EXTERNAL', externalValue)
             }
             api.createTable(catalogName, databaseName, tableName, newTable)
         }
@@ -468,29 +475,24 @@ class MetacatSmokeSpec extends Specification {
 
     @Unroll
     def "Test rename table for #catalogName/#databaseName/#tableName"() {
+        given:
+        createTable(catalogName, databaseName, tableName, external)
+        api.renameTable(catalogName, databaseName, tableName, newTableName)
+        def table = api.getTable(catalogName, databaseName, newTableName, true, true, false)
         expect:
-        try {
-            createTable(catalogName, databaseName, tableName)
-            api.renameTable(catalogName, databaseName, tableName, newTableName)
-            error == null
-        } catch (Exception e) {
-            e.class == error
-        }
-        if (!error) {
-            def table = api.getTable(catalogName, databaseName, newTableName, false, true, false)
-            assert table != null && table.name.tableName == newTableName
-            assert table.getDefinitionMetadata() != null
-        }
+        table.getMetadata() != null && table.getMetadata().get('EXTERNAL').equalsIgnoreCase('TRUE')
+        table != null && table.name.tableName == newTableName
+        table.getDefinitionMetadata() != null
         cleanup:
-        if (!error) {
-            api.deleteTable(catalogName, databaseName, newTableName)
-        }
+        api.deleteTable(catalogName, databaseName, newTableName)
         where:
-        catalogName                     | databaseName | tableName           | error | newTableName
-        'embedded-hive-metastore'       | 'smoke_db3'  | 'test_create_table' | null  | 'test_create_table1'
-        'embedded-fast-hive-metastore'  | 'fsmoke_db3' | 'test_create_table' | null  | 'test_create_table1'
-        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table' | null  | 'test_create_table1'
-        'hive-metastore'                | 'hsmoke_db3' | 'test_create_table' | null  | 'test_create_table1'
+        catalogName                     | databaseName | tableName            | external | newTableName
+        'embedded-hive-metastore'       | 'smoke_db3'  | 'test_create_table'  | null     | 'test_create_table1'
+        'embedded-fast-hive-metastore'  | 'fsmoke_db3' | 'test_create_table'  | null     | 'test_create_table1'
+        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table'  | null     | 'test_create_table1'
+        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_tablet' | 'TRUE'   | 'test_create_tablet1'
+        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_tablef' | 'FALSE'  | 'test_create_tablef1'
+        'hive-metastore'                | 'hsmoke_db3' | 'test_create_table'  | null     | 'test_create_table1'
     }
 
     @Unroll

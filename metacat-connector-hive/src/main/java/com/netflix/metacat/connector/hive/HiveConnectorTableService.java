@@ -71,6 +71,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final HiveConnectorDatabaseService hiveConnectorDatabaseService;
     private final boolean allowRenameTable;
+    private final boolean onRenameConvertToExternal;
 
     /**
      * Constructor.
@@ -94,6 +95,10 @@ public class HiveConnectorTableService implements ConnectorTableService {
         this.catalogName = catalogName;
         this.allowRenameTable = Boolean.parseBoolean(
             connectorContext.getConfiguration().getOrDefault(HiveConfigConstants.ALLOW_RENAME_TABLE, "false")
+        );
+        this.onRenameConvertToExternal = Boolean.parseBoolean(
+            connectorContext.getConfiguration().getOrDefault(HiveConfigConstants.ON_RENAME_CONVERT_TO_EXTERNAL,
+                "true")
         );
     }
 
@@ -423,6 +428,23 @@ public class HiveConnectorTableService implements ConnectorTableService {
                 "Renaming tables is disabled in catalog " + catalogName, null);
         }
         try {
+            if (onRenameConvertToExternal) {
+                //
+                // If this is a managed table(EXTERNAL=FALSE), then convert it to an external table before renaming it.
+                // We do not want the metastore to move the location/data.
+                //
+                final Table table = metacatHiveClient.getTableByName(oldName.getDatabaseName(), oldName.getTableName());
+                Map<String, String> parameters = table.getParameters();
+                if (parameters == null) {
+                    parameters = Maps.newHashMap();
+                    table.setParameters(parameters);
+                }
+                if (!parameters.containsKey(PARAMETER_EXTERNAL)
+                    || parameters.get(PARAMETER_EXTERNAL).equalsIgnoreCase("FALSE")) {
+                    parameters.put(PARAMETER_EXTERNAL, "TRUE");
+                    metacatHiveClient.alterTable(oldName.getDatabaseName(), oldName.getTableName(), table);
+                }
+            }
             metacatHiveClient.rename(oldName.getDatabaseName(), oldName.getTableName(),
                 newName.getDatabaseName(), newName.getTableName());
         } catch (NoSuchObjectException exception) {
