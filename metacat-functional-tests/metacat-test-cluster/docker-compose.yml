@@ -39,7 +39,8 @@ services:
         environment:
             VIRTUAL_HOST: metacat.docker
             JAVA_OPTS: '-ea
-                -Xmx2G
+                -Xms256m
+                -Xmx768m
                 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
                 -noverify
                 -Dnetflix.environment=test
@@ -64,9 +65,12 @@ services:
           - ./datastores/cassandra/:/init
         labels:
           - "com.netflix.metacat.oss.test"
+        environment:
+          JVM_OPTS: '-Xms256M -Xmx1024M'
     druid:
         hostname: druidserver
         image: druidio/example-cluster
+        mem_limit: 384m
         expose:
           - '8082'
           - '8081'
@@ -76,6 +80,7 @@ services:
         image: mysql:5.6
         volumes:
             - ./datastores/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+        mem_limit: 512m
         environment:
             - MYSQL_ROOT_PASSWORD=root_password
             - MYSQL_USER=metacat_user
