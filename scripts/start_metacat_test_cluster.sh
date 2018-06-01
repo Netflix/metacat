@@ -14,12 +14,6 @@ if [ $? -ne 0 ]; then
     exit 9
 fi
 
-docker-compose --file ${COMPOSE_FILE} exec -T cassandra cqlsh -f //init/init.cql #>> build/docker_compose.log 2>&1
-if [ $? -ne 0 ]; then
-    echo "Unable to initialize Cassandra"
-    exit 9
-fi
-
 docker-compose --file ${COMPOSE_FILE} up service-barrier #>> build/docker_compose.log 2>&1
 if [ $? -ne 0 ]; then
     echo "Unable to start service containers"

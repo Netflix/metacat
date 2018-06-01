@@ -24,7 +24,6 @@ services:
             - hive-metastore
             - hive-metastore-db
             - postgresql
-            - cassandra
         ports:
             - '8080'
             - '8000'
@@ -53,29 +52,12 @@ services:
                 -Dmetacat.mysqlmetadataservice.enabled=true
                 -Dmetacat.type.converter=com.netflix.metacat.connector.pig.converters.PigTypeConverter
                 -Dmetacat.definition.metadata.delete.enableForTable=false
-                -Dmetacat.definition.metadata.delete.enableDeleteForQualifiedNames=hive-metastore/hsmoke_ddb,hive-metastore/hsmoke_ddb1/test_create_table1,cassandra-310,embedded-hive-metastore,embedded-fast-hive-metastore/fsmoke_db1,embedded-fast-hive-metastore/fsmoke_ddb1,embedded-fast-hive-metastore/shard,s3-mysql-db,mysql-56-db
+                -Dmetacat.definition.metadata.delete.enableDeleteForQualifiedNames=hive-metastore/hsmoke_ddb,hive-metastore/hsmoke_ddb1/test_create_table1,embedded-hive-metastore,embedded-fast-hive-metastore/fsmoke_db1,embedded-fast-hive-metastore/fsmoke_ddb1,embedded-fast-hive-metastore/shard,s3-mysql-db,mysql-56-db
                 -Dmetacat.hive.metastore.batchSize=10
                 -Dmetacat.usermetadata.config.location=/etc/metacat/usermetadata.properties'
         labels:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.war"
-    cassandra:
-        image: cassandra:3.10
-        volumes:
-          - ./datastores/cassandra/:/init
-        labels:
-          - "com.netflix.metacat.oss.test"
-        environment:
-          JVM_OPTS: '-Xms256M -Xmx1024M'
-    druid:
-        hostname: druidserver
-        image: druidio/example-cluster
-        mem_limit: 384m
-        expose:
-          - '8082'
-          - '8081'
-        labels:
-           - "com.netflix.metacat.oss.test"
     hive-metastore-db:
         image: mysql:5.6
         volumes:
@@ -116,10 +98,8 @@ services:
         depends_on:
             - hive-metastore-db
             - postgresql
-            - cassandra
-            - druid
         environment:
-            - TARGETS=postgresql:5432,cassandra:9042,hive-metastore-db:3306,druid:8081
+            - TARGETS=postgresql:5432,hive-metastore-db:3306
         labels:
           - "com.netflix.metacat.oss.test"
     service-barrier:
