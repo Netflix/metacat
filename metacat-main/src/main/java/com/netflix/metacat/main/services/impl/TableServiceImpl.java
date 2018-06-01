@@ -167,7 +167,7 @@ public class TableServiceImpl implements TableService {
                     tags.add(tagNode.textValue());
                 }
                 log.info("Setting tags {} for table {}", tags, name);
-                final Set<String> result = tagService.setTableTags(name, tags, false);
+                final Set<String> result = tagService.setTags(name, tags, false);
             }
         }
     }

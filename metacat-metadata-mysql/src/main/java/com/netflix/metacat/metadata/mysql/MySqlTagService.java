@@ -375,12 +375,12 @@ public class MySqlTagService implements TagService {
     /**
      * Tags the given table with the given <code>tags</code>.
      *
-     * @param name table name
+     * @param name resource name
      * @param tags list of tags
      * @return return the complete list of tags associated with the table
      */
     @Override
-    public Set<String> setTableTags(final QualifiedName name, final Set<String> tags,
+    public Set<String> setTags(final QualifiedName name, final Set<String> tags,
                                     final boolean updateUserMetadata) {
         addTags(tags);
         try {
@@ -429,14 +429,14 @@ public class MySqlTagService implements TagService {
     }
 
     /**
-     * Removes the tags from the given table.
+     * Removes the tags from the given resource.
      *
-     * @param name      table name
+     * @param name      qualified name
      * @param deleteAll if true, will delete all tags associated with the given table
      * @param tags      list of tags to be removed for the given table
      */
     @Override
-    public void removeTableTags(final QualifiedName name, final Boolean deleteAll,
+    public void removeTags(final QualifiedName name, final Boolean deleteAll,
                                 final Set<String> tags, final boolean updateUserMetadata) {
         if (deleteAll != null && deleteAll) {
             delete(name, updateUserMetadata);
