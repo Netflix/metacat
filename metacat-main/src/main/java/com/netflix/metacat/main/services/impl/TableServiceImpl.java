@@ -325,7 +325,7 @@ public class TableServiceImpl implements TableService {
             } catch (UnsupportedOperationException ignored) {
             }
             userMetadataService.renameDefinitionMetadataKey(oldName, newName);
-            tagService.rename(oldName, newName.getTableName());
+            tagService.renameTableTags(oldName, newName.getTableName());
 
             final TableDto dto = get(newName, GetTableServiceParameters.builder()
                 .includeInfo(true)

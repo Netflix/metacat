@@ -95,11 +95,11 @@ public interface TagService {
     }
 
     /**
-     * Removes the tags from the given table.
+     * Removes the tags from the given qualified name.
      *
      * @param qualifiedName      table name
-     * @param deleteAll          if true, will delete all tags associated with the given table
-     * @param tags               list of tags to be removed for the given table
+     * @param deleteAll          if true, will delete all tags associated with the given qualified name
+     * @param tags               list of tags to be removed for the given qualified name
      * @param updateUserMetadata if true, updates the tags in the user metadata
      */
     default void removeTags(
@@ -113,7 +113,7 @@ public interface TagService {
     /**
      * Delete the tag item along with its associated tags.
      *
-     * @param name               table name
+     * @param name               qualified name
      * @param updateUserMetadata if true, updates the tags in the user metadata
      */
     default void delete(final QualifiedName name, final boolean updateUserMetadata) {
@@ -121,10 +121,10 @@ public interface TagService {
 
     /**
      * Renames the tag item name with the new table name.
-     *
+     * Can only be used in table rename
      * @param name         table qualified name
      * @param newTableName new table name
      */
-    default void rename(final QualifiedName name, final String newTableName) {
+    default void renameTableTags(final QualifiedName name, final String newTableName) {
     }
 }

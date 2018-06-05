@@ -213,7 +213,7 @@ public class MySqlTagService implements TagService {
     }
 
     @Override
-    public void rename(final QualifiedName name, final String newTableName) {
+    public void renameTableTags(final QualifiedName name, final String newTableName) {
         try {
             final QualifiedName newName = QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(),
                 newTableName);
@@ -362,7 +362,7 @@ public class MySqlTagService implements TagService {
             final String query = String.format(QUERY_SEARCH, "like ?");
             final Object[] params = {tag == null ? 1 : 0, tag + "%", wildCardName == null ? 1 : 0, wildCardName};
             result.addAll(jdbcTemplate.query(query, params,
-                new int[]{Types.INTEGER, Types.INTEGER, Types.VARCHAR},
+                new int[]{Types.INTEGER, Types.VARCHAR, Types.INTEGER, Types.VARCHAR},
                 (rs, rowNum) -> rs.getString("name")));
         } catch (Exception e) {
             final String message = String.format("Failed getting the list of qualified names for tag %s", tag);

@@ -68,7 +68,6 @@ class DtoVerificationSpec extends Specification {
             if (writeMethod) {
                 Class<?> type = descriptor.propertyType
                 Field field = clazz.declaredFields.find { it.name == descriptor.name }
-                print "checking ${field}"
                 if (field) {
                     def randomValue = getRandomValue(type, field)
                     writeMethod.invoke(dto, randomValue)

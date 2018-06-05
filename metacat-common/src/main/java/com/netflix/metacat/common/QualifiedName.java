@@ -182,6 +182,7 @@ public final class QualifiedName implements Serializable {
 
     /**
      * Returns a copy of this qualified name with the database/table/view names in upper case.
+     *
      * @return QualifiedName
      */
     public QualifiedName cloneWithUpperCase() {

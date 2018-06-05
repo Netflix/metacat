@@ -1084,6 +1084,107 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
+    def "Test tags for catalogName, databaseName and tableName"() {
+        when:
+        createTable(catalogName, databaseName, tableName)
+        def catalog = QualifiedName.ofCatalog(catalogName)
+        tagApi.setTags(TagCreateRequestDto.builder().name(catalog).tags(tags).build())
+        if (repeat) {
+            tagApi.setTags(TagCreateRequestDto.builder().name(catalog).tags(tags).build())
+        }
+
+        def database = QualifiedName.ofDatabase(catalogName, databaseName)
+        tagApi.setTags(TagCreateRequestDto.builder().name(database).tags(tags).build())
+
+        def table = QualifiedName.ofTable(catalogName, databaseName, tableName)
+        tagApi.setTags(TagCreateRequestDto.builder().name(table).tags(tags).build())
+
+        def catalogDto = api.getCatalog(catalogName)
+        def databaseDto = api.getDatabase(catalogName, databaseName, true, false)
+        def tableDto = api.getTable(catalogName, databaseName, tableName, true, true, false)
+
+        def ret = tagApi.search('test_tag', null, null, null)
+        def ret2 = tagApi.list(['test_tag'] as Set<String>, null, null, null, null)
+        def ret3 = tagApi.list(['never_tag'] as Set<String>, tags as Set<String>, null, null, null)
+
+        tagApi.removeTags(TagRemoveRequestDto.builder().name(catalog).tags([]).deleteAll(true).build())
+        tagApi.removeTags(TagRemoveRequestDto.builder().name(database).tags([]).deleteAll(true).build())
+        tagApi.removeTags(TagRemoveRequestDto.builder().name(table).tags([]).deleteAll(true).build())
+
+        def ret_new = tagApi.search('test_tag', null, null, null)
+        def ret2_new = tagApi.list(['test_tag'] as Set<String>, null, null, null, null)
+
+        then:
+        metacatJson.convertValue(catalogDto.getDefinitionMetadata().get('tags'), Set.class) == tags as Set<String>
+        metacatJson.convertValue(databaseDto.getDefinitionMetadata().get('tags'), Set.class) == tags as Set<String>
+        metacatJson.convertValue(tableDto.getDefinitionMetadata().get('tags'), Set.class) == tags as Set<String>
+
+        assert ret.size() == 3
+        assert ret2.size() == 3
+        assert ret3.size() == 0
+
+        assert ret_new.size() == 0
+        assert ret2_new.size() == 0
+
+        cleanup:
+        api.deleteTable(catalogName, databaseName, tableName)
+
+        where:
+        catalogName                     | databaseName | tableName | tags                              | repeat
+        'embedded-hive-metastore'       | 'smoke_db6'  | 'part'    | ['test_tag']    as List<String>        | true
+        'embedded-hive-metastore'       | 'smoke_db6'  | 'part'    | ['test_tag', 'unused'] as List<String> | false
+        'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test_tag'] as List<String>           | true
+        'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test_tag', 'unused'] as List<String> | false
+        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test_tag'] as List<String>           | true
+        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test_tag', 'unused'] as List<String> | false
+        'hive-metastore'                | 'hsmoke_db6' | 'part'    | ['test_tag'] as List<String>           | true
+        'hive-metastore'                | 'hsmoke_db6' | 'part'    | ['test_tag', 'unused'] as List<String> | false
+        's3-mysql-db'                   | 'smoke_db6'  | 'part'    | ['test_tag'] as List<String>           | true
+        's3-mysql-db'                   | 'smoke_db6'  | 'part'    | ['test_tag', 'unused'] as List<String> | false
+    }
+
+    @Unroll
+    def "Test tags for #catalogName/#databaseName/#tableName/#viewName"() {
+        when:
+        try {
+            api.createDatabase(catalogName, 'franklinviews', new DatabaseCreateRequestDto())
+        } catch (Exception ignored) {
+        }
+        createTable(catalogName, databaseName, tableName)
+        api.createMView(catalogName, databaseName, tableName, viewName, true, null)
+
+        def view = QualifiedName.ofView(catalogName, databaseName, tableName, viewName)
+        tagApi.setTags(TagCreateRequestDto.builder().name(view).tags(tags).build())
+
+        def ret = tagApi.search('test_tag', null, null, null)
+        def ret2 = tagApi.list(['test_tag'] as Set<String>, null, null, null, null)
+        def ret3 = tagApi.list(['never_tag'] as Set<String>, tags as Set<String>, null, null, null)
+
+        tagApi.removeTags(TagRemoveRequestDto.builder().name(view).tags([]).deleteAll(true).build())
+
+        def ret_new = tagApi.search('test_tag', null, null, null)
+        def ret2_new = tagApi.list(['test_tag'] as Set<String>, null, null, null, null)
+
+        then:
+        assert ret.size() == 1
+        assert ret2.size() == 1
+        assert ret3.size() == 0
+
+        assert ret_new.size() == 0
+        assert ret2_new.size() == 0
+
+        cleanup:
+            api.deleteMView(catalogName, databaseName, tableName, viewName)
+        where:
+        catalogName                     | databaseName | tableName           | viewName    |tags
+        'embedded-hive-metastore'       | 'smoke_db4'  | 'part'              | 'part_view'  | ['test_tag']    as List<String>
+        'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'part'              | 'part_view' | ['test_tag']    as List<String>
+        'embedded-fast-hive-metastore'  | 'shard'      | 'part'              | 'part_view' | ['test_tag']    as List<String>
+        'hive-metastore'                | 'hsmoke_db4' | 'part'              | 'part_view' | ['test_tag']    as List<String>
+        's3-mysql-db'                   | 'smoke_db4'  | 'part'              | 'part_view' | ['test_tag']    as List<String>
+    }
+
+    @Unroll
     def "Delete invalid partition for #catalogName/#databaseName/#tableName"() {
         when:
         createTable(catalogName, databaseName, tableName)

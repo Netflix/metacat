@@ -19,11 +19,11 @@ package com.netflix.metacat
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.base.Throwables
 import com.netflix.metacat.client.Client
-import com.netflix.metacat.client.api.TagV1
-import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.client.api.MetacatV1
 import com.netflix.metacat.client.api.PartitionV1
 import com.netflix.metacat.client.api.ResolverV1
+import com.netflix.metacat.client.api.TagV1
+import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
 import com.netflix.metacat.common.exception.MetacatBadRequestException
@@ -35,7 +35,6 @@ import feign.RetryableException
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.joda.time.Instant
 import org.skyscreamer.jsonassert.JSONAssert
-import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Stepwise
 import spock.lang.Unroll
@@ -140,22 +139,26 @@ class MetacatFunctionalSpec extends Specification {
         given:
         def now = new Date().time
         def metadata = metacatJson.parseJsonObject("""{
-        "test_time": ${now},
-        "batch_id": ${BATCH_ID}
+        "updated_part": {
+            "test_time": ${now},
+            "batch_id": ${BATCH_ID}
+        }
 }""")
-
         when:
-        def catResponse = api.getCatalog(catalog.name)
+        def catResponse1 = api.getCatalog(catalog.name)
 
-        then:
-        !catResponse.definitionMetadata
-
-        when:
         api.updateCatalog(catalog.name, new CreateCatalogDto(type: catalog.type, definitionMetadata: metadata))
-        catResponse = api.getCatalog(catalog.name)
+        def catResponse2 = api.getCatalog(catalog.name)
 
         then:
-        catResponse.definitionMetadata == metadata
+        def originMetadata = catResponse1.definitionMetadata
+        if ( originMetadata == null ) {
+            originMetadata = metacatJson.parseJsonObject("{}");
+        }
+        def ret = metacatJson.mergeIntoPrimary(originMetadata, metadata)
+
+        catResponse2.definitionMetadata.get("updated_part") == metadata.get("updated_part")
+        catResponse2.definitionMetadata == originMetadata
 
         where:
         catalog << TestCatalogs.ALL

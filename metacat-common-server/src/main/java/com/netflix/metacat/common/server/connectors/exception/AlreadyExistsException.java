@@ -45,7 +45,7 @@ public abstract class AlreadyExistsException extends ConnectorException {
         final boolean enableSuppression,
         final boolean writableStackTrace
     ) {
-        this(name, String.format("%s '%s' already exists.", name.getType().name(), name.toString()),
+        this(name, String.format("%s '%s' already exists.", name.getType(), name.toString()),
             cause, enableSuppression, writableStackTrace);
     }
 
