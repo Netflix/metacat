@@ -32,6 +32,7 @@ import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import feign.RetryableException
+import feign.Retryer
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.joda.time.Instant
 import org.skyscreamer.jsonassert.JSONAssert
@@ -59,6 +60,7 @@ class MetacatFunctionalSpec extends Specification {
             .withDataTypeContext('pig')
             .withUserName('metacat-test')
             .withClientAppName('metacat-test')
+            .withRetryer(Retryer.NEVER_RETRY)
             .build()
         api = client.api
         partitionApi = client.partitionApi
@@ -750,22 +752,6 @@ class MetacatFunctionalSpec extends Specification {
                 QualifiedName.ofPartition(tname.name, "test_db_${tname.name.replace('-', '_')}".toString(), "test_table", unescapedPartitionName)
             }
         }.flatten()
-    }
-
-    def "renameTable: Test rename table for #name"() {
-        given:
-        def catalogName = name.catalogName
-        def databaseName = name.databaseName
-        def tableName = name.tableName
-        def newTableName = tableName + "new"
-        when:
-        api.renameTable(catalogName, databaseName, tableName, newTableName)
-        then:
-        api.getTable(catalogName, databaseName, newTableName, false, false, false).getName().getTableName() == newTableName
-        cleanup:
-        api.renameTable(catalogName, databaseName, newTableName, tableName)
-        where:
-        name << TestCatalogs.getAllTables([TestCatalogs.findByCatalogName("postgresql-96-db")])
     }
 
     def 'savePartition: can add partitions to #args.name'() {
@@ -1731,5 +1717,25 @@ class MetacatFunctionalSpec extends Specification {
 
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getCanDeleteDatabase(TestCatalogs.ALL))
+    }
+
+    def "renameTable: Test rename table for #name"() {
+        given:
+        def catalogName = name.catalogName
+        def databaseName = name.databaseName
+        def tableName = name.tableName
+        def newTableName = tableName + "new"
+        when:
+        api.renameTable(catalogName, databaseName, tableName, newTableName)
+        then:
+        api.getTable(catalogName, databaseName, newTableName, true, false, false).getName().getTableName() == newTableName
+//  TODO: the rename back has transient failures ( the old table not being found ), this might relate to postgresql
+//        cleanup:
+//        try {
+//            api.renameTable(catalogName, databaseName, newTableName, tableName)
+//        }catch(Exception e) {}
+
+        where:
+        name << TestCatalogs.getAllTables([TestCatalogs.findByCatalogName("postgresql-96-db")])
     }
 }
