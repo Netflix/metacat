@@ -292,7 +292,7 @@ class HiveConvertersSpec extends Specification {
         def partition = converter.metacatToHivePartition(dto, tableDto)
 
         then:
-        partition.values == ['CAPS', 'lower', '3']
+        partition.values == ['CAPS', 'lower']
         partition.tableName == tableName
         partition.dbName == databaseName
         partition.createTime == Instant.parse('2016-02-25T14:47:27').getMillis() / 1000
@@ -315,7 +315,7 @@ class HiveConvertersSpec extends Specification {
         where:
         databaseName = 'database'
         tableName = 'table'
-        partitionName = 'key1=CAPS/key2=lower/key3=3'
+        partitionName = 'field_0=CAPS/field_1=lower'
         owner = 'owner'
         createDate = Instant.parse('2016-02-25T14:47:27').toDate()
         location = 'location'
@@ -352,21 +352,21 @@ class HiveConvertersSpec extends Specification {
         def partition = converter.metacatToHivePartition(dto, tableDto)
 
         then:
-        partition.values == ['weird=true', '', 'monk']
+        partition.values == ['true', 'monk']
 
         where:
         dto = new PartitionDto(
-            name: QualifiedName.ofPartition('c', 'd', 't', 'this=weird=true/bob=/someone=monk')
+            name: QualifiedName.ofPartition('c', 'd', 't', 'this=weird=true/someone=monk')
         )
         tableDto = new TableDto()
     }
 
-    def 'test metacatToHivePartition throws an error on invalid partition name'() {
+    def 'test metacatToHivePartition throws no error on invalid partition name'() {
         when:
         converter.metacatToHivePartition(dto, tableDto)
 
         then:
-        thrown(IllegalStateException)
+        noExceptionThrown()
 
         where:
         dto = new PartitionDto(

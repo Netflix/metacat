@@ -17,9 +17,7 @@
 package com.netflix.metacat.thrift;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
@@ -30,6 +28,7 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.dto.ViewDto;
+import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.Database;
@@ -54,8 +53,6 @@ import java.util.stream.Collectors;
  * Hive converter.
  */
 public class HiveConvertersImpl implements HiveConverters {
-    private static final Splitter SLASH_SPLITTER = Splitter.on('/');
-    private static final Splitter EQUAL_SPLITTER = Splitter.on('=').limit(2);
 
     @VisibleForTesting
     Integer dateToEpochSeconds(@Nullable final Date date) {
@@ -322,7 +319,7 @@ public class HiveConvertersImpl implements HiveConverters {
      * {@inheritDoc}
      */
     @Override
-    public List<String> getPartValsFromName(final TableDto tableDto, final String partName) {
+    public List<String> getPartValsFromName(@Nullable final TableDto tableDto, final String partName) {
         // Unescape the partition name
 
         final LinkedHashMap<String, String> hm;
@@ -332,15 +329,19 @@ public class HiveConvertersImpl implements HiveConverters {
             throw new IllegalArgumentException("Invalid partition name", e);
         }
 
-        final List<String> partVals = Lists.newArrayList();
-        for (String key : tableDto.getPartition_keys()) {
-            final String val = hm.get(key);
-            if (val == null) {
-                throw new IllegalArgumentException("Invalid partition name - missing " + key);
+        if (tableDto != null && tableDto.getPartition_keys() != null) {
+            final List<String> partVals = Lists.newArrayList();
+            for (String key : tableDto.getPartition_keys()) {
+                final String val = hm.get(key);
+                if (val == null) {
+                    throw new IllegalArgumentException("Invalid partition name - missing " + key);
+                }
+                partVals.add(val);
             }
-            partVals.add(val);
+            return partVals;
+        } else {
+            return Lists.newArrayList(hm.values());
         }
-        return partVals;
     }
 
     /**
@@ -352,18 +353,7 @@ public class HiveConvertersImpl implements HiveConverters {
         if (partitionKeys.size() != partVals.size()) {
             throw new IllegalArgumentException("Not the same number of partition columns and partition values");
         }
-
-        final StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < partitionKeys.size(); i++) {
-            if (builder.length() > 0) {
-                builder.append('/');
-            }
-
-            builder.append(partitionKeys.get(i));
-            builder.append('=');
-            builder.append(partVals.get(i));
-        }
-        return builder.toString();
+        return FileUtils.makePartName(partitionKeys, partVals, "");
     }
 
     /**
@@ -374,19 +364,16 @@ public class HiveConvertersImpl implements HiveConverters {
         final Partition result = new Partition();
 
         final QualifiedName name = partitionDto.getName();
-        final List<String> values = Lists.newArrayListWithCapacity(16);
+        List<String> values = Lists.newArrayListWithCapacity(16);
         String databaseName = "";
         String tableName = "";
         if (name != null) {
             if (name.getPartitionName() != null) {
-                for (String partialPartName : SLASH_SPLITTER.split(partitionDto.getName().getPartitionName())) {
-                    final List<String> nameValues = ImmutableList.copyOf(EQUAL_SPLITTER.split(partialPartName));
-                    if (nameValues.size() != 2) {
-                        throw new IllegalStateException("Unrecognized partition name: " + partitionDto.getName());
-                    }
-                    final String value = nameValues.get(1);
-                    values.add(value);
-                }
+                //
+                // Unescape the partition name to get the right partition values.
+                // Partition name always are escaped where as the parition values are not.
+                //
+                values = getPartValsFromName(tableDto, name.getPartitionName());
             }
 
             if (name.getDatabaseName() != null) {

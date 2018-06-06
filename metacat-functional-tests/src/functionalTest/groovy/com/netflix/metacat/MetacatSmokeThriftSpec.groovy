@@ -492,4 +492,47 @@ class MetacatSmokeThriftSpec extends Specification {
         ''      | 'invalid=xyz'                          | -1
         'end'   | "one='xyz' and (total=11 or total=12)" | 2
     }
+
+    @Unroll
+    def "Test: Embedded Fast Thrift connector: getPartitionsByNames with escape values"() {
+        given:
+        def catalogName = 'localfast'
+        def client = clients.get(catalogName)
+        def databaseName = 'test_db5_' + catalogName
+        def tableName = 'parts'
+        def hiveTable = createTable(client, catalogName, databaseName, tableName)
+        def uri = isLocalEnv ? 'file:/tmp/abc' : null;
+        def dto = converter.toTableDto(hiveConverter.toTableInfo(QualifiedName.ofTable(catalogName, databaseName, tableName), hiveTable.getTTable()))
+        def partitionDtos = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, 'one=xy^:z/total=1', uri, 10)
+        def partitions = partitionDtos.collect {
+            new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(it)))
+        }
+        client.alterPartitions(databaseName + '.' + tableName, partitions)
+        when:
+        def result = client.getPartitionsByNames(hiveTable, ['one=xy%5E%3Az/total=10'])
+        then:
+        result.size() == 1
+        result.get(0).getValues() == ['xy^:z', '10']
+        when:
+        result = client.getPartitionsByNames(hiveTable, ['one=xy^:z/total=10'])
+        then:
+        result.size() == 0
+        when:
+        result = client.getPartitionsByNames(hiveTable, ['total':'10'])
+        then:
+        result.size() == 1
+        result.get(0).getValues() == ['xy^:z', '10']
+        when:
+        result = client.getPartitionsByNames(hiveTable, ['one':'xy^:z'])
+        then:
+        result.size() == 0
+        when:
+        result = client.getPartitionsByNames(hiveTable, ['one':'xy%5E%3Az'])
+        then:
+        result.size() == 10
+        cleanup:
+        client.getPartitions(hiveTable).each {
+            client.dropPartition(databaseName, tableName, it.getValues(), false)
+        }
+    }
 }
