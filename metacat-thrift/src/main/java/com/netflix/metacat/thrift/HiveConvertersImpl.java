@@ -328,10 +328,15 @@ public class HiveConvertersImpl implements HiveConverters {
         } catch (MetaException e) {
             throw new IllegalArgumentException("Invalid partition name", e);
         }
-
-        if (tableDto != null && tableDto.getPartition_keys() != null) {
-            final List<String> partVals = Lists.newArrayList();
-            for (String key : tableDto.getPartition_keys()) {
+        // Get the partition keys.
+        List<String> partitionKeys = null;
+        if (tableDto != null) {
+            partitionKeys = tableDto.getPartition_keys();
+        }
+        // If table has not been provided, return the values without validating.
+        if (partitionKeys != null) {
+            final List<String> partVals = Lists.newArrayListWithCapacity(partitionKeys.size());
+            for (String key : partitionKeys) {
                 final String val = hm.get(key);
                 if (val == null) {
                     throw new IllegalArgumentException("Invalid partition name - missing " + key);
