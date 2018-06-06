@@ -167,7 +167,7 @@ public class TableServiceImpl implements TableService {
                     tags.add(tagNode.textValue());
                 }
                 log.info("Setting tags {} for table {}", tags, name);
-                final Set<String> result = tagService.setTableTags(name, tags, false);
+                final Set<String> result = tagService.setTags(name, tags, false);
             }
         }
     }
@@ -325,7 +325,7 @@ public class TableServiceImpl implements TableService {
             } catch (UnsupportedOperationException ignored) {
             }
             userMetadataService.renameDefinitionMetadataKey(oldName, newName);
-            tagService.rename(oldName, newName.getTableName());
+            tagService.renameTableTags(oldName, newName.getTableName());
 
             final TableDto dto = get(newName, GetTableServiceParameters.builder()
                 .includeInfo(true)

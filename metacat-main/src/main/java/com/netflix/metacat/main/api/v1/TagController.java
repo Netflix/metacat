@@ -17,20 +17,30 @@ package com.netflix.metacat.main.api.v1;
 
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.dto.TagCreateRequestDto;
+import com.netflix.metacat.common.dto.TagRemoveRequestDto;
+import com.netflix.metacat.common.exception.MetacatNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
+import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.api.RequestWrapper;
+import com.netflix.metacat.main.services.CatalogService;
+import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
+import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.TableService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -44,7 +54,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Nullable;
 import java.net.HttpURLConnection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -69,26 +81,38 @@ public class TagController {
     private final TagService tagService;
     private final MetacatEventBus eventBus;
     private final TableService tableService;
+    private final DatabaseService databaseService;
+    private final CatalogService catalogService;
+    private final MViewService mViewService;
 
     /**
      * Constructor.
      *
-     * @param eventBus       event bus
-     * @param tagService     tag service
-     * @param tableService   table service
-     * @param requestWrapper request wrapper object
+     * @param eventBus        event bus
+     * @param tagService      tag service
+     * @param tableService    table service
+     * @param databaseService database service
+     * @param catalogService  catalog service
+     * @param mViewService    mView service
+     * @param requestWrapper  request wrapper object
      */
     @Autowired
     public TagController(
         final MetacatEventBus eventBus,
         final TagService tagService,
         final TableService tableService,
+        final DatabaseService databaseService,
+        final CatalogService catalogService,
+        final MViewService mViewService,
         final RequestWrapper requestWrapper
     ) {
         this.tagService = tagService;
         this.eventBus = eventBus;
         this.tableService = tableService;
+        this.databaseService = databaseService;
+        this.catalogService = catalogService;
         this.requestWrapper = requestWrapper;
+        this.mViewService = mViewService;
     }
 
     /**
@@ -183,7 +207,129 @@ public class TagController {
     }
 
     /**
+     * Sets the tags on the given object.
+     *
+     * @param tagCreateRequestDto tag create request dto
+     * @return set of tags
+     */
+    @RequestMapping(
+        method = RequestMethod.POST,
+        consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.CREATED)
+    @ApiOperation(
+        value = "Sets the tags on the given resource",
+        notes = "Sets the tags on the given resource"
+    )
+    @ApiResponses(
+        {
+            @ApiResponse(
+                code = HttpURLConnection.HTTP_CREATED,
+                message = "The tags were successfully created"
+            ),
+            @ApiResponse(
+                code = HttpURLConnection.HTTP_NOT_FOUND,
+                message = "The requested catalog or database or table cannot be located"
+            )
+        }
+    )
+    public Set<String> setTags(
+        @ApiParam(value = "Request containing the set of tags and qualifiedName", required = true)
+        @RequestBody final TagCreateRequestDto tagCreateRequestDto
+    ) {
+        return this.requestWrapper.processRequest(
+            tagCreateRequestDto.getName(),
+            "TagV1Resource.setTags",
+            () -> this.setResourceTags(tagCreateRequestDto)
+        );
+    }
+
+    private Set<String> setResourceTags(@NonNull final TagCreateRequestDto tagCreateRequestDto) {
+        final QualifiedName name = tagCreateRequestDto.getName();
+        final Set<String> tags = new HashSet<>(tagCreateRequestDto.getTags());
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        Set<String> result = new HashSet<>();
+        switch (name.getType()) {
+            case CATALOG:
+                //catalog service will throw exception if not found
+                final CatalogDto catalogDto = this.catalogService.get(name);
+                if (catalogDto != null) {
+                    return this.tagService.setTags(name, tags, true);
+                }
+                break;
+            case DATABASE:
+                if (!this.databaseService.exists(name)) {
+                    throw new DatabaseNotFoundException(name);
+                }
+                result = this.tagService.setTags(name, tags, true);
+                this.eventBus.post(
+                    new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this)
+                );
+                return result;
+            case TABLE:
+                if (!this.tableService.exists(name)) {
+                    throw new TableNotFoundException(name);
+                }
+                final TableDto oldTable = this.tableService
+                    .get(name, GetTableServiceParameters.builder()
+                        .includeInfo(true)
+                        .includeDataMetadata(true)
+                        .includeDefinitionMetadata(true)
+                        .disableOnReadMetadataIntercetor(false)
+                        .build())
+                    .orElseThrow(IllegalStateException::new);
+                result = this.tagService.setTags(name, tags, true);
+                final TableDto currentTable = this.tableService
+                    .get(name, GetTableServiceParameters.builder()
+                        .includeInfo(true)
+                        .includeDataMetadata(true)
+                        .includeDefinitionMetadata(true)
+                        .disableOnReadMetadataIntercetor(false)
+                        .build())
+                    .orElseThrow(IllegalStateException::new);
+                this.eventBus.post(
+                    new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, currentTable)
+                );
+                return result;
+            case MVIEW:
+                if (!this.mViewService.exists(name)) {
+                    throw new MetacatNotFoundException(name.toString());
+                }
+                final Optional<TableDto> oldView = this.mViewService.getOpt(name, GetTableServiceParameters.builder()
+                    .includeInfo(true)
+                    .includeDataMetadata(true)
+                    .includeDefinitionMetadata(true)
+                    .disableOnReadMetadataIntercetor(false)
+                    .build()
+                );
+                if (oldView.isPresent()) {
+                    result = this.tagService.setTags(name, tags, true);
+                    final Optional<TableDto> currentView = this.mViewService
+                        .getOpt(name, GetTableServiceParameters.builder()
+                            .includeInfo(true)
+                            .includeDataMetadata(true)
+                            .includeDefinitionMetadata(true)
+                            .disableOnReadMetadataIntercetor(false)
+                            .build());
+                    currentView.ifPresent(p ->
+                        this.eventBus.post(
+                            new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldView.get(),
+                                currentView.get())
+                        )
+                    );
+                    return result;
+                }
+                break;
+            default:
+                throw new MetacatNotFoundException("Unsupported qualifiedName type {}" + name);
+
+        }
+        return result;
+    }
+
+    /**
      * Sets the tags on the given table.
+     * TODO: remove after setTags api is adopted
      *
      * @param catalogName  catalog name
      * @param databaseName database name
@@ -198,7 +344,6 @@ public class TagController {
     )
     @ResponseStatus(HttpStatus.CREATED)
     @ApiOperation(
-        position = 2,
         value = "Sets the tags on the given table",
         notes = "Sets the tags on the given table"
     )
@@ -244,14 +389,14 @@ public class TagController {
                         .disableOnReadMetadataIntercetor(false)
                         .build())
                     .orElseThrow(IllegalStateException::new);
-                final Set<String> result = this.tagService.setTableTags(name, tags, true);
+                final Set<String> result = this.tagService.setTags(name, tags, true);
                 final TableDto currentTable = this.tableService
                     .get(name, GetTableServiceParameters.builder()
-                                .includeInfo(true)
-                                .includeDataMetadata(true)
-                                .includeDefinitionMetadata(true)
-                                .disableOnReadMetadataIntercetor(false)
-                                .build())
+                        .includeInfo(true)
+                        .includeDataMetadata(true)
+                        .includeDefinitionMetadata(true)
+                        .disableOnReadMetadataIntercetor(false)
+                        .build())
                     .orElseThrow(IllegalStateException::new);
                 this.eventBus.post(
                     new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, currentTable)
@@ -263,6 +408,7 @@ public class TagController {
 
     /**
      * Remove the tags from the given table.
+     * TODO: remove after removeTags api is adopted
      *
      * @param catalogName  catalog name
      * @param databaseName database name
@@ -327,7 +473,7 @@ public class TagController {
                         .disableOnReadMetadataIntercetor(false)
                         .build())
                     .orElseThrow(IllegalStateException::new);
-                this.tagService.removeTableTags(name, deleteAll, tags, true);
+                this.tagService.removeTags(name, deleteAll, tags, true);
                 final TableDto currentTable = this.tableService
                     .get(name, GetTableServiceParameters.builder().includeInfo(true)
                         .includeDataMetadata(true)
@@ -348,5 +494,131 @@ public class TagController {
                 return null;
             }
         );
+    }
+
+    /**
+     * Remove the tags from the given resource.
+     *
+     * @param tagRemoveRequestDto remove tag request dto
+     */
+    @RequestMapping(
+        method = RequestMethod.DELETE,
+        consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ApiOperation(
+        value = "Remove the tags from the given resource",
+        notes = "Remove the tags from the given resource"
+    )
+    @ApiResponses(
+        {
+            @ApiResponse(
+                code = HttpURLConnection.HTTP_NO_CONTENT,
+                message = "The tags were successfully deleted from the table"
+            ),
+            @ApiResponse(
+                code = HttpURLConnection.HTTP_NOT_FOUND,
+                message = "The requested catalog or database or table cannot be located"
+            )
+        }
+    )
+    public void removeTags(
+        @ApiParam(value = "Request containing the set of tags and qualifiedName", required = true)
+        @RequestBody final TagRemoveRequestDto tagRemoveRequestDto
+    ) {
+
+
+        this.requestWrapper.processRequest(
+            tagRemoveRequestDto.getName(),
+            "TagV1Resource.removeTableTags",
+            () -> {
+                this.removeResourceTags(tagRemoveRequestDto);
+                return null;
+            }
+        );
+    }
+
+    private void removeResourceTags(final TagRemoveRequestDto tagRemoveRequestDto) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final QualifiedName name = tagRemoveRequestDto.getName();
+        switch (name.getType()) {
+            case CATALOG:
+                //catalog service will throw exception if not found
+                final CatalogDto catalogDto = this.catalogService.get(name);
+                if (catalogDto != null) {
+                    this.tagService.removeTags(name, tagRemoveRequestDto.getDeleteAll(),
+                        new HashSet<>(tagRemoveRequestDto.getTags()), true);
+                }
+                break;
+            case DATABASE:
+                if (!this.databaseService.exists(name)) {
+                    throw new DatabaseNotFoundException(name);
+                }
+                this.tagService.removeTags(name, tagRemoveRequestDto.getDeleteAll(),
+                    new HashSet<>(tagRemoveRequestDto.getTags()), true);
+                this.eventBus.post(
+                    new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this)
+                );
+                break;
+            case TABLE:
+                if (!this.tableService.exists(name)) {
+                    this.tagService.delete(name, false);
+                    throw new TableNotFoundException(name);
+                }
+                final TableDto oldTable = this.tableService
+                    .get(name, GetTableServiceParameters.builder()
+                        .includeInfo(true)
+                        .includeDataMetadata(true)
+                        .includeDefinitionMetadata(true)
+                        .disableOnReadMetadataIntercetor(false)
+                        .build())
+                    .orElseThrow(IllegalStateException::new);
+                this.tagService.removeTags(name, tagRemoveRequestDto.getDeleteAll(),
+                    new HashSet<>(tagRemoveRequestDto.getTags()), true);
+                final TableDto currentTable = this.tableService
+                    .get(name, GetTableServiceParameters.builder()
+                        .includeInfo(true)
+                        .includeDataMetadata(true)
+                        .includeDefinitionMetadata(true)
+                        .disableOnReadMetadataIntercetor(false)
+                        .build())
+                    .orElseThrow(IllegalStateException::new);
+                this.eventBus.post(
+                    new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, currentTable)
+                );
+                break;
+            case MVIEW:
+                if (!this.mViewService.exists(name)) {
+                    throw new MetacatNotFoundException(name.toString());
+                }
+                final Optional<TableDto> oldView = this.mViewService.getOpt(name, GetTableServiceParameters.builder()
+                    .includeInfo(true)
+                    .includeDataMetadata(true)
+                    .includeDefinitionMetadata(true)
+                    .disableOnReadMetadataIntercetor(false)
+                    .build()
+                );
+                if (oldView.isPresent()) {
+                    this.tagService.removeTags(name, tagRemoveRequestDto.getDeleteAll(),
+                        new HashSet<>(tagRemoveRequestDto.getTags()), true);
+                    final Optional<TableDto> currentView = this.mViewService
+                        .getOpt(name, GetTableServiceParameters.builder()
+                            .includeInfo(true)
+                            .includeDataMetadata(true)
+                            .includeDefinitionMetadata(true)
+                            .disableOnReadMetadataIntercetor(false)
+                            .build());
+                    currentView.ifPresent(p ->
+                        this.eventBus.post(
+                            new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldView.get(),
+                                currentView.get())
+                        )
+                    );
+                }
+                break;
+            default:
+                throw new MetacatNotFoundException("Unsupported qualifiedName type {}" + name);
+        }
+
     }
 }

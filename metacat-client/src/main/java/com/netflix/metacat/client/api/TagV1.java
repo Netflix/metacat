@@ -18,6 +18,8 @@
 package com.netflix.metacat.client.api;
 
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.TagCreateRequestDto;
+import com.netflix.metacat.common.dto.TagRemoveRequestDto;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -127,6 +129,32 @@ public interface TagV1 {
     );
 
     /**
+     * Sets the tags on the given qualified name.
+     *
+     * @param tagCreateRequestDto tag create request dto
+     * @return set of tags
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    Set<String> setTags(
+        TagCreateRequestDto tagCreateRequestDto
+    );
+
+
+    /**
+     * Remove the tags on the given qualified name.
+     *
+     * @param tagRemoveRequestDto tag remove request dto
+     */
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    void removeTags(
+        TagRemoveRequestDto tagRemoveRequestDto
+    );
+
+    /**
      * Remove the tags from the given table.
      *
      * @param catalogName  catalog name
@@ -149,6 +177,6 @@ public interface TagV1 {
         @DefaultValue("false")
         @QueryParam("all")
             Boolean deleteAll,
-            Set<String> tags
+        Set<String> tags
     );
 }

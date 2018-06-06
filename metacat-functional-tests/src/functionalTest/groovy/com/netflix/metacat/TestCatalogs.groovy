@@ -125,24 +125,6 @@ class TestCatalogs {
             validateCreatedDate: false,
             type: 'postgresql',
         ),
-        new TestCatalog(
-            createDatabase: true,
-            deleteDatabaseWithNoCheck: true,
-            deleteTable: true,
-            name: 'cassandra-310',
-            preExistingDatabases: [
-                QualifiedName.ofDatabase('cassandra-310', 'bills'),
-                QualifiedName.ofDatabase('cassandra-310', 'real_estate'),
-            ],
-            preExistingTables: [
-                QualifiedName.ofTable('cassandra-310', 'bills', 'bills_compress'),
-                QualifiedName.ofTable('cassandra-310', 'bills', 'bills_nc'),
-                QualifiedName.ofTable('cassandra-310', 'real_estate', 'houses'),
-                QualifiedName.ofTable('cassandra-310', 'real_estate', 'apartments'),
-            ],
-            validateCreatedDate: false,
-            type: 'cassandra',
-        ),
     ]
 
     static TestCatalog findByCatalogName(String name) {

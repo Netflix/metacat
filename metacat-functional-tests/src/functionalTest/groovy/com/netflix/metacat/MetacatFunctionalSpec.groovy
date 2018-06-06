@@ -19,11 +19,11 @@ package com.netflix.metacat
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.base.Throwables
 import com.netflix.metacat.client.Client
-import com.netflix.metacat.client.api.TagV1
-import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.client.api.MetacatV1
 import com.netflix.metacat.client.api.PartitionV1
 import com.netflix.metacat.client.api.ResolverV1
+import com.netflix.metacat.client.api.TagV1
+import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
 import com.netflix.metacat.common.exception.MetacatBadRequestException
@@ -32,10 +32,10 @@ import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import feign.RetryableException
+import feign.Retryer
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.joda.time.Instant
 import org.skyscreamer.jsonassert.JSONAssert
-import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Stepwise
 import spock.lang.Unroll
@@ -60,6 +60,7 @@ class MetacatFunctionalSpec extends Specification {
             .withDataTypeContext('pig')
             .withUserName('metacat-test')
             .withClientAppName('metacat-test')
+            .withRetryer(Retryer.NEVER_RETRY)
             .build()
         api = client.api
         partitionApi = client.partitionApi
@@ -140,22 +141,26 @@ class MetacatFunctionalSpec extends Specification {
         given:
         def now = new Date().time
         def metadata = metacatJson.parseJsonObject("""{
-        "test_time": ${now},
-        "batch_id": ${BATCH_ID}
+        "updated_part": {
+            "test_time": ${now},
+            "batch_id": ${BATCH_ID}
+        }
 }""")
-
         when:
-        def catResponse = api.getCatalog(catalog.name)
+        def catResponse1 = api.getCatalog(catalog.name)
 
-        then:
-        !catResponse.definitionMetadata
-
-        when:
         api.updateCatalog(catalog.name, new CreateCatalogDto(type: catalog.type, definitionMetadata: metadata))
-        catResponse = api.getCatalog(catalog.name)
+        def catResponse2 = api.getCatalog(catalog.name)
 
         then:
-        catResponse.definitionMetadata == metadata
+        def originMetadata = catResponse1.definitionMetadata
+        if ( originMetadata == null ) {
+            originMetadata = metacatJson.parseJsonObject("{}");
+        }
+        def ret = metacatJson.mergeIntoPrimary(originMetadata, metadata)
+
+        catResponse2.definitionMetadata.get("updated_part") == metadata.get("updated_part")
+        catResponse2.definitionMetadata == originMetadata
 
         where:
         catalog << TestCatalogs.ALL
@@ -747,22 +752,6 @@ class MetacatFunctionalSpec extends Specification {
                 QualifiedName.ofPartition(tname.name, "test_db_${tname.name.replace('-', '_')}".toString(), "test_table", unescapedPartitionName)
             }
         }.flatten()
-    }
-
-    def "renameTable: Test rename table for #name"() {
-        given:
-        def catalogName = name.catalogName
-        def databaseName = name.databaseName
-        def tableName = name.tableName
-        def newTableName = tableName + "new"
-        when:
-        api.renameTable(catalogName, databaseName, tableName, newTableName)
-        then:
-        api.getTable(catalogName, databaseName, newTableName, false, false, false).getName().getTableName() == newTableName
-        cleanup:
-        api.renameTable(catalogName, databaseName, newTableName, tableName)
-        where:
-        name << TestCatalogs.getAllTables([TestCatalogs.findByCatalogName("postgresql-96-db")])
     }
 
     def 'savePartition: can add partitions to #args.name'() {
@@ -1728,5 +1717,25 @@ class MetacatFunctionalSpec extends Specification {
 
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getCanDeleteDatabase(TestCatalogs.ALL))
+    }
+
+    def "renameTable: Test rename table for #name"() {
+        given:
+        def catalogName = name.catalogName
+        def databaseName = name.databaseName
+        def tableName = name.tableName
+        def newTableName = tableName + "new"
+        when:
+        api.renameTable(catalogName, databaseName, tableName, newTableName)
+        then:
+        api.getTable(catalogName, databaseName, newTableName, true, false, false).getName().getTableName() == newTableName
+//  TODO: the rename back has transient failures ( the old table not being found ), this might relate to postgresql
+//        cleanup:
+//        try {
+//            api.renameTable(catalogName, databaseName, newTableName, tableName)
+//        }catch(Exception e) {}
+
+        where:
+        name << TestCatalogs.getAllTables([TestCatalogs.findByCatalogName("postgresql-96-db")])
     }
 }
