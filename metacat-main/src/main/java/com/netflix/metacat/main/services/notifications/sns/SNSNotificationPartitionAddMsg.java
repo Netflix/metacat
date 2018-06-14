@@ -37,9 +37,21 @@ public enum SNSNotificationPartitionAddMsg {
      */
     ALL_FUTURE_PARTITION_KEYS,
     /**
+     * Empty Deleted Column.
+     */
+    EMPTY_DELETE_COLUMN,
+    /**
+     * No Candidate Partitions Keys.
+     */
+    NO_CANDIDATE_PARTITION_KEYS,
+    /**
      * Missing Metadata Info For Partition Key.
      */
     MISSING_METADATA_INFO_FOR_PARTITION_KEY,
+    /**
+     * Failuer of Getting Latest Partition Key.
+     */
+    FAILURE_OF_GET_LATEST_PARTITION_KEY,
     /**
      * Partition Key Unabled.
      */

@@ -76,6 +76,29 @@ class SNSNotificationServiceUtilSpec extends Specification{
         then:
         assert ret == ['1522257980000', '1522257970000', '1522257960000']
 
+
+        when:
+        partitions = Lists.newArrayList(
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', 'window_endtime=1522257960000/hour=0/batchid=merged_1')).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  'window_endtime=1522257970000/hour=2/batchid=merged_1')).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  'window_endtime=1522257980000/hour=3/batchid=merged_1')).build(),
+        )
+        ret = notificationServiceUtil.getSortedDeletionPartitionKeys(partitions, "");
+
+        then:
+        assert ret == []
+
+        when:
+        partitions = Lists.newArrayList(
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', 'window_endtime=1522257960000/hour=0/batchid=merged_1')).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  'window_endtime=1522257970000/hour=2/batchid=merged_1')).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  'window_endtime=1522257980000/hour=3/batchid=merged_1')).build(),
+        )
+        ret = notificationServiceUtil.getSortedDeletionPartitionKeys(partitions, null);
+
+        then:
+        assert ret == []
+
     }
 
     @Unroll
@@ -119,7 +142,7 @@ class SNSNotificationServiceUtilSpec extends Specification{
         '152513280000000.123345'       | false
     }
 
-    def "Test get payload valid case" () {
+    def "Test get payload valid case - ATTACHED_VALID_PARITITION_KEY" () {
         def SNSNotificationServiceUtil notificationServiceUtil = new SNSNotificationServiceUtil(userMetadataService)
         def partitions = Lists.newArrayList(
             PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', 'dateint=20170710/hour=0/batchid=merged_1')).build(),
@@ -146,7 +169,111 @@ class SNSNotificationServiceUtilSpec extends Specification{
         userMetadataService.getDefinitionMetadata(QualifiedName.fromString("testhive/test/test_table")) >> Optional.ofNullable(node)
     }
 
-    def "Test get payload future key case" () {
+    def "Test get payload missing metadata case - MISSING_METADATA_INFO_FOR_PARTITION_KEY" () {
+        def SNSNotificationServiceUtil notificationServiceUtil = new SNSNotificationServiceUtil(userMetadataService)
+        def partitions = Lists.newArrayList(
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', 'dateint=20170710/hour=0/batchid=merged_1')).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  'dateint=29170712/hour=0/batchid=merged_1')).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  'dateint=20170713/hour=0/batchid=merged_1')).build(),
+        )
+        def str =  "{ \"data_dependency\": {\"partition\": \"region\"}," +
+            "  \"data_hygiene\": {\"delete_column\":\"dateint\",\"delete_method\": \"by partition column\" }}"
+        def node = metacatJsonLocator.parseJsonObject(str)
+        def event = new MetacatSaveTablePartitionPostEvent(
+            QualifiedName.fromString("testhive/test/test_table"),
+            this.requestContext,
+            this,
+            partitions,
+            Mock(PartitionsSaveResponseDto)
+        )
+
+        when:
+        def payload = notificationServiceUtil.createTablePartitionsUpdatePayload(partitions, event)
+        assert  payload.getLatestDeleteColumnValue() == null
+        assert payload.getNumCreatedPartitions() == 3
+        assert payload.getMessage() == "MISSING_METADATA_INFO_FOR_PARTITION_KEY"
+        then:
+        userMetadataService.getDefinitionMetadata(QualifiedName.fromString("testhive/test/test_table")) >> Optional.ofNullable(node)
+    }
+
+    def "Test get payload partition_column_date_type as null ( treated as utc) - ATTACHED_VALID_PARITITION_KEY" () {
+        def SNSNotificationServiceUtil notificationServiceUtil = new SNSNotificationServiceUtil(userMetadataService)
+        def partitions = Lists.newArrayList(
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', 'dateint=20170710/hour=0/batchid=merged_1')).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  'dateint=29170712/hour=0/batchid=merged_1')).build(),
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table',  'dateint=20170713/hour=0/batchid=merged_1')).build(),
+        )
+        def str =  "{ \"data_dependency\": {\"partition_column_date_type\": \"\"}," +
+            "  \"data_hygiene\": {\"delete_column\":\"dateint\",\"delete_method\": \"by partition column\" }}"
+        def node = metacatJsonLocator.parseJsonObject(str)
+        def event = new MetacatSaveTablePartitionPostEvent(
+            QualifiedName.fromString("testhive/test/test_table"),
+            this.requestContext,
+            this,
+            partitions,
+            Mock(PartitionsSaveResponseDto)
+        )
+
+        when:
+        def payload = notificationServiceUtil.createTablePartitionsUpdatePayload(partitions, event)
+        assert  payload.getLatestDeleteColumnValue() == 'dateint=20170713'
+        assert payload.getNumCreatedPartitions() == 3
+        assert payload.getMessage() == "ATTACHED_VALID_PARITITION_KEY"
+        then:
+        userMetadataService.getDefinitionMetadata(QualifiedName.fromString("testhive/test/test_table")) >> Optional.ofNullable(node)
+    }
+
+    def "Test get payload null and empty key case - NO_CANDIDATE_PARTITION_KEYS" () {
+        def SNSNotificationServiceUtil notificationServiceUtil = new SNSNotificationServiceUtil(userMetadataService)
+        def partitions = Lists.newArrayList(
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', 'null')).build(),
+        )
+        def str =  "{ \"data_dependency\": {\"partition_column_date_type\": \"region\"}," +
+            "  \"data_hygiene\": {\"delete_column\":\"dateint\",\"delete_method\": \"by partition column\" }}"
+        def node = metacatJsonLocator.parseJsonObject(str)
+        def event = new MetacatSaveTablePartitionPostEvent(
+            QualifiedName.fromString("testhive/test/test_table"),
+            this.requestContext,
+            this,
+            partitions,
+            Mock(PartitionsSaveResponseDto)
+        )
+
+        when:
+        def payload = notificationServiceUtil.createTablePartitionsUpdatePayload(partitions, event)
+        assert  payload.getLatestDeleteColumnValue() == null
+        assert payload.getNumCreatedPartitions() == 1
+        assert payload.getMessage() == "NO_CANDIDATE_PARTITION_KEYS"
+        then:
+        userMetadataService.getDefinitionMetadata(QualifiedName.fromString("testhive/test/test_table")) >> Optional.ofNullable(node)
+    }
+
+    def "Test get payload null and empty delete column case - EMPTY_DELETE_COLUMN" () {
+        def SNSNotificationServiceUtil notificationServiceUtil = new SNSNotificationServiceUtil(userMetadataService)
+        def partitions = Lists.newArrayList(
+            PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', 'dateint=29170710/hour=0/batchid=merged_1')).build(),
+        )
+        def str =  "{ \"data_dependency\": {\"partition_column_date_type\": \"region\"}," +
+            "  \"data_hygiene\": {\"delete_column\":\"\",\"delete_method\": \"by partition column\" }}"
+        def node = metacatJsonLocator.parseJsonObject(str)
+        def event = new MetacatSaveTablePartitionPostEvent(
+            QualifiedName.fromString("testhive/test/test_table"),
+            this.requestContext,
+            this,
+            partitions,
+            Mock(PartitionsSaveResponseDto)
+        )
+
+        when:
+        def payload = notificationServiceUtil.createTablePartitionsUpdatePayload(partitions, event)
+        assert  payload.getLatestDeleteColumnValue() == null
+        assert payload.getNumCreatedPartitions() == 1
+        assert payload.getMessage() == "EMPTY_DELETE_COLUMN"
+        then:
+        userMetadataService.getDefinitionMetadata(QualifiedName.fromString("testhive/test/test_table")) >> Optional.ofNullable(node)
+    }
+
+    def "Test get payload future key case - ALL_FUTURE_PARTITION_KEYS" () {
         def SNSNotificationServiceUtil notificationServiceUtil = new SNSNotificationServiceUtil(userMetadataService)
         def partitions = Lists.newArrayList(
             PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', 'dateint=29170710/hour=0/batchid=merged_1')).build(),
@@ -166,14 +293,14 @@ class SNSNotificationServiceUtilSpec extends Specification{
 
         when:
         def payload = notificationServiceUtil.createTablePartitionsUpdatePayload(partitions, event)
-        assert  payload.getLatestDeleteColumnValue() == null
+        assert payload.getLatestDeleteColumnValue() == null
         assert payload.getNumCreatedPartitions() == 3
         assert payload.getMessage() == "ALL_FUTURE_PARTITION_KEYS"
         then:
         userMetadataService.getDefinitionMetadata(QualifiedName.fromString("testhive/test/test_table")) >> Optional.ofNullable(node)
     }
 
-    def "Test get payload invalid key case" () {
+    def "Test get payload invalid key case - INVALID_PARTITION_KEY_FORMAT" () {
         def SNSNotificationServiceUtil notificationServiceUtil = new SNSNotificationServiceUtil(userMetadataService)
         def partitions = Lists.newArrayList(
             PartitionDto.builder().name(QualifiedName.ofPartition('testhive', 'test', 'test_table', 'dateint=929170710/hour=0/batchid=merged_1')).build(),
