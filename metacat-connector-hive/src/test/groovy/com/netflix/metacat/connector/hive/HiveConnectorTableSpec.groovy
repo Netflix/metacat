@@ -41,6 +41,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
+
 /**
  * Unit test for HiveConnectorTableSpec.
  * @author zhenl

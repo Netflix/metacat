@@ -15,12 +15,16 @@
  */
 package com.netflix.metacat.connector.hive.metastore;
 
+import com.google.common.base.Throwables;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import com.netflix.spectator.api.Registry;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.Deadline;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 
+import javax.jdo.JDODataStoreException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -33,18 +37,18 @@ import java.util.concurrent.TimeUnit;
  * @author zhenl
  * @since 1.0.0
  */
+@NoArgsConstructor
 public final class HMSHandlerProxy implements InvocationHandler {
-
+    @Setter
     private MetacatHMSHandler metacatHMSHandler;
     private long timeout = 600000; //600s
 
-
     private HMSHandlerProxy(final HiveConf hiveConf, final Registry registry) throws MetaException {
         metacatHMSHandler =
-                new MetacatHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME, hiveConf, registry, false);
+            new MetacatHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME, hiveConf, registry, false);
         metacatHMSHandler.init();
         timeout = HiveConf.getTimeVar(hiveConf,
-                HiveConf.ConfVars.METASTORE_CLIENT_SOCKET_TIMEOUT, TimeUnit.MILLISECONDS);
+            HiveConf.ConfVars.METASTORE_CLIENT_SOCKET_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -56,12 +60,12 @@ public final class HMSHandlerProxy implements InvocationHandler {
      * @throws Exception Exception
      */
     public static IMetacatHMSHandler getProxy(final HiveConf hiveConf, final Registry registry)
-            throws Exception {
+        throws Exception {
 
         final HMSHandlerProxy handler = new HMSHandlerProxy(hiveConf, registry);
         return (IMetacatHMSHandler) Proxy.newProxyInstance(
-                HMSHandlerProxy.class.getClassLoader(),
-                new Class[]{IMetacatHMSHandler.class}, handler);
+            HMSHandlerProxy.class.getClassLoader(),
+            new Class[]{IMetacatHMSHandler.class}, handler);
     }
 
     @Override
@@ -72,8 +76,12 @@ public final class HMSHandlerProxy implements InvocationHandler {
             final Object object = method.invoke(metacatHMSHandler, args);
             Deadline.stopTimer();
             return object;
-
         } catch (InvocationTargetException e) {
+            for (Throwable ex : Throwables.getCausalChain(e)) {
+                if (ex instanceof JDODataStoreException) {
+                    throw ex;
+                }
+            }
             throw e.getCause();
         }
     }
