@@ -47,6 +47,7 @@ import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.SqlParameterValue;
@@ -103,7 +104,7 @@ public class DirectSqlGetPartition {
     public DirectSqlGetPartition(
         final ConnectorContext connectorContext,
         final ThreadServiceManager threadServiceManager,
-        final JdbcTemplate jdbcTemplate,
+        @Qualifier("hiveReadJdbcTemplate") final JdbcTemplate jdbcTemplate,
         final HiveConnectorFastServiceMetric fastServiceMetric
     ) {
         this.catalogName = connectorContext.getCatalogName();
