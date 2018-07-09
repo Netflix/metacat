@@ -104,7 +104,7 @@ public class HiveConnectorFastServiceConfig {
     public DirectSqlGetPartition directSqlGetPartition(
         final ThreadServiceManager threadServiceManager,
         final ConnectorContext connectorContext,
-        @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
+        @Qualifier("hiveReadJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
         final HiveConnectorFastServiceMetric serviceMetric
     ) {
         return new DirectSqlGetPartition(
@@ -127,7 +127,7 @@ public class HiveConnectorFastServiceConfig {
     @Bean
     public DirectSqlSavePartition directSqlSavePartition(
         final ConnectorContext connectorContext,
-        @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
+        @Qualifier("hiveWriteJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
         final SequenceGeneration sequenceGeneration,
         final HiveConnectorFastServiceMetric serviceMetric
     ) {
@@ -147,7 +147,7 @@ public class HiveConnectorFastServiceConfig {
      */
     @Bean
     public SequenceGeneration sequenceGeneration(
-        @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate
+        @Qualifier("hiveWriteJdbcTemplate") final JdbcTemplate hiveJdbcTemplate
     ) {
         return new SequenceGeneration(hiveJdbcTemplate);
     }
@@ -164,7 +164,7 @@ public class HiveConnectorFastServiceConfig {
     @Bean
     public DirectSqlTable directSqlTable(
         final ConnectorContext connectorContext,
-        @Qualifier("hiveJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
+        @Qualifier("hiveWriteJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
         final HiveConnectorFastServiceMetric serviceMetric,
         final DirectSqlSavePartition directSqlSavePartition
     ) {

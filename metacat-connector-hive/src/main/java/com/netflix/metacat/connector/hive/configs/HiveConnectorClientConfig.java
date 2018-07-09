@@ -40,7 +40,12 @@ import javax.sql.DataSource;
 @Configuration
 @ConditionalOnProperty(value = "useEmbeddedClient", havingValue = "true")
 public class HiveConnectorClientConfig {
-    private static final int DEFAULT_DATASTORE_READ_TIMEOUT = 60000;
+    /** Default Query timeout in milliseconds. */
+    private static final int DEFAULT_DATASTORE_TIMEOUT = 60000;
+    /** Default Query timeout in milliseconds for reads. */
+    private static final int DEFAULT_DATASTORE_READ_TIMEOUT = 120000;
+    /** Default Query timeout in milliseconds for writes. */
+    private static final int DEFAULT_DATASTORE_WRITE_TIMEOUT = 120000;
 
     /**
      * create local hive client.
@@ -128,19 +133,7 @@ public class HiveConnectorClientConfig {
     }
 
     /**
-     * hive metadata JDBC template.
-     *
-     * @param hiveDataSource hive data source
-     * @return hive JDBC Template
-     */
-    @Bean
-    public JdbcTemplate hiveJdbcTemplate(
-        @Qualifier("hiveDataSource") final DataSource hiveDataSource) {
-        return new JdbcTemplate(hiveDataSource);
-    }
-
-    /**
-     * hive metadata read JDBC template. Query timeout is set to control long running queries.
+     * hive metadata read JDBC template. Query timeout is set to control long running read queries.
      *
      * @param connectorContext connector config.
      * @param hiveDataSource hive data source
@@ -151,7 +144,23 @@ public class HiveConnectorClientConfig {
         final ConnectorContext connectorContext,
         @Qualifier("hiveDataSource") final DataSource hiveDataSource) {
         final JdbcTemplate result = new JdbcTemplate(hiveDataSource);
-        result.setQueryTimeout(getDataStoreTimeout(connectorContext) / 1000);
+        result.setQueryTimeout(getDataStoreReadTimeout(connectorContext) / 1000);
+        return result;
+    }
+
+    /**
+     * hive metadata write JDBC template. Query timeout is set to control long running write queries.
+     *
+     * @param connectorContext connector config.
+     * @param hiveDataSource hive data source
+     * @return hive JDBC Template
+     */
+    @Bean
+    public JdbcTemplate hiveWriteJdbcTemplate(
+        final ConnectorContext connectorContext,
+        @Qualifier("hiveDataSource") final DataSource hiveDataSource) {
+        final JdbcTemplate result = new JdbcTemplate(hiveDataSource);
+        result.setQueryTimeout(getDataStoreWriteTimeout(connectorContext) / 1000);
         return result;
     }
 
@@ -165,7 +174,7 @@ public class HiveConnectorClientConfig {
         final int dataStoreTimeout = getDataStoreTimeout(connectorContext);
         result.setInt(HiveConfigConstants.JAVAX_JDO_DATASTORETIMEOUT, dataStoreTimeout);
         result.setInt(HiveConfigConstants.JAVAX_JDO_DATASTOREREADTIMEOUT, dataStoreTimeout);
-        result.setInt(HiveConfigConstants.JAVAX_JDO_DATASTOREWRITETIMEOUT, dataStoreTimeout);
+        result.setInt(HiveConfigConstants.JAVAX_JDO_DATASTOREWRITETIMEOUT, getDataStoreWriteTimeout(connectorContext));
         result.setInt(HiveConfigConstants.HIVE_METASTORE_DS_RETRY, 0);
         result.setInt(HiveConfigConstants.HIVE_HMSHANDLER_RETRY, 0);
         result.set(
@@ -177,10 +186,28 @@ public class HiveConnectorClientConfig {
     }
 
     private int getDataStoreTimeout(final ConnectorContext connectorContext) {
-        int result = DEFAULT_DATASTORE_READ_TIMEOUT;
+        int result = DEFAULT_DATASTORE_TIMEOUT;
         try {
             result = Integer.parseInt(
                 connectorContext.getConfiguration().get(HiveConfigConstants.JAVAX_JDO_DATASTORETIMEOUT));
+        } catch (final Exception ignored) { }
+        return result;
+    }
+
+    private int getDataStoreReadTimeout(final ConnectorContext connectorContext) {
+        int result = DEFAULT_DATASTORE_READ_TIMEOUT;
+        try {
+            result = Integer.parseInt(
+                connectorContext.getConfiguration().get(HiveConfigConstants.JAVAX_JDO_DATASTOREREADTIMEOUT));
+        } catch (final Exception ignored) { }
+        return result;
+    }
+
+    private int getDataStoreWriteTimeout(final ConnectorContext connectorContext) {
+        int result = DEFAULT_DATASTORE_WRITE_TIMEOUT;
+        try {
+            result = Integer.parseInt(
+                connectorContext.getConfiguration().get(HiveConfigConstants.JAVAX_JDO_DATASTOREWRITETIMEOUT));
         } catch (final Exception ignored) { }
         return result;
     }

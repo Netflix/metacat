@@ -34,17 +34,17 @@ class HiveConnectorClientConfigSpec extends Specification{
         when:
         def template = config.hiveReadJdbcTemplate(context, dataSource)
         then:
-        template.getQueryTimeout() == 60
-        1 * context.getConfiguration() >> ['javax.jdo.option.DatastoreTimeout':'invalid']
+        template.getQueryTimeout() == 120
+        1 * context.getConfiguration() >> ['javax.jdo.option.DatastoreReadTimeoutMillis':'invalid']
         when:
         template = config.hiveReadJdbcTemplate(context, dataSource)
         then:
         template.getQueryTimeout() == 10
-        1 * context.getConfiguration() >> ['javax.jdo.option.DatastoreTimeout':'10000']
+        1 * context.getConfiguration() >> ['javax.jdo.option.DatastoreReadTimeoutMillis':'10000']
         when:
         template = config.hiveReadJdbcTemplate(context, dataSource)
         then:
-        template.getQueryTimeout() == 60
+        template.getQueryTimeout() == 120
         1 * context.getConfiguration() >> [:]
     }
     def testGetDefaultConf(){
@@ -52,16 +52,16 @@ class HiveConnectorClientConfigSpec extends Specification{
         def conf = config.getDefaultConf(context)
         then:
         conf.get('javax.jdo.option.DatastoreTimeout') == '60000'
-        1 * context.getConfiguration() >> ['javax.jdo.option.DatastoreTimeout':'invalid']
+        2 * context.getConfiguration() >> ['javax.jdo.option.DatastoreTimeout':'invalid']
         when:
         conf = config.getDefaultConf(context)
         then:
         conf.get('javax.jdo.option.DatastoreTimeout') == '10000'
-        1 * context.getConfiguration() >> ['javax.jdo.option.DatastoreTimeout':'10000']
+        2 * context.getConfiguration() >> ['javax.jdo.option.DatastoreTimeout':'10000']
         when:
         conf = config.getDefaultConf(context)
         then:
         conf.get('javax.jdo.option.DatastoreTimeout') == '60000'
-        1 * context.getConfiguration() >> [:]
+        2 * context.getConfiguration() >> [:]
     }
 }
