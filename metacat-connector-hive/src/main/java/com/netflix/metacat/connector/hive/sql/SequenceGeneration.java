@@ -19,7 +19,8 @@ package com.netflix.metacat.connector.hive.sql;
 import com.google.common.annotations.VisibleForTesting;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +53,7 @@ public class SequenceGeneration {
      *
      * @param jdbcTemplate JDBC template
      */
-    public SequenceGeneration(final JdbcTemplate jdbcTemplate) {
+    public SequenceGeneration(@Qualifier("hiveWriteJdbcTemplate") final JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -70,10 +71,10 @@ public class SequenceGeneration {
             //Get current sequence number
             result = jdbcTemplate.queryForObject(SQL.SEQUENCE_NEXT_VAL_BYNAME,
                 new Object[]{sequenceParamName}, Long.class);
-        } catch (DataAccessException e) {
+        } catch (EmptyResultDataAccessException e) {
             log.warn("Failed getting the sequence ids for partition", e);
         } catch (Exception e) {
-            throw new IllegalStateException("Failed retrieving the sequence numbers.");
+            throw new ConnectorException("Failed retrieving the sequence numbers.");
         }
 
         try {
@@ -91,8 +92,6 @@ public class SequenceGeneration {
 
     @VisibleForTesting
     private static class SQL {
-        static final String SEQUENCE_NEXT_VAL =
-            "SELECT NEXT_VAL, SEQUENCE_NAME FROM SEQUENCE_TABLE WHERE SEQUENCE_NAME in (?,?,?) FOR UPDATE";
         static final String SEQUENCE_INSERT_VAL =
             "INSERT INTO SEQUENCE_TABLE(NEXT_VAL,SEQUENCE_NAME) VALUES (?,?)";
         static final String SEQUENCE_UPDATE_VAL =
