@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.main.api;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
@@ -26,6 +27,7 @@ import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.exception.MetacatPreconditionFailedException;
 import com.netflix.metacat.common.exception.MetacatUserMetadataException;
+import com.netflix.metacat.common.exception.MetacatTooManyRequestsException;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
@@ -140,6 +142,12 @@ public final class RequestWrapper {
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
+            for (Throwable ex : Throwables.getCausalChain(e)) {
+                if (ex.getMessage().contains("too many connections")
+                    || ex.getMessage().contains("Timeout: Pool empty")) {
+                    throw new MetacatTooManyRequestsException(ex.getMessage());
+                }
+            }
             throw new MetacatException(message, e);
         } catch (UserMetadataServiceException e) {
             collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
