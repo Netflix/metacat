@@ -101,9 +101,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     }
 
     private void handleSqlException(final TException ex) {
-        if (ex.getCause() instanceof SQLException || ex.getMessage().startsWith(EXCEPTION_JDO_PREFIX)
-            || ex.getMessage().contains(EXCEPTION_SQL_PREFIX)
-            || ex.getMessage().contains(EX_MESSAGE_RESTART_TRANSACTION)) {
+        if ((ex.getCause() instanceof SQLException || ex.getMessage().startsWith(EXCEPTION_JDO_PREFIX)
+            || ex.getMessage().contains(EXCEPTION_SQL_PREFIX))
+            && ex.getMessage().contains(EX_MESSAGE_RESTART_TRANSACTION)) {
             this.hiveSqlErrorCounter.increment();
         }
     }
