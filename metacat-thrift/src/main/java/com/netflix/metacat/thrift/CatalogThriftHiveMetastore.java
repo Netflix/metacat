@@ -1016,10 +1016,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             final String databaseName = normalizeIdentifier(dbName);
             final String tableName = normalizeIdentifier(tblName);
             final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
-
-            final List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, dbName, tblName,
-                filter, null,
-                null, null, maxParts, false);
+            final GetPartitionsRequestDto dto = new GetPartitionsRequestDto(filter, null, true, false);
+            final List<PartitionDto> metacatPartitions = partV1.getPartitionsForRequest(catalogName, dbName, tblName,
+                null, null, null, maxParts, false, dto);
             final List<Partition> partitions = Lists.newArrayListWithCapacity(metacatPartitions.size());
             for (PartitionDto partition : metacatPartitions) {
                 partitions.add(hiveConverters.metacatToHivePartition(partition, tableDto));
@@ -1197,9 +1196,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         final TableDto tableDto = v1.getTable(catalogName, databaseName, tableName, true, false, false);
 
         final Integer maxValues = maxParts > 0 ? Short.toUnsignedInt(maxParts) : null;
-        final List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, dbName, tblName,
-            filter, null,
-            null, null, maxValues, false);
+        final GetPartitionsRequestDto dto = new GetPartitionsRequestDto(filter, null, true, false);
+        final List<PartitionDto> metacatPartitions = partV1.getPartitionsForRequest(catalogName, dbName, tblName,
+            null, null, null, maxValues, false, dto);
         final List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
         for (PartitionDto partition : metacatPartitions) {
             result.add(hiveConverters.metacatToHivePartition(partition, tableDto));
@@ -1244,8 +1243,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             final String partFilter = partition_values_to_partition_filter(tableDto, partVals);
 
             final Integer maxValues = maxParts > 0 ? Short.toUnsignedInt(maxParts) : null;
-            final List<PartitionDto> metacatPartitions = partV1.getPartitions(catalogName, dbName, tblName, partFilter,
-                null, null, null, maxValues, false);
+            final GetPartitionsRequestDto dto = new GetPartitionsRequestDto(partFilter, null, true, false);
+            final List<PartitionDto> metacatPartitions = partV1.getPartitionsForRequest(catalogName, dbName, tblName,
+                null, null, null, maxValues, false, dto);
             final List<Partition> result = Lists.newArrayListWithCapacity(metacatPartitions.size());
             for (PartitionDto partition : metacatPartitions) {
                 result.add(hiveConverters.metacatToHivePartition(partition, tableDto));

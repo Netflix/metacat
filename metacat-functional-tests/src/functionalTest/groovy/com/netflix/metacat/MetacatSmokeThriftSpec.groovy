@@ -308,8 +308,11 @@ class MetacatSmokeThriftSpec extends Specification {
             }
             client.alterPartitions(databaseName + '.' + tableName, partitions)
         }
+        def resultPartitions = client.getPartitionsByFilter(hiveTable, filter)
+        def firstPartition = resultPartitions.isEmpty() ? null : resultPartitions.get(0)
         then:
-        client.getPartitionsByFilter(hiveTable, filter).size() == (filter.contains('like') ? 0 : result)
+        resultPartitions.size() == (filter.contains('like') ? 0 : result)
+        firstPartition == null || firstPartition.getParameters().size() > 1
         cleanup:
         if (cursor == 'end') {
             def partitionNames = client.getPartitionNames(databaseName, tableName, (short) -1)
