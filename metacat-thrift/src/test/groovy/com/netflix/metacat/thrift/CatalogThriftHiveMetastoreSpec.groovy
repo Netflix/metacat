@@ -1634,7 +1634,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         noExceptionThrown()
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
-        1 * partitionV1.getPartitions(_, db, tbl, _, null, null, null, 2, false) >> []
+        1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, 2, false,_) >> []
         0 * hiveConverters.metacatToHivePartition(_, _)
         registry.clock() >> clock
         registry.timer(_) >> timer
@@ -1944,7 +1944,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
-        1 * partitionV1.getPartitions(_, db, tbl, null, null, null, null, { it > 0 || it == null }, false) >> partitions
+        1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, { it > 0 || it == null }, false, _) >> partitions
         1 * hiveConverters.metacatToHivePartition(_, _) >> matches
         result == matches
         registry.clock() >> clock
@@ -1975,7 +1975,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
-        1 * partitionV1.getPartitions(_, db, tbl, null, null, null, null, _, false) >> []
+        1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, _, false,_) >> []
         0 * hiveConverters.metacatToHivePartition(_, _)
         registry.clock() >> clock
         registry.timer(_) >> timer
@@ -2002,7 +2002,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
-        1 * partitionV1.getPartitions(_, db, tbl, null, null, null, null, 2, false) >> []
+        1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, 2, false,_) >> []
         0 * hiveConverters.metacatToHivePartition(_, _)
         registry.clock() >> clock
         registry.timer(_) >> timer
@@ -2067,7 +2067,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto()
-        1 * partitionV1.getPartitions(_, db, tbl, _, null, null, null, { it > 0 || it == null }, false) >> partitions
+        1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, { it > 0 || it == null }, false,_) >> partitions
         1 * hiveConverters.metacatToHivePartition(_, _) >> matches
         result == matches
         registry.clock() >> clock
@@ -2105,7 +2105,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto()
-        1 * partitionV1.getPartitions(_, db, tbl, _, null, null, null, { it > 0 || it == null }, false) >> partitions
+        1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, { it > 0 || it == null }, false,_) >> partitions
         1 * hiveConverters.metacatToHivePartition(_, _) >> matches
         result == matches
         registry.clock() >> clock
@@ -2139,7 +2139,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         noExceptionThrown()
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
-        1 * partitionV1.getPartitions(_, db, tbl, _, null, null, null, 2, false) >> []
+        1 * partitionV1.getPartitionsForRequest(_, db, tbl,null, null, null, 2, false,_) >> []
         0 * hiveConverters.metacatToHivePartition(_, _)
         registry.clock() >> clock
         registry.timer(_) >> timer
@@ -2177,7 +2177,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto()
-        1 * partitionV1.getPartitions(_, db, tbl, null, null, null, null, { it > 0 || it == null }, false) >> partitions
+        1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, { it > 0 || it == null }, false,_) >> partitions
         1 * hiveConverters.metacatToHivePartition(_, _) >> matches
         result == matches
         registry.clock() >> clock

@@ -123,8 +123,14 @@ class DataDtoProvider {
                         inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
                         outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
                         serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        serdeInfoParameters: [
+                            'serialization.format': '1'
+                        ],
                         uri: uri
                 ),
+                metadata: [
+                        'bytesSize' : '1'
+                ],
                 definitionMetadata: getDefinitionMetadata('test'),
                 dataMetadata: metacatJson.parseJsonObject('{"metrics": {}}')
         )
