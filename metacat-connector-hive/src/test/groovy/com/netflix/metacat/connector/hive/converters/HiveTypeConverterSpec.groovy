@@ -80,4 +80,17 @@ class HiveTypeConverterSpec extends Specification {
         ]
     }
 
+    @Unroll
+    def 'fail to convert "#typeString" to a presto type and back'(String typeString) {
+        when:
+        converter.toMetacatType(typeString)
+        then:
+        thrown(Exception)
+        where:
+        typeString << [
+            'list<string>',
+            'struct<s: string>'
+        ]
+    }
+
 }

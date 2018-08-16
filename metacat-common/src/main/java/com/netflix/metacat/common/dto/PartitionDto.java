@@ -48,11 +48,11 @@ public class PartitionDto extends BaseDto implements HasDataMetadata, HasDefinit
     @ApiModelProperty(value = "audit information about the partition")
     private AuditDto audit;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "metadata attached to this partition")
+    @ApiModelProperty(value = "metadata attached to the physical data")
     @JsonProperty
     private transient ObjectNode dataMetadata;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "metadata attached to the physical data")
+    @ApiModelProperty(value = "metadata attached to this partition")
     @JsonProperty
     private transient ObjectNode definitionMetadata;
     @ApiModelProperty(value = "the name of this entity", required = true)
