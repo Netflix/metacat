@@ -655,6 +655,7 @@ public class MetacatController implements MetacatV1 {
                         .includeDefinitionMetadata(includeDefinitionMetadata)
                         .includeDataMetadata(includeDataMetadata)
                         .disableOnReadMetadataIntercetor(false)
+                        .useCache(true)
                         .build()
                 );
                 return table.orElseThrow(() -> new TableNotFoundException(name));

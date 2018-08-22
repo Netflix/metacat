@@ -54,7 +54,8 @@ services:
                 -Dmetacat.definition.metadata.delete.enableForTable=false
                 -Dmetacat.definition.metadata.delete.enableDeleteForQualifiedNames=hive-metastore/hsmoke_ddb,hive-metastore/hsmoke_ddb1/test_create_table1,embedded-hive-metastore,embedded-fast-hive-metastore/fsmoke_db1,embedded-fast-hive-metastore/fsmoke_ddb1,embedded-fast-hive-metastore/shard,embedded-fast-hive-metastore/fsmoke_db4,s3-mysql-db,mysql-56-db
                 -Dmetacat.hive.metastore.batchSize=10
-                -Dmetacat.usermetadata.config.location=/etc/metacat/usermetadata.properties'
+                -Dmetacat.usermetadata.config.location=/etc/metacat/usermetadata.properties
+                -Dmetacat.cache.enabled=true'
         labels:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.war"

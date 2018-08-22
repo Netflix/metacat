@@ -341,4 +341,11 @@ public interface Config {
      * @return list of names
      */
     Set<QualifiedName> getNamesEnabledForDefinitionMetadataDelete();
+
+    /**
+     * Enable cache.
+     *
+     * @return true if cache is enabled
+     */
+    boolean isCacheEnabled();
 }
