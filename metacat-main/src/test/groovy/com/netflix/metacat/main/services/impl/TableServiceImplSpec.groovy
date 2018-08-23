@@ -52,6 +52,7 @@ class TableServiceImplSpec extends Specification {
     def config = Mock(Config)
     def tableDto = DataDtoProvider.getTable('a', 'b', 'c', "amajumdar", "s3:/a/b")
     def name = tableDto.name
+    def connectorTableServiceProxy
     TableService service
     def setup() {
         connectorManager.getTableService(_) >> connectorTableService
@@ -60,8 +61,9 @@ class TableServiceImplSpec extends Specification {
         usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
         usermetadataService.getDataMetadata(_) >> Optional.empty()
         usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
-        service = new TableServiceImpl(connectorManager, databaseService, tagService,
-            usermetadataService, eventBus, converterUtil, registry, config)
+        connectorTableServiceProxy = new ConnectorTableServiceProxy(connectorManager, converterUtil)
+        service = new TableServiceImpl(connectorTableServiceProxy, databaseService, tagService,
+            usermetadataService, eventBus, registry, config)
     }
 
     def testTableGet() {

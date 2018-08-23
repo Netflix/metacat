@@ -59,4 +59,6 @@ public class MetacatProperties {
     private User user = new User();
     @NonNull
     private UserMetadata usermetadata = new UserMetadata();
+    @NonNull
+    private CacheProperties cache = new CacheProperties();
 }

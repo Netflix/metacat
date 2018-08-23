@@ -40,6 +40,7 @@ import com.netflix.metacat.main.services.MetadataService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.metacat.main.services.impl.CatalogServiceImpl;
+import com.netflix.metacat.main.services.impl.ConnectorTableServiceProxy;
 import com.netflix.metacat.main.services.impl.DatabaseServiceImpl;
 import com.netflix.metacat.main.services.impl.MViewServiceImpl;
 import com.netflix.metacat.main.services.impl.PartitionServiceImpl;
@@ -140,36 +141,51 @@ public class ServicesConfig {
     /**
      * The table service bean.
      *
-     * @param connectorManager    connector manager
+     * @param connectorTableServiceProxy   connector table service proxy
      * @param databaseService     database service
      * @param tagService          tag service
      * @param userMetadataService user metadata service
      * @param eventBus            Internal event bus
-     * @param converterUtil       utility to convert to/from Dto to connector resources
      * @param registry             registry handle
      * @param config               configurations
      * @return The table service bean
      */
     @Bean
     public TableService tableService(
-        final ConnectorManager connectorManager,
+        final ConnectorTableServiceProxy connectorTableServiceProxy,
         final DatabaseService databaseService,
         final TagService tagService,
         final UserMetadataService userMetadataService,
         final MetacatEventBus eventBus,
-        final ConverterUtil converterUtil,
         final Registry registry,
         final Config config
     ) {
         return new TableServiceImpl(
-            connectorManager,
+            connectorTableServiceProxy,
             databaseService,
             tagService,
             userMetadataService,
             eventBus,
-            converterUtil,
             registry,
             config
+        );
+    }
+
+    /**
+     * The connector table service proxy bean.
+     *
+     * @param connectorManager    Connector manager to use
+     * @param converterUtil       Converter utilities
+     * @return The connector table service proxy bean
+     */
+    @Bean
+    public ConnectorTableServiceProxy connectorTableServiceProxy(
+        final ConnectorManager connectorManager,
+        final ConverterUtil converterUtil
+    ) {
+        return new ConnectorTableServiceProxy(
+            connectorManager,
+            converterUtil
         );
     }
 

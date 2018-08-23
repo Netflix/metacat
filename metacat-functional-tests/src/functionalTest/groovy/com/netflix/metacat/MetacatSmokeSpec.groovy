@@ -824,7 +824,7 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatNotFoundException)
         when:
-        api.getTable('invalid', 'invalid', 'invalid', false, false, false)
+        api.getTable('invalid', 'invalid', 'invalid', true, false, false)
         then:
         thrown(MetacatNotFoundException)
         when:
@@ -842,7 +842,7 @@ class MetacatSmokeSpec extends Specification {
         when:
         api.deleteTable('invalid', 'invalid', 'invalid')
         then:
-        thrown(MetacatNotFoundException)
+        noExceptionThrown()
         when:
         partitionApi.getPartitionCount('invalid', 'invalid', 'invalid')
         then:

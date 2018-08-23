@@ -414,4 +414,9 @@ public class DefaultConfigImpl implements Config {
     public Set<QualifiedName> getNamesEnabledForDefinitionMetadataDelete() {
         return this.metacatProperties.getDefinition().getMetadata().getDelete().getQualifiedNamesEnabledForDelete();
     }
+
+    @Override
+    public boolean isCacheEnabled() {
+        return this.metacatProperties.getCache().isEnabled();
+    }
 }
