@@ -338,7 +338,10 @@ public class TableServiceImpl implements TableService {
             .includeDefinitionMetadata(true)
             .build()).orElseThrow(() -> new TableNotFoundException(name));
         eventBus.post(new MetacatUpdateTablePreEvent(name, metacatRequestContext, this, oldTable, tableDto));
-        connectorTableServiceProxy.update(name, tableDto);
+        //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
+        if (isTableInfoProvided(tableDto)) {
+            connectorTableServiceProxy.update(name, tableDto);
+        }
 
         // Merge in metadata if the user sent any
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
@@ -359,6 +362,17 @@ public class TableServiceImpl implements TableService {
                 .build()).orElseThrow(() -> new IllegalStateException("should exist"));
         eventBus.post(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, updatedDto));
         return updatedDto;
+    }
+
+    private boolean isTableInfoProvided(final TableDto tableDto) {
+        boolean result = false;
+        if ((tableDto.getFields() != null && !tableDto.getFields().isEmpty())
+            || tableDto.getSerde() != null
+            || (tableDto.getMetadata() != null && !tableDto.getMetadata().isEmpty())
+            || tableDto.getAudit() != null) {
+            result = true;
+        }
+        return result;
     }
 
     /**

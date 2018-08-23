@@ -135,27 +135,13 @@ public class ConnectorTableServiceProxy {
     public void update(final QualifiedName name, final TableDto tableDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name);
-        //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
-        if (isTableInfoProvided(tableDto)) {
-            try {
-                log.info("Updating table {}", name);
-                final ConnectorRequestContext connectorRequestContext
-                    = converterUtil.toConnectorContext(metacatRequestContext);
-                service.update(connectorRequestContext, converterUtil.fromTableDto(tableDto));
-            } catch (UnsupportedOperationException ignored) {
-            }
+        try {
+            log.info("Updating table {}", name);
+            final ConnectorRequestContext connectorRequestContext
+                = converterUtil.toConnectorContext(metacatRequestContext);
+            service.update(connectorRequestContext, converterUtil.fromTableDto(tableDto));
+        } catch (UnsupportedOperationException ignored) {
         }
-    }
-
-    private boolean isTableInfoProvided(final TableDto tableDto) {
-        boolean result = false;
-        if ((tableDto.getFields() != null && !tableDto.getFields().isEmpty())
-            || tableDto.getSerde() != null
-            || (tableDto.getMetadata() != null && !tableDto.getMetadata().isEmpty())
-            || tableDto.getAudit() != null) {
-            result = true;
-        }
-        return result;
     }
 
     /**
