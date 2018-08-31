@@ -26,6 +26,7 @@ import com.netflix.metacat.common.exception.MetacatException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.exception.MetacatPreconditionFailedException;
+import com.netflix.metacat.common.exception.MetacatUnAuthorizedException;
 import com.netflix.metacat.common.exception.MetacatUserMetadataException;
 import com.netflix.metacat.common.exception.MetacatTooManyRequestsException;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
@@ -154,6 +155,12 @@ public final class RequestWrapper {
             final String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             throw new MetacatUserMetadataException(message);
+        } catch (MetacatUnAuthorizedException e) {
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
+            final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
+                e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
+            log.error(message, e);
+            throw e;
         } catch (Exception e) {
             collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),

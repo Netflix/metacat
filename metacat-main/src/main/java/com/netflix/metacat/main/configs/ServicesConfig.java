@@ -20,6 +20,8 @@ package com.netflix.metacat.main.configs;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.usermetadata.AuthorizationService;
+import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService;
 import com.netflix.metacat.common.server.usermetadata.DefaultLookupService;
 import com.netflix.metacat.common.server.usermetadata.DefaultTagService;
 import com.netflix.metacat.common.server.usermetadata.DefaultUserMetadataService;
@@ -81,6 +83,20 @@ public class ServicesConfig {
         return new DefaultTagService();
     }
 
+
+    /**
+     * Authorization service.
+     * @param config metacat config
+     * @return authorization class based on config
+     */
+    @Bean
+    @ConditionalOnMissingBean(AuthorizationService.class)
+    public AuthorizationService authorizationService(
+        final Config config
+    ) {
+        return new DefaultAuthorizationService(config);
+    }
+
     /**
      * No-op Look up service.
      *
@@ -96,7 +112,7 @@ public class ServicesConfig {
      * The catalog service bean.
      *
      * @param connectorManager    Connector manager to use
-     * @param userMetadataService  User metadata service
+     * @param userMetadataService User metadata service
      * @param metacatEventBus     Event bus to use
      * @param converterUtil       Converter utilities
      * @return Catalog service implementation
@@ -119,6 +135,7 @@ public class ServicesConfig {
      * @param metacatEventBus     Event bus to use
      * @param converterUtil       Converter utilities
      * @param catalogService      The catalog service to use
+     * @param authorizationService  authorization Service
      * @return Catalog service implementation
      */
     @Bean
@@ -127,27 +144,30 @@ public class ServicesConfig {
         final UserMetadataService userMetadataService,
         final MetacatEventBus metacatEventBus,
         final ConverterUtil converterUtil,
-        final CatalogService catalogService
+        final CatalogService catalogService,
+        final AuthorizationService authorizationService
     ) {
         return new DatabaseServiceImpl(
             catalogService,
             connectorManager,
             userMetadataService,
             metacatEventBus,
-            converterUtil
+            converterUtil,
+            authorizationService
         );
     }
 
     /**
      * The table service bean.
      *
-     * @param connectorTableServiceProxy   connector table service proxy
-     * @param databaseService     database service
-     * @param tagService          tag service
-     * @param userMetadataService user metadata service
-     * @param eventBus            Internal event bus
-     * @param registry             registry handle
-     * @param config               configurations
+     * @param connectorTableServiceProxy connector table service proxy
+     * @param databaseService            database service
+     * @param tagService                 tag service
+     * @param userMetadataService        user metadata service
+     * @param eventBus                   Internal event bus
+     * @param registry                   registry handle
+     * @param config                     configurations
+     * @param authorizationService       authorization Service
      * @return The table service bean
      */
     @Bean
@@ -158,7 +178,8 @@ public class ServicesConfig {
         final UserMetadataService userMetadataService,
         final MetacatEventBus eventBus,
         final Registry registry,
-        final Config config
+        final Config config,
+        final AuthorizationService authorizationService
     ) {
         return new TableServiceImpl(
             connectorTableServiceProxy,
@@ -167,15 +188,16 @@ public class ServicesConfig {
             userMetadataService,
             eventBus,
             registry,
-            config
+            config,
+            authorizationService
         );
     }
 
     /**
      * The connector table service proxy bean.
      *
-     * @param connectorManager    Connector manager to use
-     * @param converterUtil       Converter utilities
+     * @param connectorManager Connector manager to use
+     * @param converterUtil    Converter utilities
      * @return The connector table service proxy bean
      */
     @Bean
@@ -234,7 +256,7 @@ public class ServicesConfig {
      * @param connectorManager    connector manager
      * @param tableService        table service
      * @param partitionService    partition service
-     * @param userMetadataService  user metadata service
+     * @param userMetadataService user metadata service
      * @param eventBus            Internal event bus
      * @param converterUtil       utility to convert to/from Dto to connector resources
      * @return The MViewService implementation to use

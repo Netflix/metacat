@@ -16,6 +16,7 @@ package com.netflix.metacat.common.server.properties;
 import com.netflix.metacat.common.QualifiedName;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -38,14 +39,18 @@ public interface Config {
 
     /**
      * Enable publishing partitions to elastic search.
+     *
      * @return true if publishing partitions to elastic search is enabled
      */
     boolean isElasticSearchPublishPartitionEnabled();
+
     /**
      * Enable publishing metacat es error logs to elastic search.
+     *
      * @return true if publishing metacat es error logs to elastic search is enabled
      */
     boolean isElasticSearchPublishMetacatLogEnabled();
+
     /**
      * Elastic search cluster name.
      *
@@ -348,4 +353,26 @@ public interface Config {
      * @return true if cache is enabled
      */
     boolean isCacheEnabled();
+
+    /**
+     * Enable authorization.
+     *
+     * @return true if authorization is enabled
+     */
+    boolean isAuthorizationEnabled();
+
+    /**
+     * Get the metacat create acl property.
+     *
+     * @return The metacat create acl property
+     */
+    Map<QualifiedName, Set<String>> getMetacatCreateAcl();
+
+    /**
+     * Get the metacat delete acl property.
+     *
+     * @return The metacat delete acl property
+     */
+    Map<QualifiedName, Set<String>> getMetacatDeleteAcl();
 }
+

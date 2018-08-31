@@ -24,6 +24,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorTableService
 import com.netflix.metacat.common.server.converter.ConverterUtil
 import com.netflix.metacat.common.server.events.MetacatEventBus
 import com.netflix.metacat.common.server.properties.Config
+import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService
 import com.netflix.metacat.common.server.usermetadata.TagService
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.metacat.main.manager.ConnectorManager
@@ -53,8 +54,12 @@ class TableServiceImplSpec extends Specification {
     def tableDto = DataDtoProvider.getTable('a', 'b', 'c', "amajumdar", "s3:/a/b")
     def name = tableDto.name
     def connectorTableServiceProxy
+    def authorizationService
+
     TableService service
     def setup() {
+        config.getMetacatCreateAcl() >> new HashMap<QualifiedName, Set<String>>()
+        config.getMetacatDeleteAcl() >> new HashMap<QualifiedName, Set<String>>()
         connectorManager.getTableService(_) >> connectorTableService
         converterUtil.toTableDto(_) >> tableDto
         converterUtil.toConnectorContext(_) >> Mock(ConnectorRequestContext)
@@ -62,8 +67,9 @@ class TableServiceImplSpec extends Specification {
         usermetadataService.getDataMetadata(_) >> Optional.empty()
         usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
         connectorTableServiceProxy = new ConnectorTableServiceProxy(connectorManager, converterUtil)
+        authorizationService = new DefaultAuthorizationService(config)
         service = new TableServiceImpl(connectorTableServiceProxy, databaseService, tagService,
-            usermetadataService, eventBus, registry, config)
+            usermetadataService, eventBus, registry, config, authorizationService)
     }
 
     def testTableGet() {

@@ -25,6 +25,7 @@ import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.exception.MetacatPreconditionFailedException;
 import com.netflix.metacat.common.exception.MetacatTooManyRequestsException;
+import com.netflix.metacat.common.exception.MetacatUnAuthorizedException;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonException;
 import feign.Response;
@@ -64,6 +65,8 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                     return new MetacatNotSupportedException(message);
                 case 400: //BAD_REQUEST
                     return new MetacatBadRequestException(message);
+                case 403: //Forbidden
+                    return new MetacatUnAuthorizedException(message);
                 case 404: //NOT_FOUND
                     return new MetacatNotFoundException(message);
                 case 409: //CONFLICT

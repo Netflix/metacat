@@ -46,6 +46,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private final Registry registry;
     private final DirectSqlTable directSqlTable;
 
+
     /**
      * Constructor.
      *
@@ -65,7 +66,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final ConnectorContext connectorContext,
         final DirectSqlTable directSqlTable
     ) {
-        super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, connectorContext);
+        super(catalogName, metacatHiveClient, hiveConnectorDatabaseService,
+            hiveMetacatConverters, connectorContext);
         this.registry = connectorContext.getRegistry();
         this.directSqlTable = directSqlTable;
     }
@@ -89,7 +91,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
 
     /**
      * Update a table with the given metadata.
-     *
+     * <p>
      * If table is an iceberg table, then lock the table for update so that no other request can update it. If the meta
      * information is invalid, then throw an error.
      * If table is not an iceberg table, then do a regular table update.
