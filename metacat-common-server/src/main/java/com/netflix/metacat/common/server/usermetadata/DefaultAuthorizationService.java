@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Config based authorization Service implementation.
+ * Config based authorization service implementation.
  *
  * @author zhenl
  * @since 1.2.0
@@ -67,14 +67,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
     }
 
+    /**
+     * Check at database level.
+     */
     private void checkPermit(final Map<QualifiedName, Set<String>> accessACL,
                              final String userName,
                              final QualifiedName name,
                              final MetacatOperation op) {
-        //for the names without database
-        if (!name.isCatalogDefinition() || !name.isDatabaseDefinition()) {
-            return;
-        }
         final Set<String> users =
             accessACL.get(QualifiedName.ofDatabase(name.getCatalogName(), name.getDatabaseName()));
         if ((users != null) && !users.isEmpty() && !users.contains(userName)) {

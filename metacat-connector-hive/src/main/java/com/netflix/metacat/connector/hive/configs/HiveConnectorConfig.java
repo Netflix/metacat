@@ -14,11 +14,11 @@
 package com.netflix.metacat.connector.hive.configs;
 
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
-import com.netflix.metacat.common.server.connectors.util.TimeUtil;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
 import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
+import com.netflix.metacat.common.server.connectors.util.TimeUtil;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.client.thrift.HiveMetastoreClientFactory;
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient;

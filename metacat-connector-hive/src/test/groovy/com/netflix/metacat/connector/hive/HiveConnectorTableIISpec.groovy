@@ -24,7 +24,6 @@ import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
 import com.netflix.metacat.common.server.properties.Config
-import com.netflix.metacat.common.server.usermetadata.AuthorizationService
 import com.netflix.metacat.connector.hive.client.embedded.EmbeddedHiveClient
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
@@ -90,8 +89,7 @@ class HiveConnectorTableIISpec extends Specification {
         metaException.initCause(jdoException)
         def depMockclient = new EmbeddedHiveClient("test", Iproxy, registry)
 
-        def hiveConnectorTableService = new HiveConnectorTableService("testhive", depMockclient, hiveConnectorDatabaseService,
-            new HiveConnectorInfoConverter(new HiveTypeConverter()), connectorContext)
+        def hiveConnectorTableService = new HiveConnectorTableService("testhive", depMockclient, hiveConnectorDatabaseService, new HiveConnectorInfoConverter(new HiveTypeConverter()), connectorContext)
         when:
         hiveConnectorTableService.get(connectorRequestContext,QualifiedName.ofTable("testhive", "test1", "testingtable") )
 
@@ -106,13 +104,12 @@ class HiveConnectorTableIISpec extends Specification {
         Class[] interfaces = [IMetacatHMSHandler]
         proxy.setMetacatHMSHandler(hmsHandler)
         def Iproxy = (IMetacatHMSHandler) Proxy.newProxyInstance(
-        HMSHandlerProxy.class.getClassLoader(),interfaces, proxy);
+            HMSHandlerProxy.class.getClassLoader(),interfaces, proxy);
 
         def metaException = new MetaException("Metastore exception")
         def depMockclient = new EmbeddedHiveClient("test", Iproxy, registry)
 
-        def hiveConnectorTableService = new HiveConnectorTableService("testhive", depMockclient, hiveConnectorDatabaseService,
-            new HiveConnectorInfoConverter(new HiveTypeConverter()), connectorContext)
+        def hiveConnectorTableService = new HiveConnectorTableService("testhive", depMockclient, hiveConnectorDatabaseService, new HiveConnectorInfoConverter(new HiveTypeConverter()), connectorContext)
         when:
         hiveConnectorTableService.get(connectorRequestContext,QualifiedName.ofTable("testhive", "test1", "testingtable") )
 
