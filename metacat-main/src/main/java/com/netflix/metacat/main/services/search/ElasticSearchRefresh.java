@@ -63,6 +63,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -98,6 +99,7 @@ public class ElasticSearchRefresh {
     //  Fixed thread pool
     private ListeningExecutorService service;
     private ListeningExecutorService esService;
+    private ExecutorService defaultService;
 
     /**
      * Constructor.
@@ -240,7 +242,8 @@ public class ElasticSearchRefresh {
                     pageable.setOffset(offset);
                 }
             } while (count == 10000);
-            return Futures.transform(Futures.successfulAsList(indexFutures), Functions.constant((Void) null));
+            return Futures.transform(Futures.successfulAsList(indexFutures),
+                Functions.constant((Void) null), defaultService);
         })).collect(Collectors.toList());
         final ListenableFuture<Void> processPartitionsFuture = Futures.transformAsync(Futures.successfulAsList(futures),
             input -> {
@@ -248,15 +251,16 @@ public class ElasticSearchRefresh {
                     .collect(Collectors.toList());
                 return Futures.transform(Futures.successfulAsList(inputFuturesWithoutNulls),
                     Functions.constant(null));
-            });
+            }, defaultService);
         return Futures.transformAsync(processPartitionsFuture, input -> {
             elasticSearchUtil.refresh();
             final List<ListenableFuture<Void>> cleanUpFutures = tables.stream()
                 .map(s -> service
                     .submit(() -> partitionsCleanUp(QualifiedName.fromString(s, false), excludeQualifiedNames)))
                 .collect(Collectors.toList());
-            return Futures.transform(Futures.successfulAsList(cleanUpFutures), Functions.constant(null));
-        });
+            return Futures.transform(Futures.successfulAsList(cleanUpFutures),
+                Functions.constant(null), defaultService);
+        }, defaultService);
     }
 
     private Void partitionsCleanUp(final QualifiedName tableName, final List<QualifiedName> excludeQualifiedNames) {
@@ -315,6 +319,7 @@ public class ElasticSearchRefresh {
                     .listeningDecorator(newFixedThreadPool(10, "elasticsearch-refresher-%d", queueSize));
                 esService = MoreExecutors
                     .listeningDecorator(newFixedThreadPool(5, "elasticsearch-refresher-es-%d", queueSize));
+                defaultService = Executors.newSingleThreadExecutor();
                 supplier.get().get(24, TimeUnit.HOURS);
                 log.info("End: Full refresh of metacat index in elastic search");
                 if (delete) {
@@ -328,6 +333,7 @@ public class ElasticSearchRefresh {
                 try {
                     shutdown(service);
                     shutdown(esService);
+                    shutdown(defaultService);
                 } finally {
                     isElasticSearchMetacatRefreshAlreadyRunning.set(false);
                     final long duration = registry.clock().wallTime() - start;
@@ -344,7 +350,7 @@ public class ElasticSearchRefresh {
         }
     }
 
-    private void shutdown(@Nullable final ListeningExecutorService executorService) {
+    private void shutdown(@Nullable final ExecutorService executorService) {
         if (executorService != null) {
             executorService.shutdown();
             try {
@@ -509,8 +515,9 @@ public class ElasticSearchRefresh {
                         final List<QualifiedName> databaseNames = getDatabaseNamesToRefresh(catalogDto);
                         return _processDatabases(catalogDto.getName(), databaseNames);
                     }).filter(NOT_NULL).collect(Collectors.toList());
-                return Futures.transform(Futures.successfulAsList(processCatalogFutures), Functions.constant(null));
-            });
+                return Futures.transform(Futures.successfulAsList(processCatalogFutures),
+                    Functions.constant(null), defaultService);
+            }, defaultService);
     }
 
     private List<QualifiedName> getDatabaseNamesToRefresh(final CatalogDto catalogDto) {
@@ -584,9 +591,9 @@ public class ElasticSearchRefresh {
                             return processTables(databaseDto.getName(), tableNames);
                         }).filter(NOT_NULL).collect(Collectors.toList());
                     processDatabaseFutures.add(processDatabaseFuture);
-                    return Futures
-                        .transform(Futures.successfulAsList(processDatabaseFutures), Functions.constant(null));
-                });
+                    return Futures.transform(Futures.successfulAsList(processDatabaseFutures),
+                        Functions.constant(null), defaultService);
+                }, defaultService);
         }
 
         return resultFuture;
@@ -624,7 +631,8 @@ public class ElasticSearchRefresh {
         final List<ListenableFuture<Void>> processTablesBatchFutures = tableNamesBatches.stream().map(
             subTableNames -> _processTables(databaseName, subTableNames)).collect(Collectors.toList());
 
-        return Futures.transform(Futures.successfulAsList(processTablesBatchFutures), Functions.constant(null));
+        return Futures.transform(Futures.successfulAsList(processTablesBatchFutures),
+            Functions.constant(null), defaultService);
     }
 
     @SuppressWarnings("checkstyle:methodname")
@@ -646,7 +654,7 @@ public class ElasticSearchRefresh {
             .collect(Collectors.toList());
 
         return Futures.transformAsync(Futures.successfulAsList(getTableFutures),
-            input -> indexTableDtos(databaseName, input));
+            input -> indexTableDtos(databaseName, input), defaultService);
     }
 
     /**
