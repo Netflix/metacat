@@ -60,6 +60,7 @@ class TableServiceImplSpec extends Specification {
     def setup() {
         config.getMetacatCreateAcl() >> new HashMap<QualifiedName, Set<String>>()
         config.getMetacatDeleteAcl() >> new HashMap<QualifiedName, Set<String>>()
+        config.isAuthorizationEnabled() >> true
         connectorManager.getTableService(_) >> connectorTableService
         converterUtil.toTableDto(_) >> tableDto
         converterUtil.toConnectorContext(_) >> Mock(ConnectorRequestContext)

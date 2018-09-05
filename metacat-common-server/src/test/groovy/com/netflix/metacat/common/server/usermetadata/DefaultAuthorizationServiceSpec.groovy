@@ -31,6 +31,7 @@ class DefaultAuthorizationServiceSpec extends Specification{
         map.put(QualifiedName.fromString("prodhive/abc"), ["bdp_janitor"].toSet())
         conf.getMetacatCreateAcl() >> { return map }
         conf.getMetacatDeleteAcl() >> { return map }
+        conf.isAuthorizationEnabled() >> {return true}
     }
 
     def "Test unauthorized check"() {

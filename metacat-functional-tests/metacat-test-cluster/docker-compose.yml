@@ -56,6 +56,7 @@ services:
                 -Dmetacat.hive.metastore.batchSize=10
                 -Dmetacat.usermetadata.config.location=/etc/metacat/usermetadata.properties
                 -Dmetacat.cache.enabled=true
+                -Dmetacat.authorization.enabled=true
                 -Dmetacat.authorization.createAcl.createAclStr=embedded-fast-hive-metastore/fsmoke_acl:metacat-prod
                 -Dmetacat.authorization.deleteAcl.deleteAclStr=embedded-fast-hive-metastore/fsmoke_acl:metacat-prod'
         labels:

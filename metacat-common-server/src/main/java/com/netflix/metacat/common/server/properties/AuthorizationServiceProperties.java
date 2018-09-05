@@ -38,7 +38,7 @@ import java.util.Set;
  */
 @Data
 public class AuthorizationServiceProperties {
-    private boolean enabled = true;
+    private boolean enabled;
     @NonNull
     private CreateAcl createAcl = new CreateAcl();
     @NonNull
@@ -61,7 +61,7 @@ public class AuthorizationServiceProperties {
          * @return The create acl map
          */
         public Map<QualifiedName, Set<String>> getCreateAclMap() {
-            if (createAclMap == null) {
+             if (createAclMap == null) {
                 createAclMap = createAclStr == null ? new HashMap<>()
                     : getAclMap(createAclStr);
             }

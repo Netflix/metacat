@@ -31,9 +31,7 @@ import java.util.Set;
  * @since 1.2.0
  */
 public class DefaultAuthorizationService implements AuthorizationService {
-    //catalog+database name as the acl control key, and userNames as the value
-    private final Map<QualifiedName, Set<String>> createACL;
-    private final Map<QualifiedName, Set<String>> deleteACL;
+    private final Config config;
 
     /**
      * Constructor.
@@ -43,8 +41,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public DefaultAuthorizationService(
         final Config config
     ) {
-        this.createACL = config.getMetacatCreateAcl();
-        this.deleteACL = config.getMetacatDeleteAcl();
+        this.config = config;
     }
 
     /**
@@ -54,16 +51,18 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public void checkPermission(final String userName,
                                 final QualifiedName name,
                                 final MetacatOperation op) {
-        switch (op) {
-            case CREATE:
-                checkPermit(createACL, userName, name, op);
-                break;
-            case RENAME:
-            case DELETE:
-                checkPermit(deleteACL, userName, name, op);
-                break;
-            default:
+        if (config.isAuthorizationEnabled()) {
+            switch (op) {
+                case CREATE:
+                    checkPermit(config.getMetacatCreateAcl(), userName, name, op);
+                    break;
+                case RENAME:
+                case DELETE:
+                    checkPermit(config.getMetacatDeleteAcl(), userName, name, op);
+                    break;
+                default:
 
+            }
         }
     }
 
