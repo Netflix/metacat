@@ -113,17 +113,17 @@ class HiveConvertersSpec extends Specification {
 
         then:
         table
-        table.tableName != null
-        table.dbName != null
-        table.owner != null
+        table.tableName == null
+        table.dbName == null
+        table.owner == null
         table.sd != null
         table.sd.cols != null
-        table.sd.location != null
-        table.sd.inputFormat != null
-        table.sd.outputFormat != null
+        table.sd.location == null
+        table.sd.inputFormat == null
+        table.sd.outputFormat == null
         table.sd.serdeInfo != null
-        table.sd.serdeInfo.name != null
-        table.sd.serdeInfo.serializationLib != null
+        table.sd.serdeInfo.name == null
+        table.sd.serdeInfo.serializationLib == null
         table.sd.serdeInfo.parameters != null
         table.sd.bucketCols != null
         table.sd.sortCols != null
@@ -151,7 +151,7 @@ class HiveConvertersSpec extends Specification {
         table.sd.location == location
         table.sd.inputFormat == inputFormat
         table.sd.outputFormat == outputFormat
-        table.sd.serdeInfo.name == ''
+        table.sd.serdeInfo.name == tableName
         table.sd.serdeInfo.serializationLib == serializationLib
         table.sd.serdeInfo.parameters == serdeInfoParams
         table.sd.parameters == storageParams
@@ -270,17 +270,17 @@ class HiveConvertersSpec extends Specification {
         then:
         partition
         partition.values != null
-        partition.tableName != null
-        partition.dbName != null
+        partition.tableName == null
+        partition.dbName == null
         partition.parameters != null
         partition.sd != null
         partition.sd.cols != null
-        partition.sd.location != null
-        partition.sd.inputFormat != null
-        partition.sd.outputFormat != null
+        partition.sd.location == null
+        partition.sd.inputFormat == null
+        partition.sd.outputFormat == null
         partition.sd.serdeInfo != null
-        partition.sd.serdeInfo.name != null
-        partition.sd.serdeInfo.serializationLib != null
+        partition.sd.serdeInfo.name == null
+        partition.sd.serdeInfo.serializationLib == null
         partition.sd.serdeInfo.parameters != null
         partition.sd.bucketCols != null
         partition.sd.sortCols != null
@@ -306,7 +306,7 @@ class HiveConvertersSpec extends Specification {
         partition.sd.location == location
         partition.sd.inputFormat == inputFormat
         partition.sd.outputFormat == outputFormat
-        partition.sd.serdeInfo.name == ''
+        partition.sd.serdeInfo.name == tableName
         partition.sd.serdeInfo.serializationLib == serializationLib
         partition.sd.serdeInfo.parameters == serdeInfoParams
         partition.sd.parameters == sdParams

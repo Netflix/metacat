@@ -559,11 +559,25 @@ class MetacatThriftFunctionalSpec extends Specification {
         resultTbl.sd.location == locationUri
         resultTbl.sd.inputFormat == inputFormat
         resultTbl.sd.outputFormat == outputFormat
-        !resultTbl.sd.serdeInfo.name
+        resultTbl.sd.serdeInfo.name == tableName
         resultTbl.sd.serdeInfo.serializationLib == serializationLib
         resultTbl.sd.serdeInfo.parameters == sdInfoParams
         resultTbl.sd.parameters == sdParams
+        resultTbl.sd.skewedInfo != null
         catalog.createdTables << QualifiedName.ofTable(name.catalogName, name.databaseName, tableName)
+
+        when:
+        table.setTableName("partitioned_tbl1_$BATCH_ID".toString())
+        table.sd.inputFormat = null
+        table.sd.outputFormat = null
+        thrift.createTable(table)
+        tables = thrift.getAllTables(name.databaseName)
+        resultTbl = thrift.getTable(table.dbName, table.tableName)
+
+        then:
+        tables.contains(table.tableName)
+        resultTbl.sd.inputFormat == null
+        resultTbl.sd.outputFormat == null
 
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getThriftImplementers(TestCatalogs.ALL))
@@ -686,7 +700,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         resultTbl.sd.location == locationUri
         resultTbl.sd.inputFormat == inputFormat
         resultTbl.sd.outputFormat == outputFormat
-        !resultTbl.sd.serdeInfo.name
+        resultTbl.sd.serdeInfo.name == tableName
         resultTbl.sd.serdeInfo.serializationLib == serializationLib
         resultTbl.sd.serdeInfo.parameters == sdInfoParams
         resultTbl.sd.parameters == sdParams
@@ -805,6 +819,9 @@ class MetacatThriftFunctionalSpec extends Specification {
         partitions[0].location.endsWith('/add_part_1')
         catalog.createdPartitions <<
             QualifiedName.ofPartition(name.catalogName, name.databaseName, name.tableName, partitions[0].name)
+        partitions[0].getTPartition().sd.outputFormat == table.sd.outputFormat
+        partitions[0].getTPartition().sd.inputFormat == table.sd.inputFormat
+        partitions[0].getTPartition().sd.skewedInfo != null
         partitions[1].values == ['key1_val1', '1']
         partitions[1].location.endsWith('/add_part_2')
         catalog.createdPartitions <<

@@ -36,6 +36,7 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
+import org.apache.hadoop.hive.metastore.api.SkewedInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 
@@ -163,23 +164,16 @@ public class HiveConvertersImpl implements HiveConverters {
     @Override
     public Table metacatToHiveTable(final TableDto dto) {
         final Table table = new Table();
-        String tableName = "";
-        String databaseName = "";
-
         final QualifiedName name = dto.getName();
         if (name != null) {
-            tableName = name.getTableName();
-            databaseName = name.getDatabaseName();
+            table.setTableName(name.getTableName());
+            table.setDbName(name.getDatabaseName());
         }
-        table.setTableName(tableName);
-        table.setDbName(databaseName);
 
         final StorageDto storageDto = dto.getSerde();
-        String owner = "";
-        if (storageDto != null && storageDto.getOwner() != null) {
-            owner = storageDto.getOwner();
+        if (storageDto != null) {
+            table.setOwner(storageDto.getOwner());
         }
-        table.setOwner(owner);
 
         final AuditDto auditDto = dto.getAudit();
         if (auditDto != null && auditDto.getCreatedDate() != null) {
@@ -193,13 +187,12 @@ public class HiveConvertersImpl implements HiveConverters {
         table.setParameters(params);
         updateTableTypeAndViewInfo(dto, table);
 
-        table.setSd(fromStorageDto(storageDto));
-        final StorageDescriptor sd = table.getSd();
+        table.setSd(fromStorageDto(storageDto, table.getTableName()));
 
         final List<FieldDto> fields = dto.getFields();
         if (fields == null) {
             table.setPartitionKeys(Collections.emptyList());
-            sd.setCols(Collections.emptyList());
+            table.getSd().setCols(Collections.emptyList());
         } else {
             final List<FieldSchema> nonPartitionFields = Lists.newArrayListWithCapacity(fields.size());
             final List<FieldSchema> partitionFields = Lists.newArrayListWithCapacity(fields.size());
@@ -213,7 +206,7 @@ public class HiveConvertersImpl implements HiveConverters {
                 }
             }
             table.setPartitionKeys(partitionFields);
-            sd.setCols(nonPartitionFields);
+            table.getSd().setCols(nonPartitionFields);
         }
         return table;
     }
@@ -246,14 +239,16 @@ public class HiveConvertersImpl implements HiveConverters {
         return result;
     }
 
-    private StorageDescriptor fromStorageDto(@Nullable final StorageDto storageDto) {
-        // Set all required fields to a non-null value
+    private StorageDescriptor fromStorageDto(@Nullable final StorageDto storageDto, @Nullable final String serdeName) {
+        //
+        // Set all required fields to null. This is to simulate Hive behavior.
+        // Setting it to empty string failed certain hive operations.
+        //
         final StorageDescriptor result = new StorageDescriptor();
-        String inputFormat = "";
-        String location = "";
-        String outputFormat = "";
-        final String serdeName = "";
-        String serializationLib = "";
+        String inputFormat = null;
+        String location = null;
+        String outputFormat = null;
+        String serializationLib = null;
         Map<String, String> sdParams = Maps.newHashMap();
         Map<String, String> serdeParams = Maps.newHashMap();
 
@@ -277,14 +272,15 @@ public class HiveConvertersImpl implements HiveConverters {
                 serdeParams = storageDto.getSerdeInfoParameters();
             }
         }
-
+        result.setSerdeInfo(new SerDeInfo(serdeName, serializationLib, serdeParams));
+        result.setBucketCols(Collections.emptyList());
+        result.setSortCols(Collections.emptyList());
         result.setInputFormat(inputFormat);
         result.setLocation(location);
         result.setOutputFormat(outputFormat);
-        result.setSerdeInfo(new SerDeInfo(serdeName, serializationLib, serdeParams));
         result.setCols(Collections.emptyList());
-        result.setBucketCols(Collections.emptyList());
-        result.setSortCols(Collections.emptyList());
+        // Setting an empty skewed info.
+        result.setSkewedInfo(new SkewedInfo(Collections.emptyList(), Collections.emptyList(), Collections.emptyMap()));
         result.setParameters(sdParams);
         return result;
     }
@@ -370,8 +366,8 @@ public class HiveConvertersImpl implements HiveConverters {
 
         final QualifiedName name = partitionDto.getName();
         List<String> values = Lists.newArrayListWithCapacity(16);
-        String databaseName = "";
-        String tableName = "";
+        String databaseName = null;
+        String tableName = null;
         if (name != null) {
             if (name.getPartitionName() != null) {
                 //
@@ -399,7 +395,7 @@ public class HiveConvertersImpl implements HiveConverters {
         }
         result.setParameters(metadata);
 
-        result.setSd(fromStorageDto(partitionDto.getSerde()));
+        result.setSd(fromStorageDto(partitionDto.getSerde(), tableName));
         final StorageDescriptor sd = result.getSd();
         if (tableDto != null) {
             if (sd.getSerdeInfo() != null && tableDto.getSerde() != null && Strings.isNullOrEmpty(
