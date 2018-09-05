@@ -1080,4 +1080,3 @@ public class MetacatController implements MetacatV1 {
         );
     }
 }
-

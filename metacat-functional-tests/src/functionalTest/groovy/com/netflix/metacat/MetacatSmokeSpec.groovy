@@ -34,6 +34,7 @@ import com.netflix.metacat.common.exception.MetacatBadRequestException
 import com.netflix.metacat.common.exception.MetacatNotFoundException
 import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.exception.MetacatPreconditionFailedException
+import com.netflix.metacat.common.exception.MetacatUnAuthorizedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
@@ -350,6 +351,32 @@ class MetacatSmokeSpec extends Specification {
         where:
         catalogName                     | databaseName | tableName           | setUri | setNull | error
         'embedded-fast-hive-metastore'  | 'fsmoke_db2' | 'test_create_table' | true   | false   | null
+    }
+
+    def "Test create/delete database/table for #catalogName/#databaseName/#tableName with ACL"() {
+        given:
+        def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
+        when:
+        try {api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+        } catch (Exception ignored) {
+        }
+
+        def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'amajumdar', uri)
+        tableDto.getSerde().setUri(null)
+        tableDto.getDefinitionMetadata().set("hive", metacatJson.parseJsonObject('{"objectField": {}}'))
+        api.createTable(catalogName, databaseName, tableName, tableDto)
+
+        then:
+        thrown(MetacatUnAuthorizedException)
+
+        when:
+        api.deleteDatabase(catalogName, databaseName)
+        then:
+        thrown(MetacatUnAuthorizedException)
+
+        where:
+        catalogName                     | databaseName | tableName
+        'embedded-fast-hive-metastore'  | 'fsmoke_acl' | 'test_create_table'
     }
 
     @Unroll

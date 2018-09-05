@@ -104,7 +104,7 @@ class HiveConnectorTableIISpec extends Specification {
         Class[] interfaces = [IMetacatHMSHandler]
         proxy.setMetacatHMSHandler(hmsHandler)
         def Iproxy = (IMetacatHMSHandler) Proxy.newProxyInstance(
-        HMSHandlerProxy.class.getClassLoader(),interfaces, proxy);
+            HMSHandlerProxy.class.getClassLoader(),interfaces, proxy);
 
         def metaException = new MetaException("Metastore exception")
         def depMockclient = new EmbeddedHiveClient("test", Iproxy, registry)

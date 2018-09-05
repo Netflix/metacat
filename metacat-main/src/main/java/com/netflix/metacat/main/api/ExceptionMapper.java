@@ -25,6 +25,7 @@ import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.exception.MetacatPreconditionFailedException;
 import com.netflix.metacat.common.exception.MetacatUserMetadataException;
 import com.netflix.metacat.common.exception.MetacatTooManyRequestsException;
+import com.netflix.metacat.common.exception.MetacatUnAuthorizedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -71,6 +72,8 @@ public class ExceptionMapper {
             status = HttpStatus.SEE_OTHER.value();
         } else if (e instanceof MetacatTooManyRequestsException) {
             status = HttpStatus.TOO_MANY_REQUESTS.value();
+        } else if (e instanceof MetacatUnAuthorizedException) {
+            status = HttpStatus.FORBIDDEN.value();
         } else {
             status = HttpStatus.INTERNAL_SERVER_ERROR.value();
         }

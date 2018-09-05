@@ -38,7 +38,9 @@ import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.usermetadata.AuthorizationService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
+import com.netflix.metacat.common.server.usermetadata.MetacatOperation;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
@@ -67,17 +69,19 @@ public class TableServiceImpl implements TableService {
     private final Registry registry;
     private final Config config;
     private final ConnectorTableServiceProxy connectorTableServiceProxy;
+    private final AuthorizationService authorizationService;
 
     /**
      * Constructor.
      *
      * @param connectorTableServiceProxy connector table service proxy
-     * @param databaseService     database service
-     * @param tagService          tag service
-     * @param userMetadataService user metadata service
-     * @param eventBus            Internal event bus
-     * @param registry            registry handle
-     * @param config              configurations
+     * @param databaseService            database service
+     * @param tagService                 tag service
+     * @param userMetadataService        user metadata service
+     * @param eventBus                   Internal event bus
+     * @param registry                   registry handle
+     * @param config                     configurations
+     * @param authorizationService       authorization service
      */
     public TableServiceImpl(
         final ConnectorTableServiceProxy connectorTableServiceProxy,
@@ -86,7 +90,8 @@ public class TableServiceImpl implements TableService {
         final UserMetadataService userMetadataService,
         final MetacatEventBus eventBus,
         final Registry registry,
-        final Config config
+        final Config config,
+        final AuthorizationService authorizationService
     ) {
         this.connectorTableServiceProxy = connectorTableServiceProxy;
         this.databaseService = databaseService;
@@ -95,6 +100,7 @@ public class TableServiceImpl implements TableService {
         this.eventBus = eventBus;
         this.registry = registry;
         this.config = config;
+        this.authorizationService = authorizationService;
     }
 
     /**
@@ -104,6 +110,8 @@ public class TableServiceImpl implements TableService {
     public TableDto create(final QualifiedName name, final TableDto tableDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         validate(name);
+        this.authorizationService.checkPermission(metacatRequestContext.getUserName(),
+            tableDto.getName(), MetacatOperation.CREATE);
         //
         // Set the owner,if null, with the session user name.
         //
@@ -165,8 +173,12 @@ public class TableServiceImpl implements TableService {
     @Override
     public TableDto deleteAndReturn(final QualifiedName name, final boolean isMView) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        eventBus.post(new MetacatDeleteTablePreEvent(name, metacatRequestContext, this));
         validate(name);
+        this.authorizationService.checkPermission(metacatRequestContext.getUserName(),
+            name, MetacatOperation.DELETE);
+
+        eventBus.post(new MetacatDeleteTablePreEvent(name, metacatRequestContext, this));
+
         final Optional<TableDto> oTable = get(name,
             GetTableServiceParameters.builder()
                 .includeInfo(true)
@@ -290,6 +302,8 @@ public class TableServiceImpl implements TableService {
     ) {
         validate(oldName);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        this.authorizationService.checkPermission(metacatRequestContext.getUserName(),
+            oldName, MetacatOperation.RENAME);
 
         final TableDto oldTable = get(oldName, GetTableServiceParameters.builder()
             .includeInfo(true)

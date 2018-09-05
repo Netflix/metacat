@@ -31,12 +31,14 @@ import com.netflix.metacat.common.server.events.MetacatDeleteDatabasePreEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePreEvent;
+import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
+import com.netflix.metacat.common.server.usermetadata.AuthorizationService;
+import com.netflix.metacat.common.server.usermetadata.MetacatOperation;
+import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
-import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
-import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
-import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.services.GetDatabaseServiceParameters;
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,28 +59,32 @@ public class DatabaseServiceImpl implements DatabaseService {
 
     private final MetacatEventBus eventBus;
     private final ConverterUtil converterUtil;
+    private final AuthorizationService authorizationService;
 
     /**
      * Constructor.
      *
-     * @param catalogService                 catalog service
-     * @param connectorManager               connector manager
-     * @param userMetadataService            user metadata service
-     * @param eventBus                       internal event bus
-     * @param converterUtil                  utility to convert to/from Dto to connector resources
+     * @param catalogService       catalog service
+     * @param connectorManager     connector manager
+     * @param userMetadataService  user metadata service
+     * @param eventBus             internal event bus
+     * @param converterUtil        utility to convert to/from Dto to connector resources
+     * @param authorizationService authorization service
      */
     public DatabaseServiceImpl(
         final CatalogService catalogService,
         final ConnectorManager connectorManager,
         final UserMetadataService userMetadataService,
         final MetacatEventBus eventBus,
-        final ConverterUtil converterUtil
+        final ConverterUtil converterUtil,
+        final AuthorizationService authorizationService
     ) {
         this.catalogService = catalogService;
         this.connectorManager = connectorManager;
         this.userMetadataService = userMetadataService;
         this.eventBus = eventBus;
         this.converterUtil = converterUtil;
+        this.authorizationService = authorizationService;
     }
 
     /**
@@ -147,8 +153,10 @@ public class DatabaseServiceImpl implements DatabaseService {
     @Override
     public void delete(final QualifiedName name) {
         validate(name);
-        log.info("Dropping schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        this.authorizationService.checkPermission(metacatRequestContext.getUserName(),
+            name, MetacatOperation.DELETE);
+        log.info("Dropping schema {}", name);
         final DatabaseDto dto = get(name, GetDatabaseServiceParameters.builder()
             .disableOnReadMetadataIntercetor(false)
             .includeUserMetadata(true)
