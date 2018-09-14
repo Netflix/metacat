@@ -64,6 +64,11 @@ import java.util.stream.Collectors;
 @SuppressFBWarnings
 @Transactional("metadataTxManager")
 public class MysqlUserMetadataService extends BaseUserMetadataService {
+    /**
+     *  Marker for the items that are marked deleted.
+     *  TODO: Need to better handle soft delete.
+     */
+    public static final String DELETE_MARKER = "_";
     private final MetacatJson metacatJson;
     private final Config config;
     private JdbcTemplate jdbcTemplate;
@@ -589,6 +594,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     public int renameDefinitionMetadataKey(
         @Nonnull final QualifiedName oldName,
         @Nonnull final QualifiedName newName) {
+        executeUpdateForKey(SQL.RENAME_DEFINITION_METADATA, DELETE_MARKER + newName.toString(), newName.toString());
         return executeUpdateForKey(SQL.RENAME_DEFINITION_METADATA, newName.toString(), oldName.toString());
     }
 

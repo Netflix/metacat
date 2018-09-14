@@ -523,6 +523,37 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
+    def "Test drop and rename table"() {
+        given:
+        def tableName = 'test_create_table_rename'
+        def tableName1 = 'test_create_table_rename1'
+        createTable(catalogName, databaseName, tableName, 'TRUE')
+        createTable(catalogName, databaseName, tableName1, 'TRUE')
+        api.deleteTable(catalogName, databaseName, tableName)
+        when:
+        api.renameTable(catalogName, databaseName, tableName1, tableName)
+        then:
+        noExceptionThrown()
+        when:
+        api.renameTable(catalogName, databaseName, tableName, tableName1)
+        then:
+        noExceptionThrown()
+        when:
+        api.renameTable(catalogName, databaseName, tableName1, tableName)
+        then:
+        noExceptionThrown()
+        def table = api.getTable(catalogName, databaseName, tableName, true, true, false)
+        table.getMetadata() != null && table.getMetadata().get('EXTERNAL').equalsIgnoreCase('TRUE')
+        table.getDefinitionMetadata() != null
+        cleanup:
+        api.deleteTable(catalogName, databaseName, tableName1)
+        where:
+        catalogName                    | databaseName
+        'embedded-fast-hive-metastore' | 'hsmoke_db3'
+        'embedded-fast-hive-metastore' | 'fsmoke_ddb1'
+    }
+
+    @Unroll
     def "Test create view for #catalogName/#databaseName/#tableName/#viewName"() {
         expect:
         try {

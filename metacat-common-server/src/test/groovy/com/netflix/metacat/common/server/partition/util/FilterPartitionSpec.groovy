@@ -98,5 +98,9 @@ class FilterPartitionSpec extends Specification{
         "a=1"                   | "1a=1"
         "dateint=1"             | "('12' <- 2)"
         "dateint=1"             | "(12 < 2))"
+        "dateint=1"             | "((dateint)=1)"
+        "dateint=1"             | "(dateint=(1))"
+        "dateint=1"             | "dateint is null"
+        "dateint=1"             | "dateint is not null"
     }
 }

@@ -122,6 +122,7 @@ import org.apache.hadoop.hive.metastore.api.Type;
 import org.apache.hadoop.hive.metastore.api.UnlockRequest;
 import org.apache.hadoop.hive.metastore.partition.spec.PartitionSpecProxy;
 import org.apache.hadoop.hive.ql.exec.Utilities;
+import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nonnull;
@@ -1162,17 +1163,26 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     public PartitionsByExprResult get_partitions_by_expr(final PartitionsByExprRequest req) throws TException {
         return requestWrapper("get_partitions_by_expr", new Object[]{req},
             () -> {
-                String filter = null;
-                if (req.getExpr() != null) {
-                    filter = Utilities.deserializeExpressionFromKryo(req.getExpr()).getExprString();
-                    if (filter == null) {
-                        throw new MetaException("Failed to deserialize expression - ExprNodeDesc not present");
+                try {
+                    String filter = null;
+                    if (req.getExpr() != null) {
+                        filter = Utilities.deserializeExpressionFromKryo(req.getExpr()).getExprString();
+                        if (filter == null) {
+                            throw new MetaException("Failed to deserialize expression - ExprNodeDesc not present");
+                        }
                     }
+                    //TODO: We need to handle the case for 'hasUnknownPartitions'
+                    return new PartitionsByExprResult(
+                        getPartitionsByFilter(req.getDbName(), req.getTblName(), filter, req.getMaxParts()),
+                        false);
+                } catch (Exception e) {
+                    //
+                    // Added this to specially handle filter expression failures.
+                    // Extending this to any exception because Hive client then ignores the exception and executes the
+                    // query without predicate pruning.
+                    //
+                    throw new TApplicationException(TApplicationException.WRONG_METHOD_NAME, e.getMessage());
                 }
-                //TODO: We need to handle the case for 'hasUnknownPartitions'
-                return new PartitionsByExprResult(
-                    getPartitionsByFilter(req.getDbName(), req.getTblName(), filter, req.getMaxParts()),
-                    false);
             });
     }
 
