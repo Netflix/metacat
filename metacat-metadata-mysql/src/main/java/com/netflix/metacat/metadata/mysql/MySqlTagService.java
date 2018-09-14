@@ -217,6 +217,9 @@ public class MySqlTagService implements TagService {
         try {
             final QualifiedName newName = QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(),
                 newTableName);
+            jdbcTemplate.update(SQL_UPDATE_TAG_ITEM,
+                new String[]{MysqlUserMetadataService.DELETE_MARKER + newName.toString(), newName.toString()},
+                new int[]{Types.VARCHAR, Types.VARCHAR});
             jdbcTemplate.update(SQL_UPDATE_TAG_ITEM, new String[]{newName.toString(), name.toString()},
                 new int[]{Types.VARCHAR, Types.VARCHAR});
         } catch (Exception e) {
