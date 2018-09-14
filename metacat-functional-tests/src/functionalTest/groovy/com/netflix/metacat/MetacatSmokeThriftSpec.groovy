@@ -41,6 +41,7 @@ import org.apache.hadoop.hive.ql.session.SessionState
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
+import org.apache.thrift.TApplicationException
 import org.slf4j.LoggerFactory
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -381,12 +382,19 @@ class MetacatSmokeThriftSpec extends Specification {
         client.getPartitionsByExpr(hiveTable, totalExprInvalid, client.getConf(), result3)
         def result4 = []
         client.getPartitionsByExpr(hiveTable, oneExprAndTotalExpr, client.getConf(), result4)
+        def result5 = []
+        def oneIsNullExpr = new ExprNodeGenericFuncDesc(TypeInfoFactory.booleanTypeInfo,
+            FunctionRegistry.getFunctionInfo('isnull').getGenericUDF(), Lists.newArrayList(oneColExpr))
+        try {
+            client.getPartitionsByExpr(hiveTable, oneIsNullExpr, client.getConf(), result4)
+        } catch (TApplicationException ignored){}
         then:
         result.size() == 10
         result1.size() == 1
         result2.size() == 0
         result3.size() == 0
         result4.size() == 1
+        result5.size() == 0
         cleanup:
         def partitionNames = client.getPartitionNames(databaseName, tableName, (short) -1)
         partitionNames.each {
