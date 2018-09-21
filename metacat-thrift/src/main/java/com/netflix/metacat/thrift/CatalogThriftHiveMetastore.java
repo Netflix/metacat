@@ -122,11 +122,14 @@ import org.apache.hadoop.hive.metastore.api.Type;
 import org.apache.hadoop.hive.metastore.api.UnlockRequest;
 import org.apache.hadoop.hive.metastore.partition.spec.PartitionSpecProxy;
 import org.apache.hadoop.hive.ql.exec.Utilities;
-import org.apache.thrift.TApplicationException;
+import org.apache.hadoop.hive.ql.optimizer.ppr.PartitionExpressionForMetastore;
+import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -1177,11 +1180,23 @@ public class CatalogThriftHiveMetastore extends FacebookBase
                         false);
                 } catch (Exception e) {
                     //
-                    // Added this to specially handle filter expression failures.
-                    // Extending this to any exception because Hive client then ignores the exception and executes the
-                    // query without predicate pruning.
+                    // If there is an exception with filtering, fallback to getting all partition names and then
+                    // apply the filter.
                     //
-                    throw new TApplicationException(TApplicationException.WRONG_METHOD_NAME, e.getMessage());
+                    final List<String> partitionNames = Lists.newArrayList(
+                        get_partition_names(req.getDbName(), req.getTblName(), (short) -1));
+                    final Table table = get_table(req.getDbName(), req.getTblName());
+                    final List<String> columnNames = new ArrayList<>();
+                    final List<PrimitiveTypeInfo> typeInfos = new ArrayList<>();
+                    for (FieldSchema fs : table.getPartitionKeys()) {
+                        columnNames.add(fs.getName());
+                        typeInfos.add(TypeInfoFactory.getPrimitiveTypeInfo(fs.getType()));
+                    }
+                    final boolean hasUnknownPartitions = new PartitionExpressionForMetastore().filterPartitionsByExpr(
+                        columnNames, typeInfos, req.getExpr(), req.getDefaultPartitionName(), partitionNames);
+
+                    return new PartitionsByExprResult(get_partitions_by_names(
+                        req.getDbName(), req.getTblName(), partitionNames), hasUnknownPartitions);
                 }
             });
     }
@@ -1194,9 +1209,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
                                                     final short maxParts)
         throws TException {
         return requestWrapper("get_partitions_by_filter", new Object[]{dbName, tblName, filter, maxParts},
-            () -> {
-                return getPartitionsByFilter(dbName, tblName, filter, maxParts);
-            });
+            () -> getPartitionsByFilter(dbName, tblName, filter, maxParts));
     }
 
     private List<Partition> getPartitionsByFilter(final String dbName, final String tblName,

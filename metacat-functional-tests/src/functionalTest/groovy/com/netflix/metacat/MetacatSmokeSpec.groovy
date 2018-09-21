@@ -38,6 +38,7 @@ import com.netflix.metacat.common.exception.MetacatUnAuthorizedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
+import com.netflix.metacat.connector.hive.util.PartitionUtil
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.*
 import feign.jaxrs.JAXRSContract
@@ -744,6 +745,8 @@ class MetacatSmokeSpec extends Specification {
 
     @Unroll
     def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
+        given:
+        def escapedPartitionName = PartitionUtil.escapePartitionName(partitionName)
         expect:
         def uri = isLocalEnv ? 'file:/tmp/abc' : String.format("s3://wh/%s.db/%s", databaseName, tableName)
         def createDate = Instant.now().toDate()
@@ -772,12 +775,12 @@ class MetacatSmokeSpec extends Specification {
         }
         if (!error) {
             //To test the case that double quoats are supported
-            def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionName.replace('=', '="') + '"', null, null, null, null, true)
+            def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, escapedPartitionName.replace('=', '="') + '"', null, null, null, null, true)
             assert partitions != null && partitions.size() == 1 && partitions.find {
-                it.name.partitionName == partitionName
+                it.name.partitionName == escapedPartitionName
             } != null
-            def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: partitionName.replace('=', '="') + '"', includePartitionDetails: true))
-            def partitionDetail = partitionDetails.find { it.name.partitionName == partitionName }
+            def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: escapedPartitionName.replace('=', '="') + '"', includePartitionDetails: true))
+            def partitionDetail = partitionDetails.find { it.name.partitionName == escapedPartitionName }
             assert partitionDetails != null && partitionDetails.size() == 1 && partitionDetail != null && partitionDetails.size() == partitions.size() && partitionDetail.getSerde().getSerdeInfoParameters().size() >= 1
             if (catalogName != 's3-mysql-db') {
                 assert partitionDetail.getMetadata().size() >= 1
@@ -794,7 +797,7 @@ class MetacatSmokeSpec extends Specification {
         }
         cleanup:
         if (!error) {
-            partitionApi.deletePartitions(catalogName, databaseName, tableName, [partitionName])
+            partitionApi.deletePartitions(catalogName, databaseName, tableName, [escapedPartitionName])
         }
         where:
         catalogName                     | databaseName      | tableName | partitionName | uriSuffix | uriResult | repeat | alter | error
@@ -809,6 +812,8 @@ class MetacatSmokeSpec extends Specification {
         'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | true   | false | null
         'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
         'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | true   | true  | null
+        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | "one=xy'z"    | ''        | ''        | false  | false | null
+        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | "one=xy'z"    | ''        | ''        | false  | true  | null
         'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
         'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
         'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
