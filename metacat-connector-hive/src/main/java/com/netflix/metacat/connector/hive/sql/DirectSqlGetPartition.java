@@ -20,6 +20,7 @@ import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
@@ -809,10 +810,14 @@ public class DirectSqlGetPartition {
         addSortPageableFilter(queryBuilder, filterExpression, sort, pageable);
 
         List<T> partitions;
-        final List<Object> params = Lists.newArrayList(databaseName, tableName);
-        if (filterSql != null && filterParams != null) {
-            params.addAll(filterParams);
+        final ImmutableList.Builder<Object> paramsBuilder = ImmutableList.builder().add(databaseName, tableName);
+        if (partitionIds != null && !partitionIds.isEmpty()) {
+            paramsBuilder.addAll(partitionIds);
         }
+        if (filterSql != null && filterParams != null) {
+            paramsBuilder.addAll(filterParams);
+        }
+        final List<Object> params = paramsBuilder.build();
         final Object[] oParams = new Object[params.size()];
         partitions = (List) jdbcTemplate.query(
             queryBuilder.toString(), params.toArray(oParams), resultSetExtractor);
@@ -889,11 +894,20 @@ public class DirectSqlGetPartition {
 
             addSortPageableFilter(auditTableQueryBuilder, filterExpression, sort, pageable);
 
-            final List<Object> params = Lists.newArrayList(databaseName, tableName,
-                sourceTableName.get().getDatabaseName(), sourceTableName.get().getTableName(), databaseName, tableName);
-            if (filterSql != null && filterParams != null) {
-                params.addAll(filterParams);
+            // Params
+            final ImmutableList.Builder<Object> paramsBuilder = ImmutableList.builder().add(databaseName, tableName);
+            if (partitionIds != null && !partitionIds.isEmpty()) {
+                paramsBuilder.addAll(partitionIds);
             }
+            paramsBuilder.add(sourceTableName.get().getDatabaseName(), sourceTableName.get().getTableName());
+            if (partitionIds != null && !partitionIds.isEmpty()) {
+                paramsBuilder.addAll(partitionIds);
+            }
+            paramsBuilder.add(databaseName, tableName);
+            if (filterSql != null && filterParams != null) {
+                paramsBuilder.addAll(filterParams);
+            }
+            final List<Object> params = paramsBuilder.build();
             final Object[] oParams = new Object[params.size()];
             partitions = (List) jdbcTemplate.query(
                 auditTableQueryBuilder.toString(), params.toArray(oParams), resultSetExtractor);
@@ -919,8 +933,9 @@ public class DirectSqlGetPartition {
             tableQueryBuilder.append(filterSql);
         }
         if (partitionIds != null && !partitionIds.isEmpty()) {
-            tableQueryBuilder.append(" and p.PART_NAME in ('")
-                .append(Joiner.on("','").skipNulls().join(partitionIds)).append("')");
+            final List<String> paramVariables = partitionIds.stream().map(s -> "?").collect(Collectors.toList());
+            tableQueryBuilder.append(" and p.PART_NAME in (")
+                .append(Joiner.on(",").skipNulls().join(paramVariables)).append(")");
         }
         return tableQueryBuilder;
     }
