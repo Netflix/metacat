@@ -48,6 +48,7 @@ import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AbortTxnRequest;
@@ -62,6 +63,7 @@ import org.apache.hadoop.hive.metastore.api.CommitTxnRequest;
 import org.apache.hadoop.hive.metastore.api.CompactionRequest;
 import org.apache.hadoop.hive.metastore.api.CurrentNotificationEventId;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.DropPartitionsExpr;
 import org.apache.hadoop.hive.metastore.api.DropPartitionsRequest;
 import org.apache.hadoop.hive.metastore.api.DropPartitionsResult;
 import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
@@ -108,6 +110,7 @@ import org.apache.hadoop.hive.metastore.api.PrincipalPrivilegeSet;
 import org.apache.hadoop.hive.metastore.api.PrincipalType;
 import org.apache.hadoop.hive.metastore.api.PrivilegeBag;
 import org.apache.hadoop.hive.metastore.api.PrivilegeGrantInfo;
+import org.apache.hadoop.hive.metastore.api.RequestPartsSpec;
 import org.apache.hadoop.hive.metastore.api.Role;
 import org.apache.hadoop.hive.metastore.api.SetPartitionsStatsRequest;
 import org.apache.hadoop.hive.metastore.api.ShowCompactRequest;
@@ -733,8 +736,59 @@ public class CatalogThriftHiveMetastore extends FacebookBase
      * {@inheritDoc}
      */
     @Override
-    public DropPartitionsResult drop_partitions_req(final DropPartitionsRequest req) throws TException {
-        throw unimplemented("drop_partitions_req", new Object[]{req});
+    public DropPartitionsResult drop_partitions_req(final DropPartitionsRequest request) throws TException {
+        return requestWrapper("drop_partitions_req",
+            new Object[]{request}, () -> {
+                final String databaseName = request.getDbName();
+                final String tableName = request.getTblName();
+                final boolean ifExists = request.isSetIfExists() && request.isIfExists();
+                final boolean needResult = !request.isSetNeedResult() || request.isNeedResult();
+
+                final List<Partition> parts = Lists.newArrayList();
+                final List<String> partNames = Lists.newArrayList();
+                int minCount = 0;
+                final RequestPartsSpec spec = request.getParts();
+                if (spec.isSetExprs()) {
+                    final Table table = get_table(databaseName, tableName);
+                    // Dropping by expressions.
+                    for (DropPartitionsExpr expr : spec.getExprs()) {
+                        ++minCount; // At least one partition per expression, if not ifExists
+                        final PartitionsByExprResult partitionsByExprResult = get_partitions_by_expr(
+                            new PartitionsByExprRequest(databaseName, tableName, expr.bufferForExpr()));
+                        if (partitionsByExprResult.isHasUnknownPartitions()) {
+                            // Expr is built by DDLSA, it should only contain part cols and simple ops
+                            throw new MetaException("Unexpected unknown partitions to drop");
+                        }
+                        parts.addAll(partitionsByExprResult.getPartitions());
+                    }
+
+                    final List<String> colNames = new ArrayList<>(table.getPartitionKeys().size());
+                    for (FieldSchema col : table.getPartitionKeys()) {
+                        colNames.add(col.getName());
+                    }
+                    if (!colNames.isEmpty()) {
+                        parts.forEach(
+                            partition -> partNames.add(FileUtils.makePartName(colNames, partition.getValues())));
+                    }
+                } else if (spec.isSetNames()) {
+                    partNames.addAll(spec.getNames());
+                    minCount = partNames.size();
+                    parts.addAll(get_partitions_by_names(databaseName, tableName, partNames));
+                } else {
+                    throw new MetaException("Partition spec is not set");
+                }
+
+                if ((parts.size() < minCount) && !ifExists) {
+                    throw new NoSuchObjectException("Some partitions to drop are missing");
+                }
+
+                partV1.deletePartitions(catalogName, databaseName, tableName, partNames);
+                final DropPartitionsResult result = new DropPartitionsResult();
+                if (needResult) {
+                    result.setPartitions(parts);
+                }
+                return result;
+            });
     }
 
     /**
