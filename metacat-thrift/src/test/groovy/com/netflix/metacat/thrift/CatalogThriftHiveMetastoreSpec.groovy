@@ -1210,11 +1210,54 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_partitions_req'() {
+        def id = Mock(Id)
+        def counter = Mock(Counter)
+        def registry = Mock(Registry)
+        def clock = Mock(Clock)
+        def timer = Mock(Timer)
+        def table = new TableDto(partition_keys: ['x'])
+        def partitions = [new PartitionDto()]
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+
         when:
-        ms.drop_partitions_req(null)
+        def parts = RequestPartsSpec.names(['a'])
+        ms.drop_partitions_req(new DropPartitionsRequest(dbName: 'a', tblName: 'b', ifExists:false, needResult: true, parts: parts))
 
         then:
-        thrown(InvalidOperationException)
+        notThrown(Exception)
+        1 * metacatV1.getTable(_,_,_,_,_,_) >> table
+        1 * partitionV1.getPartitionsForRequest(_,_,_,_,_,_,_,_,_) >> partitions
+        1 * partitionV1.deletePartitions(_,_,_,_)
+        registry.clock() >> clock
+        registry.timer(_) >> timer
+        timer.record(_, _) >> {}
+        registry.createId(_ as String) >> id
+        registry.counter(id) >> counter
+        counter.increment()
+
+        when:
+        def exprs = RequestPartsSpec.exprs([new DropPartitionsExpr()])
+        ms.drop_partitions_req(new DropPartitionsRequest(dbName: 'a', tblName: 'b', ifExists:false, needResult: true, parts: exprs))
+
+        then:
+        notThrown(Exception)
+        2 * metacatV1.getTable(_,_,_,_,_,_) >> table
+        1 * hiveConverters.metacatToHiveTable(_) >> new Table(partitionKeys: [new FieldSchema('x','string', 'x')])
+        1 * hiveConverters.metacatToHivePartition(_,_) >> [new Partition(values: ['x'])]
+        1 * partitionV1.getPartitionsForRequest(_,_,_,_,_,_,_,_,_) >> partitions
+        1 * partitionV1.deletePartitions(_,_,_,_)
+        registry.clock() >> clock
+        registry.timer(_) >> timer
+        timer.record(_, _) >> {}
+        registry.createId(_ as String) >> id
+        registry.counter(id) >> counter
+        counter.increment()
+
+        when:
+        ms.drop_partitions_req(new DropPartitionsRequest(dbName: 'a', tblName: 'b', ifExists:false, needResult: true, parts: new RequestPartsSpec()))
+
+        then:
+        thrown(Exception)
     }
 
     def 'test drop_role'() {

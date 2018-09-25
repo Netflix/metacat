@@ -34,6 +34,7 @@ import org.apache.hadoop.hive.ql.exec.FunctionRegistry
 import org.apache.hadoop.hive.ql.metadata.Hive
 import org.apache.hadoop.hive.ql.metadata.Partition
 import org.apache.hadoop.hive.ql.metadata.Table
+import org.apache.hadoop.hive.ql.plan.DropTableDesc
 import org.apache.hadoop.hive.ql.plan.ExprNodeColumnDesc
 import org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc
 import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc
@@ -290,6 +291,46 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         client << clients.values()
         catalogName << clients.keySet()
+    }
+
+    @Unroll
+    def "Test: Remote Thrift connector: drop partitions"() {
+        given:
+        def catalogName = 'remote'
+        def client = clients.get(catalogName)
+        def databaseName = 'test_db5_' + catalogName
+        def tableName = 'parts'
+        def hiveTable = createTable(client, catalogName, databaseName, tableName)
+        def uri = isLocalEnv ? 'file:/tmp/abc' : null;
+        def dto = converter.toTableDto(hiveConverter.toTableInfo(QualifiedName.ofTable(catalogName, databaseName, tableName), hiveTable.getTTable()))
+        def partitionDtos = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, 'one=xyz/total=1', uri, 10)
+        def partitions = partitionDtos.collect {
+            new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(it)))
+        }
+        def oneColType = TypeInfoFactory.getPrimitiveTypeInfo('string')
+        def totalColType = TypeInfoFactory.getPrimitiveTypeInfo('int')
+        def oneColExpr = new ExprNodeColumnDesc(oneColType, 'one', null, true)
+        def totalColExpr = new ExprNodeColumnDesc(totalColType, 'total', null, true)
+        client.alterPartitions(databaseName + '.' + tableName, partitions)
+        def partitionNames = client.getPartitionNames(databaseName, tableName, (short) -1)
+        when:
+        client.dropPartition(databaseName, tableName, Lists.newArrayList(PartitionUtil.getPartitionKeyValues(partitionNames[0]).values()), false)
+        then:
+        client.getPartitionsByNames(hiveTable, [partitionNames[0]]).size() == 0
+        when:
+        def totalExpr = new ExprNodeGenericFuncDesc(TypeInfoFactory.booleanTypeInfo,
+            FunctionRegistry.getFunctionInfo('=').getGenericUDF(), Lists.newArrayList(totalColExpr, new ExprNodeConstantDesc(totalColType, 11)))
+        def totalExpr1 = new ExprNodeGenericFuncDesc(TypeInfoFactory.booleanTypeInfo,
+            FunctionRegistry.getFunctionInfo('=').getGenericUDF(), Lists.newArrayList(totalColExpr, new ExprNodeConstantDesc(totalColType, 12)))
+        client.dropPartitions(databaseName, tableName, [new DropTableDesc.PartSpec(totalExpr, 0), new DropTableDesc.PartSpec(totalExpr1, 0)], false, false, false)
+        then:
+        client.getPartitionsByNames(hiveTable, [partitionNames[1],partitionNames[2]]).size() == 0
+        when:
+        def oneExpr = new ExprNodeGenericFuncDesc(TypeInfoFactory.booleanTypeInfo,
+            FunctionRegistry.getFunctionInfo('=').getGenericUDF(), Lists.newArrayList(oneColExpr, new ExprNodeConstantDesc(oneColType, 'xyz')))
+        client.dropPartitions(databaseName, tableName, [new DropTableDesc.PartSpec(oneExpr, 0)], false, false, false)
+        then:
+        client.getPartitionNames(databaseName, tableName, (short) -1).size() == 0
     }
 
     @Unroll
