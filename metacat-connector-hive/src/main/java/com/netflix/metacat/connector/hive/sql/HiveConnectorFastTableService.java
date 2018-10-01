@@ -129,20 +129,25 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             ? existingMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION) : null;
         final String previousMetadataLocation = newMetadata != null
             ? newMetadata.get(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION) : null;
+        final String newMetadataLocation = newMetadata != null
+            ? newMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION) : null;
         if (StringUtils.isBlank(existingMetadataLocation)) {
             final String message = "Invalid iceberg table metadata location. Existing metadata location is empty.";
             log.error(message);
             throw new IllegalStateException(message);
-        } else if (StringUtils.isBlank(previousMetadataLocation)) {
-            final String message =
-                "Invalid iceberg table metadata location. Provided previous metadata location is empty.";
-            log.error(message);
-            throw new IllegalStateException(message);
-        } else if (!Objects.equals(existingMetadataLocation, previousMetadataLocation)) {
-            final String message = String.format("Invalid iceberg table metadata location (expected:%s, provided:%s)",
-                existingMetadataLocation, previousMetadataLocation);
-            log.error(message);
-            throw new IllegalStateException(message);
+        } else if (!Objects.equals(existingMetadataLocation, newMetadataLocation)) {
+            if (StringUtils.isBlank(previousMetadataLocation)) {
+                final String message =
+                    "Invalid iceberg table metadata location. Provided previous metadata location is empty.";
+                log.error(message);
+                throw new IllegalStateException(message);
+            } else if (!Objects.equals(existingMetadataLocation, previousMetadataLocation)) {
+                final String message =
+                    String.format("Invalid iceberg table metadata location (expected:%s, provided:%s)",
+                        existingMetadataLocation, previousMetadataLocation);
+                log.error(message);
+                throw new IllegalStateException(message);
+            }
         }
     }
 

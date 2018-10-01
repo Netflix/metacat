@@ -386,6 +386,7 @@ class MetacatSmokeSpec extends Specification {
         def catalogName = 'embedded-fast-hive-metastore'
         def databaseName = 'iceberg_db'
         def tableName = 'iceberg_table'
+        def renamedTableName = 'iceberg_table_rename'
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         def metadataLocation = String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'iceberg.0')
@@ -413,6 +414,17 @@ class MetacatSmokeSpec extends Specification {
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:
         noExceptionThrown()
+        when:
+        api.renameTable(catalogName, databaseName, tableName, renamedTableName)
+        api.updateTable(catalogName, databaseName, renamedTableName, api.getTable(catalogName, databaseName, renamedTableName, true, false, false))
+        then:
+        noExceptionThrown()
+        api.getTable(catalogName, databaseName, renamedTableName, true, false, false) != null
+        when:
+        api.renameTable(catalogName, databaseName, renamedTableName, tableName)
+        then:
+        noExceptionThrown()
+        api.getTable(catalogName, databaseName, tableName, true, false, false) != null
         when:
         tableDto.getMetadata().putAll(metadata1)
         api.updateTable(catalogName, databaseName, tableName, tableDto)
