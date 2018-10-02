@@ -15,6 +15,7 @@ package com.netflix.metacat.main.services.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -52,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -352,8 +354,11 @@ public class TableServiceImpl implements TableService {
             .includeDefinitionMetadata(true)
             .build()).orElseThrow(() -> new TableNotFoundException(name));
         eventBus.post(new MetacatUpdateTablePreEvent(name, metacatRequestContext, this, oldTable, tableDto));
-        //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
-        if (isTableInfoProvided(tableDto)) {
+        //
+        // Check if the table schema info is provided. If provided, we should continue calling the update on the table
+        // schema. Uri may exist in the serde when updating data metadata for a table.
+        //
+        if (isTableInfoProvided(tableDto, oldTable)) {
             connectorTableServiceProxy.update(name, tableDto);
         }
 
@@ -378,13 +383,35 @@ public class TableServiceImpl implements TableService {
         return updatedDto;
     }
 
-    private boolean isTableInfoProvided(final TableDto tableDto) {
+    @VisibleForTesting
+    private boolean isTableInfoProvided(final TableDto tableDto, final TableDto oldTableDto) {
         boolean result = false;
         if ((tableDto.getFields() != null && !tableDto.getFields().isEmpty())
-            || tableDto.getSerde() != null
+            || isSerdeInfoProvided(tableDto, oldTableDto)
             || (tableDto.getMetadata() != null && !tableDto.getMetadata().isEmpty())
             || tableDto.getAudit() != null) {
             result = true;
+        }
+        return result;
+    }
+
+    private boolean isSerdeInfoProvided(final TableDto tableDto, final TableDto oldTableDto) {
+        boolean result = false;
+        final StorageDto serde = tableDto.getSerde();
+        if (serde == null) {
+            result = false;
+        } else {
+            final StorageDto oldSerde = oldTableDto.getSerde();
+            final String oldUri = oldSerde != null ? oldSerde.getUri() : null;
+            if (serde.getInputFormat() != null
+                || serde.getOutputFormat() != null
+                || serde.getOwner() != null
+                || serde.getParameters() != null
+                || serde.getSerdeInfoParameters() != null
+                || serde.getSerializationLib() != null
+                || (serde.getUri() != null && !Objects.equals(serde.getUri(), oldUri))) {
+                result = true;
+            }
         }
         return result;
     }
