@@ -19,6 +19,9 @@
 package com.netflix.metacat.main.services.impl
 
 import com.netflix.metacat.common.QualifiedName
+import com.netflix.metacat.common.dto.AuditDto
+import com.netflix.metacat.common.dto.StorageDto
+import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.ConnectorTableService
 import com.netflix.metacat.common.server.converter.ConverterUtil
@@ -56,7 +59,7 @@ class TableServiceImplSpec extends Specification {
     def connectorTableServiceProxy
     def authorizationService
 
-    TableService service
+    def service
     def setup() {
         config.getMetacatCreateAcl() >> new HashMap<QualifiedName, Set<String>>()
         config.getMetacatDeleteAcl() >> new HashMap<QualifiedName, Set<String>>()
@@ -96,6 +99,37 @@ class TableServiceImplSpec extends Specification {
         1 * usermetadataService.getDataMetadata(_) >> Optional.empty()
         0 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
 
+    }
+
+    def testIsTableInfoProvided() {
+        def name = QualifiedName.ofTable('a','b','c')
+        def oldTableDto = new TableDto(name: name, serde: new StorageDto(uri: 's3:/a/b/c'))
+        def tableDto = new TableDto(name: name, serde: new StorageDto(uri: 's3:/a/b/c'))
+        when:
+        def result = service.isTableInfoProvided(tableDto, oldTableDto)
+        then:
+        !result
+        when:
+        tableDto.getSerde().setInputFormat('')
+        result = service.isTableInfoProvided(tableDto, oldTableDto)
+        then:
+        result
+        when:
+        tableDto.getSerde().setInputFormat(null)
+        tableDto.getSerde().setUri('s3:/a/b/c1')
+        result = service.isTableInfoProvided(tableDto, oldTableDto)
+        then:
+        result
+        when:
+        tableDto.setSerde(null)
+        result = service.isTableInfoProvided(tableDto, oldTableDto)
+        then:
+        !result
+        when:
+        tableDto.setAudit(new AuditDto())
+        result = service.isTableInfoProvided(tableDto, oldTableDto)
+        then:
+        result
     }
 
     def testDeleteAndReturn() {

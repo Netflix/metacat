@@ -141,6 +141,7 @@ public class ConnectorTableServiceProxy {
                 = converterUtil.toConnectorContext(metacatRequestContext);
             service.update(connectorRequestContext, converterUtil.fromTableDto(tableDto));
         } catch (UnsupportedOperationException ignored) {
+            //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata.
         }
     }
 
