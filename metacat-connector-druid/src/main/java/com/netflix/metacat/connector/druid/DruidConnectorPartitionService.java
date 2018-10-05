@@ -22,6 +22,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.druid.converter.DataSource;
 import com.netflix.metacat.connector.druid.converter.DruidConnectorInfoConverter;
 import com.netflix.metacat.connector.druid.converter.DruidConverterUtil;
@@ -62,7 +63,8 @@ public class DruidConnectorPartitionService implements ConnectorPartitionService
     @Override
     public int getPartitionCount(
         final ConnectorRequestContext context,
-        final QualifiedName name
+        final QualifiedName name,
+        final TableInfo tableInfo
     ) {
         final ObjectNode node = this.druidClient.getAllDataByName(name.getTableName());
         return DruidConverterUtil.getSegmentCount(node);
@@ -75,8 +77,8 @@ public class DruidConnectorPartitionService implements ConnectorPartitionService
     public List<PartitionInfo> getPartitions(
         final ConnectorRequestContext context,
         final QualifiedName name,
-        final PartitionListRequest partitionsRequest
-    ) {
+        final PartitionListRequest partitionsRequest,
+        final TableInfo tableInfo) {
         final ObjectNode node = this.druidClient.getAllDataByName(name.getTableName());
         final DataSource dataSource = DruidConverterUtil.getDatasourceFromAllSegmentJsonObject(node);
         final List<PartitionInfo> partitionInfos = new ArrayList<>();

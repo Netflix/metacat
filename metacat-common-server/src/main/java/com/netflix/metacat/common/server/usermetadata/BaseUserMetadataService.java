@@ -104,7 +104,8 @@ public abstract class BaseUserMetadataService implements UserMetadataService {
 
         if (holder instanceof HasDataMetadata) {
             final HasDataMetadata dataDto = (HasDataMetadata) holder;
-            if (dataDto.isDataExternal()) {
+            //data Metadata can be populated from iceberg metrics directly
+            if (dataDto.isDataExternal() || dataMetadata != null) {
                 dataDto.setDataMetadata(dataMetadata);
             }
         }

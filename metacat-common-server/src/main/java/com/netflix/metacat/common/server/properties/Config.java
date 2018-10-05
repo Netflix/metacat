@@ -374,5 +374,12 @@ public interface Config {
      * @return The metacat delete acl property
      */
     Map<QualifiedName, Set<String>> getMetacatDeleteAcl();
+
+    /**
+     * get Iceberg Table Summary Fetch Size.
+     *
+     * @return Iceberg Table Summary Fetch Size
+     */
+    int getIcebergTableSummaryFetchSize();
 }
 

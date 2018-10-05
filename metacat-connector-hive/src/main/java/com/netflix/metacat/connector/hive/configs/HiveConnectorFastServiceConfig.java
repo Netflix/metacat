@@ -64,11 +64,11 @@ public class HiveConnectorFastServiceConfig {
     /**
      * create hive connector fast partition service.
      *
-     * @param metacatHiveClient    hive client
-     * @param warehouse            hive warehouse
-     * @param hiveMetacatConverter metacat converter
-     * @param connectorContext     connector config
-     * @param directSqlGetPartition service to get partitions
+     * @param metacatHiveClient      hive client
+     * @param warehouse              hive warehouse
+     * @param hiveMetacatConverter   metacat converter
+     * @param connectorContext       connector config
+     * @param directSqlGetPartition  service to get partitions
      * @param directSqlSavePartition service to save partitions
      * @return HiveConnectorPartitionService
      */
@@ -118,10 +118,10 @@ public class HiveConnectorFastServiceConfig {
     /**
      * Service to save partitions.
      *
-     * @param connectorContext     connector config
-     * @param hiveJdbcTemplate     hive JDBC template
-     * @param sequenceGeneration    sequence generator
-     * @param serviceMetric        fast service metric
+     * @param connectorContext   connector config
+     * @param hiveJdbcTemplate   hive JDBC template
+     * @param sequenceGeneration sequence generator
+     * @param serviceMetric      fast service metric
      * @return HiveConnectorPartitionService
      */
     @Bean
@@ -142,7 +142,7 @@ public class HiveConnectorFastServiceConfig {
     /**
      * Service to generate sequence ids.
      *
-     * @param hiveJdbcTemplate     hive JDBC template
+     * @param hiveJdbcTemplate hive JDBC template
      * @return HiveConnectorPartitionService
      */
     @Bean
@@ -155,9 +155,9 @@ public class HiveConnectorFastServiceConfig {
     /**
      * Data access service to get partitions.
      *
-     * @param connectorContext     connector config
-     * @param hiveJdbcTemplate     hive JDBC template
-     * @param serviceMetric        fast service metric
+     * @param connectorContext       connector config
+     * @param hiveJdbcTemplate       hive JDBC template
+     * @param serviceMetric          fast service metric
      * @param directSqlSavePartition partition service involving direct sqls
      * @return HiveConnectorPartitionService
      */

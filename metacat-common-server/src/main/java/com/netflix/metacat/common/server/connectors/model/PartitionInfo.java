@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.common.server.connectors.model;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,7 +30,7 @@ import java.util.Map;
 /**
  * Partition DTO.
  *
- * @author amajumdar
+ * @author amajumdar, zhenl
  * @since 1.0.0
  */
 @SuppressWarnings("unused")
@@ -39,6 +40,8 @@ import java.util.Map;
 @NoArgsConstructor
 public final class PartitionInfo extends BaseInfo {
     private StorageInfo serde;
+    //to populate the metrics from iceberg
+    private ObjectNode dataMetrics;
 
     /**
      * Constructor.
@@ -53,9 +56,11 @@ public final class PartitionInfo extends BaseInfo {
         final QualifiedName name,
         final AuditInfo auditInfo,
         final Map<String, String> metadata,
-        final StorageInfo serde
+        final StorageInfo serde,
+        final ObjectNode dataMetrics
     ) {
         super(name, auditInfo, metadata);
         this.serde = serde;
+        this.dataMetrics = dataMetrics;
     }
 }

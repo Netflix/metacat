@@ -32,6 +32,8 @@ public class HiveProperties {
 
     @NonNull
     private Metastore metastore = new Metastore();
+    @NonNull
+    private Iceberg iceberg = new Iceberg();
 
     /**
      * Metastore related properties.
@@ -84,5 +86,16 @@ public class HiveProperties {
                 }
             }
         }
+    }
+
+    /**
+     * Iceberg related properties.
+     *
+     * @author zhenl
+     * @since 1.2.0
+     */
+    @Data
+    public static class Iceberg {
+        private int fetchSizeInTableSummary = 100;
     }
 }

@@ -31,6 +31,7 @@ import com.netflix.metacat.common.server.connectors.exception.TableNotFoundExcep
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
+import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
 import com.netflix.spectator.api.NoopRegistry
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import org.apache.hadoop.hive.metastore.api.FieldSchema
@@ -53,7 +54,12 @@ class HiveConnectorPartitionSpec extends Specification{
     @Shared
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient);
     @Shared
-    HiveConnectorPartitionService hiveConnectorPartitionService = new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive', null, new NoopRegistry(), Maps.newHashMap()), metacatHiveClient, new HiveConnectorInfoConverter(new HiveTypeConverter()) )
+    HiveConnectorTableService tableService = Mock(HiveConnectorTableService);
+    @Shared
+    HiveConnectorPartitionService hiveConnectorPartitionService =
+        new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive', null, new NoopRegistry(), Maps.newHashMap()),
+            metacatHiveClient,
+            new HiveConnectorInfoConverter(new HiveTypeConverter()))
     @Shared
     ConnectorRequestContext connectorContext = new ConnectorRequestContext(1, null);
     @Shared
@@ -101,7 +107,8 @@ class HiveConnectorPartitionSpec extends Specification{
         partitionListRequest.partitionNames = [
             "dateint=20170101/hour=1"
         ]
-        def partionInfos = hiveConnectorPartitionService.getPartitions( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        def partionInfos = hiveConnectorPartitionService.getPartitions(connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest,
+            MetacatDataInfoProvider.getTableInfo("testtable2"))
         def expected = [ getPartitionInfo("test1", "testtable2", "dateint=20170101/hour=1")]
         then:
         partionInfos == expected
@@ -116,7 +123,7 @@ class HiveConnectorPartitionSpec extends Specification{
         partitionListRequest.partitionNames = [
                 "dateint=20170101/hour=1"
         ]
-        hiveConnectorPartitionService.getPartitions( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        hiveConnectorPartitionService.getPartitions(connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest, MetacatDataInfoProvider.getTableInfo("testtable2"))
 
         then:
         1 * client.getPartitions(_,_,_) >> { throw exception}
@@ -133,7 +140,7 @@ class HiveConnectorPartitionSpec extends Specification{
     def "Test for get partitions" (){
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
-        def partionInfos = hiveConnectorPartitionService.getPartitions( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        def partionInfos = hiveConnectorPartitionService.getPartitions(connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest, MetacatDataInfoProvider.getTableInfo("testtable2"))
         def expected = [ getPartitionInfo("test1", "testtable2", "dateint=20170101/hour=1"),
                          getPartitionInfo("test1", "testtable2", "dateint=20170101/hour=2"),
                          getPartitionInfo("test1", "testtable2", "dateint=20170101/hour=3") ]
@@ -144,7 +151,7 @@ class HiveConnectorPartitionSpec extends Specification{
     def "Test for getNameOfPartitions" (){
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
-        def partitionNames = hiveConnectorPartitionService.getPartitionKeys( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        def partitionNames = hiveConnectorPartitionService.getPartitionKeys(connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest, MetacatDataInfoProvider.getTableInfo("testtable2"))
         def expected = [ "dateint=20170101/hour=1", "dateint=20170101/hour=2","dateint=20170101/hour=3" ]
         then:
         partitionNames == expected
@@ -156,7 +163,7 @@ class HiveConnectorPartitionSpec extends Specification{
         partitionListRequest.partitionNames = [
             "dateint=20170101/hour=1", "dateint=20170101/hour=2"
         ]
-        def partitionNames = hiveConnectorPartitionService.getPartitionKeys( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        def partitionNames = hiveConnectorPartitionService.getPartitionKeys(connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest, MetacatDataInfoProvider.getTableInfo("testtable2"))
         def expected = [ "dateint=20170101/hour=1", "dateint=20170101/hour=2" ]
         then:
         partitionNames == expected
@@ -165,14 +172,14 @@ class HiveConnectorPartitionSpec extends Specification{
     @Unroll
     def "Test for getNameOfPartitions exceptions" (){
         def client = Mock(MetacatHiveClient)
-        def hiveConnectorPartitionService = new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive',  null, new NoopRegistry(), Maps.newHashMap()), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive',  null, new NoopRegistry(), Maps.newHashMap()), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ))
 
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest()
         partitionListRequest.partitionNames = [
                 "dateint=20170101/hour=1", "dateint=20170101/hour=2"
         ]
-        hiveConnectorPartitionService.getPartitionKeys( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        hiveConnectorPartitionService.getPartitionKeys(connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest, MetacatDataInfoProvider.getTableInfo("testtable2"))
         then:
         1 * client.getTableByName(_,_) >> { throw exception}
         thrown result
@@ -191,7 +198,7 @@ class HiveConnectorPartitionSpec extends Specification{
         partitionListRequest.partitionNames = [
             "dateint=20170101/hour=1", "dateint=20170101/hour=2"
         ]
-        def partitionUris = hiveConnectorPartitionService.getPartitionUris( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        def partitionUris = hiveConnectorPartitionService.getPartitionUris( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest, Mock(TableInfo))
         def expected = [ "s3://test/location", "s3://test/location" ]
         then:
         partitionUris == expected
@@ -204,7 +211,7 @@ class HiveConnectorPartitionSpec extends Specification{
             "dateint=20170101/hour=1", "dateint=20170101/hour=2"
         ]
         partitionListRequest.sort = new Sort(null, SortOrder.DESC)
-        def partitionKeys = hiveConnectorPartitionService.getPartitionKeys( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest)
+        def partitionKeys = hiveConnectorPartitionService.getPartitionKeys(connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), partitionListRequest, MetacatDataInfoProvider.getTableInfo("testtable2"))
         def expected = [ "dateint=20170101/hour=2", "dateint=20170101/hour=1" ]
         then:
         partitionKeys == expected
@@ -212,7 +219,7 @@ class HiveConnectorPartitionSpec extends Specification{
 
     def "Test for getPartitionCount" (){
         when:
-        def count = hiveConnectorPartitionService.getPartitionCount( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"))
+        def count = hiveConnectorPartitionService.getPartitionCount( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), Mock(TableInfo))
         then:
         count == 3
     }
@@ -223,7 +230,7 @@ class HiveConnectorPartitionSpec extends Specification{
         def hiveConnectorPartitionService = new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive',  null, new NoopRegistry(), Maps.newHashMap()), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
 
         when:
-        hiveConnectorPartitionService.getPartitionCount( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"))
+        hiveConnectorPartitionService.getPartitionCount( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), Mock(TableInfo))
         then:
         1 * client.getPartitionCount(_,_) >> { throw exception}
         thrown result

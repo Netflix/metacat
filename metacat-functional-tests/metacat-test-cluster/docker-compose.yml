@@ -35,6 +35,7 @@ services:
             - ./resources/logging.properties:/usr/local/tomcat/conf/logging.properties
             - ../build/logs/metacat:/usr/local/tomcat/logs
             - ./etc-metacat:/etc/metacat:ro
+            - ./etc-metacat/data/:/tmp/data
         environment:
             VIRTUAL_HOST: metacat.docker
             JAVA_OPTS: '-ea

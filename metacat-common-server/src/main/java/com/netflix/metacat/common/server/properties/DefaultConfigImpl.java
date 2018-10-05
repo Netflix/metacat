@@ -436,4 +436,14 @@ public class DefaultConfigImpl implements Config {
     public Map<QualifiedName, Set<String>> getMetacatDeleteAcl() {
         return this.metacatProperties.getAuthorization().getDeleteAcl().getDeleteAclMap();
     }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getIcebergTableSummaryFetchSize() {
+        return this.metacatProperties.getHive().getIceberg().getFetchSizeInTableSummary();
+    }
+
 }
