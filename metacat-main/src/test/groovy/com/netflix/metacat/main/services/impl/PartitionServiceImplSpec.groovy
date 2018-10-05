@@ -18,7 +18,9 @@
 package com.netflix.metacat.main.services.impl
 
 import com.netflix.metacat.common.dto.GetPartitionsRequestDto
+import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService
+import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.converter.ConverterUtil
 import com.netflix.metacat.common.server.converter.DozerTypeConverter
 import com.netflix.metacat.common.server.converter.TypeConverterFactory
@@ -32,6 +34,7 @@ import com.netflix.metacat.main.manager.ConnectorManager
 import com.netflix.metacat.main.services.CatalogService
 import com.netflix.metacat.main.services.TableService
 import com.netflix.metacat.testdata.provider.DataDtoProvider
+import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
 import com.netflix.spectator.api.NoopRegistry
 import org.assertj.core.util.Lists
 import spock.lang.Shared
@@ -72,6 +75,7 @@ class PartitionServiceImplSpec extends Specification{
         usermetadataService.getDataMetadata(_) >> Optional.empty()
         connectorPartitionService.getPartitions(_,_,_) >> Lists.emptyList()
         config.getNamesToThrowErrorOnListPartitionsWithNoFilter() >> Lists.emptyList()
+        tableService.get(_,_) >> Optional.of(TableDto.builder().build())
     }
     /**
      * Test the null pointer cases in getPartitionRequestDto

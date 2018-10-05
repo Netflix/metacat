@@ -105,7 +105,19 @@ class MetacatDataInfoProvider {
                     .serde( StorageInfo.builder().owner("test").uri("s3://test/uri").build())
                     .metadata ( Collections.emptyMap())
                     .auditInfo( AuditInfo.builder().build())
-                    .build()
+                    .build(),
+
+    ]
+
+    private static icebergTableMap = [
+        "icebergtable" : TableInfo.builder()
+            .name(QualifiedName.ofTable("testhive", "test1", "icebergtable"))
+            .fields([ fields.fielddate] )
+            .serde( StorageInfo.builder().owner("test")
+            .build())
+            .metadata ( ['table_type': 'ICEBERG'])
+            .auditInfo( AuditInfo.builder().build())
+            .build()
     ]
 
     private static partitionInfoMap = [
@@ -139,4 +151,7 @@ class MetacatDataInfoProvider {
         return tableInfoMap.get(tableName)
     }
 
+    def static TableInfo getIcebergTableInfo(String tableName) {
+        return icebergTableMap.get(tableName)
+    }
 }

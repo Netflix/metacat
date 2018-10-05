@@ -79,7 +79,6 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final IMetacatHiveClient metacatHiveClient;
 
-
     /**
      * Constructor.
      *
@@ -105,26 +104,16 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     public List<PartitionInfo> getPartitions(
         final ConnectorRequestContext requestContext,
         final QualifiedName tableName,
-        final PartitionListRequest partitionsRequest
-    ) {
-        try {
-            final List<Partition> partitions = getPartitions(tableName,
-                partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
-                partitionsRequest.getSort(), partitionsRequest.getPageable());
-            final Table table = metacatHiveClient.getTableByName(tableName.getDatabaseName(), tableName.getTableName());
-            final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(tableName, table);
-            final List<PartitionInfo> partitionInfos = new ArrayList<>();
-            for (Partition partition : partitions) {
-                partitionInfos.add(hiveMetacatConverters.toPartitionInfo(tableInfo, partition));
-            }
-            return partitionInfos;
-        } catch (NoSuchObjectException exception) {
-            throw new TableNotFoundException(tableName, exception);
-        } catch (MetaException | InvalidObjectException e) {
-            throw new InvalidMetaException("Invalid metadata for " + tableName, e);
-        } catch (TException e) {
-            throw new ConnectorException(String.format("Failed get partitions for hive table %s", tableName), e);
+        final PartitionListRequest partitionsRequest,
+        final TableInfo tableInfo) {
+        final List<Partition> partitions = getPartitions(tableName,
+            partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
+            partitionsRequest.getSort(), partitionsRequest.getPageable());
+        final List<PartitionInfo> partitionInfos = new ArrayList<>();
+        for (Partition partition : partitions) {
+            partitionInfos.add(hiveMetacatConverters.toPartitionInfo(tableInfo, partition));
         }
+        return partitionInfos;
     }
 
     /**
@@ -133,7 +122,8 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     @Override
     public int getPartitionCount(
         final ConnectorRequestContext requestContext,
-        final QualifiedName tableName
+        final QualifiedName tableName,
+        final TableInfo tableInfo
     ) {
         try {
             return metacatHiveClient.getPartitionCount(tableName.getDatabaseName(), tableName.getTableName());
@@ -153,8 +143,8 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     public List<String> getPartitionKeys(
         final ConnectorRequestContext requestContext,
         final QualifiedName tableName,
-        final PartitionListRequest partitionsRequest
-    ) {
+        final PartitionListRequest partitionsRequest,
+        final TableInfo tableInfo) {
         final String filterExpression = partitionsRequest.getFilter();
         final List<String> partitionIds = partitionsRequest.getPartitionNames();
         List<String> names = Lists.newArrayList();
@@ -237,7 +227,8 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     public List<String> getPartitionUris(
         final ConnectorRequestContext requestContext,
         final QualifiedName table,
-        final PartitionListRequest partitionsRequest
+        final PartitionListRequest partitionsRequest,
+        final TableInfo tableInfo
     ) {
         final List<String> uris = Lists.newArrayList();
         for (Partition partition : getPartitions(table, partitionsRequest.getFilter(),
@@ -253,7 +244,6 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
      * If checkIfExists=false, the method adds the partitions to the table. If a partition already exists,
      * an AlreadyExistsException error is thrown.
      * If alterIfExists=true, the method updates existing partitions and adds non-existant partitions.
-     *
      * If a partition in the provided partition list has all the details, then it is used. If the details are missing,
      * then the table details are inherited. This is mostly for the storage information.
      */
@@ -277,7 +267,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
         final List<PartitionInfo> addedPartitionInfos = Lists.newArrayList();
         final List<PartitionInfo> partitionInfos = partitionsSaveRequest.getPartitions();
         final List<String> partitionNames = partitionInfos.stream()
-            .map(part  -> {
+            .map(part -> {
                 final String partitionName = part.getName().getPartitionName();
                 PartitionUtil.validatePartitionName(partitionName, getPartitionKeys(table.getPartitionKeys()));
                 return partitionName;
@@ -373,9 +363,12 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
         return result;
     }
 
-    protected void addUpdateDropPartitions(final QualifiedName tableQName, final Table table,
-        final List<String> partitionNames, final List<PartitionInfo> addedPartitionInfos,
-        final List<PartitionHolder> existingPartitionInfos, final Set<String> deletePartitionNames) {
+    protected void addUpdateDropPartitions(final QualifiedName tableQName,
+                                           final Table table,
+                                           final List<String> partitionNames,
+                                           final List<PartitionInfo> addedPartitionInfos,
+                                           final List<PartitionHolder> existingPartitionInfos,
+                                           final Set<String> deletePartitionNames) {
         final String databaseName = table.getDbName();
         final String tableName = table.getTableName();
         final TableInfo tableInfo = hiveMetacatConverters.toTableInfo(tableQName, table);
@@ -432,7 +425,8 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
     public void deletePartitions(
         final ConnectorRequestContext requestContext,
         final QualifiedName tableName,
-        final List<String> partitionNames
+        final List<String> partitionNames,
+        final TableInfo tableInfo
     ) {
 
         try {
@@ -456,7 +450,7 @@ public class HiveConnectorPartitionService implements ConnectorPartitionService 
      */
     protected List<String> getPartitionKeys(final List<FieldSchema> fields) {
         return (fields != null) ? fields.stream().map(FieldSchema::getName).collect(Collectors.toList())
-            :   Lists.newArrayList();
+            : Lists.newArrayList();
     }
 
     protected Map<String, PartitionHolder> getPartitionsByNames(final Table table,

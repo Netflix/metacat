@@ -50,13 +50,22 @@ import java.util.Map;
 @Slf4j
 @Transactional("hiveTxManager")
 public class DirectSqlTable {
-    /* Defines the table type. */
-    protected static final String PARAM_TABLE_TYPE = "table_type";
-    /* Defines the current metadata location of the iceberg table. */
-    protected static final String PARAM_METADATA_LOCATION = "metadata_location";
-    /* Defines the previous metadata location of the iceberg table. */
-    protected static final String PARAM_PREVIOUS_METADATA_LOCATION = "previous_metadata_location";
-    protected static final String ICEBERG_TABLE_TYPE = "ICEBERG";
+    /**
+     * Defines the table type.
+     */
+    public static final String PARAM_TABLE_TYPE = "table_type";
+    /**
+     * Defines the current metadata location of the iceberg table.
+     */
+    public static final String PARAM_METADATA_LOCATION = "metadata_location";
+    /**
+     * Defines the previous metadata location of the iceberg table.
+     */
+    public static final String PARAM_PREVIOUS_METADATA_LOCATION = "previous_metadata_location";
+    /**
+     * Iceberg table type.
+     */
+    public static final String ICEBERG_TABLE_TYPE = "ICEBERG";
     protected static final String PARAM_METADATA_LOCK = "metadata_lock";
     private final Registry registry;
     private final JdbcTemplate jdbcTemplate;

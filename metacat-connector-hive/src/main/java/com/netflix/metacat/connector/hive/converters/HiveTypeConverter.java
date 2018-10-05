@@ -14,7 +14,12 @@
 package com.netflix.metacat.connector.hive.converters;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.netflix.iceberg.PartitionField;
+import com.netflix.iceberg.Schema;
+import com.netflix.iceberg.types.Types;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
+import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.type.BaseType;
 import com.netflix.metacat.common.type.CharType;
 import com.netflix.metacat.common.type.DecimalType;
@@ -97,6 +102,87 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
                 structTypeInfo.getAllStructFieldNames(), objectInspector);
         }
         return getCanonicalType(oi);
+    }
+
+    /**
+     * Converts iceberg schema to field dto.
+     *
+     * @param schema          schema
+     * @param partitionFields partitioned fields
+     * @return list of field Info
+     */
+    public List<FieldInfo> icebergeSchemaTofieldDtos(final Schema schema,
+                                                     final List<PartitionField> partitionFields) {
+        final List<FieldInfo> fields = Lists.newArrayList();
+        final List<String> partitionNames =
+            partitionFields.stream()
+                .map(PartitionField::name).collect(Collectors.toList());
+
+        for (int i = 0; i < schema.columns().size(); i++) {
+            final Types.NestedField field = schema.columns().get(i);
+            final FieldInfo fieldInfo = new FieldInfo();
+            fieldInfo.setName(field.name());
+            fieldInfo.setType(toMetacatType(fromIcebergToHiveType(field.type())));
+            fieldInfo.setIsNullable(field.isOptional());
+
+            fieldInfo.setPartitionKey(partitionNames.contains(field.name()));
+            fields.add(fieldInfo);
+        }
+
+        return fields;
+    }
+
+
+
+    /**
+     * convert iceberg to hive type.
+     * @param type iceberg type.
+     * @return hive type string.
+     */
+    public static String fromIcebergToHiveType(final com.netflix.iceberg.types.Type type) {
+        switch (type.typeId()) {
+            case BOOLEAN:
+                return serdeConstants.BOOLEAN_TYPE_NAME;
+            case INTEGER:
+                return serdeConstants.INT_TYPE_NAME;
+            case LONG:
+                return serdeConstants.BIGINT_TYPE_NAME;
+            case FLOAT:
+                return serdeConstants.FLOAT_TYPE_NAME;
+            case DOUBLE:
+                return serdeConstants.DOUBLE_TYPE_NAME;
+            case DATE:
+                return serdeConstants.DATE_TYPE_NAME;
+            case TIME:
+                throw new UnsupportedOperationException("Hive does not support time fields");
+            case TIMESTAMP:
+                return serdeConstants.TIMESTAMP_TYPE_NAME;
+            case STRING:
+            case UUID:
+                return serdeConstants.STRING_TYPE_NAME;
+            case FIXED:
+                return serdeConstants.BINARY_TYPE_NAME;
+            case BINARY:
+                return serdeConstants.BINARY_TYPE_NAME;
+            case DECIMAL:
+                final Types.DecimalType decimalType = (Types.DecimalType) type;
+                return String.format("decimal(%s,%s)", decimalType.precision(), decimalType.scale());
+            case STRUCT:
+                final Types.StructType structType = type.asStructType();
+                final String nameToType = (String) structType.fields().stream().map((f) -> {
+                    return String.format("%s:%s", f.name(), fromIcebergToHiveType(f.type()));
+                }).collect(Collectors.joining(","));
+                return String.format("struct<%s>", nameToType);
+            case LIST:
+                final Types.ListType listType = type.asListType();
+                return String.format("array<%s>", fromIcebergToHiveType(listType.elementType()));
+            case MAP:
+                final Types.MapType mapType = type.asMapType();
+                return String.format("map<%s,%s>", fromIcebergToHiveType(mapType.keyType()),
+                    fromIcebergToHiveType(mapType.valueType()));
+            default:
+                throw new UnsupportedOperationException(type + " is not supported");
+        }
     }
 
     @Override

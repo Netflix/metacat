@@ -23,6 +23,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest
+import com.netflix.metacat.common.server.connectors.model.TableInfo
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -57,7 +58,8 @@ class JdbcConnectorPartitionServiceSpec extends Specification {
                 this.service.getPartitions(
                     this.context,
                     this.name,
-                    Mock(PartitionListRequest)
+                    Mock(PartitionListRequest),
+                    Mock(TableInfo)
                 )
             }
         )      | "getPartitions"     | UnsupportedOperationException
@@ -75,13 +77,14 @@ class JdbcConnectorPartitionServiceSpec extends Specification {
                 this.service.deletePartitions(
                     this.context,
                     this.name,
-                    Lists.newArrayList()
+                    Lists.newArrayList(),
+                    Mock(TableInfo)
                 )
             }
         )      | "deletePartitions"  | UnsupportedOperationException
         (
             {
-                this.service.getPartitionCount(this.context, this.name)
+                this.service.getPartitionCount(this.context, this.name, Mock(TableInfo))
             }
         )      | "getPartitionCount" | UnsupportedOperationException
         (
@@ -98,7 +101,8 @@ class JdbcConnectorPartitionServiceSpec extends Specification {
                 this.service.getPartitionKeys(
                     this.context,
                     this.name,
-                    Mock(PartitionListRequest)
+                    Mock(PartitionListRequest),
+                    Mock(TableInfo)
                 )
             }
         )      | "getPartitionKeys"  | UnsupportedOperationException
@@ -107,7 +111,8 @@ class JdbcConnectorPartitionServiceSpec extends Specification {
                 this.service.getPartitionUris(
                     this.context,
                     this.name,
-                    Mock(PartitionListRequest)
+                    Mock(PartitionListRequest),
+                    Mock(TableInfo)
                 )
             }
         )      | "getPartitionUris"  | UnsupportedOperationException

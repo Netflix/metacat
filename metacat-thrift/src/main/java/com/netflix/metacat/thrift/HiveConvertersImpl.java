@@ -300,7 +300,10 @@ public class HiveConvertersImpl implements HiveConverters {
         if (tableDto.getSerde() != null) {
             owner = tableDto.getSerde().getOwner();
         }
-        result.setSerde(toStorageDto(partition.getSd(), owner));
+        //not setting Serde to view
+        if (null == tableDto.getView() || Strings.isNullOrEmpty(tableDto.getView().getViewOriginalText())) {
+            result.setSerde(toStorageDto(partition.getSd(), owner));
+        }
         result.setMetadata(partition.getParameters());
 
         final AuditDto auditDto = new AuditDto();

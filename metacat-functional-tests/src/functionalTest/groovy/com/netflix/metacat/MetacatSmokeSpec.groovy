@@ -389,7 +389,7 @@ class MetacatSmokeSpec extends Specification {
         def renamedTableName = 'iceberg_table_rename'
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
-        def metadataLocation = String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'iceberg.0')
+        def metadataLocation = String.format('/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json')
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
         when:
@@ -401,22 +401,24 @@ class MetacatSmokeSpec extends Specification {
         when:
         api.deleteTable(catalogName, databaseName, tableName)
         api.createTable(catalogName, databaseName, tableName, tableDto)
-        def metadataLocation1 = String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'iceberg.1')
+        def metadataLocation1 = String.format('/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json')
         def metadata1 = [table_type: 'ICEBERG', metadata_location: metadataLocation1, previous_metadata_location: metadataLocation]
         tableDto.getMetadata().putAll(metadata1)
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:
         noExceptionThrown()
         when:
-        def metadataLocation2 = String.format('file:/tmp/%s/%s/%s', databaseName, tableName, 'iceberg.2')
+        def metadataLocation2 = String.format('/tmp/data/00089-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json')
         def metadata2 = [table_type: 'ICEBERG', metadata_location: metadataLocation2, previous_metadata_location: metadataLocation1]
         tableDto.getMetadata().putAll(metadata2)
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:
         noExceptionThrown()
         when:
+        api.deleteTable(catalogName, databaseName, renamedTableName)
         api.renameTable(catalogName, databaseName, tableName, renamedTableName)
-        api.updateTable(catalogName, databaseName, renamedTableName, api.getTable(catalogName, databaseName, renamedTableName, true, false, false))
+        def t = api.getTable(catalogName, databaseName, renamedTableName, true, false, false)
+        api.updateTable(catalogName, databaseName, renamedTableName, t)
         then:
         noExceptionThrown()
         api.getTable(catalogName, databaseName, renamedTableName, true, false, false) != null
@@ -433,6 +435,64 @@ class MetacatSmokeSpec extends Specification {
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
     }
+
+    @Unroll
+    def "Test get iceberg table"() {
+        given:
+        def catalogName = 'embedded-fast-hive-metastore'
+        def databaseName = 'iceberg_db'
+        def tableName = 'iceberg_table_6'
+        def uri = isLocalEnv ? String.format('file:/tmp/data/') : null
+        def tableDto = new TableDto(
+            name: QualifiedName.ofTable(catalogName, databaseName, tableName),
+            serde: new StorageDto(
+                owner: 'metacat-test',
+                inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                parameters: [
+                    'serialization.format': '1'
+                ],
+                uri: uri
+            ),
+            definitionMetadata: null,
+            dataMetadata: null,
+            fields: [
+                new FieldDto(
+                    comment: 'added 1st - partition key',
+                    name: 'field1',
+                    pos: 0,
+                    type: 'boolean',
+                    partition_key: true
+                )
+            ]
+        )
+
+        def metadataLocation = String.format('/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json')
+
+        def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
+        tableDto.setMetadata(metadata)
+        when:
+        try {api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+        } catch (Exception ignored) {
+        }
+        api.createTable(catalogName, databaseName, tableName, tableDto)
+        def tableDTO = api.getTable(catalogName, databaseName, tableName, true, true, true)
+        def parts = partitionApi.getPartitions(catalogName, databaseName, tableName, null, null, null, null, null, true)
+        def partkeys = partitionApi.getPartitionKeys(catalogName, databaseName, tableName, null, null, null, null, null)
+
+        then:
+        noExceptionThrown()
+        tableDTO.metadata.get("metadata_location").equals(metadataLocation)
+        tableDTO.getFields().size() == 3
+        parts.size() == 1
+        parts.get(0).dataMetadata != null
+        partkeys.size() == 1
+
+        cleanup:
+        api.deleteTable(catalogName, databaseName, tableName)
+    }
+
 
     @Unroll
     def "Test delete table #catalogName/#databaseName/#tableName"() {

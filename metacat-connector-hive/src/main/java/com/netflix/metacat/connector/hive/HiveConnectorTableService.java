@@ -39,7 +39,9 @@ import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
+import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
@@ -53,6 +55,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -64,11 +67,12 @@ import java.util.Map;
  * @since 1.0.0
  */
 @Getter
+@Slf4j
 public class HiveConnectorTableService implements ConnectorTableService {
     private static final String PARAMETER_EXTERNAL = "EXTERNAL";
+    protected final HiveConnectorInfoConverter hiveMetacatConverters;
     private final String catalogName;
     private final IMetacatHiveClient metacatHiveClient;
-    private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final HiveConnectorDatabaseService hiveConnectorDatabaseService;
     private final boolean allowRenameTable;
     private final boolean onRenameConvertToExternal;
@@ -172,11 +176,19 @@ public class HiveConnectorTableService implements ConnectorTableService {
         if (tableInfo.getMetadata() != null) {
             table.getParameters().putAll(tableInfo.getMetadata());
         }
+        //no other information is needed for iceberg table
+        if (HiveTableUtil.isIcebergTable(tableInfo)) {
+            table.setPartitionKeys(Collections.emptyList());
+            log.debug("Skipping seder and set partition key to empty when updating iceberg table in hive");
+            return;
+        }
 
         //storage
         final StorageDescriptor sd = table.getSd() != null ? table.getSd() : new StorageDescriptor();
+
         String inputFormat = null;
         String outputFormat = null;
+
         Map<String, String> sdParameters = Maps.newHashMap();
         final String location =
             tableInfo.getSerde() == null ? null : tableInfo.getSerde().getUri();

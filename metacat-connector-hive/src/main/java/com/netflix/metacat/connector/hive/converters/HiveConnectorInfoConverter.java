@@ -26,10 +26,11 @@ import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
-import com.netflix.metacat.common.server.connectors.model.ViewInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.common.server.connectors.model.ViewInfo;
+import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -168,6 +169,36 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
                 .metadata(table.getParameters()).name(name).auditInfo(auditInfo)
                 .build();
         }
+    }
+
+    /**
+     * Converts IcebergTable to TableDto.
+     *
+     * @param name      qualified name
+     * @param table     iceberg table object
+     * @param tableLoc  iceberg table metadata location
+     * @param serde  storage info
+     * @param auditInfo audit information
+     * @return Metacat table Info
+     */
+    public TableInfo fromIcebergTableToTableInfo(final QualifiedName name,
+                                                 final com.netflix.iceberg.Table table,
+                                                 final String tableLoc,
+                                                 final StorageInfo serde,
+                                                 final AuditInfo auditInfo) {
+        final List<FieldInfo> allFields =
+            this.hiveTypeConverter.icebergeSchemaTofieldDtos(table.schema(), table.spec().fields());
+        final Map<String, String> tableParameters = new HashMap<>();
+        tableParameters.put(DirectSqlTable.PARAM_TABLE_TYPE, DirectSqlTable.ICEBERG_TABLE_TYPE);
+        tableParameters.put(DirectSqlTable.PARAM_METADATA_LOCATION, tableLoc);
+        //adding iceberg table properties
+        tableParameters.putAll(table.properties());
+
+        return TableInfo.builder().fields(allFields)
+            .metadata(tableParameters)
+            .serde(serde)
+            .name(name).auditInfo(auditInfo)
+            .build();
     }
 
     /**

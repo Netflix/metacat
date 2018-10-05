@@ -17,6 +17,8 @@ package com.netflix.metacat.connector.hive.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
@@ -42,6 +44,7 @@ import java.util.Properties;
 @SuppressWarnings("deprecation")
 public final class HiveTableUtil {
     private static final String PARQUET_HIVE_SERDE = "parquet.hive.serde.ParquetHiveSerDe";
+    private static final String DUMMY_LCATION = "ICEBERG_DUMMY_LOCATION";
     private HiveTableUtil() {
     }
 
@@ -67,7 +70,7 @@ public final class HiveTableUtil {
         try {
             final ObjectInspector inspector = deserializer.getObjectInspector();
             Preconditions.checkArgument(inspector.getCategory() == ObjectInspector.Category.STRUCT,
-                    "expected STRUCT: %s", inspector.getCategory());
+                "expected STRUCT: %s", inspector.getCategory());
             return ((StructObjectInspector) inspector).getAllStructFieldRefs();
         } catch (SerDeException e) {
             throw Throwables.propagate(e);
@@ -97,4 +100,26 @@ public final class HiveTableUtil {
         }
     }
 
+    /**
+     * check if the table is an Iceberg Table.
+     *
+     * @param tableInfo table info
+     * @return true for iceberg table
+     */
+    public static boolean isIcebergTable(final TableInfo tableInfo) {
+        return tableInfo.getMetadata() != null
+            && tableInfo.getMetadata().containsKey(DirectSqlTable.PARAM_TABLE_TYPE)
+            && DirectSqlTable.ICEBERG_TABLE_TYPE
+            .equalsIgnoreCase(tableInfo.getMetadata().get(DirectSqlTable.PARAM_TABLE_TYPE));
+    }
+
+    /**
+     * get iceberg table metadata location.
+     *
+     * @param tableInfo table info
+     * @return true for iceberg table
+     */
+    public static String getIcebergTableMetadataLocation(final TableInfo tableInfo) {
+        return tableInfo.getMetadata().get(DirectSqlTable.PARAM_METADATA_LOCATION);
+    }
 }

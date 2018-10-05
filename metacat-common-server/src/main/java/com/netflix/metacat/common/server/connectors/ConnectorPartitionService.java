@@ -22,6 +22,7 @@ import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -39,14 +40,15 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * @param context           The Metacat request context
      * @param table             table handle to get partition for
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
+     * @param tableInfo Table info object
      * @return filtered list of partitions
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<PartitionInfo> getPartitions(
         final ConnectorRequestContext context,
         final QualifiedName table,
-        final PartitionListRequest partitionsRequest
-    ) {
+        final PartitionListRequest partitionsRequest,
+        final TableInfo tableInfo) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
 
@@ -73,12 +75,14 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * @param context        The Metacat request context
      * @param tableName      table name
      * @param partitionNames list of partition names
+     * @param tableInfo table info object
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default void deletePartitions(
         final ConnectorRequestContext context,
         final QualifiedName tableName,
-        final List<String> partitionNames
+        final List<String> partitionNames,
+        final TableInfo tableInfo
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
@@ -88,12 +92,14 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      *
      * @param context The Metacat request context
      * @param table   table handle
+     * @param tableInfo table info object
      * @return Number of partitions
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default int getPartitionCount(
         final ConnectorRequestContext context,
-        final QualifiedName table
+        final QualifiedName table,
+        final TableInfo tableInfo
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
@@ -121,14 +127,15 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * @param context           The Metacat request context
      * @param table             table handle to get partition for
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
+     * @param tableInfo table info object
      * @return filtered list of partition names
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<String> getPartitionKeys(
         final ConnectorRequestContext context,
         final QualifiedName table,
-        final PartitionListRequest partitionsRequest
-    ) {
+        final PartitionListRequest partitionsRequest,
+        final TableInfo tableInfo) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
 
@@ -138,13 +145,15 @@ public interface ConnectorPartitionService extends ConnectorBaseService<Partitio
      * @param context           The Metacat request context
      * @param table             table handle to get partition for
      * @param partitionsRequest The metadata for what kind of partitions to get from the table
+     * @param tableInfo table info object
      * @return filtered list of partition uris
      * @throws UnsupportedOperationException If the connector doesn't implement this method
      */
     default List<String> getPartitionUris(
         final ConnectorRequestContext context,
         final QualifiedName table,
-        final PartitionListRequest partitionsRequest
+        final PartitionListRequest partitionsRequest,
+        final TableInfo tableInfo
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }

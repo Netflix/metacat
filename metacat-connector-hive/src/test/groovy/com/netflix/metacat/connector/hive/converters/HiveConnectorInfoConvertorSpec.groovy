@@ -16,6 +16,11 @@
 
 package com.netflix.metacat.connector.hive.converters
 
+import com.netflix.iceberg.PartitionField
+import com.netflix.iceberg.PartitionSpec
+import com.netflix.iceberg.Schema
+import com.netflix.iceberg.types.Type
+import com.netflix.iceberg.types.Types
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.connectors.model.AuditInfo
@@ -25,6 +30,7 @@ import com.netflix.metacat.common.server.connectors.model.PartitionInfo
 import com.netflix.metacat.common.server.connectors.model.StorageInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.type.VarcharType
+import com.netflix.metacat.connector.hive.sql.DirectSqlTable
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.Partition
 import org.apache.hadoop.hive.metastore.api.SerDeInfo
@@ -490,5 +496,38 @@ class HiveConnectorInfoConvertorSpec extends Specification{
 
         where:
         partitionValues << [[], ['too few'], ['still', 'too few'], ['too', 'many', 'values', 'present']]
+    }
+
+    def "test fromIcebergTableToTableInfo"() {
+        def icebergTable = Mock(com.netflix.iceberg.Table)
+        def partSpec = Mock(PartitionSpec)
+        def field = Mock(PartitionField)
+        def schema =  Mock(Schema)
+        def nestedField = Mock(Types.NestedField)
+        def nestedField2 = Mock(Types.NestedField)
+        def type = Mock(Type)
+        when:
+        def tableInfo = converter.fromIcebergTableToTableInfo(QualifiedName.ofTable('c', 'd', 't'),
+           icebergTable, "/tmp/test", StorageInfo.builder().build(), AuditInfo.builder().build() )
+        then:
+        1 * icebergTable.properties() >> ["test":"abd"]
+        1 * icebergTable.spec() >>  partSpec
+        1 * partSpec.fields() >> [ field]
+        1 * icebergTable.schema() >> schema
+        1 * field.name() >> "fieldName"
+        5 * schema.columns() >> [nestedField, nestedField2]
+        2 * nestedField.name() >> "fieldName"
+        1 * nestedField.type() >> type
+        1 * nestedField.isOptional() >> true
+        2 * nestedField2.name() >> "fieldName2"
+        1 * nestedField2.type() >> type
+        1 * nestedField2.isOptional() >> true
+        2 * type.typeId() >> Type.TypeID.BOOLEAN
+
+        tableInfo.getMetadata().get(DirectSqlTable.PARAM_TABLE_TYPE).equals(DirectSqlTable.ICEBERG_TABLE_TYPE)
+        tableInfo.getMetadata().get(DirectSqlTable.PARAM_METADATA_LOCATION).equals("/tmp/test")
+        tableInfo.getFields().size() == 2
+        tableInfo.getFields().get(0).isPartitionKey() != tableInfo.getFields().get(1).isPartitionKey()
+
     }
 }

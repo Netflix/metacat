@@ -24,6 +24,7 @@ import com.google.inject.persist.Transactional;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.util.PartitionUtil;
@@ -116,7 +117,8 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
     @Override
     public List<PartitionInfo> getPartitions(@Nonnull final ConnectorRequestContext context,
                                              @Nonnull final QualifiedName tableName,
-                                             @Nonnull final PartitionListRequest partitionsRequest) {
+                                             @Nonnull final PartitionListRequest partitionsRequest,
+                                             final TableInfo tableInfo) {
         log.debug("Get partitions for table {}", tableName);
         return _getPartitions(tableName, partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
             partitionsRequest.getSort(), partitionsRequest.getPageable(), true);
@@ -221,7 +223,8 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
 
     @Override
     public void deletePartitions(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName tableName,
-                                 @Nonnull final List<String> partitionNames) {
+                                 @Nonnull final List<String> partitionNames,
+                                 final TableInfo tableInfo) {
         log.debug("Start: Delete partitions {} for table {}", partitionNames, tableName);
         partitionDao.deleteByNames(catalogName, tableName.getDatabaseName(), tableName.getTableName(), partitionNames);
         log.debug("End: Delete partitions {} for table {}", partitionNames, tableName);
@@ -241,7 +244,8 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
 
     @Override
     public int getPartitionCount(@Nonnull final ConnectorRequestContext context,
-                                 @Nonnull final QualifiedName table
+                                 @Nonnull final QualifiedName table,
+                                 final TableInfo tableInfo
     ) {
         return partitionDao.count(catalogName, table.getDatabaseName(), table.getTableName()).intValue();
     }
@@ -271,7 +275,8 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
     @Override
     public List<String> getPartitionKeys(@Nonnull final ConnectorRequestContext context,
                                          @Nonnull final QualifiedName tableName,
-                                         @Nonnull final PartitionListRequest partitionsRequest) {
+                                         @Nonnull final PartitionListRequest partitionsRequest,
+                                         final TableInfo tableInfo) {
         log.debug("Get partition keys for table {}", tableName);
         return _getPartitions(tableName, partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
             partitionsRequest.getSort(), partitionsRequest.getPageable(), true).stream()
@@ -293,7 +298,8 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
     @Override
     public List<String> getPartitionUris(@Nonnull final ConnectorRequestContext context,
                                          @Nonnull final QualifiedName tableName,
-                                         @Nonnull final PartitionListRequest partitionsRequest) {
+                                         @Nonnull final PartitionListRequest partitionsRequest,
+                                         final TableInfo tableInfo) {
         log.debug("Get partition uris for table {}", tableName);
         return _getPartitions(tableName, partitionsRequest.getFilter(), partitionsRequest.getPartitionNames(),
             partitionsRequest.getSort(), partitionsRequest.getPageable(), true).stream()

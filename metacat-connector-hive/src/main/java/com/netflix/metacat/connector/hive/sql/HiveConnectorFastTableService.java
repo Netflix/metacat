@@ -25,6 +25,8 @@ import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableUtil;
+import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -45,6 +47,7 @@ import java.util.Objects;
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private final Registry registry;
     private final DirectSqlTable directSqlTable;
+    private IcebergTableUtil icebergTableUtil;
 
     /**
      * Constructor.
@@ -68,6 +71,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, connectorContext);
         this.registry = connectorContext.getRegistry();
         this.directSqlTable = directSqlTable;
+        this.icebergTableUtil = new IcebergTableUtil(connectorContext);
+
     }
 
     /**
@@ -77,6 +82,26 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     public boolean exists(final ConnectorRequestContext requestContext, final QualifiedName name) {
         return directSqlTable.exists(name);
     }
+
+    /**
+     * getTable.
+     *
+     * @param requestContext The request context
+     * @param name           The qualified name of the resource to get
+     * @return table dto
+     */
+    @Override
+    public TableInfo get(final ConnectorRequestContext requestContext, final QualifiedName name) {
+        final TableInfo info = super.get(requestContext, name);
+        if (!HiveTableUtil.isIcebergTable(info)) {
+            return info;
+        }
+        final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
+        final com.netflix.iceberg.Table icebergTable = this.icebergTableUtil.getIcebergTable(name, tableLoc);
+        return this.hiveMetacatConverters.fromIcebergTableToTableInfo(name,
+            icebergTable, tableLoc, info.getSerde(), info.getAudit());
+    }
+
 
     @Override
     public Map<String, List<QualifiedName>> getTableNames(
@@ -99,7 +124,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      */
     @Override
     public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
-        if (isIcebergTable(tableInfo)) {
+        if (HiveTableUtil.isIcebergTable(tableInfo)) {
             final QualifiedName tableName = tableInfo.getName();
             final Long tableId = directSqlTable.getTableId(tableName);
             try {
@@ -149,13 +174,6 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
                 throw new IllegalStateException(message);
             }
         }
-    }
-
-    private boolean isIcebergTable(final TableInfo tableInfo) {
-        return tableInfo.getMetadata() != null
-            && tableInfo.getMetadata().containsKey(DirectSqlTable.PARAM_TABLE_TYPE)
-            && DirectSqlTable.ICEBERG_TABLE_TYPE
-            .equalsIgnoreCase(tableInfo.getMetadata().get(DirectSqlTable.PARAM_TABLE_TYPE));
     }
 
     /**
