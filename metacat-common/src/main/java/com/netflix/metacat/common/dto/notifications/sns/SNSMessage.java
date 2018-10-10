@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
 @ToString
 @EqualsAndHashCode(callSuper = false)
 public class SNSMessage<P> extends BaseDto {
-
+    private final String source = "metacat";
     private final String id;
     private final long timestamp;
     private final String requestId;
