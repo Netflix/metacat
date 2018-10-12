@@ -608,6 +608,12 @@ class MetacatSmokeSpec extends Specification {
         then:
         noExceptionThrown()
         when:
+        createTable(catalogName, databaseName, tableName1, 'TRUE')
+        api.deleteTable(catalogName, databaseName, tableName)
+        api.renameTable(catalogName, databaseName, tableName1, tableName)
+        then:
+        noExceptionThrown()
+        when:
         api.renameTable(catalogName, databaseName, tableName, tableName1)
         then:
         noExceptionThrown()
