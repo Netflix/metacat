@@ -32,7 +32,7 @@
   "snapshots" : [ {
     "snapshot-id" : 1528917559483,
     "timestamp-ms" : 1528917559622,
-    "manifests" : [ "/tmp/data/9ff691e6-6bda-4125-8c53-d1a41db57500-m0.avro", "/tmp/data/cc584be3-2af1-46c6-b4e7-a7072de2cd51-m0.avro"]
+    "manifests" : [ "/tmp/data/9ff691e6-6bda-4125-8c53-d1a41db57500-m0.avro", "/tmp/data/cc584be3-2af1-46c6-b4e7-a7072de2cd51-m0.avro", "/tmp/data/5bef17d2-3aa9-476d-a776-fb6c55585f54-m0.avro"]
   } ],
   "snapshot-log" : [ ]
 }
