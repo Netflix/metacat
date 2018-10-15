@@ -437,7 +437,7 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
-    def "Test get iceberg table"() {
+    def "Test get iceberg table and partitions"() {
         given:
         def catalogName = 'embedded-fast-hive-metastore'
         def databaseName = 'iceberg_db'
@@ -485,13 +485,64 @@ class MetacatSmokeSpec extends Specification {
         noExceptionThrown()
         tableDTO.metadata.get("metadata_location").equals(metadataLocation)
         tableDTO.getFields().size() == 3
-        parts.size() == 1
+        parts.size() == 2
         parts.get(0).dataMetadata != null
-        partkeys.size() == 1
+        partkeys.size() == 2
 
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
     }
+
+    @Unroll
+    def "Test get partitions from iceberg table using #filter"() {
+        def catalogName = 'embedded-fast-hive-metastore'
+        def databaseName = 'iceberg_db'
+        def tableName = 'iceberg_table_6'
+        def tableDto = new TableDto(
+            name: QualifiedName.ofTable(catalogName, databaseName, tableName),
+            metadata: [table_type: 'ICEBERG',
+                       metadata_location: String.format('/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json')]
+        )
+
+        given:
+        if ( run == "start" ) {
+            try {api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+            } catch (Exception ignored) {
+            }
+            api.createTable(catalogName, databaseName, tableName, tableDto)
+
+        }
+        def parts = partitionApi.getPartitions(catalogName, databaseName, tableName, filter, null, null, null, null, true)
+        def partkeys = partitionApi.getPartitionKeys(catalogName, databaseName, tableName, filter, null, null, null, null)
+
+        expect:
+        parts.size() == result
+        partkeys.size() == result
+
+        cleanup:
+        if ( run == "end" ) {
+            api.deleteTable(catalogName, databaseName, tableName)
+        }
+
+        where:
+        run     | filter                                         | result
+        "start" | "dateint==20180503"                            | 1
+        null    | "dateint!=20180503"                            | 1
+        null    | "dateint==20180503 or dateint==20180403"       | 2
+        null    | "dateint!=20180503 and dateint!=20180403"      | 0
+        null    | "dateint<=20180503 and dateint>=20180403"      | 2
+        null    | "dateint>20180503"                             | 0
+        null    | "dateint>=20180503"                            | 1
+        null    | "dateint<=20180503"                            | 2
+        null    | "dateint between 20180403 and 20180503"        | 2
+        null    | "dateint not between 20180403 and 20180503"    | 0
+        "end"   | "dateint>=20180403"                            | 2
+
+
+    }
+
+
+
 
 
     @Unroll

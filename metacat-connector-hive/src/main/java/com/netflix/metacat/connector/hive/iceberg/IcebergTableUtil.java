@@ -19,6 +19,7 @@ package com.netflix.metacat.connector.hive.iceberg;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Strings;
 import com.netflix.iceberg.BaseMetastoreTableOperations;
 import com.netflix.iceberg.BaseMetastoreTables;
 import com.netflix.iceberg.PartitionSpec;
@@ -26,12 +27,19 @@ import com.netflix.iceberg.ScanSummary;
 import com.netflix.iceberg.Schema;
 import com.netflix.iceberg.Table;
 import com.netflix.iceberg.TableMetadata;
+import com.netflix.iceberg.expressions.Expression;
+import com.netflix.iceberg.expressions.Expressions;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
+import com.netflix.metacat.common.server.partition.parser.ParseException;
+import com.netflix.metacat.common.server.partition.parser.PartitionParser;
+import com.netflix.metacat.connector.hive.util.IcebergFilterGenerator;
 import org.apache.hadoop.conf.Configuration;
 
+import java.io.StringReader;
 import java.util.Map;
 
 /**
@@ -66,12 +74,23 @@ public class IcebergTableUtil {
     public Map<String, ScanSummary.PartitionMetrics> getIcebergTablePartitionMap(
         final Table icebergTable,
         final PartitionListRequest partitionsRequest) {
-        return (partitionsRequest.getPageable() != null)
-            ? ScanSummary.of(icebergTable.newScan()).build() //whole table scan with paging
-            :
-            ScanSummary.of(icebergTable.newScan())  //the top x records
-                .limit(connectorContext.getConfig().getIcebergTableSummaryFetchSize())
-                .build();
+        try {
+            Expression filter = Expressions.alwaysTrue();
+            if (!Strings.isNullOrEmpty(partitionsRequest.getFilter())) {
+                final IcebergFilterGenerator icebergFilterGenerator
+                    = new IcebergFilterGenerator(icebergTable.schema().columns());
+                filter = (Expression) new PartitionParser(new StringReader(partitionsRequest.getFilter())).filter()
+                    .jjtAccept(icebergFilterGenerator, null);
+            }
+            return (partitionsRequest.getPageable() != null)
+                ? ScanSummary.of(icebergTable.newScan().filter(filter)).build() //whole table scan with paging
+                :
+                ScanSummary.of(icebergTable.newScan())  //the top x records
+                    .limit(connectorContext.getConfig().getIcebergTableSummaryFetchSize())
+                    .build();
+        } catch (ParseException ex) {
+            throw new MetacatBadRequestException("Iceberg filter parse error");
+        }
     }
 
     /**

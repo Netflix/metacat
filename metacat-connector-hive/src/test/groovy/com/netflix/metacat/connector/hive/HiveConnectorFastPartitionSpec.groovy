@@ -46,8 +46,6 @@ class HiveConnectorFastPartitionSpec extends Specification {
     @Shared
     DirectSqlSavePartition directSqlSavePartition = Mock(DirectSqlSavePartition)
     @Shared
-    HiveConnectorTableService tableService = Mock(HiveConnectorTableService);
-    @Shared
     ConnectorRequestContext connectorContext = new ConnectorRequestContext(1, null);
 
     def "Test for get iceberg table partitions" (){

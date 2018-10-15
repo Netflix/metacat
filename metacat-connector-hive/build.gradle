@@ -33,7 +33,7 @@ dependencies {
     compile("commons-dbutils:commons-dbutils")
     compile('com.github.Netflix.iceberg:iceberg-common:0.3.0')
     compile('com.github.Netflix.iceberg:iceberg-core:0.3.0')
-
+    compile('com.github.Netflix.iceberg:iceberg-api:0.3.0')
     /*******************************
      * Provided Dependencies
      *******************************/
