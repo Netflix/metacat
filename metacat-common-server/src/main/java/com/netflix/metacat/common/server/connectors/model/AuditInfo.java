@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -37,7 +38,8 @@ import java.util.Date;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuditInfo {
+public class AuditInfo implements Serializable {
+    private static final long serialVersionUID = -4683417661637244309L;
     /* Created By */
     private String createdBy;
     /* Created date */

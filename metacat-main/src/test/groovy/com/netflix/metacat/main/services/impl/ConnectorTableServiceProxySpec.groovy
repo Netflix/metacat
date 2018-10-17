@@ -20,6 +20,10 @@ import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.ConnectorTableService
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.common.server.converter.ConverterUtil
+import com.netflix.metacat.common.server.converter.DozerTypeConverter
+import com.netflix.metacat.common.server.converter.TypeConverterFactory
+import com.netflix.metacat.common.server.properties.DefaultConfigImpl
+import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.main.manager.ConnectorManager
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import spock.lang.Specification
@@ -33,26 +37,24 @@ import spock.lang.Specification
 class ConnectorTableServiceProxySpec extends Specification {
     def connectorManager = Mock(ConnectorManager)
     def connectorTableService = Mock(ConnectorTableService)
-    def converterUtil = Mock(ConverterUtil)
-    def tableDto = DataDtoProvider.getTable('a', 'b', 'c', "amajumdar", "s3:/a/b")
-    def name = tableDto.name
+    def converterUtil = new ConverterUtil(new DozerTypeConverter(new TypeConverterFactory(new DefaultConfigImpl(new MetacatProperties()))))
+    def tableInfo = converterUtil.fromTableDto(DataDtoProvider.getTable('a', 'b', 'c', "amajumdar", "s3:/a/b"))
+    def name = tableInfo.name
     ConnectorTableServiceProxy service
 
     def setup() {
         connectorManager.getTableService(_) >> connectorTableService
-        converterUtil.toTableDto(_) >> tableDto
-        converterUtil.toConnectorContext(_) >> Mock(ConnectorRequestContext)
         service = new ConnectorTableServiceProxy(connectorManager, converterUtil)
     }
 
     def testCreate() {
         when:
-        service.create(name, tableDto)
+        service.create(name, tableInfo)
         then:
         noExceptionThrown()
         1 * connectorTableService.create(_,_)
         when:
-        service.create(name, tableDto)
+        service.create(name, tableInfo)
         then:
         thrown(ConnectorException)
         1 * connectorTableService.create(_,_) >> { throw new ConnectorException("Exception") }
@@ -99,12 +101,12 @@ class ConnectorTableServiceProxySpec extends Specification {
 
     def testUpdate() {
         when:
-        service.update(name, tableDto)
+        service.update(name, tableInfo)
         then:
         noExceptionThrown()
         1 * connectorTableService.update(_,_)
         when:
-        service.update(name, tableDto)
+        service.update(name, tableInfo)
         then:
         thrown(ConnectorException)
         1 * connectorTableService.update(_,_) >> { throw new ConnectorException("Exception") }
