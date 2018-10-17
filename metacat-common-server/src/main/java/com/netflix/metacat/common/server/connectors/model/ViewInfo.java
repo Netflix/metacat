@@ -24,6 +24,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * Hive Virtual View Info.
  *
@@ -36,7 +38,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class ViewInfo {
+public class ViewInfo implements Serializable {
+    private static final long serialVersionUID = -7841464527538892424L;
     /* view original text*/
     private String viewOriginalText;
     /* view expanded text*/

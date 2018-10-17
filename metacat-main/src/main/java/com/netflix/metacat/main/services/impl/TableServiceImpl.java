@@ -28,6 +28,7 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
@@ -70,6 +71,7 @@ public class TableServiceImpl implements TableService {
     private final MetacatEventBus eventBus;
     private final Registry registry;
     private final Config config;
+    private final ConverterUtil converterUtil;
     private final ConnectorTableServiceProxy connectorTableServiceProxy;
     private final AuthorizationService authorizationService;
 
@@ -83,6 +85,7 @@ public class TableServiceImpl implements TableService {
      * @param eventBus                   Internal event bus
      * @param registry                   registry handle
      * @param config                     configurations
+     * @param converterUtil              utility to convert to/from Dto to connector resources
      * @param authorizationService       authorization service
      */
     public TableServiceImpl(
@@ -93,6 +96,7 @@ public class TableServiceImpl implements TableService {
         final MetacatEventBus eventBus,
         final Registry registry,
         final Config config,
+        final ConverterUtil converterUtil,
         final AuthorizationService authorizationService
     ) {
         this.connectorTableServiceProxy = connectorTableServiceProxy;
@@ -103,6 +107,7 @@ public class TableServiceImpl implements TableService {
         this.registry = registry;
         this.config = config;
         this.authorizationService = authorizationService;
+        this.converterUtil = converterUtil;
     }
 
     /**
@@ -120,7 +125,7 @@ public class TableServiceImpl implements TableService {
         setOwnerIfNull(tableDto, metacatRequestContext.getUserName());
         log.info("Creating table {}", name);
         eventBus.post(new MetacatCreateTablePreEvent(name, metacatRequestContext, this, tableDto));
-        connectorTableServiceProxy.create(name, tableDto);
+        connectorTableServiceProxy.create(name, converterUtil.fromTableDto(tableDto));
 
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for table {}", name);
@@ -255,8 +260,8 @@ public class TableServiceImpl implements TableService {
             || (getTableServiceParameters.isIncludeDefinitionMetadata()
             && !getTableServiceParameters.isDisableOnReadMetadataIntercetor())) {
             try {
-                tableInternal = connectorTableServiceProxy
-                    .get(name, getTableServiceParameters.isUseCache() && config.isCacheEnabled());
+                tableInternal = converterUtil.toTableDto(connectorTableServiceProxy
+                    .get(name, getTableServiceParameters.isUseCache() && config.isCacheEnabled()));
             } catch (NotFoundException ignored) {
                 return Optional.empty();
             }
@@ -279,8 +284,8 @@ public class TableServiceImpl implements TableService {
             TableDto dto = table;
             if (tableInternal == null && !getTableServiceParameters.isIncludeInfo()) {
                 try {
-                    dto = connectorTableServiceProxy
-                        .get(name, getTableServiceParameters.isUseCache() && config.isCacheEnabled());
+                    dto = converterUtil.toTableDto(connectorTableServiceProxy
+                        .get(name, getTableServiceParameters.isUseCache() && config.isCacheEnabled()));
                 } catch (NotFoundException ignored) {
                 }
             }
@@ -359,7 +364,7 @@ public class TableServiceImpl implements TableService {
         // schema. Uri may exist in the serde when updating data metadata for a table.
         //
         if (isTableInfoProvided(tableDto, oldTable)) {
-            connectorTableServiceProxy.update(name, tableDto);
+            connectorTableServiceProxy.update(name, converterUtil.fromTableDto(tableDto));
         }
 
         // Merge in metadata if the user sent any

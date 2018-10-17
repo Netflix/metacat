@@ -73,7 +73,7 @@ class TableServiceImplSpec extends Specification {
         connectorTableServiceProxy = new ConnectorTableServiceProxy(connectorManager, converterUtil)
         authorizationService = new DefaultAuthorizationService(config)
         service = new TableServiceImpl(connectorTableServiceProxy, databaseService, tagService,
-            usermetadataService, eventBus, registry, config, authorizationService)
+            usermetadataService, eventBus, registry, config, converterUtil, authorizationService)
     }
 
     def testTableGet() {

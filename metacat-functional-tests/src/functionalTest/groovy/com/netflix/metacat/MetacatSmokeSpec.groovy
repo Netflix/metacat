@@ -60,6 +60,7 @@ import java.util.concurrent.TimeUnit
  */
 class MetacatSmokeSpec extends Specification {
     public static MetacatV1 api
+    public static MetacatV1 hiveContextApi
     public static PartitionV1 partitionApi
     public static MetadataV1 metadataApi
     public static TagV1 tagApi
@@ -79,6 +80,24 @@ class MetacatSmokeSpec extends Specification {
                 template.header(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME, "metacat-test")
             }
         }
+        RequestInterceptor hiveContextInterceptor = new RequestInterceptor() {
+            @Override
+            void apply(RequestTemplate template) {
+                template.header(MetacatRequestContext.HEADER_KEY_USER_NAME, "metacat-test")
+                template.header(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME, "metacat-test")
+                template.header(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT, "hive")
+            }
+        }
+        hiveContextApi = Feign.builder()
+            .logger(new Slf4jLogger())
+            .contract(new JAXRSContract())
+            .encoder(new JacksonEncoder(mapper))
+            .decoder(new JacksonDecoder(mapper))
+            .errorDecoder(new MetacatErrorDecoder(metacatJson))
+            .requestInterceptor(hiveContextInterceptor)
+            .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
+            .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
+            .target(MetacatV1.class, url)
         api = Feign.builder()
             .logger(new Slf4jLogger())
             .contract(new JAXRSContract())
@@ -272,6 +291,11 @@ class MetacatSmokeSpec extends Specification {
             //TODO: assert table.getSerde().getParameters().size() == 0
             assert table.getSerde().getSerdeInfoParameters().size() >= 1
             assert table.getSerde().getSerdeInfoParameters().get('serialization.format') == '1'
+            table = api.getTable(catalogName, databaseName, tableName, true, true, false)
+            assert table.getFields().get(0).type == 'chararray'
+            // from the cache
+            def cachedTable = hiveContextApi.getTable(catalogName, databaseName, tableName, true, true, false)
+            assert cachedTable.getFields().get(0).type == 'string'
         }
         cleanup:
         if (!error) {

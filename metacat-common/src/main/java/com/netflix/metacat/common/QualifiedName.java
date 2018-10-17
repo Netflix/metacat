@@ -37,6 +37,7 @@ import java.util.Objects;
  */
 @Getter
 public final class QualifiedName implements Serializable {
+    private static final long serialVersionUID = -7916364073519921672L;
     private final String catalogName;
     private final String databaseName;
     private final String partitionName;

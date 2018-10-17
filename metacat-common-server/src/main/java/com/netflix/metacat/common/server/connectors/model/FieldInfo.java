@@ -18,12 +18,20 @@
 package com.netflix.metacat.common.server.connectors.model;
 
 import com.netflix.metacat.common.type.Type;
+import com.netflix.metacat.common.type.TypeRegistry;
+import com.netflix.metacat.common.type.TypeSignature;
 import io.swagger.annotations.ApiModel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 /**
  * Field DTO.
@@ -38,15 +46,36 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
-public final class FieldInfo {
+public final class FieldInfo implements Serializable {
+    private static final long serialVersionUID = -762764635047711004L;
     private String comment;
     private String name;
     private boolean partitionKey;
     private String sourceType;
-    private Type type;
+    private transient Type type;
     private Boolean isNullable;
     private Integer size;
     private String defaultValue;
     private Boolean isSortKey;
     private Boolean isIndexKey;
+
+    // setters and getters
+    private void writeObject(final ObjectOutputStream oos)
+        throws IOException {
+        oos.defaultWriteObject();
+        oos.writeObject(type == null ? null : type.getDisplayName());
+    }
+
+    private void readObject(final ObjectInputStream ois)
+        throws ClassNotFoundException, IOException {
+        ois.defaultReadObject();
+        final Object oSignature = ois.readObject();
+        if (oSignature != null) {
+            final String signatureString = (String) oSignature;
+            if (StringUtils.isNotBlank(signatureString)) {
+                final TypeSignature signature = TypeSignature.parseTypeSignature(signatureString);
+                this.setType((TypeRegistry.getTypeRegistry().getType(signature)));
+            }
+        }
+    }
 }

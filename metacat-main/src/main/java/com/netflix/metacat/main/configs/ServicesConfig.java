@@ -167,6 +167,7 @@ public class ServicesConfig {
      * @param eventBus                   Internal event bus
      * @param registry                   registry handle
      * @param config                     configurations
+     * @param converterUtil              converter utilities
      * @param authorizationService       authorization Service
      * @return The table service bean
      */
@@ -179,6 +180,7 @@ public class ServicesConfig {
         final MetacatEventBus eventBus,
         final Registry registry,
         final Config config,
+        final ConverterUtil converterUtil,
         final AuthorizationService authorizationService
     ) {
         return new TableServiceImpl(
@@ -189,6 +191,7 @@ public class ServicesConfig {
             eventBus,
             registry,
             config,
+            converterUtil,
             authorizationService
         );
     }

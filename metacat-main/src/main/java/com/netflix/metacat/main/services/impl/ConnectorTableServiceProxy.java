@@ -20,9 +20,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
@@ -62,13 +62,13 @@ public class ConnectorTableServiceProxy {
     /**
      * Calls the connector table service create method.
      * @param name table name
-     * @param tableDto table object
+     * @param tableInfo table object
      */
-    public void create(final QualifiedName name, final TableDto tableDto) {
+    public void create(final QualifiedName name, final TableInfo tableInfo) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name);
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
-        service.create(connectorRequestContext, converterUtil.fromTableDto(tableDto));
+        service.create(connectorRequestContext, tableInfo);
     }
 
     /**
@@ -95,11 +95,11 @@ public class ConnectorTableServiceProxy {
      * @return table dto
      */
     @Cacheable(key = "'table.' + #name", condition = "#useCache")
-    public TableDto get(final QualifiedName name, final boolean useCache) {
+    public TableInfo get(final QualifiedName name, final boolean useCache) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         final ConnectorTableService service = connectorManager.getTableService(name);
-        return converterUtil.toTableDto(service.get(connectorRequestContext, name));
+        return service.get(connectorRequestContext, name);
     }
 
     /**
@@ -129,17 +129,17 @@ public class ConnectorTableServiceProxy {
     /**
      * Calls the connector table service update method.
      * @param name table name
-     * @param tableDto table object
+     * @param tableInfo table object
      */
     @CacheEvict(key = "'table.' + #name")
-    public void update(final QualifiedName name, final TableDto tableDto) {
+    public void update(final QualifiedName name, final TableInfo tableInfo) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name);
         try {
             log.info("Updating table {}", name);
             final ConnectorRequestContext connectorRequestContext
                 = converterUtil.toConnectorContext(metacatRequestContext);
-            service.update(connectorRequestContext, converterUtil.fromTableDto(tableDto));
+            service.update(connectorRequestContext, tableInfo);
         } catch (UnsupportedOperationException ignored) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata.
             log.debug("Catalog {} does not support the table update operation.", name.getCatalogName());

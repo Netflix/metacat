@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -33,7 +34,8 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class BaseInfo {
+public abstract class BaseInfo implements Serializable {
+    private static final long serialVersionUID = 284049639636194327L;
     /* Name of the resource */
     private QualifiedName name;
     /* Audit information of the resource */

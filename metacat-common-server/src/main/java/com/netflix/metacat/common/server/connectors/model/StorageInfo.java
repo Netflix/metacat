@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -36,7 +37,8 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class StorageInfo {
+public class StorageInfo implements Serializable {
+    private static final long serialVersionUID = -1261997541007723844L;
     private String inputFormat;
     private String outputFormat;
     private String owner;
