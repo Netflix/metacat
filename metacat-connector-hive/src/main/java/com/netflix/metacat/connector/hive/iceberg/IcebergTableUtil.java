@@ -28,7 +28,6 @@ import com.netflix.iceberg.Schema;
 import com.netflix.iceberg.Table;
 import com.netflix.iceberg.TableMetadata;
 import com.netflix.iceberg.expressions.Expression;
-import com.netflix.iceberg.expressions.Expressions;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
@@ -75,22 +74,21 @@ public class IcebergTableUtil {
         final Table icebergTable,
         final PartitionListRequest partitionsRequest) {
         try {
-            Expression filter = Expressions.alwaysTrue();
             if (!Strings.isNullOrEmpty(partitionsRequest.getFilter())) {
                 final IcebergFilterGenerator icebergFilterGenerator
                     = new IcebergFilterGenerator(icebergTable.schema().columns());
-                filter = (Expression) new PartitionParser(new StringReader(partitionsRequest.getFilter())).filter()
+                final Expression filter = (Expression) new PartitionParser(
+                    new StringReader(partitionsRequest.getFilter())).filter()
                     .jjtAccept(icebergFilterGenerator, null);
+                return ScanSummary.of(icebergTable.newScan().filter(filter)).build();
             }
-            return (partitionsRequest.getPageable() != null)
-                ? ScanSummary.of(icebergTable.newScan().filter(filter)).build() //whole table scan with paging
-                :
-                ScanSummary.of(icebergTable.newScan())  //the top x records
-                    .limit(connectorContext.getConfig().getIcebergTableSummaryFetchSize())
-                    .build();
         } catch (ParseException ex) {
             throw new MetacatBadRequestException("Iceberg filter parse error");
         }
+        return
+            ScanSummary.of(icebergTable.newScan())  //the top x records
+                .limit(connectorContext.getConfig().getIcebergTableSummaryFetchSize())
+                .build();
     }
 
     /**
