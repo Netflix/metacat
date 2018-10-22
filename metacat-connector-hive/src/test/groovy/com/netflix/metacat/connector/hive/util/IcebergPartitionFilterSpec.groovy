@@ -17,10 +17,25 @@
 
 package com.netflix.metacat.connector.hive.util
 
+import com.google.common.collect.ImmutableMap
+import com.netflix.iceberg.DataFile
+import com.netflix.iceberg.FileScanTask
+import com.netflix.iceberg.PartitionSpec
+import com.netflix.iceberg.ScanSummary
+import com.netflix.iceberg.Schema
+import com.netflix.iceberg.StructLike
+import com.netflix.iceberg.Table
+import com.netflix.iceberg.TableScan
 import com.netflix.iceberg.expressions.Expression
 import com.netflix.iceberg.types.Type
 import com.netflix.iceberg.types.Types
+import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.connectors.model.PartitionListRequest
 import com.netflix.metacat.common.server.partition.parser.PartitionParser
+import com.netflix.metacat.common.server.properties.Config
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableUtil
+import com.netflix.spectator.api.Registry
+import org.apache.hadoop.conf.Configuration
 import spock.lang.Specification
 
 class IcebergPartitionFilterSpec extends Specification{
@@ -58,6 +73,85 @@ class IcebergPartitionFilterSpec extends Specification{
         'app==\"abc\"'                   | Expression.Operation.EQ      | "ref(name=\"app\") == \"abc\""
         'app!=\"abc\"'                   | Expression.Operation.NOT_EQ      | "ref(name=\"app\") != \"abc\""
         'app>=\"abc\"'                   | Expression.Operation.GT_EQ      | "ref(name=\"app\") >= \"abc\""
+    }
+
+    def 'Test get icebergPartitionMap default iceberg summary fetch size' () {
+        def icebergTable = Mock(Table)
+        def scan = Mock(TableScan)
+        def task = Mock(FileScanTask)
+        def dataFile = Mock(DataFile)
+        def struckLike = Mock(StructLike)
+        def partSpec = Mock(PartitionSpec)
+        def conf  = Mock(Config)
+        def partRequest = new PartitionListRequest()
+        def icebergUtil = new IcebergTableUtil(new ConnectorContext(
+            "testHive",
+            "testHive",
+            "hive",
+            conf,
+            Mock(Registry),
+            ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
+        ))
+
+        when:
+        icebergUtil.getIcebergTablePartitionMap(icebergTable, partRequest)
+
+        then:
+        noExceptionThrown()
+        icebergTable.newScan() >> scan
+        scan.planFiles() >> [task]
+        task.file() >> dataFile
+        task.spec() >> partSpec
+        partSpec.partitionToPath(_) >>['dateint=1/hour=10' , 'dateint=1/hour=11' , 'dateint=2/hour=10' , 'dateint=2/hour=11']
+        dataFile.partition() >> struckLike
+        conf.getIcebergTableSummaryFetchSize() >> 10
+    }
+
+    def 'Test get icebergPartitionMap invoking filter' () {
+        def icebergTable = Mock(Table)
+        def scan = Mock(TableScan)
+        def task = Mock(FileScanTask)
+        def dataFile = Mock(DataFile)
+        def struckLike = Mock(StructLike)
+        def partSpec = Mock(PartitionSpec)
+        def schema = Mock(Schema)
+        def dateint = Mock(Types.NestedField)
+        def type = Mock(Type)
+        def app = Mock(Types.NestedField)
+        def conf  = Mock(Config)
+        def partRequest = new PartitionListRequest('dateint==1', [], false, null, null, false)
+        def icebergUtil = new IcebergTableUtil(new ConnectorContext(
+            "testHive",
+            "testHive",
+            "hive",
+            conf,
+            Mock(Registry),
+            ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
+        ))
+
+        when:
+        icebergUtil.getIcebergTablePartitionMap(icebergTable, partRequest)
+
+
+        then:
+        noExceptionThrown()
+        icebergTable.newScan() >> scan
+        icebergTable.schema() >> schema
+        scan.filter(_) >> scan
+
+        schema.columns() >> [dateint, app]
+        dateint.name() >> "dateint"
+        dateint.type() >> type
+        type.typeId() >> Type.TypeID.INTEGER
+        app.name() >> "app"
+
+        scan.planFiles() >> [task]
+        task.file() >> dataFile
+        task.spec() >> partSpec
+        partSpec.partitionToPath(_) >>['dateint=1/app=10' , 'dateint=1/app=11' , 'dateint=2/app=10' , 'dateint=2/app=11']
+        dataFile.partition() >> struckLike
+
+
     }
 
 }
