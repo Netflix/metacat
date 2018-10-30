@@ -35,9 +35,12 @@ import com.netflix.metacat.connector.hive.sql.HiveConnectorFastPartitionService
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
 import com.netflix.spectator.api.NoopRegistry
 import org.apache.hadoop.hive.metastore.Warehouse
+import org.junit.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
+//TODO: enable this test once enable iceberg table processing
+@Ignore
 class HiveConnectorFastPartitionSpec extends Specification {
     @Shared
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient);

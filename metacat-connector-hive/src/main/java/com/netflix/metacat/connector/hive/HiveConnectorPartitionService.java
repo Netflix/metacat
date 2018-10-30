@@ -74,8 +74,8 @@ import java.util.stream.Collectors;
  */
 @Getter
 public class HiveConnectorPartitionService implements ConnectorPartitionService {
+    protected final ConnectorContext context;
     private final String catalogName;
-    private final ConnectorContext context;
     private final HiveConnectorInfoConverter hiveMetacatConverters;
     private final IMetacatHiveClient metacatHiveClient;
 
