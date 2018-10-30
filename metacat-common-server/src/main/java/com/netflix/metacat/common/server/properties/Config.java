@@ -381,5 +381,12 @@ public interface Config {
      * @return Iceberg Table Summary Fetch Size
      */
     int getIcebergTableSummaryFetchSize();
+    /**
+     * Enable iceberg table processing.
+     *
+     * @return true if iceberg table processing is enabled
+     */
+    boolean isIcebergEnabled();
+
 }
 

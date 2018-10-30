@@ -71,6 +71,7 @@ import java.util.Map;
 public class HiveConnectorTableService implements ConnectorTableService {
     private static final String PARAMETER_EXTERNAL = "EXTERNAL";
     protected final HiveConnectorInfoConverter hiveMetacatConverters;
+    protected final ConnectorContext connectorContext;
     private final String catalogName;
     private final IMetacatHiveClient metacatHiveClient;
     private final HiveConnectorDatabaseService hiveConnectorDatabaseService;
@@ -104,6 +105,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
             connectorContext.getConfiguration().getOrDefault(HiveConfigConstants.ON_RENAME_CONVERT_TO_EXTERNAL,
                 "true")
         );
+        this.connectorContext = connectorContext;
     }
 
     /**
@@ -177,7 +179,7 @@ public class HiveConnectorTableService implements ConnectorTableService {
             table.getParameters().putAll(tableInfo.getMetadata());
         }
         //no other information is needed for iceberg table
-        if (HiveTableUtil.isIcebergTable(tableInfo)) {
+        if (connectorContext.getConfig().isIcebergEnabled() && HiveTableUtil.isIcebergTable(tableInfo)) {
             table.setPartitionKeys(Collections.emptyList());
             log.debug("Skipping seder and set partition key to empty when updating iceberg table in hive");
             return;

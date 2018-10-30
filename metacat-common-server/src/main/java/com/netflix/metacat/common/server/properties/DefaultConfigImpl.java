@@ -446,4 +446,11 @@ public class DefaultConfigImpl implements Config {
         return this.metacatProperties.getHive().getIceberg().getFetchSizeInTableSummary();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isIcebergEnabled() {
+        return this.metacatProperties.getHive().getIceberg().isEnabled();
+    }
 }

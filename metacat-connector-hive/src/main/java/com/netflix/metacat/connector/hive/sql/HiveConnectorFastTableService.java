@@ -93,7 +93,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     @Override
     public TableInfo get(final ConnectorRequestContext requestContext, final QualifiedName name) {
         final TableInfo info = super.get(requestContext, name);
-        if (!HiveTableUtil.isIcebergTable(info)) {
+        if (!connectorContext.getConfig().isIcebergEnabled() || !HiveTableUtil.isIcebergTable(info)) {
             return info;
         }
         final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);

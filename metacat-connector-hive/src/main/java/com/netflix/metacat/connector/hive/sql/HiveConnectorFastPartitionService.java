@@ -107,7 +107,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final QualifiedName tableName,
         final TableInfo tableInfo
     ) {
-        if (HiveTableUtil.isIcebergTable(tableInfo)) {
+        if (context.getConfig().isIcebergEnabled() && HiveTableUtil.isIcebergTable(tableInfo)) {
             throw new MetacatNotSupportedException("IcebergTable Unsupported Operation!");
         }
         return directSqlGetPartition.getPartitionCount(requestContext, tableName);
@@ -122,7 +122,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final QualifiedName tableName,
         final PartitionListRequest partitionsRequest,
         final TableInfo tableInfo) {
-        return (HiveTableUtil.isIcebergTable(tableInfo))
+        return context.getConfig().isIcebergEnabled() && HiveTableUtil.isIcebergTable(tableInfo)
             ? getIcebergPartitionInfos(tableInfo, partitionsRequest)
             : directSqlGetPartition.getPartitions(requestContext, tableName, partitionsRequest);
     }
@@ -136,13 +136,14 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                                          final PartitionListRequest partitionsRequest,
                                          final TableInfo tableInfo) {
 
-        return (HiveTableUtil.isIcebergTable(tableInfo))
+        return context.getConfig().isIcebergEnabled() && HiveTableUtil.isIcebergTable(tableInfo)
             ? getIcebergPartitionInfos(tableInfo, partitionsRequest)
             .stream().map(info -> info.getName().getPartitionName()).collect(Collectors.toList())
             :
             directSqlGetPartition.getPartitionKeys(requestContext, tableName, partitionsRequest);
 
     }
+
 
     /**
      * {@inheritDoc}.
@@ -154,7 +155,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final PartitionListRequest partitionsRequest,
         final TableInfo tableInfo
     ) {
-        if (HiveTableUtil.isIcebergTable(tableInfo)) {
+        if (context.getConfig().isIcebergEnabled() && HiveTableUtil.isIcebergTable(tableInfo)) {
             throw new MetacatNotSupportedException("IcebergTable Unsupported Operation!");
         }
         return directSqlGetPartition.getPartitionUris(requestContext, tableName, partitionsRequest);
@@ -327,7 +328,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final TableInfo tableInfo
     ) {
         //TODO: implemented as next step
-        if (HiveTableUtil.isIcebergTable(tableInfo)) {
+        if (context.getConfig().isIcebergEnabled() && HiveTableUtil.isIcebergTable(tableInfo)) {
             throw new MetacatNotSupportedException("IcebergTable Unsupported Operation!");
         }
         //The direct sql based deletion doesn't check if the partition is valid

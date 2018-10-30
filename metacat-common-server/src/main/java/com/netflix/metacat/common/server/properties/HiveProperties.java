@@ -96,6 +96,7 @@ public class HiveProperties {
      */
     @Data
     public static class Iceberg {
+        private boolean enabled;
         private int fetchSizeInTableSummary = 100;
     }
 }
