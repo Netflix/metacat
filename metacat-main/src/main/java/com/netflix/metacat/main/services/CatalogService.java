@@ -34,6 +34,15 @@ public interface CatalogService {
     CatalogDto get(QualifiedName name);
 
     /**
+     * Gets the catalog. Returned dto will have details if asked.
+     * @param name Qualified name of the catalog
+     * @param getCatalogServiceParameters parameters
+     * @return the information about the given catalog
+     */
+    @Nonnull
+    CatalogDto get(QualifiedName name, GetCatalogServiceParameters getCatalogServiceParameters);
+
+    /**
      * List of registered catalogs.
      * @return all of the registered catalogs
      */
