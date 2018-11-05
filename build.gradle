@@ -150,6 +150,9 @@ configure(javaProjects) {
             dependency("org.elasticsearch.client:transport:5.4.1")
             dependency("net.snowflake:snowflake-jdbc:3.4.2")
             dependency("com.esotericsoftware.kryo:kryo:2.22")
+            dependency("com.github.Netflix.iceberg:iceberg-common:0.3.2")
+            dependency("com.github.Netflix.iceberg:iceberg-core:0.3.2")
+            dependency("com.github.Netflix.iceberg:iceberg-api:0.3.2")
         }
     }
 

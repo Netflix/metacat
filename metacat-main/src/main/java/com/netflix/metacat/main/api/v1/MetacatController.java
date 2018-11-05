@@ -29,6 +29,7 @@ import com.netflix.metacat.common.server.connectors.exception.TableNotFoundExcep
 import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
+import com.netflix.metacat.main.services.GetCatalogServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.TableService;
@@ -496,11 +497,21 @@ public class MetacatController implements MetacatV1 {
         @ApiParam(value = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName
     ) {
+        return getCatalog(catalogName, true, true);
+    }
+
+    @Override
+    public CatalogDto getCatalog(
+        final String catalogName,
+        final boolean includeUserMetadata,
+        final boolean includeDatabaseNames
+    ) {
         final QualifiedName name = this.requestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
         return this.requestWrapper.processRequest(
             name,
             "getCatalog",
-            () -> this.catalogService.get(name)
+            () -> this.catalogService.get(name, GetCatalogServiceParameters.builder()
+                .includeDatabaseNames(includeDatabaseNames).includeUserMetadata(includeUserMetadata).build())
         );
     }
 

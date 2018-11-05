@@ -32,6 +32,7 @@ import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
+import com.netflix.metacat.main.services.GetCatalogServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.TableService;
@@ -252,7 +253,8 @@ public class TagController {
         switch (name.getType()) {
             case CATALOG:
                 //catalog service will throw exception if not found
-                final CatalogDto catalogDto = this.catalogService.get(name);
+                final CatalogDto catalogDto = this.catalogService.get(name, GetCatalogServiceParameters.builder()
+                        .includeDatabaseNames(false).includeUserMetadata(false).build());
                 if (catalogDto != null) {
                     return this.tagService.setTags(name, tags, true);
                 }
@@ -544,7 +546,8 @@ public class TagController {
         switch (name.getType()) {
             case CATALOG:
                 //catalog service will throw exception if not found
-                final CatalogDto catalogDto = this.catalogService.get(name);
+                final CatalogDto catalogDto = this.catalogService.get(name, GetCatalogServiceParameters.builder()
+                        .includeDatabaseNames(false).includeUserMetadata(false).build());
                 if (catalogDto != null) {
                     this.tagService.removeTags(name, tagRemoveRequestDto.getDeleteAll(),
                         new HashSet<>(tagRemoveRequestDto.getTags()), true);
