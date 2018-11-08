@@ -27,6 +27,7 @@ import com.netflix.iceberg.StructLike
 import com.netflix.iceberg.Table
 import com.netflix.iceberg.TableScan
 import com.netflix.iceberg.expressions.Expression
+import com.netflix.iceberg.io.CloseableIterable
 import com.netflix.iceberg.types.Type
 import com.netflix.iceberg.types.Types
 import com.netflix.metacat.common.server.connectors.ConnectorContext
@@ -99,7 +100,8 @@ class IcebergPartitionFilterSpec extends Specification{
         then:
         noExceptionThrown()
         icebergTable.newScan() >> scan
-        scan.planFiles() >> [task]
+        scan.select(_) >> scan
+        scan.planFiles() >> CloseableIterable.combine([task],[])
         task.file() >> dataFile
         task.spec() >> partSpec
         partSpec.partitionToPath(_) >>['dateint=1/hour=10' , 'dateint=1/hour=11' , 'dateint=2/hour=10' , 'dateint=2/hour=11']
@@ -138,14 +140,14 @@ class IcebergPartitionFilterSpec extends Specification{
         icebergTable.newScan() >> scan
         icebergTable.schema() >> schema
         scan.filter(_) >> scan
-
+        scan.select(_) >> scan
         schema.columns() >> [dateint, app]
         dateint.name() >> "dateint"
         dateint.type() >> type
         type.typeId() >> Type.TypeID.INTEGER
         app.name() >> "app"
 
-        scan.planFiles() >> [task]
+        scan.planFiles() >> CloseableIterable.combine([task],[])
         task.file() >> dataFile
         task.spec() >> partSpec
         partSpec.partitionToPath(_) >>['dateint=1/app=10' , 'dateint=1/app=11' , 'dateint=2/app=10' , 'dateint=2/app=11']
