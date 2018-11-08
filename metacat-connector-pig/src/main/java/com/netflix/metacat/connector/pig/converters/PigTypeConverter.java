@@ -118,7 +118,7 @@ public class PigTypeConverter implements ConnectorTypeConverter {
             }
             return new LogicalSchema.LogicalFieldSchema(alias, schema, DataType.TUPLE);
         }
-        throw new IllegalArgumentException(String.format("Invalid for Pig converter: '%s'", canonicalType));
+        throw new IllegalArgumentException(String.format("Invalid for Pig converter: '%s'", canonicalType.getDisplayName()));
     }
 
     private Type toCanonicalType(final LogicalSchema.LogicalFieldSchema field) {
