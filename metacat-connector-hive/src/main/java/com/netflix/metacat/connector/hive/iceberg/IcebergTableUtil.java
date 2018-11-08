@@ -80,8 +80,7 @@ public class IcebergTableUtil {
                 final Expression filter = (Expression) new PartitionParser(
                     new StringReader(partitionsRequest.getFilter())).filter()
                     .jjtAccept(icebergFilterGenerator, null);
-                return ScanSummary.of(icebergTable.newScan().filter(filter))
-                    .limit(connectorContext.getConfig().getIcebergTableSummaryFetchSize()).build();
+                return ScanSummary.of(icebergTable.newScan().filter(filter)).build();
             }
         } catch (ParseException ex) {
             throw new MetacatBadRequestException("Iceberg filter parse error");
