@@ -164,4 +164,15 @@ public interface MetacatV1 {
      * @return catalog
      */
     CatalogDto getCatalog(final String catalogName);
+
+    /**
+     * Get the catalog by name.
+     *
+     * @param catalogName catalog name
+     * @param includeDatabaseNames if true, the response includes the database names
+     * @param includeUserMetadata if true, the response includes the user metadata
+     * @return catalog
+     */
+    CatalogDto getCatalog(final String catalogName, final boolean includeDatabaseNames,
+                          final boolean includeUserMetadata);
 }

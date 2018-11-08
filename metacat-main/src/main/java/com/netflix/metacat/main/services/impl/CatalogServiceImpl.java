@@ -30,6 +30,7 @@ import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
+import com.netflix.metacat.main.services.GetCatalogServiceParameters;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -70,7 +71,7 @@ public class CatalogServiceImpl implements CatalogService {
      */
     @Nonnull
     @Override
-    public CatalogDto get(final QualifiedName name) {
+    public CatalogDto get(final QualifiedName name, final GetCatalogServiceParameters getCatalogServiceParameters) {
         final Set<MetacatCatalogConfig> configs = connectorManager.getCatalogConfigs(name.getCatalogName());
         final CatalogDto result = new CatalogDto();
         result.setName(name);
@@ -83,18 +84,32 @@ public class CatalogServiceImpl implements CatalogService {
             } else {
                 qName = QualifiedName.ofDatabase(name.getCatalogName(), config.getSchemaWhitelist().get(0));
             }
-            databases.addAll(
-                connectorManager.getDatabaseService(qName).listNames(context, name, null, null, null)
-                    .stream().map(QualifiedName::getDatabaseName)
-                    .filter(s -> config.getSchemaBlacklist().isEmpty() || !config.getSchemaBlacklist().contains(s))
-                    .filter(s -> config.getSchemaWhitelist().isEmpty() || config.getSchemaWhitelist().contains(s))
-                    .sorted(String.CASE_INSENSITIVE_ORDER)
-                    .collect(Collectors.toList())
-            );
+            if (getCatalogServiceParameters.isIncludeDatabaseNames()) {
+                databases.addAll(
+                    connectorManager.getDatabaseService(qName).listNames(context, name, null, null, null)
+                        .stream().map(QualifiedName::getDatabaseName)
+                        .filter(s -> config.getSchemaBlacklist().isEmpty() || !config.getSchemaBlacklist().contains(s))
+                        .filter(s -> config.getSchemaWhitelist().isEmpty() || config.getSchemaWhitelist().contains(s))
+                        .sorted(String.CASE_INSENSITIVE_ORDER)
+                        .collect(Collectors.toList())
+                );
+            }
         });
         result.setDatabases(databases);
-        userMetadataService.populateMetadata(result, false);
+        if (getCatalogServiceParameters.isIncludeUserMetadata()) {
+            userMetadataService.populateMetadata(result, false);
+        }
         return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Nonnull
+    @Override
+    public CatalogDto get(final QualifiedName name) {
+        return get(name, GetCatalogServiceParameters.builder().includeDatabaseNames(true)
+            .includeUserMetadata(true).build());
     }
 
     /**
