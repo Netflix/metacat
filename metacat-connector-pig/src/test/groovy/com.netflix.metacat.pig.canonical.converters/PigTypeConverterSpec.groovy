@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.connector.pig.converters
 
+import com.netflix.metacat.common.type.BaseType
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -66,5 +67,15 @@ class PigTypeConverterSpec extends Specification {
         //"map",
         //"string",
         //"bag",
+    }
+
+    def 'Test convert timestamp with timezone'() {
+        when:
+        def pigTypeFromTimestampWithTimeZone = converter.fromMetacatType(BaseType.TIMESTAMP_WITH_TIME_ZONE)
+        def pigTypeFromTimestamp = converter.fromMetacatType(BaseType.TIMESTAMP)
+        then:
+        noExceptionThrown()
+        // timestamp with timezone is a lossy conversion
+        pigTypeFromTimestampWithTimeZone == pigTypeFromTimestamp
     }
 }

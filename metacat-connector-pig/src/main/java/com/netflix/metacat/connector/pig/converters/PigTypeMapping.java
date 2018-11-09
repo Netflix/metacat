@@ -42,6 +42,7 @@ public class PigTypeMapping {
         .put(BaseType.FLOAT, Byte.valueOf(DataType.FLOAT))
         .put(BaseType.DOUBLE, Byte.valueOf(DataType.DOUBLE))
         .put(BaseType.TIMESTAMP, Byte.valueOf(DataType.DATETIME))
+        .put(BaseType.TIMESTAMP_WITH_TIME_ZONE, Byte.valueOf(DataType.DATETIME))
         .put(BaseType.DATE, Byte.valueOf(DataType.DATETIME))
         .put(BaseType.TIME, Byte.valueOf(DataType.DATETIME))
         .put(BaseType.STRING, Byte.valueOf(DataType.CHARARRAY))
