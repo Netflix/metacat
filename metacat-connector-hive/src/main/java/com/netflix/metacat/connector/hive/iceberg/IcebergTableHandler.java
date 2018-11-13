@@ -36,43 +36,64 @@ import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.partition.parser.ParseException;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.connector.hive.util.IcebergFilterGenerator;
+import com.netflix.servo.util.VisibleForTesting;
+import com.netflix.spectator.api.Registry;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.StringReader;
 import java.util.Map;
 
 /**
- * Iceberg Table Util.
+ * Iceberg table handler which interacts with iceberg library
+ * to perform iceberg table loading, querying, etc. The operations limit to
+ * read-only for now.
  *
  * @author zhenl
  * @since 1.2.0
  */
-public class IcebergTableUtil {
+@Slf4j
+public class IcebergTableHandler {
     private final Configuration conf;
     private final ConnectorContext connectorContext;
+    private final Registry registry;
+    @VisibleForTesting
+    private IcebergTableCriteria icebergTableCriteria;
+    @VisibleForTesting
+    private IcebergTableOpWrapper icebergTableOpWrapper;
+    @VisibleForTesting
+    private IcebergTableRequestMetrics icebergTableRequestMetrics;
 
     /**
      * Constructor.
      *
      * @param connectorContext connector context
      */
-    public IcebergTableUtil(final ConnectorContext connectorContext) {
+    public IcebergTableHandler(final ConnectorContext connectorContext) {
         this.conf = new Configuration();
         this.connectorContext = connectorContext;
+        this.registry = connectorContext.getRegistry();
         connectorContext.getConfiguration().keySet()
             .forEach(key -> conf.set(key, connectorContext.getConfiguration().get(key)));
+        this.icebergTableCriteria = new IcebergTableCriteriaImpl(connectorContext);
+        this.icebergTableOpWrapper = new IcebergTableOpWrapper(connectorContext);
+        this.icebergTableRequestMetrics = new IcebergTableRequestMetrics(connectorContext.getRegistry());
     }
 
     /**
      * get Partition Map.
      *
-     * @param icebergTable      iceberg Table
+     * @param tableName         Qualified table name
      * @param partitionsRequest partitionsRequest
+     * @param icebergTable      iceberg Table
      * @return partition map
      */
     public Map<String, ScanSummary.PartitionMetrics> getIcebergTablePartitionMap(
-        final Table icebergTable,
-        final PartitionListRequest partitionsRequest) {
+        final QualifiedName tableName,
+        final PartitionListRequest partitionsRequest,
+        final Table icebergTable) {
+        final long start = this.registry.clock().wallTime();
+        final Map<String, ScanSummary.PartitionMetrics> result;
         try {
             if (!Strings.isNullOrEmpty(partitionsRequest.getFilter())) {
                 final IcebergFilterGenerator icebergFilterGenerator
@@ -80,15 +101,22 @@ public class IcebergTableUtil {
                 final Expression filter = (Expression) new PartitionParser(
                     new StringReader(partitionsRequest.getFilter())).filter()
                     .jjtAccept(icebergFilterGenerator, null);
-                return ScanSummary.of(icebergTable.newScan().filter(filter)).build();
+                result = this.icebergTableOpWrapper.getPartitionMetricsMap(icebergTable, filter);
+            } else {
+                result = this.icebergTableOpWrapper.getPartitionMetricsMap(icebergTable, null);
             }
         } catch (ParseException ex) {
             throw new MetacatBadRequestException("Iceberg filter parse error");
+        } finally {
+            final long duration = registry.clock().wallTime() - start;
+            log.info("Time taken to getIcebergTablePartitionMap {} is {} ms", tableName, duration);
+            this.icebergTableRequestMetrics.recordTimer(
+                IcebergRequestMetrics.TagGetPartitionMap.getMetricName(), duration);
+            this.icebergTableRequestMetrics.increaseCounter(
+                IcebergRequestMetrics.TagGetPartitionMap.getMetricName(), tableName);
         }
-        return
-            ScanSummary.of(icebergTable.newScan())  //the top x records
-                .limit(connectorContext.getConfig().getIcebergTableSummaryFetchSize())
-                .build();
+
+        return result;
     }
 
     /**
@@ -99,7 +127,15 @@ public class IcebergTableUtil {
      * @return iceberg table
      */
     public Table getIcebergTable(final QualifiedName tableName, final String tableMetadataLocation) {
-        return new IcebergMetastoreTables(tableMetadataLocation).load(tableName.toString());
+        this.icebergTableCriteria.checkCriteria(tableName, tableMetadataLocation);
+        final long start = this.registry.clock().wallTime();
+        log.debug("Loading icebergTable {} from {}", tableName, tableMetadataLocation);
+        final Table table = new IcebergMetastoreTables(tableMetadataLocation).load(tableName.toString());
+        final long duration = registry.clock().wallTime() - start;
+        log.info("Time taken to getIcebergTable {} is {} ms", tableName, duration);
+        this.icebergTableRequestMetrics.recordTimer(IcebergRequestMetrics.TagLoadTable.getMetricName(), duration);
+        this.icebergTableRequestMetrics.increaseCounter(IcebergRequestMetrics.TagLoadTable.getMetricName(), tableName);
+        return table;
     }
 
     /**
@@ -111,7 +147,7 @@ public class IcebergTableUtil {
     public ObjectNode getDataMetadataFromIcebergMetrics(
         final ScanSummary.PartitionMetrics metrics) {
         final ObjectNode root = JsonNodeFactory.instance.objectNode();
-        root.set(DataMetricConstants.DATA_METADATA_METRIC_NAME, getMetricValueNode(metrics));
+        root.set(DataMetadataMetricConstants.DATA_METADATA_METRIC_NAME, getMetricValueNode(metrics));
         return root;
     }
 
@@ -119,12 +155,12 @@ public class IcebergTableUtil {
         final ObjectNode node = JsonNodeFactory.instance.objectNode();
 
         ObjectNode valueNode = JsonNodeFactory.instance.objectNode();
-        valueNode.put(DataMetricConstants.DATA_METADATA_VALUE, metrics.recordCount());
-        node.set(DataMetrics.rowCount.getMetricName(), valueNode);
+        valueNode.put(DataMetadataMetricConstants.DATA_METADATA_VALUE, metrics.recordCount());
+        node.set(DataMetadataMetrics.rowCount.getMetricName(), valueNode);
 
         valueNode = JsonNodeFactory.instance.objectNode();
-        valueNode.put(DataMetricConstants.DATA_METADATA_VALUE, metrics.fileCount());
-        node.set(DataMetrics.fileCount.getMetricName(), valueNode);
+        valueNode.put(DataMetadataMetricConstants.DATA_METADATA_VALUE, metrics.fileCount());
+        node.set(DataMetadataMetrics.fileCount.getMetricName(), valueNode);
         return node;
     }
 
@@ -198,7 +234,8 @@ public class IcebergTableUtil {
 
         @Override
         public TableMetadata refresh() {
-            refreshFromMetadataLocation(this.location);
+            refreshFromMetadataLocation(this.location,
+                connectorContext.getConfig().getIcebergRefreshFromMetadataLocationRetryNumber());
             return current();
         }
 

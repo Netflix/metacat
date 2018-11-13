@@ -18,28 +18,24 @@
 package com.netflix.metacat.connector.hive.util
 
 import com.google.common.collect.ImmutableMap
-import com.netflix.iceberg.DataFile
-import com.netflix.iceberg.FileScanTask
-import com.netflix.iceberg.PartitionSpec
 import com.netflix.iceberg.ScanSummary
 import com.netflix.iceberg.Schema
-import com.netflix.iceberg.StructLike
 import com.netflix.iceberg.Table
-import com.netflix.iceberg.TableScan
 import com.netflix.iceberg.expressions.Expression
-import com.netflix.iceberg.io.CloseableIterable
 import com.netflix.iceberg.types.Type
 import com.netflix.iceberg.types.Types
+import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest
 import com.netflix.metacat.common.server.partition.parser.PartitionParser
 import com.netflix.metacat.common.server.properties.Config
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableUtil
-import com.netflix.spectator.api.Registry
-import org.apache.hadoop.conf.Configuration
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper
+import com.netflix.spectator.api.NoopRegistry
 import spock.lang.Specification
 
 class IcebergPartitionFilterSpec extends Specification{
+
 
     def 'Test iceberg filter' () {
         def dateint = Mock(Types.NestedField)
@@ -78,82 +74,58 @@ class IcebergPartitionFilterSpec extends Specification{
 
     def 'Test get icebergPartitionMap default iceberg summary fetch size' () {
         def icebergTable = Mock(Table)
-        def scan = Mock(TableScan)
-        def task = Mock(FileScanTask)
-        def dataFile = Mock(DataFile)
-        def struckLike = Mock(StructLike)
-        def partSpec = Mock(PartitionSpec)
-        def conf  = Mock(Config)
+        def icebergOpWrapper = Mock(IcebergTableOpWrapper)
         def partRequest = new PartitionListRequest()
-        def icebergUtil = new IcebergTableUtil(new ConnectorContext(
+        def registry = new NoopRegistry()
+        def icebergUtil = new IcebergTableHandler(new ConnectorContext(
             "testHive",
             "testHive",
             "hive",
-            conf,
-            Mock(Registry),
+            Mock(Config),
+            registry,
             ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
         ))
+        icebergUtil.icebergTableOpWrapper = icebergOpWrapper
 
         when:
-        icebergUtil.getIcebergTablePartitionMap(icebergTable, partRequest)
+        icebergUtil.getIcebergTablePartitionMap(QualifiedName.fromString("tableName"), partRequest, icebergTable)
 
         then:
         noExceptionThrown()
-        icebergTable.newScan() >> scan
-        scan.select(_) >> scan
-        scan.planFiles() >> CloseableIterable.combine([task],[])
-        task.file() >> dataFile
-        task.spec() >> partSpec
-        partSpec.partitionToPath(_) >>['dateint=1/hour=10' , 'dateint=1/hour=11' , 'dateint=2/hour=10' , 'dateint=2/hour=11']
-        dataFile.partition() >> struckLike
-        conf.getIcebergTableSummaryFetchSize() >> 10
+        icebergOpWrapper.getPartitionMetricsMap(_,_) >> ["result": Mock(ScanSummary.PartitionMetrics)]
     }
 
     def 'Test get icebergPartitionMap invoking filter' () {
+        def icebergTableHelper = Mock(IcebergTableOpWrapper)
+        def registry = new NoopRegistry()
         def icebergTable = Mock(Table)
-        def scan = Mock(TableScan)
-        def task = Mock(FileScanTask)
-        def dataFile = Mock(DataFile)
-        def struckLike = Mock(StructLike)
-        def partSpec = Mock(PartitionSpec)
         def schema = Mock(Schema)
         def dateint = Mock(Types.NestedField)
         def type = Mock(Type)
         def app = Mock(Types.NestedField)
-        def conf  = Mock(Config)
         def partRequest = new PartitionListRequest('dateint==1', [], false, null, null, false)
-        def icebergUtil = new IcebergTableUtil(new ConnectorContext(
+        def icebergUtil = new IcebergTableHandler(new ConnectorContext(
             "testHive",
             "testHive",
             "hive",
-            conf,
-            Mock(Registry),
+            Mock(Config),
+            registry,
             ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
         ))
+        icebergUtil.icebergTableOpWrapper = icebergTableHelper
 
         when:
-        icebergUtil.getIcebergTablePartitionMap(icebergTable, partRequest)
-
+        icebergUtil.getIcebergTablePartitionMap(QualifiedName.fromString("tableName"),partRequest, icebergTable)
 
         then:
         noExceptionThrown()
-        icebergTable.newScan() >> scan
+        icebergTableHelper.getPartitionMetricsMap(_,_) >> ["result": Mock(ScanSummary.PartitionMetrics)]
         icebergTable.schema() >> schema
-        scan.filter(_) >> scan
-        scan.select(_) >> scan
         schema.columns() >> [dateint, app]
         dateint.name() >> "dateint"
         dateint.type() >> type
         type.typeId() >> Type.TypeID.INTEGER
         app.name() >> "app"
-
-        scan.planFiles() >> CloseableIterable.combine([task],[])
-        task.file() >> dataFile
-        task.spec() >> partSpec
-        partSpec.partitionToPath(_) >>['dateint=1/app=10' , 'dateint=1/app=11' , 'dateint=2/app=10' , 'dateint=2/app=11']
-        dataFile.partition() >> struckLike
-
-
     }
 
 }

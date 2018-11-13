@@ -17,34 +17,22 @@
 
 package com.netflix.metacat.connector.hive.iceberg;
 
-import lombok.Getter;
+import com.netflix.metacat.common.QualifiedName;
 
 /**
- * Data Metrics.
+ * Iceberg Table Criteria.
  *
  * @author zhenl
  * @since 1.2.0
  */
-@Getter
-public enum DataMetrics {
+public interface IcebergTableCriteria {
     /**
-     * number of rows.
+     * To control iceberg table operation in metacat. The criteria implementation throws exception if
+     * the iceberg table doesn't satisfy the criteria, e.g. the manifest file doesn't exist, or too large.
+     *
+     * @param tableName     qualified table name
+     * @param tableLocation table location.
      */
-    rowCount("com.netflix.dse.mds.metric.RowCount"),
-    /**
-     * number of files.
-     */
-    fileCount("com.netflix.dse.mds.metric.NumFiles");
-
-
-    private final String metricName;
-
-    DataMetrics(final String name) {
-        this.metricName = name;
-    }
-
-    @Override
-    public String toString() {
-        return metricName;
+    default void checkCriteria(final QualifiedName tableName, final String tableLocation) {
     }
 }
