@@ -98,5 +98,9 @@ public class HiveProperties {
     public static class Iceberg {
         private boolean enabled;
         private int fetchSizeInTableSummary = 100;
+        /* each retry needs a s3 access, default to 0 as no retry */
+        private int refreshFromMetadataLocationRetryNumber;
+        /* loading metadata consumes memory, cap to 500m as default */
+        private long maxMetadataFileSizeBytes = 500 * 1024 * 1024; //500m
     }
 }

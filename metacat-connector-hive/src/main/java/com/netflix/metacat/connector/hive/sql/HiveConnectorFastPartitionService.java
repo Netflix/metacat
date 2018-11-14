@@ -32,7 +32,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableUtil;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
@@ -67,7 +67,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     private Warehouse warehouse;
     private Registry registry;
     @VisibleForTesting
-    private IcebergTableUtil icebergTableUtil;
+    private IcebergTableHandler icebergTableHandler;
 
     /**
      * Constructor.
@@ -92,7 +92,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         this.directSqlGetPartition = directSqlGetPartition;
         this.directSqlSavePartition = directSqlSavePartition;
         this.registry = context.getRegistry();
-        this.icebergTableUtil = new IcebergTableUtil(context);
+        this.icebergTableHandler = new IcebergTableHandler(context);
     }
 
     /**
@@ -352,13 +352,11 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final TableInfo tableInfo,
         final PartitionListRequest partitionsRequest) {
         final QualifiedName tableName = tableInfo.getName();
-        final com.netflix.iceberg.Table icebergTable = this.icebergTableUtil.getIcebergTable(tableName,
+        final com.netflix.iceberg.Table icebergTable = this.icebergTableHandler.getIcebergTable(tableName,
             HiveTableUtil.getIcebergTableMetadataLocation(tableInfo));
-        //TODO: to support filter
-        //final String filter = partitionsRequest.getFilter();
         final Pageable pageable = partitionsRequest.getPageable();
         final Map<String, ScanSummary.PartitionMetrics> partitionMap
-            = icebergTableUtil.getIcebergTablePartitionMap(icebergTable, partitionsRequest);
+            = icebergTableHandler.getIcebergTablePartitionMap(tableName, partitionsRequest, icebergTable);
 
         final List<PartitionInfo> filteredPartitionList;
         final List<String> partitionIds = partitionsRequest.getPartitionNames();
@@ -371,7 +369,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                     tableName.getDatabaseName(),
                     tableName.getTableName(),
                     partitionName))
-                .dataMetrics(icebergTableUtil.getDataMetadataFromIcebergMetrics(partitionMap.get(partitionName)))
+                .dataMetrics(icebergTableHandler.getDataMetadataFromIcebergMetrics(partitionMap.get(partitionName)))
                 .auditInfo(tableInfo.getAudit()).build())
             .collect(Collectors.toList());
         if (sort != null) {

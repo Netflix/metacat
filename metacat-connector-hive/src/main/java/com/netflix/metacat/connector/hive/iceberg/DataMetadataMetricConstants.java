@@ -23,7 +23,7 @@ package com.netflix.metacat.connector.hive.iceberg;
  * @author zhenl
  * @since 1.2.0
  */
-public final class DataMetricConstants {
+public final class DataMetadataMetricConstants {
     /**
      * DATA_METADATA_METRIC_NAME.
      */
@@ -34,5 +34,5 @@ public final class DataMetricConstants {
      */
     public static final String DATA_METADATA_VALUE = "value";
 
-    private DataMetricConstants() { }
+    private DataMetadataMetricConstants() { }
 }

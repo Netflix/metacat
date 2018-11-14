@@ -388,5 +388,19 @@ public interface Config {
      */
     boolean isIcebergEnabled();
 
+    /**
+     * get Iceberg table refresh metadata location retry number.
+     *
+     * @return Refresh metadata location retry number.
+     */
+    int getIcebergRefreshFromMetadataLocationRetryNumber();
+
+    /**
+     * get Iceberg table max metadata file size allowed in metacat.
+     *
+     * @return Refresh Iceberg table max metadata file size.
+     */
+    long getIcebergMaxMetadataFileSize();
+
 }
 

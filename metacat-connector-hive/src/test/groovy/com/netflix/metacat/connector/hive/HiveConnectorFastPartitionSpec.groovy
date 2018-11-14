@@ -25,22 +25,21 @@ import com.netflix.metacat.common.dto.SortOrder
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest
+import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableUtil
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
 import com.netflix.metacat.connector.hive.sql.DirectSqlGetPartition
 import com.netflix.metacat.connector.hive.sql.DirectSqlSavePartition
 import com.netflix.metacat.connector.hive.sql.HiveConnectorFastPartitionService
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
 import com.netflix.spectator.api.NoopRegistry
 import org.apache.hadoop.hive.metastore.Warehouse
-import org.junit.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
-//TODO: enable this test once enable iceberg table processing
-@Ignore
 class HiveConnectorFastPartitionSpec extends Specification {
     @Shared
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient);
@@ -49,122 +48,51 @@ class HiveConnectorFastPartitionSpec extends Specification {
     @Shared
     DirectSqlSavePartition directSqlSavePartition = Mock(DirectSqlSavePartition)
     @Shared
-    ConnectorRequestContext connectorContext = new ConnectorRequestContext(1, null);
+    ConnectorRequestContext connectorContext = new ConnectorRequestContext(1, null)
+    @Shared
+    IcebergTableHandler icebergTableHandler = Mock(IcebergTableHandler)
+    @Shared
+    conf = Mock(Config)
+    @Shared
+    HiveConnectorFastPartitionService hiveConnectorFastPartitionService =
+        new HiveConnectorFastPartitionService(
+            new ConnectorContext('testhive',
+                'testhive', 'hive', conf, new NoopRegistry(), Maps.newHashMap()),
+            metacatHiveClient,
+            Mock(Warehouse),
+            new HiveConnectorInfoConverter(new HiveTypeConverter()),
+            directSqlGetPartition,
+            directSqlSavePartition)
 
-    def "Test for get iceberg table partitions" (){
-        def IcebergTableUtil icebergTableUtil = Mock(IcebergTableUtil)
-        def metric1 = Mock(com.netflix.iceberg.ScanSummary.PartitionMetrics)
-        def  HiveConnectorFastPartitionService hiveConnectorFastPartitionService =
-            new HiveConnectorFastPartitionService(
-                new ConnectorContext('testhive', 'testhive', 'hive', null, new NoopRegistry(), Maps.newHashMap()),
-                metacatHiveClient,
-                Mock(Warehouse),
-                new HiveConnectorInfoConverter(new HiveTypeConverter()),
-                directSqlGetPartition,
-                directSqlSavePartition)
-        hiveConnectorFastPartitionService.icebergTableUtil = icebergTableUtil
+    @Shared
+    metric1 = Mock(com.netflix.iceberg.ScanSummary.PartitionMetrics)
 
+    def setupSpec() {
+        conf.icebergEnabled >> true
+        hiveConnectorFastPartitionService.icebergTableHandler = icebergTableHandler
+        icebergTableHandler.getIcebergTable(_,_) >> Mock(Table)
+        icebergTableHandler.getIcebergTablePartitionMap(_,_,_) >> ["dateint=20170101/hour=1": metric1,
+                                                                       "dateint=20170102/hour=1": metric1,
+                                                                       "dateint=20170103/hour=1": metric1]
+    }
+
+    @Unroll
+    def "Test for get iceberg table partitionMaps" (){
         when:
-        PartitionListRequest partitionListRequest = new PartitionListRequest();
-        partitionListRequest.partitionNames = [
-            "dateint=20170101/hour=1"
-        ]
         def partionInfos = hiveConnectorFastPartitionService.getPartitions(
             connectorContext, QualifiedName.ofTable("testhive", "test1", "icebergtable"),
             partitionListRequest, MetacatDataInfoProvider.getIcebergTableInfo("icebergtable"))
 
-
         then:
-        1 * icebergTableUtil.getIcebergTable(_,_) >> Mock(Table)
-        1 * icebergTableUtil.getIcebergTablePartitionMap(_,_) >> ["dateint=20170101/hour=1": metric1,
-                                                                  "dateint=20170102/hour=1": metric1,
-                                                                  "dateint=20170103/hour=1": metric1]
-        partionInfos.collect { it.getName().getPartitionName() }.flatten() == [
-            "dateint=20170101/hour=1"
-        ]
+        partionInfos.collect { it.getName().getPartitionName() }.flatten() == results
+        where:
+        partitionListRequest | results
+        new PartitionListRequest(null, ["dateint=20170101/hour=1"],false, null, new Sort(), null ) | ["dateint=20170101/hour=1"]
+        new PartitionListRequest(null, null, false, null, new Sort(), null) | ["dateint=20170101/hour=1", "dateint=20170102/hour=1", "dateint=20170103/hour=1"]
+        new PartitionListRequest(null, null, false, null, new Sort(null, SortOrder.DESC), null) | ["dateint=20170103/hour=1", "dateint=20170102/hour=1", "dateint=20170101/hour=1"]
     }
-
-    def "Test for get iceberg table partitions 2" (){
-        def IcebergTableUtil icebergTableUtil = Mock(IcebergTableUtil)
-        def metric1 = Mock(com.netflix.iceberg.ScanSummary.PartitionMetrics)
-        def  HiveConnectorFastPartitionService hiveConnectorFastPartitionService =
-            new HiveConnectorFastPartitionService(
-                new ConnectorContext('testhive', 'testhive', 'hive', null, new NoopRegistry(), Maps.newHashMap()),
-                metacatHiveClient,
-                Mock(Warehouse),
-                new HiveConnectorInfoConverter(new HiveTypeConverter()),
-                directSqlGetPartition,
-                directSqlSavePartition)
-        hiveConnectorFastPartitionService.icebergTableUtil = icebergTableUtil
-
-        when:
-        PartitionListRequest partitionListRequest = new PartitionListRequest()
-        partitionListRequest.sort = new Sort()
-        def partionInfos = hiveConnectorFastPartitionService.getPartitions(
-            connectorContext, QualifiedName.ofTable("testhive", "test1", "icebergtable"),
-            partitionListRequest, MetacatDataInfoProvider.getIcebergTableInfo("icebergtable"))
-
-
-        then:
-        1 * icebergTableUtil.getIcebergTable(_,_) >> Mock(Table)
-        1 * icebergTableUtil.getIcebergTablePartitionMap(_,_) >> ["dateint=20170101/hour=1": metric1,
-                                                                  "dateint=20170102/hour=1": metric1,
-                                                                  "dateint=20170103/hour=1": metric1]
-        partionInfos.collect { it.getName().getPartitionName() }.flatten() == [
-            "dateint=20170101/hour=1",
-            "dateint=20170102/hour=1",
-            "dateint=20170103/hour=1"
-        ]
-    }
-
-    def "Test for get iceberg table partitions 3" (){
-        def IcebergTableUtil icebergTableUtil = Mock(IcebergTableUtil)
-        def metric1 = Mock(com.netflix.iceberg.ScanSummary.PartitionMetrics)
-        def  HiveConnectorFastPartitionService hiveConnectorFastPartitionService =
-            new HiveConnectorFastPartitionService(
-                new ConnectorContext('testhive', 'testhive', 'hive', null, new NoopRegistry(), Maps.newHashMap()),
-                metacatHiveClient,
-                Mock(Warehouse),
-                new HiveConnectorInfoConverter(new HiveTypeConverter()),
-                directSqlGetPartition,
-                directSqlSavePartition)
-        hiveConnectorFastPartitionService.icebergTableUtil = icebergTableUtil
-
-        when:
-        PartitionListRequest partitionListRequest = new PartitionListRequest()
-        partitionListRequest.sort = new Sort()
-        partitionListRequest.sort.setOrder(SortOrder.DESC)
-        def partionInfos = hiveConnectorFastPartitionService.getPartitions(
-            connectorContext, QualifiedName.ofTable("testhive", "test1", "icebergtable"),
-            partitionListRequest, MetacatDataInfoProvider.getIcebergTableInfo("icebergtable"))
-
-
-        then:
-        1 * icebergTableUtil.getIcebergTable(_,_) >> Mock(Table)
-        1 * icebergTableUtil.getIcebergTablePartitionMap(_,_) >> ["dateint=20170101/hour=1": metric1,
-                                                                  "dateint=20170102/hour=1": metric1,
-                                                                  "dateint=20170103/hour=1": metric1]
-        partionInfos.collect { it.getName().getPartitionName() }.flatten() == [
-            "dateint=20170103/hour=1",
-            "dateint=20170102/hour=1",
-            "dateint=20170101/hour=1"
-        ]
-    }
-
 
     def "Test for get iceberg table partitionKeys" (){
-        def IcebergTableUtil icebergTableUtil = Mock(IcebergTableUtil)
-        def metric1 = Mock(com.netflix.iceberg.ScanSummary.PartitionMetrics)
-        def  HiveConnectorFastPartitionService hiveConnectorFastPartitionService =
-            new HiveConnectorFastPartitionService(
-                new ConnectorContext('testhive', 'testhive', 'hive', null, new NoopRegistry(), Maps.newHashMap()),
-                metacatHiveClient,
-                Mock(Warehouse),
-                new HiveConnectorInfoConverter(new HiveTypeConverter()),
-                directSqlGetPartition,
-                directSqlSavePartition)
-        hiveConnectorFastPartitionService.icebergTableUtil = icebergTableUtil
-
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
         partitionListRequest.partitionNames = [
@@ -174,12 +102,7 @@ class HiveConnectorFastPartitionSpec extends Specification {
             connectorContext, QualifiedName.ofTable("testhive", "test1", "icebergtable"),
             partitionListRequest, MetacatDataInfoProvider.getIcebergTableInfo("icebergtable"))
 
-
         then:
-        1 * icebergTableUtil.getIcebergTable(_,_) >> Mock(Table)
-        1 * icebergTableUtil.getIcebergTablePartitionMap(_,_) >> ["dateint=20170101/hour=1": metric1,
-                                                                  "dateint=20170102/hour=1": metric1,
-                                                                  "dateint=20170103/hour=1": metric1]
         partKeys== [
             "dateint=20170101/hour=1"
         ]

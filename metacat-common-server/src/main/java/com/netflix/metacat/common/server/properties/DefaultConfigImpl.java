@@ -453,4 +453,21 @@ public class DefaultConfigImpl implements Config {
     public boolean isIcebergEnabled() {
         return this.metacatProperties.getHive().getIceberg().isEnabled();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getIcebergRefreshFromMetadataLocationRetryNumber() {
+        return this.metacatProperties.getHive().getIceberg().getRefreshFromMetadataLocationRetryNumber();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getIcebergMaxMetadataFileSize() {
+        return this.metacatProperties.getHive().getIceberg().getMaxMetadataFileSizeBytes();
+    }
+
 }

@@ -25,7 +25,7 @@ import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableUtil;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +47,7 @@ import java.util.Objects;
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private final Registry registry;
     private final DirectSqlTable directSqlTable;
-    private IcebergTableUtil icebergTableUtil;
+    private IcebergTableHandler icebergTableHandler;
 
     /**
      * Constructor.
@@ -71,7 +71,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, connectorContext);
         this.registry = connectorContext.getRegistry();
         this.directSqlTable = directSqlTable;
-        this.icebergTableUtil = new IcebergTableUtil(connectorContext);
+        this.icebergTableHandler = new IcebergTableHandler(connectorContext);
 
     }
 
@@ -97,7 +97,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             return info;
         }
         final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
-        final com.netflix.iceberg.Table icebergTable = this.icebergTableUtil.getIcebergTable(name, tableLoc);
+        final com.netflix.iceberg.Table icebergTable = this.icebergTableHandler.getIcebergTable(name, tableLoc);
         return this.hiveMetacatConverters.fromIcebergTableToTableInfo(name,
             icebergTable, tableLoc, info.getSerde(), info.getAudit());
     }
