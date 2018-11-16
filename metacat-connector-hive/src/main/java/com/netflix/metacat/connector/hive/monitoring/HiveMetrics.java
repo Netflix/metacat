@@ -84,7 +84,7 @@ public enum HiveMetrics {
     private final String metricName;
 
     HiveMetrics(final Type type, final String measure) {
-        this.metricName = "metacat.hive." + type.name() + "." + type.name() + "." + measure;
+        this.metricName = String.format("metacat.hive.%s.%s", type.name(), measure);
     }
     HiveMetrics(final String name) {
         this.metricName = name;

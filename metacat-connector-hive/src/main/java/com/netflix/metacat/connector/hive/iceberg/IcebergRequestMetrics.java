@@ -52,7 +52,7 @@ public enum IcebergRequestMetrics {
     private final String metricName;
 
     IcebergRequestMetrics(final IcebergRequestMetrics.Type type, final String measure) {
-        this.metricName = String.format("metacat.iceberg.%s.%s.%s", type.name(), type.name(), measure);
+        this.metricName = String.format("metacat.iceberg.%s.%s", type.name(), measure);
     }
 
     IcebergRequestMetrics(final String name) {

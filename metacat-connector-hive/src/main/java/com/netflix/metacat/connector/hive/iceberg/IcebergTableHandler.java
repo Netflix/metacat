@@ -127,15 +127,18 @@ public class IcebergTableHandler {
      * @return iceberg table
      */
     public Table getIcebergTable(final QualifiedName tableName, final String tableMetadataLocation) {
-        this.icebergTableCriteria.checkCriteria(tableName, tableMetadataLocation);
         final long start = this.registry.clock().wallTime();
-        log.debug("Loading icebergTable {} from {}", tableName, tableMetadataLocation);
-        final Table table = new IcebergMetastoreTables(tableMetadataLocation).load(tableName.toString());
-        final long duration = registry.clock().wallTime() - start;
-        log.info("Time taken to getIcebergTable {} is {} ms", tableName, duration);
-        this.icebergTableRequestMetrics.recordTimer(IcebergRequestMetrics.TagLoadTable.getMetricName(), duration);
-        this.icebergTableRequestMetrics.increaseCounter(IcebergRequestMetrics.TagLoadTable.getMetricName(), tableName);
-        return table;
+        try {
+            this.icebergTableCriteria.checkCriteria(tableName, tableMetadataLocation);
+            log.debug("Loading icebergTable {} from {}", tableName, tableMetadataLocation);
+            return new IcebergMetastoreTables(tableMetadataLocation).load(tableName.toString());
+        } finally {
+            final long duration = registry.clock().wallTime() - start;
+            log.info("Time taken to getIcebergTable {} is {} ms", tableName, duration);
+            this.icebergTableRequestMetrics.recordTimer(IcebergRequestMetrics.TagLoadTable.getMetricName(), duration);
+            this.icebergTableRequestMetrics.increaseCounter(
+                IcebergRequestMetrics.TagLoadTable.getMetricName(), tableName);
+        }
     }
 
     /**

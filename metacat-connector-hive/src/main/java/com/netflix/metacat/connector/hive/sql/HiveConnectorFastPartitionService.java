@@ -25,6 +25,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
@@ -47,7 +48,10 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.time.Instant;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -358,11 +362,11 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final Map<String, ScanSummary.PartitionMetrics> partitionMap
             = icebergTableHandler.getIcebergTablePartitionMap(tableName, partitionsRequest, icebergTable);
 
-        final List<PartitionInfo> filteredPartitionList;
         final List<String> partitionIds = partitionsRequest.getPartitionNames();
         final Sort sort = partitionsRequest.getSort();
+        final AuditInfo tableAuditInfo = tableInfo.getAudit();
 
-        filteredPartitionList = partitionMap.keySet().stream()
+        final List<PartitionInfo> filteredPartitionList = partitionMap.keySet().stream()
             .filter(partitionName -> partitionIds == null || partitionIds.contains(partitionName))
             .map(partitionName -> PartitionInfo.builder().name(
                 QualifiedName.ofPartition(tableName.getCatalogName(),
@@ -370,8 +374,12 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                     tableName.getTableName(),
                     partitionName))
                 .dataMetrics(icebergTableHandler.getDataMetadataFromIcebergMetrics(partitionMap.get(partitionName)))
-                .auditInfo(tableInfo.getAudit()).build())
+                .auditInfo(AuditInfo.builder().createdBy(tableAuditInfo.getCreatedBy())
+                    .createdDate(fromEpochMilliToDate(partitionMap.get(partitionName).dataTimestampMillis()))
+                    .lastModifiedDate(fromEpochMilliToDate(partitionMap.get(partitionName).dataTimestampMillis()))
+                    .build()).build())
             .collect(Collectors.toList());
+
         if (sort != null) {
             //it can only support sortBy partition Name
             final Comparator<PartitionInfo> nameComparator = Comparator.comparing(p -> p.getName().toString());
@@ -380,5 +388,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         return ConnectorUtils.paginate(filteredPartitionList, pageable);
     }
 
-
+    private Date fromEpochMilliToDate(@Nullable final Long l) {
+        return (l == null) ? null : Date.from(Instant.ofEpochMilli(l));
+    }
 }

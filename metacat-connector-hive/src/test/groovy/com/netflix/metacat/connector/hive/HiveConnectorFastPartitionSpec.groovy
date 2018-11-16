@@ -69,11 +69,14 @@ class HiveConnectorFastPartitionSpec extends Specification {
 
     def setupSpec() {
         conf.icebergEnabled >> true
+        metric1.fileCount() >> 1
+        metric1.dataTimestampMillis() >> 1234500000
+        metric1.recordCount() >> 1
         hiveConnectorFastPartitionService.icebergTableHandler = icebergTableHandler
         icebergTableHandler.getIcebergTable(_,_) >> Mock(Table)
         icebergTableHandler.getIcebergTablePartitionMap(_,_,_) >> ["dateint=20170101/hour=1": metric1,
-                                                                       "dateint=20170102/hour=1": metric1,
-                                                                       "dateint=20170103/hour=1": metric1]
+                                                                   "dateint=20170102/hour=1": metric1,
+                                                                   "dateint=20170103/hour=1": metric1]
     }
 
     @Unroll
@@ -84,12 +87,18 @@ class HiveConnectorFastPartitionSpec extends Specification {
             partitionListRequest, MetacatDataInfoProvider.getIcebergTableInfo("icebergtable"))
 
         then:
-        partionInfos.collect { it.getName().getPartitionName() }.flatten() == results
+        partionInfos.collect { [it.getName().getPartitionName(),
+                                it.getAudit().createdDate.toInstant().toEpochMilli(),
+                                it.getAudit().lastModifiedDate.toInstant().toEpochMilli(),
+                                it.getAudit().createdBy] } == results
         where:
         partitionListRequest | results
-        new PartitionListRequest(null, ["dateint=20170101/hour=1"],false, null, new Sort(), null ) | ["dateint=20170101/hour=1"]
-        new PartitionListRequest(null, null, false, null, new Sort(), null) | ["dateint=20170101/hour=1", "dateint=20170102/hour=1", "dateint=20170103/hour=1"]
-        new PartitionListRequest(null, null, false, null, new Sort(null, SortOrder.DESC), null) | ["dateint=20170103/hour=1", "dateint=20170102/hour=1", "dateint=20170101/hour=1"]
+        new PartitionListRequest(null, ["dateint=20170101/hour=1"],false, null,
+            new Sort(), null ) | [["dateint=20170101/hour=1", 1234500000, 1234500000, "metacat_test"]]
+        new PartitionListRequest(null, null, false, null,
+            new Sort(), null) | [["dateint=20170101/hour=1", 1234500000, 1234500000, "metacat_test"], ["dateint=20170102/hour=1", 1234500000, 1234500000, "metacat_test"], ["dateint=20170103/hour=1", 1234500000, 1234500000, "metacat_test"]]
+        new PartitionListRequest(null, null, false, null,
+            new Sort(null, SortOrder.DESC), null) | [["dateint=20170103/hour=1", 1234500000, 1234500000, "metacat_test"], ["dateint=20170102/hour=1", 1234500000, 1234500000, "metacat_test"], ["dateint=20170101/hour=1", 1234500000, 1234500000, "metacat_test"]]
     }
 
     def "Test for get iceberg table partitionKeys" (){
