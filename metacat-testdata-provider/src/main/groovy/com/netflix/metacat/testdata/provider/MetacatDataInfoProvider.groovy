@@ -116,7 +116,7 @@ class MetacatDataInfoProvider {
             .serde( StorageInfo.builder().owner("test")
             .build())
             .metadata ( ['table_type': 'ICEBERG'])
-            .auditInfo( AuditInfo.builder().build())
+            .auditInfo( AuditInfo.builder().createdBy("metacat_test").build())
             .build()
     ]
 
