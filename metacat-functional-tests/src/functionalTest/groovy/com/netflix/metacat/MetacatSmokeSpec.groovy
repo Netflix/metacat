@@ -1320,15 +1320,21 @@ class MetacatSmokeSpec extends Specification {
         def tableDto = api.getTable(catalogName, databaseName, tableName, true, true, false)
 
         def ret = tagApi.search('test_tag', null, null, null)
-        def ret2 = tagApi.list(['test_tag'] as Set<String>, null, null, null, null)
-        def ret3 = tagApi.list(['never_tag'] as Set<String>, tags as Set<String>, null, null, null)
+        def ret2 = tagApi.list(['test_tag'] as Set<String>, null, null, null, null, null)
+        def ret3 = tagApi.list(['never_tag'] as Set<String>, tags as Set<String>, null, null, null, null)
+        def ret4 = tagApi.list(['test_tag'] as Set<String>, null, null, null, null, QualifiedName.Type.DATABASE)
+        def ret5 = tagApi.list(['test_tag'] as Set<String>, null, null, null, null, QualifiedName.Type.TABLE)
+        def ret6 = tagApi.list(['test_tag'] as Set<String>, null, null, null, null, QualifiedName.Type.CATALOG)
+
+        def ret7 = tagApi.list(['test_tag'] as Set<String>, null, null, databaseName, null, QualifiedName.Type.CATALOG)
+        def ret8 = tagApi.list(['test_tag'] as Set<String>, null, null, databaseName, null, QualifiedName.Type.DATABASE)
 
         tagApi.removeTags(TagRemoveRequestDto.builder().name(catalog).tags([]).deleteAll(true).build())
         tagApi.removeTags(TagRemoveRequestDto.builder().name(database).tags([]).deleteAll(true).build())
         tagApi.removeTags(TagRemoveRequestDto.builder().name(table).tags([]).deleteAll(true).build())
 
         def ret_new = tagApi.search('test_tag', null, null, null)
-        def ret2_new = tagApi.list(['test_tag'] as Set<String>, null, null, null, null)
+        def ret2_new = tagApi.list(['test_tag'] as Set<String>, null, null, null, null, null)
 
         then:
         metacatJson.convertValue(catalogDto.getDefinitionMetadata().get('tags'), Set.class) == tags as Set<String>
@@ -1337,7 +1343,12 @@ class MetacatSmokeSpec extends Specification {
 
         assert ret.size() == 3
         assert ret2.size() == 3
+        assert ret4.size() == 1 //only query database
+        assert ret5.size() == 1 //only query table
+        assert ret6.size() == 1 //only query catalog
         assert ret3.size() == 0
+        assert ret7.size() == 0 //limit to database
+        assert ret8.size() == 1 //limit to database
 
         assert ret_new.size() == 0
         assert ret2_new.size() == 0
@@ -1373,13 +1384,13 @@ class MetacatSmokeSpec extends Specification {
         tagApi.setTags(TagCreateRequestDto.builder().name(view).tags(tags).build())
 
         def ret = tagApi.search('test_tag', null, null, null)
-        def ret2 = tagApi.list(['test_tag'] as Set<String>, null, null, null, null)
-        def ret3 = tagApi.list(['never_tag'] as Set<String>, tags as Set<String>, null, null, null)
+        def ret2 = tagApi.list(['test_tag'] as Set<String>, null, null, null, null, null)
+        def ret3 = tagApi.list(['never_tag'] as Set<String>, tags as Set<String>, null, null, null, null)
 
         tagApi.removeTags(TagRemoveRequestDto.builder().name(view).tags([]).deleteAll(true).build())
 
         def ret_new = tagApi.search('test_tag', null, null, null)
-        def ret2_new = tagApi.list(['test_tag'] as Set<String>, null, null, null, null)
+        def ret2_new = tagApi.list(['test_tag'] as Set<String>, null, null, null, null, null)
 
         then:
         assert ret.size() == 1

@@ -28,6 +28,7 @@ import java.util.Set;
  * Tag Service API.
  *
  * @author amajumdar
+ * @author zhenl
  */
 public interface TagService {
     /**
@@ -48,14 +49,16 @@ public interface TagService {
      * @param sourceName   catalog/source name
      * @param databaseName database name
      * @param tableName    table name
+     * @param type metacat qualified name type
      * @return list of qualified names of the items
      */
     default List<QualifiedName> list(
-        @Nullable Set<String> includeTags,
-        @Nullable Set<String> excludeTags,
-        @Nullable String sourceName,
-        @Nullable String databaseName,
-        @Nullable String tableName
+        @Nullable final Set<String> includeTags,
+        @Nullable final Set<String> excludeTags,
+        @Nullable final String sourceName,
+        @Nullable final String databaseName,
+        @Nullable final String tableName,
+        @Nullable final QualifiedName.Type type
     ) {
         return Collections.emptyList();
     }
@@ -70,10 +73,10 @@ public interface TagService {
      * @return list of qualified names of the items
      */
     default List<QualifiedName> search(
-        @Nullable String tag,
-        @Nullable String sourceName,
-        @Nullable String databaseName,
-        @Nullable String tableName
+        @Nullable final String tag,
+        @Nullable final String sourceName,
+        @Nullable final String databaseName,
+        @Nullable final String tableName
     ) {
         return Collections.emptyList();
     }

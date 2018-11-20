@@ -44,8 +44,8 @@ public final class MySqlServiceUtil {
      * Returns the list of string having the input ids.
      *
      * @param jdbcTemplate jdbc template
-     * @param sql      query sql
-     * @param item     identifier
+     * @param sql          query sql
+     * @param item         identifier
      * @return list of results
      */
     public static Set<String> getValues(final JdbcTemplate jdbcTemplate,
@@ -68,11 +68,11 @@ public final class MySqlServiceUtil {
      * load mysql data source.
      *
      * @param dataSourceManager data source manager to use
-     * @param configLocation usermetadata config location
+     * @param configLocation    usermetadata config location
      * @throws Exception exception to throw
      */
     public static void loadMySqlDataSource(final DataSourceManager dataSourceManager,
-        final String configLocation) throws Exception {
+                                           final String configLocation) throws Exception {
 
         final URL url = Thread.currentThread().getContextClassLoader().getResource(configLocation);
         final Path filePath;

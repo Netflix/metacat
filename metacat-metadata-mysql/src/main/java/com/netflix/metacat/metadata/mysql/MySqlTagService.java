@@ -48,6 +48,9 @@ import java.util.stream.Collectors;
 
 /**
  * Tag service implementation.
+ *
+ * @author amajumdar
+ * @author zhenl
  */
 @Slf4j
 @SuppressFBWarnings
@@ -58,6 +61,10 @@ public class MySqlTagService implements TagService {
      */
     private static final String LOOKUP_NAME_TAG = "tag";
     private static final String NAME_TAGS = "tags";
+    private static final String QUERY_LIST =
+        "select distinct i.name from tag_item i, tag_item_tags t where i.id=t.tag_item_id"
+            + " and (1=? or t.tags_string %s ) and (1=? or i.name like ?) and (1=? or i.name rlike ?)";
+
     private static final String QUERY_SEARCH =
         "select distinct i.name from tag_item i, tag_item_tags t where i.id=t.tag_item_id"
             + " and (1=? or t.tags_string %s ) and (1=? or i.name like ?)";
@@ -260,7 +267,7 @@ public class MySqlTagService implements TagService {
     public void remove(final QualifiedName name, final Set<String> tags, final boolean updateUserMetadata) {
         try {
             jdbcTemplate.update(String.format(SQL_DELETE_TAG_ITEM_TAGS_BY_NAME_TAGS,
-                    "'" + Joiner.on("','").skipNulls().join(tags) + "'"),
+                "'" + Joiner.on("','").skipNulls().join(tags) + "'"),
                 new SqlParameterValue(Types.VARCHAR, name.toString()));
             if (updateUserMetadata) {
                 final TagItem tagItem = get(name);
@@ -298,6 +305,7 @@ public class MySqlTagService implements TagService {
      * @param sourceName   catalog/source name
      * @param databaseName database name
      * @param tableName    table name
+     * @param type         metacat data category
      * @return list of qualified names of the items
      */
     @Override
@@ -307,26 +315,54 @@ public class MySqlTagService implements TagService {
         @Nullable final Set<String> excludeTags,
         @Nullable final String sourceName,
         @Nullable final String databaseName,
-        @Nullable final String tableName
+        @Nullable final String tableName,
+        @Nullable final QualifiedName.Type type
     ) {
         Set<String> includedNames = Sets.newHashSet();
         final Set<String> excludedNames = Sets.newHashSet();
-        final String wildCardName = QualifiedName.toWildCardString(sourceName, databaseName, tableName);
+        final String wildCardName =
+            QualifiedName.qualifiedNameToWildCardQueryString(sourceName, databaseName, tableName);
         //Includes
         final Set<String> localIncludes = includeTags != null ? includeTags : Sets.newHashSet();
         try {
-            String query
-                = String.format(QUERY_SEARCH, "in ('" + Joiner.on("','").skipNulls().join(localIncludes) + "')");
-            final Object[] params = {localIncludes.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
-            includedNames.addAll(jdbcTemplate.query(query, params,
-                new int[]{Types.INTEGER, Types.INTEGER, Types.VARCHAR},
+            StringBuilder query = new StringBuilder(
+                String.format(QUERY_LIST, "in ('" + Joiner.on("','").skipNulls().join(localIncludes) + "')"
+                ));
+            final Object[] params = {
+                localIncludes.size() == 0 ? 1 : 0,
+                wildCardName == null ? 1 : 0,
+                wildCardName,
+                type == null ? 1 : 0,
+                type == null ? ".*" : type.getRegexValue(),
+            };
+            includedNames.addAll(jdbcTemplate.query(query.toString(),
+                params,
+                new int[]{Types.INTEGER,
+                    Types.INTEGER,
+                    Types.VARCHAR,
+                    Types.INTEGER,
+                    Types.VARCHAR,
+                },
                 (rs, rowNum) -> rs.getString("name")));
             if (excludeTags != null && !excludeTags.isEmpty()) {
                 //Excludes
-                query = String.format(QUERY_SEARCH, "in ('" + Joiner.on("','").skipNulls().join(excludeTags) + "')");
-                final Object[] eParams = {excludeTags.size() == 0 ? 1 : 0, wildCardName == null ? 1 : 0, wildCardName};
-                excludedNames.addAll(jdbcTemplate.query(query, eParams,
-                    new int[]{Types.INTEGER, Types.INTEGER, Types.VARCHAR},
+                query = new StringBuilder(
+                    String.format(QUERY_LIST, "in ('" + Joiner.on("','").skipNulls().join(excludeTags) + "')"));
+                final Object[] eParams = {
+                    excludeTags.size() == 0 ? 1 : 0,
+                    wildCardName == null ? 1 : 0,
+                    wildCardName,
+                    type == null ? 1 : 0,
+                    type == null ? ".*" : type.getRegexValue(),
+                };
+                excludedNames.addAll(jdbcTemplate.query(query.toString(),
+                    eParams,
+                    new int[]{Types.INTEGER,
+                        Types.INTEGER,
+                        Types.VARCHAR,
+                        Types.INTEGER,
+                        Types.VARCHAR,
+                    },
                     (rs, rowNum) -> rs.getString("name")));
             }
         } catch (Exception e) {
@@ -334,7 +370,6 @@ public class MySqlTagService implements TagService {
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
         }
-
         if (excludeTags != null && !excludeTags.isEmpty()) {
             includedNames = Sets.difference(includedNames, excludedNames);
         }
@@ -360,7 +395,8 @@ public class MySqlTagService implements TagService {
     ) {
         final Set<String> result = Sets.newHashSet();
         try {
-            final String wildCardName = QualifiedName.toWildCardString(sourceName, databaseName, tableName);
+            final String wildCardName =
+                QualifiedName.qualifiedNameToWildCardQueryString(sourceName, databaseName, tableName);
             //Includes
             final String query = String.format(QUERY_SEARCH, "like ?");
             final Object[] params = {tag == null ? 1 : 0, tag + "%", wildCardName == null ? 1 : 0, wildCardName};
@@ -384,7 +420,7 @@ public class MySqlTagService implements TagService {
      */
     @Override
     public Set<String> setTags(final QualifiedName name, final Set<String> tags,
-                                    final boolean updateUserMetadata) {
+                               final boolean updateUserMetadata) {
         addTags(tags);
         try {
             final TagItem tagItem = findOrCreateTagItemByName(name.toString());
@@ -440,7 +476,7 @@ public class MySqlTagService implements TagService {
      */
     @Override
     public void removeTags(final QualifiedName name, final Boolean deleteAll,
-                                final Set<String> tags, final boolean updateUserMetadata) {
+                           final Set<String> tags, final boolean updateUserMetadata) {
         if (deleteAll != null && deleteAll) {
             delete(name, updateUserMetadata);
         } else {

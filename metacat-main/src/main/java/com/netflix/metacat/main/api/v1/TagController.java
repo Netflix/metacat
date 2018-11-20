@@ -45,6 +45,8 @@ import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,6 +56,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Nullable;
+import java.beans.PropertyEditorSupport;
 import java.net.HttpURLConnection;
 import java.util.HashSet;
 import java.util.List;
@@ -143,6 +146,7 @@ public class TagController {
      * @param sourceName   Prefix of the source name
      * @param databaseName Prefix of the database name
      * @param tableName    Prefix of the table name
+     * @param type         metacat qualifed name type
      * @return list of qualified names
      */
     @RequestMapping(
@@ -167,11 +171,20 @@ public class TagController {
         @ApiParam(value = "Prefix of the database name")
         @Nullable @RequestParam(name = "databaseName", required = false) final String databaseName,
         @ApiParam(value = "Prefix of the table name")
-        @Nullable @RequestParam(name = "tableName", required = false) final String tableName
+        @Nullable @RequestParam(name = "tableName", required = false) final String tableName,
+        @ApiParam(value = "Qualified name type")
+        @Nullable
+        @RequestParam(name = "type", required = false) final QualifiedName.Type type
     ) {
         return this.requestWrapper.processRequest(
             "TagV1Resource.list",
-            () -> this.tagService.list(includeTags, excludeTags, sourceName, databaseName, tableName)
+            () -> this.tagService.list(
+                includeTags,
+                excludeTags,
+                sourceName,
+                databaseName,
+                tableName,
+                type)
         );
     }
 
@@ -254,7 +267,7 @@ public class TagController {
             case CATALOG:
                 //catalog service will throw exception if not found
                 final CatalogDto catalogDto = this.catalogService.get(name, GetCatalogServiceParameters.builder()
-                        .includeDatabaseNames(false).includeUserMetadata(false).build());
+                    .includeDatabaseNames(false).includeUserMetadata(false).build());
                 if (catalogDto != null) {
                     return this.tagService.setTags(name, tags, true);
                 }
@@ -547,7 +560,7 @@ public class TagController {
             case CATALOG:
                 //catalog service will throw exception if not found
                 final CatalogDto catalogDto = this.catalogService.get(name, GetCatalogServiceParameters.builder()
-                        .includeDatabaseNames(false).includeUserMetadata(false).build());
+                    .includeDatabaseNames(false).includeUserMetadata(false).build());
                 if (catalogDto != null) {
                     this.tagService.removeTags(name, tagRemoveRequestDto.getDeleteAll(),
                         new HashSet<>(tagRemoveRequestDto.getTags()), true);
@@ -622,6 +635,17 @@ public class TagController {
             default:
                 throw new MetacatNotFoundException("Unsupported qualifiedName type {}" + name);
         }
+    }
 
+    @InitBinder
+    private void bindsCustomRequestParamType(final WebDataBinder dataBinder) {
+        dataBinder.registerCustomEditor(QualifiedName.Type.class, new QualifiedNameTypeConverter());
+    }
+
+    private static class QualifiedNameTypeConverter extends PropertyEditorSupport {
+        @Override
+        public void setAsText(final String text) throws IllegalArgumentException {
+            super.setValue(QualifiedName.Type.fromValue(text));
+        }
     }
 }
