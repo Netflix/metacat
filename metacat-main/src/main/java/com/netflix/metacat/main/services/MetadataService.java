@@ -224,7 +224,8 @@ public class MetadataService {
      */
     public void cleanUpObsoleteTags() {
         log.info("Start deleting obsolete tags");
-        final List<QualifiedName> names = tagService.list(null, null, null, null, null);
+        final List<QualifiedName> names = tagService.list(null, null, null, null, null,
+            null);
         names.forEach(name -> {
             if (!name.isPartitionDefinition() && !name.isViewDefinition() && name.isTableDefinition()
                 && !tableService.exists(name)) {

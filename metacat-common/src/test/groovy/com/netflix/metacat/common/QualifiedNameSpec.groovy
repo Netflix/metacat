@@ -237,4 +237,24 @@ class QualifiedNameSpec extends Specification {
         then:
         notThrown()
     }
+
+    def testQualifedNameToWildcardQueryString() {
+        when:
+        def result = QualifiedName.qualifiedNameToWildCardQueryString(sourceName, databaseName, tableName)
+        then:
+        result == ret
+        where:
+        sourceName  | databaseName | tableName | ret
+        null        | null         | null      | null
+        "prodhive"  | "database_1" | "abcd"    | "prodhive/database_1/abcd%"
+        "prodhive"  | ""           | ""        | "prodhive%"
+        "prodhive"  | null         | null      | "prodhive%"
+        "prodhive"  | "database_1" | ""        | "prodhive/database_1%"
+        "prodhive"  | "database_1" | null      | "prodhive/database_1%"
+        ""          | "database_1" | ""        | "%/database_1%"
+        null        | "database_1" | ""        | "%/database_1%"
+        null        | "database_1" | null      | "%/database_1%"
+        ""          | "database_1" | "abcd"    | "%/database_1/abcd%"
+        ""          | ""           | "abcd"    | "%/%/abcd%"
+    }
 }

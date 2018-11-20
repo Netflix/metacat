@@ -26,6 +26,7 @@ import lombok.NonNull;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -327,6 +328,48 @@ public final class QualifiedName implements Serializable {
     }
 
     /**
+     * Change the qualified name query parameter to wildcard query string to allow source/database/table
+     * like queries. It uses '%' to represent the other field if not provided. e.g.
+     * query database like string is '%/database/%'
+     * query catalog and database like string is 'catalog/database/%'
+     *
+     * @param sourceName   source name
+     * @param databaseName database name
+     * @param tableName    table name
+     * @return query string
+     */
+    public static String qualifiedNameToWildCardQueryString(
+        @Nullable final String sourceName,
+        @Nullable final String databaseName,
+        @Nullable final String tableName
+    ) {
+        if (sourceName == null && databaseName == null && tableName == null) {
+            return null;
+        }
+        final StringBuilder builder = new StringBuilder();
+        if (!isNullOrEmpty(sourceName)) {
+            builder.append(sourceName);
+        } else {
+            builder.append('%');
+        }
+        if (isNullOrEmpty(databaseName) && isNullOrEmpty(tableName)) {
+            return builder.append('%').toString(); //query source level
+        }
+        if (!isNullOrEmpty(databaseName)) {
+            builder.append('/').append(databaseName);
+        } else {
+            builder.append("/%");
+        }
+        if (isNullOrEmpty(tableName)) {
+            return builder.append('%').toString(); //database level query
+        } else {
+            builder.append('/').append(tableName);
+        }
+        builder.append('%');
+        return builder.toString();
+    }
+
+    /**
      * Get the catalog name.
      *
      * @return The catalog name
@@ -551,32 +594,75 @@ public final class QualifiedName implements Serializable {
     }
 
     /**
+     * Checks if a CharSequence is empty ("") or null.
+     */
+    private static boolean isNullOrEmpty(@Nullable final CharSequence cs) {
+        return cs == null || cs.length() == 0;
+    }
+
+    /**
      * Type of the connector resource.
      */
     public enum Type {
         /**
          * Catalog type.
          */
-        CATALOG,
+        CATALOG("^([^\\/]+)$"),
 
         /**
          * Database type.
          */
-        DATABASE,
+        DATABASE("^([^\\/]+)\\/([^\\/]+)$"),
 
         /**
          * Table type.
          */
-        TABLE,
+        TABLE("^([^\\/]+)\\/([^\\/]+)\\/([^\\/]+)$"),
 
         /**
          * Partition type.
          */
-        PARTITION,
+        PARTITION("^(.*)$"),
 
         /**
          * MView type.
          */
-        MVIEW
+        MVIEW("^([^\\/]+)\\/([^\\/]+)\\/([^\\/]+)\\/([^\\/]+)$");
+
+        private final String regexValue;
+
+        /**
+         * Constructor.
+         *
+         * @param value category value.
+         */
+        Type(final String value) {
+            this.regexValue = value;
+        }
+
+        /**
+         * get Regex Value.
+         * @return regex value
+         */
+        public String getRegexValue() {
+            return regexValue;
+        }
+
+        /**
+         * Type create from value.
+         *
+         * @param value string value
+         * @return Type object
+         */
+        public static Type fromValue(final String value) {
+            for (Type type : values()) {
+                if (type.name().equalsIgnoreCase(value)) {
+                    return type;
+                }
+            }
+            throw new IllegalArgumentException(
+                "Unknown enum type " + value + ", Allowed values are " + Arrays.toString(values()));
+        }
     }
+
 }

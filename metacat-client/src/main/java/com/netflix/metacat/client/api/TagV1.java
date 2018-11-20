@@ -62,6 +62,7 @@ public interface TagV1 {
      * @param sourceName   Prefix of the source name
      * @param databaseName Prefix of the database name
      * @param tableName    Prefix of the table name
+     * @param type         Qualified name type category, database, table
      * @return list of qualified names
      */
     @GET
@@ -78,7 +79,9 @@ public interface TagV1 {
         @QueryParam("databaseName")
             String databaseName,
         @QueryParam("tableName")
-            String tableName
+            String tableName,
+        @QueryParam("type")
+            QualifiedName.Type type
     );
 
     /**
