@@ -1272,6 +1272,36 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
+    def "Test Get partitions threshold"() {
+        given:
+        def catalogName = 'embedded-fast-hive-metastore'
+        def databaseName = 'fsmoke_db5'
+        def tableName = 'part'
+        def request = new PartitionsSaveRequestDto()
+        def uri = isLocalEnv ? 'file:/tmp/abc' : null
+        createTable(catalogName, databaseName, tableName)
+        def partitions = PigDataDtoProvider.getPartitions(catalogName, databaseName, tableName, 'one=xyz', uri, 110)
+        request.setPartitions(partitions)
+        partitionApi.savePartitions(catalogName, databaseName, tableName, request)
+        when:
+        def savedPartitions = partitionApi.getPartitions(catalogName, databaseName, tableName, null, null, null, null, 10, true)
+        then:
+        noExceptionThrown()
+        savedPartitions != null && savedPartitions.size() == 10
+        when:
+        savedPartitions = partitionApi.getPartitions(catalogName, databaseName, tableName, null, null, null, null, 100, true)
+        then:
+        noExceptionThrown()
+        savedPartitions != null && savedPartitions.size() == 100
+        when:
+        partitionApi.getPartitions(catalogName, databaseName, tableName, null, null, null, null, 101, true)
+        then:
+        thrown(Exception)
+        cleanup:
+        api.deleteTable(catalogName, databaseName, tableName)
+    }
+
+    @Unroll
     def "Test tag table for #catalogName/#databaseName/#tableName"() {
         when:
         createTable(catalogName, databaseName, tableName)

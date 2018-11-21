@@ -234,6 +234,13 @@ public interface Config {
     List<QualifiedName> getNamesToThrowErrorOnListPartitionsWithNoFilter();
 
     /**
+     * Threshold for list of partitions returned.
+     *
+     * @return Threshold for list of partitions returned
+     */
+    int getMaxPartitionsThreshold();
+
+    /**
      * Elastic search index.
      *
      * @return elastic search index name

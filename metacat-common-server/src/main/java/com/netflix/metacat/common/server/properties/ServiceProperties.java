@@ -104,7 +104,7 @@ public class ServiceProperties {
                  */
                 @Data
                 public static class Partitions {
-
+                    private int threshold = Integer.MAX_VALUE;
                     @NonNull
                     private No no = new No();
 

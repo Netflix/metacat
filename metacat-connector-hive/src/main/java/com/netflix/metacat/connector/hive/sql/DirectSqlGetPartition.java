@@ -39,6 +39,7 @@ import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserEval;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
@@ -93,6 +94,7 @@ public class DirectSqlGetPartition {
     private final HiveConnectorFastServiceMetric fastServiceMetric;
     private final String catalogName;
     private final boolean isAuditProcessingEnabled;
+    private final Config config;
 
     /**
      * Constructor.
@@ -111,6 +113,7 @@ public class DirectSqlGetPartition {
         this.catalogName = connectorContext.getCatalogName();
         this.threadServiceManager = threadServiceManager;
         this.registry = connectorContext.getRegistry();
+        this.config = connectorContext.getConfig();
         this.jdbcTemplate = jdbcTemplate;
         this.fastServiceMetric = fastServiceMetric;
         this.isAuditProcessingEnabled = Boolean.valueOf(connectorContext.getConfiguration()
@@ -429,7 +432,10 @@ public class DirectSqlGetPartition {
         // Handler for reading the result set
         final ResultSetExtractor<List<PartitionHolder>> handler = rs -> {
             final List<PartitionHolder> result = Lists.newArrayList();
+            final QualifiedName tableQName = QualifiedName.ofTable(catalogName, databaseName, tableName);
+            int noOfRows = 0;
             while (rs.next()) {
+                noOfRows++;
                 final String name = rs.getString("name");
                 final String uri = rs.getString("uri");
                 final long createdDate = rs.getLong(FIELD_DATE_CREATED);
@@ -459,7 +465,20 @@ public class DirectSqlGetPartition {
                         PartitionInfo.builder().name(QualifiedName.ofPartition(catalogName,
                             databaseName, tableName, name)).auditInfo(auditInfo).serde(storageInfo).build()));
                 }
+
+                // Fail if the number of partitions exceeds the threshold limit.
+                if (result.size() > config.getMaxPartitionsThreshold()) {
+                    registry.counter(registry.createId(HiveMetrics.CounterHiveGetPartitionsExceedThresholdFailure
+                            .getMetricName()).withTags(tableQName.parts())).increment();
+                    final String message =
+                        String.format("Number of partitions queried for table %s exceeded the threshold %d",
+                            tableQName, config.getMaxPartitionsThreshold());
+                    log.warn(message);
+                    throw new IllegalArgumentException(message);
+                }
             }
+            registry.gauge(registry.createId(HiveMetrics.GaugePreExpressionFilterGetPartitionsCount
+                .getMetricName()).withTags(tableQName.parts())).set(noOfRows);
             return result;
         };
 
