@@ -35,6 +35,7 @@ public enum HiveMetrics {
     CounterHiveExperimentGetTablePartitionsFailure(Type.counter,"experimentGetPartitionsFailure"),
     CounterHivePartitionPathIsNotDir(Type.counter,"partitionPathIsNotDir"),
     CounterHivePartitionFileSystemCall(Type.counter,"partitionFileSystemCall"),
+    CounterHiveGetPartitionsExceedThresholdFailure(Type.counter,"getPartitionsExceedThresholdFailure"),
 
     /**
      * Gauge.
@@ -42,6 +43,7 @@ public enum HiveMetrics {
     GaugeAddPartitions(Type.gauge, "partitionAdd"),
     GaugeDeletePartitions(Type.gauge, "partitionDelete"),
     GaugeGetPartitionsCount(Type.gauge, "partitionGet"),
+    GaugePreExpressionFilterGetPartitionsCount(Type.gauge, "preExpressionFilterGetPartitionsCount"),
 
     /**
      * Timer.

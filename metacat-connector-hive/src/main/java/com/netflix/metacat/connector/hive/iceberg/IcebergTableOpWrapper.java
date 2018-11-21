@@ -45,7 +45,9 @@ public class IcebergTableOpWrapper {
     public Map<String, ScanSummary.PartitionMetrics> getPartitionMetricsMap(final Table icebergTable,
                                                                      @Nullable final Expression filter) {
         return (filter != null)
-            ? ScanSummary.of(icebergTable.newScan().filter(filter)).build()
+            ? ScanSummary.of(icebergTable.newScan().filter(filter))
+                .limit(connectorContext.getConfig().getIcebergTableSummaryFetchSize())
+                .build()
             :
             ScanSummary.of(icebergTable.newScan())  //the top x records
                 .limit(connectorContext.getConfig().getIcebergTableSummaryFetchSize())

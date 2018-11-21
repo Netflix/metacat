@@ -106,6 +106,7 @@ public class IcebergTableHandler {
                 result = this.icebergTableOpWrapper.getPartitionMetricsMap(icebergTable, null);
             }
         } catch (ParseException ex) {
+            log.error("Iceberg filter parse error", ex);
             throw new MetacatBadRequestException("Iceberg filter parse error");
         } finally {
             final long duration = registry.clock().wallTime() - start;

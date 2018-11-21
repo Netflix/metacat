@@ -307,6 +307,20 @@ public class DefaultConfigImpl implements Config {
      * {@inheritDoc}
      */
     @Override
+    public int getMaxPartitionsThreshold() {
+        return this.metacatProperties
+            .getService()
+            .getTables()
+            .getError()
+            .getList()
+            .getPartitions()
+            .getThreshold();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getEsIndex() {
         return this.metacatProperties.getElasticsearch().getIndex().getName();
     }

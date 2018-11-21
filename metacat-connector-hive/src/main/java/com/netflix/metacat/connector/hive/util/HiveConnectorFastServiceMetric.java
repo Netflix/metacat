@@ -68,7 +68,6 @@ public class HiveConnectorFastServiceMetric {
 
         getHiveTablePartsFailureCounter = registry.counter(
             HiveMetrics.CounterHiveExperimentGetTablePartitionsFailure.getMetricName());
-
     }
 
     private Timer createTimer(final Registry registry, final String requestTag) {
