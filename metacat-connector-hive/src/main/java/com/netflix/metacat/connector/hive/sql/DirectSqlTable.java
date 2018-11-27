@@ -205,15 +205,9 @@ public class DirectSqlTable {
             log.warn(message, ex);
             throw new InvalidMetaException(tableName, message, null);
         }
-        if (existingTableMetadata.isEmpty()
-            || !ICEBERG_TABLE_TYPE.equalsIgnoreCase(existingTableMetadata.get(PARAM_TABLE_TYPE))) {
-            final String message = String.format("Originally table %s is not of type iceberg", tableName);
-            log.info(message);
-            throw new InvalidMetaException(tableName, message, null);
-        }
         final Map<String, String> newTableMetadata = tableInfo.getMetadata() == null
             ? Maps.newHashMap() : tableInfo.getMetadata();
-        validateIcebergUpdate(existingTableMetadata, newTableMetadata);
+        validateIcebergUpdate(tableName, existingTableMetadata, newTableMetadata);
         final MapDifference<String, String> diff = Maps.difference(existingTableMetadata, newTableMetadata);
         insertTableParams(tableId, diff.entriesOnlyOnRight());
         final Map<String, String> updateParams = diff.entriesDiffering().entrySet().stream()
@@ -222,25 +216,35 @@ public class DirectSqlTable {
         log.debug("Unlocked Iceberg table {}", tableName);
     }
 
-    private void validateIcebergUpdate(final Map<String, String> existingTableMetadata,
+    private void validateIcebergUpdate(final QualifiedName tableName,
+                                       final Map<String, String> existingTableMetadata,
                                        final Map<String, String> newTableMetadata) {
+        if (existingTableMetadata.isEmpty()
+            || !ICEBERG_TABLE_TYPE.equalsIgnoreCase(existingTableMetadata.get(PARAM_TABLE_TYPE))) {
+            final String message = String.format("Originally table %s is not of type iceberg", tableName);
+            log.info(message);
+            throw new InvalidMetaException(tableName, message, null);
+        }
         final String existingMetadataLocation = existingTableMetadata.get(PARAM_METADATA_LOCATION);
         final String previousMetadataLocation = newTableMetadata.get(PARAM_PREVIOUS_METADATA_LOCATION);
         final String newMetadataLocation = newTableMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION);
         if (StringUtils.isBlank(existingMetadataLocation)) {
-            final String message = "Invalid iceberg table metadata location. Existing metadata location is empty.";
+            final String message = String
+                .format("Invalid metadata location for iceberg table %s. Existing location is empty.",
+                    tableName);
             log.error(message);
             throw new IllegalStateException(message);
         } else if (!Objects.equals(existingMetadataLocation, newMetadataLocation)) {
             if (StringUtils.isBlank(previousMetadataLocation)) {
-                final String message =
-                    "Invalid iceberg table metadata location. Provided previous metadata location is empty.";
+                final String message = String.format(
+                    "Invalid metadata location for iceberg table %s. Provided previous metadata location is empty.",
+                        tableName);
                 log.error(message);
                 throw new IllegalStateException(message);
             } else if (!Objects.equals(existingMetadataLocation, previousMetadataLocation)) {
                 final String message =
-                    String.format("Invalid iceberg table metadata location (expected:%s, provided:%s)",
-                        existingMetadataLocation, previousMetadataLocation);
+                    String.format("Invalid metadata location for iceberg table %s (expected:%s, provided:%s)",
+                        tableName, existingMetadataLocation, previousMetadataLocation);
                 log.error(message);
                 throw new IllegalStateException(message);
             }
