@@ -29,13 +29,10 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.hive.metastore.api.Table;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * HiveConnectorFastTableService.
@@ -125,54 +122,13 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     @Override
     public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         if (HiveTableUtil.isIcebergTable(tableInfo)) {
-            final QualifiedName tableName = tableInfo.getName();
-            final Long tableId = directSqlTable.getTableId(tableName);
             try {
-                log.debug("Locking Iceberg table {}", tableName);
-                directSqlTable.lockIcebergTable(tableId, tableName);
-                try {
-                    final TableInfo existingTableInfo = get(requestContext, tableInfo.getName());
-                    validateIcebergUpdate(existingTableInfo, tableInfo);
-                    final Table existingTable = getHiveMetacatConverters().fromTableInfo(existingTableInfo);
-                    super.update(requestContext, existingTable, tableInfo);
-                } finally {
-                    directSqlTable.unlockIcebergTable(tableId);
-                    log.debug("Unlocked Iceberg table {}", tableName);
-                }
+                directSqlTable.updateIcebergTable(tableInfo);
             } catch (IllegalStateException e) {
-                throw new TablePreconditionFailedException(tableName, e.getMessage());
+                throw new TablePreconditionFailedException(tableInfo.getName(), e.getMessage());
             }
         } else {
             super.update(requestContext, tableInfo);
-        }
-    }
-
-    private void validateIcebergUpdate(final TableInfo existingTableInfo, final TableInfo newTableInfo) {
-        final Map<String, String> existingMetadata = existingTableInfo.getMetadata();
-        final Map<String, String> newMetadata = newTableInfo.getMetadata();
-        final String existingMetadataLocation = existingMetadata != null
-            ? existingMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION) : null;
-        final String previousMetadataLocation = newMetadata != null
-            ? newMetadata.get(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION) : null;
-        final String newMetadataLocation = newMetadata != null
-            ? newMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION) : null;
-        if (StringUtils.isBlank(existingMetadataLocation)) {
-            final String message = "Invalid iceberg table metadata location. Existing metadata location is empty.";
-            log.error(message);
-            throw new IllegalStateException(message);
-        } else if (!Objects.equals(existingMetadataLocation, newMetadataLocation)) {
-            if (StringUtils.isBlank(previousMetadataLocation)) {
-                final String message =
-                    "Invalid iceberg table metadata location. Provided previous metadata location is empty.";
-                log.error(message);
-                throw new IllegalStateException(message);
-            } else if (!Objects.equals(existingMetadataLocation, previousMetadataLocation)) {
-                final String message =
-                    String.format("Invalid iceberg table metadata location (expected:%s, provided:%s)",
-                        existingMetadataLocation, previousMetadataLocation);
-                log.error(message);
-                throw new IllegalStateException(message);
-            }
         }
     }
 
