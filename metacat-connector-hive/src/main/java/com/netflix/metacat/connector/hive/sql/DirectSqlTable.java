@@ -186,6 +186,15 @@ public class DirectSqlTable {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateIcebergTable(final TableInfo tableInfo) {
         final QualifiedName tableName = tableInfo.getName();
+        final Map<String, String> newTableMetadata = tableInfo.getMetadata();
+        //
+        // Table info should have the table parameters with the metadata location.
+        //
+        if (newTableMetadata == null || newTableMetadata.isEmpty()) {
+            final String message = String.format("No parameters defined for iceberg table %s", tableName);
+            log.warn(message);
+            throw new InvalidMetaException(tableName, message, null);
+        }
         final Long tableId = getTableId(tableName);
         Map<String, String> existingTableMetadata = Maps.newHashMap();
         log.debug("Lock Iceberg table {}", tableName);
@@ -205,8 +214,6 @@ public class DirectSqlTable {
             log.warn(message, ex);
             throw new InvalidMetaException(tableName, message, null);
         }
-        final Map<String, String> newTableMetadata = tableInfo.getMetadata() == null
-            ? Maps.newHashMap() : tableInfo.getMetadata();
         validateIcebergUpdate(tableName, existingTableMetadata, newTableMetadata);
         final MapDifference<String, String> diff = Maps.difference(existingTableMetadata, newTableMetadata);
         insertTableParams(tableId, diff.entriesOnlyOnRight());
@@ -219,6 +226,7 @@ public class DirectSqlTable {
     private void validateIcebergUpdate(final QualifiedName tableName,
                                        final Map<String, String> existingTableMetadata,
                                        final Map<String, String> newTableMetadata) {
+        // Validate the type of the table stored in the RDS
         if (existingTableMetadata.isEmpty()
             || !ICEBERG_TABLE_TYPE.equalsIgnoreCase(existingTableMetadata.get(PARAM_TABLE_TYPE))) {
             final String message = String.format("Originally table %s is not of type iceberg", tableName);
@@ -228,6 +236,12 @@ public class DirectSqlTable {
         final String existingMetadataLocation = existingTableMetadata.get(PARAM_METADATA_LOCATION);
         final String previousMetadataLocation = newTableMetadata.get(PARAM_PREVIOUS_METADATA_LOCATION);
         final String newMetadataLocation = newTableMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION);
+        //
+        // 1. If stored metadata location is empty then the table is not in a valid state.
+        // 2. If previous metadata location is not provided then the request is invalid.
+        // 3. If the provided previous metadata location does not match the saved metadata location, then the table
+        //    update should fail.
+        //
         if (StringUtils.isBlank(existingMetadataLocation)) {
             final String message = String
                 .format("Invalid metadata location for iceberg table %s. Existing location is empty.",
