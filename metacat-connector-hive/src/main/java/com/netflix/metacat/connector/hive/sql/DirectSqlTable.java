@@ -19,16 +19,19 @@ package com.netflix.metacat.connector.hive.sql;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -40,6 +43,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Types;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * This class makes direct sql calls to get/set table metadata.
@@ -66,7 +71,9 @@ public class DirectSqlTable {
      * Iceberg table type.
      */
     public static final String ICEBERG_TABLE_TYPE = "ICEBERG";
-    protected static final String PARAM_METADATA_LOCK = "metadata_lock";
+
+    private static final String COL_PARAM_KEY = "param_key";
+    private static final String COL_PARAM_VALUE = "param_value";
     private final Registry registry;
     private final JdbcTemplate jdbcTemplate;
     private final HiveConnectorFastServiceMetric fastServiceMetric;
@@ -169,56 +176,111 @@ public class DirectSqlTable {
     }
 
     /**
-     * Locks the iceberg table for update so that no other request can modify the table.
-     * @param tableId table internal id
-     * @param tableName table name
+     *  Locks and updates the iceberg table for update so that no other request can modify the table at the same time.
+     *  1. Gets the table parameters and locks the requested records. If lock cannot be attained,
+     *  the request to update fails
+     *  2. Validates the metadata location
+     *  3. If validated, updates the table parameters.
+     * @param tableInfo table info
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void lockIcebergTable(final Long tableId, final QualifiedName tableName) {
-        String tableType = null;
+    public void updateIcebergTable(final TableInfo tableInfo) {
+        final QualifiedName tableName = tableInfo.getName();
+        final Map<String, String> newTableMetadata = tableInfo.getMetadata();
+        //
+        // Table info should have the table parameters with the metadata location.
+        //
+        if (newTableMetadata == null || newTableMetadata.isEmpty()) {
+            final String message = String.format("No parameters defined for iceberg table %s", tableName);
+            log.warn(message);
+            throw new InvalidMetaException(tableName, message, null);
+        }
+        final Long tableId = getTableId(tableName);
+        Map<String, String> existingTableMetadata = Maps.newHashMap();
+        log.debug("Lock Iceberg table {}", tableName);
         try {
-            tableType = jdbcTemplate.queryForObject(SQL.TABLE_PARAM_LOCK,
-                new SqlParameterValue[] {new SqlParameterValue(Types.BIGINT, tableId),
-                    new SqlParameterValue(Types.VARCHAR, PARAM_TABLE_TYPE), }, String.class);
-        } catch (EmptyResultDataAccessException ignored) { }
-        if (tableType == null || !ICEBERG_TABLE_TYPE.equalsIgnoreCase(tableType)) {
+            existingTableMetadata = jdbcTemplate.query(SQL.TABLE_PARAMS_LOCK,
+                new SqlParameterValue[]{new SqlParameterValue(Types.BIGINT, tableId)}, rs -> {
+                    final Map<String, String> result = Maps.newHashMap();
+                    while (rs.next()) {
+                        result.put(rs.getString(COL_PARAM_KEY), rs.getString(COL_PARAM_VALUE));
+                    }
+                    return result;
+                });
+        } catch (EmptyResultDataAccessException ex) {
+            log.info(String.format("No parameters defined for iceberg table %s", tableName));
+        } catch (Exception ex) {
+            final String message = String.format("Failed getting a lock on iceberg table %s", tableName);
+            log.warn(message, ex);
+            throw new InvalidMetaException(tableName, message, null);
+        }
+        validateIcebergUpdate(tableName, existingTableMetadata, newTableMetadata);
+        final MapDifference<String, String> diff = Maps.difference(existingTableMetadata, newTableMetadata);
+        insertTableParams(tableId, diff.entriesOnlyOnRight());
+        final Map<String, String> updateParams = diff.entriesDiffering().entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, s -> s.getValue().rightValue()));
+        updateTableParams(tableId, updateParams);
+        log.debug("Unlocked Iceberg table {}", tableName);
+    }
+
+    private void validateIcebergUpdate(final QualifiedName tableName,
+                                       final Map<String, String> existingTableMetadata,
+                                       final Map<String, String> newTableMetadata) {
+        // Validate the type of the table stored in the RDS
+        if (existingTableMetadata.isEmpty()
+            || !ICEBERG_TABLE_TYPE.equalsIgnoreCase(existingTableMetadata.get(PARAM_TABLE_TYPE))) {
             final String message = String.format("Originally table %s is not of type iceberg", tableName);
             log.info(message);
             throw new InvalidMetaException(tableName, message, null);
         }
-        Boolean isLocked = null;
-        try {
-            isLocked = jdbcTemplate.queryForObject(SQL.TABLE_PARAM_LOCK,
-                new SqlParameterValue[] {new SqlParameterValue(Types.BIGINT, tableId),
-                    new SqlParameterValue(Types.VARCHAR, PARAM_METADATA_LOCK), }, Boolean.class);
-        } catch (EmptyResultDataAccessException ignored) { }
-        if (isLocked == null) {
-            insertTableParam(tableId, PARAM_METADATA_LOCK, 1);
-        } else if (isLocked) {
-            final String message = String.format("Iceberg table %s is locked.", tableName);
-            log.info(message);
+        final String existingMetadataLocation = existingTableMetadata.get(PARAM_METADATA_LOCATION);
+        final String previousMetadataLocation = newTableMetadata.get(PARAM_PREVIOUS_METADATA_LOCATION);
+        final String newMetadataLocation = newTableMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION);
+        //
+        // 1. If stored metadata location is empty then the table is not in a valid state.
+        // 2. If previous metadata location is not provided then the request is invalid.
+        // 3. If the provided previous metadata location does not match the saved metadata location, then the table
+        //    update should fail.
+        //
+        if (StringUtils.isBlank(existingMetadataLocation)) {
+            final String message = String
+                .format("Invalid metadata location for iceberg table %s. Existing location is empty.",
+                    tableName);
+            log.error(message);
             throw new IllegalStateException(message);
-        } else {
-            updateTableParam(tableId, PARAM_METADATA_LOCK, 1);
+        } else if (!Objects.equals(existingMetadataLocation, newMetadataLocation)) {
+            if (StringUtils.isBlank(previousMetadataLocation)) {
+                final String message = String.format(
+                    "Invalid metadata location for iceberg table %s. Provided previous metadata location is empty.",
+                        tableName);
+                log.error(message);
+                throw new IllegalStateException(message);
+            } else if (!Objects.equals(existingMetadataLocation, previousMetadataLocation)) {
+                final String message =
+                    String.format("Invalid metadata location for iceberg table %s (expected:%s, provided:%s)",
+                        tableName, existingMetadataLocation, previousMetadataLocation);
+                log.error(message);
+                throw new IllegalStateException(message);
+            }
         }
     }
 
-    /**
-     * Unlocks the iceberg table after update so that another request can modify the table.
-     * @param tableId table internal id
-     */
-    public void unlockIcebergTable(final Long tableId) {
-        updateTableParam(tableId, PARAM_METADATA_LOCK, 0);
+    private void insertTableParams(final Long tableId, final Map<String, String> params) {
+        if (!params.isEmpty()) {
+            final List<Object[]> paramsList = params.entrySet().stream()
+                .map(s -> new Object[]{tableId, s.getKey(), s.getValue()}).collect(Collectors.toList());
+            jdbcTemplate.batchUpdate(SQL.INSERT_TABLE_PARAMS, paramsList,
+                new int[]{Types.BIGINT, Types.VARCHAR, Types.VARCHAR});
+        }
     }
 
-    private void insertTableParam(final Long tableId, final String parameter, final int value) {
-        jdbcTemplate.update(SQL.INSERT_TABLE_PARAMS, new SqlParameterValue(Types.BIGINT, tableId),
-            new SqlParameterValue(Types.VARCHAR, parameter), new SqlParameterValue(Types.VARCHAR, value));
-    }
-
-    private void updateTableParam(final Long tableId, final String parameter, final int value) {
-        jdbcTemplate.update(SQL.UPDATE_TABLE_PARAMS, new SqlParameterValue(Types.VARCHAR, value),
-            new SqlParameterValue(Types.BIGINT, tableId), new SqlParameterValue(Types.VARCHAR, parameter));
+    private void updateTableParams(final Long tableId, final Map<String, String> params) {
+        if (!params.isEmpty()) {
+            final List<Object[]> paramsList = params.entrySet().stream()
+                .map(s -> new Object[]{s.getValue(), tableId, s.getKey()}).collect(Collectors.toList());
+            jdbcTemplate.batchUpdate(SQL.UPDATE_TABLE_PARAMS, paramsList,
+                new int[]{Types.VARCHAR, Types.BIGINT, Types.VARCHAR});
+        }
     }
 
     /**
@@ -316,6 +378,8 @@ public class DirectSqlTable {
             "select t.tbl_id from DBS d join TBLS t on d.DB_ID=t.DB_ID where d.name=? and t.tbl_name=?";
         static final String TABLE_PARAM_LOCK =
             "SELECT param_value FROM TABLE_PARAMS WHERE tbl_id=? and param_key=? FOR UPDATE";
+        static final String TABLE_PARAMS_LOCK =
+            "SELECT param_key, param_value FROM TABLE_PARAMS WHERE tbl_id=? FOR UPDATE";
         static final String UPDATE_TABLE_PARAMS =
             "update TABLE_PARAMS set param_value=? WHERE tbl_id=? and param_key=?";
         static final String INSERT_TABLE_PARAMS =

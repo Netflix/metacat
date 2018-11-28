@@ -6,6 +6,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
+import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric
@@ -67,63 +68,52 @@ class DirectSqlTableSpec extends Specification {
     }
 
 
-    def "Test iceberg table lock and update"() {
+    def "Test iceberg table update"() {
         given:
-        def tableId = 1234
+        def table = new TableInfo(name: qualifiedName, metadata: ['metadata_location':'s3:/c/d/t1', 'previous_metadata_location':'s3:/c/d/t'])
         when:
-        service.lockIcebergTable(tableId, qualifiedName)
+        service.updateIcebergTable(table)
         then:
-        1 * jdbcTemplate.update(DirectSqlTable.SQL.INSERT_TABLE_PARAMS,_)
-        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,String.class) >> DirectSqlTable.ICEBERG_TABLE_TYPE
-        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,Boolean.class)
+        1 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.INSERT_TABLE_PARAMS,_,_)
+        1 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_,_)
+        1 * jdbcTemplate.query(DirectSqlTable.SQL.TABLE_PARAMS_LOCK,_,_) >> ['table_type':DirectSqlTable.ICEBERG_TABLE_TYPE, 'metadata_location':'s3:/c/d/t']
         noExceptionThrown()
         when:
-        service.lockIcebergTable(tableId, qualifiedName)
+        service.updateIcebergTable(table)
         then:
-        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,String.class)
-        0 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,Boolean.class)
+        0 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.INSERT_TABLE_PARAMS,_,_)
+        1 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_,_)
+        1 * jdbcTemplate.query(DirectSqlTable.SQL.TABLE_PARAMS_LOCK,_,_) >> ['table_type':DirectSqlTable.ICEBERG_TABLE_TYPE, 'metadata_location':'s3:/c/d/t', 'previous_metadata_location':'']
+        noExceptionThrown()
+        when:
+        service.updateIcebergTable(table)
+        then:
+        0 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.INSERT_TABLE_PARAMS,_,_)
+        0 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_,_)
+        1 * jdbcTemplate.query(DirectSqlTable.SQL.TABLE_PARAMS_LOCK,_,_) >> ['table_type':DirectSqlTable.ICEBERG_TABLE_TYPE, 'metadata_location':'s3:/c/d/t1', 'previous_metadata_location':'s3:/c/d/t']
+        noExceptionThrown()
+        when:
+        service.updateIcebergTable(new TableInfo(name: qualifiedName, metadata: ['metadata_location':'s3:/c/d/t1']))
+        then:
+        0 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.INSERT_TABLE_PARAMS,_,_)
+        0 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_,_)
+        1 * jdbcTemplate.query(DirectSqlTable.SQL.TABLE_PARAMS_LOCK,_,_) >> ['table_type':DirectSqlTable.ICEBERG_TABLE_TYPE, 'metadata_location':'s3:/c/d/t1']
+        noExceptionThrown()
+        when:
+        service.updateIcebergTable(table)
+        then:
+        1 * jdbcTemplate.query(DirectSqlTable.SQL.TABLE_PARAMS_LOCK,_,_) >> [:]
         thrown(InvalidMetaException)
         when:
-        service.lockIcebergTable(tableId, qualifiedName)
+        service.updateIcebergTable(table)
         then:
-        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,String.class) >> 'invalid'
-        0 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,Boolean.class)
+        1 * jdbcTemplate.query(DirectSqlTable.SQL.TABLE_PARAMS_LOCK,_,_) >> {throw new EmptyResultDataAccessException(1)}
         thrown(InvalidMetaException)
         when:
-        service.lockIcebergTable(tableId, qualifiedName)
+        service.updateIcebergTable(table)
         then:
-        1 * jdbcTemplate.update(DirectSqlTable.SQL.INSERT_TABLE_PARAMS,_)
-        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,String.class) >> DirectSqlTable.ICEBERG_TABLE_TYPE
-        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,Boolean.class) >> {throw new EmptyResultDataAccessException(1)}
-        noExceptionThrown()
-        when:
-        service.lockIcebergTable(tableId, qualifiedName)
-        then:
-        1 * jdbcTemplate.update(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_)
-        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,String.class) >> DirectSqlTable.ICEBERG_TABLE_TYPE
-        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,Boolean.class) >> false
-        noExceptionThrown()
-        when:
-        service.lockIcebergTable(tableId, qualifiedName)
-        then:
-        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,String.class) >> DirectSqlTable.ICEBERG_TABLE_TYPE
-        1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_PARAM_LOCK,_,Boolean.class) >> true
-        thrown(IllegalStateException)
-    }
-
-    def "Test iceberg table unlock"() {
-        given:
-        def tableId = 1234
-        when:
-        service.unlockIcebergTable(tableId)
-        then:
-        1 * jdbcTemplate.update(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_)
-        noExceptionThrown()
-        when:
-        service.unlockIcebergTable(tableId)
-        then:
-        1 * jdbcTemplate.update(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_) >> {throw new Exception()}
-        thrown(Exception)
+        1 * jdbcTemplate.query(DirectSqlTable.SQL.TABLE_PARAMS_LOCK,_,_) >> ['table_type':'invalid']
+        thrown(InvalidMetaException)
     }
 
     def "Test delete table"() {
