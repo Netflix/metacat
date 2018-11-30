@@ -31,21 +31,34 @@ import com.netflix.metacat.common.type.Type;
 import com.netflix.metacat.common.type.TypeUtils;
 import com.netflix.metacat.common.type.VarcharType;
 import lombok.NonNull;
+import org.apache.pig.backend.executionengine.ExecutionEngine;
+import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.LocalExecType;
 import org.apache.pig.data.DataType;
+import org.apache.pig.impl.PigContext;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
-import org.apache.pig.impl.util.Utils;
 import org.apache.pig.newplan.logical.Util;
 import org.apache.pig.newplan.logical.relational.LogicalSchema;
+import org.apache.pig.parser.QueryParserDriver;
 
 import javax.annotation.Nonnull;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * Class to convert pig to canonical type and vice versa.
  */
 public class PigTypeConverter implements ConnectorTypeConverter {
     private static final String NAME_ARRAY_ELEMENT = "array_element";
+    private static final PigContext PIG_CONTEXT = new PigContext(new LocalExecType() {
+        private static final long serialVersionUID = -54152102366768171L;
+
+        @Override
+        public ExecutionEngine getExecutionEngine(final PigContext pigContext) {
+            return null;
+        }
+    }, new Properties());
 
     /**
      * {@inheritDoc}.
@@ -53,7 +66,8 @@ public class PigTypeConverter implements ConnectorTypeConverter {
     @Override
     public Type toMetacatType(@Nonnull @NonNull final String pigType) {
         try {
-            final LogicalSchema schema = Utils.parseSchema(pigType);
+            final LogicalSchema schema = new QueryParserDriver(PIG_CONTEXT,
+                "util", new HashMap<>()).parseSchema(pigType);
             final LogicalSchema.LogicalFieldSchema field = schema.getField(0);
             return toCanonicalType(field);
         } catch (Exception e) {
