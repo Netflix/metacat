@@ -31,7 +31,7 @@ public enum IcebergRequestMetrics {
     /**
      * Timer.
      */
-    TimerIcebergRequest(IcebergRequestMetrics.Type.timer, "iceberg.requests"),
+    TimerIcebergRequest(IcebergRequestMetrics.Type.timer, "requests"),
 
     /**
      * Tag of loadTable operation.
@@ -41,7 +41,13 @@ public enum IcebergRequestMetrics {
     /**
      * Tag of getPartitionMap operation.
      */
-    TagGetPartitionMap("getPartitionMap");
+    TagGetPartitionMap("getPartitionMap"),
+
+    /**
+     * Counter.
+     */
+    CounterGetPartitionsExceedThresholdFailure(IcebergRequestMetrics.Type.counter,
+                                               "getPartitionsExceedThresholdFailure");
 
     enum Type {
         counter,
