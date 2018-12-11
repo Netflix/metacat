@@ -90,6 +90,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     private final MetacatJson metacatJson;
     private XContentType contentType = Requests.INDEX_CONTENT_TYPE;
     private final ElasticSearchMetric elasticSearchMetric;
+    private final TimeValue esCallTimeout;
+    private final TimeValue esBulkCallTimeout;
 
     /**
      * Constructor.
@@ -109,6 +111,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
         this.metacatJson = metacatJson;
         this.esIndex = config.getEsIndex();
         this.elasticSearchMetric = elasticSearchMetric;
+        this.esCallTimeout = TimeValue.timeValueSeconds(config.getElasticSearchCallTimeout());
+        this.esBulkCallTimeout = TimeValue.timeValueSeconds(config.getElasticSearchBulkCallTimeout());
     }
 
     /**
@@ -118,7 +122,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     public void delete(final String type, final String id) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
-                client.prepareDelete(esIndex, type, id).execute().actionGet();
+                client.prepareDelete(esIndex, type, id).execute().actionGet(esCallTimeout);
                 return null;
             });
         } catch (Exception e) {
@@ -152,7 +156,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                     .field(ElasticSearchDoc.Field.USER,
                     metacatRequestContext.getUserName()).endObject();
                 client.prepareUpdate(esIndex, type, id)
-                    .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder).get();
+                    .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder).get(esCallTimeout);
                 ensureMigrationByCopy(type, Collections.singletonList(id));
                 return null;
             });
@@ -197,7 +201,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                         .setRetryOnConflict(NO_OF_CONFLICT_RETRIES)
                         .setDoc(metacatJson.toJsonAsBytes(node), XContentType.JSON));
                 });
-                final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                final BulkResponse bulkResponse = bulkRequest.execute().actionGet(esBulkCallTimeout);
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
                         if (item.isFailed()) {
@@ -280,7 +284,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 .setQuery(QueryBuilders.termQuery("serde.uri", dataUri))
                 .setSize(Integer.MAX_VALUE)
                 .setFetchSource(false);
-            final SearchResponse response = request.execute().actionGet();
+            final SearchResponse response = request.execute().actionGet(esCallTimeout);
             if (response.getHits().getHits().length != 0) {
                 ids = getIds(response);
             }
@@ -307,7 +311,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             .setQuery(queryBuilder)
             .setSize(Integer.MAX_VALUE)  // TODO May break if too many tables returned back, change to Scroll
             .setFetchSource(false);
-        final SearchResponse response = request.execute().actionGet();
+        final SearchResponse response = request.execute().actionGet(esCallTimeout);
         if (response.getHits().getHits().length != 0) {
             ids = getIds(response);
         }
@@ -330,7 +334,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             .setQuery(queryBuilder)
             .setSize(Integer.MAX_VALUE)
             .setFetchSource(false);
-        final SearchResponse response = request.execute().actionGet();
+        final SearchResponse response = request.execute().actionGet(esCallTimeout);
         if (response.getHits().getHits().length != 0) {
             result = getIds(response);
         }
@@ -363,7 +367,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             .setSearchType(SearchType.QUERY_THEN_FETCH)
             .setQuery(queryBuilder)
             .setSize(Integer.MAX_VALUE);
-        final SearchResponse response = request.execute().actionGet();
+        final SearchResponse response = request.execute().actionGet(esCallTimeout);
         if (response.getHits().getHits().length != 0) {
             result.addAll(parseResponse(response, valueType));
         }
@@ -392,7 +396,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     @Override
     public ElasticSearchDoc get(final String type, final String id, final String index) {
         ElasticSearchDoc result = null;
-        final GetResponse response = client.prepareGet(index, type, id).execute().actionGet();
+        final GetResponse response = client.prepareGet(index, type, id).execute().actionGet(esCallTimeout);
         if (response.isExists()) {
             result = parse(response);
         }
@@ -412,10 +416,10 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             .setQuery(QueryBuilders.termQuery("_type", type))
             .setFetchSource(false)
             .execute()
-            .actionGet();
+            .actionGet(esCallTimeout);
         while (true) {
             response = client.prepareSearchScroll(response.getScrollId())
-                .setScroll(new TimeValue(config.getElasticSearchScrollTimeout())).execute().actionGet();
+                .setScroll(new TimeValue(config.getElasticSearchScrollTimeout())).execute().actionGet(esCallTimeout);
             //Break condition: No hits are returned
             if (response.getHits().getHits().length == 0) {
                 break;
@@ -452,20 +456,22 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      */
     private void log(final String method, final String type, final String name, @Nullable final String data,
                      final String logMessage, @Nullable final Exception ex, final boolean error, final String index) {
-        try {
-            final Map<String, Object> source = Maps.newHashMap();
-            source.put("method", method);
-            source.put("name", name);
-            source.put("type", type);
-            source.put("data", data);
-            source.put("error", error);
-            source.put("message", logMessage);
-            source.put("details", Throwables.getStackTraceAsString(ex));
-            client.prepareIndex(index, "metacat-log").setSource(source).execute().actionGet();
-        } catch (Exception e) {
-            this.elasticSearchMetric.getElasticSearchLogFailureCounter().increment();
-            log.warn("Failed saving the log message in elastic search for index{} method {}, name {}. Message: {}",
-                index, method, name, e.getMessage());
+        if (config.isElasticSearchPublishMetacatLogEnabled()) {
+            try {
+                final Map<String, Object> source = Maps.newHashMap();
+                source.put("method", method);
+                source.put("name", name);
+                source.put("type", type);
+                source.put("data", data);
+                source.put("error", error);
+                source.put("message", logMessage);
+                source.put("details", Throwables.getStackTraceAsString(ex));
+                client.prepareIndex(index, "metacat-log").setSource(source).execute().actionGet(esCallTimeout);
+            } catch (Exception e) {
+                this.elasticSearchMetric.getElasticSearchLogFailureCounter().increment();
+                log.warn("Failed saving the log message in elastic search for index{} method {}, name {}. Message: {}",
+                    index, method, name, e.getMessage());
+            }
         }
     }
 
@@ -482,7 +488,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             .setQuery(QueryBuilders.termQuery("_all", searchString))
             .setSize(Integer.MAX_VALUE)
             .execute()
-            .actionGet();
+            .actionGet(esCallTimeout);
         if (response.getHits().getHits().length != 0) {
             result.addAll(parseResponse(response, TableDto.class));
         }
@@ -500,7 +506,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             RETRY_ES_PUBLISH.call(() -> {
                 final BulkRequestBuilder bulkRequest = client.prepareBulk();
                 ids.forEach(id -> bulkRequest.add(client.prepareDelete(esIndex, type, id)));
-                final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                final BulkResponse bulkResponse = bulkRequest.execute().actionGet(esBulkCallTimeout);
                 log.info("Deleting metadata of type {} with count {}", type, ids.size());
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
@@ -606,7 +612,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                     .field(ElasticSearchDoc.Field.USER, metacatRequestContext.getUserName()).endObject();
                 ids.forEach(id -> bulkRequest.add(client.prepareUpdate(esIndex, type, id)
                     .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder)));
-                final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                final BulkResponse bulkResponse = bulkRequest.execute().actionGet(esBulkCallTimeout);
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
                         if (item.isFailed()) {
@@ -640,7 +646,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             RETRY_ES_PUBLISH.call(() -> {
                 final IndexRequestBuilder indexRequestBuilder = prepareIndexRequest(index, type, doc);
                 if (indexRequestBuilder != null) {
-                    indexRequestBuilder.execute().actionGet();
+                    indexRequestBuilder.execute().actionGet(esCallTimeout);
                 }
                 return null;
             });
@@ -692,7 +698,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                     }
 
                     if (bulkRequest.numberOfActions() > 0) {
-                        final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                        final BulkResponse bulkResponse = bulkRequest.execute().actionGet(esBulkCallTimeout);
                         log.info("Bulk saving metadata of index {} type {} with size {}.",
                             index, type, docs.size());
                         if (bulkResponse.hasFailures()) {

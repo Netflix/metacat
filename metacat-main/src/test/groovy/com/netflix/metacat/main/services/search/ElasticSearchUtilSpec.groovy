@@ -59,6 +59,7 @@ class ElasticSearchUtilSpec extends Specification {
     String esIndex = "metacat"
 
     def setupSpec() {
+        config.isElasticSearchPublishMetacatLogEnabled() >> true
         config.getEsIndex() >> esIndex
     }
 
@@ -83,7 +84,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * client.prepareIndex(_, _, _) >> indexRequestBuilder
         1 * indexRequestBuilder.setSource(_, _) >> indexRequestBuilder
         1 * indexRequestBuilder.execute() >> future
-        1 * future.actionGet()
+        1 * future.actionGet(_)
     }
 
     def "Test save for #id throw other exception"() {
@@ -115,7 +116,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
         1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
         1 * indexRequestBuilder2.execute()  >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
     }
 
     def "Test save for #id throw other exception with log error"() {
@@ -147,7 +148,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
         1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
         1 * indexRequestBuilder2.execute()  >> future
-        1 * future.actionGet() >> { throw new Exception("log error")}
+        1 * future.actionGet(_) >> { throw new Exception("log error")}
         1 * elasticSearchMetric.getElasticSearchLogFailureCounter() >> counter2
         1 * counter2.increment()
     }
@@ -166,7 +167,7 @@ class ElasticSearchUtilSpec extends Specification {
         then:
         1 * client.prepareDelete(_, _, _) >> deleteRequestBuilder
         1 * deleteRequestBuilder.execute() >> future
-        1 * future.actionGet()
+        1 * future.actionGet(_)
     }
 
     def "Test delete for #id throw Exception"() {
@@ -191,7 +192,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
         1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
         1 * indexRequestBuilder2.execute()  >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
     }
 
     def "Test updates for #id"() {
@@ -222,7 +223,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_,_) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> bulkResponse
+        1 * future.actionGet(_) >> bulkResponse
         1 * bulkResponse.hasFailures() >> false
     }
 
@@ -258,7 +259,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_,_) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> bulkResponse
+        1 * future.actionGet(_) >> bulkResponse
         1 * bulkResponse.hasFailures() >> true
         1 * bulkResponse.getItems() >> [bulkItemResponse]
         1 * bulkItemResponse.isFailed() >> true
@@ -300,13 +301,13 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_,_) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> {throw new Exception("ouch", new Throwable("Exception")) }
+        1 * future.actionGet(_) >> {throw new Exception("ouch", new Throwable("Exception")) }
         1 * elasticSearchMetric.getElasticSearchBulkUpdateFailureCounter() >> counter
         1 * counter.increment()
         1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
         1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
         1 * indexRequestBuilder2.execute()  >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
     }
 
     def "Test get for #id"() {
@@ -324,7 +325,7 @@ class ElasticSearchUtilSpec extends Specification {
         then:
         1 * client.prepareGet(_, _, _) >> getRequestBuilder
         1 * getRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.exists >> true
         1 * response.getSourceAsMap() >> responseMap
         1 * responseMap.get(ElasticSearchDoc.Field.USER) >> "user"
@@ -349,7 +350,7 @@ class ElasticSearchUtilSpec extends Specification {
         then:
         1 * client.prepareGet(_, _, _) >> getRequestBuilder
         1 * getRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         1 * response.exists >> false
     }
 
@@ -374,7 +375,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
         1 * searchRequestBuilder.setFetchSource(false) >> searchRequestBuilder
         1 * searchRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.getHits() >> searchHits
         2 * searchHits.getHits() >> [hit]
     }
@@ -403,7 +404,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * searchRequestBuilder.setQuery(_ as QueryBuilder) >> searchRequestBuilder
         1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
         1 * searchRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.getHits() >> searchHits
         2 * searchHits.getHits() >> [hit]
         1 *  hit.getSourceAsString() >> "test"
@@ -430,7 +431,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
         1 * searchRequestBuilder.setFetchSource(false) >> searchRequestBuilder
         1 * searchRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.getHits() >> searchHits
         2 * searchHits.getHits() >> [hit]
     }
@@ -457,7 +458,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
         1 * searchRequestBuilder.setFetchSource(false) >> searchRequestBuilder
         1 * searchRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.getHits() >> searchHits
         2 * searchHits.getHits() >> [hit]
 
@@ -484,7 +485,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * searchRequestBuilder.setQuery(_ as QueryBuilder) >> searchRequestBuilder
         1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
         1 * searchRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.getHits() >> searchHits
         2 * searchHits.getHits() >> [hit]
         1 *  hit.getSourceAsString() >> "test"
@@ -511,7 +512,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_ as XContentBuilder) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> bulkResponse
+        1 * future.actionGet(_) >> bulkResponse
         1 * bulkResponse.hasFailures() >> false
     }
 
@@ -541,7 +542,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_ as XContentBuilder) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> bulkResponse
+        1 * future.actionGet(_) >> bulkResponse
         1 * bulkResponse.hasFailures() >> true
         1 * bulkResponse.getItems() >> [bulkItemResponse]
         1 * bulkItemResponse.isFailed() >> true
@@ -577,13 +578,13 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_ as XContentBuilder) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> {throw new Exception("ouch", new Throwable("Exception")) }
+        1 * future.actionGet(_) >> {throw new Exception("ouch", new Throwable("Exception")) }
         1 * elasticSearchMetric.getElasticSearchBulkDeleteFailureCounter() >> counter
         1 * counter.increment()
         1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
         1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
         1 * indexRequestBuilder2.execute()  >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
     }
 
     def "Test toJsonString" () {

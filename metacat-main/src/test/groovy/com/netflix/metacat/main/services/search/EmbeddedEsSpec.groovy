@@ -92,10 +92,16 @@ class EmbeddedEsSpec extends Specification {
 
         metacatJson = new MetacatJsonLocator()
         config.getEsIndex() >> esIndex
+        config.getElasticSearchCallTimeout() >> 10
+        config.getElasticSearchBulkCallTimeout() >> 10
+        config.isElasticSearchPublishMetacatLogEnabled() >> true
         es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
 
         config2.getEsIndex() >> esIndex
         config2.getMergeEsIndex() >> esMergeIndex
+        config2.getElasticSearchCallTimeout() >> 10
+        config2.getElasticSearchBulkCallTimeout() >> 10
+        config2.isElasticSearchPublishMetacatLogEnabled() >> true
         esMig = new ElasticSearchUtilImpl(client, config2, metacatJson, elasticSearchMetric)
     }
 
