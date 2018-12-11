@@ -108,6 +108,14 @@ public class IcebergTableHandler {
         } catch (ParseException ex) {
             log.error("Iceberg filter parse error", ex);
             throw new MetacatBadRequestException("Iceberg filter parse error");
+        } catch (IllegalStateException e) {
+            registry.counter(registry.createId(IcebergRequestMetrics.CounterGetPartitionsExceedThresholdFailure
+                .getMetricName()).withTags(tableName.parts())).increment();
+            final String message =
+                String.format("Number of partitions queried for table %s exceeded the threshold %d",
+                    tableName, connectorContext.getConfig().getMaxPartitionsThreshold());
+            log.warn(message);
+            throw new IllegalArgumentException(message);
         } finally {
             final long duration = registry.clock().wallTime() - start;
             log.info("Time taken to getIcebergTablePartitionMap {} is {} ms", tableName, duration);
@@ -119,6 +127,7 @@ public class IcebergTableHandler {
 
         return result;
     }
+
 
     /**
      * get iceberg table.

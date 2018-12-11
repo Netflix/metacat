@@ -46,7 +46,8 @@ public class IcebergTableOpWrapper {
                                                                      @Nullable final Expression filter) {
         return (filter != null)
             ? ScanSummary.of(icebergTable.newScan().filter(filter))
-                .limit(connectorContext.getConfig().getIcebergTableSummaryFetchSize())
+                .limit(connectorContext.getConfig().getMaxPartitionsThreshold())
+                .throwIfLimited()
                 .build()
             :
             ScanSummary.of(icebergTable.newScan())  //the top x records
