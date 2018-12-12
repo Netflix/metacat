@@ -76,6 +76,10 @@
                 }
               }
             },
+            "serdeInfoParameters": {
+              "type": "object",
+              "enabled": false
+            },
             "uri": {
               "type": "keyword",
               "index": true,
@@ -179,6 +183,10 @@
           "type": "object",
           "enabled": false
         },
+        "metadata": {
+          "type": "object",
+          "enabled": false
+        },
         "name": {
           "properties": {
             "catalogName": {
@@ -276,6 +284,10 @@
     },
     "metacat-log": {
       "properties": {
+        "qname": {
+          "type": "keyword",
+          "index": true
+        },
         "method": {
           "type": "keyword",
           "index": true

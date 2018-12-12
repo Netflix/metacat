@@ -35,7 +35,7 @@ import java.util.List;
 public class ElasticsearchProperties {
     private boolean enabled;
     private long timeout = 30;
-    private long bulkTimeout = 60;
+    private long bulkTimeout = 120;
 
     @NonNull
     private Index index = new Index();

@@ -38,9 +38,10 @@ public interface Config {
     boolean isElasticSearchEnabled();
 
     /**
-     * If true, a table update should update data metadata of all table document's containing the same uri.
+     * If true, a table update should trigger updating data metadata of all table documents containing the same uri.
      *
-     * @return If true, a table update should update data metadata of all table document's containing the same uri.
+     * @return true, if data metadata of all table documents needs to be updated if their uri is the same
+     * as the updated table.
      */
     boolean isElasticSearchUpdateTablesWithSameUriEnabled();
 

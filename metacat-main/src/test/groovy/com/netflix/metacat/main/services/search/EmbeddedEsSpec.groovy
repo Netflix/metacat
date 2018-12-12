@@ -140,11 +140,8 @@ class EmbeddedEsSpec extends Specification {
         es.save(Type.table.name(), [new ElasticSearchDoc(table.getName().toString(), table,
             "testuser", false)])
         def result = (TableDto) es.get(Type.table.name(), id).getDto()
-        List<QualifiedName> names = new ArrayList<>()
-        names.add(QualifiedName.fromString('prodhive/amajumdar/part_test'))
-
         def result2 = es.getQualifiedNamesByMarkerByNames(Type.table.name(),
-                                           names,
+                                           [QualifiedName.fromString(id)],
                                             Instant.now().toInstant(),
                                             new ArrayList<QualifiedName>(),TableDto.class )
 
