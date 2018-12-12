@@ -240,8 +240,9 @@ public class ElasticSearchEventHandlers {
                 event.getRequestContext().getUserName(), false);
             final ElasticSearchDoc oldDoc = es.get(ElasticSearchDoc.Type.table.name(), doc.getId());
             es.save(ElasticSearchDoc.Type.table.name(), doc.getId(), doc);
-            if (oldDoc == null || oldDoc.getDto() == null
-                || !Objects.equals(((TableDto) oldDoc.getDto()).getDataMetadata(), dto.getDataMetadata())) {
+            if (config.isElasticSearchUpdateTablesWithSameUriEnabled()
+                && (oldDoc == null || oldDoc.getDto() == null
+                    || !Objects.equals(((TableDto) oldDoc.getDto()).getDataMetadata(), dto.getDataMetadata()))) {
                 updateEntitiesWithSameUri(ElasticSearchDoc.Type.table.name(),
                     dto, event.getRequestContext().getUserName());
             }
@@ -254,6 +255,8 @@ public class ElasticSearchEventHandlers {
             final List<String> ids = es.getTableIdsByUri(metadataType, dto.getDataUri())
                 .stream().filter(s -> !s.equals(dto.getName().toString())).collect(Collectors.toList());
             if (!ids.isEmpty()) {
+                log.info("ElasticSearch table updates({}) with same uri {} (Table:{})",
+                    ids.size(), dto.getDataUri(), dto.getName());
                 final ObjectNode node = metacatJsonLocator.emptyObjectNode();
                 node.set(ElasticSearchDoc.Field.DATA_METADATA, dto.getDataMetadata());
                 node.put(ElasticSearchDoc.Field.USER, userName);

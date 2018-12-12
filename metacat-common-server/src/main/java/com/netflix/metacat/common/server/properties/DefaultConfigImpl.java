@@ -60,6 +60,14 @@ public class DefaultConfigImpl implements Config {
         return this.metacatProperties.getElasticsearch().isEnabled();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isElasticSearchUpdateTablesWithSameUriEnabled() {
+        return this.metacatProperties.getElasticsearch().getPublish().isUpdateTablesWithSameUriEnabled();
+    }
+
     @Override
     public boolean isElasticSearchPublishPartitionEnabled() {
         return this.metacatProperties.getElasticsearch().getPublish().isPartitionEnabled();
@@ -108,6 +116,22 @@ public class DefaultConfigImpl implements Config {
     @Override
     public int getElasticSearchScrollTimeout() {
         return this.metacatProperties.getElasticsearch().getScroll().getTimeout().getMs();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getElasticSearchCallTimeout() {
+        return this.metacatProperties.getElasticsearch().getTimeout();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getElasticSearchBulkCallTimeout() {
+        return this.metacatProperties.getElasticsearch().getBulkTimeout();
     }
 
     /**

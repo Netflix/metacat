@@ -15,19 +15,23 @@
 package com.netflix.metacat.main.services.search;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.json.MetacatJson;
+import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.action.FailedNodeException;
@@ -89,7 +93,9 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     private final Config config;
     private final MetacatJson metacatJson;
     private XContentType contentType = Requests.INDEX_CONTENT_TYPE;
-    private final ElasticSearchMetric elasticSearchMetric;
+    private final Registry registry;
+    private final TimeValue esCallTimeout;
+    private final TimeValue esBulkCallTimeout;
 
     /**
      * Constructor.
@@ -97,18 +103,20 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      * @param client              elastic search client
      * @param config              config
      * @param metacatJson         json utility
-     * @param elasticSearchMetric elastic search metric
+     * @param registry            spectator registry
      */
     public ElasticSearchUtilImpl(
         @Nullable final Client client,
         final Config config,
         final MetacatJson metacatJson,
-        final ElasticSearchMetric elasticSearchMetric) {
+        final Registry registry) {
         this.config = config;
         this.client = client;
         this.metacatJson = metacatJson;
         this.esIndex = config.getEsIndex();
-        this.elasticSearchMetric = elasticSearchMetric;
+        this.registry = registry;
+        this.esCallTimeout = TimeValue.timeValueSeconds(config.getElasticSearchCallTimeout());
+        this.esBulkCallTimeout = TimeValue.timeValueSeconds(config.getElasticSearchBulkCallTimeout());
     }
 
     /**
@@ -118,14 +126,51 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     public void delete(final String type, final String id) {
         try {
             RETRY_ES_PUBLISH.call(() -> {
-                client.prepareDelete(esIndex, type, id).execute().actionGet();
+                client.prepareDelete(esIndex, type, id).execute().actionGet(esCallTimeout);
                 return null;
             });
         } catch (Exception e) {
-            log.error("Failed deleting metadata of type {} with id {}. {}", type, id, e);
-            this.elasticSearchMetric.getElasticSearchDeleteFailureCounter().increment();
-            log("ElasticSearchUtil.delete", type, id, null, e.getMessage(), e, true);
+            handleException("ElasticSearchUtil.delete", type, id, e,
+                Metrics.CounterElasticSearchDelete.getMetricName());
         }
+    }
+
+    private void handleException(final String request,
+                                 final String type,
+                                 final String id,
+                                 final Exception exception,
+                                 final String metricName) {
+        log.error("Failed {} metadata of type {} with id {}. {}", request, type, id, exception);
+        String exceptionName = exception.getClass().getSimpleName();
+        if (exception instanceof RetryException) {
+            final Throwable error = ((RetryException) exception).getLastFailedAttempt().getExceptionCause();
+            if (error != null) {
+                exceptionName = error.getClass().getSimpleName();
+            }
+        }
+        final Map<String, String> tags = ImmutableMap
+            .<String, String>builder().put("status", "failure").put("name", id).put("exception", exceptionName).build();
+        registry.counter(registry.createId(metricName).withTags(tags)).increment();
+        log(request, type, id, null, exception.getMessage(), exception, true);
+    }
+
+    private void handleException(final String request,
+                                 final String type,
+                                 final List<String> ids,
+                                 final Exception exception,
+                                 final String metricName) {
+        log.error("Failed {} metadata of type {} with ids {}. {}", request, type, ids, exception);
+        String exceptionName = exception.getClass().getSimpleName();
+        if (exception instanceof RetryException) {
+            final Throwable error = ((RetryException) exception).getLastFailedAttempt().getExceptionCause();
+            if (error != null) {
+                exceptionName = error.getClass().getSimpleName();
+            }
+        }
+        final Map<String, String> tags = ImmutableMap
+            .<String, String>builder().put("status", "failure").put("exception", exceptionName).build();
+        registry.counter(registry.createId(metricName).withTags(tags)).increment();
+        log(request, type, ids.toString(), null, exception.getMessage(), exception, true);
     }
 
     /**
@@ -152,14 +197,13 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                     .field(ElasticSearchDoc.Field.USER,
                     metacatRequestContext.getUserName()).endObject();
                 client.prepareUpdate(esIndex, type, id)
-                    .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder).get();
+                    .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder).get(esCallTimeout);
                 ensureMigrationByCopy(type, Collections.singletonList(id));
                 return null;
             });
         } catch (Exception e) {
-            log.error("Failed deleting metadata of type {} with id {}. {}", type, id, e);
-            this.elasticSearchMetric.getElasticSearchDeleteFailureCounter().increment();
-            log("ElasticSearchUtil.softDelete", type, id, null, e.getMessage(), e, true);
+            handleException("ElasticSearchUtil.softDelete", type, id, e,
+                Metrics.CounterElasticSearchDelete.getMetricName());
         }
     }
 
@@ -197,24 +241,20 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                         .setRetryOnConflict(NO_OF_CONFLICT_RETRIES)
                         .setDoc(metacatJson.toJsonAsBytes(node), XContentType.JSON));
                 });
-                final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                final BulkResponse bulkResponse = bulkRequest.execute().actionGet(esBulkCallTimeout);
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
                         if (item.isFailed()) {
-                            log.error("Failed updating metadata of type {} with id {}. Message: {}", type, item.getId(),
-                                item.getFailureMessage());
-                            this.elasticSearchMetric.getElasticSearchUpdateFailureCounter().increment();
-                            log("ElasticSearchUtil.updateDocs.item",
-                                type, item.getId(), null, item.getFailureMessage(), null, true);
+                            handleException("ElasticSearchUtil.updateDocs.item", type, item.getId(),
+                                item.getFailure().getCause(), Metrics.CounterElasticSearchUpdate.getMetricName());
                         }
                     }
                 }
                 return null;
             });
         } catch (Exception e) {
-            log.error("Failed updating metadata of type {} with ids {}. {}", type, ids, e);
-            this.elasticSearchMetric.getElasticSearchBulkUpdateFailureCounter().increment();
-            log("ElasticSearchUtil.updatDocs", type, ids.toString(), null, e.getMessage(), e, true);
+            handleException("ElasticSearchUtil.updatDocs", type, ids, e,
+                Metrics.CounterElasticSearchBulkUpdate.getMetricName());
         }
     }
 
@@ -280,7 +320,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 .setQuery(QueryBuilders.termQuery("serde.uri", dataUri))
                 .setSize(Integer.MAX_VALUE)
                 .setFetchSource(false);
-            final SearchResponse response = request.execute().actionGet();
+            final SearchResponse response = request.execute().actionGet(esCallTimeout);
             if (response.getHits().getHits().length != 0) {
                 ids = getIds(response);
             }
@@ -307,7 +347,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             .setQuery(queryBuilder)
             .setSize(Integer.MAX_VALUE)  // TODO May break if too many tables returned back, change to Scroll
             .setFetchSource(false);
-        final SearchResponse response = request.execute().actionGet();
+        final SearchResponse response = request.execute().actionGet(esCallTimeout);
         if (response.getHits().getHits().length != 0) {
             ids = getIds(response);
         }
@@ -330,7 +370,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             .setQuery(queryBuilder)
             .setSize(Integer.MAX_VALUE)
             .setFetchSource(false);
-        final SearchResponse response = request.execute().actionGet();
+        final SearchResponse response = request.execute().actionGet(esCallTimeout);
         if (response.getHits().getHits().length != 0) {
             result = getIds(response);
         }
@@ -363,7 +403,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             .setSearchType(SearchType.QUERY_THEN_FETCH)
             .setQuery(queryBuilder)
             .setSize(Integer.MAX_VALUE);
-        final SearchResponse response = request.execute().actionGet();
+        final SearchResponse response = request.execute().actionGet(esCallTimeout);
         if (response.getHits().getHits().length != 0) {
             result.addAll(parseResponse(response, valueType));
         }
@@ -392,7 +432,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     @Override
     public ElasticSearchDoc get(final String type, final String id, final String index) {
         ElasticSearchDoc result = null;
-        final GetResponse response = client.prepareGet(index, type, id).execute().actionGet();
+        final GetResponse response = client.prepareGet(index, type, id).execute().actionGet(esCallTimeout);
         if (response.isExists()) {
             result = parse(response);
         }
@@ -412,10 +452,10 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             .setQuery(QueryBuilders.termQuery("_type", type))
             .setFetchSource(false)
             .execute()
-            .actionGet();
+            .actionGet(esCallTimeout);
         while (true) {
             response = client.prepareSearchScroll(response.getScrollId())
-                .setScroll(new TimeValue(config.getElasticSearchScrollTimeout())).execute().actionGet();
+                .setScroll(new TimeValue(config.getElasticSearchScrollTimeout())).execute().actionGet(esCallTimeout);
             //Break condition: No hits are returned
             if (response.getHits().getHits().length == 0) {
                 break;
@@ -452,20 +492,23 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      */
     private void log(final String method, final String type, final String name, @Nullable final String data,
                      final String logMessage, @Nullable final Exception ex, final boolean error, final String index) {
-        try {
-            final Map<String, Object> source = Maps.newHashMap();
-            source.put("method", method);
-            source.put("name", name);
-            source.put("type", type);
-            source.put("data", data);
-            source.put("error", error);
-            source.put("message", logMessage);
-            source.put("details", Throwables.getStackTraceAsString(ex));
-            client.prepareIndex(index, "metacat-log").setSource(source).execute().actionGet();
-        } catch (Exception e) {
-            this.elasticSearchMetric.getElasticSearchLogFailureCounter().increment();
-            log.warn("Failed saving the log message in elastic search for index{} method {}, name {}. Message: {}",
-                index, method, name, e.getMessage());
+        if (config.isElasticSearchPublishMetacatLogEnabled()) {
+            try {
+                final Map<String, Object> source = Maps.newHashMap();
+                source.put("method", method);
+                source.put("qname", name);
+                source.put("type", type);
+                source.put("data", data);
+                source.put("error", error);
+                source.put("message", logMessage);
+                source.put("details", Throwables.getStackTraceAsString(ex));
+                client.prepareIndex(index, "metacat-log").setSource(source).execute().actionGet(esCallTimeout);
+            } catch (Exception e) {
+                registry.counter(registry.createId(Metrics.CounterElasticSearchLog.getMetricName())
+                    .withTags(Metrics.tagStatusFailureMap)).increment();
+                log.warn("Failed saving the log message in elastic search for index{} method {}, name {}. Message: {}",
+                    index, method, name, e.getMessage());
+            }
         }
     }
 
@@ -482,7 +525,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             .setQuery(QueryBuilders.termQuery("_all", searchString))
             .setSize(Integer.MAX_VALUE)
             .execute()
-            .actionGet();
+            .actionGet(esCallTimeout);
         if (response.getHits().getHits().length != 0) {
             result.addAll(parseResponse(response, TableDto.class));
         }
@@ -500,25 +543,21 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             RETRY_ES_PUBLISH.call(() -> {
                 final BulkRequestBuilder bulkRequest = client.prepareBulk();
                 ids.forEach(id -> bulkRequest.add(client.prepareDelete(esIndex, type, id)));
-                final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                final BulkResponse bulkResponse = bulkRequest.execute().actionGet(esBulkCallTimeout);
                 log.info("Deleting metadata of type {} with count {}", type, ids.size());
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
                         if (item.isFailed()) {
-                            log.error("Failed deleting metadata of type {} with id {}. Message: {}",
-                                type, item.getId(), item.getFailureMessage());
-                            this.elasticSearchMetric.getElasticSearchDeleteFailureCounter().increment();
-                            log("ElasticSearchUtil.bulkDelete.item", type, item.getId(), null, item.getFailureMessage(),
-                                null, true);
+                            handleException("ElasticSearchUtil.bulkDelete.item", type, item.getId(),
+                                item.getFailure().getCause(), Metrics.CounterElasticSearchDelete.getMetricName());
                         }
                     }
                 }
                 return null;
             });
         } catch (Exception e) {
-            log.error("Failed deleting metadata of type {} with ids {}. {}", type, ids, e);
-            this.elasticSearchMetric.getElasticSearchBulkDeleteFailureCounter().increment();
-            log("ElasticSearchUtil.bulkDelete", type, ids.toString(), null, e.getMessage(), e, true);
+            handleException("ElasticSearchUtil.bulkDelete", type, ids, e,
+                Metrics.CounterElasticSearchBulkDelete.getMetricName());
         }
     }
 
@@ -606,24 +645,20 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                     .field(ElasticSearchDoc.Field.USER, metacatRequestContext.getUserName()).endObject();
                 ids.forEach(id -> bulkRequest.add(client.prepareUpdate(esIndex, type, id)
                     .setRetryOnConflict(NO_OF_CONFLICT_RETRIES).setDoc(builder)));
-                final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                final BulkResponse bulkResponse = bulkRequest.execute().actionGet(esBulkCallTimeout);
                 if (bulkResponse.hasFailures()) {
                     for (BulkItemResponse item : bulkResponse.getItems()) {
                         if (item.isFailed()) {
-                            log.error("Failed soft deleting metadata of type {} with id {}. Message: {}",
-                                type, item.getId(), item.getFailureMessage());
-                            this.elasticSearchMetric.getElasticSearchDeleteFailureCounter().increment();
-                            log("ElasticSearchUtil.bulkSoftDelete.item",
-                                type, item.getId(), null, item.getFailureMessage(), null, true);
+                            handleException("ElasticSearchUtil.bulkSoftDelete.item", type, item.getId(),
+                                item.getFailure().getCause(), Metrics.CounterElasticSearchDelete.getMetricName());
                         }
                     }
                 }
                 return null;
             });
         } catch (Exception e) {
-            log.error("Failed soft deleting metadata of type {} with ids {}. {}", type, ids, e);
-            this.elasticSearchMetric.getElasticSearchBulkDeleteFailureCounter().increment();
-            log("ElasticSearchUtil.bulkSoftDelete", type, ids.toString(), null, e.getMessage(), e, true);
+            handleException("ElasticSearchUtil.bulkSoftDelete", type, ids, e,
+                Metrics.CounterElasticSearchBulkDelete.getMetricName());
         }
     }
 
@@ -640,15 +675,13 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
             RETRY_ES_PUBLISH.call(() -> {
                 final IndexRequestBuilder indexRequestBuilder = prepareIndexRequest(index, type, doc);
                 if (indexRequestBuilder != null) {
-                    indexRequestBuilder.execute().actionGet();
+                    indexRequestBuilder.execute().actionGet(esCallTimeout);
                 }
                 return null;
             });
         } catch (Exception e) {
-            log.error("Failed saving metadata of index {} type {} with id {}: {}. {}",
-                index, type, id, doc.getDto(), e);
-            this.elasticSearchMetric.getElasticSearchSaveFailureCounter().increment();
-            log("ElasticSearchUtil.saveToIndex", type, id, null, e.getMessage(), e, true, index);
+            handleException("ElasticSearchUtil.saveToIndex", type, id, e,
+                Metrics.CounterElasticSearchSave.getMetricName());
         }
     }
 
@@ -692,17 +725,14 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                     }
 
                     if (bulkRequest.numberOfActions() > 0) {
-                        final BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+                        final BulkResponse bulkResponse = bulkRequest.execute().actionGet(esBulkCallTimeout);
                         log.info("Bulk saving metadata of index {} type {} with size {}.",
                             index, type, docs.size());
                         if (bulkResponse.hasFailures()) {
                             for (BulkItemResponse item : bulkResponse.getItems()) {
                                 if (item.isFailed()) {
-                                    log.error("Failed saving metadata of {} index type {} with id {}. Message: {}",
-                                        index, type, item.getId(), item.getFailureMessage());
-                                    this.elasticSearchMetric.getElasticSearchSaveFailureCounter().increment();
-                                    log("ElasticSearchUtil.bulkSaveToIndex.index", type, item.getId(), null,
-                                        item.getFailureMessage(), null, true, index);
+                                    handleException("ElasticSearchUtil.bulkSaveToIndex.index", type, item.getId(),
+                                        item.getFailure().getCause(), Metrics.CounterElasticSearchSave.getMetricName());
                                 }
                             }
                         }
@@ -710,10 +740,9 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                     return null;
                 });
             } catch (Exception e) {
-                log.error("Failed saving metadatas of index {} type {}. {}", index, type, e);
-                this.elasticSearchMetric.getElasticSearchBulkSaveFailureCounter().increment();
                 final List<String> docIds = docs.stream().map(ElasticSearchDoc::getId).collect(Collectors.toList());
-                log("ElasticSearchUtil.bulkSaveToIndex", type, docIds.toString(), null, e.getMessage(), e, true, index);
+                handleException("ElasticSearchUtil.bulkSaveToIndex", type, docIds, e,
+                    Metrics.CounterElasticSearchBulkSave.getMetricName());
             }
         }
     }

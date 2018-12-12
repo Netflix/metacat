@@ -34,6 +34,8 @@ import java.util.List;
 @Data
 public class ElasticsearchProperties {
     private boolean enabled;
+    private long timeout = 30;
+    private long bulkTimeout = 120;
 
     @NonNull
     private Index index = new Index();
@@ -303,6 +305,7 @@ public class ElasticsearchProperties {
     @Data
     public static class Publish {
         private boolean partitionEnabled;
+        private boolean updateTablesWithSameUriEnabled;
         private boolean metacatLogEnabled;
     }
 }

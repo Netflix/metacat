@@ -22,6 +22,8 @@ import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.spectator.api.Counter
+import com.netflix.spectator.api.NoopRegistry
+import com.netflix.spectator.api.Registry
 import org.elasticsearch.action.ListenableActionFuture
 import org.elasticsearch.action.bulk.BulkItemResponse
 import org.elasticsearch.action.bulk.BulkRequestBuilder
@@ -57,8 +59,11 @@ class ElasticSearchUtilSpec extends Specification {
     MetacatJson metacatJson = new MetacatJsonLocator()
     @Shared
     String esIndex = "metacat"
+    @Shared
+    def registry = new NoopRegistry()
 
     def setupSpec() {
+        config.isElasticSearchPublishMetacatLogEnabled() >> true
         config.getEsIndex() >> esIndex
     }
 
@@ -70,11 +75,10 @@ class ElasticSearchUtilSpec extends Specification {
         def client = Mock(Client)
         def indexRequestBuilder = Mock(IndexRequestBuilder)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b")
         def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
             "testuser", false)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
 
         when:
             es.save(Type.table.name(), id, doc)
@@ -83,7 +87,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * client.prepareIndex(_, _, _) >> indexRequestBuilder
         1 * indexRequestBuilder.setSource(_, _) >> indexRequestBuilder
         1 * indexRequestBuilder.execute() >> future
-        1 * future.actionGet()
+        1 * future.actionGet(_)
     }
 
     def "Test save for #id throw other exception"() {
@@ -95,13 +99,11 @@ class ElasticSearchUtilSpec extends Specification {
         def indexRequestBuilder = Mock(IndexRequestBuilder)
         def indexRequestBuilder2 = Mock(IndexRequestBuilder)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
-        def counter = Mock(Counter)
         def response = Mock(Response)
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
         def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
             "testuser", false)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
 
         when:
         es.save(Type.table.name(), id, doc)
@@ -110,12 +112,10 @@ class ElasticSearchUtilSpec extends Specification {
         3 * client.prepareIndex(_, _, _) >> indexRequestBuilder
         3 * indexRequestBuilder.setSource(_,_) >> indexRequestBuilder
         3 * indexRequestBuilder.execute() >> { throw new TransportException("trans error")}
-        1 * elasticSearchMetric.getElasticSearchSaveFailureCounter() >> counter
-        1 * counter.increment()
         1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
         1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
         1 * indexRequestBuilder2.execute()  >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
     }
 
     def "Test save for #id throw other exception with log error"() {
@@ -127,13 +127,10 @@ class ElasticSearchUtilSpec extends Specification {
         def indexRequestBuilder = Mock(IndexRequestBuilder)
         def indexRequestBuilder2 = Mock(IndexRequestBuilder)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
-        def counter = Mock(Counter)
-        def counter2 = Mock(Counter)
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
         def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
             "testuser", false)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
 
         when:
         es.save(Type.table.name(), id, doc)
@@ -142,14 +139,10 @@ class ElasticSearchUtilSpec extends Specification {
         3 * client.prepareIndex(_, _, _) >> indexRequestBuilder
         3 * indexRequestBuilder.setSource(_,_) >> indexRequestBuilder
         3 * indexRequestBuilder.execute() >> { throw new TransportException("trans error")}
-        1 * elasticSearchMetric.getElasticSearchSaveFailureCounter() >> counter
-        1 * counter.increment()
         1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
         1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
         1 * indexRequestBuilder2.execute()  >> future
-        1 * future.actionGet() >> { throw new Exception("log error")}
-        1 * elasticSearchMetric.getElasticSearchLogFailureCounter() >> counter2
-        1 * counter2.increment()
+        1 * future.actionGet(_) >> { throw new Exception("log error")}
     }
 
     def "Test delete for #id"() {
@@ -157,8 +150,7 @@ class ElasticSearchUtilSpec extends Specification {
         def client = Mock(Client)
         def deleteRequestBuilder = Mock(DeleteRequestBuilder)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
 
         when:
         es.delete(Type.table.name(), id)
@@ -166,7 +158,7 @@ class ElasticSearchUtilSpec extends Specification {
         then:
         1 * client.prepareDelete(_, _, _) >> deleteRequestBuilder
         1 * deleteRequestBuilder.execute() >> future
-        1 * future.actionGet()
+        1 * future.actionGet(_)
     }
 
     def "Test delete for #id throw Exception"() {
@@ -175,10 +167,8 @@ class ElasticSearchUtilSpec extends Specification {
         def deleteRequestBuilder = Mock(DeleteRequestBuilder)
         def indexRequestBuilder2 = Mock(IndexRequestBuilder)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
-        def counter = Mock(Counter)
         def response = Mock(Response)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
 
         when:
         es.delete(Type.table.name(), id)
@@ -186,12 +176,10 @@ class ElasticSearchUtilSpec extends Specification {
         then:
         1 * client.prepareDelete(_, _, _) >> deleteRequestBuilder
         1 * deleteRequestBuilder.execute() >> { throw new IOException("ouch", new Throwable("Io exception")) }
-        1 * elasticSearchMetric.getElasticSearchDeleteFailureCounter() >> counter
-        1 * counter.increment()
         1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
         1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
         1 * indexRequestBuilder2.execute()  >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
     }
 
     def "Test updates for #id"() {
@@ -204,8 +192,7 @@ class ElasticSearchUtilSpec extends Specification {
         def updateRequestBuilder = Mock(UpdateRequestBuilder)
         def future = Mock(ListenableActionFuture)
         def bulkResponse = Mock(BulkResponse)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
         def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
             "testuser", false)
@@ -222,7 +209,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_,_) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> bulkResponse
+        1 * future.actionGet(_) >> bulkResponse
         1 * bulkResponse.hasFailures() >> false
     }
 
@@ -232,14 +219,13 @@ class ElasticSearchUtilSpec extends Specification {
         def tableName = 'part'
         def id = 'prodhive/estestdb/part_test'
         def client = Mock(Client)
-        def counter = Mock(Counter)
-        def counter2 = Mock(Counter)
         def bulkRequestBuilder = Mock(BulkRequestBuilder)
         def updateRequestBuilder = Mock(UpdateRequestBuilder)
         def future = Mock(ListenableActionFuture)
         def bulkResponse = Mock(BulkResponse)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def failure = Mock(BulkItemResponse.Failure)
+        failure.getCause() >> new Exception()
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
         def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
             "testuser", false)
@@ -258,16 +244,12 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_,_) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> bulkResponse
+        1 * future.actionGet(_) >> bulkResponse
         1 * bulkResponse.hasFailures() >> true
         1 * bulkResponse.getItems() >> [bulkItemResponse]
         1 * bulkItemResponse.isFailed() >> true
-        2 * bulkItemResponse.getFailureMessage() >> "ouch failed"
-        2 * bulkItemResponse.getId() >> "1"
-        1 * elasticSearchMetric.getElasticSearchUpdateFailureCounter() >> counter
-        1 * counter.increment()
-        1 * elasticSearchMetric.getElasticSearchLogFailureCounter() >> counter2
-        1 * counter2.increment()
+        1 * bulkItemResponse.getFailure() >> failure
+        1 * bulkItemResponse.getId() >> "1"
     }
 
     def "Test updates for #id with Exception "()  {
@@ -276,12 +258,10 @@ class ElasticSearchUtilSpec extends Specification {
         def tableName = 'part'
         def id = 'prodhive/estestdb/part_test'
         def client = Mock(Client)
-        def counter = Mock(Counter)
         def bulkRequestBuilder = Mock(BulkRequestBuilder)
         def updateRequestBuilder = Mock(UpdateRequestBuilder)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
         def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
             "testuser", false)
@@ -300,13 +280,11 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_,_) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> {throw new Exception("ouch", new Throwable("Exception")) }
-        1 * elasticSearchMetric.getElasticSearchBulkUpdateFailureCounter() >> counter
-        1 * counter.increment()
+        1 * future.actionGet(_) >> {throw new Exception("ouch", new Throwable("Exception")) }
         1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
         1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
         1 * indexRequestBuilder2.execute()  >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
     }
 
     def "Test get for #id"() {
@@ -314,9 +292,8 @@ class ElasticSearchUtilSpec extends Specification {
         def client = Mock(Client)
         def getRequestBuilder = Mock(GetRequestBuilder)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
         def response = Mock(GetResponse)
-        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), registry)
         def responseMap = Mock(Map)
         when:
         es.get(Type.table.name(), id)
@@ -324,7 +301,7 @@ class ElasticSearchUtilSpec extends Specification {
         then:
         1 * client.prepareGet(_, _, _) >> getRequestBuilder
         1 * getRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.exists >> true
         1 * response.getSourceAsMap() >> responseMap
         1 * responseMap.get(ElasticSearchDoc.Field.USER) >> "user"
@@ -340,16 +317,15 @@ class ElasticSearchUtilSpec extends Specification {
         def client = Mock(Client)
         def getRequestBuilder = Mock(GetRequestBuilder)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
         def response = Mock(GetResponse)
-        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), registry)
         when:
         es.get(Type.table.name(), id)
 
         then:
         1 * client.prepareGet(_, _, _) >> getRequestBuilder
         1 * getRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         1 * response.exists >> false
     }
 
@@ -357,9 +333,8 @@ class ElasticSearchUtilSpec extends Specification {
         def name = QualifiedName.fromString("testhive/test/testtable")
         def client = Mock(Client)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
         def response = Mock(SearchResponse)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
         def searchRequestBuilder = Mock(SearchRequestBuilder)
         def searchHits = Mock(SearchHits)
         def hit = Mock(SearchHit)
@@ -374,7 +349,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
         1 * searchRequestBuilder.setFetchSource(false) >> searchRequestBuilder
         1 * searchRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.getHits() >> searchHits
         2 * searchHits.getHits() >> [hit]
     }
@@ -387,9 +362,8 @@ class ElasticSearchUtilSpec extends Specification {
 
         def client = Mock(Client)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
         def response = Mock(SearchResponse)
-        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), registry)
         def searchRequestBuilder = Mock(SearchRequestBuilder)
         def searchHits = Mock(SearchHits)
         def hit = Mock(SearchHit)
@@ -403,7 +377,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * searchRequestBuilder.setQuery(_ as QueryBuilder) >> searchRequestBuilder
         1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
         1 * searchRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.getHits() >> searchHits
         2 * searchHits.getHits() >> [hit]
         1 *  hit.getSourceAsString() >> "test"
@@ -413,9 +387,8 @@ class ElasticSearchUtilSpec extends Specification {
         def uri = "s3://bucket/testhive/test/testtable"
         def client = Mock(Client)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
         def response = Mock(SearchResponse)
-        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), registry)
         def searchRequestBuilder = Mock(SearchRequestBuilder)
         def searchHits = Mock(SearchHits)
         def hit = Mock(SearchHit)
@@ -430,7 +403,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
         1 * searchRequestBuilder.setFetchSource(false) >> searchRequestBuilder
         1 * searchRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.getHits() >> searchHits
         2 * searchHits.getHits() >> [hit]
     }
@@ -440,9 +413,8 @@ class ElasticSearchUtilSpec extends Specification {
         def excludeQualifiedNames = []
         def client = Mock(Client)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
         def response = Mock(SearchResponse)
-        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), registry)
         def searchRequestBuilder = Mock(SearchRequestBuilder)
         def searchHits = Mock(SearchHits)
         def hit = Mock(SearchHit)
@@ -457,7 +429,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
         1 * searchRequestBuilder.setFetchSource(false) >> searchRequestBuilder
         1 * searchRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.getHits() >> searchHits
         2 * searchHits.getHits() >> [hit]
 
@@ -468,9 +440,8 @@ class ElasticSearchUtilSpec extends Specification {
         def excludeQualifiedNames = []
         def client = Mock(Client)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
         def response = Mock(SearchResponse)
-        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, Mock(MetacatJsonLocator), registry)
         def searchRequestBuilder = Mock(SearchRequestBuilder)
         def searchHits = Mock(SearchHits)
         def hit = Mock(SearchHit)
@@ -484,7 +455,7 @@ class ElasticSearchUtilSpec extends Specification {
         1 * searchRequestBuilder.setQuery(_ as QueryBuilder) >> searchRequestBuilder
         1 * searchRequestBuilder.setSize(Integer.MAX_VALUE) >> searchRequestBuilder
         1 * searchRequestBuilder.execute() >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
         2 * response.getHits() >> searchHits
         2 * searchHits.getHits() >> [hit]
         1 *  hit.getSourceAsString() >> "test"
@@ -497,8 +468,7 @@ class ElasticSearchUtilSpec extends Specification {
         def updateRequestBuilder = Mock(UpdateRequestBuilder)
         def future = Mock(ListenableActionFuture)
         def bulkResponse = Mock(BulkResponse)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
         def metacatConext = Mock(MetacatRequestContext)
         when:
         es.softDelete(Type.table.name(), ids, metacatConext)
@@ -511,21 +481,20 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_ as XContentBuilder) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> bulkResponse
+        1 * future.actionGet(_) >> bulkResponse
         1 * bulkResponse.hasFailures() >> false
     }
 
     def "Test softDelete with failure"()  {
         def ids = [ "testhive/test/testtable"]
         def client = Mock(Client)
-        def counter = Mock(Counter)
-        def counter2 = Mock(Counter)
         def bulkRequestBuilder = Mock(BulkRequestBuilder)
         def updateRequestBuilder = Mock(UpdateRequestBuilder)
         def future = Mock(ListenableActionFuture)
+        def failure = Mock(BulkItemResponse.Failure)
+        failure.getCause() >> new Exception()
         def bulkResponse = Mock(BulkResponse)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
 
         def bulkItemResponse = Mock(BulkItemResponse)
 
@@ -541,27 +510,21 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_ as XContentBuilder) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> bulkResponse
+        1 * future.actionGet(_) >> bulkResponse
         1 * bulkResponse.hasFailures() >> true
         1 * bulkResponse.getItems() >> [bulkItemResponse]
         1 * bulkItemResponse.isFailed() >> true
-        2 * bulkItemResponse.getFailureMessage() >> "ouch failed"
-        2 * bulkItemResponse.getId() >> "1"
-        1 * elasticSearchMetric.getElasticSearchDeleteFailureCounter() >> counter
-        1 * counter.increment()
-        1 * elasticSearchMetric.getElasticSearchLogFailureCounter() >> counter2
-        1 * counter2.increment()
+        1 * bulkItemResponse.getFailure() >> failure
+        1 * bulkItemResponse.getId() >> "1"
     }
 
     def "Test softDelete with Exception "()  {
         def ids = [ "testhive/test/testtable"]
         def client = Mock(Client)
-        def counter = Mock(Counter)
         def bulkRequestBuilder = Mock(BulkRequestBuilder)
         def updateRequestBuilder = Mock(UpdateRequestBuilder)
         def future = Mock(ListenableActionFuture)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
         def indexRequestBuilder2 = Mock(IndexRequestBuilder)
         def metacatConext = Mock(MetacatRequestContext)
         def response = Mock(Response)
@@ -577,13 +540,11 @@ class ElasticSearchUtilSpec extends Specification {
         1 * updateRequestBuilder.setDoc(_ as XContentBuilder) >> updateRequestBuilder
         1 * bulkRequestBuilder.add(_ as UpdateRequestBuilder)
         1 * bulkRequestBuilder.execute() >> future
-        1 * future.actionGet() >> {throw new Exception("ouch", new Throwable("Exception")) }
-        1 * elasticSearchMetric.getElasticSearchBulkDeleteFailureCounter() >> counter
-        1 * counter.increment()
+        1 * future.actionGet(_) >> {throw new Exception("ouch", new Throwable("Exception")) }
         1 * client.prepareIndex(_, "metacat-log") >> indexRequestBuilder2
         1 * indexRequestBuilder2.setSource(_ as Map) >> indexRequestBuilder2
         1 * indexRequestBuilder2.execute()  >> future
-        1 * future.actionGet() >> response
+        1 * future.actionGet(_) >> response
     }
 
     def "Test toJsonString" () {
@@ -591,11 +552,10 @@ class ElasticSearchUtilSpec extends Specification {
         def databaseName = 'estestdb'
         def tableName = 'part'
         def client = Mock(Client)
-        def elasticSearchMetric = Mock(ElasticSearchMetric)
         def table = DataDtoProvider.getTable(catalogName, databaseName, tableName, "estestdb", "s3:/a/b")
         def ElasticSearchDoc doc = new ElasticSearchDoc(table.getName().toString(), table,
             "testuser", false)
-        def es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        def es = new ElasticSearchUtilImpl(client, config, metacatJson, registry)
         when:
         String str = es.toJsonString(doc)
         ObjectNode nodes = metacatJson.parseJsonObject(str)

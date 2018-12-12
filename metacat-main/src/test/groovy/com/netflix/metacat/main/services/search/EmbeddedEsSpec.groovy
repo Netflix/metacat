@@ -21,6 +21,7 @@ import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.testdata.provider.DataDtoProvider
+import com.netflix.spectator.api.NoopRegistry
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
@@ -61,8 +62,6 @@ class EmbeddedEsSpec extends Specification {
     String esIndex = "metacat"
     @Shared
     String esMergeIndex = "metacat_v2"
-    @Shared
-    ElasticSearchMetric elasticSearchMetric
 
     @Shared
     org.elasticsearch.node.Node node
@@ -92,11 +91,17 @@ class EmbeddedEsSpec extends Specification {
 
         metacatJson = new MetacatJsonLocator()
         config.getEsIndex() >> esIndex
-        es = new ElasticSearchUtilImpl(client, config, metacatJson, elasticSearchMetric)
+        config.getElasticSearchCallTimeout() >> 10
+        config.getElasticSearchBulkCallTimeout() >> 10
+        config.isElasticSearchPublishMetacatLogEnabled() >> true
+        es = new ElasticSearchUtilImpl(client, config, metacatJson, new NoopRegistry())
 
         config2.getEsIndex() >> esIndex
         config2.getMergeEsIndex() >> esMergeIndex
-        esMig = new ElasticSearchUtilImpl(client, config2, metacatJson, elasticSearchMetric)
+        config2.getElasticSearchCallTimeout() >> 10
+        config2.getElasticSearchBulkCallTimeout() >> 10
+        config2.isElasticSearchPublishMetacatLogEnabled() >> true
+        esMig = new ElasticSearchUtilImpl(client, config2, metacatJson, new NoopRegistry())
     }
 
     def cleanupSpec() {
@@ -134,11 +139,8 @@ class EmbeddedEsSpec extends Specification {
         es.save(Type.table.name(), [new ElasticSearchDoc(table.getName().toString(), table,
             "testuser", false)])
         def result = (TableDto) es.get(Type.table.name(), id).getDto()
-        List<QualifiedName> names = new ArrayList<>()
-        names.add(QualifiedName.fromString('prodhive/amajumdar/part_test'))
-
         def result2 = es.getQualifiedNamesByMarkerByNames(Type.table.name(),
-                                           names,
+                                           [QualifiedName.fromString(id)],
                                             Instant.now().toInstant(),
                                             new ArrayList<QualifiedName>(),TableDto.class )
 

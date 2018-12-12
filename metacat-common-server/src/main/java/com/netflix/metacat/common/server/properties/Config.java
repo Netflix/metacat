@@ -38,6 +38,14 @@ public interface Config {
     boolean isElasticSearchEnabled();
 
     /**
+     * If true, a table update should trigger updating data metadata of all table documents containing the same uri.
+     *
+     * @return true, if data metadata of all table documents needs to be updated if their uri is the same
+     * as the updated table.
+     */
+    boolean isElasticSearchUpdateTablesWithSameUriEnabled();
+
+    /**
      * Enable publishing partitions to elastic search.
      *
      * @return true if publishing partitions to elastic search is enabled
@@ -85,6 +93,20 @@ public interface Config {
      * @return elastic search scroll timeout
      */
     int getElasticSearchScrollTimeout();
+
+    /**
+     * Elastic search call timeout.
+     *
+     * @return elastic search call timeout
+     */
+    long getElasticSearchCallTimeout();
+
+    /**
+     * Elastic search bulk call timeout.
+     *
+     * @return elastic search bulk call timeout
+     */
+    long getElasticSearchBulkCallTimeout();
 
     /**
      * Names to exclude when refreshing elastic search.
@@ -408,6 +430,5 @@ public interface Config {
      * @return Refresh Iceberg table max metadata file size.
      */
     long getIcebergMaxMetadataFileSize();
-
 }
 
