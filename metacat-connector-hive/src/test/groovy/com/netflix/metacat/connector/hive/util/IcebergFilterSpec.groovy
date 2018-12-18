@@ -34,7 +34,7 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper
 import com.netflix.spectator.api.NoopRegistry
 import spock.lang.Specification
 
-class IcebergPartitionFilterSpec extends Specification{
+class IcebergFilterSpec extends Specification{
 
 
     def 'Test iceberg filter' () {
@@ -54,7 +54,6 @@ class IcebergPartitionFilterSpec extends Specification{
         _ * type.typeId() >> Type.TypeID.INTEGER
         1 * app.name() >> "app"
 
-
         where:
         filter                           | resultop                     | resultstring
         'dateint<=8 and dateint>=5'      | Expression.Operation.AND     | "(ref(name=\"dateint\") <= 8 and ref(name=\"dateint\") >= 5)"
@@ -70,6 +69,31 @@ class IcebergPartitionFilterSpec extends Specification{
         'app==\"abc\"'                   | Expression.Operation.EQ      | "ref(name=\"app\") == \"abc\""
         'app!=\"abc\"'                   | Expression.Operation.NOT_EQ      | "ref(name=\"app\") != \"abc\""
         'app>=\"abc\"'                   | Expression.Operation.GT_EQ      | "ref(name=\"app\") >= \"abc\""
+        'dateCreated>=150000'            | Expression.Operation.GT_EQ      | "ref(name=\"dateCreated\") >= 150000"
+        'lastUpdated>=150000'            | Expression.Operation.GT_EQ      | "ref(name=\"lastUpdated\") >= 150000"
+        'dateint<5 and dateCreated>=150000'   | Expression.Operation.AND      | "(ref(name=\"dateint\") < 5 and ref(name=\"dateCreated\") >= 150000)"
+    }
+
+    def 'Test iceberg filter throw exceptions' () {
+        def dateint = Mock(Types.NestedField)
+        def app = Mock(Types.NestedField)
+        def type = Mock(Type)
+        when:
+        def fields = [dateint, app]
+        final IcebergFilterGenerator generator = new IcebergFilterGenerator(fields);
+        Expression expression = (Expression) new PartitionParser(new StringReader(filter)).filter()
+            .jjtAccept(generator, null);
+        then:
+        thrown(RuntimeException)
+        1 * dateint.name() >> "dateint"
+        _ * dateint.type() >> type
+        _ * type.typeId() >> Type.TypeID.INTEGER
+        1 * app.name() >> "app"
+
+        where:
+        filter                           | resultop                     | resultstring
+        'dateintcde<=8 and dateint>=5'   | Expression.Operation.AND     | "(ref(name=\"dateint\") <= 8 and ref(name=\"dateint\") >= 5)"
+        'dateCreated_etest>=150000'      | Expression.Operation.GT_EQ      | "ref(name=\"dateCreated\") >= 150000"
     }
 
     def 'Test get icebergPartitionMap default iceberg summary fetch size' () {
