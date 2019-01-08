@@ -373,6 +373,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                     tableName.getDatabaseName(),
                     tableName.getTableName(),
                     partitionName))
+                .serde(StorageInfo.builder().uri("").build()) //set uri to empty string for supporting psycho pattern
                 .dataMetrics(icebergTableHandler.getDataMetadataFromIcebergMetrics(partitionMap.get(partitionName)))
                 .auditInfo(AuditInfo.builder().createdBy(tableAuditInfo.getCreatedBy())
                     .createdDate(fromEpochMilliToDate(partitionMap.get(partitionName).dataTimestampMillis()))

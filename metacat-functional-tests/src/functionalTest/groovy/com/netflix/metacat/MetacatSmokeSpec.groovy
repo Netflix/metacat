@@ -564,11 +564,7 @@ class MetacatSmokeSpec extends Specification {
 
 
     }
-
-
-
-
-
+    
     @Unroll
     def "Test delete table #catalogName/#databaseName/#tableName"() {
         given:
