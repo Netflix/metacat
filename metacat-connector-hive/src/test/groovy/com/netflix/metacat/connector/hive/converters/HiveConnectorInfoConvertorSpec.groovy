@@ -508,7 +508,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         def type = Mock(Type)
         when:
         def tableInfo = converter.fromIcebergTableToTableInfo(QualifiedName.ofTable('c', 'd', 't'),
-           icebergTable, "/tmp/test", StorageInfo.builder().build(), AuditInfo.builder().build() )
+           icebergTable, "/tmp/test", AuditInfo.builder().build() )
         then:
         1 * icebergTable.properties() >> ["test":"abd"]
         1 * icebergTable.spec() >>  partSpec

@@ -55,6 +55,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -373,7 +374,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                     tableName.getDatabaseName(),
                     tableName.getTableName(),
                     partitionName))
-                .serde(StorageInfo.builder().uri("").build()) //set uri to empty string for supporting psycho pattern
+                .serde(StorageInfo.builder().uri(
+                    String.format("s3://bk/%s", UUID.randomUUID()
+                    )).build()) //set uri to empty string for supporting psycho pattern
                 .dataMetrics(icebergTableHandler.getDataMetadataFromIcebergMetrics(partitionMap.get(partitionName)))
                 .auditInfo(AuditInfo.builder().createdBy(tableAuditInfo.getCreatedBy())
                     .createdDate(fromEpochMilliToDate(partitionMap.get(partitionName).dataTimestampMillis()))
