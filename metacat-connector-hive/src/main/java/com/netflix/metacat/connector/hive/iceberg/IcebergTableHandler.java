@@ -42,7 +42,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Iceberg table handler which interacts with iceberg library
@@ -61,8 +63,6 @@ public class IcebergTableHandler {
     private IcebergTableCriteria icebergTableCriteria;
     @VisibleForTesting
     private IcebergTableOpWrapper icebergTableOpWrapper;
-    @VisibleForTesting
-    private IcebergTableRequestMetrics icebergTableRequestMetrics;
 
     /**
      * Constructor.
@@ -77,7 +77,6 @@ public class IcebergTableHandler {
             .forEach(key -> conf.set(key, connectorContext.getConfiguration().get(key)));
         this.icebergTableCriteria = new IcebergTableCriteriaImpl(connectorContext);
         this.icebergTableOpWrapper = new IcebergTableOpWrapper(connectorContext);
-        this.icebergTableRequestMetrics = new IcebergTableRequestMetrics(connectorContext.getRegistry());
     }
 
     /**
@@ -119,9 +118,9 @@ public class IcebergTableHandler {
         } finally {
             final long duration = registry.clock().wallTime() - start;
             log.info("Time taken to getIcebergTablePartitionMap {} is {} ms", tableName, duration);
-            this.icebergTableRequestMetrics.recordTimer(
+            this.recordTimer(
                 IcebergRequestMetrics.TagGetPartitionMap.getMetricName(), duration);
-            this.icebergTableRequestMetrics.increaseCounter(
+            this.increaseCounter(
                 IcebergRequestMetrics.TagGetPartitionMap.getMetricName(), tableName);
         }
 
@@ -145,9 +144,8 @@ public class IcebergTableHandler {
         } finally {
             final long duration = registry.clock().wallTime() - start;
             log.info("Time taken to getIcebergTable {} is {} ms", tableName, duration);
-            this.icebergTableRequestMetrics.recordTimer(IcebergRequestMetrics.TagLoadTable.getMetricName(), duration);
-            this.icebergTableRequestMetrics.increaseCounter(
-                IcebergRequestMetrics.TagLoadTable.getMetricName(), tableName);
+            this.recordTimer(IcebergRequestMetrics.TagLoadTable.getMetricName(), duration);
+            this.increaseCounter(IcebergRequestMetrics.TagLoadTable.getMetricName(), tableName);
         }
     }
 
@@ -260,4 +258,27 @@ public class IcebergTableHandler {
         }
     }
 
+    /**
+     * record the duration to timer.
+     *
+     * @param requestTag tag name.
+     * @param duration   duration of the operation.
+     */
+    private void recordTimer(final String requestTag, final long duration) {
+        final HashMap<String, String> tags = new HashMap<>();
+        tags.put("request", requestTag);
+        this.registry.timer(registry.createId(IcebergRequestMetrics.TimerIcebergRequest.getMetricName())
+                .withTags(tags))
+                .record(duration, TimeUnit.MILLISECONDS);
+        log.debug("## Time taken to complete {} is {} ms", requestTag, duration);
+    }
+
+    /**
+     * increase the counter of operation.
+     * @param metricName metric name
+     * @param tableName table name of the operation
+     */
+    private void increaseCounter(final String metricName, final QualifiedName tableName) {
+        this.registry.counter(registry.createId(metricName).withTags(tableName.parts())).increment();
+    }
 }

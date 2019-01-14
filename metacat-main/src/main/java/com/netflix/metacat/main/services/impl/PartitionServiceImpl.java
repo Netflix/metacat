@@ -201,8 +201,9 @@ public class PartitionServiceImpl implements PartitionService {
                     final Map<String, ObjectNode> dataMetadataMap = metadataResults.get(1);
                     result.forEach(partitionDto -> userMetadataService.populateMetadata(partitionDto,
                         definitionMetadataMap.get(partitionDto.getName().toString()),
-                        partitionDto.isDataExternal() ? dataMetadataMap.get(partitionDto.getDataUri())
-                            : prePopulatedMap.getOrDefault(partitionDto.getName().toString(), null)));
+                        prePopulatedMap.containsKey(partitionDto.getName().toString())
+                            ? prePopulatedMap.get(partitionDto.getName().toString()) //using the prepopulated datametric
+                            : dataMetadataMap.get(partitionDto.getDataUri())));
                 } catch (Exception e) {
                     Throwables.propagate(e);
                 }

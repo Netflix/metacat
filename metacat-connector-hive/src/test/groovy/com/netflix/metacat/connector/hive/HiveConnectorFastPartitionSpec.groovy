@@ -90,17 +90,19 @@ class HiveConnectorFastPartitionSpec extends Specification {
         partionInfos.collect { [it.getName().getPartitionName(),
                                 it.getAudit().createdDate.toInstant().toEpochMilli(),
                                 it.getAudit().lastModifiedDate.toInstant().toEpochMilli(),
-                                it.getAudit().createdBy,
-                                it.getSerde().uri] } == results
+                                it.getAudit().createdBy]} == results
+        !partionInfos.collect { it.getSerde().uri}.unique().contains(null)
+        partionInfos.collect { it.getSerde().uri}.unique().size() == uniquri
         where:
-        partitionListRequest | results
+        partitionListRequest | results | uniquri
         new PartitionListRequest(null, ["dateint=20170101/hour=1"],false, null,
-            new Sort(), null ) | [["dateint=20170101/hour=1", 1234500000, 1234500000, "metacat_test" ,""]]
+            new Sort(), null ) | [["dateint=20170101/hour=1", 1234500000, 1234500000, "metacat_test"]] | 1
         new PartitionListRequest(null, null, false, null,
-            new Sort(), null) | [["dateint=20170101/hour=1", 1234500000, 1234500000, "metacat_test",""], ["dateint=20170102/hour=1", 1234500000, 1234500000, "metacat_test",""], ["dateint=20170103/hour=1", 1234500000, 1234500000, "metacat_test",""]]
+            new Sort(), null) | [["dateint=20170101/hour=1", 1234500000, 1234500000, "metacat_test"], ["dateint=20170102/hour=1", 1234500000, 1234500000, "metacat_test"], ["dateint=20170103/hour=1", 1234500000, 1234500000, "metacat_test"]] | 3
         new PartitionListRequest(null, null, false, null,
-            new Sort(null, SortOrder.DESC), null) | [["dateint=20170103/hour=1", 1234500000, 1234500000, "metacat_test",""], ["dateint=20170102/hour=1", 1234500000, 1234500000, "metacat_test",""], ["dateint=20170101/hour=1", 1234500000, 1234500000, "metacat_test",""]]
+            new Sort(null, SortOrder.DESC), null) | [["dateint=20170103/hour=1", 1234500000, 1234500000, "metacat_test"], ["dateint=20170102/hour=1", 1234500000, 1234500000, "metacat_test"], ["dateint=20170101/hour=1", 1234500000, 1234500000, "metacat_test"]] | 3
     }
+
 
     def "Test for get iceberg table partitionKeys" (){
         when:
