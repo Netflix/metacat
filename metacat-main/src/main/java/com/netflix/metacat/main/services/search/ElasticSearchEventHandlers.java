@@ -31,8 +31,8 @@ import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.spectator.api.Registry;
-import com.netflix.spectator.api.Timer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 
@@ -71,11 +71,11 @@ public class ElasticSearchEventHandlers {
      * Constructor.
      *
      * @param es       elastic search util
-     * @param registry registry to spectator
+     * @param registry registry to micrometer
      * @param config   configurations
      */
     public ElasticSearchEventHandlers(final ElasticSearchUtil es,
-                                      final Registry registry,
+                                      final MeterRegistry registry,
                                       final Config config) {
         this.es = es;
         this.metacatJsonLocator = new MetacatJsonLocator();

@@ -30,6 +30,7 @@ import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.common.server.util.RegistryUtil;
 import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
@@ -38,7 +39,7 @@ import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.metacat.connector.hive.util.PartitionUtil;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.Path;
@@ -69,7 +70,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     private DirectSqlGetPartition directSqlGetPartition;
     private DirectSqlSavePartition directSqlSavePartition;
     private Warehouse warehouse;
-    private Registry registry;
+    private MeterRegistry registry;
     @VisibleForTesting
     private IcebergTableHandler icebergTableHandler;
 
@@ -197,7 +198,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             || (table.getParameters() != null && Boolean.parseBoolean(table.getParameters()
             .getOrDefault("hive.use.embedded.sql.save.partitions", "false")));
         if (useHiveFastServiceForSavePartitions) {
-            final long start = registry.clock().wallTime();
+            final long start = System.currentTimeMillis();
             try {
                 if (!existingPartitionHolders.isEmpty()) {
                     final List<PartitionInfo> existingPartitionInfos = existingPartitionHolders.stream()
@@ -208,9 +209,9 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                 copyTableSdToPartitionInfosSd(addedPartitionInfos, table);
                 createLocationForPartitions(tableQName, addedPartitionInfos, table);
             } finally {
-                registry.timer(registry
-                    .createId(HiveMetrics.TagCreatePartitionLocations.getMetricName()).withTags(tableQName.parts()))
-                    .record(registry.clock().wallTime() - start, TimeUnit.MILLISECONDS);
+                registry.timer(HiveMetrics.TagCreatePartitionLocations.getMetricName(),
+                    RegistryUtil.qualifiedNameToTagsSet(tableQName))
+                    .record(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
             }
             directSqlSavePartition.addUpdateDropPartitions(tableQName, table, addedPartitionInfos,
                 existingPartitionHolders, deletePartitionNames);
@@ -256,15 +257,15 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             location = path.toString();
             partitionInfo.getSerde().setUri(location);
             if (doFileSystemCalls) {
-                registry.counter(registry.createId(HiveMetrics.CounterHivePartitionFileSystemCall.getMetricName())
-                    .withTags(tableQName.parts())).increment();
+                registry.counter(HiveMetrics.CounterHivePartitionFileSystemCall.getMetricName(),
+                    RegistryUtil.qualifiedNameToTagsSet(tableQName)).increment();
                 try {
                     if (!warehouse.isDir(path)) {
                         //
                         // Added to track the number of partition locations that do not exist before
                         // adding the partition metadata
-                        registry.counter(registry.createId(HiveMetrics.CounterHivePartitionPathIsNotDir.getMetricName())
-                            .withTags(tableQName.parts())).increment();
+                        registry.counter(HiveMetrics.CounterHivePartitionPathIsNotDir.getMetricName(),
+                            RegistryUtil.qualifiedNameToTagsSet(tableQName)).increment();
                         log.info(String.format("Partition location %s does not exist for table %s",
                             location, tableQName));
                         if (!warehouse.mkdirs(path, false)) {

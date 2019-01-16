@@ -21,7 +21,7 @@ import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.testdata.provider.DataDtoProvider
-import com.netflix.spectator.api.NoopRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
@@ -94,14 +94,14 @@ class EmbeddedEsSpec extends Specification {
         config.getElasticSearchCallTimeout() >> 10
         config.getElasticSearchBulkCallTimeout() >> 10
         config.isElasticSearchPublishMetacatLogEnabled() >> true
-        es = new ElasticSearchUtilImpl(client, config, metacatJson, new NoopRegistry())
+        es = new ElasticSearchUtilImpl(client, config, metacatJson, new SimpleMeterRegistry())
 
         config2.getEsIndex() >> esIndex
         config2.getMergeEsIndex() >> esMergeIndex
         config2.getElasticSearchCallTimeout() >> 10
         config2.getElasticSearchBulkCallTimeout() >> 10
         config2.isElasticSearchPublishMetacatLogEnabled() >> true
-        esMig = new ElasticSearchUtilImpl(client, config2, metacatJson, new NoopRegistry())
+        esMig = new ElasticSearchUtilImpl(client, config2, metacatJson, new SimpleMeterRegistry())
     }
 
     def cleanupSpec() {

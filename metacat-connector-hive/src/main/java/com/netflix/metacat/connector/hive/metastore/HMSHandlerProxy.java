@@ -17,7 +17,7 @@ package com.netflix.metacat.connector.hive.metastore;
 
 import com.google.common.base.Throwables;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -43,7 +43,7 @@ public final class HMSHandlerProxy implements InvocationHandler {
     private MetacatHMSHandler metacatHMSHandler;
     private long timeout = 600000; //600s
 
-    private HMSHandlerProxy(final HiveConf hiveConf, final Registry registry) throws MetaException {
+    private HMSHandlerProxy(final HiveConf hiveConf, final MeterRegistry registry) throws MetaException {
         metacatHMSHandler =
             new MetacatHMSHandler(HiveConfigConstants.HIVE_HMSHANDLER_NAME, hiveConf, registry, false);
         metacatHMSHandler.init();
@@ -59,7 +59,7 @@ public final class HMSHandlerProxy implements InvocationHandler {
      * @return MetacatHMSHandler
      * @throws Exception Exception
      */
-    public static IMetacatHMSHandler getProxy(final HiveConf hiveConf, final Registry registry)
+    public static IMetacatHMSHandler getProxy(final HiveConf hiveConf, final MeterRegistry registry)
         throws Exception {
 
         final HMSHandlerProxy handler = new HMSHandlerProxy(hiveConf, registry);

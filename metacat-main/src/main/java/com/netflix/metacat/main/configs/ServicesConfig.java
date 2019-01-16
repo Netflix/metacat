@@ -47,7 +47,7 @@ import com.netflix.metacat.main.services.impl.DatabaseServiceImpl;
 import com.netflix.metacat.main.services.impl.MViewServiceImpl;
 import com.netflix.metacat.main.services.impl.PartitionServiceImpl;
 import com.netflix.metacat.main.services.impl.TableServiceImpl;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -178,7 +178,7 @@ public class ServicesConfig {
         final TagService tagService,
         final UserMetadataService userMetadataService,
         final MetacatEventBus eventBus,
-        final Registry registry,
+        final MeterRegistry registry,
         final Config config,
         final ConverterUtil converterUtil,
         final AuthorizationService authorizationService
@@ -238,7 +238,7 @@ public class ServicesConfig {
         final Config config,
         final MetacatEventBus eventBus,
         final ConverterUtil converterUtil,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         return new PartitionServiceImpl(
             catalogService,
@@ -313,7 +313,7 @@ public class ServicesConfig {
      * @param userMetadataService The user metadata service to use
      * @param tagService          tag service
      * @param helper              Metacat service helper
-     * @param registry            registry for spectator
+     * @param registry            registry for Micrometer
      * @return The metadata service bean
      */
     @Bean
@@ -324,7 +324,7 @@ public class ServicesConfig {
         final UserMetadataService userMetadataService,
         final TagService tagService,
         final MetacatServiceHelper helper,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         return new MetadataService(config, tableService, partitionService, userMetadataService,
             tagService, helper, registry);

@@ -32,7 +32,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.Bean;
@@ -85,26 +85,26 @@ public class CommonServerConfig {
      * The event bus abstraction to use.
      *
      * @param applicationEventMulticaster The asynchronous event publisher
-     * @param registry         registry for spectator
+     * @param registry         registry for micrometer
      * @return The event bus to use.
      */
     @Bean
     public MetacatEventBus eventBus(
         final MetacatApplicationEventMulticaster applicationEventMulticaster,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         return new MetacatEventBus(applicationEventMulticaster, registry);
     }
 
     /**
      * The application event multicaster to use.
-     * @param registry         registry for spectator
+     * @param registry         registry for micrometer
      * @param metacatProperties The metacat properties to get number of executor threads from.
      *                          Likely best to do one more than number of CPUs
      * @return The application event multicaster to use.
      */
     @Bean
-    public MetacatApplicationEventMulticaster applicationEventMulticaster(final Registry registry,
+    public MetacatApplicationEventMulticaster applicationEventMulticaster(final MeterRegistry registry,
                                                                           final MetacatProperties metacatProperties) {
         return new MetacatApplicationEventMulticaster(registry, metacatProperties);
     }
@@ -153,12 +153,12 @@ public class CommonServerConfig {
 
     /**
      * Get the ThreadServiceManager.
-     * @param registry registry for spectator
+     * @param registry registry for micrometer
      * @param config System configuration
      * @return The thread service manager to use
      */
     @Bean
-    public ThreadServiceManager threadServiceManager(final Registry registry, final Config config) {
+    public ThreadServiceManager threadServiceManager(final MeterRegistry registry, final Config config) {
         return new ThreadServiceManager(registry, config);
     }
 }

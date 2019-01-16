@@ -35,9 +35,10 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.partition.parser.ParseException;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
+import com.netflix.metacat.common.server.util.RegistryUtil;
 import com.netflix.metacat.connector.hive.util.IcebergFilterGenerator;
-import com.netflix.servo.util.VisibleForTesting;
-import com.netflix.spectator.api.Registry;
+import com.google.common.annotations.VisibleForTesting;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
 
@@ -58,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 public class IcebergTableHandler {
     private final Configuration conf;
     private final ConnectorContext connectorContext;
-    private final Registry registry;
+    private final MeterRegistry registry;
     @VisibleForTesting
     private IcebergTableCriteria icebergTableCriteria;
     @VisibleForTesting
@@ -91,7 +92,7 @@ public class IcebergTableHandler {
         final QualifiedName tableName,
         final PartitionListRequest partitionsRequest,
         final Table icebergTable) {
-        final long start = this.registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         final Map<String, ScanSummary.PartitionMetrics> result;
         try {
             if (!Strings.isNullOrEmpty(partitionsRequest.getFilter())) {
@@ -108,15 +109,15 @@ public class IcebergTableHandler {
             log.error("Iceberg filter parse error", ex);
             throw new MetacatBadRequestException("Iceberg filter parse error");
         } catch (IllegalStateException e) {
-            registry.counter(registry.createId(IcebergRequestMetrics.CounterGetPartitionsExceedThresholdFailure
-                .getMetricName()).withTags(tableName.parts())).increment();
+            registry.counter(IcebergRequestMetrics.CounterGetPartitionsExceedThresholdFailure
+                .getMetricName(), RegistryUtil.qualifiedNameToTagsSet(tableName)).increment();
             final String message =
                 String.format("Number of partitions queried for table %s exceeded the threshold %d",
                     tableName, connectorContext.getConfig().getMaxPartitionsThreshold());
             log.warn(message);
             throw new IllegalArgumentException(message);
         } finally {
-            final long duration = registry.clock().wallTime() - start;
+            final long duration = System.currentTimeMillis() - start;
             log.info("Time taken to getIcebergTablePartitionMap {} is {} ms", tableName, duration);
             this.recordTimer(
                 IcebergRequestMetrics.TagGetPartitionMap.getMetricName(), duration);
@@ -136,13 +137,13 @@ public class IcebergTableHandler {
      * @return iceberg table
      */
     public Table getIcebergTable(final QualifiedName tableName, final String tableMetadataLocation) {
-        final long start = this.registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         try {
             this.icebergTableCriteria.checkCriteria(tableName, tableMetadataLocation);
             log.debug("Loading icebergTable {} from {}", tableName, tableMetadataLocation);
             return new IcebergMetastoreTables(tableMetadataLocation).load(tableName.toString());
         } finally {
-            final long duration = registry.clock().wallTime() - start;
+            final long duration = System.currentTimeMillis() - start;
             log.info("Time taken to getIcebergTable {} is {} ms", tableName, duration);
             this.recordTimer(IcebergRequestMetrics.TagLoadTable.getMetricName(), duration);
             this.increaseCounter(IcebergRequestMetrics.TagLoadTable.getMetricName(), tableName);
@@ -267,9 +268,8 @@ public class IcebergTableHandler {
     private void recordTimer(final String requestTag, final long duration) {
         final HashMap<String, String> tags = new HashMap<>();
         tags.put("request", requestTag);
-        this.registry.timer(registry.createId(IcebergRequestMetrics.TimerIcebergRequest.getMetricName())
-                .withTags(tags))
-                .record(duration, TimeUnit.MILLISECONDS);
+        this.registry.timer(IcebergRequestMetrics.TimerIcebergRequest.getMetricName(), "request", requestTag)
+            .record(duration, TimeUnit.MILLISECONDS);
         log.debug("## Time taken to complete {} is {} ms", requestTag, duration);
     }
 
@@ -279,6 +279,6 @@ public class IcebergTableHandler {
      * @param tableName table name of the operation
      */
     private void increaseCounter(final String metricName, final QualifiedName tableName) {
-        this.registry.counter(registry.createId(metricName).withTags(tableName.parts())).increment();
+        this.registry.counter(metricName, RegistryUtil.qualifiedNameToTagsSet(tableName)).increment();
     }
 }

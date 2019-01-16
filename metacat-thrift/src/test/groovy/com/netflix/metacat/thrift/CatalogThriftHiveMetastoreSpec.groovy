@@ -23,11 +23,10 @@ import com.netflix.metacat.common.server.api.v1.MetacatV1
 import com.netflix.metacat.common.server.api.v1.PartitionV1
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.util.MetacatContextManager
-import com.netflix.spectator.api.Clock
-import com.netflix.spectator.api.Timer
-import com.netflix.spectator.api.Counter
-import com.netflix.spectator.api.Id
-import com.netflix.spectator.api.Registry
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Timer
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.apache.hadoop.hive.metastore.api.*
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -41,7 +40,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     String catalogName = 'testCatalogName'
     CatalogThriftEventHandler.CatalogServerRequestContext catalogServerContext = Mock(CatalogThriftEventHandler.CatalogServerRequestContext)
     CatalogThriftHiveMetastore ms =
-            new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, Mock(Registry))
+            new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
     def setup() {
         MetacatContextManager.context = catalogServerContext
@@ -73,12 +72,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test add_partition'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.add_partition(partition)
@@ -94,26 +88,13 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
                         new FieldDto(name: 'k3', partition_key: false),
                 ]
         )
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment() >> {}
-
 
         where:
         partition = new Partition(dbName: 'db1', tableName: 't1')
     }
 
     def 'test add_partition fails on an unpartitioned table'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.add_partition(partition)
@@ -122,24 +103,13 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def e = thrown(MetaException)
         e.message.contains('unpartitioned')
         1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         partition = new Partition(dbName: 'db1', tableName: 't1')
     }
 
     def 'test add_partition_with_environment_context'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.add_partition_with_environment_context(partition, null)
@@ -155,25 +125,13 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
                         new FieldDto(name: 'k3', partition_key: false),
                 ]
         )
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         partition = new Partition(dbName: 'db1', tableName: 't1')
     }
 
     def 'test add_partition_with_environment_context fails on an unpartitioned table'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
         when:
         ms.add_partition_with_environment_context(partition, null)
 
@@ -181,25 +139,13 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def e = thrown(MetaException)
         e.message.contains('unpartitioned')
         1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         partition = new Partition(dbName: 'db1', tableName: 't1')
     }
 
     def 'test add_partitions'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.add_partitions(partitions)
@@ -215,12 +161,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
                         new FieldDto(name: 'k3', partition_key: false),
                 ]
         )
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         partitions << [[new Partition(dbName: 'db1', tableName: 't1')]]
@@ -240,13 +180,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test add_partitions fails on an unpartitioned table'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.add_partitions(partitions)
@@ -255,24 +189,13 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def e = thrown(MetaException)
         e.message.contains('unpartitioned')
         1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         partitions << [[new Partition(dbName: 'db1', tableName: 't1')]]
     }
 
     def 'test add_partitions_pspec'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
         def ps = new PartitionSpec('db1', 't1', null)
 
         when:
@@ -296,21 +219,10 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
                 new FieldDto(name: 'k3', partition_key: false),
             ]
         )
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
     }
 
     def 'test add_partitions_req'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.add_partitions_req(request)
@@ -326,12 +238,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
                         new FieldDto(name: 'k3', partition_key: false),
                 ]
         )
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         request << [
@@ -340,12 +246,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test add_partitions_req fails on an unpartitioned table'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.add_partitions_req(request)
@@ -354,12 +255,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def e = thrown(MetaException)
         e.message.contains('unpartitioned')
         1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         request << [
@@ -368,36 +263,19 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test alter_database'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.alter_database(null, null)
 
         then:
         thrown(InvalidInputException)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         when:
         ms.alter_database(db, hiveDatabase)
 
         then:
         1 * metacatV1.updateDatabase(_, db, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -422,12 +300,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test alter_partition'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.alter_partition(db, tbl, partition)
@@ -442,13 +315,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
                         new FieldDto(name: 'k3', partition_key: false),
                 ]
         )
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
-
 
         where:
         db = 'db1'
@@ -457,12 +323,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test alter_partition should fail on an unpartitioned table'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.alter_partition(db, tbl, partition)
@@ -471,12 +332,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def e = thrown(MetaException)
         e.message.contains('unpartitioned')
         1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -485,12 +340,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test alter_partition_with_environment_context'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.alter_partition_with_environment_context(db, tbl, partition, null)
@@ -505,12 +355,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
                         new FieldDto(name: 'k3', partition_key: false),
                 ]
         )
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -519,12 +363,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test alter_partition_with_environment_context fails on an unpartitioned table'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.alter_partition_with_environment_context(db, tbl, partition, null)
@@ -533,12 +372,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def e = thrown(MetaException)
         e.message.contains('unpartitioned')
         1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -547,12 +380,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test alter_partitions'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.alter_partitions(db, tbl, [partition])
@@ -567,12 +395,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
                         new FieldDto(name: 'k3', partition_key: false),
                 ]
         )
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -581,12 +403,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test alter_partitions fails on an unpartitioned table'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.alter_partitions(db, tbl, [partition])
@@ -595,12 +412,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def e = thrown(MetaException)
         e.message.contains('unpartitioned')
         1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(name: QualifiedName.ofTable(catalogName, 'db1', 't1'))
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -609,12 +420,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test alter_table'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.alter_table(db, tbl, hiveTable)
@@ -627,12 +433,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
             0 * metacatV1.renameTable(_, _, _, _)
         }
         1 * metacatV1.updateTable(_, _, _, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -642,12 +442,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test alter_table_with_cascade'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.alter_table_with_cascade(db, tbl, hiveTable, false)
@@ -660,12 +455,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
             0 * metacatV1.renameTable(_, _, _, _)
         }
         1 * metacatV1.updateTable(_, _, _, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -675,12 +464,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test alter_table_with_environment_context'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.alter_table_with_environment_context(db, tbl, hiveTable, ec)
@@ -693,12 +477,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
             0 * metacatV1.renameTable(_, _, _, _)
         }
         1 * metacatV1.updateTable(_, _, _, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -709,12 +487,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test append_partition'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.append_partition(db, tbl, ['20150101'])
@@ -725,12 +498,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, _, _, _, _, _, { it.includePartitionDetails }) >>
                 [new PartitionDto(name: QualifiedName.ofPartition(catalogName, db, tbl, 'dateint=20150101'))]
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -738,12 +505,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test append_partition_by_name'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.append_partition_by_name(db, tbl, 'dateint=20150101')
@@ -753,12 +515,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, _, _, _, _, _, { it.includePartitionDetails }) >>
                 [new PartitionDto(name: QualifiedName.ofPartition(catalogName, db, tbl, 'dateint=20150101'))]
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -766,12 +522,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test append_partition_by_name_with_environment_context'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.append_partition_by_name_with_environment_context(db, tbl, partName, null)
@@ -781,12 +532,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, _, _, _, _, _, { it.includePartitionDetails }) >>
                 [new PartitionDto(name: QualifiedName.ofPartition(catalogName, db, tbl, 'dateint=20150101'))]
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -795,12 +540,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test append_partition_with_environment_context'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.append_partition_with_environment_context(db, tbl, ['20150101'], null)
@@ -811,12 +551,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * metacatV1.getTable(_, _, _, _, _, _) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, _, _, _, _, _, { it.includePartitionDetails }) >>
                 [new PartitionDto(name: QualifiedName.ofPartition(catalogName, db, tbl, 'dateint=20150101'))]
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -856,24 +590,13 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test create_database'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.create_database(hiveDatabase)
 
         then:
         1 * metacatV1.createDatabase(_, db, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -898,12 +621,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test create_table'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.create_table(hiveTable)
@@ -912,12 +630,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         notThrown(Exception)
         1 * hiveConverters.hiveToMetacatTable(_, hiveTable)
         1 * metacatV1.createTable(_, _, _, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -926,12 +638,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test create_table_with_environment_context'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.create_table_with_environment_context(hiveTable, ec)
@@ -940,12 +647,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         notThrown(Exception)
         1 * hiveConverters.hiveToMetacatTable(_, hiveTable)
         1 * metacatV1.createTable(_, _, _, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -979,23 +680,12 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_database'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
         when:
         ms.drop_database('db', true, true)
 
         then:
         1 * metacatV1.deleteDatabase(_,_)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
     }
 
     def 'test drop_function'() {
@@ -1015,12 +705,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_partition'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def r = ms.drop_partition(db, tbl, partVals, true)
@@ -1036,12 +721,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         }) >>
                 [new PartitionDto(name: QualifiedName.ofPartition(catalogName, db, tbl, partName))]
         1 * partitionV1.deletePartitions(_, db, tbl, [partName])
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1051,12 +730,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_partition_by_name'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def r = ms.drop_partition_by_name(db, tbl, partName, true)
@@ -1064,12 +738,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         r
         1 * partitionV1.deletePartitions(_, db, tbl, [partName])
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1078,12 +746,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_partition_by_name_with_environment_context'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def r = ms.drop_partition_by_name_with_environment_context(db, tbl, partName, true, new EnvironmentContext())
@@ -1091,12 +754,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         r
         1 * partitionV1.deletePartitions(_, db, tbl, [partName])
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1105,12 +762,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_partition_with_environment_context exception not enough'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def r = ms.drop_partition_with_environment_context(db, tbl, partVals, true, new EnvironmentContext())
@@ -1123,12 +775,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * hiveConverters.getNameFromPartVals(_, _) >> partName
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, _, null, null, null, false, { it.includePartitionDetails })
         0 * partitionV1.deletePartitions(_, db, tbl, [partName])
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1138,12 +784,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_partition_with_environment_context exception too many'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def r = ms.drop_partition_with_environment_context(db, tbl, partVals, true, new EnvironmentContext())
@@ -1159,12 +800,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         }) >>
                 [new PartitionDto(), new PartitionDto()]
         0 * partitionV1.deletePartitions(_, db, tbl, [partName])
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1174,12 +809,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_partition_with_environment_context'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def r = ms.drop_partition_with_environment_context(db, tbl, partVals, true, new EnvironmentContext())
@@ -1195,12 +825,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         }) >>
                 [new PartitionDto(name: QualifiedName.ofPartition(catalogName, db, tbl, partName))]
         1 * partitionV1.deletePartitions(_, db, tbl, [partName])
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1210,14 +834,9 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_partitions_req'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
         def table = new TableDto(partition_keys: ['x'])
         def partitions = [new PartitionDto()]
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def parts = RequestPartsSpec.names(['a'])
@@ -1228,12 +847,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * metacatV1.getTable(_,_,_,_,_,_) >> table
         1 * partitionV1.getPartitionsForRequest(_,_,_,_,_,_,_,_,_) >> partitions
         1 * partitionV1.deletePartitions(_,_,_,_)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         when:
         def exprs = RequestPartsSpec.exprs([new DropPartitionsExpr()])
@@ -1246,12 +859,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * hiveConverters.metacatToHivePartition(_,_) >> [new Partition(values: ['x'])]
         1 * partitionV1.getPartitionsForRequest(_,_,_,_,_,_,_,_,_) >> partitions
         1 * partitionV1.deletePartitions(_,_,_,_)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         when:
         ms.drop_partitions_req(new DropPartitionsRequest(dbName: 'a', tblName: 'b', ifExists:false, needResult: true, parts: new RequestPartsSpec()))
@@ -1269,12 +876,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_table'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         given:
         metacatV1.deleteTable(_, db, tbl) >> new TableDto()
@@ -1284,12 +886,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         notThrown(Exception)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1298,12 +894,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test drop_table_with_environment_context'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         given:
         metacatV1.deleteTable(_, db, tbl) >> new TableDto()
@@ -1313,12 +904,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         notThrown(Exception)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1383,12 +968,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_all_databases'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         given:
         def databases = ['db1', 'db2', 'db3']
@@ -1399,21 +979,10 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         result == databases
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
     }
 
     def 'test get_all_tables'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         given:
         def db = 'db1'
@@ -1425,12 +994,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         result == tables
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
     }
 
     def 'test get_config_value'() {
@@ -1450,12 +1013,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_database'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.get_database(db)
@@ -1465,24 +1023,13 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         notThrown(Exception)
         1 * metacatV1.getDatabase(_, db, true, false)
         1 * hiveConverters.metacatToHiveDatabase(_) >> new Database()
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
     }
 
     def 'test get_databases'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         given:
         metacatV1.getCatalog(_) >> new CatalogDto(
@@ -1495,12 +1042,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == expectedResult
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         // I am guessing on these patterns as I have not been able to find documentation on the format
         where:
@@ -1520,14 +1061,9 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_fields'() {
         given:
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
         def cols = [new FieldSchema(name: 'c1'), new FieldSchema(name: 'c2')]
         def partitionKeys = [new FieldSchema(name: 'pk1'), new FieldSchema(name: 'pk2')]
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             Table get_table(String _dbname, String _tbl_name) throws MetaException {
                 return new Table(
@@ -1545,12 +1081,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == cols
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1558,16 +1088,10 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_fields_with_environment_context'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
         given:
         def cols = [new FieldSchema(name: 'c1'), new FieldSchema(name: 'c2')]
         def partitionKeys = [new FieldSchema(name: 'pk1'), new FieldSchema(name: 'pk2')]
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             Table get_table(String _dbname, String _tbl_name) throws MetaException {
                 return new Table(
@@ -1585,12 +1109,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == cols
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1662,14 +1180,9 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_part_specs_by_filter'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
         def db = 'db'
         def tbl = 't1'
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.get_part_specs_by_filter(db, tbl, null, 2)
@@ -1679,23 +1192,11 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, 2, false,_) >> []
         0 * hiveConverters.metacatToHivePartition(_, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
     }
 
     def 'test get_partition no matches'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
         given:
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -1711,12 +1212,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * hiveConverters.getNameFromPartVals(_, _) >> 'a=p1/b=p2/c=p3'
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, _, null, null, null, false, { it.includePartitionDetails })
         0 * hiveConverters.metacatToHivePartition(_, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1724,13 +1219,8 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partition too many matches'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
         given:
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -1748,12 +1238,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
             it.includePartitionDetails
         }) >> partitions
         0 * hiveConverters.metacatToHivePartition(_, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1762,14 +1246,8 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partition'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
         given:
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -1787,12 +1265,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         }) >> partitions
         1 * hiveConverters.metacatToHivePartition(_, _) >> matches
         result == match
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1803,12 +1275,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partition_by_name no matches'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.get_partition_by_name(db, tbl, partitionName)
@@ -1820,12 +1287,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
             it.includePartitionDetails
         })
         0 * hiveConverters.metacatToHivePartition(_, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1834,12 +1295,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partition_by_name'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.get_partition_by_name(db, tbl, partitionName)
@@ -1851,12 +1307,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         }) >> matches
         1 * hiveConverters.metacatToHivePartition(_, _) >> convertedMatches
         result == converted
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1876,12 +1326,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partition_names'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def results = ms.get_partition_names(db, tbl, 42 as Short)
@@ -1890,12 +1335,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         notThrown(Exception)
         1 * partitionV1.getPartitionKeys(_, db, tbl, null, null, null, null, 42) >> partitions
         results == partitions
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1904,14 +1343,8 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partition_names_ps'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
         given:
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             String partition_values_to_partition_filter(String dbname, String tbl_name, List<String> partitionValues)
                     throws MetaException {
@@ -1927,13 +1360,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * partitionV1.getPartitionKeys(_, db, tbl, 'filter', null, null, null, {
             it >= 0 || it == null
         }) >> partitions
-        result == partitions
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1943,12 +1369,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partition_with_auth'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.get_partition_with_auth(db, tbl, partVals, null, null)
@@ -1961,12 +1382,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
             it.includePartitionDetails
         })
         0 * hiveConverters.metacatToHivePartition(_, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -1975,12 +1390,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partitions'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.get_partitions(db, tbl, limit as Short)
@@ -1990,12 +1400,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, { it > 0 || it == null }, false, _) >> partitions
         1 * hiveConverters.metacatToHivePartition(_, _) >> matches
         result == matches
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2006,12 +1410,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partitions_by_expr'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.get_partitions_by_expr(new PartitionsByExprRequest(db, tbl, null))
@@ -2020,12 +1419,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, _, false,_) >> []
         0 * hiveConverters.metacatToHivePartition(_, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2033,12 +1426,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partitions_by_filter'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.get_partitions_by_filter(db, tbl, null, (short)2)
@@ -2047,12 +1435,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, 2, false,_) >> []
         0 * hiveConverters.metacatToHivePartition(_, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2060,12 +1442,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partitions_by_names'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.get_partitions_by_names(db, tbl, partitionNames)
@@ -2077,12 +1454,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         }) >>
                 (0..2).collect { new PartitionDto() }
         3 * hiveConverters.metacatToHivePartition(_, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2091,14 +1462,8 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partitions_ps'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
         given:
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -2113,12 +1478,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, { it > 0 || it == null }, false,_) >> partitions
         1 * hiveConverters.metacatToHivePartition(_, _) >> matches
         result == matches
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2129,14 +1488,8 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partitions_ps_with_auth'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
         given:
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -2150,13 +1503,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto()
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, { it > 0 || it == null }, false,_) >> partitions
         1 * hiveConverters.metacatToHivePartition(_, _) >> matches
-        result == matches
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2167,14 +1513,9 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partitions_pspec'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
         def db = 'db'
         def tbl = 't1'
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.get_partitions_pspec(db, tbl, 2)
@@ -2184,12 +1525,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
         1 * partitionV1.getPartitionsForRequest(_, db, tbl,null, null, null, 2, false,_) >> []
         0 * hiveConverters.metacatToHivePartition(_, _)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
     }
 
     def 'test get_partitions_statistics_req'() {
@@ -2201,14 +1536,8 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_partitions_with_auth'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
         given:
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> values) throws MetaException {
                 return 'filter'
@@ -2223,12 +1552,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * partitionV1.getPartitionsForRequest(_, db, tbl, null, null, null, { it > 0 || it == null }, false,_) >> partitions
         1 * hiveConverters.metacatToHivePartition(_, _) >> matches
         result == matches
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2247,27 +1570,16 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_privilege_set'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.get_privilege_set(null, null, null)
 
         then:
         result == new PrincipalPrivilegeSet(null
-                , null
-                , Maps.newHashMap(ImmutableMap.of("users",
-                Lists.newArrayList(new PrivilegeGrantInfo("ALL", 0, "hadoop", PrincipalType.ROLE, true)))))
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
+            , null
+            , Maps.newHashMap(ImmutableMap.of("users",
+            Lists.newArrayList(new PrivilegeGrantInfo("ALL", 0, "hadoop", PrincipalType.ROLE, true)))))
     }
 
     def 'test get_role_grants_for_principal'() {
@@ -2288,14 +1600,9 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_schema'() {
         given:
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
         def cols = [new FieldSchema(name: 'c1'), new FieldSchema(name: 'c2')]
         def partitionKeys = [new FieldSchema(name: 'pk1'), new FieldSchema(name: 'pk2')]
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             Table get_table(String _dbname, String _tbl_name) throws MetaException {
                 return new Table(
@@ -2313,12 +1620,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == cols + partitionKeys
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2327,15 +1628,9 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test get_schema_with_environment_context'() {
         given:
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
         def cols = [new FieldSchema(name: 'c1'), new FieldSchema(name: 'c2')]
         def partitionKeys = [new FieldSchema(name: 'pk1'), new FieldSchema(name: 'pk2')]
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             Table get_table(String _dbname, String _tbl_name) throws MetaException {
                 return new Table(
@@ -2353,12 +1648,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == cols + partitionKeys
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2366,12 +1655,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_table'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.get_table(db, tbl)
@@ -2381,12 +1665,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         notThrown(Exception)
         1 * metacatV1.getTable(_, db, tbl, true, true, true)
         1 * hiveConverters.metacatToHiveTable(_) >> new Table()
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2402,12 +1680,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_table_names_by_filter'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def results = ms.get_table_names_by_filter(db, filter, limit as Short)
@@ -2421,12 +1694,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         } else {
             assert results.size() <= limit
         }
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2435,12 +1702,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_table_objects_by_name'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.get_table_objects_by_name(db, tableList)
@@ -2453,12 +1715,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         1 * metacatV1.getTable(_, db, 't2', true, true, true)
         1 * metacatV1.getTable(_, db, 't3', true, true, true)
         3 * hiveConverters.metacatToHiveTable(_) >> new Table()
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2474,12 +1730,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test get_tables'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         given:
         metacatV1.getDatabase(_, _, false, true) >> new DatabaseDto(
@@ -2492,12 +1743,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == expectedResult
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         // I am guessing on these patterns as I have not been able to find documentation on the format
         where:
@@ -2620,12 +1865,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test partition_name_has_valid_characters (throws exception = false)'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.partition_name_has_valid_characters(partVals, false)
@@ -2633,12 +1873,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == expectedResult
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         partVals                         | expectedResult
@@ -2646,36 +1880,20 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test partition_name_has_valid_characters (throws exception = true)'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.partition_name_has_valid_characters(partVals, true)
 
         then:
         notThrown(MetaException)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         partVals = ['string', '1.2.3', '123', '..']
     }
 
     def 'test partition_name_to_spec'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.partition_name_to_spec(name)
@@ -2683,12 +1901,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == vals
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         name                                            | vals
@@ -2698,12 +1910,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test partition_name_to_vals'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.partition_name_to_vals(name)
@@ -2711,12 +1918,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == vals
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         name                                            | vals
@@ -2727,13 +1928,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def 'test partition_values_to_partition_filter all strings'() {
         given:
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-
-        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry) {
+        ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry()) {
             @Override
             String partition_values_to_partition_filter(TableDto dto, List<String> partitionValues)
                     throws MetaException {
@@ -2747,13 +1942,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         1 * metacatV1.getTable(_, db, tbl, true, false, false)
         result == 'filter'
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
-
 
         where:
         db = 'db1'
@@ -2761,24 +1949,13 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test partition_values_to_partition_filter throws an exception if too many partition_values are given'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.partition_values_to_partition_filter(table, ['1', '2'])
 
         then:
         thrown(MetaException)
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2789,24 +1966,13 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test partition_values_to_partition_filter'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.partition_values_to_partition_filter(table, ['1', '', 'three'])
 
         then:
         result == "(field_0=1) and (field_2='three')"
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2817,12 +1983,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test rename_partition'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         ms.rename_partition(db, tbl, partVals, partition)
@@ -2830,12 +1991,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         1 * metacatV1.getTable(_, db, tbl, true, false, false) >> new TableDto(name: QualifiedName.ofTable(catalogName, db, tbl))
         1 * hiveConverters.getNameFromPartVals(_, _) >> 'a=pName'
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         db = 'db1'
@@ -2885,12 +2040,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
     }
 
     def 'test set_ugi'() {
-        def id = Mock(Id)
-        def counter = Mock(Counter)
-        def registry = Mock(Registry)
-        def clock = Mock(Clock)
-        def timer = Mock(Timer)
-        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
+        def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, new SimpleMeterRegistry())
 
         when:
         def result = ms.set_ugi(user, groups)
@@ -2898,12 +2048,6 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         then:
         notThrown(Exception)
         result == ['g1', 'g2', 'g3', 'user']
-        registry.clock() >> clock
-        registry.timer(_) >> timer
-        timer.record(_, _) >> {}
-        registry.createId(_ as String) >> id
-        registry.counter(id) >> counter
-        counter.increment()
 
         where:
         user = 'user'

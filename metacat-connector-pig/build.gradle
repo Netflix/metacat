@@ -28,7 +28,7 @@ dependencies {
     compile("org.apache.pig:pig")
     compile("org.apache.hadoop:hadoop-core")
     compile("org.slf4j:slf4j-api")
-    compile("log4j:log4j")
+    
 
     /*******************************
      * Provided Dependencies

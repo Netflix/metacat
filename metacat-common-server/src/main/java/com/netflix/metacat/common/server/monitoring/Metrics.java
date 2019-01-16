@@ -13,10 +13,11 @@
 
 package com.netflix.metacat.common.server.monitoring;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import io.micrometer.core.instrument.Tag;
 import lombok.Getter;
 
-import java.util.Map;
+import java.util.Set;
 
 //CHECKSTYLE:OFF
 
@@ -113,13 +114,11 @@ public enum Metrics {
     TimerSaveTableMetadata(Component.tableservice, Type.timer, "saveTableMetadata"),
 
     TagEventsType("metacat.events.type");
-
-    public final static Map<String, String> tagStatusSuccessMap
-        = ImmutableMap.of("status", "success");
-    public final static Map<String, String> tagStatusFailureMap
-        = ImmutableMap.of("status", "failure");
-
-
+    
+    public final static Set<Tag> tagStatusSuccessSet
+        = ImmutableSet.of(Tag.of("status", "success"));
+    public final static Set<Tag> tagStatusFailureSet
+        = ImmutableSet.of(Tag.of("status", "failure"));
 
     enum Type {
         counter,

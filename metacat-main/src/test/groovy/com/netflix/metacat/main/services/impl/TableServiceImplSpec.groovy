@@ -35,7 +35,7 @@ import com.netflix.metacat.main.services.DatabaseService
 import com.netflix.metacat.main.services.GetTableServiceParameters
 import com.netflix.metacat.main.services.TableService
 import com.netflix.metacat.testdata.provider.DataDtoProvider
-import com.netflix.spectator.api.NoopRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import spock.lang.Specification
 
 /**
@@ -52,7 +52,7 @@ class TableServiceImplSpec extends Specification {
     def usermetadataService = Mock(UserMetadataService)
     def eventBus = Mock(MetacatEventBus)
     def converterUtil = Mock(ConverterUtil)
-    def registry = new NoopRegistry()
+    def registry = new SimpleMeterRegistry()
     def config = Mock(Config)
     def tableDto = DataDtoProvider.getTable('a', 'b', 'c', "amajumdar", "s3:/a/b")
     def name = tableDto.name

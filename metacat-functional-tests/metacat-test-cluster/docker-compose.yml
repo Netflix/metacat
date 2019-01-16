@@ -34,6 +34,7 @@ services:
             - ../build/metacat-war-expanded/ROOT:/usr/local/tomcat/webapps/ROOT
             - ./resources/logging.properties:/usr/local/tomcat/conf/logging.properties
             - ../build/logs/metacat:/usr/local/tomcat/logs
+            - ../build/logs/metacat:/var/log/metacat
             - ./etc-metacat:/etc/metacat:ro
             - ./etc-metacat/data/:/tmp/data
         environment:
@@ -43,6 +44,8 @@ services:
                 -Xmx768m
                 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
                 -noverify
+                -Dorg.springframework.boot.logging.path=/var/log/metacat
+                -Dlogging.path=/var/log/metacat
                 -Dnetflix.environment=test
                 -Dnetflix.discovery.registration.enabled=false
                 -Dnetflix.appinfo.validateInstanceId=false

@@ -18,8 +18,8 @@
 package com.netflix.metacat.common.server.events;
 
 import com.netflix.metacat.common.server.monitoring.Metrics;
-import com.netflix.spectator.api.Counter;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEvent;
@@ -43,11 +43,11 @@ public class MetacatEventBus {
      * Constructor.
      *
      * @param applicationEventMulticaster The event multicaster to use
-     * @param registry         The registry to spectator
+     * @param registry                    The registry to micrometer
      */
     public MetacatEventBus(
         @Nonnull @NonNull final MetacatApplicationEventMulticaster applicationEventMulticaster,
-        @Nonnull @NonNull final Registry registry
+        @Nonnull @NonNull final MeterRegistry registry
     ) {
         this.applicationEventMulticaster = applicationEventMulticaster;
         this.eventPublishCounter = registry.counter(Metrics.CounterEventPublish.getMetricName());

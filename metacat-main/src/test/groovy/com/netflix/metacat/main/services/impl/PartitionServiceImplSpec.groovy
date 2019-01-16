@@ -35,7 +35,7 @@ import com.netflix.metacat.main.services.CatalogService
 import com.netflix.metacat.main.services.TableService
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
-import com.netflix.spectator.api.NoopRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.assertj.core.util.Lists
 import spock.lang.Shared
 import spock.lang.Specification
@@ -63,7 +63,7 @@ class PartitionServiceImplSpec extends Specification{
             )
         )
     )
-    def registry = new NoopRegistry()
+    def registry = new SimpleMeterRegistry()
     def config = Mock(Config)
     def threadServiceManager = Mock(ThreadServiceManager)
     def tableDto = DataDtoProvider.getTable('a', 'b', 'c', "amajumdar", "s3:/a/b")

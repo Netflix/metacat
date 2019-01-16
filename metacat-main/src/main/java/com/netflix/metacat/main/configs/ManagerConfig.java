@@ -24,7 +24,7 @@ import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.main.manager.CatalogManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.manager.PluginManager;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -79,14 +79,14 @@ public class ManagerConfig {
      *
      * @param connectorManager The connector manager to use
      * @param config           The system configuration to use
-     * @param registry         registry for spectator
+     * @param registry         registry for micrometer
      * @return Configured catalog manager
      */
     @Bean
     public CatalogManager catalogManager(
         final ConnectorManager connectorManager,
         final Config config,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         return new CatalogManager(connectorManager, config, registry);
     }

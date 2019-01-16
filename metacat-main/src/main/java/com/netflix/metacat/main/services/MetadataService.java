@@ -30,7 +30,7 @@ import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -55,7 +55,7 @@ public class MetadataService {
     private final UserMetadataService userMetadataService;
     private final TagService tagService;
     private final MetacatServiceHelper helper;
-    private final Registry registry;
+    private final MeterRegistry registry;
 
     /**
      * Constructor.
@@ -74,7 +74,7 @@ public class MetadataService {
                            final UserMetadataService userMetadataService,
                            final TagService tagService,
                            final MetacatServiceHelper helper,
-                           final Registry registry) {
+                           final MeterRegistry registry) {
         this.config = config;
         this.tableService = tableService;
         this.partitionService = partitionService;

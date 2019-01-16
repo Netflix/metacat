@@ -46,7 +46,7 @@ import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.api.v1.PartitionV1;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
@@ -164,7 +164,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     private final Map<String, List<PrivilegeGrantInfo>> defaultRolesPrivilegeSet =
         Maps.newHashMap(ImmutableMap.of("users",
             Lists.newArrayList(new PrivilegeGrantInfo("ALL", 0, "hadoop", PrincipalType.ROLE, true))));
-    private final Registry registry;
+    private final MeterRegistry registry;
 
     /**
      * Constructor.
@@ -174,7 +174,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
      * @param metacatV1      Metacat V1 resource
      * @param partitionV1    Partition V1 resource
      * @param catalogName    catalog name
-     * @param registry       registry of spectator
+     * @param registry       registry of micrometer
      */
     public CatalogThriftHiveMetastore(
         final Config config,
@@ -182,7 +182,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         final MetacatV1 metacatV1,
         final PartitionV1 partitionV1,
         final String catalogName,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         super("CatalogThriftHiveMetastore");
 
@@ -1836,8 +1836,8 @@ public class CatalogThriftHiveMetastore extends FacebookBase
 
     private <R> R requestWrapper(final String methodName, final Object[] args, final ThriftSupplier<R> supplier)
         throws TException {
-        final long start = registry.clock().wallTime();
-        registry.counter(registry.createId(Metrics.CounterThrift.getMetricName() + "." + methodName)).increment();
+        final long start = System.currentTimeMillis();
+        registry.counter(Metrics.CounterThrift.getMetricName() + "." + methodName).increment();
         try {
             log.info("+++ Thrift({}): Calling {}({})", catalogName, methodName, args);
             return supplier.get();
@@ -1854,15 +1854,15 @@ public class CatalogThriftHiveMetastore extends FacebookBase
             log.error(e.getMessage(), e);
             throw e;
         } catch (Exception e) {
-            registry.counter(registry.createId(Metrics.CounterThrift.getMetricName() + "." + methodName)
-                .withTags(Metrics.tagStatusFailureMap)).increment();
+            registry.counter(Metrics.CounterThrift.getMetricName() + "." + methodName,
+                Metrics.tagStatusFailureSet).increment();
             final String message = String.format("%s -- %s failed", e.getMessage(), methodName);
             log.error(message, e);
             final MetaException me = new MetaException(message);
             me.initCause(e);
             throw me;
         } finally {
-            final long duration = registry.clock().wallTime() - start;
+            final long duration = System.currentTimeMillis() - start;
             this.registry.timer(Metrics.TimerThriftRequest.getMetricName()
                 + "." + methodName).record(duration, TimeUnit.MILLISECONDS);
             log.info("+++ Thrift({}): Time taken to complete {} is {} ms", catalogName, methodName, duration);

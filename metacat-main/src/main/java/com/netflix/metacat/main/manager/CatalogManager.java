@@ -24,7 +24,7 @@ import com.google.common.io.Files;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
@@ -54,7 +54,7 @@ public class CatalogManager implements HealthIndicator {
     private final File catalogConfigurationDir;
     private final AtomicBoolean catalogsLoading = new AtomicBoolean();
     private final AtomicBoolean catalogsLoaded = new AtomicBoolean();
-    private final Registry registry;
+    private final MeterRegistry registry;
     private final Config config;
 
     /**
@@ -62,12 +62,12 @@ public class CatalogManager implements HealthIndicator {
      *
      * @param connectorManager manager
      * @param config           config
-     * @param registry         registry of spectator
+     * @param registry         registry of micrometer
      */
     public CatalogManager(
         final ConnectorManager connectorManager,
         final Config config,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         this.connectorManager = connectorManager;
         this.config = config;

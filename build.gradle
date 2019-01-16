@@ -81,6 +81,7 @@ configure(javaProjects) {
     apply plugin: "java"
     apply plugin: "checkstyle"
     apply plugin: "findbugs"
+    apply plugin: 'project-report'
     apply plugin: "pmd"
     apply plugin: "io.spring.dependency-management"
     apply plugin: "com.gorylenko.gradle-git-properties"
@@ -94,8 +95,9 @@ configure(javaProjects) {
 
     dependencyManagement {
         imports {
-            mavenBom "io.spring.platform:platform-bom:${spring_platform_version}"
+            mavenBom "org.springframework.boot:spring-boot-dependencies:${spring_boot_version}"
             mavenBom "org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}"
+            mavenBom "com.google.inject:guice-bom:4.0"
         }
         dependencies {
             dependency("cglib:cglib-nodep:3.2.4")
@@ -105,14 +107,17 @@ configure(javaProjects) {
             dependency("com.github.rholder:guava-retrying:2.0.0")
             // Guava even with guava.version set to 19.0 in properties keeps going back to 18.0 without this.
             dependency("com.google.guava:guava:19.0")
+            
+            
             dependencySet(group: "com.google.inject.extensions", version: "4.0") {
                 entry "guice-persist"
                 entry "guice-multibindings"
                 entry "guice-servlet"
             }
-            dependencySet(group: "com.netflix.spectator", version: "0.55.0") {
-                entry "spectator-api"
-                entry "spectator-reg-servo"
+            
+            dependencySet(group: "io.micrometer", version: "1.1.2") {
+                entry "micrometer-core"
+                entry "micrometer-registry-atlas"
             }
             dependency("com.sun.jersey:jersey-client:1.19.1")
             dependency("com.squarespace.jersey2-guice:jersey2-guice:0.5")
@@ -127,7 +132,8 @@ configure(javaProjects) {
             }
             dependency("de.danielbechler:java-object-diff:0.91.1")
             dependency("io.airlift:testing-mysql-server:0.1")
-            dependencySet(group: "io.github.openfeign", version: "9.3.1") {
+
+            dependencySet(group: "io.github.openfeign", version: "10.1.0") {
                 entry "feign-core"
                 entry "feign-jaxrs"
                 entry "feign-slf4j"
@@ -143,9 +149,11 @@ configure(javaProjects) {
             dependency("org.codehaus.gpars:gpars:1.2.1")
             dependency("org.glassfish.jersey.containers:jersey-container-servlet:2.19")
             dependency("org.glassfish.jersey.media:jersey-media-json-jackson:2.19")
-            dependency("org.spockframework:spock-core:1.1-groovy-2.4")
-            dependency("org.spockframework:spock-guice:1.1-groovy-2.4")
-            dependency("org.spockframework:spock-spring:1.1-groovy-2.4")
+
+            dependency("org.spockframework:spock-core:1.2-groovy-2.5")
+            dependency("org.spockframework:spock-guice:1.2-groovy-2.5")
+            dependency("org.spockframework:spock-spring:1.2-groovy-2.5")
+            
             /**es 5.4.1 dependencies*/
             dependency("org.elasticsearch.client:transport:5.4.1")
             dependency("net.snowflake:snowflake-jdbc:3.4.2")
@@ -161,6 +169,7 @@ configure(javaProjects) {
         all*.exclude module: "log4j-over-slf4j"
         all*.exclude module: "slf4j-jdk14"
         all*.exclude module: "slf4j-log4j12"
+        all*.exclude module: "log4j-to-slf4j"
     }
 
     dependencies {
@@ -169,14 +178,17 @@ configure(javaProjects) {
          * Compile Dependencies
          *******************************/
 
-        compile("com.google.code.findbugs:annotations")
-        compile("com.google.code.findbugs:jsr305")
+        compile("com.google.code.findbugs:annotations:2.0.0")
+        compile("com.google.code.findbugs:jsr305:2.0.0")
+        compile("log4j:log4j:1.2.17")
+        compile("io.micrometer:micrometer-core")
 
         /*******************************
          * Provided Dependencies
          *******************************/
 
-        compileOnly("org.projectlombok:lombok")
+        compileOnly("org.springframework.boot:spring-boot-starter-web")
+        compileOnly("org.projectlombok:lombok:1.18.4")
 
         /*******************************
          * Runtime Dependencies
@@ -187,7 +199,7 @@ configure(javaProjects) {
          *******************************/
 
         testCompile("cglib:cglib-nodep")
-        testCompile("org.codehaus.groovy:groovy-all")
+        testCompile("org.codehaus.groovy:groovy-all:2.5.5")
         testCompile("org.codehaus.gpars:gpars")
         testCompile("org.objenesis:objenesis")
         testCompile("org.spockframework:spock-core")
@@ -197,6 +209,8 @@ configure(javaProjects) {
         testRuntime("org.hsqldb:hsqldb")
     }
 
+    ext['groovy.version'] = '2.5.0'
+    
     compileJava {
 //        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
         options.incremental = true
@@ -212,6 +226,7 @@ configure(javaProjects) {
     }
 
     findbugs {
+        toolVersion = '3.0.0'
         excludeFilter = new File(project.parent.projectDir, "codequality/findbugs/excludeFilter.xml")
     }
 

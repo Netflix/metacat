@@ -23,7 +23,7 @@ dependencies {
 
     compile(project(":metacat-common-server"))
     compile("org.apache.httpcomponents:httpclient")
-    compile("org.json:json")
+    compile("org.json:json:20180813")
 
     /*******************************
      * Provided Dependencies

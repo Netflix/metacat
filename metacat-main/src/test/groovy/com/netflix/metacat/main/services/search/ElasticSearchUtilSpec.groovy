@@ -21,9 +21,7 @@ import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.testdata.provider.DataDtoProvider
-import com.netflix.spectator.api.Counter
-import com.netflix.spectator.api.NoopRegistry
-import com.netflix.spectator.api.Registry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.elasticsearch.action.ListenableActionFuture
 import org.elasticsearch.action.bulk.BulkItemResponse
 import org.elasticsearch.action.bulk.BulkRequestBuilder
@@ -60,7 +58,7 @@ class ElasticSearchUtilSpec extends Specification {
     @Shared
     String esIndex = "metacat"
     @Shared
-    def registry = new NoopRegistry()
+    def registry = new SimpleMeterRegistry()
 
     def setupSpec() {
         config.isElasticSearchPublishMetacatLogEnabled() >> true

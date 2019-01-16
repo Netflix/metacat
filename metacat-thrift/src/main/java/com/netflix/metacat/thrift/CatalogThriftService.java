@@ -19,7 +19,7 @@ package com.netflix.metacat.thrift;
 import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.api.v1.PartitionV1;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.server.TServerEventHandler;
@@ -42,7 +42,7 @@ public class CatalogThriftService extends AbstractThriftServer {
      * @param partitionV1    Partition V1 resource
      * @param catalogName    catalog name
      * @param portNumber     port
-     * @param registry       registry for spectator
+     * @param registry       registry for micrometer
      */
     public CatalogThriftService(
         final Config config,
@@ -51,7 +51,7 @@ public class CatalogThriftService extends AbstractThriftServer {
         final PartitionV1 partitionV1,
         final String catalogName,
         final int portNumber,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         super(config, registry, portNumber, "thrift-pool-" + catalogName + "-" + portNumber + "-%d");
         this.hiveConverters = hiveConverters;

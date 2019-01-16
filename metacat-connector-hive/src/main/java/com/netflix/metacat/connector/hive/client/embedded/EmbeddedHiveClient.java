@@ -22,9 +22,9 @@ import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.metastore.IMetacatHMSHandler;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
-import com.netflix.spectator.api.Counter;
-import com.netflix.spectator.api.Id;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -34,9 +34,7 @@ import org.apache.thrift.TException;
 import javax.annotation.Nullable;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -74,8 +72,7 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     private static final short ALL_RESULTS = -1;
     private final IMetacatHMSHandler handler;
-    private final Registry registry;
-    private final Id requestTimerId;
+    private final MeterRegistry registry;
     private final Counter hiveSqlErrorCounter;
 
     /**
@@ -87,10 +84,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      */
     public EmbeddedHiveClient(final String catalogName,
                               @Nullable final IMetacatHMSHandler handler,
-                              final Registry registry) {
+                              final MeterRegistry registry) {
         this.handler = handler;
         this.registry = registry;
-        this.requestTimerId = registry.createId(HiveMetrics.TimerHiveRequest.getMetricName());
         this.hiveSqlErrorCounter =
             registry.counter(HiveMetrics.CounterHiveSqlLockError.getMetricName() + "." + catalogName);
     }
@@ -355,9 +351,9 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
     }
 
     private <R> R callWrap(final String requestName, final Callable<R> supplier) throws TException {
-        final long start = registry.clock().wallTime();
-        final Map<String, String> tags = new HashMap<String, String>();
-        tags.put("request", requestName);
+        final long start = System.currentTimeMillis();
+        final Set<Tag> tags = Sets.newHashSet();
+        tags.add(Tag.of("request", requestName));
 
         try {
             return supplier.call();
@@ -367,10 +363,11 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
         } catch (Exception e) {
             throw new TException(e.getMessage(), e.getCause());
         } finally {
-            final long duration = registry.clock().wallTime() - start;
+            final long duration = System.currentTimeMillis() - start;
             log.debug("### Time taken to complete {} is {} ms", requestName,
                 duration);
-            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            this.registry.timer(HiveMetrics.TimerHiveRequest.getMetricName(), tags)
+                .record(duration, TimeUnit.MILLISECONDS);
         }
     }
 }

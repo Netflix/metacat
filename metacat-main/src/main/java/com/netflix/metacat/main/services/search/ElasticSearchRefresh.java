@@ -51,7 +51,7 @@ import com.netflix.metacat.main.services.GetDatabaseServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.Instant;
@@ -95,7 +95,7 @@ public class ElasticSearchRefresh {
     private Instant refreshMarker;
     private String refreshMarkerText;
 
-    private Registry registry;
+    private MeterRegistry registry;
     //  Fixed thread pool
     private ListeningExecutorService service;
     private ListeningExecutorService esService;
@@ -112,7 +112,7 @@ public class ElasticSearchRefresh {
      * @param partitionService    Partition service
      * @param userMetadataService User metadata service
      * @param tagService          Tag service
-     * @param registry            registry of spectator
+     * @param registry            registry of micrometer
      * @param elasticSearchUtil   ElasticSearch client wrapper
      */
     public ElasticSearchRefresh(
@@ -125,7 +125,7 @@ public class ElasticSearchRefresh {
         @Nonnull @NonNull final UserMetadataService userMetadataService,
         @Nonnull @NonNull final TagService tagService,
         @Nonnull @NonNull final ElasticSearchUtil elasticSearchUtil,
-        @Nonnull @NonNull final Registry registry
+        @Nonnull @NonNull final MeterRegistry registry
     ) {
         this.config = config;
         this.eventBus = eventBus;
@@ -303,7 +303,7 @@ public class ElasticSearchRefresh {
     private void _process(final List<QualifiedName> qNames, final Supplier<ListenableFuture<Void>> supplier,
                           final String requestName, final boolean delete, final int queueSize) {
         if (isElasticSearchMetacatRefreshAlreadyRunning.compareAndSet(false, true)) {
-            final long start = registry.clock().wallTime();
+            final long start = System.currentTimeMillis();
             try {
                 log.info("Start: Full refresh of metacat index in elastic search. Processing {} ...", qNames);
                 final MetacatRequestContext context = MetacatRequestContext.builder()
@@ -327,8 +327,8 @@ public class ElasticSearchRefresh {
                 }
             } catch (Exception e) {
                 log.error("Full refresh of metacat index failed", e);
-                registry.counter(registry.createId(Metrics.CounterElasticSearchRefresh.getMetricName())
-                    .withTags(Metrics.tagStatusFailureMap)).increment();
+                registry.counter(Metrics.CounterElasticSearchRefresh.getMetricName(),
+                    Metrics.tagStatusFailureSet).increment();
             } finally {
                 try {
                     shutdown(service);
@@ -336,7 +336,7 @@ public class ElasticSearchRefresh {
                     shutdown(defaultService);
                 } finally {
                     isElasticSearchMetacatRefreshAlreadyRunning.set(false);
-                    final long duration = registry.clock().wallTime() - start;
+                    final long duration = System.currentTimeMillis() - start;
                     this.registry.timer(Metrics.TimerElasticSearchRefresh.getMetricName()
                         + "." + requestName).record(duration, TimeUnit.MILLISECONDS);
                     log.info("### Time taken to complete {} is {} ms", requestName, duration);
@@ -345,7 +345,7 @@ public class ElasticSearchRefresh {
 
         } else {
             log.info("Full refresh of metacat index is already running.");
-            registry.counter(registry.createId(Metrics.CounterElasticSearchRefreshAlreadyRunning.getMetricName()))
+            registry.counter(Metrics.CounterElasticSearchRefreshAlreadyRunning.getMetricName())
                 .increment();
         }
     }
@@ -429,7 +429,7 @@ public class ElasticSearchRefresh {
                 log.info("Count of unmarked databases({}) is more than the threshold {}", unmarkedDatabaseDtos.size(),
                     config.getElasticSearchThresholdUnmarkedDatabasesDelete());
                 registry.counter(
-                    registry.createId(Metrics.CounterElasticSearchUnmarkedDatabaseThreshholdReached.getMetricName()))
+                    Metrics.CounterElasticSearchUnmarkedDatabaseThreshholdReached.getMetricName())
                     .increment();
             }
         }
@@ -483,7 +483,7 @@ public class ElasticSearchRefresh {
                 log.info("Count of unmarked tables({}) is more than the threshold {}", unmarkedTableDtos.size(),
                     config.getElasticSearchThresholdUnmarkedTablesDelete());
                 registry.counter(
-                    registry.createId(Metrics.CounterElasticSearchUnmarkedTableThreshholdReached.getMetricName()))
+                    Metrics.CounterElasticSearchUnmarkedTableThreshholdReached.getMetricName())
                     .increment();
 
             }

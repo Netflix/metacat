@@ -19,7 +19,7 @@ package com.netflix.metacat.common.server.properties;
 
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatException;
-import com.netflix.servo.util.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;

@@ -16,9 +16,9 @@
 package com.netflix.metacat.connector.hive.metastore;
 
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
-import com.netflix.spectator.api.NoopRegistry;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.metrics.Metrics;
@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
 public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMetacatHMSHandler {
     private Pattern partitionValidationPattern;
     private int nextSerialNum;
-    private final Registry registry;
+    private final MeterRegistry registry;
 
     private ThreadLocal<Integer> threadLocalId = new ThreadLocal<Integer>() {
         @Override
@@ -104,7 +104,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
      * @throws MetaException exception
      */
     public MetacatHMSHandler(final String name, final HiveConf conf) throws MetaException {
-        this(name, conf, new NoopRegistry(), true);
+        this(name, conf, new SimpleMeterRegistry(), true);
     }
 
     /**
@@ -116,7 +116,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
      * @param init initialize if true.
      * @throws MetaException exception
      */
-    public MetacatHMSHandler(final String name, final HiveConf conf, final Registry registry, final boolean init)
+    public MetacatHMSHandler(final String name, final HiveConf conf, final MeterRegistry registry, final boolean init)
         throws MetaException {
         super(name, conf, init);
         this.registry = registry;

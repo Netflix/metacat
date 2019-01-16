@@ -33,13 +33,14 @@ dependencies {
     compile(project(":metacat-common-server"))
     compile(project(":metacat-main"))
     compile(project(":metacat-metadata-mysql"))
-
     /*******************************
      * Provided Dependencies
      *******************************/
-
-    compileOnly("org.springframework.boot:spring-boot-starter-tomcat")
-
+    
+    compile("org.springframework.boot:spring-boot-starter-web"){
+        exclude module: "org.springframework.boot:spring-boot-starter-tomcat"
+    }
+    
     /*******************************
      * Runtime Dependencies
      *******************************/

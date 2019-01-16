@@ -16,8 +16,15 @@
 
 package com.netflix.metacat.common.server.util;
 
-import com.netflix.spectator.api.Registry;
+import com.google.common.collect.Sets;
+import com.netflix.metacat.common.QualifiedName;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 
+import javax.annotation.Nonnull;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -27,16 +34,17 @@ import java.util.concurrent.ThreadPoolExecutor;
 public final class RegistryUtil {
     private static final String NAME_MONITORED_POOL = "MonitoredThreadPool_";
 
-    private RegistryUtil() { }
+    private RegistryUtil() {
+    }
 
     /**
-
      * Register the pool properties.
-     * @param registry Spectator registry
-     * @param name name of the monitor
-     * @param pool thread pool
+     *
+     * @param registry micrometer registry
+     * @param name     name of the monitor
+     * @param pool     thread pool
      */
-    public static void registerThreadPool(final Registry registry,
+    public static void registerThreadPool(final MeterRegistry registry,
         final String name,
         final ThreadPoolExecutor pool) {
         registry.gauge(NAME_MONITORED_POOL + name + "_" + "activeCount", pool, ThreadPoolExecutor::getActiveCount);
@@ -46,7 +54,22 @@ public final class RegistryUtil {
         registry
             .gauge(NAME_MONITORED_POOL + name + "_" + "maximumPoolSize", pool, ThreadPoolExecutor::getMaximumPoolSize);
         registry.gauge(NAME_MONITORED_POOL + name + "_" + "poolSize", pool, ThreadPoolExecutor::getPoolSize);
-        registry.collectionSize(NAME_MONITORED_POOL + name + "_" + "queueSize", pool.getQueue());
+        registry.gaugeCollectionSize(NAME_MONITORED_POOL + name + "_" + "queueSize", Tags.empty(), pool.getQueue());
         registry.gauge(NAME_MONITORED_POOL + name + "_" + "taskCount", pool, ThreadPoolExecutor::getTaskCount);
+    }
+
+    /**
+     * Convert a {@code QualifiedName} into a Set of {@code Tag}.
+     *
+     * @param name The QualifiedName
+     * @return The Set of Meter Tags
+     */
+    public static Set<Tag> qualifiedNameToTagsSet(@Nonnull final QualifiedName name) {
+        final Set<Tag> tagsSet = Sets.newHashSet();
+        for (Map.Entry<String, String> part : name.parts().entrySet()) {
+            tagsSet.add(Tag.of(part.getKey(), part.getValue()));
+        }
+
+        return tagsSet;
     }
 }

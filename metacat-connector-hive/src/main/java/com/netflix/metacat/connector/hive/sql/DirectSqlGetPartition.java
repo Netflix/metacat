@@ -40,12 +40,13 @@ import com.netflix.metacat.common.server.partition.util.FilterPartition;
 import com.netflix.metacat.common.server.partition.visitor.PartitionKeyParserEval;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserEval;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.RegistryUtil;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.metacat.connector.hive.util.PartitionFilterGenerator;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -66,6 +67,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -89,7 +91,7 @@ public class DirectSqlGetPartition {
     private static final String PARTITION_URI = "uri";
 
     private final ThreadServiceManager threadServiceManager;
-    private final Registry registry;
+    private final MeterRegistry registry;
     private JdbcTemplate jdbcTemplate;
     private final HiveConnectorFastServiceMetric fastServiceMetric;
     private final String catalogName;
@@ -132,7 +134,7 @@ public class DirectSqlGetPartition {
         final ConnectorRequestContext requestContext,
         final QualifiedName tableName
     ) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         // Handler for reading the result set
         final ResultSetExtractor<Integer> handler = rs -> {
             int count = 0;
@@ -164,7 +166,7 @@ public class DirectSqlGetPartition {
             throw new ConnectorException("Failed getting the partition count", e);
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagGetPartitionCount.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagGetPartitionCount.getMetricName(), System.currentTimeMillis() - start);
         }
     }
 
@@ -182,7 +184,7 @@ public class DirectSqlGetPartition {
         final QualifiedName tableName,
         final PartitionListRequest partitionsRequest
     ) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         try {
             return this.getPartitions(
                 tableName.getDatabaseName(),
@@ -196,7 +198,7 @@ public class DirectSqlGetPartition {
             ).stream().map(PartitionHolder::getPartitionInfo).collect(Collectors.toList());
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagGetPartitions.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagGetPartitions.getMetricName(), System.currentTimeMillis() - start);
         }
     }
 
@@ -212,7 +214,7 @@ public class DirectSqlGetPartition {
     public List<String> getPartitionUris(final ConnectorRequestContext requestContext,
                                          final QualifiedName tableName,
                                          final PartitionListRequest partitionsRequest) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         final List<String> result;
         final List<String> partitionNames = partitionsRequest.getPartitionNames();
         final Sort sort = partitionsRequest.getSort();
@@ -243,7 +245,7 @@ public class DirectSqlGetPartition {
                 partitionsRequest.getIncludeAuditOnly());
         }
         this.fastServiceMetric.recordTimer(
-            HiveMetrics.TagGetPartitionKeys.getMetricName(), registry.clock().wallTime() - start);
+            HiveMetrics.TagGetPartitionKeys.getMetricName(), System.currentTimeMillis() - start);
         return result;
     }
 
@@ -302,7 +304,7 @@ public class DirectSqlGetPartition {
     public List<String> getPartitionKeys(final ConnectorRequestContext requestContext,
                                          final QualifiedName tableName,
                                          final PartitionListRequest partitionsRequest) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         final List<String> result;
         final List<String> partitionNames = partitionsRequest.getPartitionNames();
         final Sort sort = partitionsRequest.getSort();
@@ -332,7 +334,7 @@ public class DirectSqlGetPartition {
                 handler, sort, pageable, partitionsRequest.getIncludeAuditOnly());
         }
         this.fastServiceMetric.recordTimer(
-            HiveMetrics.TagGetPartitionKeys.getMetricName(), registry.clock().wallTime() - start);
+            HiveMetrics.TagGetPartitionKeys.getMetricName(), System.currentTimeMillis() - start);
         return result;
     }
 
@@ -349,7 +351,7 @@ public class DirectSqlGetPartition {
         @Nonnull final ConnectorRequestContext context,
         @Nonnull final List<String> uris,
         final boolean prefixSearch) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         final Map<String, List<QualifiedName>> result = Maps.newHashMap();
         // Create the sql
         final StringBuilder queryBuilder = new StringBuilder(SQL.SQL_GET_PARTITION_NAMES_BY_URI);
@@ -389,7 +391,7 @@ public class DirectSqlGetPartition {
             jdbcTemplate.query(queryBuilder.toString(), params.toArray(), handler);
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagGetPartitionNames.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagGetPartitionNames.getMetricName(), System.currentTimeMillis() - start);
         }
         return result;
     }
@@ -468,8 +470,8 @@ public class DirectSqlGetPartition {
 
                 // Fail if the number of partitions exceeds the threshold limit.
                 if (result.size() > config.getMaxPartitionsThreshold()) {
-                    registry.counter(registry.createId(HiveMetrics.CounterHiveGetPartitionsExceedThresholdFailure
-                            .getMetricName()).withTags(tableQName.parts())).increment();
+                    registry.counter(HiveMetrics.CounterHiveGetPartitionsExceedThresholdFailure
+                            .getMetricName(), RegistryUtil.qualifiedNameToTagsSet(tableQName)).increment();
                     final String message =
                         String.format("Number of partitions queried for table %s exceeded the threshold %d",
                             tableQName, config.getMaxPartitionsThreshold());
@@ -477,8 +479,8 @@ public class DirectSqlGetPartition {
                     throw new IllegalArgumentException(message);
                 }
             }
-            registry.gauge(registry.createId(HiveMetrics.GaugePreExpressionFilterGetPartitionsCount
-                .getMetricName()).withTags(tableQName.parts())).set(noOfRows);
+            registry.gauge(HiveMetrics.GaugePreExpressionFilterGetPartitionsCount.getMetricName(),
+                RegistryUtil.qualifiedNameToTagsSet(tableQName), new AtomicInteger(0)).set(noOfRows);
             return result;
         };
 

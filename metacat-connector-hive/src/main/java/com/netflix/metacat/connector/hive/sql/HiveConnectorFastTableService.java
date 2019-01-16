@@ -27,7 +27,7 @@ import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -42,7 +42,7 @@ import java.util.Map;
  */
 @Slf4j
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
-    private final Registry registry;
+    private final MeterRegistry registry;
     private final DirectSqlTable directSqlTable;
     private IcebergTableHandler icebergTableHandler;
 

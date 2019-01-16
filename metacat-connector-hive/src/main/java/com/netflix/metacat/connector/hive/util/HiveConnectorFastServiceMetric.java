@@ -17,9 +17,9 @@
 package com.netflix.metacat.connector.hive.util;
 
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
-import com.netflix.spectator.api.Counter;
-import com.netflix.spectator.api.Registry;
-import com.netflix.spectator.api.Timer;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,15 +36,16 @@ import java.util.concurrent.TimeUnit;
 @Getter
 @Slf4j
 public class HiveConnectorFastServiceMetric {
+    private static final String REQUEST_TAG = "request";
     private final HashMap<String, Timer> timerMap = new HashMap<>();
     private final Counter getHiveTablePartsFailureCounter;
 
     /**
      * Constructor.
      *
-     * @param registry the spectator registry
+     * @param registry the micrometer registry
      */
-    public HiveConnectorFastServiceMetric(final Registry registry) {
+    public HiveConnectorFastServiceMetric(final MeterRegistry registry) {
         timerMap.put(HiveMetrics.TagGetPartitionCount.getMetricName(), createTimer(registry,
             HiveMetrics.TagGetPartitionCount.getMetricName()));
         timerMap.put(HiveMetrics.TagGetPartitions.getMetricName(), createTimer(registry,
@@ -70,10 +71,8 @@ public class HiveConnectorFastServiceMetric {
             HiveMetrics.CounterHiveExperimentGetTablePartitionsFailure.getMetricName());
     }
 
-    private Timer createTimer(final Registry registry, final String requestTag) {
-        final HashMap<String, String> tags = new HashMap<>();
-        tags.put("request", requestTag);
-        return registry.timer(registry.createId(HiveMetrics.TimerFastHiveRequest.getMetricName()).withTags(tags));
+    private Timer createTimer(final MeterRegistry registry, final String requestTag) {
+        return registry.timer(HiveMetrics.TimerFastHiveRequest.getMetricName(), "request", requestTag);
     }
 
     /**

@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableMap
 import com.google.common.collect.Maps
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig
-import com.netflix.spectator.api.Registry
+import io.micrometer.core.instrument.MeterRegistry
 import org.assertj.core.util.Sets
 import org.springframework.boot.actuate.health.Status
 import spock.lang.Specification
@@ -47,7 +47,7 @@ class CatalogManagerSpec extends Specification {
         def config = Mock(Config) {
             1 * getPluginConfigLocation() >> File.createTempFile("not", ".aDirectory").getAbsolutePath()
         }
-        def registry = Mock(Registry)
+        def registry = Mock(MeterRegistry)
         def catalogManager = new CatalogManager(connectorManager, config, registry)
 
         when:

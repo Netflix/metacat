@@ -26,7 +26,7 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.main.services.notifications.sns.SNSNotificationMetric;
 import com.netflix.metacat.main.services.notifications.sns.SNSNotificationServiceImpl;
 import com.netflix.metacat.main.services.notifications.sns.SNSNotificationServiceUtil;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -110,12 +110,12 @@ public class SNSNotificationsConfig {
     /**
      * SNS Notification Metric.
      *
-     * @param registry registry for spectator
+     * @param registry registry for micrometer
      * @return Notification Metric bean
      */
     @Bean
     public SNSNotificationMetric snsNotificationMetric(
-        final Registry registry
+        final MeterRegistry registry
     ) {
         return new SNSNotificationMetric(registry);
     }

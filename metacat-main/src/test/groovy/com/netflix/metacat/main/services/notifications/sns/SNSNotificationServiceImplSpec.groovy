@@ -28,8 +28,12 @@ import com.netflix.metacat.common.dto.notifications.sns.messages.*
 import com.netflix.metacat.common.server.events.*
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
-import com.netflix.spectator.api.*
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Timer
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import spock.lang.Specification
+import sun.java2d.pipe.SpanShapeRenderer
 
 import java.util.concurrent.TimeUnit
 
@@ -55,13 +59,11 @@ class SNSNotificationServiceImplSpec extends Specification {
     def mapper = Mock(ObjectMapper)
     def partitionArn = UUID.randomUUID().toString()
     def tableArn = UUID.randomUUID().toString()
-    def registry = Mock(Registry)
+    def registry = Mock(MeterRegistry)
     def timer = Mock(Timer)
-    def config = Mock(Config)
     def counter = Mock(Counter)
-    def id = Mock(Id)
+    def config = Mock(Config)
     def service;
-    def clock = Mock(Clock)
     def result = Mock(PublishResult)
     def userMetadata = Mock(UserMetadataService)
 
@@ -74,11 +76,8 @@ class SNSNotificationServiceImplSpec extends Specification {
         .scheme("internal").build();
 
     def setup() {
-        this.registry.clock() >> clock
-        this.clock.wallTime() >> System.currentTimeMillis()
         this.registry.timer(_, _, _) >> this.timer
-        this.registry.counter(_) >> counter
-        this.registry.createId(_) >> id
+        this.registry.counter(_,_) >> counter
         this.service = new SNSNotificationServiceImpl(
             this.client,
             this.tableArn,

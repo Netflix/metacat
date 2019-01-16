@@ -31,7 +31,7 @@ import com.netflix.metacat.main.services.search.ElasticSearchEventHandlers;
 import com.netflix.metacat.main.services.search.ElasticSearchRefresh;
 import com.netflix.metacat.main.services.search.ElasticSearchUtil;
 import com.netflix.metacat.main.services.search.ElasticSearchUtilImpl;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.client.Client;
@@ -108,7 +108,7 @@ public class ElasticSearchConfig {
      * @param client              The configured ElasticSearch client
      * @param config              System config
      * @param metacatJson         JSON utilities
-     * @param registry            spectator registry
+     * @param registry            micrometer registry
      * @return The ElasticSearch utility instance
      */
     @Bean
@@ -116,7 +116,7 @@ public class ElasticSearchConfig {
         final Client client,
         final Config config,
         final MetacatJson metacatJson,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         return new ElasticSearchUtilImpl(client, config, metacatJson, registry);
     }
@@ -125,14 +125,14 @@ public class ElasticSearchConfig {
      * Event handler instance to publish event payloads to ElasticSearch.
      *
      * @param elasticSearchUtil The client wrapper utility to use
-     * @param registry          registry of spectator
+     * @param registry          registry of micrometer
      * @param config            System config
      * @return The event handler instance
      */
     @Bean
     public ElasticSearchEventHandlers elasticSearchEventHandlers(
         final ElasticSearchUtil elasticSearchUtil,
-        final Registry registry,
+        final MeterRegistry registry,
         final Config config
     ) {
         return new ElasticSearchEventHandlers(elasticSearchUtil, registry, config);
@@ -150,7 +150,7 @@ public class ElasticSearchConfig {
      * @param userMetadataService User metadata  service
      * @param tagService          Tag service
      * @param elasticSearchUtil   ElasticSearch client wrapper
-     * @param registry            registry of spectator
+     * @param registry            registry of micrometer
      * @return The refresh bean
      */
     @Bean
@@ -164,7 +164,7 @@ public class ElasticSearchConfig {
         final UserMetadataService userMetadataService,
         final TagService tagService,
         final ElasticSearchUtil elasticSearchUtil,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         return new ElasticSearchRefresh(
             config,

@@ -46,10 +46,11 @@ import com.netflix.metacat.common.server.usermetadata.MetacatOperation;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
+import com.netflix.metacat.common.server.util.RegistryUtil;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.TableService;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -69,7 +70,7 @@ public class TableServiceImpl implements TableService {
     private final TagService tagService;
     private final UserMetadataService userMetadataService;
     private final MetacatEventBus eventBus;
-    private final Registry registry;
+    private final MeterRegistry registry;
     private final Config config;
     private final ConverterUtil converterUtil;
     private final ConnectorTableServiceProxy connectorTableServiceProxy;
@@ -94,7 +95,7 @@ public class TableServiceImpl implements TableService {
         final TagService tagService,
         final UserMetadataService userMetadataService,
         final MetacatEventBus eventBus,
-        final Registry registry,
+        final MeterRegistry registry,
         final Config config,
         final ConverterUtil converterUtil,
         final AuthorizationService authorizationService
@@ -129,11 +130,12 @@ public class TableServiceImpl implements TableService {
 
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for table {}", name);
-            final long start = registry.clock().wallTime();
+            final long start = System.currentTimeMillis();
             userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
-            final long duration = registry.clock().wallTime() - start;
+            final long duration = System.currentTimeMillis() - start;
             log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
-            registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
+            registry.timer(Metrics.TimerSaveTableMetadata.getMetricName(),
+                RegistryUtil.qualifiedNameToTagsSet(name))
                 .record(duration, TimeUnit.MILLISECONDS);
             tag(name, tableDto.getDefinitionMetadata());
         }
@@ -370,11 +372,11 @@ public class TableServiceImpl implements TableService {
         // Merge in metadata if the user sent any
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for table {}", name);
-            final long start = registry.clock().wallTime();
+            final long start = System.currentTimeMillis();
             userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
-            final long duration = registry.clock().wallTime() - start;
+            final long duration = System.currentTimeMillis() - start;
             log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
-            registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
+            registry.timer(Metrics.TimerSaveTableMetadata.getMetricName(), RegistryUtil.qualifiedNameToTagsSet(name))
                 .record(duration, TimeUnit.MILLISECONDS);
         }
         final TableDto updatedDto = get(name,

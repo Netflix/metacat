@@ -21,13 +21,18 @@ import com.netflix.metacat.common.server.usermetadata.MetadataInterceptorImpl
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.metacat.common.server.util.DataSourceManager
 import io.airlift.testing.mysql.TestingMySqlServer
+import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+
+//import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
+import org.springframework.test.context.junit4.SpringRunner
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
@@ -44,8 +49,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import static java.lang.String.format
 
 @Ignore
+
+
 @SpringBootTest(classes=Config.class)
-@JdbcTest
+
+//@JdbcTest
 class BaseSpec extends Specification {
     private static final AtomicBoolean initialized = new AtomicBoolean();
     @Shared

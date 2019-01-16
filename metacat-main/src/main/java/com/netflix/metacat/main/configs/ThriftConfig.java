@@ -27,7 +27,7 @@ import com.netflix.metacat.thrift.CatalogThriftServiceFactoryImpl;
 import com.netflix.metacat.thrift.DateConverters;
 import com.netflix.metacat.thrift.HiveConverters;
 import com.netflix.metacat.thrift.HiveConvertersImpl;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -57,7 +57,7 @@ public class ThriftConfig {
      * @param hiveConverters       Hive converters to use
      * @param metacatV1            The Metacat V1 API implementation to use
      * @param partitionV1          The Metacat Partition V1 API to use
-     * @param registry             registry for spectator
+     * @param registry             registry for micrometer
      * @return The CatalogThriftServiceFactory
      */
     @Bean
@@ -66,7 +66,7 @@ public class ThriftConfig {
         final HiveConverters hiveConverters,
         final MetacatV1 metacatV1,
         final PartitionV1 partitionV1,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         return new CatalogThriftServiceFactoryImpl(
             config,

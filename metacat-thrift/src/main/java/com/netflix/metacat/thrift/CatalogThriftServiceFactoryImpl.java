@@ -22,7 +22,7 @@ import com.google.common.cache.LoadingCache;
 import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.api.v1.PartitionV1;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 
 import java.util.Objects;
 
@@ -39,14 +39,14 @@ public class CatalogThriftServiceFactoryImpl implements CatalogThriftServiceFact
      * @param hiveConverters       hive converter
      * @param metacatV1            Metacat V1
      * @param partitionV1          Partition V1
-     * @param registry             registry for spectator
+     * @param registry             registry for micrometer
      */
     public CatalogThriftServiceFactoryImpl(
         final Config config,
         final HiveConverters hiveConverters,
         final MetacatV1 metacatV1,
         final PartitionV1 partitionV1,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         this.cache = CacheBuilder.newBuilder()
             .build(new CacheLoader<CacheKey, CatalogThriftService>() {

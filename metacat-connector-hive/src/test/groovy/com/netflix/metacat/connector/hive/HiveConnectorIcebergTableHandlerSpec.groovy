@@ -29,7 +29,7 @@ import com.netflix.metacat.connector.hive.iceberg.DataMetadataMetrics
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteria
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants
-import com.netflix.spectator.api.NoopRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -40,7 +40,7 @@ class HiveConnectorIcebergTableHandlerSpec extends Specification{
         "testHive",
         "hive",
         Mock(Config),
-        new NoopRegistry(),
+        new SimpleMeterRegistry(),
         ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
     )
 

@@ -7,7 +7,7 @@ import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.common.server.usermetadata.TagService
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.metacat.common.server.util.MetacatContextManager
-import com.netflix.spectator.api.NoopRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import spock.lang.Specification
 
 /**
@@ -16,7 +16,7 @@ import spock.lang.Specification
  */
 class MetadataServiceSpec extends Specification {
     def config = new DefaultConfigImpl(new MetacatProperties())
-    def registry = new NoopRegistry()
+    def registry = new SimpleMeterRegistry()
     def tableService = Mock(TableService)
     def partitionService = Mock(PartitionService)
     def mService = Mock(UserMetadataService)

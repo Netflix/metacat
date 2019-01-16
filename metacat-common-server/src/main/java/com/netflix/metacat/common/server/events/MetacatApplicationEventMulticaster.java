@@ -20,7 +20,7 @@ package com.netflix.metacat.common.server.events;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.common.server.util.RegistryUtil;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
@@ -45,16 +45,16 @@ import java.util.Map;
 public class MetacatApplicationEventMulticaster extends SimpleApplicationEventMulticaster {
     //Map of event multicasters keyed by the listener class name.
     private final Map<String, ApplicationEventMulticaster> asyncEventMulticasters = Maps.newHashMap();
-    private final Registry registry;
+    private final MeterRegistry registry;
     private final MetacatProperties metacatProperties;
     /**
      * Constructor.
      *
-     * @param registry         registry for spectator
+     * @param registry         registry for micrometer
      * @param metacatProperties The metacat properties to get number of executor threads from.
      *                          Likely best to do one more than number of CPUs
      */
-    public MetacatApplicationEventMulticaster(final Registry registry, final MetacatProperties metacatProperties) {
+    public MetacatApplicationEventMulticaster(final MeterRegistry registry, final MetacatProperties metacatProperties) {
         super();
         this.registry = registry;
         this.metacatProperties = metacatProperties;

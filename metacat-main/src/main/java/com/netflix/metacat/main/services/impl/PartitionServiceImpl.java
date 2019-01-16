@@ -48,14 +48,14 @@ import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
+import com.netflix.metacat.common.server.util.RegistryUtil;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
-import com.netflix.spectator.api.Id;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -80,11 +80,7 @@ public class PartitionServiceImpl implements PartitionService {
     private final Config config;
     private final MetacatEventBus eventBus;
     private final ConverterUtil converterUtil;
-    private final Registry registry;
-    private final Id partitionAddDistSummary;
-    private final Id partitionMetadataOnlyAddDistSummary;
-    private final Id partitionGetDistSummary;
-    private final Id partitionDeleteDistSummary;
+    private final MeterRegistry registry;
 
     /**
      * Constructor.
@@ -108,7 +104,7 @@ public class PartitionServiceImpl implements PartitionService {
         final Config config,
         final MetacatEventBus eventBus,
         final ConverterUtil converterUtil,
-        final Registry registry
+        final MeterRegistry registry
     ) {
         this.catalogService = catalogService;
         this.connectorManager = connectorManager;
@@ -119,14 +115,6 @@ public class PartitionServiceImpl implements PartitionService {
         this.eventBus = eventBus;
         this.converterUtil = converterUtil;
         this.registry = registry;
-        this.partitionAddDistSummary =
-            registry.createId(Metrics.DistributionSummaryAddPartitions.getMetricName());
-        this.partitionMetadataOnlyAddDistSummary =
-            registry.createId(Metrics.DistributionSummaryMetadataOnlyAddPartitions.getMetricName());
-        this.partitionGetDistSummary =
-            registry.createId(Metrics.DistributionSummaryGetPartitions.getMetricName());
-        this.partitionDeleteDistSummary =
-            registry.createId(Metrics.DistributionSummaryDeletePartitions.getMetricName());
     }
 
     /**
@@ -180,8 +168,9 @@ public class PartitionServiceImpl implements PartitionService {
                 }
             });
 
-            registry.distributionSummary(
-                this.partitionGetDistSummary.withTags(name.parts())).record(result.size());
+            registry.summary(
+                Metrics.DistributionSummaryGetPartitions.getMetricName(), RegistryUtil.qualifiedNameToTagsSet(name)).
+                record(result.size());
 
             log.info("Got {} partitions for {} using filter: {} and partition names: {}",
                 result.size(), name, filterExpression,
@@ -264,8 +253,10 @@ public class PartitionServiceImpl implements PartitionService {
         final MetacatRequestContext metacatRequestContext,
         final PartitionsSaveRequestDto dto,
         final QualifiedName name, final List<PartitionDto> partitionDtos) {
-        registry.distributionSummary(
-            this.partitionMetadataOnlyAddDistSummary.withTags(name.parts())).record(partitionDtos.size());
+        registry.summary(
+            Metrics.DistributionSummaryMetadataOnlyAddPartitions.getMetricName(),
+            RegistryUtil.qualifiedNameToTagsSet(name)).
+            record(partitionDtos.size());
         eventBus.post(
             new MetacatSaveTablePartitionMetadataOnlyPreEvent(name, metacatRequestContext, this, dto));
         // Save metadata
@@ -297,13 +288,15 @@ public class PartitionServiceImpl implements PartitionService {
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         List<HasMetadata> deletePartitions = Lists.newArrayList();
         List<PartitionDto> deletePartitionDtos = Lists.newArrayList();
-        registry.distributionSummary(
-            this.partitionAddDistSummary.withTags(name.parts())).record(partitionDtos.size());
+        registry.summary(
+            Metrics.DistributionSummaryAddPartitions.getMetricName(), RegistryUtil.qualifiedNameToTagsSet(name)).
+            record(partitionDtos.size());
         final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
         if (partitionIdsForDeletes != null && !partitionIdsForDeletes.isEmpty()) {
             eventBus.post(new MetacatDeleteTablePartitionPreEvent(name, metacatRequestContext, this, dto));
-            registry.distributionSummary(
-                this.partitionDeleteDistSummary.withTags(name.parts())).record(partitionIdsForDeletes.size());
+            registry.summary(
+                Metrics.DistributionSummaryDeletePartitions.getMetricName(), RegistryUtil.qualifiedNameToTagsSet(name)).
+                record(partitionIdsForDeletes.size());
             final GetPartitionsRequestDto requestDto =
                 new GetPartitionsRequestDto(null, partitionIdsForDeletes, false, true);
             final List<PartitionInfo> deletePartitionInfos = service.getPartitions(connectorRequestContext, name,
@@ -327,11 +320,11 @@ public class PartitionServiceImpl implements PartitionService {
             log.info("Deleting user metadata for partitions with names {} for {}", partitionIdsForDeletes, name);
             deleteMetadatas(metacatRequestContext.getUserName(), deletePartitions);
         }
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         userMetadataService.saveMetadata(metacatRequestContext.getUserName(), partitionDtos, true);
-        final long duration = registry.clock().wallTime() - start;
+        final long duration = System.currentTimeMillis() - start;
         log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
-        registry.timer(registry.createId(Metrics.TimerSavePartitionMetadata.getMetricName()).withTags(name.parts()))
+        registry.timer(Metrics.TimerSavePartitionMetadata.getMetricName(), RegistryUtil.qualifiedNameToTagsSet(name))
             .record(duration, TimeUnit.MILLISECONDS);
         //publish the delete and save in order
         //TODO: create MetacatUpdateTablePartitionEvents, only publish one partitionUpdateEvent here.
@@ -352,8 +345,9 @@ public class PartitionServiceImpl implements PartitionService {
     @Override
     public void delete(final QualifiedName name, final List<String> partitionIds) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        registry.distributionSummary(
-            this.partitionDeleteDistSummary.withTags(name.parts())).record(partitionIds.size());
+        registry.summary(
+            Metrics.DistributionSummaryDeletePartitions.getMetricName(), RegistryUtil.qualifiedNameToTagsSet(name)).
+            record(partitionIds.size());
         if (!tableService.exists(name)) {
             throw new TableNotFoundException(name);
         }

@@ -18,7 +18,7 @@
 package com.netflix.metacat.main.api;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
@@ -38,16 +38,15 @@ import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExists
 import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
-import com.netflix.spectator.api.Id;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotNull;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -60,11 +59,7 @@ import java.util.function.Supplier;
 @Slf4j
 @Component
 public final class RequestWrapper {
-    private final Registry registry;
-    //Metrics
-    private final Id requestCounterId;
-    private final Id requestFailureCounterId;
-    private final Id requestTimerId;
+    private final MeterRegistry registry;
 
     /**
      * Wrapper class for processing the request.
@@ -72,11 +67,8 @@ public final class RequestWrapper {
      * @param registry registry
      */
     @Autowired
-    public RequestWrapper(@NotNull @NonNull final Registry registry) {
+    public RequestWrapper(@NotNull @NonNull final MeterRegistry registry) {
         this.registry = registry;
-        requestCounterId = registry.createId(Metrics.CounterRequestCount.getMetricName());
-        requestFailureCounterId = registry.createId(Metrics.CounterRequestFailureCount.getMetricName());
-        requestTimerId = registry.createId(Metrics.TimerRequest.getMetricName());
     }
 
     /**
@@ -107,11 +99,10 @@ public final class RequestWrapper {
         final QualifiedName name,
         final String resourceRequestName,
         final Supplier<R> supplier) {
-        final long start = registry.clock().wallTime();
-        final Map<String, String> tags = new HashMap<>(name.parts());
-        tags.put("request", resourceRequestName);
-        registry.counter(requestCounterId.withTags(tags)).increment();
-
+        final long start = System.currentTimeMillis();
+        final Set<Tag> tags = Sets.newHashSet();
+        tags.add(Tag.of("request", resourceRequestName));
+        registry.counter(Metrics.CounterRequestCount.getMetricName(), tags).increment();
         try {
             log.info("### Calling method: {} for {}", resourceRequestName, name);
             return supplier.get();
@@ -168,9 +159,9 @@ public final class RequestWrapper {
             log.error(message, e);
             throw new MetacatException(message, e);
         } finally {
-            final long duration = registry.clock().wallTime() - start;
+            final long duration = System.currentTimeMillis() - start;
             log.info("### Time taken to complete {} for {} is {} ms", resourceRequestName, name, duration);
-            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            this.registry.timer(Metrics.TimerRequest.getMetricName(), tags).record(duration, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -185,10 +176,10 @@ public final class RequestWrapper {
     public <R> R processRequest(
         final String resourceRequestName,
         final Supplier<R> supplier) {
-        final long start = registry.clock().wallTime();
-        final Map<String, String> tags = Maps.newHashMap();
-        tags.put("request", resourceRequestName);
-        registry.counter(requestCounterId.withTags(tags)).increment();
+        final long start = System.currentTimeMillis();
+        final Set<Tag> tags = Sets.newHashSet();
+        tags.add(Tag.of("request", resourceRequestName));
+        registry.counter(Metrics.CounterRequestCount.getMetricName(), tags).increment();
         try {
             log.info("### Calling method: {}", resourceRequestName);
             return supplier.get();
@@ -210,16 +201,15 @@ public final class RequestWrapper {
             log.error(message, e);
             throw new MetacatException(message, e);
         } finally {
-            final long duration = registry.clock().wallTime() - start;
+            final long duration = System.currentTimeMillis() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
                 duration);
-            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            this.registry.timer(Metrics.TimerRequest.getMetricName()).record(duration, TimeUnit.MILLISECONDS);
         }
     }
 
-    private void collectRequestExceptionMetrics(final Map<String, String> tags, final String exceptionName) {
-        tags.put("exception", exceptionName);
-        registry.counter(requestFailureCounterId.withTags(tags)).increment();
+    private void collectRequestExceptionMetrics(final Set<Tag> tags, final String exceptionName) {
+        tags.add(Tag.of("exception", exceptionName));
+        registry.counter(Metrics.CounterRequestFailureCount.getMetricName(), tags).increment();
     }
-
 }

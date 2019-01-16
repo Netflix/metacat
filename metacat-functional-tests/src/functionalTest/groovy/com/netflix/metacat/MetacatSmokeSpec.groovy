@@ -896,12 +896,15 @@ class MetacatSmokeSpec extends Specification {
     def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
         given:
         def escapedPartitionName = PartitionUtil.escapePartitionName(partitionName)
+        def partitionQueryParam = URLEncoder.encode(escapedPartitionName.replace('=', '="') + '"',
+            java.nio.charset.StandardCharsets.UTF_8.toString())
+
         expect:
         def uri = isLocalEnv ? 'file:/tmp/abc' : String.format("s3://wh/%s.db/%s", databaseName, tableName)
         def createDate = Instant.now().toDate()
         try {
             createTable(catalogName, databaseName, tableName)
-            def partition = PigDataDtoProvider.getPartition(catalogName, databaseName, tableName, partitionName, uri + uriSuffix)
+            def partition = PigDataDtoProvider.getPartition(catalogName, databaseName, tableName, escapedPartitionName, uri + uriSuffix)
             def request = new PartitionsSaveRequestDto(partitions: [partition])
 
             partitionApi.savePartitions(catalogName, databaseName, tableName, request)
@@ -912,7 +915,7 @@ class MetacatSmokeSpec extends Specification {
                 }
                 request.setDefinitionMetadata((ObjectNode) metacatJson.emptyObjectNode().set('savePartitions', metacatJson.emptyObjectNode()))
                 partitionApi.savePartitions(catalogName, databaseName, tableName, request)
-                def savedPartitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionName.replace('=', '="') + '"', null, null, null, null, false)
+                def savedPartitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionQueryParam, null, null, null, null, false)
                 createDate = savedPartitions.get(0).getAudit().createdDate
                 request.getPartitions().get(0).setDataMetadata(metacatJson.emptyObjectNode().put('updateMetadata', -1))
                 request.setSaveMetadataOnly(true)
@@ -920,11 +923,10 @@ class MetacatSmokeSpec extends Specification {
             }
             error == null
         } catch (Exception e) {
-            e.class == error
+            error == e.class
         }
         if (!error) {
-            //To test the case that double quoats are supported
-            def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, escapedPartitionName.replace('=', '="') + '"', null, null, null, null, true)
+            def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionQueryParam, null, null, null, null, true)
             assert partitions != null && partitions.size() == 1 && partitions.find {
                 it.name.partitionName == escapedPartitionName
             } != null
@@ -949,37 +951,37 @@ class MetacatSmokeSpec extends Specification {
             partitionApi.deletePartitions(catalogName, databaseName, tableName, [escapedPartitionName])
         }
         where:
-        catalogName                     | databaseName      | tableName | partitionName | uriSuffix | uriResult | repeat | alter | error
-        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
-        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
-        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
-        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
-        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | true   | false | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | true   | true  | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | "one=xy'z"    | ''        | ''        | false  | false | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | "one=xy'z"    | ''        | ''        | false  | true  | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | true   | false | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | true   | true  | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
-        'hive-metastore'                | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
-        'hive-metastore'                | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
-        'hive-metastore'                | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
-        'hive-metastore'                | 'hsmoke_db'       | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
-        's3-mysql-db'                   | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
-        's3-mysql-db'                   | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
-        's3-mysql-db'                   | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
-        's3-mysql-db'                   | 'smoke_db'        | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
-        's3-mysql-db'                   | 'invalid-catalog' | 'z'       | 'one=xyz'     | ''        | ''        | false  | false | MetacatNotFoundException.class
+        catalogName                    | databaseName      | tableName | partitionName | uriSuffix | uriResult | repeat | alter | error
+        'embedded-hive-metastore'      | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
+        'embedded-hive-metastore'      | 'smoke_db'        | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
+        'embedded-hive-metastore'      | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
+        'embedded-hive-metastore'      | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
+        'embedded-hive-metastore'      | 'smoke_db'        | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
+        'embedded-fast-hive-metastore' | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
+        'embedded-fast-hive-metastore' | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
+        'embedded-fast-hive-metastore' | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
+        'embedded-fast-hive-metastore' | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | true   | false | null
+        'embedded-fast-hive-metastore' | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
+        'embedded-fast-hive-metastore' | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | true   | true  | null
+        'embedded-fast-hive-metastore' | 'fsmoke_db'       | 'part'    | "one=xy'z"    | ''        | ''        | false  | false | null
+        'embedded-fast-hive-metastore' | 'fsmoke_db'       | 'part'    | "one=xy'z"    | ''        | ''        | true   | true  | null
+        'embedded-fast-hive-metastore' | 'fsmoke_db'       | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
+        'embedded-fast-hive-metastore' | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
+        'embedded-fast-hive-metastore' | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
+        'embedded-fast-hive-metastore' | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
+        'embedded-fast-hive-metastore' | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | true   | false | null
+        'embedded-fast-hive-metastore' | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
+        'embedded-fast-hive-metastore' | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | true   | true  | null
+        'embedded-fast-hive-metastore' | 'shard'           | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
+        'hive-metastore'               | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
+        'hive-metastore'               | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
+        'hive-metastore'               | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
+        'hive-metastore'               | 'hsmoke_db'       | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
+        's3-mysql-db'                  | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
+        's3-mysql-db'                  | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
+        's3-mysql-db'                  | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
+        's3-mysql-db'                  | 'smoke_db'        | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
+        's3-mysql-db'                  | 'invalid-catalog' | 'z'       | 'one=xyz'     | ''        | ''        | false  | false | MetacatNotFoundException.class
     }
 
     @Unroll

@@ -23,7 +23,7 @@ dependencies {
 
     compile(project(":metacat-common-server"))
 
-    compile("com.datastax.cassandra:cassandra-driver-core")
+    compile("com.datastax.cassandra:cassandra-driver-core:3.6.0")
     compile("com.google.inject:guice")
 
     /*******************************

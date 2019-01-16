@@ -19,6 +19,7 @@
 configurations {
     all*.exclude module: "jsr311-api"
     all*.exclude module: "slf4j-log4j12"
+    all*.exclude module: "log4j-to-slf4j"
 }
 
 dependencies {
@@ -52,7 +53,6 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-logging")
     compile("org.springframework.boot:spring-boot-starter-tomcat")
     compile("org.springframework.boot:spring-boot-starter-web")
-    compile("org.springframework.cloud:spring-cloud-starter-spectator")
 
     /*******************************
      * Provided Dependencies
@@ -76,7 +76,8 @@ dependencies {
     runtime("io.springfox:springfox-swagger-ui")
     runtime("org.webjars:hal-browser")
     runtime("org.springframework:spring-aspects")
-    runtime("org.apache.logging.log4j:log4j-core")
+    //runtime("org.apache.logging.log4j:log4j-to-slf4j:2.11.1")
+    runtime("org.apache.logging.log4j:log4j-core:2.11.1")
 
     /*******************************
      * Test Dependencies
@@ -84,7 +85,8 @@ dependencies {
 
     testCompile(project(":metacat-testdata-provider"))
     testCompile("io.airlift:testing-mysql-server")
-    testCompile("org.apache.logging.log4j:log4j-core")
+    //testCompile("org.apache.logging.log4j:log4j-to-slf4j:2.11.1")
+    testCompile("org.apache.logging.log4j:log4j-core:2.11.1")
 
 }
 

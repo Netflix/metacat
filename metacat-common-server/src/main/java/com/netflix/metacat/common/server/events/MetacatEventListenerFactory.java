@@ -28,6 +28,7 @@ import java.lang.reflect.Method;
  * @since 1.2.x
  */
 public class MetacatEventListenerFactory implements EventListenerFactory {
+
     @Override
     public boolean supportsMethod(final Method method) {
         return true;

@@ -34,7 +34,7 @@ import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
-import com.netflix.spectator.api.Registry
+import io.micrometer.core.instrument.MeterRegistry
 import org.apache.hadoop.hive.metastore.api.*
 import org.apache.thrift.TException
 import spock.lang.Shared
@@ -63,7 +63,7 @@ class HiveConnectorTableSpec extends Specification {
             "testHive",
             "hive",
             Mock(Config),
-            Mock(Registry),
+            Mock(MeterRegistry),
             ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
         )
     )
@@ -75,7 +75,7 @@ class HiveConnectorTableSpec extends Specification {
         "testHive",
         "hive",
         Mock(Config),
-        Mock(Registry),
+        Mock(MeterRegistry),
         ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
     )
 

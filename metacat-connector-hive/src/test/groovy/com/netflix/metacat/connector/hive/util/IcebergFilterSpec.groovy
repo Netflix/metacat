@@ -31,7 +31,7 @@ import com.netflix.metacat.common.server.partition.parser.PartitionParser
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper
-import com.netflix.spectator.api.NoopRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import spock.lang.Specification
 
 class IcebergFilterSpec extends Specification{
@@ -100,7 +100,7 @@ class IcebergFilterSpec extends Specification{
         def icebergTable = Mock(Table)
         def icebergOpWrapper = Mock(IcebergTableOpWrapper)
         def partRequest = new PartitionListRequest()
-        def registry = new NoopRegistry()
+        def registry = new SimpleMeterRegistry()
         def icebergUtil = new IcebergTableHandler(new ConnectorContext(
             "testHive",
             "testHive",
@@ -121,7 +121,7 @@ class IcebergFilterSpec extends Specification{
 
     def 'Test get icebergPartitionMap invoking filter' () {
         def icebergTableHelper = Mock(IcebergTableOpWrapper)
-        def registry = new NoopRegistry()
+        def registry = new SimpleMeterRegistry()
         def icebergTable = Mock(Table)
         def schema = Mock(Schema)
         def dateint = Mock(Types.NestedField)

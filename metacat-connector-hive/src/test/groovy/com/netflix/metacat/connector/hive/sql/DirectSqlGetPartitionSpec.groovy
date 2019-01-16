@@ -19,7 +19,7 @@ import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric
 import com.netflix.metacat.testdata.provider.DataDtoProvider
-import com.netflix.spectator.api.NoopRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.springframework.jdbc.core.JdbcTemplate
 import spock.lang.Specification
 
@@ -33,7 +33,7 @@ import java.time.Instant
 class DirectSqlGetPartitionSpec extends Specification {
     def config = new DefaultConfigImpl(new MetacatProperties())
     def converter = new ConverterUtil(new DozerTypeConverter(new TypeConverterFactory(config)))
-    def registry = new NoopRegistry()
+    def registry = new SimpleMeterRegistry()
     def context = new ConnectorContext('test', 'test', 'hive', config, registry, Maps.newHashMap())
     def metric = new HiveConnectorFastServiceMetric(registry)
     def jdbcTemplate = Mock(JdbcTemplate)

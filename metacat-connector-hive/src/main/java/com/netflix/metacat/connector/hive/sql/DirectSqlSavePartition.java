@@ -28,7 +28,7 @@ import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.metacat.connector.hive.util.PartitionUtil;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.springframework.dao.DuplicateKeyException;
@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 @Transactional("hiveTxManager")
 public class DirectSqlSavePartition {
     private static final String PARAM_LAST_DDL_TIME = "transient_lastDdlTime";
-    private final Registry registry;
+    private final MeterRegistry registry;
     private final String catalogName;
     private final int batchSize;
     private final JdbcTemplate jdbcTemplate;
@@ -88,7 +88,7 @@ public class DirectSqlSavePartition {
      * @param partitions list of partitions
      */
     public void insert(final QualifiedName tableQName, final Table table, final List<PartitionInfo> partitions) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         try {
             // Get the table id and column id
             final TableSequenceIds tableSequenceIds = getTableSequenceIds(table.getDbName(), table.getTableName());
@@ -107,7 +107,7 @@ public class DirectSqlSavePartition {
             }
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagAddPartitions.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagAddPartitions.getMetricName(), System.currentTimeMillis() - start);
         }
     }
 
@@ -209,7 +209,7 @@ public class DirectSqlSavePartition {
      * @param partitionHolders list of partitions
      */
     public void update(final QualifiedName tableQName, final List<PartitionHolder> partitionHolders) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         try {
             final List<List<PartitionHolder>> subPartitionDetailList = Lists.partition(partitionHolders, batchSize);
             final long currentTimeInEpoch = Instant.now().getEpochSecond();
@@ -218,7 +218,7 @@ public class DirectSqlSavePartition {
             }
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagAlterPartitions.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagAlterPartitions.getMetricName(), System.currentTimeMillis() - start);
         }
     }
 
@@ -280,13 +280,13 @@ public class DirectSqlSavePartition {
      * @param partitionNames list of partition ids
      */
     public void delete(final QualifiedName tableQName, final List<String> partitionNames) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         try {
             final List<List<String>> subPartitionNameList = Lists.partition(partitionNames, batchSize);
             subPartitionNameList.forEach(subPartitionNames -> _delete(tableQName, subPartitionNames));
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagDropHivePartitions.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagDropHivePartitions.getMetricName(), System.currentTimeMillis() - start);
         }
     }
 
@@ -328,7 +328,7 @@ public class DirectSqlSavePartition {
      * @param tableQName     table name
      */
     public void delete(final QualifiedName tableQName) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         try {
             List<PartitionSequenceIds> partitionSequenceIds = getPartitionSequenceIds(tableQName);
             while (!partitionSequenceIds.isEmpty()) {
@@ -337,7 +337,7 @@ public class DirectSqlSavePartition {
             }
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagDropHivePartitions.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagDropHivePartitions.getMetricName(), System.currentTimeMillis() - start);
         }
     }
 
@@ -395,7 +395,7 @@ public class DirectSqlSavePartition {
                                         final List<PartitionInfo> addedPartitionInfos,
                                         final List<PartitionHolder> existingPartitionHolders,
                                         final Set<String> deletePartitionNames) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         try {
             if (!deletePartitionNames.isEmpty()) {
                 delete(tableQName, Lists.newArrayList(deletePartitionNames));
@@ -408,7 +408,7 @@ public class DirectSqlSavePartition {
             }
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagAddDropPartitions.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagAddDropPartitions.getMetricName(), System.currentTimeMillis() - start);
         }
     }
 

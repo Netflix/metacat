@@ -34,7 +34,7 @@ import com.netflix.metacat.connector.hive.sql.DirectSqlGetPartition
 import com.netflix.metacat.connector.hive.sql.DirectSqlSavePartition
 import com.netflix.metacat.connector.hive.sql.HiveConnectorFastPartitionService
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
-import com.netflix.spectator.api.NoopRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.apache.hadoop.hive.metastore.Warehouse
 import spock.lang.Shared
 import spock.lang.Specification
@@ -57,7 +57,7 @@ class HiveConnectorFastPartitionSpec extends Specification {
     HiveConnectorFastPartitionService hiveConnectorFastPartitionService =
         new HiveConnectorFastPartitionService(
             new ConnectorContext('testhive',
-                'testhive', 'hive', conf, new NoopRegistry(), Maps.newHashMap()),
+                'testhive', 'hive', conf, new SimpleMeterRegistry(), Maps.newHashMap()),
             metacatHiveClient,
             Mock(Warehouse),
             new HiveConnectorInfoConverter(new HiveTypeConverter()),

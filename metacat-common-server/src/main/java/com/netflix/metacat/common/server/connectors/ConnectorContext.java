@@ -14,7 +14,7 @@
 package com.netflix.metacat.common.server.connectors;
 
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -43,9 +43,9 @@ public class ConnectorContext {
      */
     private final Config config;
     /**
-     * The registry for spectator.
+     * The registry for micrometer.
      */
-    private final Registry registry;
+    private final MeterRegistry registry;
     /**
      * Metacat catalog configuration.
      */

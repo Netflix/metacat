@@ -1,8 +1,8 @@
 package com.netflix.metacat.common.server.events
 
 import com.netflix.metacat.common.server.properties.MetacatProperties
-import com.netflix.spectator.api.NoopRegistry
-import com.netflix.spectator.api.Registry
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationEvent
@@ -32,20 +32,20 @@ class MetacatEventBusIntegrationSpec extends Specification {
         MetacatEventBus eventBus(
             final MetacatApplicationEventMulticaster applicationEventMulticaster
         ) {
-            return new MetacatEventBus(applicationEventMulticaster, new NoopRegistry());
+            return new MetacatEventBus(applicationEventMulticaster, new SimpleMeterRegistry());
         }
 
         @Bean
         MetacatApplicationEventMulticaster applicationEventMulticaster(
-            final Registry registry
+            final MeterRegistry registry
         ) {
 
             return factory.Spy(MetacatApplicationEventMulticaster, constructorArgs:[registry, new MetacatProperties()]);
         }
 
         @Bean
-        Registry registry() {
-            return factory.Mock(Registry);
+        MeterRegistry registry() {
+            return new SimpleMeterRegistry()
         }
 
         @Bean

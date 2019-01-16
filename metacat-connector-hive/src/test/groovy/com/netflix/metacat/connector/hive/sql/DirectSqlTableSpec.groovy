@@ -10,7 +10,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric
-import com.netflix.spectator.api.NoopRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.springframework.dao.CannotAcquireLockException
 import org.springframework.dao.DataAccessException
 import org.springframework.dao.EmptyResultDataAccessException
@@ -26,7 +26,7 @@ import java.util.function.Supplier
  */
 class DirectSqlTableSpec extends Specification {
     def config = new DefaultConfigImpl(new MetacatProperties())
-    def registry = new NoopRegistry()
+    def registry = new SimpleMeterRegistry()
     def context = new ConnectorContext('test', 'test', 'hive', config, registry, Maps.newHashMap())
     def metric = new HiveConnectorFastServiceMetric(registry)
     def jdbcTemplate = Mock(JdbcTemplate)

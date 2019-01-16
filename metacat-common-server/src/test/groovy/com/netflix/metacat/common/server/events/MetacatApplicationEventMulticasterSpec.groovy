@@ -1,7 +1,8 @@
 package com.netflix.metacat.common.server.events
 
 import com.netflix.metacat.common.server.properties.MetacatProperties
-import com.netflix.spectator.api.Registry
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.springframework.context.ApplicationEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.context.event.ApplicationEventMulticaster
@@ -14,7 +15,7 @@ import spock.lang.Specification
  * @since 1.0.0
  */
 class MetacatApplicationEventMulticasterSpec extends Specification {
-    def registry = Mock(Registry)
+    def registry = Mock(MeterRegistry)
     def bus = new MetacatApplicationEventMulticaster(registry, new MetacatProperties())
     def event = Mock(ApplicationEvent)
 
@@ -22,17 +23,17 @@ class MetacatApplicationEventMulticasterSpec extends Specification {
         when:
         bus.post(event)
         then:
-        0 * registry.collectionSize(_,_)
+        0 * registry.gaugeCollectionSize(_,_,_)
         when:
         bus.addApplicationListener(new SyncAppListener())
         bus.post(event)
         then:
-        0 * registry.collectionSize(_,_)
+        0 * registry.gaugeCollectionSize(_,_,_)
         when:
         bus.addApplicationListener(new AsyncAppListener())
         bus.post(event)
         then:
-        1 * registry.collectionSize(_,_)
+        1 * registry.gaugeCollectionSize(_,_,_)
     }
 
     class SyncAppListener implements ApplicationListener<ApplicationEvent>{

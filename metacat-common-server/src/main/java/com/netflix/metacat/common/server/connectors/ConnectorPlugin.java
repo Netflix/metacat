@@ -36,7 +36,7 @@ public interface ConnectorPlugin {
     /**
      * Returns the service implementation for the type.
      *
-     * @param connectorContext      registry for spectator
+     * @param connectorContext      registry for micrometer
      * @return connector factory
      */
     ConnectorFactory create(ConnectorContext connectorContext);

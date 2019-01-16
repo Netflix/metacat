@@ -29,7 +29,7 @@ import com.netflix.metacat.common.server.connectors.exception.TableNotFoundExcep
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.dao.DataAccessException;
@@ -74,7 +74,7 @@ public class DirectSqlTable {
 
     private static final String COL_PARAM_KEY = "param_key";
     private static final String COL_PARAM_VALUE = "param_value";
-    private final Registry registry;
+    private final MeterRegistry registry;
     private final JdbcTemplate jdbcTemplate;
     private final HiveConnectorFastServiceMetric fastServiceMetric;
     private final String catalogName;
@@ -108,7 +108,7 @@ public class DirectSqlTable {
      */
     @Transactional(readOnly = true)
     public boolean exists(final QualifiedName name) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         boolean result = false;
         try {
             final Object qResult = jdbcTemplate.queryForObject(SQL.EXIST_TABLE_BY_NAME,
@@ -122,7 +122,7 @@ public class DirectSqlTable {
             return false;
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagTableExists.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagTableExists.getMetricName(), System.currentTimeMillis() - start);
         }
         return result;
     }
@@ -137,7 +137,7 @@ public class DirectSqlTable {
      */
     @Transactional(readOnly = true)
     public Map<String, List<QualifiedName>> getTableNames(final List<String> uris, final boolean prefixSearch) {
-        final long start = registry.clock().wallTime();
+        final long start = System.currentTimeMillis();
         // Create the sql
         final StringBuilder queryBuilder = new StringBuilder(SQL.GET_TABLE_NAMES_BY_URI);
         final List<SqlParameterValue> params = Lists.newArrayList();
@@ -171,7 +171,7 @@ public class DirectSqlTable {
             return jdbcTemplate.query(queryBuilder.toString(), params.toArray(), handler);
         } finally {
             this.fastServiceMetric.recordTimer(
-                HiveMetrics.TagGetTableNames.getMetricName(), registry.clock().wallTime() - start);
+                HiveMetrics.TagGetTableNames.getMetricName(), System.currentTimeMillis() - start);
         }
     }
 
@@ -196,7 +196,7 @@ public class DirectSqlTable {
             throw new InvalidMetaException(tableName, message, null);
         }
         final Long tableId = getTableId(tableName);
-        Map<String, String> existingTableMetadata = Maps.newHashMap();
+        Map<String, String> existingTableMetadata = null;
         log.debug("Lock Iceberg table {}", tableName);
         try {
             existingTableMetadata = jdbcTemplate.query(SQL.TABLE_PARAMS_LOCK,
@@ -213,6 +213,9 @@ public class DirectSqlTable {
             final String message = String.format("Failed getting a lock on iceberg table %s", tableName);
             log.warn(message, ex);
             throw new InvalidMetaException(tableName, message, null);
+        }
+        if (existingTableMetadata == null) {
+            existingTableMetadata = Maps.newHashMap();
         }
         validateIcebergUpdate(tableName, existingTableMetadata, newTableMetadata);
         final MapDifference<String, String> diff = Maps.difference(existingTableMetadata, newTableMetadata);

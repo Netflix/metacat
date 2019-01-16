@@ -17,12 +17,13 @@
 #
 
 management:
-  contextPath: /actuator
   health:
     elasticsearch:
       enabled: false # This is needed for now as we're using a very out of date ES client that throws runtime errors
-  security:
-    enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: "*"
 
 metacat:
   plugin:
@@ -46,3 +47,5 @@ spring:
     default-property-inclusion: always
     deserialization:
       FAIL_ON_UNKNOWN_PROPERTIES: false
+  main:
+    allow-bean-definition-overriding: true

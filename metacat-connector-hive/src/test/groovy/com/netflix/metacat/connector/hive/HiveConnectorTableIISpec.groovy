@@ -31,10 +31,8 @@ import com.netflix.metacat.connector.hive.metastore.HMSHandlerProxy
 import com.netflix.metacat.connector.hive.metastore.IMetacatHMSHandler
 import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants
-import com.netflix.spectator.api.Clock
-import com.netflix.spectator.api.Id
-import com.netflix.spectator.api.Registry
-import com.netflix.spectator.api.Timer
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.apache.hadoop.hive.metastore.api.MetaException
 import spock.lang.Shared
 import spock.lang.Specification
@@ -45,13 +43,7 @@ import java.util.concurrent.TimeUnit
 
 class HiveConnectorTableIISpec extends Specification {
     @Shared
-    Registry registry = Mock(Registry)
-    @Shared
-    def clock = Mock(Clock)
-    @Shared
-    def timer = Mock(Timer)
-    @Shared
-    def requestId = Mock(Id)
+    MeterRegistry registry = new SimpleMeterRegistry()
     @Shared
     ConnectorRequestContext connectorRequestContext = new ConnectorRequestContext(1, null)
     @Shared
@@ -60,21 +52,15 @@ class HiveConnectorTableIISpec extends Specification {
         "testHive",
         "hive",
         Mock(Config),
-        Mock(Registry),
+        registry,
         ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
     )
     @Shared
     HiveConnectorDatabaseService hiveConnectorDatabaseService = Mock(HiveConnectorDatabaseService)
 
+    /*
     def setupSpec() {
-        registry.createId(_) >>requestId
-        registry.clock() >> clock
-        clock.wallTime() >> 1l
-        requestId.withTags(_) >> requestId
-        registry.timer(_) >> timer
-        timer.record(1l,TimeUnit.MILLISECONDS)
-
-    }
+    }*/
 
     def "Test for HMSHandlerProxy handling with empty pool JDODataStoreException"() {
         def hmsHandler = Mock(MetacatHMSHandler)

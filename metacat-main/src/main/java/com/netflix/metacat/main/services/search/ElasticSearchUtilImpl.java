@@ -22,7 +22,7 @@ import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.MetacatRequestContext;
@@ -31,7 +31,8 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
-import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.action.FailedNodeException;
@@ -64,8 +65,10 @@ import org.joda.time.Instant;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -93,7 +96,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
     private final Config config;
     private final MetacatJson metacatJson;
     private XContentType contentType = Requests.INDEX_CONTENT_TYPE;
-    private final Registry registry;
+    private final MeterRegistry registry;
     private final TimeValue esCallTimeout;
     private final TimeValue esBulkCallTimeout;
 
@@ -103,13 +106,13 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
      * @param client              elastic search client
      * @param config              config
      * @param metacatJson         json utility
-     * @param registry            spectator registry
+     * @param registry            micrometer registry
      */
     public ElasticSearchUtilImpl(
         @Nullable final Client client,
         final Config config,
         final MetacatJson metacatJson,
-        final Registry registry) {
+        final MeterRegistry registry) {
         this.config = config;
         this.client = client;
         this.metacatJson = metacatJson;
@@ -148,9 +151,10 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 exceptionName = error.getClass().getSimpleName();
             }
         }
-        final Map<String, String> tags = ImmutableMap
-            .<String, String>builder().put("status", "failure").put("name", id).put("exception", exceptionName).build();
-        registry.counter(registry.createId(metricName).withTags(tags)).increment();
+        final Set<Tag> tags = ImmutableSet
+            .<Tag>builder().add(Tag.of("status", "failure"))
+            .add(Tag.of("name", id)).add(Tag.of("exception", exceptionName)).build();
+        registry.counter(metricName, tags).increment();
         log(request, type, id, null, exception.getMessage(), exception, true);
     }
 
@@ -167,9 +171,9 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 exceptionName = error.getClass().getSimpleName();
             }
         }
-        final Map<String, String> tags = ImmutableMap
-            .<String, String>builder().put("status", "failure").put("exception", exceptionName).build();
-        registry.counter(registry.createId(metricName).withTags(tags)).increment();
+        final ImmutableSet<Tag> tags = ImmutableSet
+            .<Tag>builder().add(Tag.of("status", "failure")).add(Tag.of("exception", exceptionName)).build();
+        registry.counter(metricName, tags).increment();
         log(request, type, ids.toString(), null, exception.getMessage(), exception, true);
     }
 
@@ -494,7 +498,7 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                      final String logMessage, @Nullable final Exception ex, final boolean error, final String index) {
         if (config.isElasticSearchPublishMetacatLogEnabled()) {
             try {
-                final Map<String, Object> source = Maps.newHashMap();
+                final HashMap<String, Object> source = Maps.newHashMap();
                 source.put("method", method);
                 source.put("qname", name);
                 source.put("type", type);
@@ -504,8 +508,8 @@ public class ElasticSearchUtilImpl implements ElasticSearchUtil {
                 source.put("details", Throwables.getStackTraceAsString(ex));
                 client.prepareIndex(index, "metacat-log").setSource(source).execute().actionGet(esCallTimeout);
             } catch (Exception e) {
-                registry.counter(registry.createId(Metrics.CounterElasticSearchLog.getMetricName())
-                    .withTags(Metrics.tagStatusFailureMap)).increment();
+                registry.counter(Metrics.CounterElasticSearchLog.getMetricName(),
+                    Metrics.tagStatusFailureSet).increment();
                 log.warn("Failed saving the log message in elastic search for index{} method {}, name {}. Message: {}",
                     index, method, name, e.getMessage());
             }
