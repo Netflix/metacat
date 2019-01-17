@@ -508,4 +508,11 @@ public class DefaultConfigImpl implements Config {
         return this.metacatProperties.getHive().getIceberg().getMaxMetadataFileSizeBytes();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getIcebergPartitionUriScheme() {
+        return this.metacatProperties.getHive().getIceberg().getPartitionUriScheme();
+    }
 }
