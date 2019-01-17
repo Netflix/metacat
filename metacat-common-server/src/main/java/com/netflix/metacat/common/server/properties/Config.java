@@ -430,5 +430,12 @@ public interface Config {
      * @return Refresh Iceberg table max metadata file size.
      */
     long getIcebergMaxMetadataFileSize();
+
+    /**
+     * get Iceberg partition uri scheme.
+     *
+     * @return Iceberg table partition uri scheme.
+     */
+    String getIcebergPartitionUriScheme();
 }
 

@@ -102,5 +102,7 @@ public class HiveProperties {
         private int refreshFromMetadataLocationRetryNumber;
         /* loading metadata consumes memory, cap to 500m as default */
         private long maxMetadataFileSizeBytes = 500 * 1024 * 1024; //500m
+        /*iceberg://<db-name.table-name>/<partition>/snapshot_time=<dateCreated> */
+        private String partitionUriScheme = "iceberg";
     }
 }

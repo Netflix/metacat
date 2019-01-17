@@ -55,7 +55,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -367,6 +366,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final Sort sort = partitionsRequest.getSort();
         final AuditInfo tableAuditInfo = tableInfo.getAudit();
 
+
         final List<PartitionInfo> filteredPartitionList = partitionMap.keySet().stream()
             .filter(partitionName -> partitionIds == null || partitionIds.contains(partitionName))
             .map(partitionName -> PartitionInfo.builder().name(
@@ -375,7 +375,10 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
                     tableName.getTableName(),
                     partitionName))
                 .serde(StorageInfo.builder().uri(
-                    String.format("s3://bk/%s", UUID.randomUUID()
+                    getIcebergPartitionURI(tableName.getDatabaseName(),
+                        tableName.getTableName(),
+                        partitionName,
+                        partitionMap.get(partitionName).dataTimestampMillis()
                     )).build()) //set uri to empty string for supporting psycho pattern
                 .dataMetrics(icebergTableHandler.getDataMetadataFromIcebergMetrics(partitionMap.get(partitionName)))
                 .auditInfo(AuditInfo.builder().createdBy(tableAuditInfo.getCreatedBy())
@@ -394,5 +397,19 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
 
     private Date fromEpochMilliToDate(@Nullable final Long l) {
         return (l == null) ? null : Date.from(Instant.ofEpochMilli(l));
+    }
+
+    //iceberg://<db-name.table-name>/<partition>/snapshot_time=<dateCreated>
+    private String getIcebergPartitionURI(final String databaseName,
+                                          final String tableName,
+                                          final String partitionName,
+                                          @Nullable final Long dataTimestampMillis) {
+        return String.format("%s://%s.%s/%s/snapshot_time=%s",
+            context.getConfig().getIcebergPartitionUriScheme(),
+            databaseName,
+            tableName,
+            partitionName,
+            (dataTimestampMillis == null) ? partitionName.hashCode()
+                : Instant.ofEpochMilli(dataTimestampMillis).getEpochSecond());
     }
 }
