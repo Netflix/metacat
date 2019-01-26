@@ -19,13 +19,13 @@ package com.netflix.metacat.main.configs;
 
 import com.netflix.metacat.main.api.ApiFilter;
 import com.netflix.metacat.main.api.MetacatErrorController;
-import org.springframework.boot.autoconfigure.web.DefaultErrorAttributes;
-import org.springframework.boot.autoconfigure.web.ErrorAttributes;
+import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
+import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -92,11 +92,11 @@ public class ApiConfig extends WebMvcConfigurerAdapter {
              */
             @Override
             public Map<String, Object> getErrorAttributes(
-                final RequestAttributes requestAttributes,
+                final WebRequest webRequest,
                 final boolean includeStackTrace
             ) {
                 final Map<String, Object> errorAttributes
-                    = super.getErrorAttributes(requestAttributes, includeStackTrace);
+                    = super.getErrorAttributes(webRequest, includeStackTrace);
                 errorAttributes.put("error", errorAttributes.get("message"));
                 return errorAttributes;
             }

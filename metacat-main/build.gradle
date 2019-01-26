@@ -19,6 +19,7 @@
 configurations {
     all*.exclude module: "jsr311-api"
     all*.exclude module: "slf4j-log4j12"
+    all*.exclude module: "log4j-to-slf4j"
 }
 
 dependencies {
@@ -51,8 +52,6 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-hateoas")
     compile("org.springframework.boot:spring-boot-starter-logging")
     compile("org.springframework.boot:spring-boot-starter-tomcat")
-    compile("org.springframework.boot:spring-boot-starter-web")
-    compile("org.springframework.cloud:spring-cloud-starter-spectator")
 
     /*******************************
      * Provided Dependencies

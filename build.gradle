@@ -94,8 +94,9 @@ configure(javaProjects) {
 
     dependencyManagement {
         imports {
-            mavenBom "io.spring.platform:platform-bom:${spring_platform_version}"
+            mavenBom "org.springframework.boot:spring-boot-dependencies:${spring_boot_version}"
             mavenBom "org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}"
+            mavenBom "com.google.inject:guice-bom:${google_guice_version}"
         }
         dependencies {
             dependency("cglib:cglib-nodep:3.2.4")
@@ -105,17 +106,11 @@ configure(javaProjects) {
             dependency("com.github.rholder:guava-retrying:2.0.0")
             // Guava even with guava.version set to 19.0 in properties keeps going back to 18.0 without this.
             dependency("com.google.guava:guava:19.0")
-            dependencySet(group: "com.google.inject.extensions", version: "4.0") {
-                entry "guice-persist"
-                entry "guice-multibindings"
-                entry "guice-servlet"
-            }
             dependencySet(group: "com.netflix.spectator", version: "0.55.0") {
                 entry "spectator-api"
                 entry "spectator-reg-servo"
             }
             dependency("com.sun.jersey:jersey-client:1.19.1")
-            dependency("com.squarespace.jersey2-guice:jersey2-guice:0.5")
             dependencySet(group: "io.springfox", version: "2.7.0") {
                 entry "springfox-swagger2"
                 entry "springfox-swagger-ui"
@@ -127,11 +122,6 @@ configure(javaProjects) {
             }
             dependency("de.danielbechler:java-object-diff:0.91.1")
             dependency("io.airlift:testing-mysql-server:0.1")
-            dependencySet(group: "io.github.openfeign", version: "9.3.1") {
-                entry "feign-core"
-                entry "feign-jaxrs"
-                entry "feign-slf4j"
-            }
             dependency("javax.ws.rs:jsr311-api:1.1.1")
             dependency("net.sf.dozer:dozer:5.4.0")
             dependency("nl.jqno.equalsverifier:equalsverifier:1.7.2")
@@ -139,13 +129,23 @@ configure(javaProjects) {
             dependencySet(group: "org.apache.hive", version: "1.2.1") {
                 entry "hive-metastore"
             }
+            dependency("log4j:log4j:1.2.17")
+            dependency("org.projectlombok:lombok:1.18.4")
+            dependency("commons-logging:commons-logging:1.2")
+            dependency("com.datastax.cassandra:cassandra-driver-core:3.6.0")
+            dependency("org.json:json:20180813")
+            dependency("com.google.code.findbugs:annotations:3.0.1")
+            dependency("com.google.code.findbugs:jsr305:3.0.2")
+            dependency("org.apache.logging.log4j:log4j-core:2.10.0")
             dependency("org.apache.pig:pig:0.14.0")
             dependency("org.codehaus.gpars:gpars:1.2.1")
             dependency("org.glassfish.jersey.containers:jersey-container-servlet:2.19")
             dependency("org.glassfish.jersey.media:jersey-media-json-jackson:2.19")
-            dependency("org.spockframework:spock-core:1.1-groovy-2.4")
-            dependency("org.spockframework:spock-guice:1.1-groovy-2.4")
-            dependency("org.spockframework:spock-spring:1.1-groovy-2.4")
+            dependencySet(group: "org.spockframework", version: "1.1-groovy-2.4") {
+                entry("spock-core")
+                entry("spock-guice")
+                entry("spock-spring")
+            }
             /**es 5.4.1 dependencies*/
             dependency("org.elasticsearch.client:transport:5.4.1")
             dependency("net.snowflake:snowflake-jdbc:3.4.2")
@@ -161,6 +161,7 @@ configure(javaProjects) {
         all*.exclude module: "log4j-over-slf4j"
         all*.exclude module: "slf4j-jdk14"
         all*.exclude module: "slf4j-log4j12"
+        all*.exclude module: "log4j-to-slf4j"
     }
 
     dependencies {
@@ -169,8 +170,12 @@ configure(javaProjects) {
          * Compile Dependencies
          *******************************/
 
+        compile("com.netflix.spectator:spectator-reg-servo")
+        compile("com.netflix.spectator:spectator-api")
         compile("com.google.code.findbugs:annotations")
         compile("com.google.code.findbugs:jsr305")
+        compile("log4j:log4j")
+        compile("org.springframework.boot:spring-boot-starter-web")
 
         /*******************************
          * Provided Dependencies
