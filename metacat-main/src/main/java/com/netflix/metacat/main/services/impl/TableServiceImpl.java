@@ -377,14 +377,16 @@ public class TableServiceImpl implements TableService {
             registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
                 .record(duration, TimeUnit.MILLISECONDS);
         }
+
         final TableDto updatedDto = get(name,
             GetTableServiceParameters.builder()
                 .disableOnReadMetadataIntercetor(false)
                 .includeInfo(true)
                 .includeDataMetadata(true)
                 .includeDefinitionMetadata(true)
-                .build()).orElseThrow(() -> new IllegalStateException("should exist"));
-        eventBus.post(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable, updatedDto));
+                .build()).orElse(tableDto);
+        eventBus.post(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable,
+            updatedDto, updatedDto != tableDto));
         return updatedDto;
     }
 

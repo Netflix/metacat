@@ -24,8 +24,11 @@ import com.netflix.metacat.common.dto.StorageDto
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.ConnectorTableService
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
 import com.netflix.metacat.common.server.converter.ConverterUtil
 import com.netflix.metacat.common.server.events.MetacatEventBus
+import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent
+import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService
 import com.netflix.metacat.common.server.usermetadata.TagService
@@ -181,6 +184,44 @@ class TableServiceImplSpec extends Specification {
         1 * config.canSoftDeleteDataMetadata() >> true
         0 * usermetadataService.deleteMetadata(_,_)
         1 * usermetadataService.softDeleteDataMetadata(_,_)
+        noExceptionThrown()
+    }
+
+    def testUpdateAndReturn() {
+        given:
+        def updatedTableDto = new TableDto(name: name, serde: new StorageDto(uri: 's3:/a/b/c'))
+
+        when:
+        def result = service.updateAndReturn(name, updatedTableDto)
+
+        then:
+        2 * usermetadataService.getDefinitionMetadataWithInterceptor(_, _) >> Optional.empty()
+        2 * usermetadataService.getDataMetadata(_) >> Optional.empty()
+        2 * converterUtil.toTableDto(_) >> this.tableDto
+        1 * eventBus.post(_ as MetacatUpdateTablePreEvent)
+        1 * eventBus.post({
+            MetacatUpdateTablePostEvent e ->
+                e.latestCurrentTable && e.currentTable == this.tableDto
+        })
+        result == this.tableDto
+    }
+
+    def "Will not throw on Successful Table Update with Failed Get"() {
+        given:
+        def updatedTableDto = new TableDto(name: name, serde: new StorageDto(uri: 's3:/a/b/c'))
+
+        when:
+        def result = service.updateAndReturn(name, updatedTableDto)
+
+        then:
+        1 * converterUtil.toTableDto(_) >> this.tableDto
+        1 * converterUtil.toTableDto(_) >> { throw new TableNotFoundException(name) }
+        1 * eventBus.post(_ as MetacatUpdateTablePreEvent)
+        1 * eventBus.post({
+            MetacatUpdateTablePostEvent e ->
+                !e.latestCurrentTable && e.currentTable == updatedTableDto
+        })
+        result == updatedTableDto
         noExceptionThrown()
     }
 }

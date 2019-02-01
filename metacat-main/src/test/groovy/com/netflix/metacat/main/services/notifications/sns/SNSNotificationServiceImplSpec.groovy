@@ -24,6 +24,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.PartitionDto
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto
 import com.netflix.metacat.common.dto.TableDto
+import com.netflix.metacat.common.dto.notifications.sns.SNSMessage
 import com.netflix.metacat.common.dto.notifications.sns.messages.*
 import com.netflix.metacat.common.server.events.*
 import com.netflix.metacat.common.server.properties.Config
@@ -217,6 +218,27 @@ class SNSNotificationServiceImplSpec extends Specification {
         1 * this.mapper.writeValueAsString(_ as UpdateTableMessage) >> UUID.randomUUID().toString()
         1 * this.client.publish(this.tableArn, _ as String) >> result
         2 * this.timer.record(_ as Long, _ as TimeUnit)
+    }
+
+    def "Will Notify with Null Payload on Table Update with Failed Get"() {
+        def event = new MetacatUpdateTablePostEvent(
+            this.qName,
+            this.requestContext,
+            this,
+            new TableDto(),
+            new TableDto(),
+            false
+        )
+
+        when:
+        this.service.notifyOfTableUpdate(event)
+
+        then:
+        0 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
+        1 * this.mapper.writeValueAsString(_ as SNSMessage) >> UUID.randomUUID().toString()
+        1 * this.client.publish(this.tableArn, _ as String) >> result
+        2 * this.timer.record(_ as Long, _ as TimeUnit)
+        noExceptionThrown()
     }
 
     def "Won't retry on Other Exception"() {
