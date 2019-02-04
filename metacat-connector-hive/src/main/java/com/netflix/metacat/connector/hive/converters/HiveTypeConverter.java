@@ -118,13 +118,12 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
             partitionFields.stream()
                 .map(PartitionField::name).collect(Collectors.toList());
 
-        for (int i = 0; i < schema.columns().size(); i++) {
-            final Types.NestedField field = schema.columns().get(i);
+        for (Types.NestedField field : schema.columns()) {
             final FieldInfo fieldInfo = new FieldInfo();
             fieldInfo.setName(field.name());
             fieldInfo.setType(toMetacatType(fromIcebergToHiveType(field.type())));
             fieldInfo.setIsNullable(field.isOptional());
-
+            fieldInfo.setComment(field.doc());
             fieldInfo.setPartitionKey(partitionNames.contains(field.name()));
             fields.add(fieldInfo);
         }

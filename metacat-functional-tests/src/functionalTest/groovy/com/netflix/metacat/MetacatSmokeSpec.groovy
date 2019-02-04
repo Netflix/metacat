@@ -509,6 +509,7 @@ class MetacatSmokeSpec extends Specification {
         noExceptionThrown()
         tableDTO.metadata.get("metadata_location").equals(metadataLocation)
         tableDTO.getFields().size() == 3
+        tableDTO.getFields().get(0).getComment() != null
         parts.size() == 2
         parts.get(0).dataMetadata != null
         partkeys.size() == 2
@@ -564,7 +565,7 @@ class MetacatSmokeSpec extends Specification {
 
 
     }
-    
+
     @Unroll
     def "Test delete table #catalogName/#databaseName/#tableName"() {
         given:
