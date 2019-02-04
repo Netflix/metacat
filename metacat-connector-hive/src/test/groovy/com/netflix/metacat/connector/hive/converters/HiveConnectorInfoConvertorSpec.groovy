@@ -515,11 +515,13 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         1 * partSpec.fields() >> [ field]
         1 * icebergTable.schema() >> schema
         1 * field.name() >> "fieldName"
-        5 * schema.columns() >> [nestedField, nestedField2]
+        1 * schema.columns() >> [nestedField, nestedField2]
         2 * nestedField.name() >> "fieldName"
+        1 * nestedField.doc() >> "fieldName doc"
         1 * nestedField.type() >> type
         1 * nestedField.isOptional() >> true
         2 * nestedField2.name() >> "fieldName2"
+        1 * nestedField2.doc() >> "fieldName2 doc"
         1 * nestedField2.type() >> type
         1 * nestedField2.isOptional() >> true
         2 * type.typeId() >> Type.TypeID.BOOLEAN
@@ -528,6 +530,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         tableInfo.getMetadata().get(DirectSqlTable.PARAM_METADATA_LOCATION).equals("/tmp/test")
         tableInfo.getFields().size() == 2
         tableInfo.getFields().get(0).isPartitionKey() != tableInfo.getFields().get(1).isPartitionKey()
+        tableInfo.getFields().get(0).getComment() == 'fieldName doc'
 
     }
 }

@@ -9,17 +9,20 @@
       "id" : 1,
       "name" : "id",
       "required" : false,
-      "type" : "long"
+      "type" : "long",
+      "doc" : "1st field"
     }, {
       "id" : 2,
       "name" : "data",
       "required" : false,
-      "type" : "string"
+      "type" : "string",
+      "doc" : "2nd field"
     }, {
       "id" : 3,
       "name" : "dateint",
       "required" : false,
-      "type" : "int"
+      "type" : "int",
+      "doc" : "3rd field"
     } ]
   },
   "partition-spec" : [ {
