@@ -514,6 +514,21 @@ class MetacatSmokeSpec extends Specification {
         parts.get(0).dataMetadata != null
         partkeys.size() == 2
 
+        when:
+        partitionApi.getPartitionCount(catalogName, databaseName, tableName)
+        then:
+        thrown(MetacatNotSupportedException)
+
+        when:
+        partitionApi.getPartitionUris(catalogName, databaseName, tableName, null, null, null, null, null)
+        then:
+        noExceptionThrown()
+
+        when:
+        partitionApi.deletePartitions(catalogName, databaseName, tableName, ['field1=true'])
+        then:
+        thrown(MetacatNotSupportedException)
+
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
     }
