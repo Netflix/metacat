@@ -20,7 +20,6 @@ import com.netflix.iceberg.ScanSummary;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
@@ -112,7 +111,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final TableInfo tableInfo
     ) {
         if (context.getConfig().isIcebergEnabled() && HiveTableUtil.isIcebergTable(tableInfo)) {
-            throw new MetacatNotSupportedException("IcebergTable Unsupported Operation!");
+            throw new UnsupportedOperationException("IcebergTable Unsupported Operation!");
         }
         return directSqlGetPartition.getPartitionCount(requestContext, tableName);
     }
@@ -160,7 +159,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final TableInfo tableInfo
     ) {
         if (context.getConfig().isIcebergEnabled() && HiveTableUtil.isIcebergTable(tableInfo)) {
-            throw new MetacatNotSupportedException("IcebergTable Unsupported Operation!");
+            throw new UnsupportedOperationException("IcebergTable Unsupported Operation!");
         }
         return directSqlGetPartition.getPartitionUris(requestContext, tableName, partitionsRequest);
     }
@@ -333,7 +332,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     ) {
         //TODO: implemented as next step
         if (context.getConfig().isIcebergEnabled() && HiveTableUtil.isIcebergTable(tableInfo)) {
-            throw new MetacatNotSupportedException("IcebergTable Unsupported Operation!");
+            throw new UnsupportedOperationException("IcebergTable Unsupported Operation!");
         }
         //The direct sql based deletion doesn't check if the partition is valid
         if (Boolean.parseBoolean(getContext().getConfiguration()
