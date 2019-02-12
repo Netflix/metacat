@@ -104,19 +104,36 @@ class HiveConnectorFastPartitionSpec extends Specification {
     }
 
 
-    def "Test for get iceberg table partitionKeys" (){
+    def "Test for get iceberg table partitions" (){
+        given:
+        def tableName = QualifiedName.ofTable("testhive", "test1", "icebergtable")
+        def tableInfo = MetacatDataInfoProvider.getIcebergTableInfo("icebergtable")
+        def partitionListRequest = new PartitionListRequest();
         when:
-        PartitionListRequest partitionListRequest = new PartitionListRequest();
         partitionListRequest.partitionNames = [
             "dateint=20170101/hour=1"
         ]
-        def partKeys = hiveConnectorFastPartitionService.getPartitionKeys(
-            connectorContext, QualifiedName.ofTable("testhive", "test1", "icebergtable"),
-            partitionListRequest, MetacatDataInfoProvider.getIcebergTableInfo("icebergtable"))
-
+        def partKeys = hiveConnectorFastPartitionService.getPartitionKeys(connectorContext, tableName, partitionListRequest, tableInfo)
         then:
         partKeys== [
             "dateint=20170101/hour=1"
         ]
+
+        when:
+        hiveConnectorFastPartitionService.getPartitionCount(connectorContext, tableName, tableInfo)
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        hiveConnectorFastPartitionService.getPartitionUris(connectorContext, tableName, partitionListRequest, tableInfo)
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        hiveConnectorFastPartitionService.deletePartitions(connectorContext, tableName, ['field1=true'], tableInfo)
+        then:
+        thrown(UnsupportedOperationException)
     }
+
+
 }
