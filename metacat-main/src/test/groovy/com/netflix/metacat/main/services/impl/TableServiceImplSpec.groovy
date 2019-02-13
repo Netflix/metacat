@@ -223,5 +223,19 @@ class TableServiceImplSpec extends Specification {
         })
         result == updatedTableDto
         noExceptionThrown()
+
+        when:
+        result = service.updateAndReturn(name, updatedTableDto)
+
+        then:
+        1 * converterUtil.toTableDto(_) >> this.tableDto
+        1 * converterUtil.toTableDto(_) >> { throw new FileNotFoundException("test") }
+        1 * eventBus.post(_ as MetacatUpdateTablePreEvent)
+        1 * eventBus.post({
+            MetacatUpdateTablePostEvent e ->
+                !e.latestCurrentTable && e.currentTable == updatedTableDto
+        })
+        result == updatedTableDto
+        noExceptionThrown()
     }
 }
