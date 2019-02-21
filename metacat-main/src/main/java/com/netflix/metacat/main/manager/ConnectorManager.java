@@ -27,6 +27,7 @@
 package com.netflix.metacat.main.manager;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
@@ -37,17 +38,21 @@ import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.connectors.exception.CatalogNotFoundException;
+import com.netflix.metacat.common.server.connectors.model.CatalogInfo;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.common.Strings;
 
 import javax.annotation.Nonnull;
 import javax.annotation.PreDestroy;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,6 +60,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Connector manager.
@@ -177,12 +183,42 @@ public class ConnectorManager {
      */
     @Nonnull
     private Set<CatalogHolder> getCatalogHolders(final String catalogName) {
-        final Map<String, CatalogHolder> result =  catalogs.row(catalogName);
+        final Map<String, CatalogHolder> result =  getCatalogHoldersByDatabaseName(catalogName);
         if (result.isEmpty()) {
             throw new CatalogNotFoundException(catalogName);
         } else {
             return Sets.newHashSet(result.values());
         }
+    }
+
+
+    private Map<String, CatalogHolder> getCatalogHoldersByDatabaseName(final String catalogName) {
+        Map<String, CatalogHolder> result =  catalogs.row(catalogName);
+        if (result.isEmpty()) {
+            final String proxyCatalogName = getConnectorNameFromCatalogName(catalogName);
+            if (!Strings.isNullOrEmpty(proxyCatalogName)) {
+                result = catalogs.row(proxyCatalogName);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * This method should be called only for a proxy catalog. A proxy catalog is a connector catalog that acts as a
+     * proxy to another service that contains the actual list of catalogs. The convention of the naming is such that
+     * the connector name is prefixed to the catalog names. Ex: For a catalog configuration with name as 'cde', the
+     * catalogs under it will be prefixed by 'cde_'.
+     *
+     * @param catalogName catalog name
+     * @return connector name
+     */
+    private String getConnectorNameFromCatalogName(final String catalogName) {
+        String result = null;
+        final Iterator<String> splits = Splitter.on("_").limit(2).split(catalogName).iterator();
+        if (splits.hasNext()) {
+            result = splits.next();
+        }
+        return result;
     }
 
     /**
@@ -195,8 +231,9 @@ public class ConnectorManager {
     private CatalogHolder getCatalogHolder(final QualifiedName name) {
         final String catalogName = name.getCatalogName();
         final String databaseName = name.isDatabaseDefinition() ? name.getDatabaseName() : EMPTY_STRING;
-        final CatalogHolder result =  catalogs.contains(catalogName, databaseName)
-            ? catalogs.get(catalogName, databaseName) : catalogs.get(catalogName, EMPTY_STRING);
+        final Map<String, CatalogHolder> catalogHolders = getCatalogHoldersByDatabaseName(catalogName);
+        final CatalogHolder result =  catalogHolders.containsKey(databaseName)
+            ? catalogHolders.get(databaseName) : catalogHolders.get(EMPTY_STRING);
         if (result == null) {
             throw new CatalogNotFoundException(catalogName);
         }
@@ -204,7 +241,9 @@ public class ConnectorManager {
     }
 
     /**
-     * Returns the catalog config.
+     * Returns the catalog config based on the qualified name that may or may not have the database name.
+     * If database name is not present, then the default catalog is returned if there are multiple catalogs with
+     * the same catalog name.
      *
      * @param name name
      * @return catalog config
@@ -215,19 +254,46 @@ public class ConnectorManager {
     }
 
     /**
-     * Returns the catalog config.
+     * Returns the catalog configs based on the catalog name. In the case where there are multiple catalogs with the
+     * same catalog name, this method will return multiple catalog configs.
      *
      * @param name name
-     * @return catalog config
+     * @return set of catalog configs
      */
     @Nonnull
     public Set<MetacatCatalogConfig> getCatalogConfigs(final String name) {
         return getCatalogHolders(name).stream().map(CatalogHolder::getCatalogConfig).collect(Collectors.toSet());
     }
 
+    /**
+     * Returns all catalog configs. In the case where a catalog is a proxy connector, the list of catalogs represented
+     * by the connector will not be included.
+     * @return  set of catalog configs
+     */
     @Nonnull
-    public Set<MetacatCatalogConfig> getCatalogs() {
+    public Set<MetacatCatalogConfig> getCatalogConfigs() {
         return catalogConfigs;
+    }
+
+    /**
+     * Returns all catalogs. The list will also include the list of catalogs represented by a proxy connector.
+     * @return set of catalogs
+     */
+    @Nonnull
+    public Set<CatalogInfo> getCatalogs() {
+        return catalogs.column(EMPTY_STRING).values().stream().flatMap(c -> {
+            final Stream.Builder<CatalogInfo> builder = Stream.builder();
+            final MetacatCatalogConfig catalogConfig = c.getCatalogConfig();
+            if (catalogConfig.isProxy()) {
+                c.getConnectorFactory().getCatalogService()
+                    .list(new ConnectorRequestContext(), QualifiedName.ofCatalog(catalogConfig.getCatalogName()),
+                        null, null, null)
+                    .forEach(builder);
+            } else {
+                builder.accept(catalogConfig.toCatalogInfo());
+            }
+            return builder.build();
+        }).collect(Collectors.toSet());
     }
 
     /**

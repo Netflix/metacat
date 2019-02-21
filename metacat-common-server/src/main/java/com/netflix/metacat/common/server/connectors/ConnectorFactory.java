@@ -30,6 +30,16 @@ public interface ConnectorFactory {
     String UNSUPPORTED_MESSAGE = "Not supported by this connector";
 
     /**
+     * Returns the catalog service implementation of the connector.
+     *
+     * @return Returns the catalog service implementation of the connector.
+     */
+    default ConnectorCatalogService getCatalogService() {
+        throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
+    }
+
+
+    /**
      * Returns the database service implementation of the connector.
      *
      * @return Returns the database service implementation of the connector.

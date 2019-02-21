@@ -160,7 +160,7 @@ class ConnectorManagerSpec extends Specification {
         1 * context.getConfiguration() >> [:]
         noExceptionThrown()
         expect:
-        connectorManager.getCatalogs().size() == 7
+        connectorManager.getCatalogConfigs().size() == 7
         connectorManager.getTypeConverter('hive') == connectorTypeConverter
         connectorManager.getInfoConverter('hive') == connectorInfoConverter
         connectorManager.getDatabaseService(QualifiedName.fromString('h/d1')) == databaseService1

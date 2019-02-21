@@ -20,6 +20,8 @@ package com.netflix.metacat.common.server.converter;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.dto.AuditDto;
+import com.netflix.metacat.common.dto.CatalogDto;
+import com.netflix.metacat.common.dto.ClusterDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.FieldDto;
 import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
@@ -33,6 +35,8 @@ import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
+import com.netflix.metacat.common.server.connectors.model.CatalogInfo;
+import com.netflix.metacat.common.server.connectors.model.ClusterInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.ViewInfo;
@@ -82,6 +86,8 @@ public class ConverterUtil {
                     .fields("name", "name", FieldsMappingOptions.copyByReference());
                 mapping(PartitionDto.class, PartitionInfo.class)
                     .fields("name", "name", FieldsMappingOptions.copyByReference());
+                mapping(CatalogDto.class, CatalogInfo.class);
+                mapping(ClusterDto.class, ClusterInfo.class);
                 mapping(AuditDto.class, AuditInfo.class);
                 mapping(ViewDto.class, ViewInfo.class);
                 mapping(StorageDto.class, StorageInfo.class);
@@ -92,6 +98,46 @@ public class ConverterUtil {
         customConverterMap.put("typeConverter", dozerTypeConverter);
         dozerBeanMapper.setCustomConvertersWithId(customConverterMap);
         this.mapper = dozerBeanMapper;
+    }
+
+    /**
+     * Converts from CatalogInfo to CatalogDto.
+     *
+     * @param catalogInfo connector catalog info
+     * @return catalog dto
+     */
+    public CatalogDto toCatalogDto(final CatalogInfo catalogInfo) {
+        return this.mapper.map(catalogInfo, CatalogDto.class);
+    }
+
+    /**
+     * Converts from CatalogDto to CatalogInfo.
+     *
+     * @param catalogDto catalog dto
+     * @return connector catalog info
+     */
+    public CatalogInfo fromCatalogDto(final CatalogDto catalogDto) {
+        return this.mapper.map(catalogDto, CatalogInfo.class);
+    }
+
+    /**
+     * Converts from ClusterInfo to ClusterDto.
+     *
+     * @param clusterInfo catalog cluster info
+     * @return cluster dto
+     */
+    public ClusterDto toClusterDto(final ClusterInfo clusterInfo) {
+        return this.mapper.map(clusterInfo, ClusterDto.class);
+    }
+
+    /**
+     * Converts from ClusterDto to ClusterInfo.
+     *
+     * @param clusterDto catalog cluster dto
+     * @return cluster info
+     */
+    public ClusterInfo fromClusterDto(final ClusterDto clusterDto) {
+        return this.mapper.map(clusterDto, ClusterInfo.class);
     }
 
     /**

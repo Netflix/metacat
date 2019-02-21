@@ -35,7 +35,7 @@ import spock.lang.Specification
 class CatalogManagerSpec extends Specification {
     def "can report health accurately based on whether catalogs are loaded or not"() {
         def connectorManager = Mock(ConnectorManager) {
-            2 * getCatalogs() >>> [
+            2 * getCatalogConfigs() >>> [
                 [],
                 [
                     MetacatCatalogConfig.createFromMapAndRemoveProperties("hive", "testhive", Maps.newHashMap()),
