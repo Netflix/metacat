@@ -509,9 +509,25 @@ class MetacatSmokeSpec extends Specification {
         noExceptionThrown()
         tableDTO.metadata.get("metadata_location").equals(metadataLocation)
         tableDTO.getFields().size() == 3
+        tableDTO.getFields().get(0).getComment() != null
         parts.size() == 2
         parts.get(0).dataMetadata != null
         partkeys.size() == 2
+
+        when:
+        partitionApi.getPartitionCount(catalogName, databaseName, tableName)
+        then:
+        thrown(MetacatNotSupportedException)
+
+        when:
+        partitionApi.getPartitionUris(catalogName, databaseName, tableName, null, null, null, null, null)
+        then:
+        noExceptionThrown()
+
+        when:
+        partitionApi.deletePartitions(catalogName, databaseName, tableName, ['field1=true'])
+        then:
+        thrown(MetacatNotSupportedException)
 
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
@@ -564,7 +580,7 @@ class MetacatSmokeSpec extends Specification {
 
 
     }
-    
+
     @Unroll
     def "Test delete table #catalogName/#databaseName/#tableName"() {
         given:
