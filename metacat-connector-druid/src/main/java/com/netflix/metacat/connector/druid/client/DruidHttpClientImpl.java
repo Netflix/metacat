@@ -97,6 +97,9 @@ public class DruidHttpClientImpl implements MetacatDruidClient {
     public ObjectNode getLatestDataByName(final String dataSourceName) {
         String url = String.format(druidURI + "/%s/segments", dataSourceName);
         String result = restTemplate.getForObject(url, String.class);
+        if (result == null) {
+            throw new MetacatException(String.format("Druid cluster: %s result not found.", dataSourceName));
+        }
         final String latestSegment = DruidHttpClientUtil.getLatestSegment(result);
         log.debug("Get the latest segment {}", latestSegment);
         url = String.format(druidURI + "/%s/segments/%s", dataSourceName, latestSegment);

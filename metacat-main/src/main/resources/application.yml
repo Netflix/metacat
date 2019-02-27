@@ -17,19 +17,25 @@
 #
 
 management:
-  contextPath: /actuator
   health:
     elasticsearch:
       enabled: false # This is needed for now as we're using a very out of date ES client that throws runtime errors
-  security:
-    enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+        exclude: httptrace,shutdown
 
 metacat:
+  metrics:
+    default-registry:
+      enabled: true
   plugin:
     config:
       location: /etc/catalog
   swagger:
     enabled: true
+
 netflix:
   appinfo:
     name: metacat

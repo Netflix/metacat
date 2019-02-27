@@ -52,6 +52,7 @@ services:
                 -Dnetflix.appinfo.metadata.route53NamePrefix=
                 -Dnetflix.appinfo.metadata.enableRoute53=false
                 -Dmetacat.plugin.config.location=/etc/metacat/catalog
+                -Dmetacat.metrics.default-registry.enabled=true
                 -Dmetacat.mysqlmetadataservice.enabled=true
                 -Dmetacat.type.converter=com.netflix.metacat.connector.pig.converters.PigTypeConverter
                 -Dmetacat.definition.metadata.delete.enableForTable=false

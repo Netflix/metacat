@@ -26,7 +26,7 @@ import java.util.List;
  */
 public interface TypeManager {
     /**
-     * Gets the type witht the signature, or null if not found.
+     * Gets the type with the signature, or null if not found.
      *
      * @param signature type signature
      * @return Type

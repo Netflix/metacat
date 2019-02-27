@@ -40,12 +40,11 @@ jar {
 }
 
 springBoot {
-    mainClass = "com.netflix.metacat.MetacatApplication"
+    mainClassName = "com.netflix.metacat.MetacatApplication"
 }
 
 def env = project.hasProperty("env") ? project.getProperty("env") : "dev"
 
 bootRun {
-    addResources = false
     systemProperty "spring.profiles.active", env
 }

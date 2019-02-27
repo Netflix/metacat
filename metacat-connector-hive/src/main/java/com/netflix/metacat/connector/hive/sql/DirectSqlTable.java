@@ -196,7 +196,7 @@ public class DirectSqlTable {
             throw new InvalidMetaException(tableName, message, null);
         }
         final Long tableId = getTableId(tableName);
-        Map<String, String> existingTableMetadata = Maps.newHashMap();
+        Map<String, String> existingTableMetadata = null;
         log.debug("Lock Iceberg table {}", tableName);
         try {
             existingTableMetadata = jdbcTemplate.query(SQL.TABLE_PARAMS_LOCK,
@@ -213,6 +213,9 @@ public class DirectSqlTable {
             final String message = String.format("Failed getting a lock on iceberg table %s", tableName);
             log.warn(message, ex);
             throw new InvalidMetaException(tableName, message, null);
+        }
+        if (existingTableMetadata == null) {
+            existingTableMetadata = Maps.newHashMap();
         }
         validateIcebergUpdate(tableName, existingTableMetadata, newTableMetadata);
         final MapDifference<String, String> diff = Maps.difference(existingTableMetadata, newTableMetadata);
