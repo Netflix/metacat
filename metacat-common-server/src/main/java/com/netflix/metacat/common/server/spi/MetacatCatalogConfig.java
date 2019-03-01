@@ -15,6 +15,9 @@ package com.netflix.metacat.common.server.spi;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.server.connectors.model.CatalogInfo;
+import com.netflix.metacat.common.server.connectors.model.ClusterInfo;
 import lombok.Getter;
 
 import java.util.Collections;
@@ -33,16 +36,19 @@ public final class MetacatCatalogConfig {
     private final int thriftPort;
     private final String type;
     private final String catalogName;
+    private final ClusterInfo clusterInfo;
 
     private MetacatCatalogConfig(
         final String type,
         final String catalogName,
+        final ClusterInfo clusterInfo,
         final boolean includeViewsWithTables,
         final List<String> schemaWhitelist,
         final List<String> schemaBlacklist,
         final int thriftPort) {
         this.type = type;
         this.catalogName = catalogName;
+        this.clusterInfo = clusterInfo;
         this.includeViewsWithTables = includeViewsWithTables;
         this.schemaBlacklist = schemaBlacklist;
         this.schemaWhitelist = schemaWhitelist;
@@ -78,13 +84,35 @@ public final class MetacatCatalogConfig {
         if (properties.containsKey(Keys.THRIFT_PORT)) {
             thriftPort = Integer.parseInt(properties.remove(Keys.THRIFT_PORT));
         }
+        // Cluster information
+        final String clusterName = properties.get(Keys.CLUSTER_NAME);
+        final String clusterAccount = properties.get(Keys.CLUSTER_ACCOUNT);
+        final String clusterEnv = properties.get(Keys.CLUSTER_ENV);
+        final String clusterRegion = properties.get(Keys.CLUSTER_REGION);
+        final ClusterInfo clusterInfo = new ClusterInfo(clusterName, type, clusterAccount, clusterEnv, clusterRegion);
 
-        return new MetacatCatalogConfig(catalogType, catalogName, includeViewsWithTables, schemaWhitelist,
+        return new MetacatCatalogConfig(catalogType, catalogName, clusterInfo, includeViewsWithTables, schemaWhitelist,
             schemaBlacklist, thriftPort);
     }
 
     public boolean isThriftInterfaceRequested() {
         return thriftPort != 0;
+    }
+
+    /**
+     * Returns true if catalog is a proxy one.
+     * @return Returns true if catalog is a proxy one.
+     */
+    public boolean isProxy() {
+        return type.equalsIgnoreCase("proxy");
+    }
+
+    /**
+     * Creates the catalog info.
+     * @return catalog info
+     */
+    public CatalogInfo toCatalogInfo() {
+        return CatalogInfo.builder().name(QualifiedName.ofCatalog(catalogName)).clusterInfo(clusterInfo).build();
     }
 
     /**
@@ -122,5 +150,21 @@ public final class MetacatCatalogConfig {
          * Thrift port.
          */
         public static final String THRIFT_PORT = "metacat.thrift.port";
+        /**
+         *  Cluster name.
+         */
+        public static final String CLUSTER_NAME = "metacat.cluster.name";
+        /**
+         *  Cluster account.
+         */
+        public static final String CLUSTER_ACCOUNT = "metacat.cluster.account";
+        /**
+         *  Cluster region.
+         */
+        public static final String CLUSTER_REGION = "metacat.cluster.region";
+        /**
+         *  Cluster environment.
+         */
+        public static final String CLUSTER_ENV = "metacat.cluster.env";
     }
 }

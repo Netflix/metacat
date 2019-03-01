@@ -92,7 +92,7 @@ public class CatalogManager implements HealthIndicator {
         // If catalogs are loaded we'll just report up
         final Health.Builder builder = this.catalogsLoaded.get() ? Health.up() : Health.outOfService();
 
-        this.connectorManager.getCatalogs().forEach(catalog -> {
+        this.connectorManager.getCatalogConfigs().forEach(catalog -> {
             final String key = catalog.getSchemaWhitelist().isEmpty() ? catalog.getCatalogName()
                 : String.format("%s:%s", catalog.getCatalogName(), catalog.getSchemaWhitelist());
             builder.withDetail(key, catalog.getType());

@@ -21,6 +21,7 @@ import com.netflix.metacat.common.dto.CatalogMappingDto;
 import com.netflix.metacat.common.dto.CreateCatalogDto;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
+import com.netflix.metacat.common.server.connectors.model.CatalogInfo;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
@@ -94,6 +95,7 @@ public class CatalogServiceImpl implements CatalogService {
                         .collect(Collectors.toList())
                 );
             }
+            result.setClusterDto(converterUtil.toClusterDto(config.getClusterInfo()));
         });
         result.setDatabases(databases);
         if (getCatalogServiceParameters.isIncludeUserMetadata()) {
@@ -118,12 +120,14 @@ public class CatalogServiceImpl implements CatalogService {
     @Nonnull
     @Override
     public List<CatalogMappingDto> getCatalogNames() {
-        if (connectorManager.getCatalogs().isEmpty()) {
+        final Set<CatalogInfo> catalogs = connectorManager.getCatalogs();
+        if (catalogs.isEmpty()) {
             throw new MetacatNotFoundException("Unable to locate any catalogs");
         }
 
-        return connectorManager.getCatalogs().stream()
-            .map(catalog -> new CatalogMappingDto(catalog.getCatalogName(), catalog.getType()))
+        return catalogs.stream()
+            .map(catalog -> new CatalogMappingDto(catalog.getName().getCatalogName(),
+                catalog.getClusterInfo().getType(), converterUtil.toClusterDto(catalog.getClusterInfo())))
             .distinct()
             .collect(Collectors.toList());
     }
