@@ -34,4 +34,5 @@ import lombok.NoArgsConstructor;
 public class ConnectorRequestContext {
     private long timestamp;
     private String userName;
+    private boolean includeMetadata;
 }

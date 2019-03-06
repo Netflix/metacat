@@ -78,6 +78,7 @@ import java.util.stream.Collectors;
  * @author amajumdar
  */
 @Slf4j
+@Deprecated
 public class ElasticSearchRefresh {
     private static final Predicate<Object> NOT_NULL = Objects::nonNull;
     private static AtomicBoolean isElasticSearchMetacatRefreshAlreadyRunning = new AtomicBoolean(false);

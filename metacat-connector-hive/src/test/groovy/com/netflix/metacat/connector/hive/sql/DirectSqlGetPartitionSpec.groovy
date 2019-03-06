@@ -52,7 +52,7 @@ class DirectSqlGetPartitionSpec extends Specification {
     def partitionNames = partitionInfos.collect { it.name.partitionName}
     def partitionuris = partitionInfos.collect { it.serde.uri}
     def partitionTableDbNames = partitionInfos.collect { [it.name.partitionName, it.name.tableName, it.name.databaseName]}
-    def requestContext = new ConnectorRequestContext(Instant.now().toEpochMilli(), 'test')
+    def requestContext = new ConnectorRequestContext(timestamp: Instant.now().toEpochMilli(), userName:'test')
     def emptyPartitionsRequest = new PartitionListRequest()
     def partitionsRequest = new PartitionListRequest(filter:"field1='a'", sort: new Sort('createdDate', SortOrder.ASC), pageable: new Pageable(3,1))
 

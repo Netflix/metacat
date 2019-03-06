@@ -26,7 +26,7 @@ class S3ConnectorTableServiceSpec extends Specification {
         new S3ConnectorInfoConverter(new PigTypeConverter(), true, TypeRegistry.getTypeRegistry());
     S3ConnectorTableService service =
         new S3ConnectorTableService('s3', databaseDao, tableDao, fieldDao, converter)
-    ConnectorRequestContext context = new ConnectorRequestContext(0, 'test')
+    ConnectorRequestContext context = new ConnectorRequestContext(timestamp:0, userName: 'test')
     QualifiedName name = QualifiedName.ofTable('s3', 'd3', 't3')
     TableInfo info = TableInfo.builder().name(name)
             .fields([FieldInfo.builder().name('f1').type(BaseType.STRING).build(), FieldInfo.builder().name('f2').type(BaseType.DATE).build()])

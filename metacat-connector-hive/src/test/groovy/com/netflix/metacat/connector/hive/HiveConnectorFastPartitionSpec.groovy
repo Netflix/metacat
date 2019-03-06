@@ -48,7 +48,7 @@ class HiveConnectorFastPartitionSpec extends Specification {
     @Shared
     DirectSqlSavePartition directSqlSavePartition = Mock(DirectSqlSavePartition)
     @Shared
-    ConnectorRequestContext connectorContext = new ConnectorRequestContext(1, null)
+    ConnectorRequestContext connectorContext = new ConnectorRequestContext(timestamp:1)
     @Shared
     IcebergTableHandler icebergTableHandler = Mock(IcebergTableHandler)
     @Shared

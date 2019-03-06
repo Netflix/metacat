@@ -17,7 +17,6 @@ package com.netflix.metacat.main.api.v1;
 
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.dto.TagCreateRequestDto;
 import com.netflix.metacat.common.dto.TagRemoveRequestDto;
@@ -266,12 +265,9 @@ public class TagController {
         switch (name.getType()) {
             case CATALOG:
                 //catalog service will throw exception if not found
-                final CatalogDto catalogDto = this.catalogService.get(name, GetCatalogServiceParameters.builder()
+                this.catalogService.get(name, GetCatalogServiceParameters.builder()
                     .includeDatabaseNames(false).includeUserMetadata(false).build());
-                if (catalogDto != null) {
-                    return this.tagService.setTags(name, tags, true);
-                }
-                break;
+                return this.tagService.setTags(name, tags, true);
             case DATABASE:
                 if (!this.databaseService.exists(name)) {
                     throw new DatabaseNotFoundException(name);
@@ -559,12 +555,10 @@ public class TagController {
         switch (name.getType()) {
             case CATALOG:
                 //catalog service will throw exception if not found
-                final CatalogDto catalogDto = this.catalogService.get(name, GetCatalogServiceParameters.builder()
+                this.catalogService.get(name, GetCatalogServiceParameters.builder()
                     .includeDatabaseNames(false).includeUserMetadata(false).build());
-                if (catalogDto != null) {
-                    this.tagService.removeTags(name, tagRemoveRequestDto.getDeleteAll(),
+                this.tagService.removeTags(name, tagRemoveRequestDto.getDeleteAll(),
                         new HashSet<>(tagRemoveRequestDto.getTags()), true);
-                }
                 break;
             case DATABASE:
                 if (!this.databaseService.exists(name)) {
