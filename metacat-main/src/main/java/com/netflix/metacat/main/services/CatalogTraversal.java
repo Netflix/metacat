@@ -145,7 +145,7 @@ public class CatalogTraversal {
     /**
      * Does a sweep across given catalogs to refresh the same data in elastic search.
      *
-     * @param catalogNames catalog anmes
+     * @param catalogNames catalog names
      */
     public void processCatalogs(final List<String> catalogNames) {
         final List<QualifiedName> qNames = catalogNames.stream()

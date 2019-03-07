@@ -59,7 +59,7 @@ public class ElasticSearchCatalogTraversalAction implements CatalogTraversalActi
     private final UserMetadataService userMetadataService;
     private final TagService tagService;
     private final MetacatEventBus eventBus;
-    private Registry registry;
+    private final Registry registry;
 
     /**
      * Constructor.

@@ -182,7 +182,7 @@ public class ElasticSearchConfig {
     }
 
     /**
-     * ElasticSearch refresh action.
+     * Traversal action implementation for ElasticSearch refresh.
      *
      * @param config              System config
      * @param eventBus            Event bus
