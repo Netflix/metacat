@@ -24,7 +24,7 @@ class S3ConnectorDatabaseServiceSpec extends Specification {
         new S3ConnectorInfoConverter(new PigTypeConverter(), true, TypeRegistry.getTypeRegistry());
     S3ConnectorDatabaseService service =
         new S3ConnectorDatabaseService('s3', databaseDao, sourceDao, converter)
-    ConnectorRequestContext context = new ConnectorRequestContext(0, 'test')
+    ConnectorRequestContext context = new ConnectorRequestContext(timestamp:0, userName:'test')
     QualifiedName databaseName = QualifiedName.ofDatabase('s3', 'd3')
 
     def testListViewNames(){

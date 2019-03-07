@@ -22,6 +22,7 @@ import com.netflix.metacat.common.dto.CreateCatalogDto;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.model.CatalogInfo;
+import com.netflix.metacat.common.server.connectors.model.ClusterInfo;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
@@ -95,7 +96,15 @@ public class CatalogServiceImpl implements CatalogService {
                         .collect(Collectors.toList())
                 );
             }
-            result.setClusterDto(converterUtil.toClusterDto(config.getClusterInfo()));
+            if (config.isProxy()) {
+                final CatalogInfo catalogInfo =
+                    connectorManager.getCatalogService(name).get(new ConnectorRequestContext(), name);
+                final ClusterInfo clusterInfo = catalogInfo.getClusterInfo();
+                result.setCluster(converterUtil.toClusterDto(clusterInfo));
+                result.setType(clusterInfo.getType());
+            } else {
+                result.setCluster(converterUtil.toClusterDto(config.getClusterInfo()));
+            }
         });
         result.setDatabases(databases);
         if (getCatalogServiceParameters.isIncludeUserMetadata()) {

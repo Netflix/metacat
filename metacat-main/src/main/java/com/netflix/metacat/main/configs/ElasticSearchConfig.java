@@ -27,6 +27,7 @@ import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.main.services.search.ElasticSearchCatalogTraversalAction;
 import com.netflix.metacat.main.services.search.ElasticSearchEventHandlers;
 import com.netflix.metacat.main.services.search.ElasticSearchRefresh;
 import com.netflix.metacat.main.services.search.ElasticSearchUtil;
@@ -173,6 +174,42 @@ public class ElasticSearchConfig {
             databaseService,
             tableService,
             partitionService,
+            userMetadataService,
+            tagService,
+            elasticSearchUtil,
+            registry
+        );
+    }
+
+    /**
+     * Traversal action implementation for ElasticSearch refresh.
+     *
+     * @param config              System config
+     * @param eventBus            Event bus
+     * @param databaseService     Database service
+     * @param tableService        Table service
+     * @param userMetadataService User metadata  service
+     * @param tagService          Tag service
+     * @param elasticSearchUtil   ElasticSearch client wrapper
+     * @param registry            registry of spectator
+     * @return The refresh bean
+     */
+    @Bean
+    public ElasticSearchCatalogTraversalAction elasticSearchCatalogTraversalAction(
+        final Config config,
+        final MetacatEventBus eventBus,
+        final DatabaseService databaseService,
+        final TableService tableService,
+        final UserMetadataService userMetadataService,
+        final TagService tagService,
+        final ElasticSearchUtil elasticSearchUtil,
+        final Registry registry
+    ) {
+        return new ElasticSearchCatalogTraversalAction(
+            config,
+            eventBus,
+            databaseService,
+            tableService,
             userMetadataService,
             tagService,
             elasticSearchUtil,

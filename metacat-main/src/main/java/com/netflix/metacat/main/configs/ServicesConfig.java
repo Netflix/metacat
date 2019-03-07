@@ -33,6 +33,7 @@ import com.netflix.metacat.main.manager.CatalogManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.manager.PluginManager;
 import com.netflix.metacat.main.services.CatalogService;
+import com.netflix.metacat.main.services.CatalogTraversal;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.MetacatInitializationService;
@@ -354,6 +355,33 @@ public class ServicesConfig {
             connectorManager,
             threadServiceManager,
             metacatThriftService
+        );
+    }
+
+    /**
+     * The catalog traversal bean.
+     *
+     * @param config              System config
+     * @param catalogService      Catalog service
+     * @param databaseService     Database service
+     * @param tableService        Table service
+     * @param registry            registry of spectator
+     * @return The catalog traversal bean
+     */
+    @Bean
+    public CatalogTraversal catalogTraversal(
+        final Config config,
+        final CatalogService catalogService,
+        final DatabaseService databaseService,
+        final TableService tableService,
+        final Registry registry
+    ) {
+        return new CatalogTraversal(
+            config,
+            catalogService,
+            databaseService,
+            tableService,
+            registry
         );
     }
 }

@@ -68,7 +68,7 @@ class HiveConnectorTableSpec extends Specification {
         )
     )
     @Shared
-    ConnectorRequestContext connectorRequestContext = new ConnectorRequestContext(1, null)
+    ConnectorRequestContext connectorRequestContext = new ConnectorRequestContext(timestamp:1)
     @Shared
     ConnectorContext connectorContext = new ConnectorContext(
         "testHive",

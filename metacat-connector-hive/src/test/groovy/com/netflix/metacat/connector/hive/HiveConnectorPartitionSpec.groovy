@@ -61,7 +61,7 @@ class HiveConnectorPartitionSpec extends Specification{
             metacatHiveClient,
             new HiveConnectorInfoConverter(new HiveTypeConverter()))
     @Shared
-    ConnectorRequestContext connectorContext = new ConnectorRequestContext(1, null);
+    ConnectorRequestContext connectorContext = new ConnectorRequestContext(timestamp:1);
     @Shared
     HiveConnectorInfoConverter hiveConnectorInfoConverter = new HiveConnectorInfoConverter( new HiveTypeConverter())
 

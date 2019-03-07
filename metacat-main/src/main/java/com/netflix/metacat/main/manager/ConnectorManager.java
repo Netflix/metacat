@@ -32,6 +32,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.server.connectors.ConnectorCatalogService;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
@@ -345,6 +346,16 @@ public class ConnectorManager {
      */
     public Set<ConnectorPartitionService> getPartitionServices() {
         return partitionServices;
+    }
+
+    /**
+     * Returns the connector catalog service for the given <code>name</code>.
+     *
+     * @param name qualified name
+     * @return Returns the connector catalog service for the given <code>name</code>
+     */
+    public ConnectorCatalogService getCatalogService(final QualifiedName name) {
+        return getConnectorFactory(name).getCatalogService();
     }
 
     /**

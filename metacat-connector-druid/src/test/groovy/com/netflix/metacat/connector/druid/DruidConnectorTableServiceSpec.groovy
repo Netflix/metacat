@@ -39,7 +39,7 @@ class DruidConnectorTableServiceSpec extends Specification{
      @Shared
     DruidConnectorInfoConverter druidInfoConverter = new DruidConnectorInfoConverter("test")
     @Shared
-    ConnectorRequestContext connectorContext = new ConnectorRequestContext(1, null)
+    ConnectorRequestContext connectorContext = new ConnectorRequestContext(timestamp: 1)
     @Shared
     tableNames = [
         QualifiedName.ofTable("druid", "default", "devtable2"),

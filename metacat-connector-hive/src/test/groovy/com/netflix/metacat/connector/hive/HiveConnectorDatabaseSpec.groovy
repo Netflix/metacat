@@ -46,7 +46,7 @@ class HiveConnectorDatabaseSpec extends Specification {
     @Shared
     HiveConnectorDatabaseService hiveConnectorDatabaseService = new HiveConnectorDatabaseService(metacatHiveClient, new HiveConnectorInfoConverter(new HiveTypeConverter()))
     @Shared
-    ConnectorRequestContext connectorContext = new ConnectorRequestContext(1, null)
+    ConnectorRequestContext connectorContext = new ConnectorRequestContext(timestamp:1)
 
     def setupSpec() {
         metacatHiveClient.getAllDatabases() >> ["test1", "test2", "dev1", "dev2"]
