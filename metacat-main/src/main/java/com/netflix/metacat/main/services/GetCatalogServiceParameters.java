@@ -30,4 +30,5 @@ import lombok.Value;
 public class GetCatalogServiceParameters {
     private final boolean includeDatabaseNames;
     private final boolean includeUserMetadata;
+    private final boolean includeMetadataFromConnector;
 }

@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
-import com.netflix.metacat.common.dto.CatalogMappingDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.monitoring.Metrics;
@@ -67,11 +66,9 @@ public class CatalogTraversal {
     private static final Predicate<Object> NOT_NULL = Objects::nonNull;
     private static AtomicBoolean isTraversalAlreadyRunning = new AtomicBoolean(false);
 
-    private final TableService tableService;
+    private final CatalogTraversalServiceHelper catalogTraversalServiceHelper;
     private final List<CatalogTraversalAction> actions;
-    private final CatalogService catalogService;
     private final Config config;
-    private final DatabaseService databaseService;
 
     private Registry registry;
     // Traversal state
@@ -85,24 +82,18 @@ public class CatalogTraversal {
     /**
      * Constructor.
      *
-     * @param config              System config
-     * @param catalogService      Catalog service
-     * @param databaseService     Database service
-     * @param tableService        Table service
-     * @param registry            registry of spectator
+     * @param config                            System config
+     * @param catalogTraversalServiceHelper     Catalog service helper
+     * @param registry                          registry of spectator
      */
     public CatalogTraversal(
         @Nonnull @NonNull final Config config,
-        @Nonnull @NonNull final CatalogService catalogService,
-        @Nonnull @NonNull final DatabaseService databaseService,
-        @Nonnull @NonNull final TableService tableService,
+        @Nonnull @NonNull final CatalogTraversalServiceHelper catalogTraversalServiceHelper,
         @Nonnull @NonNull final Registry registry
     ) {
         this.config = config;
         this.actions = Lists.newArrayList();
-        this.catalogService = catalogService;
-        this.databaseService = databaseService;
-        this.tableService = tableService;
+        this.catalogTraversalServiceHelper = catalogTraversalServiceHelper;
         this.registry = registry;
     }
 
@@ -139,7 +130,7 @@ public class CatalogTraversal {
      * Does a sweep across all catalogs to refresh the same data in elastic search.
      */
     public void process() {
-        processCatalogs(getCatalogNames());
+        processCatalogs(catalogTraversalServiceHelper.getCatalogNames());
     }
 
     /**
@@ -245,7 +236,7 @@ public class CatalogTraversal {
             .map(catalogName -> service.submit(() -> {
                 CatalogDto result = null;
                 try {
-                    result = getCatalog(catalogName);
+                    result = catalogTraversalServiceHelper.getCatalog(catalogName);
                 } catch (Exception e) {
                     log.error("Traversal: Failed to retrieve catalog: {}", catalogName);
                     registry.counter(
@@ -297,7 +288,7 @@ public class CatalogTraversal {
             .map(databaseName -> service.submit(() -> {
                 DatabaseDto result = null;
                 try {
-                    result = getDatabase(databaseName);
+                    result = catalogTraversalServiceHelper.getDatabase(databaseName);
                 } catch (Exception e) {
                     log.error("Traversal: Failed to retrieve database: {}", databaseName);
                     registry.counter(
@@ -407,7 +398,7 @@ public class CatalogTraversal {
             .map(tableName -> service.submit(() -> {
                 Optional<TableDto> result = null;
                 try {
-                    result = getTable(tableName);
+                    result = catalogTraversalServiceHelper.getTable(tableName);
                 } catch (Exception e) {
                     log.error("Traversal: Failed to retrieve table: {}", tableName);
                     registry.counter(
@@ -420,33 +411,6 @@ public class CatalogTraversal {
 
         return Futures.transformAsync(Futures.successfulAsList(getTableFutures),
             input -> applyTables(databaseName, input), defaultService);
-    }
-
-    protected List<String> getCatalogNames() {
-        return catalogService.getCatalogNames().stream().map(CatalogMappingDto::getCatalogName).collect(
-            Collectors.toList());
-    }
-
-    protected CatalogDto getCatalog(final String catalogName) {
-        return catalogService.get(QualifiedName.ofCatalog(catalogName));
-    }
-
-    protected DatabaseDto getDatabase(final QualifiedName databaseName) {
-        return databaseService.get(databaseName,
-            GetDatabaseServiceParameters.builder()
-                .disableOnReadMetadataIntercetor(false)
-                .includeTableNames(true)
-                .includeUserMetadata(true)
-                .build());
-    }
-
-    protected Optional<TableDto> getTable(final QualifiedName tableName) {
-        return tableService.get(tableName, GetTableServiceParameters.builder()
-            .disableOnReadMetadataIntercetor(false)
-            .includeInfo(true)
-            .includeDefinitionMetadata(true)
-            .includeDataMetadata(true)
-            .build());
     }
 
     /**

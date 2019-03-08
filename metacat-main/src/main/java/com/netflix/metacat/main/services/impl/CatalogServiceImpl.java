@@ -77,7 +77,10 @@ public class CatalogServiceImpl implements CatalogService {
         final Set<MetacatCatalogConfig> configs = connectorManager.getCatalogConfigs(name.getCatalogName());
         final CatalogDto result = new CatalogDto();
         result.setName(name);
+        // Prepare the connector context
         final ConnectorRequestContext context = converterUtil.toConnectorContext(MetacatContextManager.getContext());
+        context.setIncludeMetadata(getCatalogServiceParameters.isIncludeMetadataFromConnector());
+
         final List<String> databases = Lists.newArrayList();
         configs.forEach(config -> {
             QualifiedName qName = name;
@@ -98,7 +101,7 @@ public class CatalogServiceImpl implements CatalogService {
             }
             if (config.isProxy()) {
                 final CatalogInfo catalogInfo =
-                    connectorManager.getCatalogService(name).get(new ConnectorRequestContext(), name);
+                    connectorManager.getCatalogService(name).get(context, name);
                 final ClusterInfo clusterInfo = catalogInfo.getClusterInfo();
                 result.setCluster(converterUtil.toClusterDto(clusterInfo));
                 result.setType(clusterInfo.getType());

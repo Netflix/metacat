@@ -25,6 +25,7 @@ import com.netflix.metacat.common.server.converter.TypeConverterFactory
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.main.manager.ConnectorManager
+import com.netflix.metacat.main.services.GetTableServiceParameters
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import spock.lang.Specification
 
@@ -75,12 +76,12 @@ class ConnectorTableServiceProxySpec extends Specification {
 
     def testGet() {
         when:
-        service.get(name, false)
+        service.get(name, GetTableServiceParameters.builder().build(),false)
         then:
         noExceptionThrown()
         1 * connectorTableService.get(_,_)
         when:
-        service.get(name, false)
+        service.get(name, GetTableServiceParameters.builder().build(), false)
         then:
         thrown(ConnectorException)
         1 * connectorTableService.get(_,_) >> { throw new ConnectorException("Exception") }
