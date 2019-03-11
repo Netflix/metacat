@@ -34,4 +34,5 @@ public class GetTableServiceParameters {
     private final boolean includeDataMetadata;
     private final boolean disableOnReadMetadataIntercetor;
     private final boolean useCache;
+    private final boolean includeMetadataFromConnector;
 }

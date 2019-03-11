@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Information about a catalog.
@@ -55,6 +56,8 @@ public class CatalogDto extends BaseDto implements HasDefinitionMetadata {
     @ApiModelProperty(value = "Cluster information referred to by this catalog", required = true)
     @JsonProperty
     private ClusterDto cluster;
+    @JsonProperty
+    private Map<String, String> metadata;
     @JsonIgnore
     public QualifiedName getDefinitionName() {
         return name;

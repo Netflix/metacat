@@ -198,7 +198,9 @@ public class DatabaseServiceImpl implements DatabaseService {
         final MetacatCatalogConfig config = connectorManager.getCatalogConfig(name);
         final ConnectorDatabaseService service = connectorManager.getDatabaseService(name);
         final ConnectorTableService tableService = connectorManager.getTableService(name);
+        // Prepare the connector request
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
+        connectorRequestContext.setIncludeMetadata(getDatabaseServiceParameters.isIncludeMetadataFromConnector());
 
         final DatabaseDto dto = converterUtil.toDatabaseDto(service.get(connectorRequestContext, name));
         dto.setType(config.getType());

@@ -26,6 +26,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
+import com.netflix.metacat.main.services.GetTableServiceParameters;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -91,13 +92,17 @@ public class ConnectorTableServiceProxy {
      * Returns table if <code>useCache</code> is true and object exists in the cache. If <code>useCache</code> is false
      * or object does not exists in the cache, it is retrieved from the store.
      * @param name table name
+     * @param getTableServiceParameters  get table parameters
      * @param useCache true, if table can be retrieved from cache
      * @return table dto
      */
     @Cacheable(key = "'table.' + #name", condition = "#useCache")
-    public TableInfo get(final QualifiedName name, final boolean useCache) {
+    public TableInfo get(final QualifiedName name,
+                         final GetTableServiceParameters getTableServiceParameters,
+                         final boolean useCache) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
+        connectorRequestContext.setIncludeMetadata(getTableServiceParameters.isIncludeMetadataFromConnector());
         final ConnectorTableService service = connectorManager.getTableService(name);
         return service.get(connectorRequestContext, name);
     }

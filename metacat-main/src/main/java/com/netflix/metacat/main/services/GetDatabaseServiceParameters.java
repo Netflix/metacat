@@ -31,4 +31,5 @@ public class GetDatabaseServiceParameters {
     private final boolean disableOnReadMetadataIntercetor;
     private final boolean includeTableNames;
     private final boolean includeUserMetadata;
+    private final boolean includeMetadataFromConnector;
 }

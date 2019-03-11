@@ -261,7 +261,9 @@ public class TableServiceImpl implements TableService {
             && !getTableServiceParameters.isDisableOnReadMetadataIntercetor())) {
             try {
                 tableInternal = converterUtil.toTableDto(connectorTableServiceProxy
-                    .get(name, getTableServiceParameters.isUseCache() && config.isCacheEnabled()));
+                    .get(name,
+                        getTableServiceParameters,
+                        getTableServiceParameters.isUseCache() && config.isCacheEnabled()));
             } catch (NotFoundException ignored) {
                 return Optional.empty();
             }
@@ -285,7 +287,9 @@ public class TableServiceImpl implements TableService {
             if (tableInternal == null && !getTableServiceParameters.isIncludeInfo()) {
                 try {
                     dto = converterUtil.toTableDto(connectorTableServiceProxy
-                        .get(name, getTableServiceParameters.isUseCache() && config.isCacheEnabled()));
+                        .get(name,
+                            getTableServiceParameters,
+                            getTableServiceParameters.isUseCache() && config.isCacheEnabled()));
                 } catch (NotFoundException ignored) {
                 }
             }
