@@ -105,6 +105,7 @@ public class CatalogServiceImpl implements CatalogService {
                 final ClusterInfo clusterInfo = catalogInfo.getClusterInfo();
                 result.setCluster(converterUtil.toClusterDto(clusterInfo));
                 result.setType(clusterInfo.getType());
+                result.setMetadata(catalogInfo.getMetadata());
             } else {
                 result.setCluster(converterUtil.toClusterDto(config.getClusterInfo()));
             }

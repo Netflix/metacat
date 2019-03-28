@@ -73,10 +73,11 @@ public class CatalogTraversalServiceHelper {
 
     /**
      * Returns the database for the given <code>databaseName</code>.
+     * @param catalogDto catalog dto
      * @param databaseName database name
      * @return database
      */
-    public DatabaseDto getDatabase(final QualifiedName databaseName) {
+    public DatabaseDto getDatabase(final CatalogDto catalogDto, final QualifiedName databaseName) {
         return databaseService.get(databaseName,
             GetDatabaseServiceParameters.builder()
                 .disableOnReadMetadataIntercetor(false)
@@ -87,10 +88,11 @@ public class CatalogTraversalServiceHelper {
 
     /**
      * Returns the table for the given <code>tableName</code>.
+     * @param databaseDto database dto
      * @param tableName table name
      * @return table dto
      */
-    public Optional<TableDto> getTable(final QualifiedName tableName) {
+    public Optional<TableDto> getTable(final DatabaseDto databaseDto, final QualifiedName tableName) {
         return tableService.get(tableName, GetTableServiceParameters.builder()
             .disableOnReadMetadataIntercetor(false)
             .includeInfo(true)
