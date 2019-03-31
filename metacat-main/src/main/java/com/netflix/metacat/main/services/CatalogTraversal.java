@@ -144,19 +144,6 @@ public class CatalogTraversal {
         _process(qNames, () -> _processCatalogs(catalogNames), "processCatalogs", true, 1000);
     }
 
-    /**
-     * Does a sweep across given catalog and databases to refresh the same data in elastic search.
-     *
-     * @param catalogName   catalog
-     * @param databaseNames database names
-     */
-    public void processDatabases(final String catalogName, final List<String> databaseNames) {
-        final List<QualifiedName> qNames = databaseNames.stream()
-            .map(s -> QualifiedName.ofDatabase(catalogName, s)).collect(Collectors.toList());
-        _process(qNames, () -> _processDatabases(QualifiedName.ofCatalog(catalogName), qNames), "processDatabases",
-            true, 1000);
-    }
-
     @SuppressWarnings("checkstyle:methodname")
     private void _process(final List<QualifiedName> qNames, final Supplier<ListenableFuture<Void>> supplier,
                           final String requestName, final boolean delete, final int queueSize) {
@@ -232,6 +219,15 @@ public class CatalogTraversal {
     @SuppressWarnings("checkstyle:methodname")
     private ListenableFuture<Void> _processCatalogs(final List<String> catalogNames) {
         log.info("Start: Full traversal of catalogs: {}", catalogNames);
+        final List<List<String>> subCatalogNamesList = Lists.partition(catalogNames, 5);
+        final List<ListenableFuture<Void>> futures =
+            subCatalogNamesList.stream().map(this::_processSubCatalogList).collect(Collectors.toList());
+        return Futures.transform(Futures.successfulAsList(futures), Functions.constant(null), defaultService);
+    }
+
+    @SuppressWarnings("checkstyle:methodname")
+    private ListenableFuture<Void> _processSubCatalogList(final List<String> catalogNames) {
+        log.info("Start: Full traversal of catalogs: {}", catalogNames);
         final List<ListenableFuture<CatalogDto>> getCatalogFutures = catalogNames.stream()
             .map(catalogName -> service.submit(() -> {
                 CatalogDto result = null;
@@ -252,7 +248,7 @@ public class CatalogTraversal {
                 final List<ListenableFuture<Void>> processCatalogFutures = input.stream().filter(NOT_NULL).map(
                     catalogDto -> {
                         final List<QualifiedName> databaseNames = getDatabaseNamesToRefresh(catalogDto);
-                        return _processDatabases(catalogDto.getName(), databaseNames);
+                        return _processDatabases(catalogDto, databaseNames);
                     }).filter(NOT_NULL).collect(Collectors.toList());
                 processCatalogFutures.add(processCatalogFuture);
                 return Futures.transform(Futures.successfulAsList(processCatalogFutures),
@@ -274,21 +270,22 @@ public class CatalogTraversal {
     /**
      * Process the list of databases.
      *
-     * @param catalogName   catalog name
+     * @param catalogDto   catalog dto
      * @param databaseNames database names
      * @return future
      */
     @SuppressWarnings("checkstyle:methodname")
-    private ListenableFuture<Void> _processDatabases(final QualifiedName catalogName,
+    private ListenableFuture<Void> _processDatabases(final CatalogDto catalogDto,
                                                      final List<QualifiedName> databaseNames) {
         ListenableFuture<Void> resultFuture = null;
+        final QualifiedName catalogName = catalogDto.getName();
         log.info("Traversal: Full traversal of catalog {} for databases({}): {}",
             catalogName, databaseNames.size(), databaseNames);
         final List<ListenableFuture<DatabaseDto>> getDatabaseFutures = databaseNames.stream()
             .map(databaseName -> service.submit(() -> {
                 DatabaseDto result = null;
                 try {
-                    result = catalogTraversalServiceHelper.getDatabase(databaseName);
+                    result = catalogTraversalServiceHelper.getDatabase(catalogDto, databaseName);
                 } catch (Exception e) {
                     log.error("Traversal: Failed to retrieve database: {}", databaseName);
                     registry.counter(
@@ -312,7 +309,7 @@ public class CatalogTraversal {
                             log.info("Traversal: Full traversal of database {} for tables({}): {}",
                                 databaseDto.getName(),
                                 databaseDto.getTables().size(), databaseDto.getTables());
-                            return processTables(databaseDto.getName(), tableNames);
+                            return processTables(databaseDto, tableNames);
                         }).filter(NOT_NULL).collect(Collectors.toList());
                     processDatabaseFutures.add(processDatabaseFuture);
                     return Futures.transform(Futures.successfulAsList(processDatabaseFutures),
@@ -377,28 +374,29 @@ public class CatalogTraversal {
     /**
      * Process the list of tables in batches.
      *
-     * @param databaseName database name
+     * @param databaseDto database dto
      * @param tableNames   table names
      * @return A future containing the tasks
      */
-    private ListenableFuture<Void> processTables(final QualifiedName databaseName,
+    private ListenableFuture<Void> processTables(final DatabaseDto databaseDto,
                                                  final List<QualifiedName> tableNames) {
         final List<List<QualifiedName>> tableNamesBatches = Lists.partition(tableNames, 500);
         final List<ListenableFuture<Void>> processTablesBatchFutures = tableNamesBatches.stream().map(
-            subTableNames -> _processTables(databaseName, subTableNames)).collect(Collectors.toList());
+            subTableNames -> _processTables(databaseDto, subTableNames)).collect(Collectors.toList());
 
         return Futures.transform(Futures.successfulAsList(processTablesBatchFutures),
             Functions.constant(null), defaultService);
     }
 
     @SuppressWarnings("checkstyle:methodname")
-    private ListenableFuture<Void> _processTables(final QualifiedName databaseName,
+    private ListenableFuture<Void> _processTables(final DatabaseDto databaseDto,
                                                   final List<QualifiedName> tableNames) {
+        final QualifiedName databaseName = databaseDto.getName();
         final List<ListenableFuture<Optional<TableDto>>> getTableFutures = tableNames.stream()
             .map(tableName -> service.submit(() -> {
                 Optional<TableDto> result = null;
                 try {
-                    result = catalogTraversalServiceHelper.getTable(tableName);
+                    result = catalogTraversalServiceHelper.getTable(databaseDto, tableName);
                 } catch (Exception e) {
                     log.error("Traversal: Failed to retrieve table: {}", tableName);
                     registry.counter(
