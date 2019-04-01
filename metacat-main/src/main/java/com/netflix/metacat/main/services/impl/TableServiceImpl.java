@@ -382,13 +382,18 @@ public class TableServiceImpl implements TableService {
                 .record(duration, TimeUnit.MILLISECONDS);
         }
 
-        final TableDto updatedDto = get(name,
-            GetTableServiceParameters.builder()
-                .disableOnReadMetadataIntercetor(false)
-                .includeInfo(true)
-                .includeDataMetadata(true)
-                .includeDefinitionMetadata(true)
-                .build()).orElse(tableDto);
+        TableDto updatedDto = tableDto;
+        try {
+            updatedDto = get(name,
+                GetTableServiceParameters.builder()
+                    .disableOnReadMetadataIntercetor(false)
+                    .includeInfo(true)
+                    .includeDataMetadata(true)
+                    .includeDefinitionMetadata(true)
+                    .build()).orElse(tableDto);
+        } catch (Exception e) {
+            log.warn("Failed to read updated TableDto", e);
+        }
         eventBus.post(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable,
             updatedDto, updatedDto != tableDto));
         return updatedDto;

@@ -44,6 +44,7 @@ import feign.*
 import feign.jaxrs.JAXRSContract
 import feign.slf4j.Slf4jLogger
 import groovy.sql.Sql
+import org.apache.commons.io.FileUtils
 import org.joda.time.Instant
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -411,9 +412,15 @@ class MetacatSmokeSpec extends Specification {
         def databaseName = 'iceberg_db'
         def tableName = 'iceberg_table'
         def renamedTableName = 'iceberg_table_rename'
+        def icebergManifestFileName = '/metacat-test-cluster/etc-metacat/data/icebergManifest.json'
+        def metadataFileName = '/metacat-test-cluster/etc-metacat/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
+        def curWorkingDir = new File("").getAbsolutePath()
+        def icebergManifestFile = new File(curWorkingDir + icebergManifestFileName)
+        def metadataFile = new File(curWorkingDir + metadataFileName)
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
-        def metadataLocation = String.format('/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json')
+        def metadataLocation = '/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
+        def icebergMetadataLocation = '/tmp/data/icebergManifest.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
         when:
@@ -425,14 +432,14 @@ class MetacatSmokeSpec extends Specification {
         when:
         api.deleteTable(catalogName, databaseName, tableName)
         api.createTable(catalogName, databaseName, tableName, tableDto)
-        def metadataLocation1 = String.format('/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json')
+        def metadataLocation1 = '/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
         def metadata1 = [table_type: 'ICEBERG', metadata_location: metadataLocation1, previous_metadata_location: metadataLocation]
         tableDto.getMetadata().putAll(metadata1)
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:
         noExceptionThrown()
         when:
-        def metadataLocation2 = String.format('/tmp/data/00089-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json')
+        def metadataLocation2 = '/tmp/data/00089-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
         def metadata2 = [table_type: 'ICEBERG', metadata_location: metadataLocation2, previous_metadata_location: metadataLocation1]
         tableDto.getMetadata().putAll(metadata2)
         api.updateTable(catalogName, databaseName, tableName, tableDto)
@@ -456,8 +463,18 @@ class MetacatSmokeSpec extends Specification {
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:
         thrown(MetacatPreconditionFailedException)
+        when:
+        // Failure to get table after a successful update shouldn't fail
+        def updatedInvalidMetadata = [table_type: 'ICEBERG', metadata_location: icebergMetadataLocation, previous_metadata_location: metadataLocation2]
+        tableDto.getMetadata().putAll(updatedInvalidMetadata)
+        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        then:
+        noExceptionThrown()
+        // Actually create the iceberg manifest file so deleteTable succeeds
+        FileUtils.copyFile(metadataFile, icebergManifestFile)
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
+        FileUtils.deleteQuietly(icebergManifestFile)
     }
 
     @Unroll
