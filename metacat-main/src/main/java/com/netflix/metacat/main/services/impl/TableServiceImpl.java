@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.MetacatRequestContext;
@@ -367,32 +368,67 @@ public class TableServiceImpl implements TableService {
         // Check if the table schema info is provided. If provided, we should continue calling the update on the table
         // schema. Uri may exist in the serde when updating data metadata for a table.
         //
+        boolean ignoreErrorsAfterUpdate = false;
         if (isTableInfoProvided(tableDto, oldTable)) {
-            connectorTableServiceProxy.update(name, converterUtil.fromTableDto(tableDto));
+            ignoreErrorsAfterUpdate = connectorTableServiceProxy.update(name, converterUtil.fromTableDto(tableDto));
         }
 
-        // Merge in metadata if the user sent any
-        if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
-            log.info("Saving user metadata for table {}", name);
-            final long start = registry.clock().wallTime();
-            userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
-            final long duration = registry.clock().wallTime() - start;
-            log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
-            registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
-                .record(duration, TimeUnit.MILLISECONDS);
+        try {
+            // Merge in metadata if the user sent any
+            if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
+                log.info("Saving user metadata for table {}", name);
+                final long start = registry.clock().wallTime();
+                userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
+                final long duration = registry.clock().wallTime() - start;
+                log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
+                registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
+                    .record(duration, TimeUnit.MILLISECONDS);
+            }
+        } catch (Exception e) {
+            handleException(name, ignoreErrorsAfterUpdate, "saveMetadata", e);
         }
 
-        final TableDto updatedDto = get(name,
-            GetTableServiceParameters.builder()
-                .disableOnReadMetadataIntercetor(false)
-                .includeInfo(true)
-                .includeDataMetadata(true)
-                .includeDefinitionMetadata(true)
-                .build()).orElse(tableDto);
-        eventBus.post(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable,
-            updatedDto, updatedDto != tableDto));
+        TableDto updatedDto = tableDto;
+        try {
+            updatedDto = get(name,
+                GetTableServiceParameters.builder()
+                    .disableOnReadMetadataIntercetor(false)
+                    .includeInfo(true)
+                    .includeDataMetadata(true)
+                    .includeDefinitionMetadata(true)
+                    .build()).orElse(tableDto);
+        } catch (Exception e) {
+            handleException(name, ignoreErrorsAfterUpdate, "getTable", e);
+        }
+
+        try {
+            eventBus.post(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable,
+                updatedDto, updatedDto != tableDto));
+        } catch (Exception e) {
+            handleException(name, ignoreErrorsAfterUpdate, "postEvent", e);
+        }
         return updatedDto;
     }
+
+    /**
+     * Throws exception if the provided <code>ignoreErrorsAfterUpdate</code> is false. If true, it will swallow the
+     * exception and log it.
+     *
+     */
+    private void handleException(final QualifiedName name,
+                                 final boolean ignoreErrorsAfterUpdate,
+                                 final String request,
+                                 final Exception ex) {
+        if (ignoreErrorsAfterUpdate) {
+            log.warn("Failed {} for table {}", request, name);
+            registry.counter(registry.createId(
+                Metrics.CounterTableUpdateIgnoredException.getMetricName()).withTags(name.parts())
+                .withTag("request", request)).increment();
+        } else {
+            throw Throwables.propagate(ex);
+        }
+    }
+
 
     @VisibleForTesting
     private boolean isTableInfoProvided(final TableDto tableDto, final TableDto oldTableDto) {

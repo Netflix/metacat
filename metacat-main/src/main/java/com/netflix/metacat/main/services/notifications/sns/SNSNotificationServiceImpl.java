@@ -18,8 +18,6 @@
 package com.netflix.metacat.main.services.notifications.sns;
 
 import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.model.InvalidParameterException;
-import com.amazonaws.services.sns.model.InvalidParameterValueException;
 import com.amazonaws.services.sns.model.PublishResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatch;
@@ -389,8 +387,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
         PublishResult result = null;
         try {
             result = this.client.publish(arn, this.mapper.writeValueAsString(message));
-        } catch (InvalidParameterException | InvalidParameterValueException exception) {
-            log.error("SNS Publish message exceeded the size threshold", exception);
+        } catch (Exception exception) {
+            log.error("SNS Publish message failed.", exception);
             notificationMetric.counterIncrement(
                 Metrics.CounterSNSNotificationPublishMessageSizeExceeded.getMetricName());
             final SNSMessage<Void> voidMessage = new SNSMessage<>(message.getId(),

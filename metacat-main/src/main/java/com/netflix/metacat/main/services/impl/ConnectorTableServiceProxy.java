@@ -135,20 +135,24 @@ public class ConnectorTableServiceProxy {
      * Calls the connector table service update method.
      * @param name table name
      * @param tableInfo table object
+     * @return true if errors after this should be ignored.
      */
     @CacheEvict(key = "'table.' + #name")
-    public void update(final QualifiedName name, final TableInfo tableInfo) {
+    public boolean update(final QualifiedName name, final TableInfo tableInfo) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name);
+        boolean result = false;
         try {
             log.info("Updating table {}", name);
             final ConnectorRequestContext connectorRequestContext
                 = converterUtil.toConnectorContext(metacatRequestContext);
             service.update(connectorRequestContext, tableInfo);
+            result = connectorRequestContext.isIgnoreErrorsAfterUpdate();
         } catch (UnsupportedOperationException ignored) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata.
             log.debug("Catalog {} does not support the table update operation.", name.getCatalogName());
         }
+        return result;
     }
 
     /**

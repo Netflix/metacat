@@ -36,7 +36,6 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.metacat.main.manager.ConnectorManager
 import com.netflix.metacat.main.services.DatabaseService
 import com.netflix.metacat.main.services.GetTableServiceParameters
-import com.netflix.metacat.main.services.TableService
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.spectator.api.NoopRegistry
 import spock.lang.Specification
@@ -69,7 +68,7 @@ class TableServiceImplSpec extends Specification {
         config.isAuthorizationEnabled() >> true
         connectorManager.getTableService(_) >> connectorTableService
         converterUtil.toTableDto(_) >> tableDto
-        converterUtil.toConnectorContext(_) >> Mock(ConnectorRequestContext)
+        converterUtil.toConnectorContext(_) >> new ConnectorRequestContext()
         usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
         usermetadataService.getDataMetadata(_) >> Optional.empty()
         usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
@@ -221,6 +220,21 @@ class TableServiceImplSpec extends Specification {
             MetacatUpdateTablePostEvent e ->
                 !e.latestCurrentTable && e.currentTable == updatedTableDto
         })
+        result == updatedTableDto
+        noExceptionThrown()
+
+        when:
+        result = service.updateAndReturn(name, updatedTableDto)
+
+        then:
+        1 * converterUtil.toTableDto(_) >> this.tableDto
+        1 * converterUtil.toTableDto(_) >> { throw new FileNotFoundException("test") }
+        1 * eventBus.post(_ as MetacatUpdateTablePreEvent)
+        1 * eventBus.post({
+            MetacatUpdateTablePostEvent e ->
+                !e.latestCurrentTable && e.currentTable == updatedTableDto
+        })
+        1 * connectorTableService.update(_,_) >> {args -> ((ConnectorRequestContext) args[0]).setIgnoreErrorsAfterUpdate(true)}
         result == updatedTableDto
         noExceptionThrown()
     }
