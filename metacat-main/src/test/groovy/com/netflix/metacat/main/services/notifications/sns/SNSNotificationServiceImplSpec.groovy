@@ -241,7 +241,7 @@ class SNSNotificationServiceImplSpec extends Specification {
         noExceptionThrown()
     }
 
-    def "Won't retry on Other Exception"() {
+    def "Won't retry on Error"() {
         def event = new MetacatCreateTablePostEvent(
             this.qName,
             this.requestContext,
@@ -254,8 +254,8 @@ class SNSNotificationServiceImplSpec extends Specification {
 
         then:
         1 * this.mapper.writeValueAsString(_ as CreateTableMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> { throw new NotFoundException("Exception") }
+        1 * this.client.publish(this.tableArn, _ as String) >> { throw new Error("Exception") }
         1 * this.timer.record(_ as Long, _ as TimeUnit)
-        thrown(NotFoundException)
+        thrown(Error)
     }
 }

@@ -122,6 +122,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     @Override
     public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         if (HiveTableUtil.isIcebergTable(tableInfo)) {
+            requestContext.setIgnoreErrorsAfterUpdate(true);
             try {
                 directSqlTable.updateIcebergTable(tableInfo);
             } catch (IllegalStateException e) {
