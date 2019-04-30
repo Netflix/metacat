@@ -90,6 +90,7 @@ public final class DruidConverterUtil {
             Instant.parse(intervalStr[1]));
         final JsonNode loadspecNode = node.get(DruidConfigConstants.LOADSPEC);
         final JsonNode loadspecNodeBucket = loadspecNode.get(DruidConfigConstants.LOADSPEC_BUCKET);
+        // Checking for Null before accessing the node as bucket and key could be null in load spec
         final String bucket = loadspecNodeBucket != null
             ? loadspecNode.get(DruidConfigConstants.LOADSPEC_BUCKET).asText() : "";
         final JsonNode loadspecNodeKey = loadspecNode.get(DruidConfigConstants.LOADSPEC_KEY);
