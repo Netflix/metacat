@@ -57,10 +57,12 @@ public final class QualifiedName implements Serializable {
         @Nullable final String viewName
     ) {
         this.catalogName = standardizeRequired("catalogName", catalogName);
-        this.databaseName = standardizeOptional(databaseName, true);
-        this.tableName = standardizeOptional(tableName, true);
+        // Database and table names are case sensitive in MySQL. Hence its best to leave them
+        // without standardize them
+        this.databaseName = standardizeOptional(databaseName, false);
+        this.tableName = standardizeOptional(tableName, false);
         this.partitionName = standardizeOptional(partitionName, false);
-        this.viewName = standardizeOptional(viewName, true);
+        this.viewName = standardizeOptional(viewName, false);
 
         if (this.databaseName.isEmpty() && (!this.tableName.isEmpty() || !this.partitionName.isEmpty())) {
             throw new IllegalStateException("databaseName is not present but tableName or partitionName are present");
