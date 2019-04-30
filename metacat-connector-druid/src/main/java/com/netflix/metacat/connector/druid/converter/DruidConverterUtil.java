@@ -19,6 +19,7 @@ package com.netflix.metacat.connector.druid.converter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.connector.druid.DruidConfigConstants;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -88,11 +89,16 @@ public final class DruidConverterUtil {
         final Interval interval = new Interval(Instant.parse(intervalStr[0]),
             Instant.parse(intervalStr[1]));
         final JsonNode loadspecNode = node.get(DruidConfigConstants.LOADSPEC);
-        final String bucket = loadspecNode.get(DruidConfigConstants.LOADSPEC_BUCKET).asText();
-        final List<String> keys =
-            Arrays.asList(loadspecNode.get(DruidConfigConstants.LOADSPEC_KEY).asText().split(","));
+        final JsonNode loadspecNodeBucket = loadspecNode.get(DruidConfigConstants.LOADSPEC_BUCKET);
+        final String bucket = loadspecNodeBucket != null
+            ? loadspecNode.get(DruidConfigConstants.LOADSPEC_BUCKET).asText() : "";
+        final JsonNode loadspecNodeKey = loadspecNode.get(DruidConfigConstants.LOADSPEC_KEY);
+        final List<String> keys = loadspecNodeKey != null
+            ? Arrays.asList(loadspecNode.get(DruidConfigConstants.LOADSPEC_KEY).asText().split(","))
+            : new ArrayList<>();
         final LoadSpec loadSpec = new LoadSpec(loadspecNode.get(DruidConfigConstants.LOADSPEC_TYPE).asText(),
-            bucket, keys, getUriFromKey(bucket, keys.get(0))
+            bucket, keys, StringUtils.isEmpty(bucket) || keys.size() == 0
+            ? "" : getUriFromKey(bucket, keys.get(0))
         );
         final String dimensions = node.get(DruidConfigConstants.DIMENSIONS).asText();
         final String metric = node.get(DruidConfigConstants.METRICS).asText();
