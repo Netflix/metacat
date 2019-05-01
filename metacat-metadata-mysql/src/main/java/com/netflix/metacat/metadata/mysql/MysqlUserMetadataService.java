@@ -826,6 +826,9 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             if (type != null) {
                 String typeRegex = null;
                 switch (type) {
+                    case "catalog":
+                        typeRegex = "^[^/]*$";
+                        break;
                     case "database":
                         typeRegex = "^[^/]*/[^/]*$";
                         break;
