@@ -24,24 +24,22 @@ ext {
     logger.info("metacat-functional-tests: stop cluster = '${stopCluster}'")
 }
 
+apply plugin: 'nebula.facet'
+
+facets {
+    functionalTest {
+        parentSourceSet = "test"
+        testTaskName = 'functionalTest'
+        includeInCheckLifecycle = false
+    }
+}
+
 configurations {
     warproject
-    functionalTestCompile.extendsFrom testCompile
-    functionalTestRuntime.extendsFrom testRuntime
-
+    
     all*.exclude group: 'javax.ws.rs', module: 'javax.ws.rs-api'
 }
 
-sourceSets {
-    functionalTest {
-        compileClasspath += main.output + test.output
-        runtimeClasspath += main.output + test.output
-
-        java.srcDir file('src/functionalTest/java')
-        groovy.srcDir file('src/functionalTest/groovy')
-        resources.srcDir file('src/functionalTest/resources')
-    }
-}
 
 dependencies {
     warproject(project(path: ':metacat-war', configuration: 'archives'))
@@ -63,18 +61,13 @@ dependencies {
      *******************************/
 
     // Test that metacat-client can be used with jersey 1
-    testCompile(project(":metacat-client")) {
-        exclude group: "javax.ws.rs", module: "javax.ws.rs-api"
-        exclude group: "org.glassfish.jersey.core"
-    }
     testCompile(project(":metacat-common-server"))
     testCompile(project(":metacat-connector-hive"))
     testCompile(project(":metacat-testdata-provider"))
 
-    testCompile("com.sun.jersey:jersey-client")
-    testCompile("javax.ws.rs:jsr311-api")
-    testCompile("org.apache.hadoop:hadoop-core")
-    testCompile("org.apache.hive:hive-exec:${hive_version}") {
+    functionalTestCompile(project(":metacat-client"))
+    functionalTestCompile("org.apache.hadoop:hadoop-core")
+    functionalTestCompile("org.apache.hive:hive-exec:${hive_version}") {
         exclude module: "pentaho-aggdesigner-algorithm"
     }
 
@@ -145,9 +138,7 @@ task metacatPorts {
     }
 }
 
-task functionalTest(type: Test) {
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath = sourceSets.functionalTest.runtimeClasspath
+functionalTest {
     outputs.upToDateWhen { false }
 
     doFirst {
@@ -176,4 +167,8 @@ task functionalTest(type: Test) {
 clean {
     delete "derby.log"
     delete "metastore_db"
+}
+
+findbugs {
+    sourceSets = []
 }

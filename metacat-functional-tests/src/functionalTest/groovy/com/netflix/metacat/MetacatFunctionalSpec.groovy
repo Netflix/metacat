@@ -16,7 +16,6 @@
  */
 package com.netflix.metacat
 
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.base.Throwables
 import com.netflix.metacat.client.Client
 import com.netflix.metacat.client.api.MetacatV1
@@ -31,8 +30,6 @@ import com.netflix.metacat.common.exception.MetacatNotFoundException
 import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
-import feign.RetryableException
-import feign.Retryer
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.joda.time.Instant
 import org.skyscreamer.jsonassert.JSONAssert
@@ -60,7 +57,6 @@ class MetacatFunctionalSpec extends Specification {
             .withDataTypeContext('pig')
             .withUserName('metacat-test')
             .withClientAppName('metacat-test')
-            .withRetryer(Retryer.NEVER_RETRY)
             .build()
         api = client.api
         partitionApi = client.partitionApi
@@ -167,7 +163,7 @@ class MetacatFunctionalSpec extends Specification {
     }
     def "create test_db"() {
         given:
-        ObjectNode metadata = metacatJson.parseJsonObject('{"objectField": {}}')
+        def metadata = metacatJson.parseJsonObject('{"objectField": {}}')
         def dto = DatabaseCreateRequestDto.builder().definitionMetadata(metadata).build()
         String databaseName = "test_db_${catalog.name.replace('-', '_')}".toString()
         when:
@@ -214,7 +210,7 @@ class MetacatFunctionalSpec extends Specification {
 
     def 'createDatabase: can create a database in #catalog.name without metadata'() {
         given:
-        ObjectNode metadata = null
+        def metadata = null
         def dto = DatabaseCreateRequestDto.builder().definitionMetadata(metadata).build()
         String databaseName = "db_no_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
 
@@ -257,7 +253,7 @@ class MetacatFunctionalSpec extends Specification {
 
     def 'createDatabase: can create a database in #catalog.name with metadata'() {
         given:
-        ObjectNode metadata = metacatJson.parseJsonObject('{"objectField": {}}')
+        def metadata = metacatJson.parseJsonObject('{"objectField": {}}')
         def dto = DatabaseCreateRequestDto.builder().definitionMetadata(metadata).build()
         String databaseName = "db_metadata_${catalog.name.replace('-', '_')}_$BATCH_ID".toString()
 
@@ -456,8 +452,8 @@ class MetacatFunctionalSpec extends Specification {
         def databaseName = "test_db_${catalog.name.replace('-', '_')}".toString()
 
         def dataUri = "file:/tmp/${catalog.name}/${databaseName}/${tableName}".toString()
-        ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
-        ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
+        def definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
+        def dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
         def dto = new TableDto(
             name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
             audit: new AuditDto(
@@ -585,8 +581,8 @@ class MetacatFunctionalSpec extends Specification {
         def now = new Date()
         def databaseName = "test_db_${catalog.name.replace('-', '_')}".toString()
         def dataUri = "file:/tmp/${catalog.name}/${databaseName}/${tableName}".toString()
-        ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
-        ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
+        def definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
+        def dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
         def dto = new TableDto(
             name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
             audit: new AuditDto(
@@ -1176,8 +1172,8 @@ class MetacatFunctionalSpec extends Specification {
         //create the audit table
         def auditableName =  databaseName+"__" + tableName + "__audit_12345"
         def dataUri = "file:/tmp/${catalogName}/${databaseName}/${tableName}".toString()
-        ObjectNode definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
-        ObjectNode dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
+        def definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
+        def dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
         def dto = new TableDto(
             name: QualifiedName.ofTable(catalogName, databaseName, tableName),
             audit: new AuditDto(
@@ -1636,7 +1632,7 @@ class MetacatFunctionalSpec extends Specification {
         api.deleteDatabase(name.catalogName, name.databaseName)
 
         then:
-        def exception = thrown(RetryableException)
+        def exception = thrown(Exception)
         exception.message.contains('is not empty')
 
         when:
@@ -1717,25 +1713,5 @@ class MetacatFunctionalSpec extends Specification {
 
         where:
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getCanDeleteDatabase(TestCatalogs.ALL))
-    }
-
-    def "renameTable: Test rename table for #name"() {
-        given:
-        def catalogName = name.catalogName
-        def databaseName = name.databaseName
-        def tableName = name.tableName
-        def newTableName = tableName + "new"
-        when:
-        api.renameTable(catalogName, databaseName, tableName, newTableName)
-        then:
-        api.getTable(catalogName, databaseName, newTableName, true, false, false).getName().getTableName() == newTableName
-//  TODO: the rename back has transient failures ( the old table not being found ), this might relate to postgresql
-//        cleanup:
-//        try {
-//            api.renameTable(catalogName, databaseName, newTableName, tableName)
-//        }catch(Exception e) {}
-
-        where:
-        name << TestCatalogs.getAllTables([TestCatalogs.findByCatalogName("postgresql-96-db")])
     }
 }

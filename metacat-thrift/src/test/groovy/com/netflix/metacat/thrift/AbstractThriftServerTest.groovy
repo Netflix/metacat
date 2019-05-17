@@ -108,9 +108,9 @@ class AbstractThriftServerTest extends Specification {
 
         when:
         def clientConnections = new AtomicInteger(0)
-        def threads = (0..<100).collect {
+        def threads = (0..<10).collect {
             return new Thread({
-                Thread.sleep(new Random().nextInt(500))
+                Thread.sleep(new Random().nextInt(50))
                 def socket = new Socket('localhost', port)
                 socket.withStreams { input, output ->
                     int count = clientConnections.incrementAndGet()
@@ -127,7 +127,7 @@ class AbstractThriftServerTest extends Specification {
 
         then:
         notThrown(Throwable)
-        clientConnections.get() > 50
+        clientConnections.get() > 5
 
         when:
         server.stop()
@@ -139,7 +139,7 @@ class AbstractThriftServerTest extends Specification {
     def 'throwing an exception of type #exceptionTypeClass does not stop the server from serving'() {
         given:
         int port = randomPort
-        config.thriftServerMaxWorkerThreads >> 50
+        config.thriftServerMaxWorkerThreads >> 5
         config.thriftServerSocketClientTimeoutInSeconds >> 1
         Class exceptionType = exceptionTypeClass
         def server = new TestThriftServer(config, port, { TProtocol tProtocol, TProtocol out ->
@@ -155,9 +155,9 @@ class AbstractThriftServerTest extends Specification {
 
         when:
         def clientConnections = new AtomicInteger(0)
-        def threads = (0..<100).collect {
+        def threads = (0..<10).collect {
             return new Thread({
-                Thread.sleep(new Random().nextInt(500))
+                Thread.sleep(new Random().nextInt(50))
                 def socket = new Socket('localhost', port)
                 socket.withStreams { input, output ->
                     int count = clientConnections.incrementAndGet()
@@ -174,7 +174,7 @@ class AbstractThriftServerTest extends Specification {
 
         then:
         notThrown(Throwable)
-        clientConnections.get() == 100
+        clientConnections.get() == 10
 
         when:
         server.stop()
