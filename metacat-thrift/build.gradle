@@ -49,3 +49,8 @@ dependencies {
     testCompile("de.danielbechler:java-object-diff")
 }
 
+// TODO: Remove this once we optimize this task. It running out of memory at times.
+findbugs {
+    sourceSets = []
+}
+

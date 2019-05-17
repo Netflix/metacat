@@ -17,13 +17,11 @@
 
 package com.netflix.metacat
 
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.ObjectMapper
-import feign.codec.EncodeException
+import com.netflix.metacat.common.json.MetacatJsonLocator
 
 
 class TestUtilities {
-    final static ObjectMapper mapper = new ObjectMapper();
+    final static MetacatJsonLocator metacatJson = new MetacatJsonLocator()
 
     public static boolean dateCloseEnough(Date a, Date b, int acceptableDifferenceInSeconds) {
         def diff = Math.abs(a.time - b.time)
@@ -42,11 +40,11 @@ class TestUtilities {
     }
 
     public static String toJsonString(final Object object)
-            throws EncodeException {
+            throws Exception {
         try {
-            mapper.writeValueAsString(object)
-        } catch (JsonProcessingException e) {
-            throw new EncodeException(e.getMessage(), e);
+            metacatJson.toJsonString(object)
+        } catch (Exception e) {
+            throw new Exception(e.getMessage(), e);
         }
     }
 }

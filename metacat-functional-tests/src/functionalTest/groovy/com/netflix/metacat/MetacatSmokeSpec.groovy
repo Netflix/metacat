@@ -15,18 +15,11 @@
  */
 package com.netflix.metacat
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.datatype.guava.GuavaModule
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule
+import com.netflix.metacat.client.Client
 import com.netflix.metacat.client.api.MetacatV1
 import com.netflix.metacat.client.api.MetadataV1
 import com.netflix.metacat.client.api.PartitionV1
 import com.netflix.metacat.client.api.TagV1
-import com.netflix.metacat.client.module.JacksonDecoder
-import com.netflix.metacat.client.module.JacksonEncoder
-import com.netflix.metacat.client.module.MetacatErrorDecoder
-import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
@@ -40,9 +33,6 @@ import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
 import com.netflix.metacat.connector.hive.util.PartitionUtil
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
-import feign.*
-import feign.jaxrs.JAXRSContract
-import feign.slf4j.Slf4jLogger
 import groovy.sql.Sql
 import org.apache.commons.io.FileUtils
 import org.joda.time.Instant
@@ -50,8 +40,6 @@ import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
-
-import java.util.concurrent.TimeUnit
 
 /**
  * MetacatSmokeSpec.
@@ -71,74 +59,22 @@ class MetacatSmokeSpec extends Specification {
         String url = "http://localhost:${System.properties['metacat_http_port']}"
         assert url, 'Required system property "metacat_url" is not set'
 
-        ObjectMapper mapper = metacatJson.getPrettyObjectMapper().copy()
-            .registerModule(new GuavaModule())
-            .registerModule(new JaxbAnnotationModule())
-        RequestInterceptor interceptor = new RequestInterceptor() {
-            @Override
-            void apply(RequestTemplate template) {
-                template.header(MetacatRequestContext.HEADER_KEY_USER_NAME, "metacat-test")
-                template.header(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME, "metacat-test")
-            }
-        }
-        RequestInterceptor hiveContextInterceptor = new RequestInterceptor() {
-            @Override
-            void apply(RequestTemplate template) {
-                template.header(MetacatRequestContext.HEADER_KEY_USER_NAME, "metacat-test")
-                template.header(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME, "metacat-test")
-                template.header(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT, "hive")
-            }
-        }
-        hiveContextApi = Feign.builder()
-            .logger(new Slf4jLogger())
-            .contract(new JAXRSContract())
-            .encoder(new JacksonEncoder(mapper))
-            .decoder(new JacksonDecoder(mapper))
-            .errorDecoder(new MetacatErrorDecoder(metacatJson))
-            .requestInterceptor(hiveContextInterceptor)
-            .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
-            .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-            .target(MetacatV1.class, url)
-        api = Feign.builder()
-            .logger(new Slf4jLogger())
-            .contract(new JAXRSContract())
-            .encoder(new JacksonEncoder(mapper))
-            .decoder(new JacksonDecoder(mapper))
-            .errorDecoder(new MetacatErrorDecoder(metacatJson))
-            .requestInterceptor(interceptor)
-            .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
-            .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-            .target(MetacatV1.class, url)
-        partitionApi = Feign.builder()
-            .logger(new Slf4jLogger())
-            .contract(new JAXRSContract())
-            .encoder(new JacksonEncoder(mapper))
-            .decoder(new JacksonDecoder(mapper))
-            .errorDecoder(new MetacatErrorDecoder(metacatJson))
-            .requestInterceptor(interceptor)
-            .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
-            .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-            .target(PartitionV1.class, url)
-        tagApi = Feign.builder()
-            .logger(new Slf4jLogger())
-            .contract(new JAXRSContract())
-            .encoder(new JacksonEncoder(mapper))
-            .decoder(new JacksonDecoder(mapper))
-            .errorDecoder(new MetacatErrorDecoder(metacatJson))
-            .requestInterceptor(interceptor)
-            .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
-            .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-            .target(TagV1.class, url)
-        metadataApi = Feign.builder()
-            .logger(new Slf4jLogger())
-            .contract(new JAXRSContract())
-            .encoder(new JacksonEncoder(mapper))
-            .decoder(new JacksonDecoder(mapper))
-            .errorDecoder(new MetacatErrorDecoder(metacatJson))
-            .requestInterceptor(interceptor)
-            .retryer(new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0))
-            .options(new Request.Options((int) TimeUnit.MINUTES.toMillis(10), (int) TimeUnit.MINUTES.toMillis(30)))
-            .target(MetadataV1.class, url)
+        def client = Client.builder()
+            .withHost(url)
+            .withUserName('metacat-test')
+            .withClientAppName('metacat-test')
+            .build()
+        def hiveClient = Client.builder()
+            .withHost(url)
+            .withDataTypeContext('hive')
+            .withUserName('metacat-test')
+            .withClientAppName('metacat-test')
+            .build()
+        hiveContextApi = hiveClient.api
+        api = client.api
+        partitionApi = client.partitionApi
+        tagApi = client.tagApi
+        metadataApi = client.metadataApi
     }
 
     @Shared
@@ -208,7 +144,7 @@ class MetacatSmokeSpec extends Specification {
     @Unroll
     def "Test create database for #catalogName/#databaseName"() {
         given:
-        def definitionMetadata = (ObjectNode) metacatJson.emptyObjectNode().set("owner", metacatJson.emptyObjectNode())
+        def definitionMetadata = metacatJson.emptyObjectNode().set("owner", metacatJson.emptyObjectNode())
         expect:
         try {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto(definitionMetadata: definitionMetadata))
@@ -239,7 +175,7 @@ class MetacatSmokeSpec extends Specification {
     def "Test update database for #catalogName/#databaseName"() {
         given:
         def metadata = ['a':'1']
-        def definitionMetadata = (ObjectNode) metacatJson.emptyObjectNode().set("owner", metacatJson.emptyObjectNode())
+        def definitionMetadata = metacatJson.emptyObjectNode().set("owner", metacatJson.emptyObjectNode())
         api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto(definitionMetadata: definitionMetadata))
         api.updateDatabase(catalogName, databaseName, new DatabaseCreateRequestDto(metadata: metadata))
         def database = api.getDatabase(catalogName, databaseName, true, true)
@@ -671,7 +607,6 @@ class MetacatSmokeSpec extends Specification {
         'embedded-hive-metastore'       | 'smoke_db2'  | 'part'
         'embedded-fast-hive-metastore'  | 'fsmoke_db2' | 'part'
         'embedded-fast-hive-metastore'  | 'shard'      | 'part'
-        'embedded-fast-hive-metastore'  | 'shard1'     | 'part'
         'hive-metastore'                | 'hsmoke_db2' | 'part'
         's3-mysql-db'                   | 'smoke_db2'  | 'part'
         's3-mysql-db'                   | 'smoke_db2'  | 'PART'
@@ -943,7 +878,7 @@ class MetacatSmokeSpec extends Specification {
                 if (alter) {
                     request.setAlterIfExists(true)
                 }
-                request.setDefinitionMetadata((ObjectNode) metacatJson.emptyObjectNode().set('savePartitions', metacatJson.emptyObjectNode()))
+                request.setDefinitionMetadata(metacatJson.emptyObjectNode().set('savePartitions', metacatJson.emptyObjectNode()))
                 partitionApi.savePartitions(catalogName, databaseName, tableName, request)
                 def savedPartitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionName.replace('=', '="') + '"', null, null, null, null, false)
                 createDate = savedPartitions.get(0).getAudit().createdDate
