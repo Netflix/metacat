@@ -25,6 +25,8 @@ CREATE USER 'metacat_user' IDENTIFIED BY 'vz';
 GRANT ALL PRIVILEGES ON * . * TO 'metacat_user';
 FLUSH PRIVILEGES;
 
+
+./gradlew build -x test
 java -Dmetacat.plugin.config.location=./local/catalog/ -Dmetacat.usermetadata.config.location=./local/usermetadata.properties -jar  metacat-app/build/libs/metacat-app-1.3.0-SNAPSHOT.jar
 
 
@@ -33,3 +35,4 @@ http://localhost:8080/swagger-ui.html
 http://localhost:8080/mds/v1/catalog
 ```
 
+We broke the ES tests in the ES upgrade process, yet to fix it.
