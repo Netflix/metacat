@@ -43,8 +43,10 @@ public class ClusterInfo implements Serializable {
     private String name;
     /** Type of the cluster. */
     private String type;
-    /** Account under which the cluster exists. Ex: "abc_test" */
+    /** Name of the account under which the cluster was created. Ex: "abc_test" */
     private String account;
+    /** Id of Account under which the cluster was created. Ex: "abc_test" */
+    private String accountId;
     /** Environment under which the cluster exists. Ex: "prod", "test" */
     private String env;
     /** Region in which the cluster exists. Ex: "us-east-1" */
