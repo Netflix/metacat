@@ -87,9 +87,11 @@ public final class MetacatCatalogConfig {
         // Cluster information
         final String clusterName = properties.get(Keys.CLUSTER_NAME);
         final String clusterAccount = properties.get(Keys.CLUSTER_ACCOUNT);
+        final String clusterAccountId = properties.get(Keys.CLUSTER_ACCOUNT_ID);
         final String clusterEnv = properties.get(Keys.CLUSTER_ENV);
         final String clusterRegion = properties.get(Keys.CLUSTER_REGION);
-        final ClusterInfo clusterInfo = new ClusterInfo(clusterName, type, clusterAccount, clusterEnv, clusterRegion);
+        final ClusterInfo clusterInfo =
+            new ClusterInfo(clusterName, type, clusterAccount, clusterAccountId, clusterEnv, clusterRegion);
 
         return new MetacatCatalogConfig(catalogType, catalogName, clusterInfo, includeViewsWithTables, schemaWhitelist,
             schemaBlacklist, thriftPort);
@@ -158,6 +160,10 @@ public final class MetacatCatalogConfig {
          *  Cluster account.
          */
         public static final String CLUSTER_ACCOUNT = "metacat.cluster.account";
+        /**
+         *  Cluster account id.
+         */
+        public static final String CLUSTER_ACCOUNT_ID = "metacat.cluster.account-id";
         /**
          *  Cluster region.
          */

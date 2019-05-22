@@ -31,13 +31,16 @@ public class ClusterDto implements Serializable {
     /** Type of the cluster. */
     @ApiModelProperty(value = "the type of the cluster", required = true)
     private String type;
-    /** Account under which the cluster exists. Ex: "abc_test" */
-    @ApiModelProperty(value = "the account type for this catalog", required = false)
+    /** Name of the account under which the cluster was created. Ex: "abc_test" */
+    @ApiModelProperty(value = "Name of the account under which the cluster was created.", required = false)
     private String account;
+    /** Id of the Account under which the cluster was created. Ex: "abc_test" */
+    @ApiModelProperty(value = "Id of the Account under which the cluster was created", required = false)
+    private String accountId;
     /** Environment under which the cluster exists. Ex: "prod", "test" */
-    @ApiModelProperty(value = "the environment of this catalog", required = false)
+    @ApiModelProperty(value = "the environment in which the cluster exists", required = false)
     private String env;
     /** Region in which the cluster exists. Ex: "us-east-1" */
-    @ApiModelProperty(value = "the region of this catalog", required = false)
+    @ApiModelProperty(value = "the region of this cluster", required = false)
     private String region;
 }
