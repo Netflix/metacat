@@ -35,6 +35,8 @@ metacat:
       location: /etc/catalog
   swagger:
     enabled: true
+  elasticsearch:
+    enabled: true
 
 netflix:
   appinfo:

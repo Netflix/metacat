@@ -64,14 +64,14 @@ dependencies {
      * Runtime Dependencies
      *******************************/
 
-    runtime(project(":metacat-connector-cassandra"))
-    runtime(project(":metacat-connector-hive"))
-    runtime(project(":metacat-connector-mysql"))
-    runtime(project(":metacat-connector-postgresql"))
-    runtime(project(":metacat-connector-redshift"))
-    runtime(project(":metacat-connector-snowflake"))
-    runtime(project(":metacat-connector-s3"))
-    runtime(project(":metacat-connector-druid"))
+    // runtime(project(":metacat-connector-cassandra"))
+    // runtime(project(":metacat-connector-hive"))
+     runtime(project(":metacat-connector-mysql"))
+    // runtime(project(":metacat-connector-postgresql"))
+    // runtime(project(":metacat-connector-redshift"))
+    // runtime(project(":metacat-connector-snowflake"))
+    // runtime(project(":metacat-connector-s3"))
+    // runtime(project(":metacat-connector-druid"))
 
     runtime("io.springfox:springfox-swagger-ui")
     runtime("org.webjars:hal-browser")

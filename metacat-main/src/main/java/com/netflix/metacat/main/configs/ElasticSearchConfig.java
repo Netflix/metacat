@@ -17,7 +17,6 @@
  */
 package com.netflix.metacat.main.configs;
 
-import com.google.common.base.Splitter;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.properties.Config;
@@ -38,18 +37,18 @@ import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.elasticsearch.common.transport.TransportAddress;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
- * Configuration for ElasticSearch which triggers when metacat.elasticsearch.enabled is true.
+ * Configuration for ElasticSearch which triggers when
+ * metacat.elasticsearch.enabled is true.
  *
  * @author tgianos
  * @author zhenl
@@ -68,57 +67,35 @@ public class ElasticSearchConfig {
     @Bean
     @ConditionalOnMissingBean(Client.class)
     public Client elasticSearchClient(final Config config) {
-        final String clusterName = config.getElasticSearchClusterName();
-        if (StringUtils.isBlank(clusterName)) {
-            throw new IllegalStateException("No cluster name set. Unable to continue");
-        }
-        final Settings settings = Settings.builder()
-            .put("cluster.name", clusterName)
-            .put("client.transport.sniff", true) //to dynamically add new hosts and remove old ones
-            .put("transport.tcp.connect_timeout", "60s")
-            .build();
-        final TransportClient client = new PreBuiltTransportClient(settings);
-        // Add the transport address if exists
-        final String clusterNodesStr = config.getElasticSearchClusterNodes();
-        if (StringUtils.isNotBlank(clusterNodesStr)) {
-            final int port = config.getElasticSearchClusterPort();
-            final Iterable<String> clusterNodes = Splitter.on(',').split(clusterNodesStr);
-            clusterNodes.
-                forEach(
-                    clusterNode -> {
-                        try {
-                            client.addTransportAddress(
-                                new InetSocketTransportAddress(InetAddress.getByName(clusterNode), port)
-                            );
-                        } catch (UnknownHostException exception) {
-                            log.error("Skipping unknown host {}", clusterNode);
-                        }
-                    }
-                );
-        }
+        try {
+            String clusterName = config.getElasticSearchClusterName();
+            if (StringUtils.isBlank(clusterName)) {
+                clusterName = "elasticsearch";
+            }
+            final Settings settings = Settings.builder().put("cluster.name", clusterName)
+                .put("client.transport.sniff", false) // to dynamically add new hosts and remove old ones
+                .put("transport.tcp.connect_timeout", "60s").put("client.transport.ignore_cluster_name", true).build();
 
-        if (client.transportAddresses().isEmpty()) {
-            throw new IllegalStateException("No Elasticsearch cluster nodes added. Unable to create client.");
+            final TransportClient client = new PreBuiltTransportClient(settings)
+                .addTransportAddress(new TransportAddress(InetAddress.getByName("localhost"), 9200));
+            return client;
+        } catch (Exception exc) {
+            throw new RuntimeException(exc);
         }
-        return client;
     }
 
     /**
      * ElasticSearch utility wrapper.
      *
-     * @param client              The configured ElasticSearch client
-     * @param config              System config
-     * @param metacatJson         JSON utilities
-     * @param registry            spectator registry
+     * @param client      The configured ElasticSearch client
+     * @param config      System config
+     * @param metacatJson JSON utilities
+     * @param registry    spectator registry
      * @return The ElasticSearch utility instance
      */
     @Bean
-    public ElasticSearchUtil elasticSearchUtil(
-        final Client client,
-        final Config config,
-        final MetacatJson metacatJson,
-        final Registry registry
-    ) {
+    public ElasticSearchUtil elasticSearchUtil(final Client client, final Config config, final MetacatJson metacatJson,
+            final Registry registry) {
         return new ElasticSearchUtilImpl(client, config, metacatJson, registry);
     }
 
@@ -131,11 +108,8 @@ public class ElasticSearchConfig {
      * @return The event handler instance
      */
     @Bean
-    public ElasticSearchEventHandlers elasticSearchEventHandlers(
-        final ElasticSearchUtil elasticSearchUtil,
-        final Registry registry,
-        final Config config
-    ) {
+    public ElasticSearchEventHandlers elasticSearchEventHandlers(final ElasticSearchUtil elasticSearchUtil,
+            final Registry registry, final Config config) {
         return new ElasticSearchEventHandlers(elasticSearchUtil, registry, config);
     }
 
@@ -148,37 +122,19 @@ public class ElasticSearchConfig {
      * @param databaseService     Database service
      * @param tableService        Table service
      * @param partitionService    Partition service
-     * @param userMetadataService User metadata  service
+     * @param userMetadataService User metadata service
      * @param tagService          Tag service
      * @param elasticSearchUtil   ElasticSearch client wrapper
      * @param registry            registry of spectator
      * @return The refresh bean
      */
     @Bean
-    public ElasticSearchRefresh elasticSearchRefresh(
-        final Config config,
-        final MetacatEventBus eventBus,
-        final CatalogService catalogService,
-        final DatabaseService databaseService,
-        final TableService tableService,
-        final PartitionService partitionService,
-        final UserMetadataService userMetadataService,
-        final TagService tagService,
-        final ElasticSearchUtil elasticSearchUtil,
-        final Registry registry
-    ) {
-        return new ElasticSearchRefresh(
-            config,
-            eventBus,
-            catalogService,
-            databaseService,
-            tableService,
-            partitionService,
-            userMetadataService,
-            tagService,
-            elasticSearchUtil,
-            registry
-        );
+    public ElasticSearchRefresh elasticSearchRefresh(final Config config, final MetacatEventBus eventBus,
+            final CatalogService catalogService, final DatabaseService databaseService, final TableService tableService,
+            final PartitionService partitionService, final UserMetadataService userMetadataService,
+            final TagService tagService, final ElasticSearchUtil elasticSearchUtil, final Registry registry) {
+        return new ElasticSearchRefresh(config, eventBus, catalogService, databaseService, tableService,
+                partitionService, userMetadataService, tagService, elasticSearchUtil, registry);
     }
 
     /**
@@ -188,32 +144,18 @@ public class ElasticSearchConfig {
      * @param eventBus            Event bus
      * @param databaseService     Database service
      * @param tableService        Table service
-     * @param userMetadataService User metadata  service
+     * @param userMetadataService User metadata service
      * @param tagService          Tag service
      * @param elasticSearchUtil   ElasticSearch client wrapper
      * @param registry            registry of spectator
      * @return The refresh bean
      */
     @Bean
-    public ElasticSearchCatalogTraversalAction elasticSearchCatalogTraversalAction(
-        final Config config,
-        final MetacatEventBus eventBus,
-        final DatabaseService databaseService,
-        final TableService tableService,
-        final UserMetadataService userMetadataService,
-        final TagService tagService,
-        final ElasticSearchUtil elasticSearchUtil,
-        final Registry registry
-    ) {
-        return new ElasticSearchCatalogTraversalAction(
-            config,
-            eventBus,
-            databaseService,
-            tableService,
-            userMetadataService,
-            tagService,
-            elasticSearchUtil,
-            registry
-        );
+    public ElasticSearchCatalogTraversalAction elasticSearchCatalogTraversalAction(final Config config,
+            final MetacatEventBus eventBus, final DatabaseService databaseService, final TableService tableService,
+            final UserMetadataService userMetadataService, final TagService tagService,
+            final ElasticSearchUtil elasticSearchUtil, final Registry registry) {
+        return new ElasticSearchCatalogTraversalAction(config, eventBus, databaseService, tableService,
+                userMetadataService, tagService, elasticSearchUtil, registry);
     }
 }
