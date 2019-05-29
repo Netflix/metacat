@@ -17,7 +17,6 @@
 package com.netflix.metacat.connector.hive.util;
 
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
-import com.netflix.spectator.api.Counter;
 import com.netflix.spectator.api.Registry;
 import com.netflix.spectator.api.Timer;
 import lombok.Getter;
@@ -37,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class HiveConnectorFastServiceMetric {
     private final HashMap<String, Timer> timerMap = new HashMap<>();
-    private final Counter getHiveTablePartsFailureCounter;
 
     /**
      * Constructor.
@@ -65,9 +63,6 @@ public class HiveConnectorFastServiceMetric {
             HiveMetrics.TagDropHivePartitions.getMetricName()));
         timerMap.put(HiveMetrics.TagAddDropPartitions.getMetricName(), createTimer(registry,
             HiveMetrics.TagAddDropPartitions.getMetricName()));
-
-        getHiveTablePartsFailureCounter = registry.counter(
-            HiveMetrics.CounterHiveExperimentGetTablePartitionsFailure.getMetricName());
     }
 
     private Timer createTimer(final Registry registry, final String requestTag) {

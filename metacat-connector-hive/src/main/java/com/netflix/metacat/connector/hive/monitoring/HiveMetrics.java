@@ -32,6 +32,7 @@ public enum HiveMetrics {
      * hive sql lock error.
      */
     CounterHiveSqlLockError(Type.counter, "hiveSqlLockError"),
+    CounterHiveGetTablePartitionsTimeoutFailure(Type.counter,"getPartitionsTimeoutFailure"),
     CounterHiveExperimentGetTablePartitionsFailure(Type.counter,"experimentGetPartitionsFailure"),
     CounterHivePartitionPathIsNotDir(Type.counter,"partitionPathIsNotDir"),
     CounterHivePartitionFileSystemCall(Type.counter,"partitionFileSystemCall"),
