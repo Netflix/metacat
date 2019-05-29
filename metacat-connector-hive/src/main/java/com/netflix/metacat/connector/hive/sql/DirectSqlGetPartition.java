@@ -50,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.SqlParameterValue;
@@ -551,6 +552,7 @@ public class DirectSqlGetPartition {
         final boolean forceDisableAudit
     ) {
         List<T> partitions;
+        final QualifiedName tableQName = QualifiedName.ofTable(catalogName, databaseName, tableName);
         try {
             if (!Strings.isNullOrEmpty(filterExpression)) {
                 final PartitionFilterGenerator generator =
@@ -573,11 +575,21 @@ public class DirectSqlGetPartition {
                     null, null,
                     null, sort, pageable, forceDisableAudit);
             }
+        } catch (QueryTimeoutException e) {
+            //
+            // On query timeouts, propagate the error.
+            // API calling into this method will throw a HTTP 500 error with the timeout message.
+            //
+            registry.counter(registry.createId(HiveMetrics.CounterHiveGetTablePartitionsTimeoutFailure.getMetricName())
+                .withTags(tableQName.parts())).increment();
+            throw e;
         } catch (Exception e) {
             log.warn("Experiment: Get partitions for for table {} filter {}"
-                    + " failed with error {}", tableName, filterExpression,
+                    + " failed with error {}", tableQName.toString(), filterExpression,
                 e.getMessage());
-            this.fastServiceMetric.getGetHiveTablePartsFailureCounter().increment();
+            registry.counter(registry
+                .createId(HiveMetrics.CounterHiveExperimentGetTablePartitionsFailure.getMetricName())
+                .withTags(tableQName.parts())).increment();
             partitions = getHandlerResults(databaseName, tableName,
                 filterExpression, partitionIds, sql, resultSetExtractor, null,
                 prepareFilterSql(filterExpression), Lists.newArrayList(), sort, pageable, forceDisableAudit);
@@ -918,14 +930,17 @@ public class DirectSqlGetPartition {
             if (partitionIds != null && !partitionIds.isEmpty()) {
                 paramsBuilder.addAll(partitionIds);
             }
+            if (filterSql != null && filterParams != null) {
+                paramsBuilder.addAll(filterParams);
+            }
             paramsBuilder.add(sourceTableName.get().getDatabaseName(), sourceTableName.get().getTableName());
             if (partitionIds != null && !partitionIds.isEmpty()) {
                 paramsBuilder.addAll(partitionIds);
             }
-            paramsBuilder.add(databaseName, tableName);
             if (filterSql != null && filterParams != null) {
                 paramsBuilder.addAll(filterParams);
             }
+            paramsBuilder.add(databaseName, tableName);
             final List<Object> params = paramsBuilder.build();
             final Object[] oParams = new Object[params.size()];
             partitions = (List) jdbcTemplate.query(

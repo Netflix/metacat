@@ -20,9 +20,15 @@ import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.spectator.api.NoopRegistry
+import org.springframework.dao.QueryTimeoutException
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.StatementCallback
 import spock.lang.Specification
 
+import javax.sql.DataSource
+import java.sql.Connection
+import java.sql.SQLTimeoutException
+import java.sql.Statement
 import java.time.Instant
 
 /**
@@ -108,5 +114,20 @@ class DirectSqlGetPartitionSpec extends Specification {
         1 * jdbcTemplate.query(_,_,_) >> partitionHolders
         noExceptionThrown()
         holders.size() == partitionHolders.size()
+    }
+
+    def "Test query timeout"() {
+        given:
+        def source = Mock(DataSource)
+        def conn = Mock(Connection)
+        source.getConnection() >> conn
+        conn.createStatement() >> Mock(Statement)
+        def template = new JdbcTemplate(source)
+        def action = Mock(StatementCallback)
+        when:
+        template.execute(action)
+        then:
+        thrown(QueryTimeoutException)
+        1 * action.doInStatement(_) >> {throw new SQLTimeoutException()}
     }
 }
