@@ -66,7 +66,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
     private static final char RIGHT_PAREN = ')';
     private static final char SPACE = ' ';
     protected final DataSource dataSource;
-    private final JdbcExceptionMapper exceptionMapper;
+    protected final JdbcExceptionMapper exceptionMapper;
     private final JdbcTypeConverter typeConverter;
 
     /**

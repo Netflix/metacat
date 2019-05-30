@@ -20,6 +20,7 @@ package com.netflix.metacat.connector.snowflake
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter
@@ -29,6 +30,7 @@ import spock.lang.Unroll
 
 import javax.sql.DataSource
 import java.sql.Connection
+import java.sql.DatabaseMetaData
 import java.sql.Date
 import java.sql.PreparedStatement
 import java.sql.ResultSet
@@ -46,7 +48,7 @@ class SnowflakeConnectorTableServiceSpec extends Specification {
     def context = Mock(ConnectorRequestContext)
     def dataSource = Mock(DataSource)
     def typeConverter = Mock(JdbcTypeConverter)
-    def exceptionMapper = Mock(JdbcExceptionMapper)
+    def exceptionMapper = new SnowflakeExceptionMapper()
     def service = new SnowflakeConnectorTableService(this.dataSource, this.typeConverter, this.exceptionMapper)
 
     def "Can delete an uppercase table"() {
@@ -89,6 +91,35 @@ class SnowflakeConnectorTableServiceSpec extends Specification {
         1 * statement.executeUpdate(
             "DROP TABLE " + table
         )
+    }
+
+    def "get table"() {
+        def connection = Mock(Connection)
+        def metadata = Mock(DatabaseMetaData)
+        def resultset = Mock(ResultSet)
+        def resultset1 = Mock(ResultSet)
+        dataSource.getConnection() >> connection
+        connection.getMetaData() >> metadata
+        def database = UUID.randomUUID().toString().toUpperCase()
+        def table = UUID.randomUUID().toString().toUpperCase()
+        def qName = QualifiedName.ofTable(UUID.randomUUID().toString(), database, table)
+
+        when:
+        this.service.get(context, qName)
+
+        then:
+        noExceptionThrown()
+        1 * metadata.getColumns(_,_,_,_) >> resultset
+        1 * resultset.next() >> false
+        1 * metadata.getTables(_,_,_,_) >> resultset1
+        1 * resultset1.next() >> true
+
+        when:
+        this.service.get(context, qName)
+
+        then:
+        thrown(TableNotFoundException)
+        1 * metadata.getColumns(_,_,_,_) >> {throw new SQLException("reason", "42SO2", 2003)}
     }
 
     def "Can't rename table if databases are different"() {
