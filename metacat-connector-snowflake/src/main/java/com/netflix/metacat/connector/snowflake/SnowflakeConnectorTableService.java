@@ -152,12 +152,16 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
         @Nonnull @NonNull final Connection connection,
         @Nonnull @NonNull final QualifiedName name
     ) throws SQLException {
-        return connection.getMetaData().getColumns(
-            connection.getCatalog(),
-            name.getDatabaseName(),
-            name.getTableName(),
-            JdbcConnectorUtils.MULTI_CHARACTER_SEARCH
-        );
+        try {
+            return connection.getMetaData().getColumns(
+                connection.getCatalog(),
+                name.getDatabaseName(),
+                name.getTableName(),
+                JdbcConnectorUtils.MULTI_CHARACTER_SEARCH
+            );
+        } catch (SQLException e) {
+            throw this.exceptionMapper.toConnectorException(e, name);
+        }
     }
 
     /**
