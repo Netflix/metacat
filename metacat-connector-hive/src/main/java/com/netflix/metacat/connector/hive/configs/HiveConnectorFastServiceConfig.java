@@ -20,6 +20,10 @@ import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteria;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
 import com.netflix.metacat.connector.hive.sql.DirectSqlGetPartition;
 import com.netflix.metacat.connector.hive.sql.DirectSqlSavePartition;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
@@ -70,6 +74,7 @@ public class HiveConnectorFastServiceConfig {
      * @param connectorContext       connector config
      * @param directSqlGetPartition  service to get partitions
      * @param directSqlSavePartition service to save partitions
+     * @param icebergTableHandler    iceberg table handler
      * @return HiveConnectorPartitionService
      */
     @Bean
@@ -79,15 +84,17 @@ public class HiveConnectorFastServiceConfig {
         final HiveConnectorInfoConverter hiveMetacatConverter,
         final ConnectorContext connectorContext,
         final DirectSqlGetPartition directSqlGetPartition,
-        final DirectSqlSavePartition directSqlSavePartition
-    ) {
+        final DirectSqlSavePartition directSqlSavePartition,
+        final IcebergTableHandler icebergTableHandler
+        ) {
         return new HiveConnectorFastPartitionService(
             connectorContext,
             metacatHiveClient,
             warehouse,
             hiveMetacatConverter,
             directSqlGetPartition,
-            directSqlSavePartition
+            directSqlSavePartition,
+            icebergTableHandler
         );
     }
 
@@ -184,6 +191,7 @@ public class HiveConnectorFastServiceConfig {
      * @param hiveConnectorDatabaseService hive database service
      * @param connectorContext             server context
      * @param directSqlTable               table jpa service
+     * @param icebergTableHandler          iceberg table handler
      * @return HiveConnectorFastTableService
      */
     @Bean
@@ -192,7 +200,8 @@ public class HiveConnectorFastServiceConfig {
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final ConnectorContext connectorContext,
-        final DirectSqlTable directSqlTable
+        final DirectSqlTable directSqlTable,
+        final IcebergTableHandler icebergTableHandler
     ) {
         return new HiveConnectorFastTableService(
             connectorContext.getCatalogName(),
@@ -200,7 +209,47 @@ public class HiveConnectorFastServiceConfig {
             hiveConnectorDatabaseService,
             hiveMetacatConverters,
             connectorContext,
-            directSqlTable
+            directSqlTable,
+            icebergTableHandler
         );
+    }
+
+    /**
+     * Create iceberg table handler.
+     * @param connectorContext      server context
+     * @param icebergTableCriteria  iceberg table criteria
+     * @param icebergTableOpWrapper iceberg table operation
+     * @return IcebergTableHandler
+     */
+    @Bean
+    public IcebergTableHandler icebergTableHandler(final ConnectorContext connectorContext,
+                                                   final IcebergTableCriteria icebergTableCriteria,
+                                                   final IcebergTableOpWrapper icebergTableOpWrapper) {
+        return new IcebergTableHandler(connectorContext,
+            icebergTableCriteria,
+            icebergTableOpWrapper);
+    }
+
+    /**
+     *
+     * Create iceberg table criteria.
+     * @param connectorContext server context
+     * @return IcebergTableCriteria
+     */
+    @Bean
+    public IcebergTableCriteria icebergTableCriteria(final ConnectorContext connectorContext) {
+        return new IcebergTableCriteriaImpl(connectorContext);
+    }
+
+    /**
+     * Create iceberg table operation.
+     * @param connectorContext      server context
+     * @param threadServiceManager  executor service
+     * @return IcebergTableOpWrapper
+     */
+    @Bean
+    public IcebergTableOpWrapper icebergTableOpWrapper(final ConnectorContext connectorContext,
+                                                       final ThreadServiceManager threadServiceManager) {
+        return new IcebergTableOpWrapper(connectorContext, threadServiceManager);
     }
 }

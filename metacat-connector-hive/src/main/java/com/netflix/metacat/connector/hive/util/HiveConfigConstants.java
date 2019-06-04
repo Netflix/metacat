@@ -51,6 +51,14 @@ public final class HiveConfigConstants {
      */
     public static final String ENABLE_AUDIT_PROCESSING = "hive.use.embedded.fastservice.auditEnabled";
     /**
+     * GET_PARTITION_DETAILS_TIMEOUT.
+     */
+    public static final String GET_PARTITION_DETAILS_TIMEOUT = "hive.use.embedded.GetPartitionDetailsTimeout";
+    /**
+     * GET_ICEBERG_PARTITIONS_TIMEOUT.
+     */
+    public static final String GET_ICEBERG_PARTITIONS_TIMEOUT = "hive.iceberg.GetIcebergPartitionsTimeout";
+    /**
      * USE_FAST_DELETION.
      */
     public static final String USE_FAST_DELETION = "hive.use.embedded.sql.delete.partitions";

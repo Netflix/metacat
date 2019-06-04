@@ -67,16 +67,20 @@ public class IcebergTableHandler {
     /**
      * Constructor.
      *
-     * @param connectorContext connector context
+     * @param connectorContext     connector context
+     * @param icebergTableCriteria iceberg table criteria
+     * @param icebergTableOpWrapper iceberg table operation
      */
-    public IcebergTableHandler(final ConnectorContext connectorContext) {
+    public IcebergTableHandler(final ConnectorContext connectorContext,
+                               final IcebergTableCriteria icebergTableCriteria,
+                               final IcebergTableOpWrapper icebergTableOpWrapper) {
         this.conf = new Configuration();
         this.connectorContext = connectorContext;
         this.registry = connectorContext.getRegistry();
         connectorContext.getConfiguration().keySet()
             .forEach(key -> conf.set(key, connectorContext.getConfiguration().get(key)));
-        this.icebergTableCriteria = new IcebergTableCriteriaImpl(connectorContext);
-        this.icebergTableOpWrapper = new IcebergTableOpWrapper(connectorContext);
+        this.icebergTableCriteria = icebergTableCriteria;
+        this.icebergTableOpWrapper = icebergTableOpWrapper;
     }
 
     /**

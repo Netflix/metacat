@@ -16,14 +16,23 @@
  */
 package com.netflix.metacat.connector.hive.iceberg;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import com.netflix.iceberg.ScanSummary;
 import com.netflix.iceberg.Table;
 import com.netflix.iceberg.expressions.Expression;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
-import lombok.AllArgsConstructor;
+import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.ThreadServiceManager;
+import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Iceberg table operation wrapper.
@@ -31,9 +40,23 @@ import java.util.Map;
  * @author zhenl
  * @since 1.2.0
  */
-@AllArgsConstructor
+@Slf4j
 public class IcebergTableOpWrapper {
-    private final ConnectorContext connectorContext;
+    private final Config config;
+    private final Map<String, String> configuration;
+    private final ThreadServiceManager threadServiceManager;
+
+    /**
+     * Constructor.
+     * @param connectorContext      server context
+     * @param threadServiceManager  executor service
+     */
+    public IcebergTableOpWrapper(final ConnectorContext connectorContext,
+                                 final ThreadServiceManager threadServiceManager) {
+        this.config = connectorContext.getConfig();
+        this.configuration = connectorContext.getConfiguration();
+        this.threadServiceManager = threadServiceManager;
+    }
 
     /**
      * get iceberg partition map.
@@ -44,14 +67,31 @@ public class IcebergTableOpWrapper {
      */
     public Map<String, ScanSummary.PartitionMetrics> getPartitionMetricsMap(final Table icebergTable,
                                                                      @Nullable final Expression filter) {
-        return (filter != null)
-            ? ScanSummary.of(icebergTable.newScan().filter(filter))
-                .limit(connectorContext.getConfig().getMaxPartitionsThreshold())
-                .throwIfLimited()
-                .build()
+        Map<String, ScanSummary.PartitionMetrics> result = Maps.newHashMap();
+        //
+        // Cancel the iceberg call if it times out.
+        //
+        final Future<Map<String, ScanSummary.PartitionMetrics>> future = threadServiceManager.getExecutor()
+            .submit(() -> (filter != null) ? ScanSummary.of(icebergTable.newScan().filter(filter))
+            .limit(config.getMaxPartitionsThreshold())
+            .throwIfLimited()
+            .build()
             :
             ScanSummary.of(icebergTable.newScan())  //the top x records
-                .limit(connectorContext.getConfig().getIcebergTableSummaryFetchSize())
-                .build();
+                .limit(config.getIcebergTableSummaryFetchSize())
+                .build());
+        try {
+            final int getIcebergPartitionsTimeout = Integer.parseInt(configuration
+                .getOrDefault(HiveConfigConstants.GET_ICEBERG_PARTITIONS_TIMEOUT, "120"));
+            result = future.get(getIcebergPartitionsTimeout, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            try {
+                future.cancel(true);
+            } catch (Exception ignored) {
+                log.warn("Failed cancelling the task that gets the partitions for an iceberg table.");
+            }
+            Throwables.propagate(e);
+        }
+        return result;
     }
 }

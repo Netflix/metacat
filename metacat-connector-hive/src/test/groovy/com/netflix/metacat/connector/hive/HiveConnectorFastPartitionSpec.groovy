@@ -62,7 +62,7 @@ class HiveConnectorFastPartitionSpec extends Specification {
             Mock(Warehouse),
             new HiveConnectorInfoConverter(new HiveTypeConverter()),
             directSqlGetPartition,
-            directSqlSavePartition)
+            directSqlSavePartition, icebergTableHandler)
 
     @Shared
     metric1 = Mock(com.netflix.iceberg.ScanSummary.PartitionMetrics)
@@ -72,7 +72,6 @@ class HiveConnectorFastPartitionSpec extends Specification {
         metric1.fileCount() >> 1
         metric1.dataTimestampMillis() >> 1234500000
         metric1.recordCount() >> 1
-        hiveConnectorFastPartitionService.icebergTableHandler = icebergTableHandler
         icebergTableHandler.getIcebergTable(_,_) >> Mock(Table)
         icebergTableHandler.getIcebergTablePartitionMap(_,_,_) >> ["dateint=20170101/hour=1": metric1,
                                                                    "dateint=20170102/hour=1": metric1,
