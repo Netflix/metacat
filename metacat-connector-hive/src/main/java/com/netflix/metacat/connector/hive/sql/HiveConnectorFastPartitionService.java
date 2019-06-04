@@ -81,6 +81,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
      * @param hiveMetacatConverters  hive converter
      * @param directSqlGetPartition  service to get partitions
      * @param directSqlSavePartition service to save partitions
+     * @param icebergTableHandler    iceberg table handler
      */
     public HiveConnectorFastPartitionService(
         final ConnectorContext context,
@@ -88,14 +89,15 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final Warehouse warehouse,
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final DirectSqlGetPartition directSqlGetPartition,
-        final DirectSqlSavePartition directSqlSavePartition
+        final DirectSqlSavePartition directSqlSavePartition,
+        final IcebergTableHandler icebergTableHandler
     ) {
         super(context, metacatHiveClient, hiveMetacatConverters);
         this.warehouse = warehouse;
         this.directSqlGetPartition = directSqlGetPartition;
         this.directSqlSavePartition = directSqlSavePartition;
         this.registry = context.getRegistry();
-        this.icebergTableHandler = new IcebergTableHandler(context);
+        this.icebergTableHandler = icebergTableHandler;
     }
 
     /**

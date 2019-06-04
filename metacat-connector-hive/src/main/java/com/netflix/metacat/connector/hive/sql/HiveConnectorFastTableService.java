@@ -55,6 +55,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param hiveMetacatConverters        hive converter
      * @param connectorContext             serverContext
      * @param directSqlTable               Table jpa service
+     * @param icebergTableHandler          iceberg table handler
      */
     @Autowired
     public HiveConnectorFastTableService(
@@ -63,12 +64,13 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final ConnectorContext connectorContext,
-        final DirectSqlTable directSqlTable
+        final DirectSqlTable directSqlTable,
+        final IcebergTableHandler icebergTableHandler
     ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, connectorContext);
         this.registry = connectorContext.getRegistry();
         this.directSqlTable = directSqlTable;
-        this.icebergTableHandler = new IcebergTableHandler(connectorContext);
+        this.icebergTableHandler = icebergTableHandler;
 
     }
 

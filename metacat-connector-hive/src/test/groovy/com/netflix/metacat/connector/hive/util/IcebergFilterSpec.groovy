@@ -29,6 +29,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest
 import com.netflix.metacat.common.server.partition.parser.PartitionParser
 import com.netflix.metacat.common.server.properties.Config
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteria
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper
 import com.netflix.spectator.api.NoopRegistry
@@ -99,6 +100,7 @@ class IcebergFilterSpec extends Specification{
     def 'Test get icebergPartitionMap default iceberg summary fetch size' () {
         def icebergTable = Mock(Table)
         def icebergOpWrapper = Mock(IcebergTableOpWrapper)
+        def icebergTableCriteria = Mock(IcebergTableCriteria)
         def partRequest = new PartitionListRequest()
         def registry = new NoopRegistry()
         def icebergUtil = new IcebergTableHandler(new ConnectorContext(
@@ -108,8 +110,7 @@ class IcebergFilterSpec extends Specification{
             Mock(Config),
             registry,
             ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
-        ))
-        icebergUtil.icebergTableOpWrapper = icebergOpWrapper
+        ), icebergTableCriteria, icebergOpWrapper)
 
         when:
         icebergUtil.getIcebergTablePartitionMap(QualifiedName.fromString("tableName"), partRequest, icebergTable)
@@ -121,6 +122,7 @@ class IcebergFilterSpec extends Specification{
 
     def 'Test get icebergPartitionMap invoking filter' () {
         def icebergTableHelper = Mock(IcebergTableOpWrapper)
+        def icebergTableCriteria = Mock(IcebergTableCriteria)
         def registry = new NoopRegistry()
         def icebergTable = Mock(Table)
         def schema = Mock(Schema)
@@ -135,8 +137,7 @@ class IcebergFilterSpec extends Specification{
             Mock(Config),
             registry,
             ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
-        ))
-        icebergUtil.icebergTableOpWrapper = icebergTableHelper
+        ), icebergTableCriteria, icebergTableHelper)
 
         when:
         icebergUtil.getIcebergTablePartitionMap(QualifiedName.fromString("tableName"),partRequest, icebergTable)

@@ -31,7 +31,7 @@ public class IcebergTableCriteriaImpl implements IcebergTableCriteria {
      * Iceberg table criteriaImpl constructor.
      * @param connectorContext connector context
      */
-    IcebergTableCriteriaImpl(final ConnectorContext connectorContext) {
+    public IcebergTableCriteriaImpl(final ConnectorContext connectorContext) {
         this.connectorContext = connectorContext;
     }
 }

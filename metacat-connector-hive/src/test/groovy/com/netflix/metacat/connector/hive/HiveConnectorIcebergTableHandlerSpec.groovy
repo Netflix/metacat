@@ -28,6 +28,7 @@ import com.netflix.metacat.connector.hive.iceberg.DataMetadataMetricConstants
 import com.netflix.metacat.connector.hive.iceberg.DataMetadataMetrics
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteria
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants
 import com.netflix.spectator.api.NoopRegistry
 import spock.lang.Shared
@@ -45,7 +46,9 @@ class HiveConnectorIcebergTableHandlerSpec extends Specification{
     )
 
     def "Test for populate data metadata" () {
-        def icebergHandler = new IcebergTableHandler(connectorContext)
+        def criteriaImpl = Mock(IcebergTableCriteria)
+        def icebergTableOp = Mock(IcebergTableOpWrapper)
+        def icebergHandler = new IcebergTableHandler(connectorContext, criteriaImpl, icebergTableOp)
 
         def metrics = Mock(ScanSummary.PartitionMetrics)
         when:
@@ -68,8 +71,9 @@ class HiveConnectorIcebergTableHandlerSpec extends Specification{
                     new MetacatNotSupportedException("manifest too larg"))
             }
         }
-        def icebergHandler = new IcebergTableHandler(connectorContext)
-        icebergHandler.icebergTableCriteria = criteriaImpl
+        def icebergTableOp = Mock(IcebergTableOpWrapper)
+        def icebergHandler = new IcebergTableHandler(connectorContext, criteriaImpl, icebergTableOp)
+
         when:
         ret = icebergHandler.getIcebergTable(QualifiedName.fromString("testing/db/table"), "abc")
         then:
