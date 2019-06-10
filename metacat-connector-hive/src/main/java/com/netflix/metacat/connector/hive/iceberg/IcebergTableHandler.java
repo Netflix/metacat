@@ -27,11 +27,13 @@ import com.netflix.iceberg.ScanSummary;
 import com.netflix.iceberg.Schema;
 import com.netflix.iceberg.Table;
 import com.netflix.iceberg.TableMetadata;
+import com.netflix.iceberg.exceptions.NoSuchTableException;
 import com.netflix.iceberg.expressions.Expression;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.partition.parser.ParseException;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
@@ -145,6 +147,8 @@ public class IcebergTableHandler {
             this.icebergTableCriteria.checkCriteria(tableName, tableMetadataLocation);
             log.debug("Loading icebergTable {} from {}", tableName, tableMetadataLocation);
             return new IcebergMetastoreTables(tableMetadataLocation).load(tableName.toString());
+        } catch (NoSuchTableException e) {
+            throw new InvalidMetaException(tableName, e);
         } finally {
             final long duration = registry.clock().wallTime() - start;
             log.info("Time taken to getIcebergTable {} is {} ms", tableName, duration);
