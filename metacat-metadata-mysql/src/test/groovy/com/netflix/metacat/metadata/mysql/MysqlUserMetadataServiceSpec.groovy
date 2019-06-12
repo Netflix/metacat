@@ -17,6 +17,8 @@ import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 
+import java.time.Instant
+
 /**
  * Tests for MysqlUserMetadataService.
  * TODO: Need to move this to integration-test
@@ -98,5 +100,10 @@ class MysqlUserMetadataServiceSpec extends BaseSpec {
         mysqlUserMetadataService.deleteDataMetadata(uris)
         then:
         mysqlUserMetadataService.getDeletedDataMetadataUris(new Date(), 0, 10).size() == 0
+        when:
+        mysqlUserMetadataService.saveMetadata(userName, table, true)
+        mysqlUserMetadataService.deleteStaleDefinitionMetadata("prod%", Date.from(Instant.now().plusSeconds(500)))
+        then:
+        !mysqlUserMetadataService.getDefinitionMetadata(qualifiedName).isPresent()
     }
 }

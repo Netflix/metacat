@@ -81,6 +81,16 @@ public interface UserMetadataService {
     }
 
     /**
+     * Delete definition metadata older than the given timestamp for names
+     * that match the given pattern.
+     *
+     * @param qualifiedNamePattern The pattern to match against qualified names.
+     * @param lastUpdated The lastUpdated timestamp to use as a cut-off.
+     */
+    default void deleteStaleDefinitionMetadata(String qualifiedNamePattern, Date lastUpdated) {
+    }
+
+    /**
      * Delete definition metadata and soft delete data metadata.
      *
      * @param userId  username

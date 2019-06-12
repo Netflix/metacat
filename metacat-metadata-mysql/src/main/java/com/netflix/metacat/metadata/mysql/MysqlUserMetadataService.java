@@ -33,6 +33,7 @@ import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Data;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -171,6 +172,25 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             }
         } catch (Exception e) {
             final String message = String.format("Failed deleting the definition metadata for %s", names);
+            log.error(message, e);
+            throw new UserMetadataServiceException(message, e);
+        }
+    }
+
+    @Override
+    public void deleteStaleDefinitionMetadata(
+        @NonNull final String qualifiedNamePattern,
+        @NonNull final Date lastUpdated) {
+        if (qualifiedNamePattern == null || lastUpdated == null) {
+            return;
+        }
+
+        try {
+            jdbcTemplate.update(SQL.DELETE_DEFINITION_METADATA_STALE, new Object[]{qualifiedNamePattern, lastUpdated},
+                new int[]{Types.VARCHAR, Types.TIMESTAMP});
+        } catch (Exception e) {
+            final String message = String.format("Failed to delete stale definition metadata for pattern %s",
+                qualifiedNamePattern);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
         }
@@ -885,6 +905,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             "delete from data_metadata where id in (%s)";
         static final String DELETE_DEFINITION_METADATA =
             "delete from definition_metadata where name in (%s)";
+        static final String DELETE_DEFINITION_METADATA_STALE =
+            "delete from definition_metadata where name like ? and last_updated < ?";
         static final String DELETE_PARTITION_DEFINITION_METADATA =
             "delete from partition_definition_metadata where name in (%s)";
         static final String GET_DATA_METADATA =
