@@ -80,7 +80,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional("hiveTxManager")
 public class DirectSqlGetPartition {
-    private static final String FIELD_DATE_CREATED = "dateCreated";
+    /**
+     * DateCreated field users can request to sort on.
+     */
+    public static final String FIELD_DATE_CREATED = "dateCreated";
+
     private static final String FIELD_BATCHID = "batchid";
     private static final String AUDIT_DB = "audit";
     private static final Pattern AUDIT_TABLENAME_PATTERN = Pattern.compile(
