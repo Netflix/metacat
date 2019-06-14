@@ -389,9 +389,17 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
             .collect(Collectors.toList());
 
         if (sort != null) {
-            //it can only support sortBy partition Name
-            final Comparator<PartitionInfo> nameComparator = Comparator.comparing(p -> p.getName().toString());
-            ConnectorUtils.sort(filteredPartitionList, sort, nameComparator);
+            if (sort.hasSort() && sort.getSortBy().equalsIgnoreCase(DirectSqlGetPartition.FIELD_DATE_CREATED)) {
+                final Comparator<PartitionInfo> dateCreatedComparator = Comparator.comparing(
+                    p -> p.getAudit() != null ? p.getAudit().getCreatedDate() : null,
+                    Comparator.nullsLast(Date::compareTo));
+
+                ConnectorUtils.sort(filteredPartitionList, sort, dateCreatedComparator);
+            } else {
+                // Sort using the partition name by default
+                final Comparator<PartitionInfo> nameComparator = Comparator.comparing(p -> p.getName().toString());
+                ConnectorUtils.sort(filteredPartitionList, sort, nameComparator);
+            }
         }
         return ConnectorUtils.paginate(filteredPartitionList, pageable);
     }
