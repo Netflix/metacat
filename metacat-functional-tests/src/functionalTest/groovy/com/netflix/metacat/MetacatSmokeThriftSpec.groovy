@@ -27,6 +27,7 @@ import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import org.apache.hadoop.hive.conf.HiveConf
+import org.apache.hadoop.hive.metastore.TableType
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import org.apache.hadoop.hive.metastore.api.Database
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
@@ -242,7 +243,7 @@ class MetacatSmokeThriftSpec extends Specification {
     }
 
     @Unroll
-    def "Test rename table for #catalogName/#databaseName/#tableName to #newTableName"() {
+    def "Test rename table for #catalogName to test_create_table1"() {
         when:
         def databaseName = 'test_db3_' + catalogName
         def tableName = 'test_create_table'
@@ -253,8 +254,18 @@ class MetacatSmokeThriftSpec extends Specification {
         then:
         def table = client.getTable(databaseName, newTableName)
         table != null && table.getTableName() == newTableName
+        when:
+        hiveTable.setTableType(TableType.VIRTUAL_VIEW)
+        hiveTable.setViewOriginalText('select 1')
+        hiveTable.setViewExpandedText('select 1')
+        client.alterTable(databaseName + '.' + newTableName, hiveTable)
+        hiveTable.setTableName(tableName)
+        client.alterTable(databaseName + '.' + newTableName, hiveTable)
+        table = client.getTable(databaseName, tableName)
+        then:
+        table != null && table.getTableName() == tableName
         cleanup:
-        client.dropTable(databaseName, newTableName)
+        client.dropTable(databaseName, tableName)
         where:
         client << clients.values()
         catalogName << clients.keySet()

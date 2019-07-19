@@ -323,9 +323,6 @@ public class HiveConnectorTableService implements ConnectorTableService {
                           final Table existingTable, final TableInfo tableInfo) {
         final QualifiedName tableName = tableInfo.getName();
         try {
-            if (existingTable.getTableType().equals(TableType.VIRTUAL_VIEW.name())) {
-                throw new TableNotFoundException(tableName);
-            }
             updateTable(requestContext, existingTable, tableInfo);
             metacatHiveClient.alterTable(tableName.getDatabaseName(),
                 tableName.getTableName(),
