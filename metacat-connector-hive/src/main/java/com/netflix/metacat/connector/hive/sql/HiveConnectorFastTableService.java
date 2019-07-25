@@ -98,7 +98,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
         final com.netflix.iceberg.Table icebergTable = this.icebergTableHandler.getIcebergTable(name, tableLoc);
         return this.hiveMetacatConverters.fromIcebergTableToTableInfo(name,
-            icebergTable, tableLoc, info.getAudit());
+            icebergTable, tableLoc, info);
     }
 
 

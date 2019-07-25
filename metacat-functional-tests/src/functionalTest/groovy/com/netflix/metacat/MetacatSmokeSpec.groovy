@@ -370,7 +370,9 @@ class MetacatSmokeSpec extends Specification {
         api.createTable(catalogName, databaseName, tableName, tableDto)
         def metadataLocation1 = '/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
         def metadata1 = [table_type: 'ICEBERG', metadata_location: metadataLocation1, previous_metadata_location: metadataLocation]
+        def updatedUri = tableDto.getDataUri() + 'updated'
         tableDto.getMetadata().putAll(metadata1)
+        tableDto.getSerde().setUri(updatedUri)
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:
         noExceptionThrown()
@@ -380,6 +382,12 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatBadRequestException)
         FileUtils.moveFile(new File(metadataFile.getAbsolutePath() + '1'), metadataFile)
+        when:
+        def updatedTable = api.getTable(catalogName, databaseName, tableName, true, false, false)
+        then:
+        noExceptionThrown()
+        updatedTable != null
+        updatedTable.getDataUri() == updatedUri
         when:
         def metadataLocation2 = '/tmp/data/00089-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
         def metadata2 = [table_type: 'ICEBERG', metadata_location: metadataLocation2, previous_metadata_location: metadataLocation1]

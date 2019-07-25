@@ -177,13 +177,13 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @param name      qualified name
      * @param table     iceberg table object
      * @param tableLoc  iceberg table metadata location
-     * @param auditInfo audit information
+     * @param tableInfo table info
      * @return Metacat table Info
      */
     public TableInfo fromIcebergTableToTableInfo(final QualifiedName name,
                                                  final com.netflix.iceberg.Table table,
                                                  final String tableLoc,
-                                                 final AuditInfo auditInfo) {
+                                                 final TableInfo tableInfo) {
         final List<FieldInfo> allFields =
             this.hiveTypeConverter.icebergeSchemaTofieldDtos(table.schema(), table.spec().fields());
         final Map<String, String> tableParameters = new HashMap<>();
@@ -191,10 +191,11 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         tableParameters.put(DirectSqlTable.PARAM_METADATA_LOCATION, tableLoc);
         //adding iceberg table properties
         tableParameters.putAll(table.properties());
+        final String location = tableInfo.getSerde() != null ? tableInfo.getSerde().getUri() : null;
         return TableInfo.builder().fields(allFields)
             .metadata(tableParameters)
-            .serde(StorageInfo.builder().uri(table.location()).build())
-            .name(name).auditInfo(auditInfo)
+            .serde(StorageInfo.builder().uri(location).build())
+            .name(name).auditInfo(tableInfo.getAudit())
             .build();
     }
 

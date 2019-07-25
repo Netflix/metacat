@@ -18,6 +18,7 @@
 package com.netflix.metacat.connector.hive.sql;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -223,6 +224,11 @@ public class DirectSqlTable {
         final Map<String, String> updateParams = diff.entriesDiffering().entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, s -> s.getValue().rightValue()));
         updateTableParams(tableId, updateParams);
+        //
+        // In addition to updating the table params, the table location in HMS needs to be updated for usage by
+        // external tools, that access HMS directly
+        //
+        updateTableLocation(tableId, tableInfo);
         log.debug("Unlocked Iceberg table {}", tableName);
     }
 
@@ -265,6 +271,14 @@ public class DirectSqlTable {
                 log.error(message);
                 throw new IllegalStateException(message);
             }
+        }
+    }
+
+    private void updateTableLocation(final Long tableId, final TableInfo tableInfo) {
+        final String uri = tableInfo.getSerde() != null ? tableInfo.getSerde().getUri() : null;
+        if (!Strings.isNullOrEmpty(uri)) {
+            jdbcTemplate.update(SQL.UPDATE_SDS_LOCATION, new SqlParameterValue(Types.VARCHAR, uri),
+                new SqlParameterValue(Types.BIGINT, tableId));
         }
     }
 
@@ -387,6 +401,8 @@ public class DirectSqlTable {
             "update TABLE_PARAMS set param_value=? WHERE tbl_id=? and param_key=?";
         static final String INSERT_TABLE_PARAMS =
             "insert into TABLE_PARAMS(tbl_id,param_key,param_value) values (?,?,?)";
+        static final String UPDATE_SDS_LOCATION =
+            "UPDATE SDS SET LOCATION=? WHERE SD_ID= (SELECT SD_ID FROM TBLS WHERE TBL_ID=?)";
         static final String UPDATE_SDS_CD = "UPDATE SDS SET CD_ID=? WHERE SD_ID=?";
         static final String DELETE_COLUMNS_OLD = "DELETE FROM COLUMNS_OLD WHERE SD_ID=?";
         static final String DELETE_COLUMNS_V2 = "DELETE FROM COLUMNS_V2 WHERE CD_ID=?";
