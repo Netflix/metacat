@@ -189,6 +189,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         final Map<String, String> tableParameters = new HashMap<>();
         tableParameters.put(DirectSqlTable.PARAM_TABLE_TYPE, DirectSqlTable.ICEBERG_TABLE_TYPE);
         tableParameters.put(DirectSqlTable.PARAM_METADATA_LOCATION, tableLoc);
+        tableParameters.put(DirectSqlTable.PARAM_PARTITION_SPEC, table.spec().toString());
         //adding iceberg table properties
         tableParameters.putAll(table.properties());
         final String location = tableInfo.getSerde() != null ? tableInfo.getSerde().getUri() : null;
