@@ -27,6 +27,7 @@ import java.util.Map;
 public final class PartitionUtil {
     private static final Splitter EQUAL_SPLITTER = Splitter.on('=').trimResults();
     private static final Splitter SLASH_SPLITTER = Splitter.on('/').omitEmptyStrings().trimResults();
+    private static final String DEFAULT_PARTITION_NAME = "__HIVE_DEFAULT_PARTITION__";
 
     private PartitionUtil() {
     }
@@ -51,8 +52,13 @@ public final class PartitionUtil {
         for (String part : Splitter.on('/').omitEmptyStrings().split(location)) {
             if (part.contains("=")) {
                 final String[] values = part.split("=", 2);
-
-                if (values[0].equalsIgnoreCase("null") || values[1].equalsIgnoreCase("null")) {
+                //
+                // Ignore the partition value, if it is null or the hive default. Hive sets the default value if the
+                // value is null/empty string or any other values that cannot be escaped.
+                //
+                if (values[0].equalsIgnoreCase("null")
+                    || values[1].equalsIgnoreCase("null")
+                    || values[1].equalsIgnoreCase(DEFAULT_PARTITION_NAME)) {
                     log.debug("Found 'null' string in kvp [{}] skipping.", part);
                 } else {
                     parts.put(values[0], values[1]);
