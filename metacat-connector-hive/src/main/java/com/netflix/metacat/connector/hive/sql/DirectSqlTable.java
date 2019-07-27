@@ -69,6 +69,10 @@ public class DirectSqlTable {
      */
     public static final String PARAM_PREVIOUS_METADATA_LOCATION = "previous_metadata_location";
     /**
+     * Defines the current partition spec expression of the iceberg table.
+     */
+    public static final String PARAM_PARTITION_SPEC = "partition_spec";
+    /**
      * Iceberg table type.
      */
     public static final String ICEBERG_TABLE_TYPE = "ICEBERG";
@@ -285,6 +289,7 @@ public class DirectSqlTable {
     private void insertTableParams(final Long tableId, final Map<String, String> params) {
         if (!params.isEmpty()) {
             final List<Object[]> paramsList = params.entrySet().stream()
+                .filter(s -> !s.getKey().equalsIgnoreCase(PARAM_PARTITION_SPEC))
                 .map(s -> new Object[]{tableId, s.getKey(), s.getValue()}).collect(Collectors.toList());
             jdbcTemplate.batchUpdate(SQL.INSERT_TABLE_PARAMS, paramsList,
                 new int[]{Types.BIGINT, Types.VARCHAR, Types.VARCHAR});
@@ -294,6 +299,7 @@ public class DirectSqlTable {
     private void updateTableParams(final Long tableId, final Map<String, String> params) {
         if (!params.isEmpty()) {
             final List<Object[]> paramsList = params.entrySet().stream()
+                .filter(s -> !s.getKey().equalsIgnoreCase(PARAM_PARTITION_SPEC))
                 .map(s -> new Object[]{s.getValue(), tableId, s.getKey()}).collect(Collectors.toList());
             jdbcTemplate.batchUpdate(SQL.UPDATE_TABLE_PARAMS, paramsList,
                 new int[]{Types.VARCHAR, Types.BIGINT, Types.VARCHAR});

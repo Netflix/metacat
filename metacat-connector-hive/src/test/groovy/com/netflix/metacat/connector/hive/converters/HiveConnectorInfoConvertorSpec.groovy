@@ -511,7 +511,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
            icebergTable, "/tmp/test", TableInfo.builder().build() )
         then:
         1 * icebergTable.properties() >> ["test":"abd"]
-        1 * icebergTable.spec() >>  partSpec
+        2 * icebergTable.spec() >>  partSpec
         1 * partSpec.fields() >> [ field]
         1 * icebergTable.schema() >> schema
         1 * field.name() >> "fieldName"
