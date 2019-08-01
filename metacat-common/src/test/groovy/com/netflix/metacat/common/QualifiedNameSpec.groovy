@@ -257,4 +257,25 @@ class QualifiedNameSpec extends Specification {
         ""          | "database_1" | "abcd"    | "%/database_1/abcd%"
         ""          | ""           | "abcd"    | "%/%/abcd%"
     }
+
+    @Unroll
+    def testCaseSensitiveQualifiedNameCreation() {
+        when:
+        def QualifiedName caseSensitiveQualifiedName = QualifiedName.fromString(input).getCaseSensitiveQualifiedName();
+
+        then:
+        (caseSensitiveQualifiedName == null) ? (result == null) : (caseSensitiveQualifiedName.toString().equals(result))
+
+        where:
+        input        | result
+        'c'          | null
+        'c/D'        | 'c/D'
+        'c/d'        | null
+        'c/D/T'      | 'c/D/T'
+        'c/d/t'      | null
+        'c/d/t/P'    | 'c/d/t/P'
+        'c/d/t/v=1'  | null
+        'c/d/t/V=1'  | null
+        'c/d/t/View' | 'c/d/t/View'
+    }
 }

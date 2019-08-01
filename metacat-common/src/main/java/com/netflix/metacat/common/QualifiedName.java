@@ -49,6 +49,9 @@ public final class QualifiedName implements Serializable {
     private Map<String, String> parts;
     private Type type;
 
+    // Null if this QualifiedName was all lower-case to begin with.
+    private QualifiedName caseSensitiveQualifiedName;
+
     private QualifiedName(
         @NonNull final String catalogName,
         @Nullable final String databaseName,
@@ -79,6 +82,10 @@ public final class QualifiedName implements Serializable {
         } else {
             type = Type.CATALOG;
         }
+
+        this.caseSensitiveQualifiedName = createCaseSensitiveQualifiedNameIfNecessary(this.catalogName,
+            databaseName, this.databaseName, tableName, this.tableName, partitionName, this.partitionName,
+            viewName, this.viewName, this.type);
     }
 
     private QualifiedName(
@@ -292,6 +299,58 @@ public final class QualifiedName implements Serializable {
     }
 
     /**
+     * Returns the case-sensitive QualifiedName if present and
+     * {@code name} as a default otherwise.
+     * @param name The QualifiedName instance.
+     * @return case-sensitive QualifiedName.
+     */
+    public static QualifiedName getCaseSensitiveQualifiedNameIfPresent(@NonNull final QualifiedName name) {
+        final QualifiedName caseSensitiveQualifiedName = name.getCaseSensitiveQualifiedName();
+        return caseSensitiveQualifiedName == null ? name : caseSensitiveQualifiedName;
+    }
+
+    private static QualifiedName createCaseSensitiveQualifiedNameIfNecessary(
+        @NonNull final String catalogName,
+        @Nullable final String databaseName,
+        @NonNull final String standardDatabaseName,
+        @Nullable final String tableName,
+        @NonNull final String standardTableName,
+        @Nullable final String partitionName,
+        @NonNull final String standardPartitionName,
+        @Nullable final String viewName,
+        @NonNull final String standardViewName,
+        @NonNull final Type type
+    ) {
+        final String caseSensitiveDatabaseName = standardizeOptional(databaseName, false);
+        final String caseSensitiveTableName = standardizeOptional(tableName, false);
+        final String caseSensitivePartitionName = standardizeOptional(partitionName, false);
+        final String caseSensitiveViewName = standardizeOptional(viewName, false);
+        if (shouldCreateCaseSensitiveQualifiedName(caseSensitiveDatabaseName, standardDatabaseName,
+            caseSensitiveTableName, standardTableName, caseSensitivePartitionName, standardPartitionName,
+            caseSensitiveViewName, standardViewName)) {
+            return new QualifiedName(catalogName, caseSensitiveDatabaseName, caseSensitiveTableName,
+                caseSensitivePartitionName, caseSensitiveViewName, type);
+        }
+
+        return null;
+    }
+
+    private static boolean shouldCreateCaseSensitiveQualifiedName(
+        @NonNull final String databaseName,
+        @NonNull final String standardDatabaseName,
+        @NonNull final String tableName,
+        @NonNull final String standardTableName,
+        @NonNull final String partitionName,
+        @NonNull final String standardPartitionName,
+        @NonNull final String viewName,
+        @NonNull final String standardViewName) {
+        return !standardDatabaseName.equals(databaseName)
+            || !standardTableName.equals(tableName)
+            || !standardPartitionName.equals(partitionName)
+            || !standardViewName.equals(viewName);
+    }
+
+    /**
      * Creates a wild card string format of the qualified name.
      *
      * @param sourceName   catalog/source name
@@ -436,7 +495,7 @@ public final class QualifiedName implements Serializable {
         return !tableName.isEmpty();
     }
 
-    private String standardizeOptional(@Nullable final String value, final boolean forceLowerCase) {
+    private static String standardizeOptional(@Nullable final String value, final boolean forceLowerCase) {
         if (value == null) {
             return "";
         } else {
@@ -448,7 +507,7 @@ public final class QualifiedName implements Serializable {
         }
     }
 
-    private String standardizeRequired(final String name, @Nullable final String value) {
+    private static String standardizeRequired(final String name, @Nullable final String value) {
         if (value == null) {
             throw new IllegalStateException(name + " cannot be null");
         }
