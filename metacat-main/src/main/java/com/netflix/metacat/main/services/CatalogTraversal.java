@@ -236,7 +236,8 @@ public class CatalogTraversal {
                 } catch (Exception e) {
                     log.error("Traversal: Failed to retrieve catalog: {}", catalogName);
                     registry.counter(
-                        registry.createId(Metrics.CounterCatalogTraversalCatalogReadFailed.getMetricName()))
+                        registry.createId(Metrics.CounterCatalogTraversalCatalogReadFailed.getMetricName())
+                            .withTag("catalogName", catalogName))
                         .increment();
                 }
                 return result;
@@ -289,7 +290,8 @@ public class CatalogTraversal {
                 } catch (Exception e) {
                     log.error("Traversal: Failed to retrieve database: {}", databaseName);
                     registry.counter(
-                        registry.createId(Metrics.CounterCatalogTraversalDatabaseReadFailed.getMetricName()))
+                        registry.createId(Metrics.CounterCatalogTraversalDatabaseReadFailed.getMetricName())
+                            .withTags(databaseName.parts()))
                         .increment();
                 }
                 return result;
@@ -400,7 +402,8 @@ public class CatalogTraversal {
                 } catch (Exception e) {
                     log.error("Traversal: Failed to retrieve table: {}", tableName);
                     registry.counter(
-                        registry.createId(Metrics.CounterCatalogTraversalTableReadFailed.getMetricName()))
+                        registry.createId(Metrics.CounterCatalogTraversalTableReadFailed.getMetricName())
+                            .withTags(tableName.parts()))
                         .increment();
                 }
                 return result;
