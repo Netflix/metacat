@@ -39,6 +39,7 @@ import java.util.Objects;
 @Getter
 public final class QualifiedName implements Serializable {
     private static final long serialVersionUID = -7916364073519921672L;
+    private static final String CATALOG_CDE_NAME_PREFIX = "cde_";
     private final String catalogName;
     private final String databaseName;
     private final String partitionName;
@@ -49,9 +50,6 @@ public final class QualifiedName implements Serializable {
     private Map<String, String> parts;
     private Type type;
 
-    // Null if this QualifiedName was all lower-case to begin with.
-    private QualifiedName caseSensitiveQualifiedName;
-
     private QualifiedName(
         @NonNull final String catalogName,
         @Nullable final String databaseName,
@@ -60,10 +58,12 @@ public final class QualifiedName implements Serializable {
         @Nullable final String viewName
     ) {
         this.catalogName = standardizeRequired("catalogName", catalogName);
-        this.databaseName = standardizeOptional(databaseName, true);
-        this.tableName = standardizeOptional(tableName, true);
+        // TODO: Temporary hack to support a certain catalog that has mixed case naming.
+        final boolean forceLowerCase = !catalogName.startsWith(CATALOG_CDE_NAME_PREFIX);
+        this.databaseName = standardizeOptional(databaseName, forceLowerCase);
+        this.tableName = standardizeOptional(tableName, forceLowerCase);
         this.partitionName = standardizeOptional(partitionName, false);
-        this.viewName = standardizeOptional(viewName, true);
+        this.viewName = standardizeOptional(viewName, forceLowerCase);
 
         if (this.databaseName.isEmpty() && (!this.tableName.isEmpty() || !this.partitionName.isEmpty())) {
             throw new IllegalStateException("databaseName is not present but tableName or partitionName are present");
@@ -82,10 +82,6 @@ public final class QualifiedName implements Serializable {
         } else {
             type = Type.CATALOG;
         }
-
-        this.caseSensitiveQualifiedName = createCaseSensitiveQualifiedNameIfNecessary(this.catalogName,
-            databaseName, this.databaseName, tableName, this.tableName, partitionName, this.partitionName,
-            viewName, this.viewName, this.type);
     }
 
     private QualifiedName(
@@ -296,58 +292,6 @@ public final class QualifiedName implements Serializable {
         @NonNull final String tableName
     ) {
         return new QualifiedName(catalogName, databaseName, tableName, null, null);
-    }
-
-    /**
-     * Returns the case-sensitive QualifiedName if present and
-     * {@code name} as a default otherwise.
-     * @param name The QualifiedName instance.
-     * @return case-sensitive QualifiedName.
-     */
-    public static QualifiedName getCaseSensitiveQualifiedNameIfPresent(@NonNull final QualifiedName name) {
-        final QualifiedName caseSensitiveQualifiedName = name.getCaseSensitiveQualifiedName();
-        return caseSensitiveQualifiedName == null ? name : caseSensitiveQualifiedName;
-    }
-
-    private static QualifiedName createCaseSensitiveQualifiedNameIfNecessary(
-        @NonNull final String catalogName,
-        @Nullable final String databaseName,
-        @NonNull final String standardDatabaseName,
-        @Nullable final String tableName,
-        @NonNull final String standardTableName,
-        @Nullable final String partitionName,
-        @NonNull final String standardPartitionName,
-        @Nullable final String viewName,
-        @NonNull final String standardViewName,
-        @NonNull final Type type
-    ) {
-        final String caseSensitiveDatabaseName = standardizeOptional(databaseName, false);
-        final String caseSensitiveTableName = standardizeOptional(tableName, false);
-        final String caseSensitivePartitionName = standardizeOptional(partitionName, false);
-        final String caseSensitiveViewName = standardizeOptional(viewName, false);
-        if (shouldCreateCaseSensitiveQualifiedName(caseSensitiveDatabaseName, standardDatabaseName,
-            caseSensitiveTableName, standardTableName, caseSensitivePartitionName, standardPartitionName,
-            caseSensitiveViewName, standardViewName)) {
-            return new QualifiedName(catalogName, caseSensitiveDatabaseName, caseSensitiveTableName,
-                caseSensitivePartitionName, caseSensitiveViewName, type);
-        }
-
-        return null;
-    }
-
-    private static boolean shouldCreateCaseSensitiveQualifiedName(
-        @NonNull final String databaseName,
-        @NonNull final String standardDatabaseName,
-        @NonNull final String tableName,
-        @NonNull final String standardTableName,
-        @NonNull final String partitionName,
-        @NonNull final String standardPartitionName,
-        @NonNull final String viewName,
-        @NonNull final String standardViewName) {
-        return !standardDatabaseName.equals(databaseName)
-            || !standardTableName.equals(tableName)
-            || !standardPartitionName.equals(partitionName)
-            || !standardViewName.equals(viewName);
     }
 
     /**
