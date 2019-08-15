@@ -331,7 +331,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
                 throw new InvalidInputException("Invalid database request");
             }
             v1.updateDatabase(catalogName, normalizeIdentifier(dbname),
-                DatabaseCreateRequestDto.builder().metadata(db.getParameters()).build());
+                DatabaseCreateRequestDto.builder().metadata(db.getParameters()).uri(db.getLocationUri()).build());
             return null;
         });
     }
@@ -551,7 +551,8 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         requestWrapper("create_database", new Object[]{database}, () -> {
             final String dbName = normalizeIdentifier(database.getName());
             v1.createDatabase(catalogName, dbName,
-                DatabaseCreateRequestDto.builder().metadata(database.getParameters()).build());
+                DatabaseCreateRequestDto.builder().metadata(database.getParameters()).uri(database.getLocationUri())
+                    .build());
             return null;
         });
     }

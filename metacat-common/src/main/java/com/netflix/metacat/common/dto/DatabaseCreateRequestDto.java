@@ -47,6 +47,8 @@ public class DatabaseCreateRequestDto extends BaseDto {
     private transient ObjectNode definitionMetadata;
     @ApiModelProperty(value = "Any extra metadata properties of the database")
     private Map<String, String> metadata;
+    @ApiModelProperty(value = "URI of the database. Only applies to certain data sources like hive, S3")
+    private String uri;
 
     private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();

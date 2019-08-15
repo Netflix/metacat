@@ -187,6 +187,7 @@ public class MetacatController implements MetacatV1 {
                 final DatabaseDto newDto = new DatabaseDto();
                 newDto.setName(name);
                 if (databaseCreateRequestDto != null) {
+                    newDto.setUri(databaseCreateRequestDto.getUri());
                     newDto.setMetadata(databaseCreateRequestDto.getMetadata());
                     newDto.setDefinitionMetadata(databaseCreateRequestDto.getDefinitionMetadata());
                 }
@@ -969,6 +970,7 @@ public class MetacatController implements MetacatV1 {
             () -> {
                 final DatabaseDto newDto = new DatabaseDto();
                 newDto.setName(name);
+                newDto.setUri(databaseUpdateRequestDto.getUri());
                 newDto.setMetadata(databaseUpdateRequestDto.getMetadata());
                 newDto.setDefinitionMetadata(databaseUpdateRequestDto.getDefinitionMetadata());
                 this.databaseService.update(name, newDto);

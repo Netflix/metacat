@@ -63,6 +63,8 @@ public class HiveConnectorFastServiceMetric {
             HiveMetrics.TagDropHivePartitions.getMetricName()));
         timerMap.put(HiveMetrics.TagAddDropPartitions.getMetricName(), createTimer(registry,
             HiveMetrics.TagAddDropPartitions.getMetricName()));
+        timerMap.put(HiveMetrics.TagAlterDatabase.getMetricName(), createTimer(registry,
+            HiveMetrics.TagAlterDatabase.getMetricName()));
     }
 
     private Timer createTimer(final Registry registry, final String requestTag) {

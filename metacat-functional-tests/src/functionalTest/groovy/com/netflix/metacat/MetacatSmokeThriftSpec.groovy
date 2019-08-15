@@ -169,6 +169,7 @@ class MetacatSmokeThriftSpec extends Specification {
         given:
         def invalidDatabaseName = 'test_db1_invalid' + catalogName
         def databaseName = 'test_db1_' + catalogName
+        def exceptionThrown = false
         client.createDatabase(new Database(databaseName, 'test_db1', null, null))
         when:
         client.alterDatabase(databaseName, new Database(databaseName, 'test_db1', null, null))
@@ -180,13 +181,17 @@ class MetacatSmokeThriftSpec extends Specification {
         client.alterDatabase(databaseName, new Database(databaseName, 'test_db1', databaseUri + 1, null))
         then:
         def uDatabase = client.getDatabase(databaseName)
-        //Database uri in hive does not get updated.
-        uDatabase != null && uDatabase.name == 'test_db1_' + catalogName && uDatabase.locationUri == databaseUri
+        uDatabase != null && (catalogName != 'localfast' || uDatabase.name == 'test_db1_' + catalogName && uDatabase.locationUri == databaseUri + 1)
         when:
-        client.alterDatabase(invalidDatabaseName, new Database(invalidDatabaseName, 'test_db1', null, null))
+        try {
+            client.alterDatabase(invalidDatabaseName, new Database(invalidDatabaseName, 'test_db1', null, null))
+        } catch (Exception e) {
+            exceptionThrown = true
+        }
         then:
         //Hive metsatore does not throw NoSuchObjectException
-        noExceptionThrown()
+        catalogName == 'localfast' || catalogName == 'local' || !exceptionThrown
+        catalogName == 'remote' || exceptionThrown
         cleanup:
         client.dropDatabase(databaseName)
         where:

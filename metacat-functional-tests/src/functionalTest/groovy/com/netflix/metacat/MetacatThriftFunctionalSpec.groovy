@@ -351,7 +351,7 @@ class MetacatThriftFunctionalSpec extends Specification {
         resultDb.name == databaseName
         resultDb.description == databaseName // currently the passed description is ignored on create
         resultDb.description != description
-        resultDb.locationUri != locationUri // currently the passed location is ignored on create
+        resultDb.locationUri == locationUri
         resultDb.parameters == params
         catalog.createdDatabases << QualifiedName.ofDatabase(catalog.name, databaseName)
 
