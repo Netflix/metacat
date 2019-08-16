@@ -50,6 +50,7 @@ public class HiveConnectorConfig {
      * @return HiveConnectorDatabaseService
      */
     @Bean
+    @ConditionalOnMissingBean(HiveConnectorDatabaseService.class)
     public HiveConnectorDatabaseService hiveDatabaseService(
         final IMetacatHiveClient metacatHiveClient,
         final HiveConnectorInfoConverter hiveMetacatConverter

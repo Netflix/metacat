@@ -147,7 +147,7 @@ class MetacatSmokeSpec extends Specification {
         def definitionMetadata = metacatJson.emptyObjectNode().set("owner", metacatJson.emptyObjectNode())
         expect:
         try {
-            api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto(definitionMetadata: definitionMetadata))
+            api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto(definitionMetadata: definitionMetadata, uri:uri))
             error == null
         } catch (Exception e) {
             e.class == error
@@ -156,19 +156,20 @@ class MetacatSmokeSpec extends Specification {
             def database = api.getDatabase(catalogName, databaseName, true, true)
             assert database != null && database.name.databaseName == databaseName
             assert database.definitionMetadata != null && database.definitionMetadata == definitionMetadata
+            assert uri == null || uri == database.uri
         }
         cleanup:
         if (!error) {
             api.deleteDatabase(catalogName, databaseName)
         }
         where:
-        catalogName                     | databaseName | error
-        'embedded-hive-metastore'       | 'smoke_db0'  | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db0' | null
-        'embedded-fast-hive-metastore'  | 'shard1'     | null
-        'hive-metastore'                | 'hsmoke_db0' | null
-        's3-mysql-db'                   | 'smoke_db0'  | null
-        'invalid-catalog'               | 'smoke_db0'  | MetacatNotFoundException.class
+        catalogName                     | databaseName | uri                                                  | error
+        'embedded-hive-metastore'       | 'smoke_db0'  | 'file:/tmp/embedded-hive-metastore/smoke_db00'       | null
+        'embedded-fast-hive-metastore'  | 'fsmoke_db0' | 'file:/tmp/embedded-fast-hive-metastore/fsmoke_db00' | null
+        'embedded-fast-hive-metastore'  | 'shard1'     | null                                                 | null
+        'hive-metastore'                | 'hsmoke_db0' | 'file:/tmp/hive-metastore/hsmoke_db00'               | null
+        's3-mysql-db'                   | 'smoke_db0'  | null                                                 | null
+        'invalid-catalog'               | 'smoke_db0'  | null                                                 | MetacatNotFoundException.class
     }
 
     @Unroll
@@ -177,20 +178,21 @@ class MetacatSmokeSpec extends Specification {
         def metadata = ['a':'1']
         def definitionMetadata = metacatJson.emptyObjectNode().set("owner", metacatJson.emptyObjectNode())
         api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto(definitionMetadata: definitionMetadata))
-        api.updateDatabase(catalogName, databaseName, new DatabaseCreateRequestDto(metadata: metadata))
+        api.updateDatabase(catalogName, databaseName, new DatabaseCreateRequestDto(metadata: metadata, uri: uri))
         def database = api.getDatabase(catalogName, databaseName, true, true)
         expect:
         database != null
         database.definitionMetadata == definitionMetadata
         database.metadata == metadata
+        uri == null || uri == database.uri
         cleanup:
         api.deleteDatabase(catalogName, databaseName)
         where:
-        catalogName                     | databaseName
-        'embedded-hive-metastore'       | 'smoke_db0'
-        'embedded-fast-hive-metastore'  | 'fsmoke_db0'
-        'embedded-fast-hive-metastore'  | 'shard1'
-        'hive-metastore'                | 'hsmoke_db0'
+        catalogName                     | databaseName | uri
+        'embedded-hive-metastore'       | 'smoke_db0'  | null
+        'embedded-fast-hive-metastore'  | 'fsmoke_db0' | 'file:/tmp/embedded-fast-hive-metastore/fsmoke_db00'
+        'embedded-fast-hive-metastore'  | 'shard1'     | null
+        'hive-metastore'                | 'hsmoke_db0' | null
     }
 
     @Unroll

@@ -24,9 +24,11 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteria;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
+import com.netflix.metacat.connector.hive.sql.DirectSqlDatabase;
 import com.netflix.metacat.connector.hive.sql.DirectSqlGetPartition;
 import com.netflix.metacat.connector.hive.sql.DirectSqlSavePartition;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
+import com.netflix.metacat.connector.hive.sql.HiveConnectorFastDatabaseService;
 import com.netflix.metacat.connector.hive.sql.HiveConnectorFastPartitionService;
 import com.netflix.metacat.connector.hive.sql.HiveConnectorFastTableService;
 import com.netflix.metacat.connector.hive.sql.SequenceGeneration;
@@ -160,13 +162,13 @@ public class HiveConnectorFastServiceConfig {
     }
 
     /**
-     * Data access service to get partitions.
+     * Data access service for table.
      *
      * @param connectorContext       connector config
      * @param hiveJdbcTemplate       hive JDBC template
      * @param serviceMetric          fast service metric
      * @param directSqlSavePartition partition service involving direct sqls
-     * @return HiveConnectorPartitionService
+     * @return DirectSqlTable
      */
     @Bean
     public DirectSqlTable directSqlTable(
@@ -180,6 +182,27 @@ public class HiveConnectorFastServiceConfig {
             hiveJdbcTemplate,
             serviceMetric,
             directSqlSavePartition
+        );
+    }
+
+    /**
+     * Data access service for database.
+     *
+     * @param connectorContext       connector config
+     * @param hiveJdbcTemplate       hive JDBC template
+     * @param serviceMetric          fast service metric
+     * @return DirectSqlDatabase
+     */
+    @Bean
+    public DirectSqlDatabase directSqlDatabase(
+        final ConnectorContext connectorContext,
+        @Qualifier("hiveWriteJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
+        final HiveConnectorFastServiceMetric serviceMetric
+    ) {
+        return new DirectSqlDatabase(
+            connectorContext,
+            hiveJdbcTemplate,
+            serviceMetric
         );
     }
 
@@ -211,6 +234,27 @@ public class HiveConnectorFastServiceConfig {
             connectorContext,
             directSqlTable,
             icebergTableHandler
+        );
+    }
+
+    /**
+     * create hive connector fast database service.
+     *
+     * @param metacatHiveClient            metacat hive client
+     * @param hiveMetacatConverters        hive metacat converters
+     * @param directSqlDatabase            database sql service
+     * @return HiveConnectorDatabaseService
+     */
+    @Bean
+    public HiveConnectorDatabaseService hiveDatabaseService(
+        final IMetacatHiveClient metacatHiveClient,
+        final HiveConnectorInfoConverter hiveMetacatConverters,
+        final DirectSqlDatabase directSqlDatabase
+    ) {
+        return new HiveConnectorFastDatabaseService(
+            metacatHiveClient,
+            hiveMetacatConverters,
+            directSqlDatabase
         );
     }
 
