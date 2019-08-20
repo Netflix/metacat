@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseCreateRequestDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
@@ -46,6 +47,7 @@ import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.api.v1.PartitionV1;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.common.FileUtils;
@@ -1840,7 +1842,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         final long start = registry.clock().wallTime();
         registry.counter(registry.createId(Metrics.CounterThrift.getMetricName() + "." + methodName)).increment();
         try {
-            log.info("+++ Thrift({}): Calling {}({})", catalogName, methodName, args);
+            final MetacatRequestContext requestContext = MetacatContextManager.getContext();
+            log.info("+++ Thrift({}): Calling {}({}). Request Context: {}",
+                catalogName, methodName, args, requestContext);
             return supplier.get();
         } catch (MetacatAlreadyExistsException e) {
             log.error(e.getMessage(), e);
