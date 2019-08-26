@@ -187,23 +187,28 @@ public class TableServiceImpl implements TableService {
 
         eventBus.post(new MetacatDeleteTablePreEvent(name, metacatRequestContext, this));
 
-        final Optional<TableDto> oTable = get(name,
-            GetTableServiceParameters.builder()
-                .includeInfo(true)
-                .disableOnReadMetadataIntercetor(false)
-                .includeDefinitionMetadata(true)
-                .includeDataMetadata(true)
-                .build());
-        if (oTable.isPresent()) {
-            connectorTableServiceProxy.delete(name);
+        TableDto tableDto = new TableDto();
+        tableDto.setName(name);
+
+        try {
+            final Optional<TableDto> oTable = get(name,
+                GetTableServiceParameters.builder()
+                    .includeInfo(true)
+                    .disableOnReadMetadataIntercetor(false)
+                    .includeDefinitionMetadata(true)
+                    .includeDataMetadata(true)
+                    .build());
+            tableDto = oTable.orElse(tableDto);
+        } catch (Exception e) {
+            handleException(name, true, "deleteAndReturn_get", e);
         }
 
-        final TableDto tableDto = oTable.orElseGet(() -> {
-            // If the table doesn't exist construct a blank copy we can use to delete the definitionMetadata and tags
-            final TableDto t = new TableDto();
-            t.setName(name);
-            return t;
-        });
+        // Try to delete the table even if get above fails
+        try {
+            connectorTableServiceProxy.delete(name);
+        } catch (NotFoundException ignored) {
+            log.debug("NotFoundException ignored for table {}", name);
+        }
 
         if (canDeleteMetadata(name)) {
             // Delete the metadata.  Type doesn't matter since we discard the result

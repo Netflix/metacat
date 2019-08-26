@@ -426,10 +426,12 @@ class MetacatSmokeSpec extends Specification {
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:
         noExceptionThrown()
-        // Actually create the iceberg manifest file so deleteTable succeeds
-        FileUtils.copyFile(metadataFile, icebergManifestFile)
-        cleanup:
+        when:
+        // delete table on an invalid metadata location shouldn't fail
         api.deleteTable(catalogName, databaseName, tableName)
+        then:
+        noExceptionThrown()
+        cleanup:
         FileUtils.deleteQuietly(icebergManifestFile)
     }
 
