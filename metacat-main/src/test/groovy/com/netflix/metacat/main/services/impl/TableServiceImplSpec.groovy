@@ -24,6 +24,7 @@ import com.netflix.metacat.common.dto.StorageDto
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.ConnectorTableService
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetadataException
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
 import com.netflix.metacat.common.server.converter.ConverterUtil
 import com.netflix.metacat.common.server.events.MetacatEventBus
@@ -183,6 +184,13 @@ class TableServiceImplSpec extends Specification {
         1 * config.canSoftDeleteDataMetadata() >> true
         0 * usermetadataService.deleteMetadata(_,_)
         1 * usermetadataService.softDeleteDataMetadata(_,_)
+        noExceptionThrown()
+        when:
+        service.deleteAndReturn(name, false)
+        then:
+        1 * connectorTableService.get(_, _) >> { throw new InvalidMetadataException(name) }
+        1 * config.canDeleteTableDefinitionMetadata() >> true
+        1 * usermetadataService.deleteMetadata(_,_)
         noExceptionThrown()
     }
 
