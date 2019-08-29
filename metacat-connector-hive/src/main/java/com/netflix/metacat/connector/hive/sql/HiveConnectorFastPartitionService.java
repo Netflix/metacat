@@ -358,7 +358,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final PartitionListRequest partitionsRequest) {
         final QualifiedName tableName = tableInfo.getName();
         final com.netflix.iceberg.Table icebergTable = this.icebergTableHandler.getIcebergTable(tableName,
-            HiveTableUtil.getIcebergTableMetadataLocation(tableInfo));
+            HiveTableUtil.getIcebergTableMetadataLocation(tableInfo), false).getTable();
         final Pageable pageable = partitionsRequest.getPageable();
         final Map<String, ScanSummary.PartitionMetrics> partitionMap
             = icebergTableHandler.getIcebergTablePartitionMap(tableName, partitionsRequest, icebergTable);

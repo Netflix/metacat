@@ -75,9 +75,8 @@ class HiveConnectorIcebergTableHandlerSpec extends Specification{
         def icebergHandler = new IcebergTableHandler(connectorContext, criteriaImpl, icebergTableOp)
 
         when:
-        ret = icebergHandler.getIcebergTable(QualifiedName.fromString("testing/db/table"), "abc")
+        icebergHandler.getIcebergTable(QualifiedName.fromString("testing/db/table"), "abc", false)
         then:
         thrown(MetacatException)
     }
-
 }

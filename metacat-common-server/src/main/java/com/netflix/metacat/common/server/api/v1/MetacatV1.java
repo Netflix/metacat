@@ -45,13 +45,38 @@ public interface MetacatV1 {
      * @param includeDataMetadata       true if the data metadata to be included
      * @return table
      */
-    TableDto getTable(
+    default TableDto getTable(
         final String catalogName,
         final String databaseName,
         final String tableName,
         final boolean includeInfo,
         final boolean includeDefinitionMetadata,
         final boolean includeDataMetadata
+    ) {
+        return getTable(catalogName, databaseName, tableName, includeInfo, includeDefinitionMetadata,
+            includeDataMetadata, false);
+    }
+
+    /**
+     * Get the table.
+     *
+     * @param catalogName               catalog name
+     * @param databaseName              database name
+     * @param tableName                 table name.
+     * @param includeInfo               true if the details need to be included
+     * @param includeDefinitionMetadata true if the definition metadata to be included
+     * @param includeDataMetadata       true if the data metadata to be included
+     * @param includeInfoDetails        true if the more info details to be included
+     * @return table
+     */
+    TableDto getTable(
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final boolean includeInfo,
+        final boolean includeDefinitionMetadata,
+        final boolean includeDataMetadata,
+        final boolean includeInfoDetails
     );
 
     /**

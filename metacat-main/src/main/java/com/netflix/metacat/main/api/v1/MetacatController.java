@@ -651,7 +651,10 @@ public class MetacatController implements MetacatV1 {
             defaultValue = "true"
         ) final boolean includeDefinitionMetadata,
         @ApiParam(value = "Whether to include user data metadata information to the response")
-        @RequestParam(name = "includeDataMetadata", defaultValue = "true") final boolean includeDataMetadata
+        @RequestParam(name = "includeDataMetadata", defaultValue = "true") final boolean includeDataMetadata,
+        @ApiParam(value = "Whether to include more info details to the response. This value is considered only if "
+            + "includeInfo is true.")
+        @RequestParam(name = "includeInfoDetails", defaultValue = "false") final boolean includeInfoDetails
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
@@ -667,6 +670,7 @@ public class MetacatController implements MetacatV1 {
                         .includeDefinitionMetadata(includeDefinitionMetadata)
                         .includeDataMetadata(includeDataMetadata)
                         .disableOnReadMetadataIntercetor(false)
+                        .includeMetadataFromConnector(includeInfoDetails)
                         .useCache(true)
                         .build()
                 );

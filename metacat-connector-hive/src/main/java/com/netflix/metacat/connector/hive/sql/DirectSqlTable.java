@@ -19,6 +19,7 @@ package com.netflix.metacat.connector.hive.sql;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -45,6 +46,7 @@ import java.sql.Types;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -76,6 +78,15 @@ public class DirectSqlTable {
      * Iceberg table type.
      */
     public static final String ICEBERG_TABLE_TYPE = "ICEBERG";
+    /**
+     * Defines the metadata content of the iceberg table.
+     */
+    public static final String PARAM_METADATA_CONTENT = "metadata_content";
+    /**
+     * List of parameter that needs to be excluded when updating an iceberg table.
+     */
+    public static final Set<String> TABLE_EXCLUDED_PARAMS =
+        ImmutableSet.of(PARAM_PARTITION_SPEC, PARAM_METADATA_CONTENT);
 
     private static final String COL_PARAM_KEY = "param_key";
     private static final String COL_PARAM_VALUE = "param_value";
@@ -289,7 +300,7 @@ public class DirectSqlTable {
     private void insertTableParams(final Long tableId, final Map<String, String> params) {
         if (!params.isEmpty()) {
             final List<Object[]> paramsList = params.entrySet().stream()
-                .filter(s -> !s.getKey().equalsIgnoreCase(PARAM_PARTITION_SPEC))
+                .filter(s -> !TABLE_EXCLUDED_PARAMS.contains(s.getKey()))
                 .map(s -> new Object[]{tableId, s.getKey(), s.getValue()}).collect(Collectors.toList());
             jdbcTemplate.batchUpdate(SQL.INSERT_TABLE_PARAMS, paramsList,
                 new int[]{Types.BIGINT, Types.VARCHAR, Types.VARCHAR});
@@ -299,7 +310,7 @@ public class DirectSqlTable {
     private void updateTableParams(final Long tableId, final Map<String, String> params) {
         if (!params.isEmpty()) {
             final List<Object[]> paramsList = params.entrySet().stream()
-                .filter(s -> !s.getKey().equalsIgnoreCase(PARAM_PARTITION_SPEC))
+                .filter(s -> !TABLE_EXCLUDED_PARAMS.contains(s.getKey()))
                 .map(s -> new Object[]{s.getValue(), tableId, s.getKey()}).collect(Collectors.toList());
             jdbcTemplate.batchUpdate(SQL.UPDATE_TABLE_PARAMS, paramsList,
                 new int[]{Types.VARCHAR, Types.BIGINT, Types.VARCHAR});

@@ -254,6 +254,30 @@ public interface MetacatV1 {
      * @param includeDataMetadata       true if the data metadata to be included
      * @return table
      */
+    default TableDto getTable(
+            String catalogName,
+            String databaseName,
+            String tableName,
+            Boolean includeInfo,
+            Boolean includeDefinitionMetadata,
+            Boolean includeDataMetadata
+    ) {
+        return getTable(catalogName, databaseName, tableName, includeInfo,
+            includeDefinitionMetadata, includeDataMetadata, false);
+    }
+
+    /**
+     * Get the table.
+     *
+     * @param catalogName               catalog name
+     * @param databaseName              database name
+     * @param tableName                 table name.
+     * @param includeInfo               true if the details need to be included
+     * @param includeDefinitionMetadata true if the definition metadata to be included
+     * @param includeDataMetadata       true if the data metadata to be included
+     * @param includeInfoDetails        true if the more info details to be included
+     * @return table
+     */
     @GET
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -273,7 +297,10 @@ public interface MetacatV1 {
             Boolean includeDefinitionMetadata,
         @DefaultValue("true")
         @QueryParam("includeDataMetadata")
-            Boolean includeDataMetadata
+            Boolean includeDataMetadata,
+        @DefaultValue("false")
+        @QueryParam("includeInfoDetails")
+            Boolean includeInfoDetails
     );
 
     /**

@@ -26,6 +26,7 @@ import com.netflix.metacat.connector.hive.HiveConnectorTableService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
@@ -96,7 +97,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             return info;
         }
         final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
-        final com.netflix.iceberg.Table icebergTable = this.icebergTableHandler.getIcebergTable(name, tableLoc);
+        final IcebergTableWrapper icebergTable =
+            this.icebergTableHandler.getIcebergTable(name, tableLoc, requestContext.isIncludeMetadata());
         return this.hiveMetacatConverters.fromIcebergTableToTableInfo(name,
             icebergTable, tableLoc, info);
     }

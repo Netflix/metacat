@@ -30,6 +30,7 @@ import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.connectors.model.ViewInfo;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -174,16 +175,17 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     /**
      * Converts IcebergTable to TableDto.
      *
-     * @param name      qualified name
-     * @param table     iceberg table object
-     * @param tableLoc  iceberg table metadata location
-     * @param tableInfo table info
+     * @param name             qualified name
+     * @param tableWrapper     iceberg table wrapper containing the table info and extra properties
+     * @param tableLoc         iceberg table metadata location
+     * @param tableInfo        table info
      * @return Metacat table Info
      */
     public TableInfo fromIcebergTableToTableInfo(final QualifiedName name,
-                                                 final com.netflix.iceberg.Table table,
+                                                 final IcebergTableWrapper tableWrapper,
                                                  final String tableLoc,
                                                  final TableInfo tableInfo) {
+        final com.netflix.iceberg.Table table = tableWrapper.getTable();
         final List<FieldInfo> allFields =
             this.hiveTypeConverter.icebergeSchemaTofieldDtos(table.schema(), table.spec().fields());
         final Map<String, String> tableParameters = new HashMap<>();
@@ -192,6 +194,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         tableParameters.put(DirectSqlTable.PARAM_PARTITION_SPEC, table.spec().toString());
         //adding iceberg table properties
         tableParameters.putAll(table.properties());
+        tableParameters.putAll(tableWrapper.getExtraProperties());
         final String location = tableInfo.getSerde() != null ? tableInfo.getSerde().getUri() : null;
         return TableInfo.builder().fields(allFields)
             .metadata(tableParameters)
