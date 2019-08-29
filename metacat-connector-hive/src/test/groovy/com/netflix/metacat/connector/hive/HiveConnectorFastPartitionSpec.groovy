@@ -30,6 +30,7 @@ import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper
 import com.netflix.metacat.connector.hive.sql.DirectSqlGetPartition
 import com.netflix.metacat.connector.hive.sql.DirectSqlSavePartition
 import com.netflix.metacat.connector.hive.sql.HiveConnectorFastPartitionService
@@ -85,7 +86,7 @@ class HiveConnectorFastPartitionSpec extends Specification {
         metric3.dataTimestampMillis() >> null
         metric3.recordCount() >> 1
 
-        icebergTableHandler.getIcebergTable(_,_) >> Mock(Table)
+        icebergTableHandler.getIcebergTable(_,_,_) >> new IcebergTableWrapper(Mock(Table), [:])
         icebergTableHandler.getIcebergTablePartitionMap(_,_,_) >> ["dateint=20170101/hour=1": metric1,
                                                                    "dateint=20170102/hour=1": metric1,
                                                                    "dateint=20170103/hour=1": metric1,

@@ -401,6 +401,12 @@ class MetacatSmokeSpec extends Specification {
         noExceptionThrown()
         updatedTable.getMetadata().get('metadata_location') == metadataLocation2
         updatedTable.getMetadata().get('partition_spec') != 'invalid'
+        !updatedTable.getMetadata().containsKey('metadata_content')
+        when:
+        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        def tableWithDetails = api.getTable(catalogName, databaseName, tableName, true, false, false, true)
+        then:
+        tableWithDetails.getMetadata().get('metadata_content') != null
         when:
         api.deleteTable(catalogName, databaseName, renamedTableName)
         api.renameTable(catalogName, databaseName, tableName, renamedTableName)

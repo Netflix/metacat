@@ -30,6 +30,7 @@ import com.netflix.metacat.common.server.connectors.model.PartitionInfo
 import com.netflix.metacat.common.server.connectors.model.StorageInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.type.VarcharType
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.Partition
@@ -500,6 +501,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
 
     def "test fromIcebergTableToTableInfo"() {
         def icebergTable = Mock(com.netflix.iceberg.Table)
+        def icebergTableWrapper = new IcebergTableWrapper(icebergTable, [:])
         def partSpec = Mock(PartitionSpec)
         def field = Mock(PartitionField)
         def schema =  Mock(Schema)
@@ -508,7 +510,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         def type = Mock(Type)
         when:
         def tableInfo = converter.fromIcebergTableToTableInfo(QualifiedName.ofTable('c', 'd', 't'),
-           icebergTable, "/tmp/test", TableInfo.builder().build() )
+            icebergTableWrapper, "/tmp/test", TableInfo.builder().build() )
         then:
         1 * icebergTable.properties() >> ["test":"abd"]
         2 * icebergTable.spec() >>  partSpec
