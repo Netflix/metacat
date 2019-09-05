@@ -37,6 +37,8 @@ import com.netflix.metacat.common.server.connectors.exception.PartitionAlreadyEx
 import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.monitoring.Metrics;
+import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.usermetadata.AliasService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
@@ -61,6 +63,9 @@ import java.util.function.Supplier;
 @Component
 public final class RequestWrapper {
     private final Registry registry;
+    private final Config config;
+    private final AliasService aliasService;
+
     //Metrics
     private final Id requestCounterId;
     private final Id requestFailureCounterId;
@@ -70,10 +75,16 @@ public final class RequestWrapper {
      * Wrapper class for processing the request.
      *
      * @param registry registry
+     * @param config Config
+     * @param aliasService AliasService
      */
     @Autowired
-    public RequestWrapper(@NotNull @NonNull final Registry registry) {
+    public RequestWrapper(@NotNull @NonNull final Registry registry,
+                          @NotNull @NonNull final Config config,
+                          @NotNull @NonNull final AliasService aliasService) {
         this.registry = registry;
+        this.config = config;
+        this.aliasService = aliasService;
         requestCounterId = registry.createId(Metrics.CounterRequestCount.getMetricName());
         requestFailureCounterId = registry.createId(Metrics.CounterRequestFailureCount.getMetricName());
         requestTimerId = registry.createId(Metrics.TimerRequest.getMetricName());
@@ -87,7 +98,11 @@ public final class RequestWrapper {
      */
     public QualifiedName qualifyName(final Supplier<QualifiedName> nameSupplier) {
         try {
-            return nameSupplier.get();
+            final QualifiedName name = nameSupplier.get();
+            if (config.isTableAliasEnabled() && name.getType() == QualifiedName.Type.TABLE) {
+                return aliasService.getTableName(name);
+            }
+            return name;
         } catch (Exception e) {
             log.error("Invalid qualified name", e);
             throw new MetacatBadRequestException(e.getMessage());

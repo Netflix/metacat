@@ -437,5 +437,11 @@ public interface Config {
      * @return Iceberg table partition uri scheme.
      */
     String getIcebergPartitionUriScheme();
+
+    /**
+     * Whether the table alias is enabled.
+     * @return True if it is.
+     */
+    boolean isTableAliasEnabled();
 }
 

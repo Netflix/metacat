@@ -20,7 +20,9 @@ package com.netflix.metacat.main.configs;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.usermetadata.AliasService;
 import com.netflix.metacat.common.server.usermetadata.AuthorizationService;
+import com.netflix.metacat.common.server.usermetadata.DefaultAliasService;
 import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService;
 import com.netflix.metacat.common.server.usermetadata.DefaultLookupService;
 import com.netflix.metacat.common.server.usermetadata.DefaultTagService;
@@ -97,6 +99,16 @@ public class ServicesConfig {
         final Config config
     ) {
         return new DefaultAuthorizationService(config);
+    }
+
+    /**
+     * Alias service.
+     * @return an instance of the Alias service.
+     */
+    @Bean
+    @ConditionalOnMissingBean(AliasService.class)
+    public AliasService aliasService() {
+        return new DefaultAliasService();
     }
 
     /**
