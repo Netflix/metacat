@@ -55,6 +55,7 @@ import javax.validation.Valid;
 import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Metacat V1 API implementation.
@@ -656,9 +657,9 @@ public class MetacatController implements MetacatV1 {
             + "includeInfo is true.")
         @RequestParam(name = "includeInfoDetails", defaultValue = "false") final boolean includeInfoDetails
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
-            () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
-        );
+        final Supplier<QualifiedName> qualifiedNameSupplier =
+            () -> QualifiedName.ofTable(catalogName, databaseName, tableName);
+        final QualifiedName name = this.requestWrapper.qualifyName(qualifiedNameSupplier);
         return this.requestWrapper.processRequest(
             name,
             "getTable",
@@ -674,7 +675,12 @@ public class MetacatController implements MetacatV1 {
                         .useCache(true)
                         .build()
                 );
-                return table.orElseThrow(() -> new TableNotFoundException(name));
+
+                final TableDto tableDto = table.orElseThrow(() -> new TableNotFoundException(name));
+                // Set the name to whatever the request was for because
+                // for aliases, this could've been set to the original name
+                tableDto.setName(qualifiedNameSupplier.get());
+                return tableDto;
             }
         );
     }

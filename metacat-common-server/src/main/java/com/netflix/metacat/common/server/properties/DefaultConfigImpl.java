@@ -515,4 +515,12 @@ public class DefaultConfigImpl implements Config {
     public String getIcebergPartitionUriScheme() {
         return this.metacatProperties.getHive().getIceberg().getPartitionUriScheme();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isTableAliasEnabled() {
+        return this.metacatProperties.getAliasServiceProperties().isEnabled();
+    }
 }

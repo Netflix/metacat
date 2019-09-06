@@ -63,4 +63,6 @@ public class MetacatProperties {
     private CacheProperties cache = new CacheProperties();
     @NonNull
     private AuthorizationServiceProperties authorization = new AuthorizationServiceProperties();
+    @NonNull
+    private AliasServiceProperties aliasServiceProperties = new AliasServiceProperties();
 }
