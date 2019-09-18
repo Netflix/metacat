@@ -1202,6 +1202,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         final List<String> groupNames
     ) throws TException {
         //TODO: Handle setting the privileges
+        MetacatContextManager.getContext().setUserName(userName);
         return get_partition(dbName, tblName, partVals);
     }
 
@@ -1346,6 +1347,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         final List<String> groupNames
     ) throws TException {
         //TODO: Handle setting the privileges
+        MetacatContextManager.getContext().setUserName(userName);
         return get_partitions_ps(dbName, tblName, partVals, maxParts);
     }
 
@@ -1378,6 +1380,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         final List<String> groupNames
     ) throws TException {
         //TODO: Handle setting the privileges
+        MetacatContextManager.getContext().setUserName(userName);
         return get_partitions(dbName, tblName, maxParts);
     }
 
@@ -1397,6 +1400,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     public PrincipalPrivilegeSet get_privilege_set(final HiveObjectRef hiveObject, final String userName,
                                                    final List<String> groupNames)
         throws TException {
+        MetacatContextManager.getContext().setUserName(userName);
         return requestWrapper("get_privilege_set", new Object[]{hiveObject, userName, groupNames},
             () -> {
                 Map<String, List<PrivilegeGrantInfo>> groupPrivilegeSet = null;
@@ -1912,6 +1916,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
      */
     @Override
     public List<String> set_ugi(final String userName, final List<String> groupNames) throws TException {
+        MetacatContextManager.getContext().setUserName(userName);
         return requestWrapper("set_ugi", new Object[]{userName, groupNames}, () -> {
             Collections.addAll(groupNames, userName);
             return groupNames;

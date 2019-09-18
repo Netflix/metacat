@@ -228,14 +228,15 @@ class MetacatSmokeThriftSpec extends Specification {
         } catch (Exception ignored) {
         }
         def uri = getUri(databaseName, tableName)
-        def dto = DataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
+        def dto = DataDtoProvider.getTable(catalogName, databaseName, tableName, null, uri)
         def hiveTable = new Table(hiveConverter.fromTableInfo(converter.fromTableDto(dto)))
         when:
         client.createTable(hiveTable)
         then:
         def table = client.getTable(databaseName, tableName)
-        assert table != null && table.getTableName() == tableName
-        assert table.getSd().getLocation() == uri
+        table != null && table.getTableName() == tableName
+        table.getSd().getLocation() == uri
+        table.getOwner() == client.getConf().getUser()
         when:
         client.createTable(hiveTable)
         then:
