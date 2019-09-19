@@ -58,7 +58,7 @@ public class MetacatRequestContext {
     // TODO: Move to Java 8 and use java.time.Instant
     private final long timestamp = new Date().getTime();
 
-    private final String userName;
+    private String userName;
     private final String clientAppName;
     private final String clientId;
     private final String jobId;
@@ -122,6 +122,14 @@ public class MetacatRequestContext {
         sb.append(", scheme='").append(scheme).append('\'');
         sb.append('}');
         return sb.toString();
+    }
+
+    /**
+     * Returns the username.
+     * @param userName user name
+     */
+    public void setUserName(final String userName) {
+        this.userName = userName;
     }
 
     /**
