@@ -16,6 +16,11 @@
 
 package com.netflix.metacat.connector.hive.sql;
 
+import com.github.rholder.retry.RetryException;
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
+import com.google.common.base.Throwables;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
@@ -34,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * HiveConnectorFastTableService.
@@ -43,6 +49,10 @@ import java.util.Map;
  */
 @Slf4j
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
+    private static final Retryer<Void> RETRY_ICEBERG_TABLE_UPDATE = RetryerBuilder.<Void>newBuilder()
+        .retryIfExceptionOfType(TablePreconditionFailedException.class)
+        .withStopStrategy(StopStrategies.stopAfterAttempt(3))
+        .build();
     private final Registry registry;
     private final DirectSqlTable directSqlTable;
     private IcebergTableHandler icebergTableHandler;
@@ -127,10 +137,27 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         if (HiveTableUtil.isIcebergTable(tableInfo)) {
             requestContext.setIgnoreErrorsAfterUpdate(true);
-            try {
+            final boolean icebergTableUpdated = icebergTableHandler.update(tableInfo);
+            if (icebergTableUpdated) {
+                try {
+                    RETRY_ICEBERG_TABLE_UPDATE.call(() -> {
+                        try {
+                            directSqlTable.updateIcebergTable(tableInfo);
+                        } catch (TablePreconditionFailedException e) {
+                            tableInfo.getMetadata()
+                                .put(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION, e.getMetadataLocation());
+                            icebergTableHandler.update(tableInfo);
+                            throw e;
+                        }
+                        return null;
+                    });
+                } catch (RetryException e) {
+                    Throwables.propagate(e.getLastFailedAttempt().getExceptionCause());
+                } catch (ExecutionException e) {
+                    Throwables.propagate(e.getCause());
+                }
+            } else {
                 directSqlTable.updateIcebergTable(tableInfo);
-            } catch (IllegalStateException e) {
-                throw new TablePreconditionFailedException(tableInfo.getName(), e.getMessage());
             }
         } else {
             super.update(requestContext, tableInfo);

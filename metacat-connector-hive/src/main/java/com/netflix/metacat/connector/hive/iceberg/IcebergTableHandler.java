@@ -29,17 +29,22 @@ import com.netflix.iceberg.Schema;
 import com.netflix.iceberg.Table;
 import com.netflix.iceberg.TableMetadata;
 import com.netflix.iceberg.TableMetadataParser;
+import com.netflix.iceberg.UpdateSchema;
 import com.netflix.iceberg.exceptions.NoSuchTableException;
 import com.netflix.iceberg.expressions.Expression;
+import com.netflix.iceberg.types.Types;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.partition.parser.ParseException;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
+import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.metacat.connector.hive.util.IcebergFilterGenerator;
 import com.netflix.servo.util.VisibleForTesting;
 import com.netflix.spectator.api.Registry;
@@ -48,7 +53,9 @@ import org.apache.hadoop.conf.Configuration;
 
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -170,6 +177,46 @@ public class IcebergTableHandler {
     }
 
     /**
+     * Updates the iceberg schema if the provided tableInfo has updated field comments.
+     * @param tableInfo table information
+     * @return true if an update is done
+     */
+    public boolean update(final TableInfo tableInfo) {
+        boolean result = false;
+        final List<FieldInfo> fields = tableInfo.getFields();
+        if (fields != null && !fields.isEmpty()) {
+            final QualifiedName tableName = tableInfo.getName();
+            final String tableMetadataLocation = HiveTableUtil.getIcebergTableMetadataLocation(tableInfo);
+            if (Strings.isNullOrEmpty(tableMetadataLocation)) {
+                final String message = String.format("No metadata location specified for table %s", tableName);
+                log.error(message);
+                throw new MetacatBadRequestException(message);
+            }
+            final IcebergMetastoreTables icebergMetastoreTables = new IcebergMetastoreTables(tableMetadataLocation);
+            final Table table = icebergMetastoreTables.load(tableName.toString());
+            final UpdateSchema updateSchema = table.updateSchema();
+            final Schema schema = table.schema();
+            for (FieldInfo field: fields) {
+                final Types.NestedField iField = schema.findField(field.getName());
+                if (iField != null && !Objects.equals(field.getComment(), iField.doc())) {
+                    updateSchema.updateColumnDoc(field.getName(), field.getComment());
+                    result = true;
+                }
+            }
+            if (result) {
+                updateSchema.commit();
+                final String newTableMetadataLocation = icebergMetastoreTables.getTableOps().currentMetadataLocation();
+                if (!tableMetadataLocation.equalsIgnoreCase(newTableMetadataLocation)) {
+                    tableInfo.getMetadata().put(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION, tableMetadataLocation);
+                    tableInfo.getMetadata().put(DirectSqlTable.PARAM_METADATA_LOCATION,
+                        icebergMetastoreTables.getTableOps().currentMetadataLocation());
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
      * get data metadata from partition metrics.
      *
      * @param metrics metrics.
@@ -257,7 +304,7 @@ public class IcebergTableHandler {
      * Read only operations.
      */
     private final class IcebergTableOps extends BaseMetastoreTableOperations {
-        private final String location;
+        private String location;
 
         IcebergTableOps(final String location) {
             super(conf);
@@ -272,11 +319,16 @@ public class IcebergTableHandler {
             return current();
         }
 
-        /**
-         * No-op operation.
-         */
+        @Override
+        public String currentMetadataLocation() {
+            return location;
+        }
+
         @Override
         public void commit(final TableMetadata base, final TableMetadata metadata) {
+            if (!base.equals(metadata)) {
+                location = writeNewMetadata(metadata, currentVersion() + 1);
+            }
         }
     }
 
