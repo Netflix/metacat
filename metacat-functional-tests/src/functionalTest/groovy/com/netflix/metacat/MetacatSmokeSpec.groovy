@@ -357,6 +357,7 @@ class MetacatSmokeSpec extends Specification {
         def metadataFile = new File(curWorkingDir + metadataFileName)
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
+        tableDto.setFields([])
         def metadataLocation = '/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
         def icebergMetadataLocation = '/tmp/data/icebergManifest.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
@@ -426,8 +427,16 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatPreconditionFailedException)
         when:
+        updatedTable = api.getTable(catalogName, databaseName, tableName, true, false, false)
+        updatedTable.getFields().get(0).setComment('new comments')
+        api.updateTable(catalogName, databaseName, tableName, updatedTable)
+        updatedTable = api.getTable(catalogName, databaseName, tableName, true, false, false)
+        then:
+        noExceptionThrown()
+        updatedTable.getFields().get(0).getComment() == 'new comments'
+        when:
         // Failure to get table after a successful update shouldn't fail
-        def updatedInvalidMetadata = [table_type: 'ICEBERG', metadata_location: icebergMetadataLocation, previous_metadata_location: metadataLocation2]
+        def updatedInvalidMetadata = [table_type: 'ICEBERG', metadata_location: icebergMetadataLocation, previous_metadata_location: updatedTable.getMetadata().get('metadata_location')]
         tableDto.getMetadata().putAll(updatedInvalidMetadata)
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:

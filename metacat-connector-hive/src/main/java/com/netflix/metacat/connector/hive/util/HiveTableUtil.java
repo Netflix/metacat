@@ -44,7 +44,6 @@ import java.util.Properties;
 @SuppressWarnings("deprecation")
 public final class HiveTableUtil {
     private static final String PARQUET_HIVE_SERDE = "parquet.hive.serde.ParquetHiveSerDe";
-    private static final String DUMMY_LCATION = "ICEBERG_DUMMY_LOCATION";
 
     private HiveTableUtil() {
     }

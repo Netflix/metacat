@@ -18,6 +18,7 @@
 package com.netflix.metacat.common.server.connectors.exception;
 
 import com.netflix.metacat.common.QualifiedName;
+import lombok.Getter;
 
 import javax.annotation.Nullable;
 
@@ -26,14 +27,26 @@ import javax.annotation.Nullable;
  *
  * @author amajumdar
  */
+@Getter
 public class TablePreconditionFailedException extends ConnectorException {
+    // Current metadata location for the table
+    private final String metadataLocation;
+    // Provided metadata location
+    private final String previousMetadataLocation;
     /**
      * Constructor.
      *
-     * @param name  qualified name of the table
-     * @param message error cause
+     * @param name                      qualified name of the table
+     * @param message                   error cause
+     * @param metadataLocation          current metadata location
+     * @param previousMetadataLocation  previous metadata location
      */
-    public TablePreconditionFailedException(final QualifiedName name, @Nullable final String message) {
+    public TablePreconditionFailedException(final QualifiedName name,
+                                            @Nullable final String message,
+                                            final String metadataLocation,
+                                            final String previousMetadataLocation) {
         super(String.format("Precondition failed to update table %s. %s", name, message));
+        this.metadataLocation = metadataLocation;
+        this.previousMetadataLocation = previousMetadataLocation;
     }
 }

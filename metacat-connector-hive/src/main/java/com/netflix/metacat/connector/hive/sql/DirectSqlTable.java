@@ -28,6 +28,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
@@ -271,20 +272,23 @@ public class DirectSqlTable {
                 .format("Invalid metadata location for iceberg table %s. Existing location is empty.",
                     tableName);
             log.error(message);
-            throw new IllegalStateException(message);
+            throw new TablePreconditionFailedException(tableName, message, existingMetadataLocation,
+                previousMetadataLocation);
         } else if (!Objects.equals(existingMetadataLocation, newMetadataLocation)) {
             if (StringUtils.isBlank(previousMetadataLocation)) {
                 final String message = String.format(
                     "Invalid metadata location for iceberg table %s. Provided previous metadata location is empty.",
                         tableName);
                 log.error(message);
-                throw new IllegalStateException(message);
+                throw new TablePreconditionFailedException(tableName, message, existingMetadataLocation,
+                    previousMetadataLocation);
             } else if (!Objects.equals(existingMetadataLocation, previousMetadataLocation)) {
                 final String message =
                     String.format("Invalid metadata location for iceberg table %s (expected:%s, provided:%s)",
                         tableName, existingMetadataLocation, previousMetadataLocation);
                 log.error(message);
-                throw new IllegalStateException(message);
+                throw new TablePreconditionFailedException(tableName, message, existingMetadataLocation,
+                    previousMetadataLocation);
             }
         }
     }
