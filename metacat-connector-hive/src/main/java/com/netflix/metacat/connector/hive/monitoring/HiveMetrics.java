@@ -61,6 +61,7 @@ public enum HiveMetrics {
     TagGetAllDatabases("getAllDatabases"),
     TagGetDatabase("getDatabase"),
     TagGetAllTables("getAllTables"),
+    TagGetTableNamesByFilter("getTableNamesByFilter"),
     TagGetTableByName("getTableByName"),
     TagLoadTable("loadTable"),
     TagAlterTable("alterTable"),

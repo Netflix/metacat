@@ -2414,7 +2414,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         then:
         notThrown(Exception)
-        1 * metacatV1.getDatabase(_, db, false, true) >> { new DatabaseDto(tables: ['t1', 't2', 't3']) }
+        1 * metacatV1.getTableNames(_, db, _, limit) >> [QualifiedName.ofTable(catalogName, db, 't1'),QualifiedName.ofTable(catalogName, db, 't2'),QualifiedName.ofTable(catalogName, db, 't3')]
         !results.empty
         if (limit <= 0) {
             assert results.size() == 3
@@ -2431,7 +2431,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         where:
         db = 'db1'
         filter = 'hive_filter_field_params__presto_view = "true"'
-        limit << [-1, 0, 1, Short.MAX_VALUE]
+        limit << [-1, 0, Short.MAX_VALUE]
     }
 
     def 'test get_table_objects_by_name'() {

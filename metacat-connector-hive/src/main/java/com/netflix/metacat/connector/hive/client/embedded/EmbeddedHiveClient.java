@@ -219,6 +219,16 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
      * {@inheritDoc}.
      */
     @Override
+    public List<String> getTableNames(final String databaseName, final String filter, final int limit)
+        throws TException {
+        return callWrap(HiveMetrics.TagGetTableNamesByFilter.getMetricName(),
+            () -> handler.get_table_names_by_filter(databaseName, filter, (short) limit));
+    }
+
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
     public Table getTableByName(final String databaseName,
                                 final String tableName) throws TException {
         return callWrap(HiveMetrics.TagGetTableByName.getMetricName(), () -> loadTable(databaseName, tableName));

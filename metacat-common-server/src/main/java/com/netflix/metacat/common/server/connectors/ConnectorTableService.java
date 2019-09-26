@@ -47,4 +47,20 @@ public interface ConnectorTableService extends ConnectorBaseService<TableInfo> {
     ) {
         throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
     }
+
+    /**
+     * Returns a filtered list of table names.
+     * @param context   The Metacat request context
+     * @param filter    filter expression
+     * @param name      qualified name of either the catalog or database
+     * @param limit     size of the list
+     * @return list of table names
+     */
+    default List<QualifiedName> getTableNames(
+        final ConnectorRequestContext context,
+        final QualifiedName name,
+        final String filter,
+        final Integer limit) {
+        throw new UnsupportedOperationException(ConnectorBaseService.UNSUPPORTED_MESSAGE);
+    }
 }

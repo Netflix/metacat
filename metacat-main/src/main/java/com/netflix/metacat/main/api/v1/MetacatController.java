@@ -30,6 +30,7 @@ import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.GetCatalogServiceParameters;
+import com.netflix.metacat.main.services.GetTableNamesServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.TableService;
@@ -681,6 +682,100 @@ public class MetacatController implements MetacatV1 {
                 // for aliases, this could've been set to the original name
                 tableDto.setName(qualifiedNameSupplier.get());
                 return tableDto;
+            }
+        );
+    }
+
+    @RequestMapping(
+        method = RequestMethod.GET,
+        path = "/catalog/{catalog-name}/table-names"
+    )
+    @ApiOperation(
+        value = "Filtered list of table names",
+        notes = "Filtered list of table names for the given catalog. The filter expression pattern depends on the "
+            + "catalog")
+    @ApiResponses(
+        {
+            @ApiResponse(
+                code = HttpURLConnection.HTTP_OK,
+                message = "List of table names is returned"
+            ),
+            @ApiResponse(
+                code = HttpURLConnection.HTTP_NOT_FOUND,
+                message = "The requested catalog cannot be located"
+            )
+        }
+    )
+    @Override
+    public List<QualifiedName> getTableNames(
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathVariable("catalog-name") final String catalogName,
+        @ApiParam(value = "filter expression")
+        @RequestParam(name = "filter") final String filter,
+        @ApiParam(value = "Size of the list")
+        @Nullable @RequestParam(name = "limit", required = false, defaultValue = "-1") final Integer limit) {
+        final Supplier<QualifiedName> qualifiedNameSupplier =
+            () -> QualifiedName.ofCatalog(catalogName);
+        final QualifiedName name = this.requestWrapper.qualifyName(qualifiedNameSupplier);
+        return this.requestWrapper.processRequest(
+            name,
+            "getTableNames",
+            () -> {
+                return this.tableService.getQualifiedNames(
+                    name,
+                    GetTableNamesServiceParameters.builder()
+                        .filter(filter)
+                        .limit(limit)
+                        .build()
+                );
+            }
+        );
+    }
+
+    @RequestMapping(
+        method = RequestMethod.GET,
+        path = "/catalog/{catalog-name}/database/{database-name}/table-names"
+    )
+    @ApiOperation(
+        value = "Filtered list of table names",
+        notes = "Filtered list of table names for the given database. The filter expression pattern depends on the "
+            + "catalog")
+    @ApiResponses(
+        {
+            @ApiResponse(
+                code = HttpURLConnection.HTTP_OK,
+                message = "List of table names is returned"
+            ),
+            @ApiResponse(
+                code = HttpURLConnection.HTTP_NOT_FOUND,
+                message = "The requested catalog cannot be located"
+            )
+        }
+    )
+    @Override
+    public List<QualifiedName> getTableNames(
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathVariable("catalog-name") final String catalogName,
+        @ApiParam(value = "The name of the database", required = true)
+        @PathVariable("database-name") final String databaseName,
+        @ApiParam(value = "filter expression")
+        @RequestParam(name = "filter") final String filter,
+        @ApiParam(value = "Size of the list")
+        @Nullable @RequestParam(name = "limit", required = false, defaultValue = "-1") final Integer limit) {
+        final Supplier<QualifiedName> qualifiedNameSupplier =
+            () -> QualifiedName.ofDatabase(catalogName, databaseName);
+        final QualifiedName name = this.requestWrapper.qualifyName(qualifiedNameSupplier);
+        return this.requestWrapper.processRequest(
+            name,
+            "getTableNames",
+            () -> {
+                return this.tableService.getQualifiedNames(
+                    name,
+                    GetTableNamesServiceParameters.builder()
+                        .filter(filter)
+                        .limit(limit)
+                        .build()
+                );
             }
         );
     }

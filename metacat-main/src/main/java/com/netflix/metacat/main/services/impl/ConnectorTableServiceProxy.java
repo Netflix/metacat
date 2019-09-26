@@ -26,6 +26,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
+import com.netflix.metacat.main.services.GetTableNamesServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
@@ -222,5 +223,19 @@ public class ConnectorTableServiceProxy {
         final ConnectorTableService service = connectorManager.getTableService(name);
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         return service.exists(connectorRequestContext, name);
+    }
+
+    /**
+     * Returns a filtered list of table names.
+     * @param name          catalog name
+     * @param parameters    service parameters
+     * @return list of table names
+     */
+    public List<QualifiedName> getQualifiedNames(final QualifiedName name,
+                                                 final GetTableNamesServiceParameters parameters) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final ConnectorTableService service = connectorManager.getTableService(name);
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
+        return service.getTableNames(connectorRequestContext, name, parameters.getFilter(), parameters.getLimit());
     }
 }

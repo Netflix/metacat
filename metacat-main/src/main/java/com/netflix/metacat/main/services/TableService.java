@@ -91,4 +91,12 @@ public interface TableService extends MetacatService<TableDto> {
      * @return Map of list of table names
      */
     Map<String, List<QualifiedName>> getQualifiedNames(List<String> uris, boolean prefixSearch);
+
+    /**
+     * Returns a list of qualified names of tables that matches the given filter.
+     * @param name          catalog name
+     * @param parameters    parameters used to get the table names
+     * @return list of table names
+     */
+    List<QualifiedName> getQualifiedNames(QualifiedName name, GetTableNamesServiceParameters parameters);
 }

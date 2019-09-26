@@ -385,4 +385,31 @@ class HiveConnectorTableSpec extends Specification {
         new MetaException()         | InvalidMetaException
         new NoSuchObjectException() | TableNotFoundException
     }
+
+    def "Test get table names"() {
+        def client = Mock(MetacatHiveClient)
+        def service = new HiveConnectorTableService("testhive", client, hiveConnectorDatabaseService, new HiveConnectorInfoConverter(new HiveTypeConverter()), connectorContext)
+        def names = ['1','2','3','4','5','6','7','8','9','10']
+        def dbNames = ['db1','db2','db3']
+        when:
+        def result = service.getTableNames(connectorRequestContext, QualifiedName.ofDatabase('testhive','db1'), null, 10)
+        then:
+        1 * client.getTableNames(_,_,_) >> names
+        result.size() == 10
+        result.get(0).toString() == 'testhive/db1/1'
+        when:
+        result = service.getTableNames(connectorRequestContext, QualifiedName.ofCatalog('testhive'), null, 10)
+        then:
+        1 * client.getAllDatabases() >> dbNames
+        1 * client.getTableNames(_,_,_) >> names
+        result.size() == 10
+        result.get(0).toString() == 'testhive/db1/1'
+        when:
+        result = service.getTableNames(connectorRequestContext, QualifiedName.ofCatalog('testhive'), null, 15)
+        then:
+        1 * client.getAllDatabases() >> dbNames
+        1 * client.getTableNames(_,_,15) >> names
+        1 * client.getTableNames(_,_,5) >> names.subList(0,5)
+        result.size() == 15
+    }
 }

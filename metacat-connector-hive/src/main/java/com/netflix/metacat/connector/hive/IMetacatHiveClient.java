@@ -91,6 +91,20 @@ public interface IMetacatHiveClient {
     }
 
     /**
+     * Get all tables.
+     *
+     * @param databaseName databasename
+     * @param filter       filter
+     * @param limit        list size
+     * @return list of table names
+     * @throws TException metaexception
+     */
+    default List<String> getTableNames(final String databaseName, final String filter, final int limit)
+        throws TException {
+        throw new UnsupportedOperationException(UNSUPPORTED_MESSAGE);
+    }
+
+    /**
      * Returns the table.
      *
      * @param databaseName databaseName
