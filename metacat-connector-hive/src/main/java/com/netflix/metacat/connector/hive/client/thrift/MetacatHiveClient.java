@@ -97,6 +97,17 @@ public class MetacatHiveClient implements IMetacatHiveClient {
         }
     }
 
+    /**
+     * {@inheritDoc}.
+     */
+    @Override
+    public List<String> getTableNames(final String databaseName, final String filter, final int limit)
+        throws TException {
+        try (HiveMetastoreClient client = createMetastoreClient()) {
+            return client.get_table_names_by_filter(databaseName, filter, (short) limit);
+        }
+    }
+
 
     /**
      * {@inheritDoc}.

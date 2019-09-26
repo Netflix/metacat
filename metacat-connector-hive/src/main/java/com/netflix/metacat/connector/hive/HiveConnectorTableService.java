@@ -59,6 +59,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Hive base connector base service impl.
@@ -489,5 +490,39 @@ public class HiveConnectorTableService implements ConnectorTableService {
         }
         throw new MetaException(
             String.format("Output format %s with SerDe %s is not supported", outputFormat, serializationLib));
+    }
+
+    @Override
+    public List<QualifiedName> getTableNames(
+        final ConnectorRequestContext context,
+        final QualifiedName name,
+        final String filter,
+        @Nullable final Integer limit) {
+        try {
+            if (name.isDatabaseDefinition()) {
+                return metacatHiveClient.getTableNames(name.getDatabaseName(), filter, limit == null ? -1 : limit)
+                    .stream()
+                    .map(n -> QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), n))
+                    .collect(Collectors.toList());
+            } else {
+                int limitSize = limit == null || limit < 0 ? Integer.MAX_VALUE : limit;
+                final List<String> databaseNames = metacatHiveClient.getAllDatabases();
+                final List<QualifiedName> result = Lists.newArrayList();
+                for (int i = 0; i < databaseNames.size() && limitSize > 0; i++) {
+                    final String databaseName = databaseNames.get(i);
+                    final List<String> tableNames =
+                        metacatHiveClient.getTableNames(databaseName, filter, limitSize);
+                    limitSize = limitSize - tableNames.size();
+                    result.addAll(tableNames.stream()
+                        .map(n -> QualifiedName.ofTable(name.getCatalogName(), databaseName, n))
+                        .collect(Collectors.toList()));
+                }
+                return result;
+            }
+        } catch (TException e) {
+            final String message = String.format("Failed getting the table names for database %s", name);
+            log.error(message);
+            throw new ConnectorException(message);
+        }
     }
 }

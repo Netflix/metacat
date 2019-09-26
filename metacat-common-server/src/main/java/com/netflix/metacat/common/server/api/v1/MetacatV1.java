@@ -17,12 +17,14 @@
  */
 package com.netflix.metacat.common.server.api.v1;
 
+import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.DatabaseCreateRequestDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.TableDto;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 /**
  * Interface for methods needed by Thrift.
@@ -77,6 +79,34 @@ public interface MetacatV1 {
         final boolean includeDefinitionMetadata,
         final boolean includeDataMetadata,
         final boolean includeInfoDetails
+    );
+
+    /**
+     * Returns a filtered list of table names.
+     * @param catalogName  catalog name
+     * @param filter       filter expression
+     * @param limit        list size
+     * @return list of table names
+     */
+    List<QualifiedName> getTableNames(
+        final String catalogName,
+        final String filter,
+        final Integer limit
+    );
+
+    /**
+     * Returns a filtered list of table names.
+     * @param catalogName  catalog name
+     * @param databaseName database name
+     * @param filter       filter expression
+     * @param limit        list size
+     * @return list of table names
+     */
+    List<QualifiedName> getTableNames(
+        final String catalogName,
+        final String databaseName,
+        final String filter,
+        final Integer limit
     );
 
     /**

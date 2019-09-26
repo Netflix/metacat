@@ -41,6 +41,8 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.stream.IntStream
+
 /**
  * MetacatSmokeSpec.
  * @author amajumdar
@@ -85,6 +87,10 @@ class MetacatSmokeSpec extends Specification {
     }
 
     static createTable(String catalogName, String databaseName, String tableName, String externalValue) {
+        createTable(catalogName, databaseName, tableName, ['EXTERNAL':externalValue])
+    }
+
+    static createTable(String catalogName, String databaseName, String tableName, Map<String, String> metadata) {
         def catalog = api.getCatalog(catalogName)
         if (!catalog.databases.contains(databaseName)) {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
@@ -106,8 +112,8 @@ class MetacatSmokeSpec extends Specification {
             } else {
                 newTable = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, owner, uri)
             }
-            if (externalValue != null) {
-                newTable.getMetadata() == null? newTable.setMetadata(['EXTERNAL': externalValue]): newTable.getMetadata().put('EXTERNAL', externalValue)
+            if (metadata != null) {
+                newTable.getMetadata() == null? newTable.setMetadata(metadata): newTable.getMetadata().putAll(metadata)
             }
             api.createTable(catalogName, databaseName, tableName, newTable)
         }
@@ -341,6 +347,57 @@ class MetacatSmokeSpec extends Specification {
         where:
         catalogName                     | databaseName | tableName
         'embedded-fast-hive-metastore'  | 'fsmoke_acl' | 'test_create_table'
+    }
+
+    def "Test get table names"() {
+        given:
+        def catalogName = 'embedded-fast-hive-metastore'
+        def databaseName = 'fsmoke_db_names'
+        def database1Name = 'fsmoke_db1_names'
+        def database2Name = 'fsmoke_db2_names'
+        def tableName = 'fsmoke_table_names'
+        def ownerFilter = 'hive_filter_field_owner__= "amajumdar"'
+        def paramFilter = 'hive_filter_field_params__type = "ice"'
+        def ownerParamFilter = 'hive_filter_field_params__type = "ice" and hive_filter_field_owner__= "amajumdar"'
+        IntStream.range(0,15).forEach{ i -> createTable(catalogName, databaseName, tableName + i)}
+        IntStream.range(0,25).forEach{ i -> createTable(catalogName, database1Name, tableName + i)}
+        IntStream.range(0,10).forEach{ i -> createTable(catalogName, database2Name, tableName + i, ['type':'ice'])}
+        when:
+        api.getTableNames(catalogName, null, 10)
+        then:
+        thrown(MetacatBadRequestException)
+        when:
+        def result = api.getTableNames(catalogName, ownerFilter, 10)
+        then:
+        result.size() == 10
+        when:
+        result = api.getTableNames(catalogName, ownerFilter, 100)
+        then:
+        result.size() >= 50
+        when:
+        result = api.getTableNames(catalogName, databaseName, ownerFilter, 10)
+        then:
+        result.size() == 10
+        when:
+        result = api.getTableNames(catalogName, databaseName, ownerFilter, 100)
+        then:
+        result.size() == 15
+        when:
+        result = api.getTableNames(catalogName, database2Name, paramFilter, 100)
+        then:
+        result.size() == 10
+        when:
+        result = api.getTableNames(catalogName, database2Name, ownerParamFilter, 100)
+        then:
+        result.size() == 10
+        when:
+        result = api.getTableNames(catalogName, ownerParamFilter, 100)
+        then:
+        result.size() == 10
+        cleanup:
+        IntStream.range(0,15).forEach{ i -> api.deleteTable(catalogName, databaseName, tableName + i)}
+        IntStream.range(0,25).forEach{ i -> api.deleteTable(catalogName, database1Name, tableName + i)}
+        IntStream.range(0,10).forEach{ i -> api.deleteTable(catalogName, database2Name, tableName + i)}
     }
 
     @Unroll

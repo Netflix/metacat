@@ -1512,18 +1512,8 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         throws TException {
         return requestWrapper("get_table_names_by_filter", new Object[]{dbname, filter, maxTables}, () -> {
             final String databaseName = normalizeIdentifier(dbname);
-
-            final List<String> tables =
-                v1.getDatabase(catalogName, databaseName, false, true).getTables();
-            // TODO apply filter
-            if (!"hive_filter_field_params__presto_view = \"true\"".equals(filter)) {
-                throw new IllegalArgumentException("Unexpected filter: '" + filter + "'");
-            }
-            if (maxTables <= 0 || maxTables >= tables.size()) {
-                return tables;
-            } else {
-                return tables.subList(0, maxTables);
-            }
+            return v1.getTableNames(catalogName, databaseName, filter, (int) maxTables).stream()
+                .map(QualifiedName::getTableName).collect(Collectors.toList());
         });
     }
 

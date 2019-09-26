@@ -26,6 +26,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
@@ -48,6 +49,7 @@ import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.services.DatabaseService;
+import com.netflix.metacat.main.services.GetTableNamesServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.spectator.api.Registry;
@@ -593,6 +595,15 @@ public class TableServiceImpl implements TableService {
     @Override
     public Map<String, List<QualifiedName>> getQualifiedNames(final List<String> uris, final boolean prefixSearch) {
         return connectorTableServiceProxy.getQualifiedNames(uris, prefixSearch);
+    }
+
+    @Override
+    public List<QualifiedName> getQualifiedNames(final QualifiedName name,
+                                                 final GetTableNamesServiceParameters parameters) {
+        if (Strings.isNullOrEmpty(parameters.getFilter())) {
+            throw new MetacatBadRequestException("Filter expression cannot be empty");
+        }
+        return connectorTableServiceProxy.getQualifiedNames(name, parameters);
     }
 
     /**

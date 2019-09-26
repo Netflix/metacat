@@ -18,6 +18,7 @@
 package com.netflix.metacat.client.api;
 
 import com.netflix.metacat.common.NameDateDto;
+import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.CatalogMappingDto;
 import com.netflix.metacat.common.dto.CreateCatalogDto;
@@ -301,6 +302,47 @@ public interface MetacatV1 {
         @DefaultValue("false")
         @QueryParam("includeInfoDetails")
             Boolean includeInfoDetails
+    );
+
+    /**
+     * Returns a filtered list of table names.
+     * @param catalogName  catalog name
+     * @param filter       filter expression
+     * @param limit        list size
+     * @return list of table names
+     */
+    @GET
+    @Path("catalog/{catalog-name}/table-names")
+    @Produces(MediaType.APPLICATION_JSON)
+    List<QualifiedName> getTableNames(
+        @PathParam("catalog-name")
+            final String catalogName,
+        @QueryParam("filter")
+            final String filter,
+        @QueryParam("limit")
+            Integer limit
+    );
+
+    /**
+     * Returns a filtered list of table names.
+     * @param catalogName  catalog name
+     * @param databaseName database name
+     * @param filter       filter expression
+     * @param limit        list size
+     * @return list of table names
+     */
+    @GET
+    @Path("catalog/{catalog-name}/database/{database-name}/table-names")
+    @Produces(MediaType.APPLICATION_JSON)
+    List<QualifiedName> getTableNames(
+        @PathParam("catalog-name")
+        final String catalogName,
+        @PathParam("database-name")
+        final String databaseName,
+        @QueryParam("filter")
+        final String filter,
+        @QueryParam("limit")
+            Integer limit
     );
 
     /**
