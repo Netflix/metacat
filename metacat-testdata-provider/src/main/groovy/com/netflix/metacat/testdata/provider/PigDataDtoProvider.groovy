@@ -242,6 +242,13 @@ class PigDataDtoProvider {
     }
 
     def static getDefinitionMetadata(String owner){
-        return metacatJson.parseJsonObject('{"hive": {"cleanup": true},"tags":["unused"],"owner": {"team": "Cloud Platform Engineering","userId":"' + owner + '","name":"' + owner + '"}}')
+        def s = new StringBuilder('{"hive": {"cleanup": true},"tags":["unused"],"owner": {"team": "Cloud Platform Engineering","userId":')
+        if (owner == null) {
+            s.append('null')
+        } else {
+            s.append('"').append(owner).append('"')
+        }
+        s.append(',"name":"' + owner + '"}}')
+        return metacatJson.parseJsonObject(s.toString())
     }
 }

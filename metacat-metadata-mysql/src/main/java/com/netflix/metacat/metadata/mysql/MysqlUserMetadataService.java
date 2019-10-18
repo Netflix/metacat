@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.metadata.mysql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -65,6 +66,8 @@ import java.util.stream.Collectors;
 @SuppressFBWarnings
 @Transactional("metadataTxManager")
 public class MysqlUserMetadataService extends BaseUserMetadataService {
+    private static final String NAME_OWNER = "owner";
+    private static final String NAME_USERID = "userId";
     private final MetacatJson metacatJson;
     private final Config config;
     private JdbcTemplate jdbcTemplate;
@@ -821,6 +824,20 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 String.format("Failed to get deleted data metadata uris deleted prior to %s", deletedPriorTo);
             log.error(message, e);
             throw new UserMetadataServiceException(message, e);
+        }
+    }
+
+    @Override
+    public void populateOwnerIfMissing(final HasDefinitionMetadata holder, final String owner) {
+        ObjectNode definitionMetadata = holder.getDefinitionMetadata();
+        if (definitionMetadata == null) {
+            definitionMetadata = metacatJson.emptyObjectNode();
+            holder.setDefinitionMetadata(definitionMetadata);
+        }
+        final ObjectNode ownerNode = definitionMetadata.with(NAME_OWNER);
+        final JsonNode userId = ownerNode.get(NAME_USERID);
+        if (userId == null || Strings.isNullOrEmpty(userId.textValue())) {
+            ownerNode.put(NAME_USERID, owner);
         }
     }
 

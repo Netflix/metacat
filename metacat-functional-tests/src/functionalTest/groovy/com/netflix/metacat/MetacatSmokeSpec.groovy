@@ -269,6 +269,41 @@ class MetacatSmokeSpec extends Specification {
         'invalid-catalog'               | 'smoke_db1'  | 'z'                 | true   | false   | MetacatNotFoundException.class
     }
 
+    def testCreateTableWithOwner() {
+        given:
+        def catalogName = 'embedded-fast-hive-metastore'
+        def databaseName = 'fsmoke_db1_owner'
+        try {
+            api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+        } catch (Exception ignored) {
+        }
+        when:
+        def tableName ='test_create_table'
+        def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
+        def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'amajumdar', uri)
+        api.createTable(catalogName, databaseName, tableName, tableDto)
+        then:
+        api.getTable(catalogName, databaseName, tableName, false, true, false).definitionMetadata.at('/owner/userId').textValue() == 'amajumdar'
+        api.deleteTable(catalogName, databaseName, tableName)
+        when:
+        tableName ='test_create_table1'
+        uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
+        tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, null, uri)
+        api.createTable(catalogName, databaseName, tableName, tableDto)
+        then:
+        api.getTable(catalogName, databaseName, tableName, false, true, false).definitionMetadata.at('/owner/userId').textValue() == 'metacat-test'
+        api.deleteTable(catalogName, databaseName, tableName)
+        when:
+        tableName ='test_create_table2'
+        uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
+        tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'amajumdar', uri)
+        tableDto.getSerde().setOwner('amajumdar1')
+        api.createTable(catalogName, databaseName, tableName, tableDto)
+        then:
+        api.getTable(catalogName, databaseName, tableName, false, true, false).definitionMetadata.at('/owner/userId').textValue() == 'amajumdar'
+        api.deleteTable(catalogName, databaseName, tableName)
+    }
+
     def "Test create/delete table for #catalogName/#databaseName/#tableName not delete usermetadata"() {
         given:
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
