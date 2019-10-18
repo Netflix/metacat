@@ -184,7 +184,9 @@ public class IcebergTableHandler {
     public boolean update(final TableInfo tableInfo) {
         boolean result = false;
         final List<FieldInfo> fields = tableInfo.getFields();
-        if (fields != null && !fields.isEmpty()) {
+        if (fields != null && !fields.isEmpty()
+            // This parameter is only sent during data change and not during schema change.
+            && Strings.isNullOrEmpty(tableInfo.getMetadata().get(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION))) {
             final QualifiedName tableName = tableInfo.getName();
             final String tableMetadataLocation = HiveTableUtil.getIcebergTableMetadataLocation(tableInfo);
             if (Strings.isNullOrEmpty(tableMetadataLocation)) {
