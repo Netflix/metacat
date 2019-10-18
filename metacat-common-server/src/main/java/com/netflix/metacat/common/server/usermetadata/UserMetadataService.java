@@ -20,6 +20,7 @@ package com.netflix.metacat.common.server.usermetadata;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
+import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.HasMetadata;
 
 import javax.annotation.Nonnull;
@@ -327,5 +328,14 @@ public interface UserMetadataService {
      */
     default List<String> getDeletedDataMetadataUris(Date deletedPriorTo, Integer offset, Integer limit) {
         return Collections.emptyList();
+    }
+
+    /**
+     * Populate the owner in definitionMetadata, if missing, with the provider owner.
+     *
+     * @param holder definition metadata holder
+     * @param owner owner name.
+     */
+    default void populateOwnerIfMissing(HasDefinitionMetadata holder, String owner) {
     }
 }

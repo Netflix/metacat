@@ -445,7 +445,7 @@ class MetacatFunctionalSpec extends Specification {
         catalog << TestCatalogs.getCanCreateTable(TestCatalogs.ALL)
     }
 
-    def 'createTable: inside #name'() {
+    def 'createTable: inside #catalog'() {
         given:
         def tableName = "table_$BATCH_ID".toString()
         def now = new Date()
@@ -453,6 +453,7 @@ class MetacatFunctionalSpec extends Specification {
 
         def dataUri = "file:/tmp/${catalog.name}/${databaseName}/${tableName}".toString()
         def definitionMetadata = metacatJson.parseJsonObject('{"objectField": {}}')
+        def responseDefinitionMetadata = metacatJson.parseJsonObject('{"objectField":{},"owner":{"userId":"metacat-test"}}')
         def dataMetadata = metacatJson.emptyObjectNode().put('data_field', 4)
         def dto = new TableDto(
             name: QualifiedName.ofTable(catalog.name, databaseName, tableName),
@@ -553,7 +554,7 @@ class MetacatFunctionalSpec extends Specification {
         table.name.catalogName == catalog.name
         table.name.databaseName == databaseName
         table.name.tableName == tableName
-        table.definitionMetadata == definitionMetadata
+        table.definitionMetadata == responseDefinitionMetadata
         table.dataMetadata == dataMetadata
         table.fields.find { it.name == 'field1' }.partition_key
         !table.fields.find { it.name == 'field2' }.partition_key

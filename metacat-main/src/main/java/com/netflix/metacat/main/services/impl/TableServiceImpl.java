@@ -151,15 +151,20 @@ public class TableServiceImpl implements TableService {
     }
 
     private void setOwnerIfNull(final TableDto tableDto, final String user) {
-        if (!Strings.isNullOrEmpty(user)) {
-            StorageDto serde = tableDto.getSerde();
-            if (serde == null) {
-                serde = new StorageDto();
-                tableDto.setSerde(serde);
-            }
-            if (Strings.isNullOrEmpty(serde.getOwner())) {
-                serde.setOwner(user);
-            }
+        String owner = user;
+        StorageDto serde = tableDto.getSerde();
+        if (serde == null) {
+            serde = new StorageDto();
+            tableDto.setSerde(serde);
+        }
+        final String serdeOwner = serde.getOwner();
+        if (Strings.isNullOrEmpty(serdeOwner)) {
+            serde.setOwner(user);
+        } else {
+            owner = serdeOwner;
+        }
+        if (!Strings.isNullOrEmpty(owner)) {
+            userMetadataService.populateOwnerIfMissing(tableDto, owner);
         }
     }
 
