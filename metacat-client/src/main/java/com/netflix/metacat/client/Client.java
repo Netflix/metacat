@@ -34,7 +34,6 @@ import com.netflix.metacat.common.json.MetacatJsonLocator;
 import feign.Feign;
 import feign.Request;
 import feign.RequestInterceptor;
-import feign.RequestTemplate;
 import feign.Retryer;
 import feign.jaxrs.JAXRSContract;
 import feign.slf4j.Slf4jLogger;
@@ -302,16 +301,13 @@ public final class Client {
             if (retryer == null) {
                 retryer = new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0);
             }
-            final RequestInterceptor interceptor = new RequestInterceptor() {
-                @Override
-                public void apply(final RequestTemplate template) {
-                    if (requestInterceptor != null) {
-                        requestInterceptor.apply(template);
-                    }
-                    template.header(MetacatRequestContext.HEADER_KEY_USER_NAME, userName);
-                    template.header(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME, clientAppName);
-                    template.header(MetacatRequestContext.HEADER_KEY_JOB_ID, jobId);
-                    template.header(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT, dataTypeContext);
+            final RequestInterceptor interceptor = template -> {
+                template.header(MetacatRequestContext.HEADER_KEY_USER_NAME, userName);
+                template.header(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME, clientAppName);
+                template.header(MetacatRequestContext.HEADER_KEY_JOB_ID, jobId);
+                template.header(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT, dataTypeContext);
+                if (requestInterceptor != null) {
+                    requestInterceptor.apply(template);
                 }
             };
             if (requestOptions == null) {
