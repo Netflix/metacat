@@ -42,12 +42,14 @@ import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
 import com.netflix.metacat.common.server.usermetadata.AuthorizationService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.MetacatOperation;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
+import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.GetTableNamesServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
@@ -68,6 +70,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TableServiceImpl implements TableService {
     private static final String NAME_TAGS = "tags";
+    private final ConnectorManager connectorManager;
     private final DatabaseService databaseService;
     private final TagService tagService;
     private final UserMetadataService userMetadataService;
@@ -81,6 +84,7 @@ public class TableServiceImpl implements TableService {
     /**
      * Constructor.
      *
+     * @param connectorManager Connector manager to use
      * @param connectorTableServiceProxy connector table service proxy
      * @param databaseService            database service
      * @param tagService                 tag service
@@ -92,6 +96,7 @@ public class TableServiceImpl implements TableService {
      * @param authorizationService       authorization service
      */
     public TableServiceImpl(
+        final ConnectorManager connectorManager,
         final ConnectorTableServiceProxy connectorTableServiceProxy,
         final DatabaseService databaseService,
         final TagService tagService,
@@ -102,6 +107,7 @@ public class TableServiceImpl implements TableService {
         final ConverterUtil converterUtil,
         final AuthorizationService authorizationService
     ) {
+        this.connectorManager = connectorManager;
         this.connectorTableServiceProxy = connectorTableServiceProxy;
         this.databaseService = databaseService;
         this.tagService = tagService;
@@ -269,14 +275,15 @@ public class TableServiceImpl implements TableService {
         validate(name);
         TableDto tableInternal = null;
         final TableDto table;
+        final MetacatCatalogConfig catalogConfig = connectorManager.getCatalogConfig(name);
         if (getTableServiceParameters.isIncludeInfo()
-            || (getTableServiceParameters.isIncludeDefinitionMetadata()
+            || (getTableServiceParameters.isIncludeDefinitionMetadata() && catalogConfig.isInterceptorEnabled()
             && !getTableServiceParameters.isDisableOnReadMetadataIntercetor())) {
             try {
                 tableInternal = converterUtil.toTableDto(connectorTableServiceProxy
-                    .get(name,
-                        getTableServiceParameters,
-                        getTableServiceParameters.isUseCache() && config.isCacheEnabled()));
+                    .get(name, getTableServiceParameters,
+                        getTableServiceParameters.isUseCache() && config.isCacheEnabled()
+                            && catalogConfig.isCacheEnabled()));
             } catch (NotFoundException ignored) {
                 return Optional.empty();
             }
@@ -295,7 +302,7 @@ public class TableServiceImpl implements TableService {
             definitionMetadata.ifPresent(table::setDefinitionMetadata);
         }
 
-        if (getTableServiceParameters.isIncludeDataMetadata()) {
+        if (getTableServiceParameters.isIncludeDataMetadata() && catalogConfig.isHasDataExternal()) {
             TableDto dto = table;
             if (tableInternal == null && !getTableServiceParameters.isIncludeInfo()) {
                 try {

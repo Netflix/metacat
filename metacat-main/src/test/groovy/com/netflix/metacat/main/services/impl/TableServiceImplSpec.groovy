@@ -31,6 +31,7 @@ import com.netflix.metacat.common.server.events.MetacatEventBus
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent
 import com.netflix.metacat.common.server.properties.Config
+import com.netflix.metacat.common.server.spi.MetacatCatalogConfig
 import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService
 import com.netflix.metacat.common.server.usermetadata.TagService
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
@@ -55,6 +56,8 @@ class TableServiceImplSpec extends Specification {
     def usermetadataService = Mock(UserMetadataService)
     def eventBus = Mock(MetacatEventBus)
     def converterUtil = Mock(ConverterUtil)
+    def catalogConfig = MetacatCatalogConfig.createFromMapAndRemoveProperties('hive', 'a', ['metacat.interceptor.enabled': 'true', 'metacat.has-data-external':'true'])
+    def catalogConfigFalse = MetacatCatalogConfig.createFromMapAndRemoveProperties('hive', 'a', ['metacat.interceptor.enabled': 'false', 'metacat.has-data-external':'false'])
     def registry = new NoopRegistry()
     def config = Mock(Config)
     def tableDto = DataDtoProvider.getTable('a', 'b', 'c', "amajumdar", "s3:/a/b")
@@ -68,6 +71,7 @@ class TableServiceImplSpec extends Specification {
         config.getMetacatDeleteAcl() >> new HashMap<QualifiedName, Set<String>>()
         config.isAuthorizationEnabled() >> true
         connectorManager.getTableService(_) >> connectorTableService
+        connectorManager.getCatalogConfig(_) >> catalogConfig
         converterUtil.toTableDto(_) >> tableDto
         converterUtil.toConnectorContext(_) >> new ConnectorRequestContext()
         usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
@@ -75,7 +79,7 @@ class TableServiceImplSpec extends Specification {
         usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
         connectorTableServiceProxy = new ConnectorTableServiceProxy(connectorManager, converterUtil)
         authorizationService = new DefaultAuthorizationService(config)
-        service = new TableServiceImpl(connectorTableServiceProxy, databaseService, tagService,
+        service = new TableServiceImpl(connectorManager, connectorTableServiceProxy, databaseService, tagService,
             usermetadataService, eventBus, registry, config, converterUtil, authorizationService)
     }
 
@@ -87,6 +91,7 @@ class TableServiceImplSpec extends Specification {
             .includeDefinitionMetadata(true)
             .build())
         then:
+        1 * connectorManager.getCatalogConfig(_) >> catalogConfig
         1 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
         1 * usermetadataService.getDataMetadata(_) >> Optional.empty()
         0 * usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
@@ -98,10 +103,21 @@ class TableServiceImplSpec extends Specification {
             .includeDefinitionMetadata(true)
             .build())
         then:
+        1 * connectorManager.getCatalogConfig(_) >> catalogConfig
         1 * usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
         1 * usermetadataService.getDataMetadata(_) >> Optional.empty()
         0 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
-
+        when:
+        service.get(name,GetTableServiceParameters.builder().
+            disableOnReadMetadataIntercetor(true)
+            .includeDataMetadata(true)
+            .includeDefinitionMetadata(true)
+            .build())
+        then:
+        1 * connectorManager.getCatalogConfig(_) >> catalogConfigFalse
+        1 * usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
+        0 * usermetadataService.getDataMetadata(_)
+        0 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
     }
 
     def testIsTableInfoProvided() {

@@ -37,6 +37,9 @@ public final class MetacatCatalogConfig {
     private final String type;
     private final String catalogName;
     private final ClusterInfo clusterInfo;
+    private boolean cacheEnabled;
+    private boolean interceptorEnabled;
+    private boolean hasDataExternal;
 
     private MetacatCatalogConfig(
         final String type,
@@ -45,7 +48,10 @@ public final class MetacatCatalogConfig {
         final boolean includeViewsWithTables,
         final List<String> schemaWhitelist,
         final List<String> schemaBlacklist,
-        final int thriftPort) {
+        final int thriftPort,
+        final boolean cacheEnabled,
+        final boolean interceptorEnabled,
+        final boolean hasDataExternal) {
         this.type = type;
         this.catalogName = catalogName;
         this.clusterInfo = clusterInfo;
@@ -53,6 +59,9 @@ public final class MetacatCatalogConfig {
         this.schemaBlacklist = schemaBlacklist;
         this.schemaWhitelist = schemaWhitelist;
         this.thriftPort = thriftPort;
+        this.cacheEnabled = cacheEnabled;
+        this.interceptorEnabled = interceptorEnabled;
+        this.hasDataExternal = hasDataExternal;
     }
 
     /**
@@ -84,6 +93,15 @@ public final class MetacatCatalogConfig {
         if (properties.containsKey(Keys.THRIFT_PORT)) {
             thriftPort = Integer.parseInt(properties.remove(Keys.THRIFT_PORT));
         }
+        // Cache properties
+        final boolean cacheEnabled =
+            Boolean.parseBoolean(properties.getOrDefault(Keys.CATALOG_CACHE_ENABLED, "false"));
+        // Interceptor properties
+        final boolean interceptorEnabled =
+            Boolean.parseBoolean(properties.getOrDefault(Keys.CATALOG_INTERCEPTOR_ENABLED, "true"));
+        // Has data external
+        final boolean hasDataExternal =
+            Boolean.parseBoolean(properties.getOrDefault(Keys.CATALOG_HAS_DATA_EXTERNAL, "false"));
         // Cluster information
         final String clusterName = properties.get(Keys.CLUSTER_NAME);
         final String clusterAccount = properties.get(Keys.CLUSTER_ACCOUNT);
@@ -94,7 +112,7 @@ public final class MetacatCatalogConfig {
             new ClusterInfo(clusterName, type, clusterAccount, clusterAccountId, clusterEnv, clusterRegion);
 
         return new MetacatCatalogConfig(catalogType, catalogName, clusterInfo, includeViewsWithTables, schemaWhitelist,
-            schemaBlacklist, thriftPort);
+            schemaBlacklist, thriftPort, cacheEnabled, interceptorEnabled, hasDataExternal);
     }
 
     public boolean isThriftInterfaceRequested() {
@@ -136,6 +154,18 @@ public final class MetacatCatalogConfig {
          * Catalog type.
          */
         public static final String CATALOG_TYPE = "metacat.type";
+        /**
+         * True, if catalog cache is enabled.
+         */
+        public static final String CATALOG_CACHE_ENABLED = "metacat.cache.enabled";
+        /**
+         * True, if catalog interceptor needs to be enabled.
+         */
+        public static final String CATALOG_INTERCEPTOR_ENABLED = "metacat.interceptor.enabled";
+        /**
+         * True, if catalog stores data externally. Ex: Hive.
+         */
+        public static final String CATALOG_HAS_DATA_EXTERNAL = "metacat.has-data-external";
         /**
          * List views with tables.
          */

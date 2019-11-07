@@ -174,6 +174,7 @@ public class ServicesConfig {
     /**
      * The table service bean.
      *
+     * @param connectorManager Connector manager to use
      * @param connectorTableServiceProxy connector table service proxy
      * @param databaseService            database service
      * @param tagService                 tag service
@@ -187,6 +188,7 @@ public class ServicesConfig {
      */
     @Bean
     public TableService tableService(
+        final ConnectorManager connectorManager,
         final ConnectorTableServiceProxy connectorTableServiceProxy,
         final DatabaseService databaseService,
         final TagService tagService,
@@ -198,6 +200,7 @@ public class ServicesConfig {
         final AuthorizationService authorizationService
     ) {
         return new TableServiceImpl(
+            connectorManager,
             connectorTableServiceProxy,
             databaseService,
             tagService,
