@@ -415,20 +415,20 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @SuppressWarnings("checkstyle:methodname")
     private Map<String, ObjectNode> _getNonPartitionDefinitionMetadataMap(final List<QualifiedName> names) {
         final List<List<QualifiedName>> parts = Lists.partition(names, config.getUserMetadataMaxInClauseItems());
-        return parts.stream()
+        return parts.parallelStream()
             .map(keys -> _getMetadataMap(keys, SQL.GET_DEFINITION_METADATAS))
             .flatMap(it -> it.entrySet().stream())
-            .collect(Collectors.toMap(it -> QualifiedName.fromString(it.getKey()).toString(),
+            .collect(Collectors.toConcurrentMap(it -> QualifiedName.fromString(it.getKey()).toString(),
                 Map.Entry::getValue));
     }
 
     @SuppressWarnings("checkstyle:methodname")
     private Map<String, ObjectNode> _getPartitionDefinitionMetadata(final List<QualifiedName> names) {
         final List<List<QualifiedName>> parts = Lists.partition(names, config.getUserMetadataMaxInClauseItems());
-        return parts.stream()
+        return parts.parallelStream()
             .map(keys -> _getMetadataMap(keys, SQL.GET_PARTITION_DEFINITION_METADATAS))
             .flatMap(it -> it.entrySet().stream())
-            .collect(Collectors.toMap(it -> QualifiedName.fromString(it.getKey()).toString(),
+            .collect(Collectors.toConcurrentMap(it -> QualifiedName.fromString(it.getKey()).toString(),
                 Map.Entry::getValue));
     }
 
