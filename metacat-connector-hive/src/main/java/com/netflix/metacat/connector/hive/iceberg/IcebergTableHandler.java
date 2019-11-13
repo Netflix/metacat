@@ -36,7 +36,6 @@ import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.metacat.connector.hive.util.IcebergFilterGenerator;
 import com.netflix.servo.util.VisibleForTesting;
 import com.netflix.spectator.api.Registry;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.iceberg.BaseMetastoreCatalog;
@@ -218,7 +217,7 @@ public class IcebergTableHandler {
             }
             if (result) {
                 updateSchema.commit();
-                final String newTableMetadataLocation = icebergMetastoreTables.getTableOps().getLocation();
+                final String newTableMetadataLocation = icebergMetastoreTables.getTableOps().currentMetadataLocation();
                 if (!tableMetadataLocation.equalsIgnoreCase(newTableMetadataLocation)) {
                     tableInfo.getMetadata().put(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION, tableMetadataLocation);
                     tableInfo.getMetadata().put(DirectSqlTable.PARAM_METADATA_LOCATION,
@@ -340,7 +339,6 @@ public class IcebergTableHandler {
      * Read only operations.
      */
     private final class IcebergTableOps extends BaseMetastoreTableOperations {
-        @Getter
         private String location;
 
         IcebergTableOps(final String location) {
@@ -361,6 +359,11 @@ public class IcebergTableHandler {
         }
 
         @Override
+        public String currentMetadataLocation() {
+            return location;
+        }
+
+        @Override
         public TableMetadata current() {
             return super.current();
         }
@@ -369,6 +372,7 @@ public class IcebergTableHandler {
         public void commit(final TableMetadata base, final TableMetadata metadata) {
             if (!base.equals(metadata)) {
                 location = writeNewMetadata(metadata, currentVersion() + 1);
+                this.requestRefresh();
             }
         }
     }
