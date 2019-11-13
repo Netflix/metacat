@@ -16,7 +16,7 @@
 package com.netflix.metacat.connector.hive.sql;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.netflix.iceberg.ScanSummary;
+import org.apache.iceberg.ScanSummary;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
@@ -357,7 +357,7 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
         final TableInfo tableInfo,
         final PartitionListRequest partitionsRequest) {
         final QualifiedName tableName = tableInfo.getName();
-        final com.netflix.iceberg.Table icebergTable = this.icebergTableHandler.getIcebergTable(tableName,
+        final org.apache.iceberg.Table icebergTable = this.icebergTableHandler.getIcebergTable(tableName,
             HiveTableUtil.getIcebergTableMetadataLocation(tableInfo), false).getTable();
         final Pageable pageable = partitionsRequest.getPageable();
         final Map<String, ScanSummary.PartitionMetrics> partitionMap

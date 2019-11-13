@@ -15,9 +15,6 @@ package com.netflix.metacat.connector.hive.converters;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.netflix.iceberg.PartitionField;
-import com.netflix.iceberg.Schema;
-import com.netflix.iceberg.types.Types;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.type.BaseType;
@@ -48,6 +45,9 @@ import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
+import org.apache.iceberg.PartitionField;
+import org.apache.iceberg.Schema;
+import org.apache.iceberg.types.Types;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -138,7 +138,7 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
      * @param type iceberg type.
      * @return hive type string.
      */
-    public static String fromIcebergToHiveType(final com.netflix.iceberg.types.Type type) {
+    public static String fromIcebergToHiveType(final org.apache.iceberg.types.Type type) {
         switch (type.typeId()) {
             case BOOLEAN:
                 return serdeConstants.BOOLEAN_TYPE_NAME;

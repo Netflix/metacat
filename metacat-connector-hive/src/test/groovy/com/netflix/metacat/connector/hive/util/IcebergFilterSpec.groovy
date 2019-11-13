@@ -18,12 +18,12 @@
 package com.netflix.metacat.connector.hive.util
 
 import com.google.common.collect.ImmutableMap
-import com.netflix.iceberg.ScanSummary
-import com.netflix.iceberg.Schema
-import com.netflix.iceberg.Table
-import com.netflix.iceberg.expressions.Expression
-import com.netflix.iceberg.types.Type
-import com.netflix.iceberg.types.Types
+import org.apache.iceberg.ScanSummary
+import org.apache.iceberg.Schema
+import org.apache.iceberg.Table
+import org.apache.iceberg.expressions.Expression
+import org.apache.iceberg.types.Type
+import org.apache.iceberg.types.Types
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest

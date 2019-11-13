@@ -31,9 +31,7 @@ dependencies {
     }
 
     compile("commons-dbutils:commons-dbutils")
-    compile('com.github.Netflix.iceberg:iceberg-common')
-    compile('com.github.Netflix.iceberg:iceberg-core')
-    compile('com.github.Netflix.iceberg:iceberg-api')
+    compile("org.apache.iceberg:iceberg-spark-runtime")
     /*******************************
      * Provided Dependencies
      *******************************/

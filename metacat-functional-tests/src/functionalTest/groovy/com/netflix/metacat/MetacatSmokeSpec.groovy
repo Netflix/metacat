@@ -518,14 +518,7 @@ class MetacatSmokeSpec extends Specification {
         api.updateTable(catalogName, databaseName, tableName, tableDto)
         then:
         thrown(MetacatPreconditionFailedException)
-        when:
-        updatedTable = api.getTable(catalogName, databaseName, tableName, true, false, false)
-        updatedTable.getFields().get(0).setComment('new comments')
-        api.updateTable(catalogName, databaseName, tableName, updatedTable)
-        updatedTable = api.getTable(catalogName, databaseName, tableName, true, false, false)
-        then:
-        noExceptionThrown()
-        updatedTable.getFields().get(0).getComment() == 'new comments'
+
         when:
         // Failure to get table after a successful update shouldn't fail
         def updatedInvalidMetadata = [table_type: 'ICEBERG', metadata_location: icebergMetadataLocation, previous_metadata_location: updatedTable.getMetadata().get('metadata_location')]

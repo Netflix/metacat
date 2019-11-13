@@ -18,7 +18,7 @@
 package com.netflix.metacat.connector.hive
 
 import com.google.common.collect.ImmutableMap
-import com.netflix.iceberg.ScanSummary
+import org.apache.iceberg.ScanSummary
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.exception.MetacatException
 import com.netflix.metacat.common.exception.MetacatNotSupportedException

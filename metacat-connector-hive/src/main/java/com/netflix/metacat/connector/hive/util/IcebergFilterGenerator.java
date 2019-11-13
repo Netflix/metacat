@@ -19,9 +19,9 @@ package com.netflix.metacat.connector.hive.util;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import com.netflix.iceberg.expressions.Expression;
-import com.netflix.iceberg.expressions.Expressions;
-import com.netflix.iceberg.types.Types;
+import org.apache.iceberg.expressions.Expression;
+import org.apache.iceberg.expressions.Expressions;
+import org.apache.iceberg.types.Types;
 import com.netflix.metacat.common.server.partition.parser.ASTAND;
 import com.netflix.metacat.common.server.partition.parser.ASTBETWEEN;
 import com.netflix.metacat.common.server.partition.parser.ASTCOMPARE;

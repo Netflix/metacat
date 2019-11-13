@@ -17,6 +17,7 @@ package com.netflix.metacat.connector.hive.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import org.apache.hadoop.conf.Configuration;
@@ -30,6 +31,7 @@ import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.iceberg.catalog.TableIdentifier;
 
 import java.util.Collections;
 import java.util.List;
@@ -121,5 +123,14 @@ public final class HiveTableUtil {
      */
     public static String getIcebergTableMetadataLocation(final TableInfo tableInfo) {
         return tableInfo.getMetadata().get(DirectSqlTable.PARAM_METADATA_LOCATION);
+    }
+
+    /**
+     * Convert qualified name to table identifier.
+     * @param name qualified name
+     * @return table identifier
+     */
+    public static TableIdentifier qualifiedNameToTableIdentifier(final QualifiedName name) {
+        return TableIdentifier.parse(name.toString().replace('/', '.'));
     }
 }
