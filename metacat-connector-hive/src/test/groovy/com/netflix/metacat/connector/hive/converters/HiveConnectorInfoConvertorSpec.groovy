@@ -16,11 +16,11 @@
 
 package com.netflix.metacat.connector.hive.converters
 
-import com.netflix.iceberg.PartitionField
-import com.netflix.iceberg.PartitionSpec
-import com.netflix.iceberg.Schema
-import com.netflix.iceberg.types.Type
-import com.netflix.iceberg.types.Types
+import org.apache.iceberg.PartitionField
+import org.apache.iceberg.PartitionSpec
+import org.apache.iceberg.Schema
+import org.apache.iceberg.types.Type
+import org.apache.iceberg.types.Types
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.connectors.model.AuditInfo
@@ -48,7 +48,7 @@ import java.time.ZoneOffset
  * Unit test for hive connector info convertor.
  *
  * @author zhenl
- * @since 1.0.0
+ * @since 1.0.0HiveConnectorFastPartitionSpec
  */
 class HiveConnectorInfoConvertorSpec extends Specification{
     private static final ZoneOffset PACIFIC = LocalDateTime.now().atZone(ZoneId.of('America/Los_Angeles')).offset
@@ -500,7 +500,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
     }
 
     def "test fromIcebergTableToTableInfo"() {
-        def icebergTable = Mock(com.netflix.iceberg.Table)
+        def icebergTable = Mock(org.apache.iceberg.Table)
         def icebergTableWrapper = new IcebergTableWrapper(icebergTable, [:])
         def partSpec = Mock(PartitionSpec)
         def field = Mock(PartitionField)

@@ -185,7 +185,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
                                                  final IcebergTableWrapper tableWrapper,
                                                  final String tableLoc,
                                                  final TableInfo tableInfo) {
-        final com.netflix.iceberg.Table table = tableWrapper.getTable();
+        final org.apache.iceberg.Table table = tableWrapper.getTable();
         final List<FieldInfo> allFields =
             this.hiveTypeConverter.icebergeSchemaTofieldDtos(table.schema(), table.spec().fields());
         final Map<String, String> tableParameters = new HashMap<>();

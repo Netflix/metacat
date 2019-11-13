@@ -18,14 +18,14 @@ package com.netflix.metacat.connector.hive.iceberg;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import com.netflix.iceberg.ScanSummary;
-import com.netflix.iceberg.Table;
-import com.netflix.iceberg.expressions.Expression;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.iceberg.ScanSummary;
+import org.apache.iceberg.Table;
+import org.apache.iceberg.expressions.Expression;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -43,6 +43,7 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class IcebergTableOpWrapper {
     private final Config config;
+
     private final Map<String, String> configuration;
     private final ThreadServiceManager threadServiceManager;
 
@@ -66,7 +67,7 @@ public class IcebergTableOpWrapper {
      * @return scan summary map
      */
     public Map<String, ScanSummary.PartitionMetrics> getPartitionMetricsMap(final Table icebergTable,
-                                                                     @Nullable final Expression filter) {
+                                                                            @Nullable final Expression filter) {
         Map<String, ScanSummary.PartitionMetrics> result = Maps.newHashMap();
         //
         // Cancel the iceberg call if it times out.

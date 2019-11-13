@@ -154,9 +154,7 @@ configure(javaProjects) {
             dependency("org.elasticsearch.client:transport:5.4.1")
             dependency("net.snowflake:snowflake-jdbc:3.4.2")
             dependency("com.esotericsoftware.kryo:kryo:2.22")
-            dependency("com.github.Netflix.iceberg:iceberg-common:${iceberg_version}")
-            dependency("com.github.Netflix.iceberg:iceberg-core:${iceberg_version}")
-            dependency("com.github.Netflix.iceberg:iceberg-api:${iceberg_version}")
+            dependency("org.apache.iceberg:iceberg-spark-runtime:${iceberg_version}")
         }
     }
 
@@ -173,16 +171,14 @@ configure(javaProjects) {
         /*******************************
          * Compile Dependencies
          *******************************/
-        
         compile("log4j:log4j")
 
         /*******************************
          * Provided Dependencies
          *******************************/
-
         compileOnly("com.google.code.findbugs:annotations")
         compileOnly("com.google.code.findbugs:jsr305")
-        
+
         /*******************************
          * Runtime Dependencies
          *******************************/

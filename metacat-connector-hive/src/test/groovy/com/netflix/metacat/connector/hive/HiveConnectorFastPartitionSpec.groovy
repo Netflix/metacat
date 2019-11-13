@@ -18,7 +18,8 @@
 package com.netflix.metacat.connector.hive
 
 import com.google.common.collect.Maps
-import com.netflix.iceberg.Table
+import org.apache.iceberg.ScanSummary
+import org.apache.iceberg.Table
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
@@ -66,13 +67,13 @@ class HiveConnectorFastPartitionSpec extends Specification {
             directSqlSavePartition, icebergTableHandler)
 
     @Shared
-    metric1 = Mock(com.netflix.iceberg.ScanSummary.PartitionMetrics)
+    metric1 = Mock(ScanSummary.PartitionMetrics)
 
     @Shared
-    metric2 = Mock(com.netflix.iceberg.ScanSummary.PartitionMetrics)
+    metric2 = Mock(ScanSummary.PartitionMetrics)
 
     @Shared
-    metric3 = Mock(com.netflix.iceberg.ScanSummary.PartitionMetrics)
+    metric3 = Mock(ScanSummary.PartitionMetrics)
 
     def setupSpec() {
         conf.icebergEnabled >> true

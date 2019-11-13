@@ -16,7 +16,7 @@
 
 package com.netflix.metacat.connector.hive.iceberg;
 
-import com.netflix.iceberg.Table;
+import org.apache.iceberg.Table;
 import lombok.Data;
 
 import java.util.Map;

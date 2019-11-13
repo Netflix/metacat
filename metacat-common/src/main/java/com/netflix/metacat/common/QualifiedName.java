@@ -596,6 +596,7 @@ public final class QualifiedName implements Serializable {
         return qualifiedName;
     }
 
+
     /**
      * Checks if a CharSequence is empty ("") or null.
      */

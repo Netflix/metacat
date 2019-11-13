@@ -21,18 +21,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
-import com.netflix.iceberg.BaseMetastoreTableOperations;
-import com.netflix.iceberg.BaseMetastoreTables;
-import com.netflix.iceberg.PartitionSpec;
-import com.netflix.iceberg.ScanSummary;
-import com.netflix.iceberg.Schema;
-import com.netflix.iceberg.Table;
-import com.netflix.iceberg.TableMetadata;
-import com.netflix.iceberg.TableMetadataParser;
-import com.netflix.iceberg.UpdateSchema;
-import com.netflix.iceberg.exceptions.NoSuchTableException;
-import com.netflix.iceberg.expressions.Expression;
-import com.netflix.iceberg.types.Types;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
@@ -50,6 +38,24 @@ import com.netflix.servo.util.VisibleForTesting;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.iceberg.BaseMetastoreCatalog;
+import org.apache.iceberg.BaseMetastoreTableOperations;
+import org.apache.iceberg.PartitionSpec;
+import org.apache.iceberg.ScanSummary;
+import org.apache.iceberg.Schema;
+import org.apache.iceberg.Table;
+import org.apache.iceberg.TableMetadata;
+import org.apache.iceberg.TableMetadataParser;
+import org.apache.iceberg.TableOperations;
+import org.apache.iceberg.Transaction;
+import org.apache.iceberg.UpdateSchema;
+import org.apache.iceberg.catalog.TableIdentifier;
+import org.apache.iceberg.exceptions.NoSuchTableException;
+import org.apache.iceberg.exceptions.NotFoundException;
+import org.apache.iceberg.expressions.Expression;
+import org.apache.iceberg.hadoop.HadoopFileIO;
+import org.apache.iceberg.io.FileIO;
+import org.apache.iceberg.types.Types;
 
 import java.io.StringReader;
 import java.util.HashMap;
@@ -57,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+
 
 /**
  * Iceberg table handler which interacts with iceberg library
@@ -79,8 +86,8 @@ public class IcebergTableHandler {
     /**
      * Constructor.
      *
-     * @param connectorContext     connector context
-     * @param icebergTableCriteria iceberg table criteria
+     * @param connectorContext      connector context
+     * @param icebergTableCriteria  iceberg table criteria
      * @param icebergTableOpWrapper iceberg table operation
      */
     public IcebergTableHandler(final ConnectorContext connectorContext,
@@ -153,20 +160,21 @@ public class IcebergTableHandler {
      * @return iceberg table
      */
     public IcebergTableWrapper getIcebergTable(final QualifiedName tableName, final String tableMetadataLocation,
-                                        final boolean includeInfoDetails) {
+                                               final boolean includeInfoDetails) {
         final long start = this.registry.clock().wallTime();
         try {
             this.icebergTableCriteria.checkCriteria(tableName, tableMetadataLocation);
             log.debug("Loading icebergTable {} from {}", tableName, tableMetadataLocation);
             final IcebergMetastoreTables icebergMetastoreTables = new IcebergMetastoreTables(tableMetadataLocation);
-            final Table table = icebergMetastoreTables.load(tableName.toString());
+            final Table table = icebergMetastoreTables.loadTable(
+                HiveTableUtil.qualifiedNameToTableIdentifier(tableName));
             final Map<String, String> extraProperties = Maps.newHashMap();
             if (includeInfoDetails) {
                 extraProperties.put(DirectSqlTable.PARAM_METADATA_CONTENT,
                     TableMetadataParser.toJson(icebergMetastoreTables.getTableOps().current()));
             }
             return new IcebergTableWrapper(table, extraProperties);
-        } catch (NoSuchTableException e) {
+        } catch (NotFoundException | NoSuchTableException e) {
             throw new InvalidMetaException(tableName, e);
         } finally {
             final long duration = registry.clock().wallTime() - start;
@@ -178,6 +186,7 @@ public class IcebergTableHandler {
 
     /**
      * Updates the iceberg schema if the provided tableInfo has updated field comments.
+     *
      * @param tableInfo table information
      * @return true if an update is done
      */
@@ -195,10 +204,11 @@ public class IcebergTableHandler {
                 throw new MetacatBadRequestException(message);
             }
             final IcebergMetastoreTables icebergMetastoreTables = new IcebergMetastoreTables(tableMetadataLocation);
-            final Table table = icebergMetastoreTables.load(tableName.toString());
+            final Table table = icebergMetastoreTables.loadTable(
+                HiveTableUtil.qualifiedNameToTableIdentifier(tableName));
             final UpdateSchema updateSchema = table.updateSchema();
             final Schema schema = table.schema();
-            for (FieldInfo field: fields) {
+            for (FieldInfo field : fields) {
                 final Types.NestedField iField = schema.findField(field.getName());
                 if (iField != null && !Objects.equals(field.getComment(), iField.doc())) {
                     updateSchema.updateColumnDoc(field.getName(), field.getComment());
@@ -211,7 +221,7 @@ public class IcebergTableHandler {
                 if (!tableMetadataLocation.equalsIgnoreCase(newTableMetadataLocation)) {
                     tableInfo.getMetadata().put(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION, tableMetadataLocation);
                     tableInfo.getMetadata().put(DirectSqlTable.PARAM_METADATA_LOCATION,
-                        icebergMetastoreTables.getTableOps().currentMetadataLocation());
+                        newTableMetadataLocation);
                 }
             }
         }
@@ -248,44 +258,67 @@ public class IcebergTableHandler {
      * Implemented BaseMetastoreTables to interact with iceberg library.
      * Load an iceberg table from a location.
      */
-    private final class IcebergMetastoreTables extends BaseMetastoreTables {
+    private final class IcebergMetastoreTables extends BaseMetastoreCatalog {
         private final String tableLocation;
-        private BaseMetastoreTableOperations tableOperations;
+        private IcebergTableOps tableOperations;
 
         IcebergMetastoreTables(final String tableMetadataLocation) {
-            super(conf);
             this.tableLocation = tableMetadataLocation;
         }
 
         @Override
-        public Table create(final Schema schema, final PartitionSpec spec, final String database, final String table) {
+        public Table createTable(final TableIdentifier identifier,
+                                 final Schema schema,
+                                 final PartitionSpec spec,
+                                 final String location,
+                                 final Map<String, String> properties) {
             throw new MetacatNotSupportedException("not supported");
         }
 
         @Override
-        public Table create(final Schema schema,
-                            final PartitionSpec spec,
-                            final Map<String, String> properties,
-                            final String table) {
-            throw new MetacatNotSupportedException("Not supported");
+        public Transaction newCreateTableTransaction(final TableIdentifier identifier,
+                                                     final Schema schema,
+                                                     final PartitionSpec spec,
+                                                     final String location,
+                                                     final Map<String, String> properties) {
+            throw new MetacatNotSupportedException("not supported");
         }
 
         @Override
-        public Table create(final Schema schema, final PartitionSpec spec, final String tables) {
-            throw new MetacatNotSupportedException("Not supported");
+        public Transaction newReplaceTableTransaction(final TableIdentifier identifier,
+                                                      final Schema schema,
+                                                      final PartitionSpec spec,
+                                                      final String location,
+                                                      final Map<String, String> properties,
+                                                      final boolean orCreate) {
+            throw new MetacatNotSupportedException("not supported");
         }
 
         @Override
-        public Table load(final String tableName) {
-            final QualifiedName table = QualifiedName.fromString(tableName);
-            return super.load(table.getDatabaseName(), table.getTableName());
+        public Table loadTable(final TableIdentifier identifier) {
+            return super.loadTable(identifier);
         }
 
         @Override
-        public BaseMetastoreTableOperations newTableOps(final Configuration config,
-                                                        final String database,
-                                                        final String table) {
+        protected TableOperations newTableOps(final TableIdentifier tableIdentifier) {
             return getTableOps();
+        }
+
+        @Override
+        protected String defaultWarehouseLocation(final TableIdentifier tableIdentifier) {
+            throw new MetacatNotSupportedException("not supported");
+        }
+
+        @Override
+        public boolean dropTable(final TableIdentifier identifier,
+                                 final boolean purge) {
+            throw new MetacatNotSupportedException("not supported");
+        }
+
+        @Override
+        public void renameTable(final TableIdentifier from,
+                                final TableIdentifier to) {
+            throw new MetacatNotSupportedException("not supported");
         }
 
         /**
@@ -293,7 +326,7 @@ public class IcebergTableHandler {
          *
          * @return a MetacatServerOps for the table
          */
-        public BaseMetastoreTableOperations getTableOps() {
+        public IcebergTableOps getTableOps() {
             if (tableOperations == null) {
                 tableOperations = new IcebergTableOps(tableLocation);
             }
@@ -309,9 +342,13 @@ public class IcebergTableHandler {
         private String location;
 
         IcebergTableOps(final String location) {
-            super(conf);
             this.location = location;
             refresh();
+        }
+
+        @Override
+        public FileIO io() {
+            return new HadoopFileIO(conf);
         }
 
         @Override
@@ -327,9 +364,15 @@ public class IcebergTableHandler {
         }
 
         @Override
+        public TableMetadata current() {
+            return super.current();
+        }
+
+        @Override
         public void commit(final TableMetadata base, final TableMetadata metadata) {
             if (!base.equals(metadata)) {
                 location = writeNewMetadata(metadata, currentVersion() + 1);
+                this.requestRefresh();
             }
         }
     }
@@ -344,15 +387,16 @@ public class IcebergTableHandler {
         final HashMap<String, String> tags = new HashMap<>();
         tags.put("request", requestTag);
         this.registry.timer(registry.createId(IcebergRequestMetrics.TimerIcebergRequest.getMetricName())
-                .withTags(tags))
-                .record(duration, TimeUnit.MILLISECONDS);
+            .withTags(tags))
+            .record(duration, TimeUnit.MILLISECONDS);
         log.debug("## Time taken to complete {} is {} ms", requestTag, duration);
     }
 
     /**
      * increase the counter of operation.
+     *
      * @param metricName metric name
-     * @param tableName table name of the operation
+     * @param tableName  table name of the operation
      */
     private void increaseCounter(final String metricName, final QualifiedName tableName) {
         this.registry.counter(registry.createId(metricName).withTags(tableName.parts())).increment();

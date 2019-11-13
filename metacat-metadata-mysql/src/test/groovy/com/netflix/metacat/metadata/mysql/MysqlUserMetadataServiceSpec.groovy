@@ -16,6 +16,7 @@ package com.netflix.metacat.metadata.mysql
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.testdata.provider.DataDtoProvider
+import org.junit.Ignore
 
 import java.time.Instant
 
@@ -24,6 +25,7 @@ import java.time.Instant
  * TODO: Need to move this to integration-test
  * @author amajumdar
  */
+@Ignore
 class MysqlUserMetadataServiceSpec extends BaseSpec {
     def testAll() {
         given:
