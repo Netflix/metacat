@@ -29,7 +29,9 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
+import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
@@ -56,6 +58,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private final Registry registry;
     private final DirectSqlTable directSqlTable;
     private IcebergTableHandler icebergTableHandler;
+    private CommonViewHandler commonViewHandler;
 
     /**
      * Constructor.
@@ -67,6 +70,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param connectorContext             serverContext
      * @param directSqlTable               Table jpa service
      * @param icebergTableHandler          iceberg table handler
+     * @param commonViewHandler            common view handler
      */
     @Autowired
     public HiveConnectorFastTableService(
@@ -76,13 +80,14 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final HiveConnectorInfoConverter hiveMetacatConverters,
         final ConnectorContext connectorContext,
         final DirectSqlTable directSqlTable,
-        final IcebergTableHandler icebergTableHandler
+        final IcebergTableHandler icebergTableHandler,
+        final CommonViewHandler commonViewHandler
     ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, connectorContext);
         this.registry = connectorContext.getRegistry();
         this.directSqlTable = directSqlTable;
         this.icebergTableHandler = icebergTableHandler;
-
+        this.commonViewHandler = commonViewHandler;
     }
 
     /**
@@ -103,6 +108,12 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     @Override
     public TableInfo get(final ConnectorRequestContext requestContext, final QualifiedName name) {
         final TableInfo info = super.get(requestContext, name);
+        if (connectorContext.getConfig().isCommonViewEnabled()
+            && HiveTableUtil.isCommonView(info)) {
+            final String tableLoc = HiveTableUtil.getCommonViewMetadataLocation(info);
+            return this.commonViewHandler.getCommonViewTableInfo(name, tableLoc, info,
+                new HiveTypeConverter());
+        }
         if (!connectorContext.getConfig().isIcebergEnabled() || !HiveTableUtil.isIcebergTable(info)) {
             return info;
         }
@@ -159,11 +170,36 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             } else {
                 directSqlTable.updateIcebergTable(tableInfo);
             }
+        } else if (connectorContext.getConfig().isCommonViewEnabled()
+            && HiveTableUtil.isCommonView(tableInfo)) {
+            /* Using iceberg table update strategy for common views that employs iceberg library*/
+            requestContext.setIgnoreErrorsAfterUpdate(true);
+            final boolean viewUpdated = commonViewHandler.update(tableInfo);
+            if (viewUpdated) {
+                try {
+                    RETRY_ICEBERG_TABLE_UPDATE.call(() -> {
+                        try {
+                            directSqlTable.updateIcebergTable(tableInfo);
+                        } catch (TablePreconditionFailedException e) {
+                            tableInfo.getMetadata()
+                                .put(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION, e.getMetadataLocation());
+                            commonViewHandler.update(tableInfo);
+                            throw e;
+                        }
+                        return null;
+                    });
+                } catch (RetryException e) {
+                    Throwables.propagate(e.getLastFailedAttempt().getExceptionCause());
+                } catch (ExecutionException e) {
+                    Throwables.propagate(e.getCause());
+                }
+            } else {
+                directSqlTable.updateIcebergTable(tableInfo);
+            }
         } else {
             super.update(requestContext, tableInfo);
         }
     }
-
     /**
      * {@inheritDoc}.
      */

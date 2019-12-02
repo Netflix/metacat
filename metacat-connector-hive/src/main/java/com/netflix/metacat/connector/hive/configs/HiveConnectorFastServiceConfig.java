@@ -19,6 +19,7 @@ import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
 import com.netflix.metacat.connector.hive.HiveConnectorPartitionService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
+import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteria;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
@@ -215,6 +216,7 @@ public class HiveConnectorFastServiceConfig {
      * @param connectorContext             server context
      * @param directSqlTable               table jpa service
      * @param icebergTableHandler          iceberg table handler
+     * @param commonViewHandler            common view handler
      * @return HiveConnectorFastTableService
      */
     @Bean
@@ -224,7 +226,8 @@ public class HiveConnectorFastServiceConfig {
         final HiveConnectorDatabaseService hiveConnectorDatabaseService,
         final ConnectorContext connectorContext,
         final DirectSqlTable directSqlTable,
-        final IcebergTableHandler icebergTableHandler
+        final IcebergTableHandler icebergTableHandler,
+        final CommonViewHandler commonViewHandler
     ) {
         return new HiveConnectorFastTableService(
             connectorContext.getCatalogName(),
@@ -233,16 +236,17 @@ public class HiveConnectorFastServiceConfig {
             hiveMetacatConverters,
             connectorContext,
             directSqlTable,
-            icebergTableHandler
+            icebergTableHandler,
+            commonViewHandler
         );
     }
 
     /**
      * create hive connector fast database service.
      *
-     * @param metacatHiveClient            metacat hive client
-     * @param hiveMetacatConverters        hive metacat converters
-     * @param directSqlDatabase            database sql service
+     * @param metacatHiveClient     metacat hive client
+     * @param hiveMetacatConverters hive metacat converters
+     * @param directSqlDatabase     database sql service
      * @return HiveConnectorDatabaseService
      */
     @Bean
@@ -287,13 +291,24 @@ public class HiveConnectorFastServiceConfig {
 
     /**
      * Create iceberg table operation.
-     * @param connectorContext      server context
-     * @param threadServiceManager  executor service
+     * @param connectorContext     server context
+     * @param threadServiceManager executor service
      * @return IcebergTableOpWrapper
      */
     @Bean
     public IcebergTableOpWrapper icebergTableOpWrapper(final ConnectorContext connectorContext,
                                                        final ThreadServiceManager threadServiceManager) {
         return new IcebergTableOpWrapper(connectorContext, threadServiceManager);
+    }
+
+    /**
+     * Create commonViewHandler.
+     *
+     * @param connectorContext server context
+     * @return CommonViewHandler
+     */
+    @Bean
+    public CommonViewHandler commonViewHandler(final ConnectorContext connectorContext) {
+        return new CommonViewHandler(connectorContext);
     }
 }

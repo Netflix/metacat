@@ -80,6 +80,15 @@ public class DirectSqlTable {
      */
     public static final String ICEBERG_TABLE_TYPE = "ICEBERG";
     /**
+     * Iceberg table type.
+     */
+    public static final String COMMON_VIEW = "common_view";
+
+    /**
+     * VIRTUAL_VIEW table type.
+     */
+    public static final String VIRTUAL_VIEW_TABLE_TYPE = "VIRTUAL_VIEW";
+    /**
      * Defines the metadata content of the iceberg table.
      */
     public static final String PARAM_METADATA_CONTENT = "metadata_content";
@@ -120,6 +129,7 @@ public class DirectSqlTable {
 
     /**
      * Returns true if table exists with the given name.
+     *
      * @param name table name
      * @return true if table exists with the given name.
      */
@@ -193,11 +203,11 @@ public class DirectSqlTable {
     }
 
     /**
-     *  Locks and updates the iceberg table for update so that no other request can modify the table at the same time.
-     *  1. Gets the table parameters and locks the requested records. If lock cannot be attained,
-     *  the request to update fails
-     *  2. Validates the metadata location
-     *  3. If validated, updates the table parameters.
+     * Locks and updates the iceberg table for update so that no other request can modify the table at the same time.
+     * 1. Gets the table parameters and locks the requested records. If lock cannot be attained,
+     * the request to update fails
+     * 2. Validates the metadata location
+     * 3. If validated, updates the table parameters.
      * @param tableInfo table info
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -248,16 +258,28 @@ public class DirectSqlTable {
         log.debug("Unlocked Iceberg table {}", tableName);
     }
 
+    private void validateTableType(final QualifiedName tableName, final Map<String, String> tableMetadata) {
+        if (!tableMetadata.isEmpty()) {
+            if (ICEBERG_TABLE_TYPE.equalsIgnoreCase(tableMetadata.get(PARAM_TABLE_TYPE))) {
+                return;
+            }
+            if (VIRTUAL_VIEW_TABLE_TYPE.equalsIgnoreCase(tableMetadata.get(PARAM_TABLE_TYPE))
+                && tableMetadata.containsKey(COMMON_VIEW)
+                && Boolean.parseBoolean(tableMetadata.get(DirectSqlTable.COMMON_VIEW))
+            ) {
+                return;
+            }
+        }
+        final String message = String.format("Originally table %s is not type of iceberg ", tableName);
+        log.info(message);
+        throw new InvalidMetaException(tableName, message, null);
+    }
+
     private void validateIcebergUpdate(final QualifiedName tableName,
                                        final Map<String, String> existingTableMetadata,
                                        final Map<String, String> newTableMetadata) {
         // Validate the type of the table stored in the RDS
-        if (existingTableMetadata.isEmpty()
-            || !ICEBERG_TABLE_TYPE.equalsIgnoreCase(existingTableMetadata.get(PARAM_TABLE_TYPE))) {
-            final String message = String.format("Originally table %s is not of type iceberg", tableName);
-            log.info(message);
-            throw new InvalidMetaException(tableName, message, null);
-        }
+        validateTableType(tableName, existingTableMetadata);
         final String existingMetadataLocation = existingTableMetadata.get(PARAM_METADATA_LOCATION);
         final String previousMetadataLocation = newTableMetadata.get(PARAM_PREVIOUS_METADATA_LOCATION);
         final String newMetadataLocation = newTableMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION);

@@ -119,7 +119,7 @@ public final class HiveTableUtil {
      * get iceberg table metadata location.
      *
      * @param tableInfo table info
-     * @return true for iceberg table
+     * @return iceberg table metadata location
      */
     public static String getIcebergTableMetadataLocation(final TableInfo tableInfo) {
         return tableInfo.getMetadata().get(DirectSqlTable.PARAM_METADATA_LOCATION);
@@ -127,10 +127,33 @@ public final class HiveTableUtil {
 
     /**
      * Convert qualified name to table identifier.
+     *
      * @param name qualified name
      * @return table identifier
      */
     public static TableIdentifier qualifiedNameToTableIdentifier(final QualifiedName name) {
         return TableIdentifier.parse(name.toString().replace('/', '.'));
+    }
+
+    /**
+     * check if the table is a common view.
+     *
+     * @param tableInfo table info
+     * @return true for common view
+     */
+    public static boolean isCommonView(final TableInfo tableInfo) {
+        return tableInfo.getMetadata() != null
+            && tableInfo.getMetadata().containsKey(DirectSqlTable.PARAM_TABLE_TYPE)
+            && Boolean.parseBoolean(tableInfo.getMetadata().get(DirectSqlTable.COMMON_VIEW));
+    }
+
+    /**
+     * get common view metadata location.
+     *
+     * @param tableInfo table info
+     * @return common view metadata location
+     */
+    public static String getCommonViewMetadataLocation(final TableInfo tableInfo) {
+        return tableInfo.getMetadata().get(DirectSqlTable.PARAM_METADATA_LOCATION);
     }
 }

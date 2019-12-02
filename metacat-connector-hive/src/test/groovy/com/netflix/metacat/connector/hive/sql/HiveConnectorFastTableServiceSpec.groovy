@@ -27,6 +27,7 @@ import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService
 import com.netflix.metacat.connector.hive.HiveConnectorTableService
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
+import com.netflix.metacat.connector.hive.commonview.CommonViewHandler
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
@@ -59,7 +60,8 @@ class HiveConnectorFastTableServiceSpec extends Specification {
         new HiveConnectorInfoConverter(new HiveTypeConverter()),
         connectorContext,
         directSqlTable,
-        handler
+        handler,
+        new CommonViewHandler(connectorContext)
     )
     def catalogName = 'c'
     def databaseName = 'd'
