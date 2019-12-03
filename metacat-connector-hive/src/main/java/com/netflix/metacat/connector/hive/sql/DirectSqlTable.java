@@ -270,7 +270,7 @@ public class DirectSqlTable {
                 return;
             }
         }
-        final String message = String.format("Originally table %s is not type of iceberg ", tableName);
+        final String message = String.format("Originally table %s is neither iceberg table nor common view", tableName);
         log.info(message);
         throw new InvalidMetaException(tableName, message, null);
     }

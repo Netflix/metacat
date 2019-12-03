@@ -16,11 +16,21 @@
  */
 package com.netflix.metacat.connector.hive.commonview;
 
+import com.github.rholder.retry.RetryException;
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
+import com.google.common.base.Throwables;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
+import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
+import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import com.netflix.spectator.api.Registry;
+
+import java.util.concurrent.ExecutionException;
 
 /**
  * CommonViewHandler class.
@@ -29,6 +39,10 @@ import com.netflix.spectator.api.Registry;
  */
 //TODO: in case a third iceberg table like object we should refactor them as a common iceberg-like handler
 public class CommonViewHandler {
+    private static final Retryer<Void> RETRY_ICEBERG_TABLE_UPDATE = RetryerBuilder.<Void>newBuilder()
+        .retryIfExceptionOfType(TablePreconditionFailedException.class)
+        .withStopStrategy(StopStrategies.stopAfterAttempt(3))
+        .build();
     protected final ConnectorContext connectorContext;
     protected final Registry registry;
 
@@ -67,5 +81,41 @@ public class CommonViewHandler {
      */
     public boolean update(final TableInfo tableInfo) {
         return false;
+    }
+
+    /**
+     * Handle common view update request using iceberg table
+     * update strategy for common views that employs iceberg library.
+     *
+     * @param requestContext    request context
+     * @param directSqlTable    direct sql table object
+     * @param tableInfo         table info
+     */
+    public void handleUpdate(final ConnectorRequestContext requestContext,
+                             final DirectSqlTable directSqlTable,
+                             final TableInfo tableInfo) {
+        requestContext.setIgnoreErrorsAfterUpdate(true);
+        final boolean viewUpdated = this.update(tableInfo);
+        if (viewUpdated) {
+            try {
+                RETRY_ICEBERG_TABLE_UPDATE.call(() -> {
+                    try {
+                        directSqlTable.updateIcebergTable(tableInfo);
+                    } catch (TablePreconditionFailedException e) {
+                        tableInfo.getMetadata()
+                            .put(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION, e.getMetadataLocation());
+                        this.update(tableInfo);
+                        throw e;
+                    }
+                    return null;
+                });
+            } catch (RetryException e) {
+                Throwables.propagate(e.getLastFailedAttempt().getExceptionCause());
+            } catch (ExecutionException e) {
+                Throwables.propagate(e.getCause());
+            }
+        } else {
+            directSqlTable.updateIcebergTable(tableInfo);
+        }
     }
 }
