@@ -496,6 +496,14 @@ public class DefaultConfigImpl implements Config {
      * {@inheritDoc}
      */
     @Override
+    public boolean isCommonViewEnabled() {
+        return this.metacatProperties.getHive().getCommonview().isEnabled();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getIcebergRefreshFromMetadataLocationRetryNumber() {
         return this.metacatProperties.getHive().getIceberg().getRefreshFromMetadataLocationRetryNumber();
     }

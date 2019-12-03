@@ -418,6 +418,13 @@ public interface Config {
     boolean isIcebergEnabled();
 
     /**
+     * Enable common view processing.
+     *
+     * @return true if common view processing is enabled
+     */
+    boolean isCommonViewEnabled();
+
+    /**
      * get Iceberg table refresh metadata location retry number.
      *
      * @return Refresh metadata location retry number.

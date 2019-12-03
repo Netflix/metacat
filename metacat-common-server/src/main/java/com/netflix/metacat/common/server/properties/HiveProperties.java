@@ -34,7 +34,8 @@ public class HiveProperties {
     private Metastore metastore = new Metastore();
     @NonNull
     private Iceberg iceberg = new Iceberg();
-
+    @NonNull
+    private CommonView commonview = new CommonView();
     /**
      * Metastore related properties.
      *
@@ -104,5 +105,16 @@ public class HiveProperties {
         private long maxMetadataFileSizeBytes = 500 * 1024 * 1024; //500m
         /*iceberg://<db-name.table-name>/<partition>/snapshot_time=<dateCreated> */
         private String partitionUriScheme = "iceberg";
+    }
+
+    /**
+     * CommonView related properties.
+     *
+     * @author zhenl
+     * @since 1.3.0
+     */
+    @Data
+    public static class CommonView {
+        private boolean enabled;
     }
 }

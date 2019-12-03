@@ -19,13 +19,20 @@ package com.netflix.metacat.connector.hive.iceberg;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.rholder.retry.RetryException;
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
@@ -62,6 +69,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 
@@ -75,6 +83,10 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class IcebergTableHandler {
+    private static final Retryer<Void> RETRY_ICEBERG_TABLE_UPDATE = RetryerBuilder.<Void>newBuilder()
+        .retryIfExceptionOfType(TablePreconditionFailedException.class)
+        .withStopStrategy(StopStrategies.stopAfterAttempt(3))
+        .build();
     private final Configuration conf;
     private final ConnectorContext connectorContext;
     private final Registry registry;
@@ -226,6 +238,41 @@ public class IcebergTableHandler {
             }
         }
         return result;
+    }
+
+    /**
+     * Handle iceberg table update operation.
+     *
+     * @param requestContext request context
+     * @param directSqlTable direct sql table object
+     * @param tableInfo      table info
+     */
+    public void handleUpdate(final ConnectorRequestContext requestContext,
+                             final DirectSqlTable directSqlTable,
+                             final TableInfo tableInfo) {
+        requestContext.setIgnoreErrorsAfterUpdate(true);
+        final boolean icebergTableUpdated = this.update(tableInfo);
+        if (icebergTableUpdated) {
+            try {
+                RETRY_ICEBERG_TABLE_UPDATE.call(() -> {
+                    try {
+                        directSqlTable.updateIcebergTable(tableInfo);
+                    } catch (TablePreconditionFailedException e) {
+                        tableInfo.getMetadata()
+                            .put(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION, e.getMetadataLocation());
+                        this.update(tableInfo);
+                        throw e;
+                    }
+                    return null;
+                });
+            } catch (RetryException e) {
+                Throwables.propagate(e.getLastFailedAttempt().getExceptionCause());
+            } catch (ExecutionException e) {
+                Throwables.propagate(e.getCause());
+            }
+        } else {
+            directSqlTable.updateIcebergTable(tableInfo);
+        }
     }
 
     /**

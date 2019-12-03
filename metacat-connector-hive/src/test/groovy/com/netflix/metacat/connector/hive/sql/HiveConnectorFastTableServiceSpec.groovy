@@ -27,6 +27,7 @@ import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService
 import com.netflix.metacat.connector.hive.HiveConnectorTableService
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
+import com.netflix.metacat.connector.hive.commonview.CommonViewHandler
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
@@ -59,7 +60,8 @@ class HiveConnectorFastTableServiceSpec extends Specification {
         new HiveConnectorInfoConverter(new HiveTypeConverter()),
         connectorContext,
         directSqlTable,
-        handler
+        handler,
+        new CommonViewHandler(connectorContext)
     )
     def catalogName = 'c'
     def databaseName = 'd'
@@ -82,30 +84,5 @@ class HiveConnectorFastTableServiceSpec extends Specification {
         then:
         thrown(TableNotFoundException)
         metacatHiveClient.getTableByName(_,_) >> { throw new NoSuchObjectException()}
-    }
-
-    def "Test iceberg table update"() {
-        given:
-        def table = new TableInfo(name: qualifiedName, metadata: ['table_type': 'ICEBERG','metadata_location':'s3:/c/d/t1', 'previous_metadata_location':'s3:/c/d/t'])
-        when:
-        service.update(connectorRequestContext, table)
-        then:
-        noExceptionThrown()
-        when:
-        service.update(connectorRequestContext, table)
-        then:
-        thrown(TableNotFoundException)
-        directSqlTable.updateIcebergTable(_) >> { throw new TableNotFoundException(qualifiedName)}
-        when:
-        service.update(connectorRequestContext, table)
-        then:
-        noExceptionThrown()
-        handler.update(_) >> true
-        when:
-        service.update(connectorRequestContext, table)
-        then:
-        thrown(TablePreconditionFailedException)
-        directSqlTable.updateIcebergTable(_) >> { throw new TablePreconditionFailedException(qualifiedName, '', 'x', 'p')}
-        handler.update(_) >> true
     }
 }
