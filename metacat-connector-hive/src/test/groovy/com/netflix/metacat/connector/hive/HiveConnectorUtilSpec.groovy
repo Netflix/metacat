@@ -16,7 +16,10 @@
 
 package com.netflix.metacat.connector.hive
 
+import com.netflix.metacat.common.dto.TableDto
+import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.connectors.util.TimeUtil
+import com.netflix.metacat.connector.hive.util.HiveTableUtil
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -42,4 +45,24 @@ class HiveConnectorUtilSpec extends Specification{
         '1'         | 1L
         '010m'      | 600L
     }
+
+    def "Test for check common view" () {
+        given:
+        def tableInfo = TableInfo.builder().metadata(metadata).build()
+        def isView = HiveTableUtil.isCommonView(tableInfo)
+        def isView2 = HiveTableUtil.isCommonView(tableInfo.metadata)
+        expect:
+        isView == output
+        isView2 == output
+        where:
+        metadata     | output
+        ['common_view' : "true"]    | true
+        ['common_view' : "false"]    | false
+        ['common_view_1' : "false"]    | false
+        ['common_view' : null]    | false
+        ['common_view' : "True"]    | true
+        ['common_view' : ""]    | false
+        [:]    | false
+        null | false
+      }
 }

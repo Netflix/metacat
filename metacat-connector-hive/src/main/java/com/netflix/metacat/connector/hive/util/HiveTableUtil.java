@@ -35,6 +35,7 @@ import org.apache.iceberg.catalog.TableIdentifier;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -142,10 +143,19 @@ public final class HiveTableUtil {
      * @return true for common view
      */
     public static boolean isCommonView(final TableInfo tableInfo) {
-        return tableInfo.getMetadata() != null
-            && tableInfo.getMetadata().containsKey(DirectSqlTable.PARAM_TABLE_TYPE)
-            && Boolean.parseBoolean(tableInfo.getMetadata().get(DirectSqlTable.COMMON_VIEW));
+        return tableInfo.getMetadata() != null && isCommonView(tableInfo.getMetadata());
     }
+
+    /**
+     * check if the table is a common view.
+     *
+     * @param tableMetadata table metadata map
+     * @return true for common view
+     */
+    public static boolean isCommonView(final Map<String, String> tableMetadata) {
+        return tableMetadata != null && Boolean.parseBoolean(tableMetadata.get(DirectSqlTable.COMMON_VIEW));
+    }
+
 
     /**
      * get common view metadata location.
