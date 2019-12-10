@@ -32,6 +32,7 @@ import com.netflix.metacat.common.server.connectors.exception.TablePreconditionF
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
+import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -263,10 +264,7 @@ public class DirectSqlTable {
             if (ICEBERG_TABLE_TYPE.equalsIgnoreCase(tableMetadata.get(PARAM_TABLE_TYPE))) {
                 return;
             }
-            if (VIRTUAL_VIEW_TABLE_TYPE.equalsIgnoreCase(tableMetadata.get(PARAM_TABLE_TYPE))
-                && tableMetadata.containsKey(COMMON_VIEW)
-                && Boolean.parseBoolean(tableMetadata.get(DirectSqlTable.COMMON_VIEW))
-            ) {
+            if (HiveTableUtil.isCommonView(tableMetadata)) {
                 return;
             }
         }
