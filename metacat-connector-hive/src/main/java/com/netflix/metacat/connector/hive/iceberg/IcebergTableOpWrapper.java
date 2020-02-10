@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Iceberg table operation wrapper.
@@ -85,11 +84,23 @@ public class IcebergTableOpWrapper {
             final int getIcebergPartitionsTimeout = Integer.parseInt(configuration
                 .getOrDefault(HiveConfigConstants.GET_ICEBERG_PARTITIONS_TIMEOUT, "120"));
             result = future.get(getIcebergPartitionsTimeout, TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            try {
-                future.cancel(true);
-            } catch (Exception ignored) {
-                log.warn("Failed cancelling the task that gets the partitions for an iceberg table.");
+        } catch (Exception e) {
+            if (!future.isDone()) {
+                try {
+                    future.cancel(true);
+                } catch (Exception ignored) {
+                    log.warn("Failed cancelling the task that gets the partitions for an iceberg table.");
+                }
+            }
+            if (e instanceof ExecutionException && e.getCause() != null) {
+                //
+                // On execution exception, throw the inner exception. This is added to throw these as 4xx errors
+                // instead of 5xx.
+                //
+                if (e.getCause() instanceof IllegalArgumentException) {
+                    throw (IllegalArgumentException) e.getCause();
+                }
+                Throwables.propagate(e.getCause());
             }
             Throwables.propagate(e);
         }
