@@ -109,6 +109,8 @@ class MetacatSmokeSpec extends Specification {
                 newTable = PigDataDtoProvider.getPartsTable(catalogName, databaseName, owner, uri)
             } else if ('metacat_all_types' == tableName) {
                 newTable = PigDataDtoProvider.getMetacatAllTypesTable(catalogName, databaseName, owner, uri)
+            } else if ('part_hyphen' == tableName  ) {
+                newTable = PigDataDtoProvider.getPartHyphenTable(catalogName, databaseName, tableName, owner, uri)
             } else {
                 newTable = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, owner, uri)
             }
@@ -1311,6 +1313,35 @@ class MetacatSmokeSpec extends Specification {
         ''      | null                                      | 5      | 10    | 5
         'end'   | null                                      | 10     | 10    | 0
 
+    }
+
+    @Unroll
+    def "Test: embedded-hive-metastore get partitions for #filter with null partition values and partition names with hyphen"() {
+        given:
+        if (cursor == 'start') {
+            def uri = isLocalEnv ? 'file:/tmp/abc' : null
+            createTable('embedded-hive-metastore', 'smoke_db', 'part_hyphen')
+            partitionApi.savePartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', new PartitionsSaveRequestDto(partitions: PigDataDtoProvider.getPartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', 'one-one=xyz/total=1', uri, 10)))
+            partitionApi.savePartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', new PartitionsSaveRequestDto(partitions: PigDataDtoProvider.getPartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', 'one-one=__HIVE_DEFAULT_PARTITION__/total=1', uri, 10)))
+            partitionApi.savePartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', new PartitionsSaveRequestDto(partitions: [PigDataDtoProvider.getPartition('embedded-hive-metastore', 'smoke_db', 'part_hyphen', 'one-one=xyz/total=__HIVE_DEFAULT_PARTITION__', uri)]))
+        }
+        def partitionKeys = partitionApi.getPartitionKeys('embedded-hive-metastore', 'smoke_db', 'part_hyphen', filter, null, null, offset, limit)
+
+        expect:
+        partitionKeys.size() == result
+        cleanup:
+        if (cursor == 'end') {
+            def partitionKeysToDrop = partitionApi.getPartitionKeys('embedded-hive-metastore', 'smoke_db', 'part_hyphen', null, null, null, null, null)
+            partitionApi.deletePartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', partitionKeysToDrop)
+        }
+        where:
+        cursor  | filter                                    | offset | limit | result
+        'start' | "one-one=='xyz'"                          | null   | null  | 11
+        ''      | "one-one is null"                         | null   | null  | 10
+        ''      | "total is null"                           | 0      | 10    | 1
+        ''      | "one-one is null and total=10"            | 0      | 10    | 1
+        ''      | "one-one is null or total=1"              | 0      | 10    | 10
+        'end'   | "one-one is null or one-one=='xyz'"       | null   | null  | 21
     }
 
     @Unroll

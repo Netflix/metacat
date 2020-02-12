@@ -25,9 +25,10 @@ import java.util.Map;
  */
 @Slf4j
 public final class PartitionUtil {
+    /** Default partition value. */
+    public static final String DEFAULT_PARTITION_NAME = "__HIVE_DEFAULT_PARTITION__";
     private static final Splitter EQUAL_SPLITTER = Splitter.on('=').trimResults();
     private static final Splitter SLASH_SPLITTER = Splitter.on('/').omitEmptyStrings().trimResults();
-    private static final String DEFAULT_PARTITION_NAME = "__HIVE_DEFAULT_PARTITION__";
 
     private PartitionUtil() {
     }
@@ -57,9 +58,10 @@ public final class PartitionUtil {
                 // value is null/empty string or any other values that cannot be escaped.
                 //
                 if (values[0].equalsIgnoreCase("null")
-                    || values[1].equalsIgnoreCase("null")
-                    || values[1].equalsIgnoreCase(DEFAULT_PARTITION_NAME)) {
+                    || values[1].equalsIgnoreCase("null")) {
                     log.debug("Found 'null' string in kvp [{}] skipping.", part);
+                } else if (values[1].equalsIgnoreCase(DEFAULT_PARTITION_NAME)) {
+                    parts.put(values[0], null);
                 } else {
                     parts.put(values[0], values[1]);
                 }

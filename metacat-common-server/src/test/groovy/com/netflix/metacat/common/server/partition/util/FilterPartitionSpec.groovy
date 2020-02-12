@@ -74,10 +74,15 @@ class FilterPartitionSpec extends Specification{
 
         "dateint=1/type=java"   | "((dateint==1) and (type=='java'))"                   | true
         "dateint=1/type=java"   | "((dateint==1) and (type=='bava'))"                   | false
-
+        "date-int=1/type=java"  | "((date-int==1) and (type=='bava'))"                   | false
+        "date-int=1/type=java"  | "((date-int==1) and (type=='java'))"                   | true
         "dateint=1/type=java"   | "(dateint>1 and type=='java') or (dateint==1 and type=='java')" | true
         "dateint=1/type=java"   | "(dateint>1 or dateint<1) and (type=='bava' or type=='java')" | false
         "dateint=1/type=java"   | "(dateint>1 or dateint<1) or (type=='bava' or type=='java')" | true
+        "dateint=__HIVE_DEFAULT_PARTITION__" | "dateint is null"     | true
+        "dateint=__HIVE_DEFAULT_PARTITION__" | "dateint is not null" | false
+        "dateint=1"             | "dateint is null"     | false
+        "dateint=1"             | "dateint is not null" | true
     }
 
     @Unroll
@@ -100,7 +105,6 @@ class FilterPartitionSpec extends Specification{
         "dateint=1"             | "(12 < 2))"
         "dateint=1"             | "((dateint)=1)"
         "dateint=1"             | "(dateint=(1))"
-        "dateint=1"             | "dateint is null"
-        "dateint=1"             | "dateint is not null"
+        "dateint=1"             | "dateint not null"
     }
 }

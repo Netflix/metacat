@@ -44,11 +44,13 @@ TOKEN :
 |   < NOT: "not">
 |   < MATCHES: "matches">
 |   < LIKE: "like">
+|   < IS: "is">
+|   < NULL: "null">
 |   < BETWEEN: "between">
 |   < IN: "in">
 |   < BOOLEAN: "true" | "false" >
 |   < VARIABLE : "_" < CHARS > | ["A"-"Z"] < CHARS > | ["a"-"z"] <CHARS > | ["a"-"z","A"-"Z"] >
-|   < #CHARS : (["a"-"z","0"-"9","_","A"-"Z"])+ >
+|   < #CHARS : (["a"-"z","0"-"9","_","-","A"-"Z"])+ >
 |   < QUOTE:"\"" > : STRING_STATE
 |   < SQUOTE:"\'" > : SSTRING_STATE
 }
@@ -86,6 +88,8 @@ void eval() #void:
         InEval()
 |   LOOKAHEAD({ getToken(2).kind==LIKE || getToken(3).kind==LIKE })
         LikeEval()
+|   LOOKAHEAD({ getToken(2).kind==IS })
+                NullEval()
 |   CompareEval()
 }
 void BetweenEval() #BETWEEN:
@@ -102,6 +106,11 @@ void LikeEval() #LIKE:
 {}
 {
     term() [ < NOT > { jjtThis.not=true; } ] < LIKE > term()
+}
+void NullEval() #NULL:
+{}
+{
+    term() < IS > [ < NOT > { jjtThis.not=true; } ] < NULL >
 }
 void CompareEval() #COMPARE:
 {}
