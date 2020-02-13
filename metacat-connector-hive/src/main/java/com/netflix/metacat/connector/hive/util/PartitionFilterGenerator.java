@@ -25,10 +25,12 @@ import com.netflix.metacat.common.server.partition.parser.ASTIN;
 import com.netflix.metacat.common.server.partition.parser.ASTLIKE;
 import com.netflix.metacat.common.server.partition.parser.ASTMATCHES;
 import com.netflix.metacat.common.server.partition.parser.ASTNOT;
+import com.netflix.metacat.common.server.partition.parser.ASTNULL;
 import com.netflix.metacat.common.server.partition.parser.ASTOR;
 import com.netflix.metacat.common.server.partition.parser.ASTVAR;
 import com.netflix.metacat.common.server.partition.parser.SimpleNode;
 import com.netflix.metacat.common.server.partition.parser.Variable;
+import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParserEval;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -328,6 +330,12 @@ public class PartitionFilterGenerator extends PartitionParserEval {
         final Object lhs = node.jjtGetChild(0).jjtAccept(this, data);
         final Object rhs = node.jjtGetChild(1).jjtAccept(this, data);
         return createSqlCriteria(lhs, rhs, Compare.LIKE, node.not);
+    }
+
+    @Override
+    public Object visit(final ASTNULL node, final Object data) {
+        final Object lhs = node.jjtGetChild(0).jjtAccept(this, data);
+        return createSqlCriteria(lhs, PartitionUtil.DEFAULT_PARTITION_NAME, Compare.EQ, node.not);
     }
 
     @Override

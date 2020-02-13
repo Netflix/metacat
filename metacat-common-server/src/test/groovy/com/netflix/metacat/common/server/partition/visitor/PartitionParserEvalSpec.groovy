@@ -57,5 +57,7 @@ class PartitionParserEvalSpec extends Specification{
         "dateint between 20160417 and 20160419 or app=='metaca'"                                            | true
         "app like '%cat%'"                                                                                  | true
         "app not like '%cat%'"                                                                              | false
+        "dateint is null"                                                                                   | false
+        "dateint is not null"                                                                               | true
     }
 }

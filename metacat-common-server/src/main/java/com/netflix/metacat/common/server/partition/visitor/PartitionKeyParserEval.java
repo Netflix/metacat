@@ -21,6 +21,7 @@ import com.netflix.metacat.common.server.partition.parser.ASTEQ;
 import com.netflix.metacat.common.server.partition.parser.ASTIN;
 import com.netflix.metacat.common.server.partition.parser.ASTLIKE;
 import com.netflix.metacat.common.server.partition.parser.ASTNOT;
+import com.netflix.metacat.common.server.partition.parser.ASTNULL;
 import com.netflix.metacat.common.server.partition.parser.ASTOR;
 import com.netflix.metacat.common.server.partition.parser.ASTVAR;
 import com.netflix.metacat.common.server.partition.parser.SimpleNode;
@@ -99,6 +100,11 @@ public class PartitionKeyParserEval extends PartitionParserEval {
 
     @Override
     public Object visit(final ASTNOT node, final Object data) {
+        return new HashSet<String>();
+    }
+
+    @Override
+    public Object visit(final ASTNULL node, final Object data) {
         return new HashSet<String>();
     }
 

@@ -30,6 +30,7 @@ import com.netflix.metacat.common.server.partition.parser.ASTLTE;
 import com.netflix.metacat.common.server.partition.parser.ASTMATCHES;
 import com.netflix.metacat.common.server.partition.parser.ASTNEQ;
 import com.netflix.metacat.common.server.partition.parser.ASTNOT;
+import com.netflix.metacat.common.server.partition.parser.ASTNULL;
 import com.netflix.metacat.common.server.partition.parser.ASTNUM;
 import com.netflix.metacat.common.server.partition.parser.ASTOR;
 import com.netflix.metacat.common.server.partition.parser.ASTSTRING;
@@ -284,6 +285,12 @@ public class PartitionParserEval implements PartitionParserVisitor {
         final Object value2 = node.jjtGetChild(1).jjtAccept(this, data);
         final boolean result = compare(Compare.LIKE, value1, value2);
         return node.not != result;
+    }
+
+    @Override
+    public Object visit(final ASTNULL node, final Object data) {
+        final Object value = node.jjtGetChild(0).jjtAccept(this, data);
+        return node.not != (value == null);
     }
 
     @Override

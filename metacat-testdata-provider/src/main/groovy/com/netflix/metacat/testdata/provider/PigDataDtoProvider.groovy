@@ -174,6 +174,57 @@ class PigDataDtoProvider {
                 definitionMetadata: getDefinitionMetadata(owner)
         )
     }
+    /**
+     * Returns a tableDto with the provided information. This table contains two columns.
+     */
+    def static TableDto getPartHyphenTable(String sourceName, String databaseName, String tableName, String owner, String uri){
+        if (uri == null){
+            uri = String.format("s3://wh/%s.db/%s", databaseName, tableName)
+        }
+        return new TableDto(
+            name: QualifiedName.ofTable(sourceName, databaseName, tableName),
+            serde: new StorageDto(
+                owner: owner,
+                inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                serdeInfoParameters: [
+                    'serialization.format': '1'
+                ],
+                uri: uri
+            ),
+            audit: new AuditDto(
+                createdBy: owner,
+                createdDate: new Date(),
+                lastModifiedBy: owner,
+                lastModifiedDate: new Date()
+            ),
+            fields: [
+                new FieldDto(
+                    comment: 'testing',
+                    name: 'two',
+                    pos: 0,
+                    type: 'chararray',
+                    partition_key: false
+                ),
+                new FieldDto(
+                    comment: null,
+                    name: 'one-one',
+                    pos: 1,
+                    type: 'chararray',
+                    partition_key: true
+                ),
+                new FieldDto(
+                    comment: 'added 3nt - partition key',
+                    name: 'total',
+                    pos: 2,
+                    type: 'int',
+                    partition_key: true
+                )
+            ],
+            definitionMetadata: getDefinitionMetadata(owner)
+        )
+    }
 
     /**
      * Returns a tableDto with the provided information. This table contains three columns.
