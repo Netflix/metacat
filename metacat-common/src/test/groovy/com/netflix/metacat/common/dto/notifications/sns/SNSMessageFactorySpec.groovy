@@ -87,6 +87,21 @@ class SNSMessageFactorySpec extends Specification {
             )
         )       | UpdateTableMessage.class
         this.mapper.writeValueAsString(
+            new RenameTableMessage(
+                UUID.randomUUID().toString(),
+                Instant.now().toEpochMilli(),
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                new UpdatePayload<TableDto>(
+                    new TableDto(),
+                    JsonDiff.asJsonPatch(
+                        this.mapper.readTree("{\"a\":\"b\"}"),
+                        this.mapper.readTree("{\"a\":\"c\"}")
+                    )
+                )
+            )
+        )       | RenameTableMessage.class
+        this.mapper.writeValueAsString(
             new UpdateTablePartitionsMessage(
                 UUID.randomUUID().toString(),
                 Instant.now().toEpochMilli(),
