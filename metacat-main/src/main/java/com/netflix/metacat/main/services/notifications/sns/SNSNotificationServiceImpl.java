@@ -31,6 +31,8 @@ import com.netflix.metacat.common.dto.notifications.sns.messages.AddPartitionMes
 import com.netflix.metacat.common.dto.notifications.sns.messages.CreateTableMessage;
 import com.netflix.metacat.common.dto.notifications.sns.messages.DeletePartitionMessage;
 import com.netflix.metacat.common.dto.notifications.sns.messages.DeleteTableMessage;
+import com.netflix.metacat.common.dto.notifications.sns.messages.RenameTableMessage;
+import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateOrRenameTableMessageBase;
 import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTableMessage;
 import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTablePartitionsMessage;
 import com.netflix.metacat.common.dto.notifications.sns.payloads.TablePartitionsUpdatePayload;
@@ -254,7 +256,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
     @EventListener
     public void notifyOfTableRename(final MetacatRenameTablePostEvent event) {
         log.debug("Received RenameTableEvent {}", event);
-        final UpdateTableMessage message = this.createUpdateTableMessage(
+        final RenameTableMessage message = (RenameTableMessage) this.createUpdateorRenameTableMessage(
             UUID.randomUUID().toString(),
             event.getRequestContext().getTimestamp(),
             event.getRequestContext().getId(),
@@ -262,7 +264,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
             event.getOldTable(),
             event.getCurrentTable(),
             "Unable to create json patch for rename table notification",
-            Metrics.CounterSNSNotificationTableRename.getMetricName()
+            Metrics.CounterSNSNotificationTableRename.getMetricName(),
+            SNSMessageType.TABLE_RENAME
         );
         this.publishNotification(this.tableTopicArn, this.config.getFallbackSnsTopicTableArn(),
             message, event.getName(),
@@ -284,7 +287,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final TableDto oldTable = event.getOldTable();
         final TableDto currentTable = event.getCurrentTable();
         if (event.isLatestCurrentTable()) {
-            message = this.createUpdateTableMessage(
+            message = this.createUpdateorRenameTableMessage(
                 UUID.randomUUID().toString(),
                 timestamp,
                 requestId,
@@ -292,7 +295,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 oldTable,
                 currentTable,
                 "Unable to create json patch for update table notification",
-                Metrics.CounterSNSNotificationTableUpdate.getMetricName()
+                Metrics.CounterSNSNotificationTableUpdate.getMetricName(),
+                SNSMessageType.TABLE_UPDATE
             );
         } else {
             // Send a null payload if we failed to get the latest version
@@ -313,7 +317,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
             Metrics.CounterSNSNotificationTableUpdate.getMetricName());
     }
 
-    private UpdateTableMessage createUpdateTableMessage(
+    private UpdateOrRenameTableMessageBase createUpdateorRenameTableMessage(
         final String id,
         final long timestamp,
         final String requestId,
@@ -321,20 +325,31 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final TableDto oldTable,
         final TableDto currentTable,
         final String exceptionMessage,
-        final String metricName
+        final String metricName,
+        final SNSMessageType messageType
     ) {
         try {
             final JsonPatch patch = JsonDiff.asJsonPatch(
                 this.mapper.valueToTree(oldTable),
                 this.mapper.valueToTree(currentTable)
             );
-            return new UpdateTableMessage(
-                id,
-                timestamp,
-                requestId,
-                name.toString(),
-                new UpdatePayload<>(oldTable, patch)
-            );
+            if (messageType == SNSMessageType.TABLE_UPDATE) {
+                return new UpdateTableMessage(
+                    id,
+                    timestamp,
+                    requestId,
+                    name.toString(),
+                    new UpdatePayload<>(oldTable, patch)
+                );
+            } else {
+                return new RenameTableMessage(
+                    id,
+                    timestamp,
+                    requestId,
+                    name.toString(),
+                    new UpdatePayload<>(oldTable, patch)
+                );
+            }
         } catch (final Exception e) {
             this.notificationMetric.handleException(
                 name,

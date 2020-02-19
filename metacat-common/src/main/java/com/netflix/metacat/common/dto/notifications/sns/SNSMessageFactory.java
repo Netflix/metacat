@@ -23,6 +23,7 @@ import com.netflix.metacat.common.dto.notifications.sns.messages.AddPartitionMes
 import com.netflix.metacat.common.dto.notifications.sns.messages.CreateTableMessage;
 import com.netflix.metacat.common.dto.notifications.sns.messages.DeletePartitionMessage;
 import com.netflix.metacat.common.dto.notifications.sns.messages.DeleteTableMessage;
+import com.netflix.metacat.common.dto.notifications.sns.messages.RenameTableMessage;
 import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTableMessage;
 import com.netflix.metacat.common.dto.notifications.sns.messages.UpdateTablePartitionsMessage;
 import lombok.NonNull;
@@ -67,6 +68,8 @@ public class SNSMessageFactory {
                     return this.mapper.readValue(json, DeleteTableMessage.class);
                 case TABLE_UPDATE:
                     return this.mapper.readValue(json, UpdateTableMessage.class);
+                case TABLE_RENAME:
+                    return this.mapper.readValue(json, RenameTableMessage.class);
                 case TABLE_PARTITIONS_UPDATE:
                     return this.mapper.readValue(json, UpdateTablePartitionsMessage.class);
                 case PARTITION_ADD:

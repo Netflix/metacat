@@ -196,7 +196,7 @@ class SNSNotificationServiceImplSpec extends Specification {
 
         then:
         2 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
-        1 * this.mapper.writeValueAsString(_ as UpdateTableMessage) >> UUID.randomUUID().toString()
+        1 * this.mapper.writeValueAsString(_ as RenameTableMessage) >> UUID.randomUUID().toString()
         1 * this.client.publish(this.tableArn, _ as String) >> result
         2 * this.timer.record(_ as Long, _ as TimeUnit)
     }

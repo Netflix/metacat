@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright 2016 Netflix, Inc.
+ *  Copyright 2020 Netflix, Inc.
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -27,18 +27,17 @@ import lombok.Getter;
 import lombok.ToString;
 
 /**
- * A message sent when a table is updated.
+ * A message sent when a table is renamed.
  *
- * @author tgianos
- * @since 0.1.47
+ * @author rveeramacheneni
  */
 @Getter
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class UpdateTableMessage extends UpdateOrRenameTableMessageBase {
+public class RenameTableMessage extends UpdateOrRenameTableMessageBase {
 
     /**
-     * Create a new UpdateTableMessage.
+     * Create a new RenameTableMessage.
      *
      * @param id        The unique id of the message
      * @param timestamp The number of milliseconds since epoch that this message occurred
@@ -47,13 +46,13 @@ public class UpdateTableMessage extends UpdateOrRenameTableMessageBase {
      * @param payload   The payload of the notification
      */
     @JsonCreator
-    public UpdateTableMessage(
+    public RenameTableMessage(
         @JsonProperty("id") final String id,
         @JsonProperty("timestamp") final long timestamp,
         @JsonProperty("requestId") final String requestId,
         @JsonProperty("name") final String name,
         @JsonProperty("payload") final UpdatePayload<TableDto> payload
     ) {
-        super(id, timestamp, requestId, name, payload, SNSMessageType.TABLE_UPDATE);
+        super(id, timestamp, requestId, name, payload, SNSMessageType.TABLE_RENAME);
     }
 }
