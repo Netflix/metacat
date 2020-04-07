@@ -133,7 +133,7 @@ public final class RequestWrapper {
         } catch (UnsupportedOperationException e) {
             collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             log.error(e.getMessage(), e);
-            throw new MetacatNotSupportedException("Catalog does not support the operation");
+            throw new MetacatNotSupportedException("Catalog does not support the operation. " + e.getMessage());
         } catch (DatabaseAlreadyExistsException | TableAlreadyExistsException | PartitionAlreadyExistsException e) {
             collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             log.error(e.getMessage(), e);
