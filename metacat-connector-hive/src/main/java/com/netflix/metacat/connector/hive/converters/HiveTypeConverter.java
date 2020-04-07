@@ -121,7 +121,9 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
         for (Types.NestedField field : schema.columns()) {
             final FieldInfo fieldInfo = new FieldInfo();
             fieldInfo.setName(field.name());
-            fieldInfo.setType(toMetacatType(fromIcebergToHiveType(field.type())));
+            final org.apache.iceberg.types.Type fieldType = field.type();
+            fieldInfo.setSourceType(fieldType.toString());
+            fieldInfo.setType(toMetacatType(fromIcebergToHiveType(fieldType)));
             fieldInfo.setIsNullable(field.isOptional());
             fieldInfo.setComment(field.doc());
             fieldInfo.setPartitionKey(partitionNames.contains(field.name()));
