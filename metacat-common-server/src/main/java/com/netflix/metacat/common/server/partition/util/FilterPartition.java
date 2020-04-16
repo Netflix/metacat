@@ -78,7 +78,7 @@ public class FilterPartition {
                 }
             } catch (ParseException | TokenMgrError e) {
                 throw new IllegalArgumentException(String.format("Invalid expression: %s", partitionExpression), e);
-            } catch (StackOverflowError e) {
+            } catch (StackOverflowError | ArrayIndexOutOfBoundsException | NullPointerException e) {
                 throw new IllegalArgumentException(String.format("Expression too long: %s", partitionExpression), e);
             } catch (IllegalArgumentException e) {
                 throw e;
