@@ -37,6 +37,7 @@ public enum HiveMetrics {
     CounterHivePartitionPathIsNotDir(Type.counter,"partitionPathIsNotDir"),
     CounterHivePartitionFileSystemCall(Type.counter,"partitionFileSystemCall"),
     CounterHiveGetPartitionsExceedThresholdFailure(Type.counter,"getPartitionsExceedThresholdFailure"),
+    CounterHiveFileSystemFailure(Type.counter,"fileSystemFailure"),
 
     /**
      * Gauge.
