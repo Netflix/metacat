@@ -16,9 +16,11 @@
 
 package com.netflix.metacat.connector.hive.sql;
 
+import com.google.common.base.Throwables;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService;
 import com.netflix.metacat.connector.hive.HiveConnectorTableService;
@@ -28,9 +30,11 @@ import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
+import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hadoop.fs.FileSystem;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
@@ -79,6 +83,39 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         this.commonViewHandler = commonViewHandler;
     }
 
+    @Override
+    public void create(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
+        try {
+            super.create(requestContext, tableInfo);
+        } catch (InvalidMetaException e) {
+            throw handleException(e);
+        }
+    }
+
+    private RuntimeException handleException(final RuntimeException e) {
+        //
+        // On table creation, hive metastore validates the table location.
+        // On iceberg table get and update, the iceberg method uses the metadata location.
+        // On both occasions, FileSystem uses a relevant file system based on the location scheme. Noticed an error
+        // where the s3 client's pool closed abruptly. This causes subsequent request to the s3 client to fail.
+        // FileSystem caches the file system instances.
+        // The fix is to clear the FileSystem cache so that it can recreate the file system instances.
+        //
+        for (Throwable ex : Throwables.getCausalChain(e)) {
+            if (ex instanceof IllegalStateException && ex.getMessage().contains("Connection pool shut down")) {
+                log.warn("File system connection pool is down. It will be restarted.");
+                registry.counter(HiveMetrics.CounterHiveFileSystemFailure.getMetricName()).increment();
+                try {
+                    FileSystem.closeAll();
+                } catch (Exception fe) {
+                    log.warn("Failed closing the file system.", fe);
+                }
+                Throwables.propagate(ex);
+            }
+        }
+        throw e;
+    }
+
     /**
      * {@inheritDoc}.
      */
@@ -96,21 +133,25 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      */
     @Override
     public TableInfo get(final ConnectorRequestContext requestContext, final QualifiedName name) {
-        final TableInfo info = super.get(requestContext, name);
-        if (connectorContext.getConfig().isCommonViewEnabled()
-            && HiveTableUtil.isCommonView(info)) {
-            final String tableLoc = HiveTableUtil.getCommonViewMetadataLocation(info);
-            return this.commonViewHandler.getCommonViewTableInfo(name, tableLoc, info,
-                new HiveTypeConverter());
+        try {
+            final TableInfo info = super.get(requestContext, name);
+            if (connectorContext.getConfig().isCommonViewEnabled()
+                && HiveTableUtil.isCommonView(info)) {
+                final String tableLoc = HiveTableUtil.getCommonViewMetadataLocation(info);
+                return this.commonViewHandler.getCommonViewTableInfo(name, tableLoc, info,
+                    new HiveTypeConverter());
+            }
+            if (!connectorContext.getConfig().isIcebergEnabled() || !HiveTableUtil.isIcebergTable(info)) {
+                return info;
+            }
+            final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
+            final IcebergTableWrapper icebergTable =
+                this.icebergTableHandler.getIcebergTable(name, tableLoc, requestContext.isIncludeMetadata());
+            return this.hiveMetacatConverters.fromIcebergTableToTableInfo(name,
+                icebergTable, tableLoc, info);
+        } catch (IllegalStateException e) {
+            throw handleException(e);
         }
-        if (!connectorContext.getConfig().isIcebergEnabled() || !HiveTableUtil.isIcebergTable(info)) {
-            return info;
-        }
-        final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
-        final IcebergTableWrapper icebergTable =
-            this.icebergTableHandler.getIcebergTable(name, tableLoc, requestContext.isIncludeMetadata());
-        return this.hiveMetacatConverters.fromIcebergTableToTableInfo(name,
-            icebergTable, tableLoc, info);
     }
 
 
@@ -135,13 +176,17 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      */
     @Override
     public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
-        if (HiveTableUtil.isIcebergTable(tableInfo)) {
-            icebergTableHandler.handleUpdate(requestContext, this.directSqlTable, tableInfo);
-        } else if (connectorContext.getConfig().isCommonViewEnabled()
-            && HiveTableUtil.isCommonView(tableInfo)) {
-            commonViewHandler.handleUpdate(requestContext, this.directSqlTable, tableInfo);
-        } else {
-            super.update(requestContext, tableInfo);
+        try {
+            if (HiveTableUtil.isIcebergTable(tableInfo)) {
+                icebergTableHandler.handleUpdate(requestContext, this.directSqlTable, tableInfo);
+            } else if (connectorContext.getConfig().isCommonViewEnabled()
+                && HiveTableUtil.isCommonView(tableInfo)) {
+                commonViewHandler.handleUpdate(requestContext, this.directSqlTable, tableInfo);
+            } else {
+                super.update(requestContext, tableInfo);
+            }
+        } catch (IllegalStateException e) {
+            throw handleException(e);
         }
     }
     /**
