@@ -450,5 +450,19 @@ public interface Config {
      * @return True if it is.
      */
     boolean isTableAliasEnabled();
+
+    /**
+     * Set of tags that disable table delete.
+     *
+     * @return set of tags
+     */
+    Set<String> getNoTableDeleteOnTags();
+
+    /**
+     * Set of tags that disable table rename.
+     *
+     * @return set of tags
+     */
+    Set<String> getNoTableRenameOnTags();
 }
 

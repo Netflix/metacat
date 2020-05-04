@@ -57,6 +57,7 @@ import com.netflix.metacat.main.services.TableService;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -175,17 +176,24 @@ public class TableServiceImpl implements TableService {
     }
 
     private void tag(final QualifiedName name, final ObjectNode definitionMetadata) {
+        final Set<String> tags = getTableTags(definitionMetadata);
+        if (!tags.isEmpty()) {
+            log.info("Setting tags {} for table {}", tags, name);
+            final Set<String> result = tagService.setTags(name, tags, false);
+        }
+    }
+
+    private Set<String> getTableTags(@Nullable final ObjectNode definitionMetadata) {
+        final Set<String> tags = Sets.newHashSet();
         if (definitionMetadata != null && definitionMetadata.get(NAME_TAGS) != null) {
             final JsonNode tagsNode = definitionMetadata.get(NAME_TAGS);
-            final Set<String> tags = Sets.newHashSet();
             if (tagsNode.isArray() && tagsNode.size() > 0) {
                 for (JsonNode tagNode : tagsNode) {
                     tags.add(tagNode.textValue());
                 }
-                log.info("Setting tags {} for table {}", tags, name);
-                final Set<String> result = tagService.setTags(name, tags, false);
             }
         }
+        return tags;
     }
 
     /**
@@ -216,6 +224,13 @@ public class TableServiceImpl implements TableService {
             handleException(name, true, "deleteAndReturn_get", e);
         }
 
+        // Fail if the table is tagged not to be deleted.
+        if (hasTags(tableDto, config.getNoTableDeleteOnTags())) {
+            throw new IllegalArgumentException(
+                String.format("Table %s cannot be deleted because it is tagged with %s.", name,
+                    config.getNoTableDeleteOnTags()));
+        }
+
         // Try to delete the table even if get above fails
         try {
             connectorTableServiceProxy.delete(name);
@@ -237,6 +252,20 @@ public class TableServiceImpl implements TableService {
         }
         eventBus.post(new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, tableDto, isMView));
         return tableDto;
+    }
+
+    private boolean hasTags(@Nullable final TableDto tableDto, final Set<String> hasTags) {
+        if (!hasTags.isEmpty() && tableDto != null) {
+            final Set<String> tags = getTableTags(tableDto.getDefinitionMetadata());
+            if (!tags.isEmpty()) {
+                for (String t: hasTags) {
+                    if (tags.contains(t)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -342,6 +371,14 @@ public class TableServiceImpl implements TableService {
             .includeDefinitionMetadata(true)
             .includeDataMetadata(true)
             .build()).orElseThrow(() -> new TableNotFoundException(oldName));
+
+        // Fail if the table is tagged not to be renamed.
+        if (hasTags(oldTable, config.getNoTableRenameOnTags())) {
+            throw new IllegalArgumentException(
+                String.format("Table %s cannot be renamed because it is tagged with %s.", oldName,
+                    config.getNoTableRenameOnTags()));
+        }
+
         if (oldTable != null) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
             eventBus.post(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, this, newName));
