@@ -17,7 +17,13 @@
  */
 package com.netflix.metacat.common.server.properties;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Splitter;
 import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Table related properties.
@@ -30,6 +36,8 @@ public class Table {
 
     @NonNull
     private Delete delete = new Delete();
+    @NonNull
+    private Rename rename = new Rename();
 
     /**
      * Delete related properties.
@@ -42,6 +50,27 @@ public class Table {
 
         @NonNull
         private Cascade cascade = new Cascade();
+        private String noDeleteOnTags;
+        private Set<String> noDeleteOnTagsSet;
+
+        /**
+         * Get the tags that disable table deletes.
+         *
+         * @return Set of tags
+         */
+        @JsonIgnore
+        public Set<String> getNoDeleteOnTagsSet() {
+            if (noDeleteOnTagsSet == null) {
+                if (StringUtils.isNotBlank(noDeleteOnTags)) {
+                    noDeleteOnTagsSet = new HashSet<>(Splitter.on(',')
+                        .omitEmptyStrings()
+                        .splitToList(noDeleteOnTags));
+                } else {
+                    noDeleteOnTagsSet = new HashSet<>();
+                }
+            }
+            return noDeleteOnTagsSet;
+        }
 
         /**
          * Cascade related properties.
@@ -65,6 +94,38 @@ public class Table {
             public static class Views {
                 private boolean metadata = true;
             }
+        }
+    }
+
+    /**
+     * Rename related properties.
+     *
+     * @author amajumdar
+     * @since 1.3.0
+     */
+    @lombok.Data
+    public static class Rename {
+
+        private String noRenameOnTags;
+        private Set<String> noRenameOnTagsSet;
+
+        /**
+         * Get the tags that disable table renames.
+         *
+         * @return Set of tags
+         */
+        @JsonIgnore
+        public Set<String> getNoRenameOnTagsSet() {
+            if (noRenameOnTagsSet == null) {
+                if (StringUtils.isNotBlank(noRenameOnTags)) {
+                    noRenameOnTagsSet = new HashSet<>(Splitter.on(',')
+                        .omitEmptyStrings()
+                        .splitToList(noRenameOnTags));
+                } else {
+                    noRenameOnTagsSet = new HashSet<>();
+                }
+            }
+            return noRenameOnTagsSet;
         }
     }
 }

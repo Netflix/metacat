@@ -764,8 +764,13 @@ class MetacatSmokeSpec extends Specification {
         given:
         def tableName = 'test_create_table_rename'
         def tableName1 = 'test_create_table_rename1'
+        def tableNameTagNoDelete = 'test_create_table_tag_no_delete'
+        def tableNameTagNoRename = 'test_create_table_tag_no_rename'
+        def tableNameTagNoRenamed = 'test_create_table_tag_no_renamed'
         createTable(catalogName, databaseName, tableName, 'TRUE')
         createTable(catalogName, databaseName, tableName1, 'TRUE')
+        createTable(catalogName, databaseName, tableNameTagNoDelete, 'TRUE')
+        createTable(catalogName, databaseName, tableNameTagNoRename, 'TRUE')
         api.deleteTable(catalogName, databaseName, tableName)
         when:
         api.renameTable(catalogName, databaseName, tableName1, tableName)
@@ -788,8 +793,30 @@ class MetacatSmokeSpec extends Specification {
         def table = api.getTable(catalogName, databaseName, tableName, true, true, false)
         table.getMetadata() != null && table.getMetadata().get('EXTERNAL').equalsIgnoreCase('TRUE')
         table.getDefinitionMetadata() != null
+        when:
+        tagApi.setTableTags(catalogName, databaseName, tableNameTagNoDelete, ['do_not_drop'] as Set)
+        api.deleteTable(catalogName, databaseName, tableNameTagNoDelete)
+        then:
+        thrown(MetacatBadRequestException)
+        when:
+        tagApi.removeTableTags(catalogName, databaseName, tableNameTagNoDelete, true, [] as Set)
+        api.deleteTable(catalogName, databaseName, tableNameTagNoDelete)
+        then:
+        noExceptionThrown()
+        when:
+        tagApi.setTableTags(catalogName, databaseName, tableNameTagNoRename, ['do_not_drop','do_not_rename'] as Set)
+        api.renameTable(catalogName, databaseName, tableNameTagNoRename, tableNameTagNoRenamed)
+        then:
+        thrown(MetacatBadRequestException)
+        when:
+        tagApi.removeTableTags(catalogName, databaseName, tableNameTagNoRename, false, ['do_not_rename'] as Set)
+        api.renameTable(catalogName, databaseName, tableNameTagNoRename, tableNameTagNoRenamed)
+        tagApi.removeTableTags(catalogName, databaseName, tableNameTagNoRenamed, true, [] as Set)
+        then:
+        noExceptionThrown()
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName1)
+        api.deleteTable(catalogName, databaseName, tableNameTagNoRenamed)
         where:
         catalogName                    | databaseName
         'embedded-fast-hive-metastore' | 'hsmoke_db3'

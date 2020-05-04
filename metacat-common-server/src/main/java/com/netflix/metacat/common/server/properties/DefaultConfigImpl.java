@@ -531,4 +531,14 @@ public class DefaultConfigImpl implements Config {
     public boolean isTableAliasEnabled() {
         return this.metacatProperties.getAliasServiceProperties().isEnabled();
     }
+
+    @Override
+    public Set<String> getNoTableDeleteOnTags() {
+        return this.metacatProperties.getTable().getDelete().getNoDeleteOnTagsSet();
+    }
+
+    @Override
+    public Set<String> getNoTableRenameOnTags() {
+        return this.metacatProperties.getTable().getRename().getNoRenameOnTagsSet();
+    }
 }

@@ -155,6 +155,7 @@ class TableServiceImplSpec extends Specification {
         when:
         service.deleteAndReturn(name, false)
         then:
+        1 * config.getNoTableDeleteOnTags() >> []
         1 * config.canDeleteTableDefinitionMetadata() >> true
         1 * usermetadataService.deleteMetadata(_,_)
         0 * usermetadataService.softDeleteDataMetadata(_,_)
@@ -162,6 +163,7 @@ class TableServiceImplSpec extends Specification {
         when:
         service.deleteAndReturn(name, false)
         then:
+        1 * config.getNoTableDeleteOnTags() >> []
         1 * config.canDeleteTableDefinitionMetadata() >> false
         1 * config.getNamesEnabledForDefinitionMetadataDelete() >> [QualifiedName.fromString('a')]
         1 * usermetadataService.deleteMetadata(_,_)
@@ -170,6 +172,7 @@ class TableServiceImplSpec extends Specification {
         when:
         service.deleteAndReturn(name, false)
         then:
+        1 * config.getNoTableDeleteOnTags() >> []
         1 * config.canDeleteTableDefinitionMetadata() >> false
         1 * config.getNamesEnabledForDefinitionMetadataDelete() >> [QualifiedName.fromString('a/b')]
         1 * usermetadataService.deleteMetadata(_,_)
@@ -178,6 +181,7 @@ class TableServiceImplSpec extends Specification {
         when:
         service.deleteAndReturn(name, false)
         then:
+        1 * config.getNoTableDeleteOnTags() >> []
         1 * config.canDeleteTableDefinitionMetadata() >> false
         1 * config.getNamesEnabledForDefinitionMetadataDelete() >> [QualifiedName.fromString('a/b/c')]
         1 * usermetadataService.deleteMetadata(_,_)
@@ -186,6 +190,7 @@ class TableServiceImplSpec extends Specification {
         when:
         service.deleteAndReturn(name, false)
         then:
+        1 * config.getNoTableDeleteOnTags() >> []
         1 * config.canDeleteTableDefinitionMetadata() >> false
         1 * config.getNamesEnabledForDefinitionMetadataDelete() >> []
         1 * config.canSoftDeleteDataMetadata() >> true
@@ -195,6 +200,7 @@ class TableServiceImplSpec extends Specification {
         when:
         service.deleteAndReturn(name, false)
         then:
+        1 * config.getNoTableDeleteOnTags() >> []
         1 * config.canDeleteTableDefinitionMetadata() >> false
         1 * config.getNamesEnabledForDefinitionMetadataDelete() >> [QualifiedName.fromString('a/c')]
         1 * config.canSoftDeleteDataMetadata() >> true
@@ -204,6 +210,7 @@ class TableServiceImplSpec extends Specification {
         when:
         service.deleteAndReturn(name, false)
         then:
+        1 * config.getNoTableDeleteOnTags() >> []
         1 * connectorTableService.get(_, _) >> { throw new InvalidMetadataException(name) }
         1 * config.canDeleteTableDefinitionMetadata() >> true
         1 * usermetadataService.deleteMetadata(_,_)
