@@ -21,15 +21,20 @@ import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.exception.MetacatException;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetadataException;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.druid.converter.DataSource;
 import com.netflix.metacat.connector.druid.converter.DruidConnectorInfoConverter;
 import com.netflix.metacat.connector.druid.converter.DruidConverterUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -66,9 +71,21 @@ public class DruidConnectorTableService implements ConnectorTableService {
     @Override
     public TableInfo get(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
         log.debug("Get table metadata for qualified name {} for request {}", name, context);
-        final ObjectNode node = this.druidClient.getLatestDataByName(name.getTableName());
-        final DataSource dataSource = DruidConverterUtil.getDatasourceFromLatestSegmentJsonObject(node);
-        return this.druidConnectorInfoConverter.getTableInfoFromDatasource(dataSource);
+        try {
+            final ObjectNode node = this.druidClient.getLatestDataByName(name.getTableName());
+            final DataSource dataSource = DruidConverterUtil.getDatasourceFromLatestSegmentJsonObject(node);
+            return this.druidConnectorInfoConverter.getTableInfoFromDatasource(dataSource);
+        } catch (MetacatException e) {
+            log.error(String.format("Table %s not found.", name), e);
+            throw new TableNotFoundException(name);
+        } catch (HttpClientErrorException e) {
+            log.error(String.format("Failed getting table %s.", name), e);
+            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+                throw new TableNotFoundException(name);
+            } else {
+                throw new InvalidMetadataException(String.format("Invalid table %s. %s", name, e.getMessage()));
+            }
+        }
     }
 
     /**
