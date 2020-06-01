@@ -144,7 +144,17 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
      */
     @Override
     public boolean exists(@Nonnull final ConnectorRequestContext context, @Nonnull final QualifiedName name) {
-        return super.exists(context, getSnowflakeName(name));
+        boolean result = false;
+        final QualifiedName sName = getSnowflakeName(name);
+        try (Connection connection = this.dataSource.getConnection()) {
+            final ResultSet rs = getTables(connection, sName, sName, false);
+            if (rs.next()) {
+                result = true;
+            }
+        } catch (final SQLException se) {
+            throw this.exceptionMapper.toConnectorException(se, name);
+        }
+        return result;
     }
 
     @Override
@@ -198,6 +208,15 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
         @Nonnull @NonNull final QualifiedName name,
         @Nullable final QualifiedName prefix
     ) throws SQLException {
+        return getTables(connection, name, prefix, true);
+    }
+
+    private ResultSet getTables(
+        @Nonnull @NonNull final Connection connection,
+        @Nonnull @NonNull final QualifiedName name,
+        @Nullable final QualifiedName prefix,
+        final boolean multiCharacterSearch
+    ) throws SQLException {
         final String schema = name.getDatabaseName();
         final DatabaseMetaData metaData = connection.getMetaData();
         return prefix == null || StringUtils.isEmpty(prefix.getTableName())
@@ -206,7 +225,8 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
             .getTables(
                 connection.getCatalog(),
                 schema,
-                prefix.getTableName() + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH,
+                multiCharacterSearch ? prefix.getTableName() + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH
+                    : prefix.getTableName(),
                 TABLE_TYPES
             );
     }
