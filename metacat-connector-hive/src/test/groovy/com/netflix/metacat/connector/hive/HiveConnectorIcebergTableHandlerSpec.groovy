@@ -18,6 +18,8 @@
 package com.netflix.metacat.connector.hive
 
 import com.google.common.collect.ImmutableMap
+import com.netflix.metacat.connector.hive.configs.HiveConnectorFastServiceConfig
+import com.netflix.metacat.testdata.provider.DataDtoProvider
 import org.apache.iceberg.ScanSummary
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.exception.MetacatException
@@ -30,25 +32,17 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteria
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants
-import com.netflix.spectator.api.NoopRegistry
 import spock.lang.Shared
 import spock.lang.Specification
 
 class HiveConnectorIcebergTableHandlerSpec extends Specification{
     @Shared
-    ConnectorContext connectorContext = new ConnectorContext(
-        "testHive",
-        "testHive",
-        "hive",
-        Mock(Config),
-        new NoopRegistry(),
-        ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
-    )
+    ConnectorContext connectorContext = DataDtoProvider.newContext(Mock(Config), ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true"))
 
     def "Test for populate data metadata" () {
         def criteriaImpl = Mock(IcebergTableCriteria)
         def icebergTableOp = Mock(IcebergTableOpWrapper)
-        def icebergHandler = new IcebergTableHandler(connectorContext, criteriaImpl, icebergTableOp)
+        def icebergHandler = new IcebergTableHandler(connectorContext, criteriaImpl, icebergTableOp, null)
 
         def metrics = Mock(ScanSummary.PartitionMetrics)
         when:
@@ -72,7 +66,7 @@ class HiveConnectorIcebergTableHandlerSpec extends Specification{
             }
         }
         def icebergTableOp = Mock(IcebergTableOpWrapper)
-        def icebergHandler = new IcebergTableHandler(connectorContext, criteriaImpl, icebergTableOp)
+        def icebergHandler = new IcebergTableHandler(connectorContext, criteriaImpl, icebergTableOp, new HiveConnectorFastServiceConfig().icebergTableOps())
 
         when:
         icebergHandler.getIcebergTable(QualifiedName.fromString("testing/db/table"), "abc", false)

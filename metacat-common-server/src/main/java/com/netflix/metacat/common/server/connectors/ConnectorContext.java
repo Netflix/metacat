@@ -17,6 +17,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.spectator.api.Registry;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.springframework.context.ApplicationContext;
 
 import java.util.Map;
 
@@ -46,6 +47,10 @@ public class ConnectorContext {
      * The registry for spectator.
      */
     private final Registry registry;
+    /**
+     * Main application context.
+     */
+    private final ApplicationContext applicationContext;
     /**
      * Metacat catalog configuration.
      */

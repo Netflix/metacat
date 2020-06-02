@@ -416,6 +416,12 @@ public interface Config {
      * @return true if iceberg table processing is enabled
      */
     boolean isIcebergEnabled();
+    /**
+     * Enable iceberg table cache.
+     *
+     * @return true if iceberg table cache is enabled
+     */
+    boolean isIcebergCacheEnabled();
 
     /**
      * Enable common view processing.

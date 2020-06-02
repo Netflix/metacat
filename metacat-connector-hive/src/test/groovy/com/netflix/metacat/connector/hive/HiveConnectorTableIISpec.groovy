@@ -31,6 +31,7 @@ import com.netflix.metacat.connector.hive.metastore.HMSHandlerProxy
 import com.netflix.metacat.connector.hive.metastore.IMetacatHMSHandler
 import com.netflix.metacat.connector.hive.metastore.MetacatHMSHandler
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants
+import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.spectator.api.Clock
 import com.netflix.spectator.api.Id
 import com.netflix.spectator.api.Registry
@@ -55,14 +56,7 @@ class HiveConnectorTableIISpec extends Specification {
     @Shared
     ConnectorRequestContext connectorRequestContext = new ConnectorRequestContext(timestamp:1)
     @Shared
-    ConnectorContext connectorContext = new ConnectorContext(
-        "testHive",
-        "testHive",
-        "hive",
-        Mock(Config),
-        Mock(Registry),
-        ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
-    )
+    ConnectorContext connectorContext = DataDtoProvider.newContext(null, ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true"))
     @Shared
     HiveConnectorDatabaseService hiveConnectorDatabaseService = Mock(HiveConnectorDatabaseService)
 

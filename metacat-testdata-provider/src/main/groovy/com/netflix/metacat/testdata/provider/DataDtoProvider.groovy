@@ -15,10 +15,16 @@
  */
 package com.netflix.metacat.testdata.provider
 
+import com.google.common.collect.Maps
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
+import com.netflix.metacat.common.server.connectors.ConnectorContext
+import com.netflix.metacat.common.server.properties.Config
+import com.netflix.metacat.common.server.properties.DefaultConfigImpl
+import com.netflix.metacat.common.server.properties.MetacatProperties
+import com.netflix.spectator.api.NoopRegistry
 
 /**
  * Created by amajumdar on 5/15/15.
@@ -328,5 +334,11 @@ class DataDtoProvider {
                 '    }\n' +
                 '  }\n' +
                 '}')
+    }
+
+    def static ConnectorContext newContext(Config conf, Map<String, String> configuration) {
+        return new ConnectorContext('testhive', 'testhive', 'hive',
+            conf == null ? new DefaultConfigImpl(new MetacatProperties()): conf, new NoopRegistry(),
+            null,  configuration == null ? Maps.newHashMap() : configuration)
     }
 }

@@ -28,13 +28,12 @@ import com.netflix.metacat.common.server.connectors.model.AuditInfo
 import com.netflix.metacat.common.server.connectors.model.StorageInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.connectors.model.ViewInfo
-import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants
+import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
-import com.netflix.spectator.api.Registry
 import org.apache.hadoop.hive.metastore.api.*
 import org.apache.thrift.TException
 import spock.lang.Shared
@@ -58,26 +57,12 @@ class HiveConnectorTableSpec extends Specification {
         metacatHiveClient,
         hiveConnectorDatabaseService,
         new HiveConnectorInfoConverter(new HiveTypeConverter()),
-        new ConnectorContext(
-            "testHive",
-            "testHive",
-            "hive",
-            Mock(Config),
-            Mock(Registry),
-            ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
-        )
+        DataDtoProvider.newContext(null, ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true"))
     )
     @Shared
     ConnectorRequestContext connectorRequestContext = new ConnectorRequestContext(timestamp:1)
     @Shared
-    ConnectorContext connectorContext = new ConnectorContext(
-        "testHive",
-        "testHive",
-        "hive",
-        Mock(Config),
-        Mock(Registry),
-        ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
-    )
+    ConnectorContext connectorContext = DataDtoProvider.newContext(null, ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true"))
 
     def setupSpec() {
         metacatHiveClient.createTable(_) >> {}

@@ -7,10 +7,10 @@ import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
 import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException
 import com.netflix.metacat.common.server.connectors.model.TableInfo
-import com.netflix.metacat.common.server.properties.Config
+import com.netflix.metacat.connector.hive.configs.HiveConnectorFastServiceConfig
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants
-import com.netflix.spectator.api.Registry
+import com.netflix.metacat.testdata.provider.DataDtoProvider
 import spock.lang.Specification
 
 class IcebergTableHandlerSpec extends Specification{
@@ -20,16 +20,10 @@ class IcebergTableHandlerSpec extends Specification{
     def qualifiedName = QualifiedName.ofTable(catalogName, databaseName, tableName)
 
     ConnectorRequestContext connectorRequestContext = new ConnectorRequestContext(timestamp:1)
-    ConnectorContext connectorContext = new ConnectorContext(
-        "testHive",
-        "testHive",
-        "hive",
-        Mock(Config),
-        Mock(Registry),
-        ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true"))
+    ConnectorContext connectorContext = DataDtoProvider.newContext(null, ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true"))
 
     IcebergTableHandler icebergTableHandler =
-        new IcebergTableHandler(connectorContext, null, null)
+        new IcebergTableHandler(connectorContext, null, null, new HiveConnectorFastServiceConfig().icebergTableOps())
     DirectSqlTable directSqlTable = Mock(DirectSqlTable)
 
     def "Test iceberg table handleUpdate"() {

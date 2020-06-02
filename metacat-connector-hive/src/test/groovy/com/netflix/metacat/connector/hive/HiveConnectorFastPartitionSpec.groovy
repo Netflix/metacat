@@ -18,6 +18,7 @@
 package com.netflix.metacat.connector.hive
 
 import com.google.common.collect.Maps
+import com.netflix.metacat.testdata.provider.DataDtoProvider
 import org.apache.iceberg.ScanSummary
 import org.apache.iceberg.Table
 import com.netflix.metacat.common.QualifiedName
@@ -57,9 +58,7 @@ class HiveConnectorFastPartitionSpec extends Specification {
     conf = Mock(Config)
     @Shared
     HiveConnectorFastPartitionService hiveConnectorFastPartitionService =
-        new HiveConnectorFastPartitionService(
-            new ConnectorContext('testhive',
-                'testhive', 'hive', conf, new NoopRegistry(), Maps.newHashMap()),
+        new HiveConnectorFastPartitionService(DataDtoProvider.newContext(conf, null),
             metacatHiveClient,
             Mock(Warehouse),
             new HiveConnectorInfoConverter(new HiveTypeConverter()),

@@ -25,7 +25,9 @@ import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
+import com.netflix.metacat.connector.hive.util.HiveConfigConstants
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric
+import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.spectator.api.NoopRegistry
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
@@ -40,7 +42,7 @@ import spock.lang.Specification
 class DirectSqlDatabaseSpec extends Specification {
     def config = new DefaultConfigImpl(new MetacatProperties())
     def registry = new NoopRegistry()
-    def context = new ConnectorContext('test', 'test', 'hive', config, registry, Maps.newHashMap())
+    def context = DataDtoProvider.newContext(config, null)
     def metric = new HiveConnectorFastServiceMetric(registry)
     def jdbcTemplate = Mock(JdbcTemplate)
     def service = new DirectSqlDatabase(context, jdbcTemplate, metric)
