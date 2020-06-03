@@ -16,11 +16,9 @@
 
 package com.netflix.metacat.connector.hive
 
-import com.google.common.collect.Maps
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.Sort
 import com.netflix.metacat.common.dto.SortOrder
-import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.model.*
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException
@@ -31,8 +29,8 @@ import com.netflix.metacat.common.server.connectors.exception.TableNotFoundExcep
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
+import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
-import com.netflix.spectator.api.NoopRegistry
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException
@@ -57,7 +55,7 @@ class HiveConnectorPartitionSpec extends Specification{
     HiveConnectorTableService tableService = Mock(HiveConnectorTableService);
     @Shared
     HiveConnectorPartitionService hiveConnectorPartitionService =
-        new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive', null, new NoopRegistry(), Maps.newHashMap()),
+        new HiveConnectorPartitionService(DataDtoProvider.newContext(null, null),
             metacatHiveClient,
             new HiveConnectorInfoConverter(new HiveTypeConverter()))
     @Shared
@@ -117,7 +115,7 @@ class HiveConnectorPartitionSpec extends Specification{
     @Unroll
     def "Test for get partitions exceptions" (){
         def client = Mock(MetacatHiveClient)
-        def hiveConnectorPartitionService = new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive', null, new NoopRegistry(), Maps.newHashMap()), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService(DataDtoProvider.newContext(null, null), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest();
         partitionListRequest.partitionNames = [
@@ -172,7 +170,7 @@ class HiveConnectorPartitionSpec extends Specification{
     @Unroll
     def "Test for getNameOfPartitions exceptions" (){
         def client = Mock(MetacatHiveClient)
-        def hiveConnectorPartitionService = new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive',  null, new NoopRegistry(), Maps.newHashMap()), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ))
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService(DataDtoProvider.newContext(null, null), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ))
 
         when:
         PartitionListRequest partitionListRequest = new PartitionListRequest()
@@ -227,7 +225,7 @@ class HiveConnectorPartitionSpec extends Specification{
     @Unroll
     def "Test for getPartitionCount exceptions: #result" (){
         def client = Mock(MetacatHiveClient)
-        def hiveConnectorPartitionService = new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive',  null, new NoopRegistry(), Maps.newHashMap()), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService(DataDtoProvider.newContext(null, null), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
 
         when:
         hiveConnectorPartitionService.getPartitionCount( connectorContext, QualifiedName.ofTable("testhive", "test1", "testtable2"), Mock(TableInfo))
@@ -245,7 +243,7 @@ class HiveConnectorPartitionSpec extends Specification{
 
     def "Test for savePartition" (){
         def client = Mock(MetacatHiveClient)
-        def hiveConnectorPartitionService = new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive',  null, new NoopRegistry(), Maps.newHashMap()), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService(DataDtoProvider.newContext(null, null), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
         when:
         def saverequest = new PartitionsSaveRequest()
         saverequest.checkIfExists = true
@@ -264,7 +262,7 @@ class HiveConnectorPartitionSpec extends Specification{
     @Unroll
     def "Test for savePartition exceptions: #result" (){
         def client = Mock(MetacatHiveClient)
-        def hiveConnectorPartitionService = new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive',  null, new NoopRegistry(), Maps.newHashMap()), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService(DataDtoProvider.newContext(null, null), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
 
         when:
         def saverequest = new PartitionsSaveRequest()
@@ -287,7 +285,7 @@ class HiveConnectorPartitionSpec extends Specification{
 
     def "Test for savePartition partitionalreadyexist exception" (){
         def client = Mock(MetacatHiveClient)
-        def hiveConnectorPartitionService = new HiveConnectorPartitionService(new ConnectorContext('testhive', 'testhive', 'hive',   null, new NoopRegistry(), Maps.newHashMap()), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
+        def hiveConnectorPartitionService = new HiveConnectorPartitionService(DataDtoProvider.newContext(null, null), client, new HiveConnectorInfoConverter( new HiveTypeConverter() ) )
         when:
         def saverequest = new PartitionsSaveRequest()
         saverequest.checkIfExists = true

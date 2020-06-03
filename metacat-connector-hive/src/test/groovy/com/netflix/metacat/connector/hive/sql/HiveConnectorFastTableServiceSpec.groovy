@@ -32,6 +32,7 @@ import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants
+import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.spectator.api.Registry
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
@@ -44,13 +45,7 @@ class HiveConnectorFastTableServiceSpec extends Specification {
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient)
     HiveConnectorDatabaseService hiveConnectorDatabaseService = Mock(HiveConnectorDatabaseService)
     ConnectorRequestContext connectorRequestContext = new ConnectorRequestContext(timestamp:1)
-    ConnectorContext connectorContext = new ConnectorContext(
-        "testHive",
-        "testHive",
-        "hive",
-        Mock(Config),
-        Mock(Registry),
-        ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true"))
+    ConnectorContext connectorContext = DataDtoProvider.newContext(null, ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true"))
     IcebergTableHandler handler = Mock(IcebergTableHandler)
     DirectSqlTable directSqlTable = Mock(DirectSqlTable)
     HiveConnectorTableService service = new HiveConnectorFastTableService(

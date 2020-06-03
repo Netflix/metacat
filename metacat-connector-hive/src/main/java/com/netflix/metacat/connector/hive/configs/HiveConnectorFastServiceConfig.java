@@ -25,6 +25,7 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteria;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.hive.sql.DirectSqlDatabase;
 import com.netflix.metacat.connector.hive.sql.DirectSqlGetPartition;
 import com.netflix.metacat.connector.hive.sql.DirectSqlSavePartition;
@@ -267,15 +268,18 @@ public class HiveConnectorFastServiceConfig {
      * @param connectorContext      server context
      * @param icebergTableCriteria  iceberg table criteria
      * @param icebergTableOpWrapper iceberg table operation
+     * @param icebergTableOpsProxy IcebergTableOps proxy
      * @return IcebergTableHandler
      */
     @Bean
     public IcebergTableHandler icebergTableHandler(final ConnectorContext connectorContext,
                                                    final IcebergTableCriteria icebergTableCriteria,
-                                                   final IcebergTableOpWrapper icebergTableOpWrapper) {
+                                                   final IcebergTableOpWrapper icebergTableOpWrapper,
+                                                   final IcebergTableOpsProxy icebergTableOpsProxy) {
         return new IcebergTableHandler(connectorContext,
             icebergTableCriteria,
-            icebergTableOpWrapper);
+            icebergTableOpWrapper,
+            icebergTableOpsProxy);
     }
 
     /**
@@ -290,7 +294,7 @@ public class HiveConnectorFastServiceConfig {
     }
 
     /**
-     * Create iceberg table operation.
+     * Create iceberg table operation wrapper.
      * @param connectorContext     server context
      * @param threadServiceManager executor service
      * @return IcebergTableOpWrapper
@@ -310,5 +314,14 @@ public class HiveConnectorFastServiceConfig {
     @Bean
     public CommonViewHandler commonViewHandler(final ConnectorContext connectorContext) {
         return new CommonViewHandler(connectorContext);
+    }
+
+    /**
+     * Create IcebergTableOps proxy.
+     * @return IcebergTableOpsProxy
+     */
+    @Bean
+    public IcebergTableOpsProxy icebergTableOps() {
+        return new IcebergTableOpsProxy();
     }
 }

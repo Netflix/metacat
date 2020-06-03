@@ -28,7 +28,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
-import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
@@ -45,23 +44,14 @@ import com.netflix.servo.util.VisibleForTesting;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.iceberg.BaseMetastoreCatalog;
-import org.apache.iceberg.BaseMetastoreTableOperations;
-import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.ScanSummary;
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.Table;
-import org.apache.iceberg.TableMetadata;
 import org.apache.iceberg.TableMetadataParser;
-import org.apache.iceberg.TableOperations;
-import org.apache.iceberg.Transaction;
 import org.apache.iceberg.UpdateSchema;
-import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.exceptions.NoSuchTableException;
 import org.apache.iceberg.exceptions.NotFoundException;
 import org.apache.iceberg.expressions.Expression;
-import org.apache.iceberg.hadoop.HadoopFileIO;
-import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.types.Types;
 
 import java.io.StringReader;
@@ -71,7 +61,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
 
 /**
  * Iceberg table handler which interacts with iceberg library
@@ -94,6 +83,7 @@ public class IcebergTableHandler {
     private IcebergTableCriteria icebergTableCriteria;
     @VisibleForTesting
     private IcebergTableOpWrapper icebergTableOpWrapper;
+    private IcebergTableOpsProxy icebergTableOpsProxy;
 
     /**
      * Constructor.
@@ -101,10 +91,12 @@ public class IcebergTableHandler {
      * @param connectorContext      connector context
      * @param icebergTableCriteria  iceberg table criteria
      * @param icebergTableOpWrapper iceberg table operation
+     * @param icebergTableOpsProxy IcebergTableOps proxy
      */
     public IcebergTableHandler(final ConnectorContext connectorContext,
                                final IcebergTableCriteria icebergTableCriteria,
-                               final IcebergTableOpWrapper icebergTableOpWrapper) {
+                               final IcebergTableOpWrapper icebergTableOpWrapper,
+                               final IcebergTableOpsProxy icebergTableOpsProxy) {
         this.conf = new Configuration();
         this.connectorContext = connectorContext;
         this.registry = connectorContext.getRegistry();
@@ -112,6 +104,7 @@ public class IcebergTableHandler {
             .forEach(key -> conf.set(key, connectorContext.getConfiguration().get(key)));
         this.icebergTableCriteria = icebergTableCriteria;
         this.icebergTableOpWrapper = icebergTableOpWrapper;
+        this.icebergTableOpsProxy = icebergTableOpsProxy;
     }
 
     /**
@@ -177,7 +170,10 @@ public class IcebergTableHandler {
         try {
             this.icebergTableCriteria.checkCriteria(tableName, tableMetadataLocation);
             log.debug("Loading icebergTable {} from {}", tableName, tableMetadataLocation);
-            final IcebergMetastoreTables icebergMetastoreTables = new IcebergMetastoreTables(tableMetadataLocation);
+            final IcebergMetastoreTables icebergMetastoreTables = new IcebergMetastoreTables(
+                new IcebergTableOps(conf, tableMetadataLocation,
+                    connectorContext.getConfig(),
+                    icebergTableOpsProxy));
             final Table table = icebergMetastoreTables.loadTable(
                 HiveTableUtil.qualifiedNameToTableIdentifier(tableName));
             final Map<String, String> extraProperties = Maps.newHashMap();
@@ -215,7 +211,10 @@ public class IcebergTableHandler {
                 log.error(message);
                 throw new MetacatBadRequestException(message);
             }
-            final IcebergMetastoreTables icebergMetastoreTables = new IcebergMetastoreTables(tableMetadataLocation);
+            final IcebergMetastoreTables icebergMetastoreTables = new IcebergMetastoreTables(
+                new IcebergTableOps(conf, tableMetadataLocation,
+                    connectorContext.getConfig(),
+                    icebergTableOpsProxy));
             final Table table = icebergMetastoreTables.loadTable(
                 HiveTableUtil.qualifiedNameToTableIdentifier(tableName));
             final UpdateSchema updateSchema = table.updateSchema();
@@ -299,129 +298,6 @@ public class IcebergTableHandler {
         valueNode.put(DataMetadataMetricConstants.DATA_METADATA_VALUE, metrics.fileCount());
         node.set(DataMetadataMetrics.fileCount.getMetricName(), valueNode);
         return node;
-    }
-
-    /**
-     * Implemented BaseMetastoreTables to interact with iceberg library.
-     * Load an iceberg table from a location.
-     */
-    private final class IcebergMetastoreTables extends BaseMetastoreCatalog {
-        private final String tableLocation;
-        private IcebergTableOps tableOperations;
-
-        IcebergMetastoreTables(final String tableMetadataLocation) {
-            this.tableLocation = tableMetadataLocation;
-        }
-
-        @Override
-        public Table createTable(final TableIdentifier identifier,
-                                 final Schema schema,
-                                 final PartitionSpec spec,
-                                 final String location,
-                                 final Map<String, String> properties) {
-            throw new MetacatNotSupportedException("not supported");
-        }
-
-        @Override
-        public Transaction newCreateTableTransaction(final TableIdentifier identifier,
-                                                     final Schema schema,
-                                                     final PartitionSpec spec,
-                                                     final String location,
-                                                     final Map<String, String> properties) {
-            throw new MetacatNotSupportedException("not supported");
-        }
-
-        @Override
-        public Transaction newReplaceTableTransaction(final TableIdentifier identifier,
-                                                      final Schema schema,
-                                                      final PartitionSpec spec,
-                                                      final String location,
-                                                      final Map<String, String> properties,
-                                                      final boolean orCreate) {
-            throw new MetacatNotSupportedException("not supported");
-        }
-
-        @Override
-        public Table loadTable(final TableIdentifier identifier) {
-            return super.loadTable(identifier);
-        }
-
-        @Override
-        protected TableOperations newTableOps(final TableIdentifier tableIdentifier) {
-            return getTableOps();
-        }
-
-        @Override
-        protected String defaultWarehouseLocation(final TableIdentifier tableIdentifier) {
-            throw new MetacatNotSupportedException("not supported");
-        }
-
-        @Override
-        public boolean dropTable(final TableIdentifier identifier,
-                                 final boolean purge) {
-            throw new MetacatNotSupportedException("not supported");
-        }
-
-        @Override
-        public void renameTable(final TableIdentifier from,
-                                final TableIdentifier to) {
-            throw new MetacatNotSupportedException("not supported");
-        }
-
-        /**
-         * Creates a new instance of IcebergTableOps for the given table location, if not exists.
-         *
-         * @return a MetacatServerOps for the table
-         */
-        public IcebergTableOps getTableOps() {
-            if (tableOperations == null) {
-                tableOperations = new IcebergTableOps(tableLocation);
-            }
-            return tableOperations;
-        }
-    }
-
-    /**
-     * Implemented the BaseMetastoreTableOperations to interact with iceberg library.
-     * Read only operations.
-     */
-    private final class IcebergTableOps extends BaseMetastoreTableOperations {
-        private String location;
-
-        IcebergTableOps(final String location) {
-            this.location = location;
-            refresh();
-        }
-
-        @Override
-        public FileIO io() {
-            return new HadoopFileIO(conf);
-        }
-
-        @Override
-        public TableMetadata refresh() {
-            refreshFromMetadataLocation(this.location,
-                connectorContext.getConfig().getIcebergRefreshFromMetadataLocationRetryNumber());
-            return current();
-        }
-
-        @Override
-        public String currentMetadataLocation() {
-            return location;
-        }
-
-        @Override
-        public TableMetadata current() {
-            return super.current();
-        }
-
-        @Override
-        public void commit(final TableMetadata base, final TableMetadata metadata) {
-            if (!base.equals(metadata)) {
-                location = writeNewMetadata(metadata, currentVersion() + 1);
-                this.requestRefresh();
-            }
-        }
     }
 
     /**

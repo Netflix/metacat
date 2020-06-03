@@ -135,7 +135,7 @@ public class MetacatInitializationService implements HealthIndicator {
             //       some interface/order?
             this.pluginManager.loadPlugins();
             this.pluginsLoaded.set(true);
-            this.catalogManager.loadCatalogs();
+            this.catalogManager.loadCatalogs(event.getApplicationContext());
             this.catalogsLoaded.set(true);
             this.metacatThriftService.start();
             this.thriftStarted.set(true);

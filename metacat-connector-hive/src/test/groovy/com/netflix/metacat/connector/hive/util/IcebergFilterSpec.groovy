@@ -18,6 +18,8 @@
 package com.netflix.metacat.connector.hive.util
 
 import com.google.common.collect.ImmutableMap
+import com.netflix.metacat.connector.hive.configs.HiveConnectorFastServiceConfig
+import com.netflix.metacat.testdata.provider.DataDtoProvider
 import org.apache.iceberg.ScanSummary
 import org.apache.iceberg.Schema
 import org.apache.iceberg.Table
@@ -25,10 +27,8 @@ import org.apache.iceberg.expressions.Expression
 import org.apache.iceberg.types.Type
 import org.apache.iceberg.types.Types
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest
 import com.netflix.metacat.common.server.partition.parser.PartitionParser
-import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteria
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper
@@ -103,14 +103,7 @@ class IcebergFilterSpec extends Specification{
         def icebergTableCriteria = Mock(IcebergTableCriteria)
         def partRequest = new PartitionListRequest()
         def registry = new NoopRegistry()
-        def icebergUtil = new IcebergTableHandler(new ConnectorContext(
-            "testHive",
-            "testHive",
-            "hive",
-            Mock(Config),
-            registry,
-            ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
-        ), icebergTableCriteria, icebergOpWrapper)
+        def icebergUtil = new IcebergTableHandler(DataDtoProvider.newContext(null, ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")), icebergTableCriteria, icebergOpWrapper, new HiveConnectorFastServiceConfig().icebergTableOps())
 
         when:
         icebergUtil.getIcebergTablePartitionMap(QualifiedName.fromString("tableName"), partRequest, icebergTable)
@@ -130,14 +123,7 @@ class IcebergFilterSpec extends Specification{
         def type = Mock(Type)
         def app = Mock(Types.NestedField)
         def partRequest = new PartitionListRequest('dateint==1', [], false, null, null, false)
-        def icebergUtil = new IcebergTableHandler(new ConnectorContext(
-            "testHive",
-            "testHive",
-            "hive",
-            Mock(Config),
-            registry,
-            ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")
-        ), icebergTableCriteria, icebergTableHelper)
+        def icebergUtil = new IcebergTableHandler(DataDtoProvider.newContext(null, ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")), icebergTableCriteria, icebergTableHelper, new HiveConnectorFastServiceConfig().icebergTableOps())
 
         when:
         icebergUtil.getIcebergTablePartitionMap(QualifiedName.fromString("tableName"),partRequest, icebergTable)

@@ -28,6 +28,7 @@ import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.ApplicationContext;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -104,23 +105,24 @@ public class CatalogManager implements HealthIndicator {
     /**
      * Loads catalogs.
      *
+     * @param applicationContext spring application context
      * @throws Exception error
      */
-    public void loadCatalogs() throws Exception {
+    public void loadCatalogs(final ApplicationContext applicationContext) throws Exception {
         if (!this.catalogsLoading.compareAndSet(false, true)) {
             return;
         }
 
         for (final File file : this.listFiles(this.catalogConfigurationDir)) {
             if (file.isFile() && file.getName().endsWith(".properties")) {
-                this.loadCatalog(file);
+                this.loadCatalog(file, applicationContext);
             }
         }
 
         this.catalogsLoaded.set(true);
     }
 
-    private void loadCatalog(final File file) throws Exception {
+    private void loadCatalog(final File file, final ApplicationContext applicationContext) throws Exception {
         log.info("-- Loading catalog {} --", file);
         final Map<String, String> properties = new HashMap<>(this.loadProperties(file));
 
@@ -137,8 +139,10 @@ public class CatalogManager implements HealthIndicator {
         final String catalogShardName = Files.getNameWithoutExtension(file.getName());
         // If catalog name is not specified, then use the catalog shard name.
         final String catalogName = properties.getOrDefault(MetacatCatalogConfig.Keys.CATALOG_NAME, catalogShardName);
+        // Pass in the server application context to the connector context.
         final ConnectorContext connectorContext =
-            new ConnectorContext(catalogName, catalogShardName, connectorType, config, registry, properties);
+            new ConnectorContext(catalogName, catalogShardName, connectorType, config, registry,
+                applicationContext, properties);
         this.connectorManager.createConnection(connectorContext);
         log.info("-- Added catalog {} shard {} using connector {} --", catalogName, catalogShardName, connectorType);
     }

@@ -97,6 +97,8 @@ public class HiveProperties {
      */
     @Data
     public static class Iceberg {
+        @NonNull
+        private IcebergCacheProperties cache = new IcebergCacheProperties();
         private boolean enabled;
         private int fetchSizeInTableSummary = 100;
         /* each retry needs a s3 access, default to 0 as no retry */
@@ -105,6 +107,17 @@ public class HiveProperties {
         private long maxMetadataFileSizeBytes = 500 * 1024 * 1024; //500m
         /*iceberg://<db-name.table-name>/<partition>/snapshot_time=<dateCreated> */
         private String partitionUriScheme = "iceberg";
+    }
+
+    /**
+     * Iceberg cache related properties.
+     *
+     * @author amajumdar
+     * @since 1.3.0
+     */
+    @Data
+    public static class IcebergCacheProperties {
+        private boolean enabled;
     }
 
     /**

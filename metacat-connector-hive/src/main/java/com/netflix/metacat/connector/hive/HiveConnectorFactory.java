@@ -21,6 +21,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.SpringConnectorFactory;
+import com.netflix.metacat.connector.hive.configs.CacheConfig;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorClientConfig;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorConfig;
 import com.netflix.metacat.connector.hive.configs.HiveConnectorFastServiceConfig;
@@ -63,9 +64,10 @@ public class HiveConnectorFactory extends SpringConnectorFactory {
         final Map<String, Object> properties = new HashMap<>();
         properties.put("useHiveFastService", useFastHiveService);
         properties.put("useEmbeddedClient", useLocalMetastore);
+        properties.put("metacat.cache.enabled", connectorContext.getConfig().isCacheEnabled());
         super.addEnvProperties(new MapPropertySource("HIVE_CONNECTOR", properties));
         super.registerClazz(HiveConnectorFastServiceConfig.class,
-            HiveConnectorClientConfig.class, HiveConnectorConfig.class);
+            HiveConnectorClientConfig.class, HiveConnectorConfig.class, CacheConfig.class);
         super.refresh();
     }
 
