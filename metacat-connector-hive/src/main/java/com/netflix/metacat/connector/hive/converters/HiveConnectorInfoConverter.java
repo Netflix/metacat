@@ -195,10 +195,17 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         //adding iceberg table properties
         tableParameters.putAll(table.properties());
         tableParameters.putAll(tableWrapper.getExtraProperties());
-        final String location = tableInfo.getSerde() != null ? tableInfo.getSerde().getUri() : null;
+        final StorageInfo.StorageInfoBuilder storageInfoBuilder = StorageInfo.builder();
+        if (tableInfo.getSerde() != null) {
+            // Adding the serde properties to support old engines.
+            storageInfoBuilder.inputFormat(tableInfo.getSerde().getInputFormat())
+                .outputFormat(tableInfo.getSerde().getOutputFormat())
+                .uri(tableInfo.getSerde().getUri())
+                .serializationLib(tableInfo.getSerde().getSerializationLib());
+        }
         return TableInfo.builder().fields(allFields)
             .metadata(tableParameters)
-            .serde(StorageInfo.builder().uri(location).build())
+            .serde(storageInfoBuilder.build())
             .name(name).auditInfo(tableInfo.getAudit())
             .build();
     }

@@ -486,6 +486,7 @@ class MetacatSmokeSpec extends Specification {
         updatedTable.getMetadata().get('metadata_location') == metadataLocation1
         updatedTable != null
         updatedTable.getDataUri() == updatedUri
+        updatedTable.getSerde().getInputFormat() == 'org.apache.hadoop.mapred.TextInputFormat'
         when:
         def metadataLocation2 = '/tmp/data/00089-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
         def metadata2 = [table_type: 'ICEBERG', metadata_location: metadataLocation2, previous_metadata_location: metadataLocation1, 'partition_spec': 'invalid']
