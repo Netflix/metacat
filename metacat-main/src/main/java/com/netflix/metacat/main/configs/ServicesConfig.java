@@ -17,6 +17,8 @@
  */
 package com.netflix.metacat.main.configs;
 
+import com.netflix.metacat.common.server.api.ratelimiter.DefaultRateLimiter;
+import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.properties.Config;
@@ -90,6 +92,7 @@ public class ServicesConfig {
 
     /**
      * Authorization service.
+     *
      * @param config metacat config
      * @return authorization class based on config
      */
@@ -103,6 +106,7 @@ public class ServicesConfig {
 
     /**
      * Alias service.
+     *
      * @return an instance of the Alias service.
      */
     @Bean
@@ -120,6 +124,17 @@ public class ServicesConfig {
     @ConditionalOnMissingBean(LookupService.class)
     public LookupService lookupService() {
         return new DefaultLookupService();
+    }
+
+    /**
+     * RateLimiter service.
+     *
+     * @return The rate-limiter service bean.
+     */
+    @Bean
+    @ConditionalOnMissingBean(RateLimiter.class)
+    public RateLimiter rateLimiter() {
+        return new DefaultRateLimiter();
     }
 
     /**
@@ -144,12 +159,12 @@ public class ServicesConfig {
     /**
      * The database service bean.
      *
-     * @param connectorManager    Connector manager to use
-     * @param userMetadataService User metadata service to use
-     * @param metacatEventBus     Event bus to use
-     * @param converterUtil       Converter utilities
-     * @param catalogService      The catalog service to use
-     * @param authorizationService  authorization Service
+     * @param connectorManager     Connector manager to use
+     * @param userMetadataService  User metadata service to use
+     * @param metacatEventBus      Event bus to use
+     * @param converterUtil        Converter utilities
+     * @param catalogService       The catalog service to use
+     * @param authorizationService authorization Service
      * @return Catalog service implementation
      */
     @Bean
@@ -174,7 +189,7 @@ public class ServicesConfig {
     /**
      * The table service bean.
      *
-     * @param connectorManager Connector manager to use
+     * @param connectorManager           Connector manager to use
      * @param connectorTableServiceProxy connector table service proxy
      * @param databaseService            database service
      * @param tagService                 tag service
@@ -377,9 +392,9 @@ public class ServicesConfig {
     /**
      * The catalog traversal service helper.
      *
-     * @param catalogService      Catalog service
-     * @param databaseService     Database service
-     * @param tableService        Table service
+     * @param catalogService  Catalog service
+     * @param databaseService Database service
+     * @param tableService    Table service
      * @return The catalog traversal service helper bean
      */
     @Bean

@@ -470,5 +470,20 @@ public interface Config {
      * @return set of tags
      */
     Set<String> getNoTableRenameOnTags();
+
+    /**
+     * Whether the rate limiter is enabled.
+     *
+     * @return True if it is.
+     */
+    boolean isRateLimiterEnabled();
+
+    /**
+     * Whether the rate limiter is enforced
+     * and rejecting requests.
+     *
+     * @return True if it is.
+     */
+    boolean isRateLimiterEnforced();
 }
 

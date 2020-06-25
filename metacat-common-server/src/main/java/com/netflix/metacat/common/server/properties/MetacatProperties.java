@@ -65,4 +65,6 @@ public class MetacatProperties {
     private AuthorizationServiceProperties authorization = new AuthorizationServiceProperties();
     @NonNull
     private AliasServiceProperties aliasServiceProperties = new AliasServiceProperties();
+    @NonNull
+    private RateLimiterProperties rateLimiterProperties = new RateLimiterProperties();
 }

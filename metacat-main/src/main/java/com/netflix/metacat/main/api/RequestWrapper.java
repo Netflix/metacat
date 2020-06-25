@@ -29,6 +29,8 @@ import com.netflix.metacat.common.exception.MetacatPreconditionFailedException;
 import com.netflix.metacat.common.exception.MetacatUnAuthorizedException;
 import com.netflix.metacat.common.exception.MetacatUserMetadataException;
 import com.netflix.metacat.common.exception.MetacatTooManyRequestsException;
+import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
+import com.netflix.metacat.common.server.api.ratelimiter.RateLimiterRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
@@ -65,11 +67,13 @@ public final class RequestWrapper {
     private final Registry registry;
     private final Config config;
     private final AliasService aliasService;
+    private final RateLimiter rateLimiter;
 
     //Metrics
     private final Id requestCounterId;
     private final Id requestFailureCounterId;
     private final Id requestTimerId;
+    private final Id requestRateLimitExceededId;
 
     /**
      * Wrapper class for processing the request.
@@ -77,17 +81,21 @@ public final class RequestWrapper {
      * @param registry registry
      * @param config Config
      * @param aliasService AliasService
+     * @param rateLimiter RateLimiter
      */
     @Autowired
     public RequestWrapper(@NotNull @NonNull final Registry registry,
                           @NotNull @NonNull final Config config,
-                          @NotNull @NonNull final AliasService aliasService) {
+                          @NotNull @NonNull final AliasService aliasService,
+                          @NotNull @NonNull final RateLimiter rateLimiter) {
         this.registry = registry;
         this.config = config;
         this.aliasService = aliasService;
+        this.rateLimiter = rateLimiter;
         requestCounterId = registry.createId(Metrics.CounterRequestCount.getMetricName());
         requestFailureCounterId = registry.createId(Metrics.CounterRequestFailureCount.getMetricName());
         requestTimerId = registry.createId(Metrics.TimerRequest.getMetricName());
+        requestRateLimitExceededId = registry.createId(Metrics.CounterRequestRateLimitExceededCount.getMetricName());
     }
 
     /**
@@ -126,6 +134,7 @@ public final class RequestWrapper {
         final Map<String, String> tags = new HashMap<>(name.parts());
         tags.put("request", resourceRequestName);
         registry.counter(requestCounterId.withTags(tags)).increment();
+        checkRequestRateLimit(name, resourceRequestName, tags);
 
         try {
             log.info("### Calling method: {} for {}", resourceRequestName, name);
@@ -237,4 +246,26 @@ public final class RequestWrapper {
         registry.counter(requestFailureCounterId.withTags(tags)).increment();
     }
 
+    private void checkRequestRateLimit(@NonNull final QualifiedName name,
+                                       @NonNull final String resourceRequestName,
+                                       @NonNull final Map<String, String> tags) {
+        if (!this.config.isRateLimiterEnabled()) {
+            return;
+        }
+        log.info("Checking request rate limit for {}. Request: {}",
+            name, resourceRequestName);
+
+        if (this.rateLimiter.hasExceededRequestLimit(new RateLimiterRequestContext(resourceRequestName, name))) {
+            final String errorMsg = String.format("Too many requests for resource %s. Request: %s",
+                name, resourceRequestName);
+            log.warn(errorMsg);
+            registry.counter(requestRateLimitExceededId.withTags(tags)).increment();
+            if (this.config.isRateLimiterEnforced()) {
+                final MetacatTooManyRequestsException ex =
+                    new MetacatTooManyRequestsException(errorMsg);
+                this.collectRequestExceptionMetrics(tags, ex.getClass().getSimpleName());
+                throw ex;
+            }
+        }
+    }
 }

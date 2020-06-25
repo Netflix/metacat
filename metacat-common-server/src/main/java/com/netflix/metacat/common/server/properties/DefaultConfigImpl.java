@@ -549,4 +549,24 @@ public class DefaultConfigImpl implements Config {
     public Set<String> getNoTableRenameOnTags() {
         return this.metacatProperties.getTable().getRename().getNoRenameOnTagsSet();
     }
+
+    /**
+     * Whether the rate limiter is enabled.
+     *
+     * @return True if it is.
+     */
+    @Override
+    public boolean isRateLimiterEnabled() {
+        return this.metacatProperties.getRateLimiterProperties().isEnabled();
+    }
+
+    /**
+     * Whether the rate limiter is being enforced
+     * and rejecting requests.
+     *
+     * @return True if it is.
+     */
+    public boolean isRateLimiterEnforced() {
+        return this.metacatProperties.getRateLimiterProperties().isEnforced();
+    }
 }
