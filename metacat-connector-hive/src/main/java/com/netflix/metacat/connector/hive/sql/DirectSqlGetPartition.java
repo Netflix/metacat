@@ -1065,14 +1065,13 @@ public class DirectSqlGetPartition {
         // using nest order https://stackoverflow.com/questions/6965333/mysql-union-distinct
         static final String SQL_GET_AUDIT_TABLE_PARTITION_KEYS =
             "select pkey_name, pkey_type from ("
-                + "select pkey_name, pkey_type, integer_idx from PARTITION_KEYS as p1 "
+                + "(select pkey_name, pkey_type, integer_idx from PARTITION_KEYS as p1 "
                 + "join TBLS as t1 on t1.TBL_ID = p1.TBL_ID join DBS as d1 "
-                + "on t1.DB_ID = d1.DB_ID where d1.NAME = ? and t1.TBL_NAME = ? order by integer_idx "
-                + ") as tmp "
-                + "UNION "
-                + "select pkey_name, pkey_type from PARTITION_KEYS as p2 "
+                + "on t1.DB_ID = d1.DB_ID where d1.NAME = ? and t1.TBL_NAME = ? "
+                + ") UNION "
+                + "(select pkey_name, pkey_type, integer_idx from PARTITION_KEYS as p2 "
                 + "join TBLS as t2 on t2.TBL_ID = p2.TBL_ID join DBS as d2 "
-                + "on t2.DB_ID = d2.DB_ID where d2.NAME = ? and t2.TBL_NAME = ?";
+                + "on t2.DB_ID = d2.DB_ID where d2.NAME = ? and t2.TBL_NAME = ?)) as pp order by integer_idx";
 
         //select the partitions not in audit table
         static final String SQL_NOT_IN_AUTDI_TABLE_PARTITIONS =

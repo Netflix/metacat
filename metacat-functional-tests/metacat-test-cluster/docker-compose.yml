@@ -73,7 +73,7 @@ services:
     ##REMOVED cassandra and druid container to reduce the memory demand (orig git hash 43890dd)
     ##TODO: We need to add them back with light images
     hive-metastore-db:
-        image: mysql:5.6
+        image: mysql:5.7
         volumes:
             - ./datastores/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
         environment:
