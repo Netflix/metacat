@@ -21,9 +21,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
-import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException
 import com.netflix.metacat.common.server.connectors.model.TableInfo
-import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.connector.hive.HiveConnectorDatabaseService
 import com.netflix.metacat.connector.hive.HiveConnectorTableService
 import com.netflix.metacat.connector.hive.client.thrift.MetacatHiveClient
@@ -33,7 +31,6 @@ import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants
 import com.netflix.metacat.testdata.provider.DataDtoProvider
-import com.netflix.spectator.api.Registry
 import org.apache.hadoop.hive.metastore.api.FieldSchema
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.hadoop.hive.metastore.api.SerDeInfo
@@ -48,15 +45,18 @@ class HiveConnectorFastTableServiceSpec extends Specification {
     ConnectorContext connectorContext = DataDtoProvider.newContext(null, ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true"))
     IcebergTableHandler handler = Mock(IcebergTableHandler)
     DirectSqlTable directSqlTable = Mock(DirectSqlTable)
+    HiveConnectorInfoConverter infoConverter = new HiveConnectorInfoConverter(new HiveTypeConverter())
+    CommonViewHandler commonViewHandler = new CommonViewHandler(connectorContext)
     HiveConnectorTableService service = new HiveConnectorFastTableService(
         "testhive",
         metacatHiveClient,
         hiveConnectorDatabaseService,
-        new HiveConnectorInfoConverter(new HiveTypeConverter()),
+        infoConverter,
         connectorContext,
         directSqlTable,
         handler,
-        new CommonViewHandler(connectorContext)
+        new CommonViewHandler(connectorContext),
+        new HiveConnectorFastTableServiceProxy(infoConverter, handler, commonViewHandler)
     )
     def catalogName = 'c'
     def databaseName = 'd'

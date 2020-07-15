@@ -29,13 +29,11 @@ import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.fs.FileSystem;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Map;
@@ -50,8 +48,9 @@ import java.util.Map;
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private final Registry registry;
     private final DirectSqlTable directSqlTable;
-    private IcebergTableHandler icebergTableHandler;
-    private CommonViewHandler commonViewHandler;
+    private final IcebergTableHandler icebergTableHandler;
+    private final CommonViewHandler commonViewHandler;
+    private final HiveConnectorFastTableServiceProxy hiveConnectorFastTableServiceProxy;
 
     /**
      * Constructor.
@@ -64,8 +63,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
      * @param directSqlTable               Table jpa service
      * @param icebergTableHandler          iceberg table handler
      * @param commonViewHandler            common view handler
+     * @param hiveConnectorFastTableServiceProxy hive connector fast table service proxy
      */
-    @Autowired
     public HiveConnectorFastTableService(
         final String catalogName,
         final IMetacatHiveClient metacatHiveClient,
@@ -74,13 +73,15 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         final ConnectorContext connectorContext,
         final DirectSqlTable directSqlTable,
         final IcebergTableHandler icebergTableHandler,
-        final CommonViewHandler commonViewHandler
+        final CommonViewHandler commonViewHandler,
+        final HiveConnectorFastTableServiceProxy hiveConnectorFastTableServiceProxy
     ) {
         super(catalogName, metacatHiveClient, hiveConnectorDatabaseService, hiveMetacatConverters, connectorContext);
         this.registry = connectorContext.getRegistry();
         this.directSqlTable = directSqlTable;
         this.icebergTableHandler = icebergTableHandler;
         this.commonViewHandler = commonViewHandler;
+        this.hiveConnectorFastTableServiceProxy = hiveConnectorFastTableServiceProxy;
     }
 
     @Override
@@ -138,17 +139,15 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             if (connectorContext.getConfig().isCommonViewEnabled()
                 && HiveTableUtil.isCommonView(info)) {
                 final String tableLoc = HiveTableUtil.getCommonViewMetadataLocation(info);
-                return this.commonViewHandler.getCommonViewTableInfo(name, tableLoc, info,
-                    new HiveTypeConverter());
+                return hiveConnectorFastTableServiceProxy.getCommonViewTableInfo(name, tableLoc, info,
+                    new HiveTypeConverter(), connectorContext.getConfig().isIcebergCacheEnabled());
             }
             if (!connectorContext.getConfig().isIcebergEnabled() || !HiveTableUtil.isIcebergTable(info)) {
                 return info;
             }
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
-            final IcebergTableWrapper icebergTable =
-                this.icebergTableHandler.getIcebergTable(name, tableLoc, requestContext.isIncludeMetadata());
-            return this.hiveMetacatConverters.fromIcebergTableToTableInfo(name,
-                icebergTable, tableLoc, info);
+            return hiveConnectorFastTableServiceProxy.getIcebergTable(name, tableLoc, info,
+                requestContext.isIncludeMetadata(), connectorContext.getConfig().isIcebergCacheEnabled());
         } catch (IllegalStateException e) {
             throw handleException(e);
         }

@@ -33,6 +33,7 @@ import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import com.netflix.metacat.connector.hive.sql.HiveConnectorFastDatabaseService;
 import com.netflix.metacat.connector.hive.sql.HiveConnectorFastPartitionService;
 import com.netflix.metacat.connector.hive.sql.HiveConnectorFastTableService;
+import com.netflix.metacat.connector.hive.sql.HiveConnectorFastTableServiceProxy;
 import com.netflix.metacat.connector.hive.sql.SequenceGeneration;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import org.apache.hadoop.hive.metastore.Warehouse;
@@ -218,6 +219,7 @@ public class HiveConnectorFastServiceConfig {
      * @param directSqlTable               table jpa service
      * @param icebergTableHandler          iceberg table handler
      * @param commonViewHandler            common view handler
+     * @param hiveConnectorFastTableServiceProxy hive connector fast table service proxy
      * @return HiveConnectorFastTableService
      */
     @Bean
@@ -228,7 +230,8 @@ public class HiveConnectorFastServiceConfig {
         final ConnectorContext connectorContext,
         final DirectSqlTable directSqlTable,
         final IcebergTableHandler icebergTableHandler,
-        final CommonViewHandler commonViewHandler
+        final CommonViewHandler commonViewHandler,
+        final HiveConnectorFastTableServiceProxy hiveConnectorFastTableServiceProxy
     ) {
         return new HiveConnectorFastTableService(
             connectorContext.getCatalogName(),
@@ -237,6 +240,28 @@ public class HiveConnectorFastServiceConfig {
             hiveMetacatConverters,
             connectorContext,
             directSqlTable,
+            icebergTableHandler,
+            commonViewHandler,
+            hiveConnectorFastTableServiceProxy
+        );
+    }
+
+    /**
+     * create hive connector fast table service proxy.
+     *
+     * @param hiveMetacatConverters        hive metacat converters
+     * @param icebergTableHandler          iceberg table handler
+     * @param commonViewHandler            common view handler
+     * @return HiveConnectorFastTableServiceProxy
+     */
+    @Bean
+    public HiveConnectorFastTableServiceProxy hiveConnectorFastTableServiceProxy(
+        final HiveConnectorInfoConverter hiveMetacatConverters,
+        final IcebergTableHandler icebergTableHandler,
+        final CommonViewHandler commonViewHandler
+    ) {
+        return new HiveConnectorFastTableServiceProxy(
+            hiveMetacatConverters,
             icebergTableHandler,
             commonViewHandler
         );
