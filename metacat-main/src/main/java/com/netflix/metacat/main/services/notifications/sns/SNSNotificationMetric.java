@@ -57,6 +57,9 @@ public class SNSNotificationMetric {
         this.counterHashMap.put(Metrics.CounterSNSNotificationTablePartitionAdd.getMetricName(),
             registry.counter(registry.createId(Metrics.CounterSNSNotificationTablePartitionAdd.getMetricName())
                 .withTags(Metrics.tagStatusSuccessMap)));
+        this.counterHashMap.put(Metrics.CounterSNSNotificationTablePartitionDelete.getMetricName(),
+            registry.counter(registry.createId(Metrics.CounterSNSNotificationTablePartitionDelete.getMetricName())
+                .withTags(Metrics.tagStatusSuccessMap)));
         this.counterHashMap.put(Metrics.CounterSNSNotificationPartitionDelete.getMetricName(),
             registry.counter(registry.createId(Metrics.CounterSNSNotificationPartitionDelete.getMetricName())
                 .withTags(Metrics.tagStatusSuccessMap)));
