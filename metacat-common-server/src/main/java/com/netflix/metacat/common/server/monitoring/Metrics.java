@@ -57,6 +57,7 @@ public enum Metrics {
     CounterCatalogTraversalDatabaseReadFailed(Component.server, Type.counter, "catalogTraversalDatabaseReadFailed"),
     CounterCatalogTraversalTableReadFailed(Component.server, Type.counter, "catalogTraversalTableReadFailed"),
     CounterTableUpdateIgnoredException(Component.tableservice, Type.counter, "tableUpdateIgnoredException"),
+    CounterTableCreateIgnoredException(Component.tableservice, Type.counter, "tableCreateIgnoredException"),
     CounterRequestRateLimitExceededCount(Component.server, Type.counter, "requestRateLimitExceeded"),
 
     /**

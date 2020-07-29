@@ -135,6 +135,7 @@ public class TableServiceImpl implements TableService {
         setOwnerIfNull(tableDto, metacatRequestContext.getUserName());
         log.info("Creating table {}", name);
         eventBus.post(new MetacatCreateTablePreEvent(name, metacatRequestContext, this, tableDto));
+
         connectorTableServiceProxy.create(name, converterUtil.fromTableDto(tableDto));
 
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
@@ -147,13 +148,24 @@ public class TableServiceImpl implements TableService {
                 .record(duration, TimeUnit.MILLISECONDS);
             tag(name, tableDto.getDefinitionMetadata());
         }
-        final TableDto dto = get(name, GetTableServiceParameters.builder()
-            .disableOnReadMetadataIntercetor(false)
-            .includeInfo(true)
-            .includeDataMetadata(true)
-            .includeDefinitionMetadata(true)
-            .build()).orElseThrow(() -> new IllegalStateException("Should exist"));
-        eventBus.post(new MetacatCreateTablePostEvent(name, metacatRequestContext, this, dto));
+
+        TableDto dto = tableDto;
+        try {
+            dto = get(name, GetTableServiceParameters.builder()
+                .disableOnReadMetadataIntercetor(false)
+                .includeInfo(true)
+                .includeDataMetadata(true)
+                .includeDefinitionMetadata(true)
+                .build()).orElse(tableDto);
+        } catch (Exception e) {
+            handleExceptionOnCreate(name, "getTable", e);
+        }
+
+        try {
+            eventBus.post(new MetacatCreateTablePostEvent(name, metacatRequestContext, this, dto));
+        } catch (Exception e) {
+            handleExceptionOnCreate(name, "postEvent", e);
+        }
         return dto;
     }
 
@@ -476,13 +488,26 @@ public class TableServiceImpl implements TableService {
                                  final String request,
                                  final Exception ex) {
         if (ignoreErrorsAfterUpdate) {
-            log.warn("Failed {} for table {}", request, name);
+            log.warn("Failed {} for table {}. Error: {}", request, name, ex.getMessage());
             registry.counter(registry.createId(
                 Metrics.CounterTableUpdateIgnoredException.getMetricName()).withTags(name.parts())
                 .withTag("request", request)).increment();
         } else {
             throw Throwables.propagate(ex);
         }
+    }
+
+    /**
+     * Swallow the exception and log it.
+     *
+     */
+    private void handleExceptionOnCreate(final QualifiedName name,
+                                         final String request,
+                                         final Exception ex) {
+        log.warn("Failed {} for create table {}. Error: {}", request, name, ex.getMessage());
+        registry.counter(registry.createId(
+            Metrics.CounterTableCreateIgnoredException.getMetricName()).withTags(name.parts())
+            .withTag("request", request)).increment();
     }
 
 
