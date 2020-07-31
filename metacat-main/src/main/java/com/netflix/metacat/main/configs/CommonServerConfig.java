@@ -113,6 +113,7 @@ public class CommonServerConfig {
      * Default event listener factory.
      * @return The application event multicaster to use.
      */
+    @ConditionalOnMissingBean
     @Bean(AnnotationConfigUtils.EVENT_LISTENER_FACTORY_BEAN_NAME)
     public EventListenerFactory eventListenerFactory() {
         return new MetacatEventListenerFactory();

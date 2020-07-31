@@ -45,8 +45,7 @@ dependencies {
     compile("com.github.rholder:guava-retrying") {
         exclude module: "guava"
     }
-    compile("io.springfox:springfox-swagger2")
-    compile("io.springfox:springfox-bean-validators")
+    compile("io.springfox:springfox-boot-starter")
     compile("org.springframework.boot:spring-boot-starter")
     compile("org.springframework.boot:spring-boot-starter-web")
     compile("org.springframework.boot:spring-boot-starter-actuator")

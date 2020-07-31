@@ -55,6 +55,7 @@ import com.netflix.metacat.main.services.GetTableNamesServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.spectator.api.Registry;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -187,6 +188,7 @@ public class TableServiceImpl implements TableService {
         }
     }
 
+    @SuppressFBWarnings
     private void tag(final QualifiedName name, final ObjectNode definitionMetadata) {
         final Set<String> tags = getTableTags(definitionMetadata);
         if (!tags.isEmpty()) {

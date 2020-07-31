@@ -74,10 +74,14 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                 case 412: // PRECONDITION_FAILED
                     return new MetacatPreconditionFailedException(message);
                 case 429:
-                    return new RetryableException(message, new MetacatTooManyRequestsException(message), null);
+                    return new RetryableException(response.status(), message,
+                        response.request() == null ? null : response.request().httpMethod(),
+                        new MetacatTooManyRequestsException(message), null, response.request());
                 case 500: //INTERNAL_SERVER_ERROR
                 case 503: //SERVICE_UNAVAILABLE
-                    return new RetryableException(message, new MetacatException(message), null);
+                    return new RetryableException(response.status(), message,
+                        response.request() == null ? null : response.request().httpMethod(),
+                        new MetacatException(message), null, response.request());
                 default:
                     return new MetacatException(message);
             }

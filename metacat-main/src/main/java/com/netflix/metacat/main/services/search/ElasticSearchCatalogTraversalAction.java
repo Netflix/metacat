@@ -133,9 +133,11 @@ public class ElasticSearchCatalogTraversalAction implements CatalogTraversalActi
                         if (dto == null) {
                             result = true;
                         }
-                    } catch (DatabaseNotFoundException ignored) {
+                    } catch (DatabaseNotFoundException de) {
                         result = true;
-                    } catch (Exception ignored) {
+                    } catch (Exception e) {
+                        log.warn("Ignoring exception during deleteUnmarkedEntities for {}. Message: {}",
+                            databaseDto.getName(), e.getMessage());
                     }
                     return result;
                 }).collect(Collectors.toList());
@@ -182,7 +184,9 @@ public class ElasticSearchCatalogTraversalAction implements CatalogTraversalActi
                         if (!dto.isPresent()) {
                             result = true;
                         }
-                    } catch (Exception ignored) {
+                    } catch (Exception e) {
+                        log.warn("Ignoring exception during deleteUnmarkedEntities for {}. Message: {}",
+                            tableDto.getName(), e.getMessage());
                     }
                     return result;
                 }).collect(Collectors.toList());

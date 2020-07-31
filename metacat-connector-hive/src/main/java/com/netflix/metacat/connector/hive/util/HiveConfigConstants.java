@@ -166,7 +166,14 @@ public final class HiveConfigConstants {
      * DATANUCLEUS_AUTOCREATESCHEMA.
      */
     public static final String DATANUCLEUS_AUTOCREATESCHEMA = "datanucleus.autoCreateSchema";
-
+    /**
+     * DATANUCLEUS_RDBMS_CHECKEXISTTABLESORVIEWS.
+     */
+    public static final String DATANUCLEUS_RDBMS_CHECKEXISTTABLESORVIEWS = "datanucleus.rdbms.CheckExistTablesOrViews";
+    /**
+     * DATANUCLEUS_RDBMS_INITIALIZECOULUMNINFO.
+     */
+    public static final String DATANUCLEUS_RDBMS_INITIALIZECOULUMNINFO = "datanucleus.rdbms.initializeColumnInfo";
     /**
      * DATANUCLEUS_IDENTIFIERFACTORY.
      */

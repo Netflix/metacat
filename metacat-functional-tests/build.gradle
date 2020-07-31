@@ -36,7 +36,7 @@ facets {
 
 configurations {
     warproject
-    
+
     all*.exclude group: 'javax.ws.rs', module: 'javax.ws.rs-api'
 }
 
@@ -169,6 +169,4 @@ clean {
     delete "metastore_db"
 }
 
-findbugs {
-    sourceSets = []
-}
+spotbugsTest.enabled = false

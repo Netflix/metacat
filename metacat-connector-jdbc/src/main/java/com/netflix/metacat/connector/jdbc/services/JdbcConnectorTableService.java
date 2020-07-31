@@ -31,6 +31,7 @@ import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +57,7 @@ import java.util.List;
 @Slf4j
 @Getter
 public class JdbcConnectorTableService implements ConnectorTableService {
+    @SuppressFBWarnings
     protected static final String[] TABLE_TYPES = {"TABLE", "VIEW"};
     static final String[] TABLE_TYPE = {"TABLE"};
     private static final String EMPTY = "";

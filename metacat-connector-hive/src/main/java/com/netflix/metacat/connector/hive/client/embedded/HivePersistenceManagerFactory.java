@@ -61,9 +61,13 @@ public final class HivePersistenceManagerFactory {
             final DataSource dataSource = DataSourceManager.get().get(name);
             final Map<String, Object> properties = Maps.newHashMap();
             properties.put(HiveConfigConstants.DATANUCLEUS_FIXEDDATASTORE,
-                props.get(HiveConfigConstants.DATANUCLEUS_FIXEDDATASTORE));
+                props.getOrDefault(HiveConfigConstants.DATANUCLEUS_FIXEDDATASTORE, true));
             properties.put(HiveConfigConstants.DATANUCLEUS_AUTOCREATESCHEMA,
-                props.get(HiveConfigConstants.DATANUCLEUS_AUTOCREATESCHEMA));
+                props.getOrDefault(HiveConfigConstants.DATANUCLEUS_AUTOCREATESCHEMA, false));
+            properties.put(HiveConfigConstants.DATANUCLEUS_RDBMS_CHECKEXISTTABLESORVIEWS,
+                props.getOrDefault(HiveConfigConstants.DATANUCLEUS_RDBMS_CHECKEXISTTABLESORVIEWS, false));
+            properties.put(HiveConfigConstants.DATANUCLEUS_RDBMS_INITIALIZECOULUMNINFO,
+                props.getOrDefault(HiveConfigConstants.DATANUCLEUS_RDBMS_INITIALIZECOULUMNINFO, "None"));
             properties.put(HiveConfigConstants.DATANUCLEUS_IDENTIFIERFACTORY,
                 HiveConfigConstants.DATANUCLEUS_DATANUCLEU1);
             properties.put(HiveConfigConstants.DATANUCLEUS_CONNECTIONFACTORY, dataSource);

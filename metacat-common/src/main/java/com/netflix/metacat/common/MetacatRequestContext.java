@@ -20,6 +20,7 @@ package com.netflix.metacat.common;
 import lombok.Getter;
 
 import javax.annotation.Nullable;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
 
@@ -31,7 +32,7 @@ import java.util.UUID;
  * @author zhenl
  */
 @Getter
-public class MetacatRequestContext {
+public class MetacatRequestContext implements Serializable {
     /**
      * Request header representing the user name.
      */
@@ -53,6 +54,7 @@ public class MetacatRequestContext {
      * Default if unknown.
      */
     public static final String UNKNOWN = "UNKNOWN";
+    private static final long serialVersionUID = -1486145626431113817L;
 
     private final String id = UUID.randomUUID().toString();
     // TODO: Move to Java 8 and use java.time.Instant

@@ -15,6 +15,8 @@
  *     limitations under the License.
  *
  */
+import com.github.spotbugs.snom.SpotBugsTask
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
 buildscript {
     repositories {
@@ -23,24 +25,22 @@ buildscript {
             url "http://repo.spring.io/milestone"
         }
         maven { url 'https://jitpack.io' }
+        gradlePluginPortal()
     }
 
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}")
-        classpath("org.asciidoctor:asciidoctor-gradle-plugin:1.5.3")
-        classpath("gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.4.17")
         classpath("com.netflix.nebula:gradle-aggregate-javadocs-plugin:3.0.1")
-        classpath("com.netflix.nebula:gradle-netflixoss-project-plugin:7.1.3")
-        classpath("gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.6")
     }
 }
 
-
 plugins {
-    id "com.github.kt3k.coveralls" version "2.8.1"
-    id "org.ajoberstar.github-pages" version "1.7.2"
-    id "org.unbroken-dome.test-sets" version "2.1.1"
-    id "io.franzbecker.gradle-lombok" version "3.0.0"
+    id 'com.github.kt3k.coveralls' version '2.10.1'
+    id 'nebula.netflixoss' version '8.8.1'
+    id 'org.springframework.boot' version "${spring_boot_version}" apply false
+    id 'com.gorylenko.gradle-git-properties' version '2.2.2' apply false
+    id 'io.franzbecker.gradle-lombok' version '4.0.0' apply false
+    id 'nebula.node' version '1.3.1' apply false
+    id 'com.github.spotbugs' version '4.4.1' apply false
 }
 
 apply plugin: "nebula-aggregate-javadocs"
@@ -85,12 +85,11 @@ idea {
 configure(javaProjects) {
     apply plugin: "java"
     apply plugin: "checkstyle"
-    apply plugin: "findbugs"
-    apply plugin: "pmd"
+    apply plugin: "com.github.spotbugs"
     apply plugin: "io.spring.dependency-management"
     apply plugin: "com.gorylenko.gradle-git-properties"
     apply plugin: "groovy"
-    apply plugin: "org.unbroken-dome.test-sets"
+    apply plugin: "io.franzbecker.gradle-lombok"
 
     group = "com.netflix.${githubProjectName}"
 
@@ -99,57 +98,48 @@ configure(javaProjects) {
 
     dependencyManagement {
         imports {
-            mavenBom "org.springframework.boot:spring-boot-dependencies:${spring_boot_version}"
+            mavenBom SpringBootPlugin.BOM_COORDINATES
             mavenBom "org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}"
+            mavenBom "org.spockframework:spock-bom:${spock_version}"
             mavenBom "com.google.inject:guice-bom:${google_guice_version}"
         }
         dependencies {
+            dependency("com.github.spotbugs:spotbugs-annotations:4.0.6")
+            dependency("org.codehaus.groovy:groovy-all:2.5.9")
+            dependencySet(group: "org.ow2.asm", version: "8.0.1") {
+                entry "asm"
+                entry "asm-analysis"
+                entry "asm-commons"
+                entry "asm-tree"
+                entry "asm-util"
+            }
             dependency("cglib:cglib-nodep:3.2.4")
-            dependency("commons-dbutils:commons-dbutils:1.6")
             dependency("com.amazon.redshift:redshift-jdbc42:1.2.1.1001")
             dependency("com.github.fge:json-patch:1.9")
             dependency("com.github.rholder:guava-retrying:2.0.0")
-            // Guava even with guava.version set to 19.0 in properties keeps going back to 18.0 without this.
-            dependency("com.google.guava:guava:19.0")
-            dependencySet(group: "com.netflix.spectator", version: "0.55.0") {
+            dependency("commons-dbutils:commons-dbutils:1.6")
+            dependencySet(group: "com.netflix.spectator", version: "0.111.0") {
                 entry "spectator-api"
                 entry "spectator-reg-servo"
             }
-            dependencySet(group: "io.springfox", version: "2.7.0") {
-                entry "springfox-swagger2"
-                entry "springfox-swagger-ui"
-                entry "springfox-bean-validators"
-            }
-            dependencySet(group: "io.swagger", version: "1.5.13") {
+            dependency("io.springfox:springfox-boot-starter:3.0.0")
+            dependencySet(group: "io.swagger", version: "1.6.2") {
                 entry "swagger-annotations"
                 entry "swagger-jersey2-jaxrs"
             }
             dependency("de.danielbechler:java-object-diff:0.91.1")
             dependency("io.airlift:testing-mysql-server:0.1")
-            dependency("javax.ws.rs:jsr311-api:1.1.1")
-            dependency("net.sf.dozer:dozer:5.4.0")
+            dependency("net.sf.dozer:dozer:5.5.1")
             dependency("nl.jqno.equalsverifier:equalsverifier:1.7.2")
             dependency("org.apache.hadoop:hadoop-core:1.2.1")
             dependencySet(group: "org.apache.hive", version: "1.2.1") {
                 entry "hive-metastore"
             }
             dependency("log4j:log4j:1.2.17")
-            dependency("org.projectlombok:lombok:1.18.4")
-            dependency("commons-logging:commons-logging:1.2")
-            dependency("com.datastax.cassandra:cassandra-driver-core:3.6.0")
             dependency("org.json:json:20180813")
-            dependency("com.google.code.findbugs:annotations:3.0.1")
-            dependency("com.google.code.findbugs:jsr305:3.0.2")
-            dependency("org.apache.logging.log4j:log4j-core:2.10.0")
+            dependency("commons-logging:commons-logging:1.2")
             dependency("org.apache.pig:pig:0.14.0")
             dependency("org.codehaus.gpars:gpars:1.2.1")
-            dependency("org.glassfish.jersey.containers:jersey-container-servlet:2.19")
-            dependency("org.glassfish.jersey.media:jersey-media-json-jackson:2.19")
-            dependencySet(group: "org.spockframework", version: "1.1-groovy-2.4") {
-                entry("spock-core")
-                entry("spock-guice")
-                entry("spock-spring")
-            }
             /**es 5.4.1 dependencies*/
             dependency("org.elasticsearch.client:transport:5.4.1")
             dependency("net.snowflake:snowflake-jdbc:3.4.2")
@@ -164,6 +154,7 @@ configure(javaProjects) {
         all*.exclude module: "slf4j-jdk14"
         all*.exclude module: "slf4j-log4j12"
         all*.exclude module: "log4j-to-slf4j"
+        all*.exclude group: "asm"
     }
 
     dependencies {
@@ -171,14 +162,11 @@ configure(javaProjects) {
         /*******************************
          * Compile Dependencies
          *******************************/
-        compile("log4j:log4j")
 
         /*******************************
          * Provided Dependencies
          *******************************/
-        compileOnly("com.google.code.findbugs:annotations")
-        compileOnly("com.google.code.findbugs:jsr305")
-
+        compileOnly("com.github.spotbugs:spotbugs-annotations")
         /*******************************
          * Runtime Dependencies
          *******************************/
@@ -186,7 +174,7 @@ configure(javaProjects) {
         /*******************************
          * Test Dependencies
          *******************************/
-
+        testCompile("log4j:log4j")
         testCompile("cglib:cglib-nodep")
         testCompile("org.codehaus.groovy:groovy-all")
         testCompile("org.codehaus.gpars:gpars")
@@ -212,11 +200,13 @@ configure(javaProjects) {
         configFile = new File(project.parent.projectDir, "codequality/checkstyle/checkstyle.xml")
     }
 
-    findbugs {
+    spotbugs {
+        toolVersion = '4.0.6'
         excludeFilter = new File(project.parent.projectDir, "codequality/findbugs/excludeFilter.xml")
     }
+    spotbugsTest.enabled = false
 
-    tasks.withType(Pmd) {
+    tasks.withType(SpotBugsTask) {
         reports {
             xml.enabled = false
             html.enabled = true
@@ -231,13 +221,6 @@ configure(javaProjects) {
         }
     }
 
-    tasks.withType(FindBugs) {
-        reports {
-            xml.enabled = false
-            html.enabled = true
-        }
-    }
-
     // Print out full stack traces when our tests fail to assist debugging (e.g., when scanning Jenkins console output)
     tasks.withType(Test) {
         testLogging {
@@ -245,11 +228,7 @@ configure(javaProjects) {
         }
     }
 
-    testSets {
-        integrationTest { dirName = 'integration-test' }
+    javadoc {
+        exclude 'com/netflix/metacat/common/server/partition/parser/**'
     }
-
-    pmdTest.enabled = false
-    check.dependsOn integrationTest
-    integrationTest.mustRunAfter test
 }

@@ -22,7 +22,6 @@ import com.netflix.spectator.api.Registry;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
@@ -37,7 +36,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Getter
 @Slf4j
-@Component
 public class ThreadServiceManager {
     private  ListeningExecutorService executor;
 
