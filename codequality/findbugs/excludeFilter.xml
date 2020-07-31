@@ -20,4 +20,9 @@
         <Package name="~com\.netflix\.metacat\.common\.server\.partition\.parser.*" />
     </Match>
 
+    <Match>
+        <Package name="~com\.netflix\.metacat\.common\.server\.properties\.*" />
+        <Bug code="RCN" />
+    </Match>
+
 </FindBugsFilter>

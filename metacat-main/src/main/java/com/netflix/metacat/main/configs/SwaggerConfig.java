@@ -40,7 +40,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
  * @since 1.1.0
  */
 @Configuration
-@ConditionalOnProperty(value = "metacat.swagger.enabled", havingValue = "true")
+@ConditionalOnProperty(value = "springfox.documentation.swagger-ui.enabled", havingValue = "true")
 @EnableSwagger2
 @Import(BeanValidatorPluginsConfiguration.class)
 public class SwaggerConfig {
@@ -51,7 +51,7 @@ public class SwaggerConfig {
      * @return The spring fox docket.
      */
     @Bean
-    public Docket genieApi(final Config config) {
+    public Docket api(final Config config) {
         return new Docket(DocumentationType.SWAGGER_2)
             .apiInfo(
                 /**

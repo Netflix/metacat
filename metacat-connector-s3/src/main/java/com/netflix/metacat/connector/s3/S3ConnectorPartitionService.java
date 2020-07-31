@@ -55,6 +55,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * S3 Connector implementation for partitions.
@@ -257,9 +258,12 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
                                     @Nullable final Sort sort,
                                     @Nullable final Pageable pageable) {
         log.debug("Get partitions for table {} with name prefix {}", name, prefix);
-        return _getPartitions(name, null, null, sort, pageable, true).stream()
-            .filter(p -> p.getName().getPartitionName().startsWith(prefix.getPartitionName()))
-            .collect(Collectors.toList());
+        List<PartitionInfo> result = _getPartitions(name, null, null, sort, pageable, true);
+        if (prefix != null) {
+            result = result.stream().filter(p -> p.getName().getPartitionName().startsWith(prefix.getPartitionName()))
+                .collect(Collectors.toList());
+        }
+        return result;
     }
 
     @Override
@@ -290,9 +294,13 @@ public class S3ConnectorPartitionService implements ConnectorPartitionService {
                                          @Nullable final Sort sort,
                                          @Nullable final Pageable pageable) {
         log.debug("Get partition names for table {} with prefix {}", name, prefix);
-        return _getPartitions(name, null, null, sort, pageable, true).stream().map(BaseInfo::getName)
-            .filter(partitionName -> partitionName.getPartitionName().startsWith(prefix.getPartitionName()))
-            .collect(Collectors.toList());
+        Stream<QualifiedName> result = _getPartitions(name, null, null, sort, pageable, true)
+            .stream().map(BaseInfo::getName);
+        if (prefix != null) {
+            result = result
+                .filter(partitionName -> partitionName.getPartitionName().startsWith(prefix.getPartitionName()));
+        }
+        return result.collect(Collectors.toList());
     }
 
     @Override

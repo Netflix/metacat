@@ -419,7 +419,7 @@ public class CatalogTraversal {
      */
     @Data
     @AllArgsConstructor
-    public class Context {
+    public static class Context {
         private String runId;
         private Instant startInstant;
         private List<QualifiedName> qNames;

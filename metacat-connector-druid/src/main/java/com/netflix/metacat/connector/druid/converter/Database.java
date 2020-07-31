@@ -17,6 +17,7 @@
 package com.netflix.metacat.connector.druid.converter;
 
 import com.netflix.metacat.connector.druid.DruidConfigConstants;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 
 /**
@@ -26,6 +27,7 @@ import lombok.Getter;
  * @since 1.2.0
  */
 @Getter
+@SuppressFBWarnings
 public class Database {
     private final String name = DruidConfigConstants.DRUID_DB;
 }

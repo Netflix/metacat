@@ -20,6 +20,7 @@ package com.netflix.metacat.common.dto.notifications.sns;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netflix.metacat.common.dto.BaseDto;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -37,6 +38,7 @@ import javax.annotation.Nullable;
 @Getter
 @ToString
 @EqualsAndHashCode(callSuper = false)
+@SuppressFBWarnings
 public class SNSMessage<P> extends BaseDto {
     private final String source = "metacat";
     private final String id;
