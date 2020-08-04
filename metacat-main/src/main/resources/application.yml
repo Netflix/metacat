@@ -52,3 +52,5 @@ spring:
     default-property-inclusion: always
     deserialization:
       FAIL_ON_UNKNOWN_PROPERTIES: false
+  main:
+    allow-bean-definition-overriding: true
