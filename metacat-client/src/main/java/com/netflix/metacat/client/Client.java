@@ -315,7 +315,7 @@ public final class Client {
                     (int) TimeUnit.MINUTES.toMillis(30));
             }
             if (logLevel == null) {
-                logLevel = feign.Logger.Level.NONE;
+                logLevel = feign.Logger.Level.BASIC;
             }
             if (client == null) {
                 client = new feign.Client.Default(null, null);
