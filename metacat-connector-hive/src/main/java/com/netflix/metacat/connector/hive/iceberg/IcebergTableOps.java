@@ -1,9 +1,11 @@
 package com.netflix.metacat.connector.hive.iceberg;
 
+import com.google.common.base.Throwables;
 import com.netflix.metacat.common.server.properties.Config;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.iceberg.BaseMetastoreTableOperations;
 import org.apache.iceberg.TableMetadata;
+import org.apache.iceberg.exceptions.NotFoundException;
 import org.apache.iceberg.hadoop.HadoopFileIO;
 import org.apache.iceberg.io.FileIO;
 
@@ -50,8 +52,17 @@ public class IcebergTableOps extends BaseMetastoreTableOperations {
 
     @Override
     public TableMetadata refresh() {
-        refreshFromMetadataLocation(this.location, config.getIcebergRefreshFromMetadataLocationRetryNumber());
-        return super.current();
+        try {
+            refreshFromMetadataLocation(this.location, config.getIcebergRefreshFromMetadataLocationRetryNumber());
+            return super.current();
+        } catch (Exception e) {
+            for (Throwable ex : Throwables.getCausalChain(e)) {
+                if (ex.getMessage().contains("NoSuchKey")) {
+                    throw new NotFoundException(e, String.format("Location %s does not exist", location));
+                }
+            }
+            throw e;
+        }
     }
 
     @Override

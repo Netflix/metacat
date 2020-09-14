@@ -33,6 +33,7 @@ import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
 import com.netflix.metacat.connector.hive.util.PartitionUtil
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
+import feign.Logger
 import groovy.sql.Sql
 import org.apache.commons.io.FileUtils
 import org.joda.time.Instant
@@ -65,9 +66,11 @@ class MetacatSmokeSpec extends Specification {
             .withHost(url)
             .withUserName('metacat-test')
             .withClientAppName('metacat-test')
+            .withLogLevel(Logger.Level.NONE)
             .build()
         def hiveClient = Client.builder()
             .withHost(url)
+            .withLogLevel(Logger.Level.NONE)
             .withDataTypeContext('hive')
             .withUserName('metacat-test')
             .withClientAppName('metacat-test')
