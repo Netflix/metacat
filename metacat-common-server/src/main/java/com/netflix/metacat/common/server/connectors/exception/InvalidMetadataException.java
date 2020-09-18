@@ -17,15 +17,12 @@
 
 package com.netflix.metacat.common.server.connectors.exception;
 
-import com.netflix.metacat.common.QualifiedName;
-
 /**
  * Invalid BusinessMetadata Exception.
  * @author zhenl
  * @since 1.2.0
  */
 public class InvalidMetadataException extends ConnectorException {
-    private QualifiedName name;
     /**
      * Constructor.
      *
