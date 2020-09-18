@@ -18,6 +18,7 @@
 package com.netflix.metacat.client.module;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Strings;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatException;
@@ -55,7 +56,10 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                 message = Util.toString(response.body().asReader());
                 try {
                     final ObjectNode body = metacatJson.parseJsonObject(message);
-                    message = body.path("message").asText("No error message supplied.");
+                    message = body.path("error").asText();
+                    if (Strings.isNullOrEmpty(message)) {
+                        message = body.path("message").asText("No error message supplied.");
+                    }
                 } catch (final MetacatJsonException ignored) {
                 }
             }
