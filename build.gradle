@@ -145,6 +145,7 @@ configure(javaProjects) {
             dependency("net.snowflake:snowflake-jdbc:3.4.2")
             dependency("com.esotericsoftware.kryo:kryo:2.22")
             dependency("org.apache.iceberg:iceberg-spark-runtime:${iceberg_version}")
+            dependency("com.datastax.cassandra:cassandra-driver-core:3.7.2")
         }
     }
 

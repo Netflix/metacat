@@ -52,6 +52,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-hateoas")
     compile("org.springframework.boot:spring-boot-starter-logging")
     compile("org.springframework.boot:spring-boot-starter-tomcat")
+    compile("javax.validation:validation-api")
 
     /*******************************
      * Provided Dependencies

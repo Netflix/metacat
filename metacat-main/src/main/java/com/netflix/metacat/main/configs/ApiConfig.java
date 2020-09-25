@@ -19,9 +19,10 @@ package com.netflix.metacat.main.configs;
 
 import com.netflix.metacat.main.api.ApiFilter;
 import com.netflix.metacat.main.api.MetacatErrorController;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
-import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -91,12 +92,10 @@ public class ApiConfig extends WebMvcConfigurerAdapter {
              * {@inheritDoc}
              */
             @Override
-            public Map<String, Object> getErrorAttributes(
-                final WebRequest webRequest,
-                final boolean includeStackTrace
-            ) {
+            public Map<String, Object> getErrorAttributes(final WebRequest webRequest,
+                                                          final ErrorAttributeOptions options) {
                 final Map<String, Object> errorAttributes
-                    = super.getErrorAttributes(webRequest, includeStackTrace);
+                    = super.getErrorAttributes(webRequest, options);
                 errorAttributes.put("error", errorAttributes.get("message"));
                 return errorAttributes;
             }
@@ -104,23 +103,14 @@ public class ApiConfig extends WebMvcConfigurerAdapter {
     }
 
     /**
-     * Returns the default error properties.
-     * @return default error properties.
-     */
-    @Bean
-    public ErrorProperties errorProperties() {
-        return new ErrorProperties();
-    }
-
-    /**
      * Returns the error controller.
      * @param errorAttributes error attributes
-     * @param errorProperties error properties
+     * @param serverProperties server properties
      * @return error controller
      */
     @Bean
     public MetacatErrorController metacatErrorController(final ErrorAttributes errorAttributes,
-                                                         final ErrorProperties errorProperties) {
-        return new MetacatErrorController(errorAttributes, errorProperties);
+                                                         final ServerProperties serverProperties) {
+        return new MetacatErrorController(errorAttributes, serverProperties.getError());
     }
 }

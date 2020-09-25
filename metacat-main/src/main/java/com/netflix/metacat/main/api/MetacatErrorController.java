@@ -18,6 +18,7 @@
 package com.netflix.metacat.main.api;
 
 import org.springframework.boot.autoconfigure.web.servlet.error.AbstractErrorController;
+import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorViewResolver;
@@ -57,20 +58,44 @@ public class MetacatErrorController extends AbstractErrorController {
     @RequestMapping
     @ResponseBody
     public ResponseEntity<Map<String, Object>> error(final HttpServletRequest request) {
-        final Map<String, Object> body = getErrorAttributes(request, isIncludeStackTrace(request));
+        final Map<String, Object> body = getErrorAttributes(request, getErrorAttributeOptions(request));
         final HttpStatus status = getStatus(request);
         return new ResponseEntity<>(body, status);
     }
 
-    /**
-     * Determine if the stacktrace attribute should be included.
-     * @param request the source request
-     * @return if the stacktrace attribute should be included
-     */
-    private boolean isIncludeStackTrace(final HttpServletRequest request) {
-        final ErrorProperties.IncludeStacktrace include = this.errorProperties.getIncludeStacktrace();
-        return include == ErrorProperties.IncludeStacktrace.ALWAYS
-            || include == ErrorProperties.IncludeStacktrace.ON_TRACE_PARAM && getTraceParameter(request);
+    private ErrorAttributeOptions getErrorAttributeOptions(final HttpServletRequest request) {
+        ErrorAttributeOptions options = ErrorAttributeOptions.defaults();
+        if (includeStackTrace(request)) {
+            options = options.including(ErrorAttributeOptions.Include.STACK_TRACE);
+        }
+        if (includeMessage(request)) {
+            options = options.including(ErrorAttributeOptions.Include.MESSAGE);
+        }
+        return options;
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean includeStackTrace(final HttpServletRequest request) {
+        switch (this.errorProperties.getIncludeStacktrace()) {
+            case ALWAYS:
+                return true;
+            case ON_PARAM:
+            case ON_TRACE_PARAM:
+                return getBooleanParameter(request, "trace");
+            default:
+                return false;
+        }
+    }
+
+    private boolean includeMessage(final HttpServletRequest request) {
+        switch (this.errorProperties.getIncludeMessage()) {
+            case ALWAYS:
+                return true;
+            case ON_PARAM:
+                return getBooleanParameter(request, "message");
+            default:
+                return false;
+        }
     }
 
     @Override
