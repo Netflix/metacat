@@ -43,7 +43,8 @@ netflix:
 
 server:
   error:
-    includeStacktrace: on_trace_param
+    includeStacktrace: on_param
+    includeMessage: always
 
 spring:
   application:
