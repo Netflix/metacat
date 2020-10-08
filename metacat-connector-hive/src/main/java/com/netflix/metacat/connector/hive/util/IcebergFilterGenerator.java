@@ -104,22 +104,22 @@ public class IcebergFilterGenerator extends PartitionParserEval {
 
     @Override
     public Object visit(final ASTIN node, final Object data) {
-        throw new RuntimeException("Not supported");
+        throw new UnsupportedOperationException("IN Operator not supported");
     }
 
     @Override
     public Object visit(final ASTMATCHES node, final Object data) {
-        throw new RuntimeException("Not supported");
+        throw new UnsupportedOperationException("Operator Not supported");
     }
 
     @Override
     public Object visit(final ASTNOT node, final Object data) {
-        throw new RuntimeException("Not supported");
+        throw new UnsupportedOperationException("Operator Not supported");
     }
 
     @Override
     public Object visit(final ASTLIKE node, final Object data) {
-        throw new RuntimeException("Not supported");
+        throw new UnsupportedOperationException("Not supported");
     }
 
     private Expression evalSingleTerm(final ASTCOMPARE node, final Object data) {
@@ -184,7 +184,7 @@ public class IcebergFilterGenerator extends PartitionParserEval {
         } else if (isField(rhs)) {
             return new ImmutablePair<>(rhs.toString(), getValue(rhs.toString(), lhs));
         }
-        throw new RuntimeException(
+        throw new IllegalArgumentException(
             String.format("Invalid input \"%s/%s\" filter must be columns in fields %s or %s",
                 lhs, rhs, fieldMap.keySet().toString(), ICEBERG_TIMESTAMP_NAMES.toString()));
     }
@@ -210,7 +210,7 @@ public class IcebergFilterGenerator extends PartitionParserEval {
                 case DECIMAL:
                     return value;
                 default:
-                    throw new RuntimeException("Unsupported BigDecimal to Iceberg Type");
+                    throw new IllegalArgumentException("Cannot convert the given big decimal value to an Iceberg type");
             }
         }
         return value;
@@ -244,7 +244,7 @@ public class IcebergFilterGenerator extends PartitionParserEval {
             case NEQ:
                 return Expressions.notEqual(key, value);
             default:
-                throw new RuntimeException("Not supported");
+                throw new UnsupportedOperationException(String.format("Operator %s supported", comparison));
         }
     }
 }

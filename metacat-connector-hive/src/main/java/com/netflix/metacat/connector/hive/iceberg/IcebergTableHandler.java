@@ -133,8 +133,8 @@ public class IcebergTableHandler {
                 result = this.icebergTableOpWrapper.getPartitionMetricsMap(icebergTable, null);
             }
         } catch (ParseException ex) {
-            log.error("Iceberg filter parse error", ex);
-            throw new MetacatBadRequestException("Iceberg filter parse error");
+            log.error("Iceberg filter parse error: ", ex);
+            throw new IllegalArgumentException(String.format("Iceberg filter parse error. Ex: %s", ex.getMessage()));
         } catch (IllegalStateException e) {
             registry.counter(registry.createId(IcebergRequestMetrics.CounterGetPartitionsExceedThresholdFailure
                 .getMetricName()).withTags(tableName.parts())).increment();
