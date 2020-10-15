@@ -22,6 +22,7 @@ import com.amazonaws.services.sns.model.PublishResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.diff.JsonDiff;
+import com.google.common.base.Throwables;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.TableDto;
@@ -46,6 +47,7 @@ import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEve
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.main.configs.SNSNotificationsConfig;
 import com.netflix.metacat.main.services.notifications.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -53,6 +55,7 @@ import org.springframework.context.event.EventListener;
 import javax.annotation.Nullable;
 import javax.validation.constraints.Size;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Implementation of the NotificationService using Amazon SNS.
@@ -62,7 +65,8 @@ import java.util.UUID;
  */
 @Slf4j
 public class SNSNotificationServiceImpl implements NotificationService {
-    private final AmazonSNS client;
+    private final AtomicBoolean isClientPoolDown;
+    private AmazonSNS client;
     private final String tableTopicArn;
     private final String partitionTopicArn;
     private final ObjectMapper mapper;
@@ -99,6 +103,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
         this.config = config;
         this.notificationMetric = notificationMetric;
         this.snsNotificationServiceUtil = snsNotificationServiceUtil;
+        this.isClientPoolDown = new AtomicBoolean();
     }
 
     /**
@@ -401,7 +406,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
     ) throws Exception {
         PublishResult result = null;
         try {
-            result = this.client.publish(arn, this.mapper.writeValueAsString(message));
+            result = publishNotification(arn, this.mapper.writeValueAsString(message));
         } catch (Exception exception) {
             log.error("SNS Publish message failed.", exception);
             notificationMetric.counterIncrement(
@@ -409,11 +414,55 @@ public class SNSNotificationServiceImpl implements NotificationService {
             final SNSMessage<Void> voidMessage = new SNSMessage<>(message.getId(),
                 message.getTimestamp(), message.getRequestId(), message.getType(), message.getName(),
                 null);
-            result = this.client.publish(arn, this.mapper.writeValueAsString(voidMessage));
+            result = publishNotification(arn, this.mapper.writeValueAsString(voidMessage));
         }
         log.info("Successfully published message to topic {} with id {}", arn, result.getMessageId());
         log.debug("Successfully published message {} to topic {} with id {}", message, arn, result.getMessageId());
         notificationMetric.counterIncrement(counterKey);
         notificationMetric.recordTime(message, Metrics.TimerNotificationsPublishDelay.getMetricName());
+    }
+
+    private PublishResult publishNotification(final String arn, final String message) {
+        if (isClientPoolDown.get()) {
+            synchronized (this) {
+                return publishNotificationWithNoCheck(arn, message);
+            }
+        } else {
+            return publishNotificationWithNoCheck(arn, message);
+        }
+    }
+
+    private PublishResult publishNotificationWithNoCheck(final String arn, final String message) {
+        try {
+            return this.client.publish(arn, message);
+        } catch (Exception e) {
+            //
+            // SNS Http client pool once shutdown cannot be recovered. Hence we are shutting down the SNS client
+            // and recreating a new instance.
+            //
+            return Throwables.getCausalChain(e).stream()
+                .filter(ex -> ex instanceof IllegalStateException
+                    && ex.getMessage().contains("Connection pool shut down"))
+                .findFirst()
+                .map(ex -> {
+                    if (isClientPoolDown.compareAndSet(false, true)) {
+                        reinitializeClient();
+                    }
+                    return publishNotification(arn, message);
+                }).orElseThrow(() -> Throwables.propagate(e));
+        }
+    }
+
+    private synchronized void reinitializeClient() {
+        if (isClientPoolDown.get()) {
+            log.warn("SNS HTTP connection pool is down. It will be restarted.");
+            try {
+                this.client.shutdown();
+            } catch (Exception exception) {
+                log.warn("Failed shutting down SNS client.", exception);
+            }
+            this.client = new SNSNotificationsConfig().amazonSNS();
+            isClientPoolDown.set(false);
+        }
     }
 }
