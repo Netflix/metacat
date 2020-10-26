@@ -26,8 +26,6 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.ApplicationContext;
 
 import java.io.File;
@@ -50,7 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * all databases for the <code>catalog.name</code>.
  */
 @Slf4j
-public class CatalogManager implements HealthIndicator {
+public class CatalogManager {
     private final ConnectorManager connectorManager;
     private final File catalogConfigurationDir;
     private final AtomicBoolean catalogsLoading = new AtomicBoolean();
@@ -83,23 +81,6 @@ public class CatalogManager implements HealthIndicator {
      */
     public boolean areCatalogsLoaded() {
         return this.catalogsLoaded.get();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Health health() {
-        // If catalogs are loaded we'll just report up
-        final Health.Builder builder = this.catalogsLoaded.get() ? Health.up() : Health.outOfService();
-
-        this.connectorManager.getCatalogConfigs().forEach(catalog -> {
-            final String key = catalog.getSchemaWhitelist().isEmpty() ? catalog.getCatalogName()
-                : String.format("%s:%s", catalog.getCatalogName(), catalog.getSchemaWhitelist());
-            builder.withDetail(key, catalog.getType());
-        });
-
-        return builder.build();
     }
 
     /**

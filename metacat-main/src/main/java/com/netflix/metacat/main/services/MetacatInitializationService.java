@@ -24,6 +24,7 @@ import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.manager.PluginManager;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.thrift.transport.TSocket;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.event.ContextClosedEvent;
@@ -55,8 +56,6 @@ public class MetacatInitializationService implements HealthIndicator {
     @NonNull
     private final MetacatThriftService metacatThriftService;
     // Initial values are false
-    private final AtomicBoolean pluginsLoaded = new AtomicBoolean();
-    private final AtomicBoolean catalogsLoaded = new AtomicBoolean();
     private final AtomicBoolean thriftStarted = new AtomicBoolean();
 
     /**
@@ -87,9 +86,23 @@ public class MetacatInitializationService implements HealthIndicator {
      */
     @Override
     public Health health() {
-        final boolean plugins = this.pluginsLoaded.get();
-        final boolean catalogs = this.catalogsLoaded.get();
-        final boolean thrift = this.thriftStarted.get();
+        final boolean plugins = pluginManager.arePluginsLoaded();
+        final boolean catalogs = catalogManager.areCatalogsLoaded();
+        final boolean thrift = this.thriftStarted.get()
+            && metacatThriftService.getCatalogThriftServices().parallelStream().map(c -> {
+                TSocket transport = null;
+                try {
+                   transport = new TSocket("localhost", c.getPortNumber(), 100);
+                   transport.open();
+                } catch (Exception e) {
+                    return false;
+                } finally {
+                    if (transport != null && transport.isOpen()) {
+                        transport.close();
+                    }
+                }
+                return true;
+            }).reduce(Boolean.TRUE, Boolean::equals);
 
         final Health.Builder builder = plugins && catalogs && thrift ? Health.up() : Health.outOfService();
 
@@ -109,9 +122,7 @@ public class MetacatInitializationService implements HealthIndicator {
     public void stop(final ContextClosedEvent event) {
         log.info("Metacat application is stopped per {}. Stopping services.", event);
         try {
-            this.pluginsLoaded.set(false);
             this.connectorManager.stop();
-            this.catalogsLoaded.set(false);
             this.threadServiceManager.stop();
             this.metacatThriftService.stop();
             this.thriftStarted.set(false);
@@ -134,9 +145,7 @@ public class MetacatInitializationService implements HealthIndicator {
             // TODO: Rather than doing this statically why don't we have things that need to be started implement
             //       some interface/order?
             this.pluginManager.loadPlugins();
-            this.pluginsLoaded.set(true);
             this.catalogManager.loadCatalogs(event.getApplicationContext());
-            this.catalogsLoaded.set(true);
             this.metacatThriftService.start();
             this.thriftStarted.set(true);
         } catch (final Exception e) {
