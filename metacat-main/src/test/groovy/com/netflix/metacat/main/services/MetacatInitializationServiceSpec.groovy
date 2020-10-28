@@ -21,6 +21,7 @@ import com.netflix.metacat.common.server.util.ThreadServiceManager
 import com.netflix.metacat.main.manager.CatalogManager
 import com.netflix.metacat.main.manager.ConnectorManager
 import com.netflix.metacat.main.manager.PluginManager
+import com.netflix.metacat.thrift.CatalogThriftService
 import org.springframework.boot.actuate.health.Status
 import org.springframework.context.event.ContextRefreshedEvent
 import spock.lang.Specification
@@ -39,8 +40,7 @@ class MetacatInitializationServiceSpec extends Specification {
         def connectorManager = Mock(ConnectorManager)
         def threadServiceManager = Mock(ThreadServiceManager)
         def thriftService = Mock(MetacatThriftService)
-
-        when:
+        def catalogThriftService = Mock(CatalogThriftService)
         def initializationService = new MetacatInitializationService(
             pluginManager,
             catalogManager,
@@ -49,6 +49,7 @@ class MetacatInitializationServiceSpec extends Specification {
             thriftService
         )
         initializationService.start(Mock(ContextRefreshedEvent))
+        when:
         def health = initializationService.health()
 
         then:
@@ -57,6 +58,22 @@ class MetacatInitializationServiceSpec extends Specification {
         health.getDetails().get(MetacatInitializationService.PLUGIN_KEY) == true
         health.getDetails().get(MetacatInitializationService.CATALOG_KEY) == true
         health.getDetails().get(MetacatInitializationService.THRIFT_KEY) == true
+        thriftService.getCatalogThriftServices() >> []
+        pluginManager.arePluginsLoaded() >> true
+        catalogManager.areCatalogsLoaded() >> true
+
+        when:
+        health = initializationService.health()
+
+        then:
+        health.getStatus() == Status.OUT_OF_SERVICE
+        health.getDetails().get(MetacatInitializationService.PLUGIN_KEY) == true
+        health.getDetails().get(MetacatInitializationService.CATALOG_KEY) == false
+        health.getDetails().get(MetacatInitializationService.THRIFT_KEY) == false
+        thriftService.getCatalogThriftServices() >> [catalogThriftService]
+        catalogThriftService.getPortNumber() >> 77
+        pluginManager.arePluginsLoaded() >> true
+        catalogManager.areCatalogsLoaded() >> false
     }
 
     def "can't start services on exception"() {
