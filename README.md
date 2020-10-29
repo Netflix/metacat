@@ -28,8 +28,8 @@ TODO
 
 ## Builds
 
-Metacat builds are run on Travis CI [here](https://travis-ci.org/Netflix/metacat).
-[![Build Status](https://travis-ci.org/Netflix/metacat.svg?branch=master)](https://travis-ci.org/Netflix/meatcat)
+Metacat builds are run on Travis CI [here](https://travis-ci.com/Netflix/metacat).
+[![Build Status](https://travis-ci.com/Netflix/metacat.svg?branch=master)](https://travis-ci.com/Netflix/metacat)
 
 ## Getting Started
 
