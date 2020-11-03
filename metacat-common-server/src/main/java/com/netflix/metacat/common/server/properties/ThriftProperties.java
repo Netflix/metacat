@@ -28,6 +28,6 @@ import lombok.Data;
 @Data
 //TODO: This should be in the Thrift module
 public class ThriftProperties {
-    private int serverMaxWorkerThreads = 200;
+    private int serverMaxWorkerThreads = 100;
     private int serverSocketClientTimeoutInSeconds = 60;
 }

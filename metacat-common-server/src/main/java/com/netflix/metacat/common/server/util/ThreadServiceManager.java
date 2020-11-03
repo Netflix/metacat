@@ -49,6 +49,7 @@ public class ThreadServiceManager {
     public ThreadServiceManager(final Registry registry, final Config config) {
         final ExecutorService executorService = newFixedThreadPool(
             config.getServiceMaxNumberOfThreads(),
+            config.getServiceMaxNumberOfThreads(),
             "metacat-service-pool-%d",
             1000
         );
@@ -67,12 +68,14 @@ public class ThreadServiceManager {
     public ThreadServiceManager(final Registry registry, final int maxThreads,
         final int maxQueueSize, final String usage) {
         final ExecutorService executorService = newFixedThreadPool(
+            2,
             maxThreads,
             "metacat-" + usage + "-pool-%d",
             maxQueueSize
         );
         this.executor = MoreExecutors.listeningDecorator(executorService);
-        RegistryUtil.registerThreadPool(registry, "metacat-service-pool", (ThreadPoolExecutor) executorService);
+        RegistryUtil.registerThreadPool(registry, "metacat-" + usage + "-pool",
+            (ThreadPoolExecutor) executorService);
     }
 
     /**
@@ -94,13 +97,14 @@ public class ThreadServiceManager {
 
     @SuppressWarnings("checkstyle:hiddenfield")
     private ExecutorService newFixedThreadPool(
-        final int nThreads,
+        final int minThreads,
+        final int maxThreads,
         final String threadFactoryName,
         final int queueSize
     ) {
         return new ThreadPoolExecutor(
-            nThreads,
-            nThreads,
+            minThreads,
+            maxThreads,
             0L,
             TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<>(queueSize),
