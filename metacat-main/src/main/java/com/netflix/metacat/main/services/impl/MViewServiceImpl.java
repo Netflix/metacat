@@ -66,6 +66,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MViewServiceImpl implements MViewService {
     /**
+     * Defines the table type.
+     */
+    public static final String PARAM_TABLE_TYPE = "table_type";
+    /**
+     * Iceberg table type.
+     */
+    public static final String ICEBERG_TABLE_TYPE = "ICEBERG";
+    /**
      * Hive database name where views are stored.
      */
     private static final String VIEW_DB_NAME = "franklinviews";
@@ -152,6 +160,14 @@ public class MViewServiceImpl implements MViewService {
             }
             if (!oViewTable.isPresent()) {
                 log.info("Creating view {}.", targetName);
+                //
+                // Fix issue where an iceberg table is used to create the mView and fails with invalid field type.
+                // The issue is caused by a mismatch with field source types.
+                // The check for iceberg table is needed to not disrupt the previous logic for other table types.
+                //
+                if (isIcebergTable(table)) {
+                    table.getFields().forEach(f -> f.setSource_type(null));
+                }
                 result = tableService.copy(table, targetName);
             } else {
                 result = oViewTable.get();
@@ -166,6 +182,19 @@ public class MViewServiceImpl implements MViewService {
             throw new TableNotFoundException(name);
         }
         return result;
+    }
+
+    /**
+     * check if the table is an Iceberg Table.
+     *
+     * @param tableDto table dto
+     * @return true for iceberg table
+     */
+    public static boolean isIcebergTable(final TableDto tableDto) {
+        return tableDto.getMetadata() != null
+            && tableDto.getMetadata().containsKey(PARAM_TABLE_TYPE)
+            && ICEBERG_TABLE_TYPE
+            .equalsIgnoreCase(tableDto.getMetadata().get(PARAM_TABLE_TYPE));
     }
 
     /**
