@@ -36,6 +36,8 @@ dependencies {
 jar {
     manifest {
         attributes("Implementation-Version": version)
+        attributes("Bundle-SymbolicName": "org.datanucleus;singleton:=true")
+        attributes("Premain-Class": "org.datanucleus.enhancer.DataNucleusClassFileTransformer")
     }
 }
 
