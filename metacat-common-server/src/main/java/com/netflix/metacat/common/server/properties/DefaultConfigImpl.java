@@ -500,6 +500,11 @@ public class DefaultConfigImpl implements Config {
         return this.metacatProperties.getHive().getIceberg().getCache().isEnabled();
     }
 
+    @Override
+    public boolean isIcebergTableMetadataCacheEnabled() {
+        return this.metacatProperties.getHive().getIceberg().getCache().getMetadata().isEnabled();
+    }
+
     /**
      * {@inheritDoc}
      */

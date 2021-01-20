@@ -17,6 +17,6 @@ public class IcebergTableOpsProxy {
      */
     @Cacheable(key = "'iceberg.' + #icebergTableOps.currentMetadataLocation()", condition = "#useCache")
     public TableMetadata getMetadata(final IcebergTableOps icebergTableOps, final boolean useCache) {
-        return icebergTableOps.refresh();
+        return icebergTableOps.refresh().removeSnapshotsIf(s -> true);
     }
 }
