@@ -118,6 +118,18 @@ public class HiveProperties {
     @Data
     public static class IcebergCacheProperties {
         private boolean enabled;
+        @NonNull
+        private TableMetadata metadata = new TableMetadata();
+    }
+
+    /**
+     * TableMetadata properties.
+     *
+     * @author amajumdar
+     */
+    @Data
+    public static class TableMetadata {
+        private boolean enabled;
     }
 
     /**
