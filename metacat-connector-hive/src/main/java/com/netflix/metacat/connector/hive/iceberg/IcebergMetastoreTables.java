@@ -7,8 +7,10 @@ import org.apache.iceberg.Schema;
 import org.apache.iceberg.Table;
 import org.apache.iceberg.TableOperations;
 import org.apache.iceberg.Transaction;
+import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.TableIdentifier;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,6 +22,16 @@ public final class IcebergMetastoreTables extends BaseMetastoreCatalog {
 
     IcebergMetastoreTables(final IcebergTableOps tableOperations) {
         this.tableOperations = tableOperations;
+    }
+
+    @Override
+    public List<TableIdentifier> listTables(final Namespace namespace) {
+        throw new MetacatNotSupportedException("not supported");
+    }
+
+    @Override
+    public String name() {
+        return "";
     }
 
     @Override
