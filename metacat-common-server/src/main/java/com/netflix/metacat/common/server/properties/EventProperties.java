@@ -28,6 +28,7 @@ import lombok.NonNull;
  */
 @Data
 public class EventProperties {
+    private boolean updateIcebergTableAsyncPostEventEnabled;
 
     @NonNull
     private Thread thread = new Thread();

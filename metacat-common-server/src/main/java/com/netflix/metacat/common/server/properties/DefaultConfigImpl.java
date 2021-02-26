@@ -574,4 +574,9 @@ public class DefaultConfigImpl implements Config {
     public boolean isRateLimiterEnforced() {
         return this.metacatProperties.getRateLimiterProperties().isEnforced();
     }
+
+    @Override
+    public boolean isUpdateIcebergTableAsyncPostEventEnabled() {
+        return this.metacatProperties.getEvent().isUpdateIcebergTableAsyncPostEventEnabled();
+    }
 }

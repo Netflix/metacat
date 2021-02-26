@@ -491,5 +491,13 @@ public interface Config {
      * @return True if it is.
      */
     boolean isRateLimiterEnforced();
+
+    /**
+     * Whether the update iceberg table post event handler
+     * is enabled.
+     *
+     * @return True if it is.
+     */
+    boolean isUpdateIcebergTableAsyncPostEventEnabled();
 }
 

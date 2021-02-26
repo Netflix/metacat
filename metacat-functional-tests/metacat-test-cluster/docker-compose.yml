@@ -66,7 +66,8 @@ services:
                 -Dmetacat.authorization.deleteAcl.deleteAclStr=embedded-fast-hive-metastore/fsmoke_acl:metacat-prod
                 -Dmetacat.service.tables.error.list.partitions.threshold=100
                 -Dmetacat.table.delete.noDeleteOnTags=do_not_drop
-                -Dmetacat.table.rename.noRenameOnTags=do_not_rename'
+                -Dmetacat.table.rename.noRenameOnTags=do_not_rename
+                -Dmetacat.event.updateIcebergTablePostEventEnabled=true'
         labels:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.war"
