@@ -65,9 +65,9 @@ public class FilterPartition {
                 }
                 context.clear();
                 if (batchid) {
-                    PartitionUtil.getPartitionKeyValues(path, context);
+                    addPathValues(path, context);
                 }
-                PartitionUtil.getPartitionKeyValues(name, context);
+                addNameValues(name, context);
                 if (values != null) {
                     context.putAll(values);
                 }
@@ -88,5 +88,22 @@ public class FilterPartition {
             }
         }
         return true;
+    }
+
+    /**
+     * Adds the path part values to context.
+     * @param path location
+     * @param values Map of part keys and values.
+     */
+    protected void addPathValues(final String path, final Map<String, String> values) {
+        PartitionUtil.getPartitionKeyValues(path, values);
+    }
+    /**
+     * Adds the name part values to context.
+     * @param name part name
+     * @param values Map of part keys and values.
+     */
+    protected void addNameValues(final String name, final Map<String, String> values) {
+        PartitionUtil.getPartitionKeyValues(name, values);
     }
 }

@@ -32,12 +32,14 @@ import com.netflix.metacat.common.server.partition.parser.SimpleNode;
 import com.netflix.metacat.common.server.partition.parser.Variable;
 import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParserEval;
+import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.serde.serdeConstants;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -52,13 +54,15 @@ public class PartitionFilterGenerator extends PartitionParserEval {
     private final List<Object> params;
     private List<String> partVals;
     private boolean optimized;
+    private final boolean escapePartitionNameOnFilter;
 
     /**
      * Constructor.
      *
      * @param partitionsKeys partition keys
+     * @param escapePartitionNameOnFilter if true, escape the partition name
      */
-    public PartitionFilterGenerator(final List<FieldSchema> partitionsKeys) {
+    public PartitionFilterGenerator(final List<FieldSchema> partitionsKeys, final boolean escapePartitionNameOnFilter) {
         partitionColumns = Maps.newHashMap();
         this.partVals = Lists.newArrayListWithCapacity(partitionsKeys.size());
         for (int index = 0; index < partitionsKeys.size(); index++) {
@@ -67,7 +71,8 @@ public class PartitionFilterGenerator extends PartitionParserEval {
             this.partVals.add(null);
         }
         this.params = Lists.newArrayList();
-        optimized = true;
+        this.optimized = true;
+        this.escapePartitionNameOnFilter = escapePartitionNameOnFilter;
     }
 
     /**
@@ -125,7 +130,8 @@ public class PartitionFilterGenerator extends PartitionParserEval {
             partCol.occurred();
             // For more optimization
             if (partCol.hasOccurredOnlyOnce() && Compare.EQ.equals(comparison)) {
-                partVals.set(partCol.index, key + "=" + value);
+                partVals.set(partCol.index, key + "="
+                    + (escapePartitionNameOnFilter ? FileUtils.escapePathName(valueStr) : valueStr));
             } else {
                 optimized = false;
             }
@@ -143,6 +149,13 @@ public class PartitionFilterGenerator extends PartitionParserEval {
                     value = new java.sql.Date(
                             HiveMetaStore.PARTITION_DATE_FORMAT.get().parse((String) value).getTime());
                     valType = FilterType.Date;
+                } catch (ParseException pe) { // do nothing, handled below - types will mismatch
+                }
+            } else if (colType == FilterType.Timestamp && valType == FilterType.String) {
+                try {
+                    value = new java.sql.Timestamp(
+                        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse((String) value).getTime());
+                    valType = FilterType.Timestamp;
                 } catch (ParseException pe) { // do nothing, handled below - types will mismatch
                 }
             } else if (colType == FilterType.Integral && valType == FilterType.String) {
@@ -183,6 +196,8 @@ public class PartitionFilterGenerator extends PartitionParserEval {
                 result = "cast(" + result + " as decimal(21,0))";
             } else if (partCol.type == FilterType.Date) {
                 result = "cast(" + result + " as date)";
+            } else if (partCol.type == FilterType.Timestamp) {
+                result = "cast(" + result + " as timestamp)";
             }
         }
         return result;
@@ -357,6 +372,7 @@ public class PartitionFilterGenerator extends PartitionParserEval {
         Integral,
         String,
         Date,
+        Timestamp,
         Invalid;
 
         static FilterType fromType(final String colTypeStr) {
@@ -364,6 +380,8 @@ public class PartitionFilterGenerator extends PartitionParserEval {
                 return FilterType.String;
             } else if (colTypeStr.equals(serdeConstants.DATE_TYPE_NAME)) {
                 return FilterType.Date;
+            } else if (colTypeStr.equals(serdeConstants.TIMESTAMP_TYPE_NAME)) {
+                return FilterType.Timestamp;
             } else if (serdeConstants.IntegralTypes.contains(colTypeStr)) {
                 return FilterType.Integral;
             }
@@ -377,6 +395,8 @@ public class PartitionFilterGenerator extends PartitionParserEval {
                 return FilterType.Integral;
             } else if (value instanceof java.sql.Date) {
                 return FilterType.Date;
+            } else if (value instanceof java.sql.Timestamp) {
+                return FilterType.Timestamp;
             }
             return FilterType.Invalid;
         }
