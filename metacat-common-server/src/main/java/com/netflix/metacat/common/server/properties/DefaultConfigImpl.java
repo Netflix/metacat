@@ -227,6 +227,14 @@ public class DefaultConfigImpl implements Config {
      * {@inheritDoc}
      */
     @Override
+    public boolean escapePartitionNameOnFilter() {
+        return this.metacatProperties.getHive().getMetastore().getPartition().isEscapeNameOnFilter();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getHiveMetastoreFetchSize() {
         return this.metacatProperties.getHive().getMetastore().getFetchSize();
     }

@@ -1048,11 +1048,11 @@ class MetacatSmokeSpec extends Specification {
         }
         if (!error) {
             //To test the case that double quoats are supported
-            def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, escapedPartitionName.replace('=', '="') + '"', null, null, null, null, true)
+            def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionName.replace('=', '="') + '"', null, null, null, null, true)
             assert partitions != null && partitions.size() == 1 && partitions.find {
                 it.name.partitionName == escapedPartitionName
             } != null
-            def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: escapedPartitionName.replace('=', '="') + '"', includePartitionDetails: true))
+            def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: partitionName.replace('=', '="') + '"', includePartitionDetails: true))
             def partitionDetail = partitionDetails.find { it.name.partitionName == escapedPartitionName }
             assert partitionDetails != null && partitionDetails.size() == 1 && partitionDetail != null && partitionDetails.size() == partitions.size() && partitionDetail.getSerde().getSerdeInfoParameters().size() >= 1
             if (catalogName != 's3-mysql-db') {

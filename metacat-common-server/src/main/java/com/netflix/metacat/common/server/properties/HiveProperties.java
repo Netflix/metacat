@@ -61,6 +61,7 @@ public class HiveProperties {
 
             @NonNull
             private Name name = new Name();
+            private boolean escapeNameOnFilter = true;
 
             /**
              * Metastore partition name related properties.

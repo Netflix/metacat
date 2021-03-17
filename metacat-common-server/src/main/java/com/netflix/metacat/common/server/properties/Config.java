@@ -171,6 +171,14 @@ public interface Config {
      */
     String getHivePartitionWhitelistPattern();
 
+
+    /**
+     * If true, will escape partition names when filtering partitions.
+     *
+     * @return Whether to escape partition names when filtering partitions
+     */
+    boolean escapePartitionNameOnFilter();
+
     /**
      * Number of records to fetch in one call from Hive Metastore.
      *
