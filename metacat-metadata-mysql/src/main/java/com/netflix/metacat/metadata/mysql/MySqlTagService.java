@@ -13,11 +13,12 @@
 
 package com.netflix.metacat.metadata.mysql;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.model.Lookup;
 import com.netflix.metacat.common.server.model.TagItem;
@@ -28,6 +29,7 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameterValue;
@@ -45,6 +47,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Tag service implementation.
@@ -63,7 +66,7 @@ public class MySqlTagService implements TagService {
     private static final String NAME_TAGS = "tags";
     private static final String QUERY_LIST =
         "select distinct i.name from tag_item i, tag_item_tags t where i.id=t.tag_item_id"
-            + " and (1=? or t.tags_string %s ) and (1=? or i.name like ?) and (1=? or i.name rlike ?)";
+            + " and (1=? or t.tags_string in (%s) ) and (1=? or i.name like ?) and (1=? or i.name rlike ?)";
 
     private static final String QUERY_SEARCH =
         "select distinct i.name from tag_item i, tag_item_tags t where i.id=t.tag_item_id"
@@ -73,7 +76,7 @@ public class MySqlTagService implements TagService {
             + " last_updated lastUpdated from tag_item where name=?";
     private static final String SQL_INSERT_TAG_ITEM =
         "insert into tag_item( name, version, created_by, last_updated_by, date_created, last_updated)"
-            + " values (?,0, ?,?,now(),now())";
+            + " values (?,0,?,?,now(),now())";
     private static final String SQL_UPDATE_TAG_ITEM =
         "update tag_item set name=?, last_updated=now() where name=?";
     private static final String SQL_INSERT_TAG_ITEM_TAGS =
@@ -85,11 +88,13 @@ public class MySqlTagService implements TagService {
     private static final String SQL_DELETE_TAG_ITEM_TAGS_BY_NAME_TAGS =
         "delete from tag_item_tags where tag_item_id=(select id from tag_item where name=?) and tags_string in (%s)";
     private static final String SQL_DELETE_TAG_ITEM_TAGS =
-        "delete from tag_item_tags where tag_item_id=? and tags_string in (%s)";
+        "delete from tag_item_tags where tag_item_id=(?) and tags_string in (%s)";
     private static final String SQL_GET_TAG_ITEM_TAGS =
         "select tags_string value from tag_item_tags where tag_item_id=?";
+    private static final String EMPTY_CLAUSE = "''";
     //    private static final String SQL_GET_LOOKUP_VALUES_BY_NAME =
 //        "select lv.tags_string value from tag_item l, tag_item_tags lv where l.id=lv.tag_item_id and l.name=?";
+    private static final int MAX_TAGS_LIST_COUNT = 16;
     private final Config config;
     private final LookupService lookupService;
     private final MetacatJson metacatJson;
@@ -266,9 +271,11 @@ public class MySqlTagService implements TagService {
      */
     public void remove(final QualifiedName name, final Set<String> tags, final boolean updateUserMetadata) {
         try {
+            final List<SqlParameterValue> params = Lists.newArrayList();
+            params.add(new SqlParameterValue(Types.VARCHAR, name.toString()));
             jdbcTemplate.update(String.format(SQL_DELETE_TAG_ITEM_TAGS_BY_NAME_TAGS,
-                "'" + Joiner.on("','").skipNulls().join(tags) + "'"),
-                new SqlParameterValue(Types.VARCHAR, name.toString()));
+                buildParametrizedInClause(tags, params, params.size())),
+                params.toArray());
             if (updateUserMetadata) {
                 final TagItem tagItem = get(name);
                 tagItem.getValues().removeAll(tags);
@@ -322,48 +329,12 @@ public class MySqlTagService implements TagService {
         final Set<String> excludedNames = Sets.newHashSet();
         final String wildCardName =
             QualifiedName.qualifiedNameToWildCardQueryString(sourceName, databaseName, tableName);
-        //Includes
         final Set<String> localIncludes = includeTags != null ? includeTags : Sets.newHashSet();
+        validateRequestTagCount(localIncludes);
         try {
-            StringBuilder query = new StringBuilder(
-                String.format(QUERY_LIST, "in ('" + Joiner.on("','").skipNulls().join(localIncludes) + "')"
-                ));
-            final Object[] params = {
-                localIncludes.size() == 0 ? 1 : 0,
-                wildCardName == null ? 1 : 0,
-                wildCardName,
-                type == null ? 1 : 0,
-                type == null ? ".*" : type.getRegexValue(),
-            };
-            includedNames.addAll(jdbcTemplate.query(query.toString(),
-                params,
-                new int[]{Types.INTEGER,
-                    Types.INTEGER,
-                    Types.VARCHAR,
-                    Types.INTEGER,
-                    Types.VARCHAR,
-                },
-                (rs, rowNum) -> rs.getString("name")));
+            includedNames.addAll(queryTaggedItems(wildCardName, type, localIncludes));
             if (excludeTags != null && !excludeTags.isEmpty()) {
-                //Excludes
-                query = new StringBuilder(
-                    String.format(QUERY_LIST, "in ('" + Joiner.on("','").skipNulls().join(excludeTags) + "')"));
-                final Object[] eParams = {
-                    excludeTags.size() == 0 ? 1 : 0,
-                    wildCardName == null ? 1 : 0,
-                    wildCardName,
-                    type == null ? 1 : 0,
-                    type == null ? ".*" : type.getRegexValue(),
-                };
-                excludedNames.addAll(jdbcTemplate.query(query.toString(),
-                    eParams,
-                    new int[]{Types.INTEGER,
-                        Types.INTEGER,
-                        Types.VARCHAR,
-                        Types.INTEGER,
-                        Types.VARCHAR,
-                    },
-                    (rs, rowNum) -> rs.getString("name")));
+                excludedNames.addAll(queryTaggedItems(wildCardName, type, excludeTags));
             }
         } catch (Exception e) {
             final String message = String.format("Failed getting the list of qualified names for tags %s", includeTags);
@@ -457,9 +428,14 @@ public class MySqlTagService implements TagService {
     }
 
     private void removeTagItemTags(final Long id, final Set<String> tags) {
+        final List<SqlParameterValue> params = Lists.newArrayList();
+        params.add(new SqlParameterValue(Types.BIGINT, id));
         jdbcTemplate
-            .update(String.format(SQL_DELETE_TAG_ITEM_TAGS, "'" + Joiner.on("','").skipNulls().join(tags) + "'"),
-                new SqlParameterValue(Types.BIGINT, id));
+            .update(String.format(SQL_DELETE_TAG_ITEM_TAGS, buildParametrizedInClause(
+                tags,
+                params,
+                params.size()
+            )), params.toArray());
     }
 
     private void insertTagItemTags(final Long id, final Set<String> tags) {
@@ -481,6 +457,42 @@ public class MySqlTagService implements TagService {
             delete(name, updateUserMetadata);
         } else {
             remove(name, tags, updateUserMetadata);
+        }
+    }
+
+    private List<String> queryTaggedItems(final String name,
+                                          final QualifiedName.Type type,
+                                          final Set<String> tags) {
+        final List<SqlParameterValue> sqlParams = Lists.newArrayList();
+        sqlParams.add(new SqlParameterValue(Types.INTEGER, tags.size() == 0 ? 1 : 0));
+        final String query = String.format(QUERY_LIST,
+            buildParametrizedInClause(tags, sqlParams, sqlParams.size()));
+        sqlParams.addAll(Stream.of(
+            new SqlParameterValue(Types.INTEGER, name == null ? 1 : 0),
+            new SqlParameterValue(Types.VARCHAR, name),
+            new SqlParameterValue(Types.INTEGER, type == null ? 1 : 0),
+            new SqlParameterValue(Types.VARCHAR, type == null ? ".*" : type.getRegexValue())
+        ).collect(Collectors.toList()));
+        return jdbcTemplate.query(query,
+            sqlParams.toArray(),
+            (rs, rowNum) -> rs.getString("name"));
+    }
+
+    private static String buildParametrizedInClause(final Set<String> tags,
+                                                    final List<SqlParameterValue> params,
+                                                    final int index) {
+        final String tagList = tags.stream().filter(StringUtils::isNotBlank)
+            .map(v -> "?").collect(Collectors.joining(", "));
+        params.addAll(index, tags.stream().filter(StringUtils::isNotBlank)
+            .map(p -> new SqlParameterValue(Types.VARCHAR, p))
+            .collect(Collectors.toList()));
+        return StringUtils.isBlank(tagList) ? EMPTY_CLAUSE : tagList;
+    }
+
+    private static void validateRequestTagCount(final Set<String> tags) {
+        final int totalTags = tags.size();
+        if (totalTags > MAX_TAGS_LIST_COUNT) {
+            throw new MetacatBadRequestException(String.format("Too many tags in request. Count %s", totalTags));
         }
     }
 }
