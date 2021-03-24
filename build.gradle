@@ -20,7 +20,7 @@ import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
 buildscript {
     repositories {
-        jcenter()
+        mavenCentral()
         maven {
             url "http://repo.spring.io/milestone"
         }
@@ -61,7 +61,7 @@ allprojects {
     apply plugin: "io.franzbecker.gradle-lombok"
 
     repositories {
-        jcenter()
+        mavenCentral()
         maven {
             url "http://repo.spring.io/milestone"
         }
