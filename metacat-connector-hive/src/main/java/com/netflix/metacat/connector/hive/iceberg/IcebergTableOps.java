@@ -40,7 +40,8 @@ public class IcebergTableOps extends BaseMetastoreTableOperations {
     @Override
     public TableMetadata current() {
         if (tableMetadata == null) {
-            tableMetadata = icebergTableOpsProxy.getMetadata(this, config.isIcebergCacheEnabled());
+            tableMetadata =
+                icebergTableOpsProxy.getMetadata(this, config.isIcebergTableMetadataCacheEnabled());
         }
         return tableMetadata;
     }

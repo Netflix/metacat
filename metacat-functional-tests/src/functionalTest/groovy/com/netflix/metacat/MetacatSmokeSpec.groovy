@@ -448,14 +448,14 @@ class MetacatSmokeSpec extends Specification {
         def tableName = 'iceberg_table'
         def renamedTableName = 'iceberg_table_rename'
         def icebergManifestFileName = '/metacat-test-cluster/etc-metacat/data/icebergManifest.json'
-        def metadataFileName = '/metacat-test-cluster/etc-metacat/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
+        def metadataFileName = '/metacat-test-cluster/etc-metacat/data/metadata/00001-abf48887-aa4f-4bcc-9219-1e1721314ee1.metadata.json'
         def curWorkingDir = new File("").getAbsolutePath()
         def icebergManifestFile = new File(curWorkingDir + icebergManifestFileName)
         def metadataFile = new File(curWorkingDir + metadataFileName)
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
-        def metadataLocation = '/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
+        def metadataLocation = '/tmp/data/metadata/00001-abf48887-aa4f-4bcc-9219-1e1721314ee1.metadata.json'
         def icebergMetadataLocation = '/tmp/data/icebergManifest.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
@@ -468,7 +468,7 @@ class MetacatSmokeSpec extends Specification {
         when:
         api.deleteTable(catalogName, databaseName, tableName)
         api.createTable(catalogName, databaseName, tableName, tableDto)
-        def metadataLocation1 = '/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
+        def metadataLocation1 = '/tmp/data/metadata/00001-abf48887-aa4f-4bcc-9219-1e1721314ee1.metadata.json'
         def metadata1 = [table_type: 'ICEBERG', metadata_location: metadataLocation1, previous_metadata_location: metadataLocation]
         def updatedUri = tableDto.getDataUri() + 'updated'
         tableDto.getMetadata().putAll(metadata1)
@@ -491,7 +491,7 @@ class MetacatSmokeSpec extends Specification {
         updatedTable.getDataUri() == updatedUri
         updatedTable.getSerde().getInputFormat() == 'org.apache.hadoop.mapred.TextInputFormat'
         when:
-        def metadataLocation2 = '/tmp/data/00089-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json'
+        def metadataLocation2 = '/tmp/data/metadata/00002-2d6c1951-31d5-4bea-8edd-e35746b172f3.metadata.json'
         def metadata2 = [table_type: 'ICEBERG', metadata_location: metadataLocation2, previous_metadata_location: metadataLocation1, 'partition_spec': 'invalid']
         tableDto.getMetadata().putAll(metadata2)
         api.updateTable(catalogName, databaseName, tableName, tableDto)
@@ -574,7 +574,7 @@ class MetacatSmokeSpec extends Specification {
             ]
         )
 
-        def metadataLocation = String.format('/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json')
+        def metadataLocation = String.format('/tmp/data/metadata/00002-2d6c1951-31d5-4bea-8edd-e35746b172f3.metadata.json')
 
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
@@ -623,7 +623,7 @@ class MetacatSmokeSpec extends Specification {
         def tableDto = new TableDto(
             name: QualifiedName.ofTable(catalogName, databaseName, tableName),
             metadata: [table_type: 'ICEBERG',
-                       metadata_location: String.format('/tmp/data/00088-5641e8bf-06b8-46b3-a0fc-5c867f5bca58.metadata.json')]
+                       metadata_location: String.format('/tmp/data/metadata/00002-2d6c1951-31d5-4bea-8edd-e35746b172f3.metadata.json')]
         )
 
         given:
@@ -1048,11 +1048,11 @@ class MetacatSmokeSpec extends Specification {
         }
         if (!error) {
             //To test the case that double quoats are supported
-            def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, escapedPartitionName.replace('=', '="') + '"', null, null, null, null, true)
+            def partitions = partitionApi.getPartitions(catalogName, databaseName, tableName, partitionName.replace('=', '="') + '"', null, null, null, null, true)
             assert partitions != null && partitions.size() == 1 && partitions.find {
                 it.name.partitionName == escapedPartitionName
             } != null
-            def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: escapedPartitionName.replace('=', '="') + '"', includePartitionDetails: true))
+            def partitionDetails = partitionApi.getPartitionsForRequest(catalogName, databaseName, tableName, null, null, null, null, true, new GetPartitionsRequestDto(filter: partitionName.replace('=', '="') + '"', includePartitionDetails: true))
             def partitionDetail = partitionDetails.find { it.name.partitionName == escapedPartitionName }
             assert partitionDetails != null && partitionDetails.size() == 1 && partitionDetail != null && partitionDetails.size() == partitions.size() && partitionDetail.getSerde().getSerdeInfoParameters().size() >= 1
             if (catalogName != 's3-mysql-db') {

@@ -61,6 +61,7 @@ public class HiveProperties {
 
             @NonNull
             private Name name = new Name();
+            private boolean escapeNameOnFilter = true;
 
             /**
              * Metastore partition name related properties.
@@ -117,6 +118,18 @@ public class HiveProperties {
      */
     @Data
     public static class IcebergCacheProperties {
+        private boolean enabled;
+        @NonNull
+        private TableMetadata metadata = new TableMetadata();
+    }
+
+    /**
+     * TableMetadata properties.
+     *
+     * @author amajumdar
+     */
+    @Data
+    public static class TableMetadata {
         private boolean enabled;
     }
 

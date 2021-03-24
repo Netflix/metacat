@@ -26,6 +26,7 @@ import com.netflix.metacat.common.server.partition.parser.ASTOR;
 import com.netflix.metacat.common.server.partition.parser.ASTVAR;
 import com.netflix.metacat.common.server.partition.parser.SimpleNode;
 import com.netflix.metacat.common.server.partition.parser.Variable;
+import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -49,7 +50,16 @@ public class PartitionKeyParserEval extends PartitionParserEval {
         if (comparison != Compare.EQ) {
             return null;
         }
-        return String.format("%s=%s", value1, value2.toString());
+        return String.format("%s=%s", value1, toValue(value2));
+    }
+
+    /**
+     * Converts to String.
+     * @param value value object
+     * @return String
+     */
+    protected String toValue(final Object value) {
+        return value == null ? PartitionUtil.DEFAULT_PARTITION_NAME : value.toString();
     }
 
     @SuppressWarnings("unchecked")

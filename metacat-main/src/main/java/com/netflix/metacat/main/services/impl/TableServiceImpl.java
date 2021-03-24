@@ -38,6 +38,7 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
+import com.netflix.metacat.common.server.events.MetacatUpdateIcebergTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
 import com.netflix.metacat.common.server.monitoring.Metrics;
@@ -458,26 +459,33 @@ public class TableServiceImpl implements TableService {
             handleException(name, ignoreErrorsAfterUpdate, "saveMetadata", e);
         }
 
-        TableDto updatedDto = tableDto;
-        try {
-            updatedDto = get(name,
-                GetTableServiceParameters.builder()
-                    .disableOnReadMetadataIntercetor(false)
-                    .includeInfo(true)
-                    .includeDataMetadata(true)
-                    .includeDefinitionMetadata(true)
-                    .build()).orElse(tableDto);
-        } catch (Exception e) {
-            handleException(name, ignoreErrorsAfterUpdate, "getTable", e);
-        }
+        // ignoreErrorsAfterUpdate is currently set only for iceberg tables
+        if (config.isUpdateIcebergTableAsyncPostEventEnabled() && ignoreErrorsAfterUpdate) {
+            eventBus.post(new MetacatUpdateIcebergTablePostEvent(name,
+                metacatRequestContext, this, oldTable, tableDto));
+            return tableDto;
+        } else {
+            TableDto updatedDto = tableDto;
+            try {
+                updatedDto = get(name,
+                    GetTableServiceParameters.builder()
+                        .disableOnReadMetadataIntercetor(false)
+                        .includeInfo(true)
+                        .includeDataMetadata(true)
+                        .includeDefinitionMetadata(true)
+                        .build()).orElse(tableDto);
+            } catch (Exception e) {
+                handleException(name, ignoreErrorsAfterUpdate, "getTable", e);
+            }
 
-        try {
-            eventBus.post(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable,
-                updatedDto, updatedDto != tableDto));
-        } catch (Exception e) {
-            handleException(name, ignoreErrorsAfterUpdate, "postEvent", e);
+            try {
+                eventBus.post(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable,
+                    updatedDto, updatedDto != tableDto));
+            } catch (Exception e) {
+                handleException(name, ignoreErrorsAfterUpdate, "postEvent", e);
+            }
+            return updatedDto;
         }
-        return updatedDto;
     }
 
     /**

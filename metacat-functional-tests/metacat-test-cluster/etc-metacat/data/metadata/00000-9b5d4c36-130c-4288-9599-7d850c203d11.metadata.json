@@ -1,0 +1,57 @@
+{
+  "format-version" : 1,
+  "table-uuid" : "2adba3fa-118d-4e0c-939d-9f4f8f7a34ef",
+  "location" : "file:/tmp/data",
+  "last-updated-ms" : 1612554048968,
+  "last-column-id" : 3,
+  "schema" : {
+    "type" : "struct",
+    "fields" : [ {
+      "id" : 1,
+      "name" : "id",
+      "required" : false,
+      "type" : "long",
+      "doc" : "1st field"
+    }, {
+      "id" : 2,
+      "name" : "data",
+      "required" : false,
+      "type" : "string",
+      "doc" : "2nd field"
+    }, {
+      "id" : 3,
+      "name" : "dateint",
+      "required" : false,
+      "type" : "int",
+      "doc" : "3rd field"
+    } ]
+  },
+  "partition-spec" : [ {
+    "name" : "dateint",
+    "transform" : "identity",
+    "source-id" : 3,
+    "field-id" : 1000
+  } ],
+  "default-spec-id" : 0,
+  "partition-specs" : [ {
+    "spec-id" : 0,
+    "fields" : [ {
+      "name" : "dateint",
+      "transform" : "identity",
+      "source-id" : 3,
+      "field-id" : 1000
+    } ]
+  } ],
+  "default-sort-order-id" : 0,
+  "sort-orders" : [ {
+    "order-id" : 0,
+    "fields" : [ ]
+  } ],
+  "properties" : {
+    "field.metadata.json" : "{\n  \"1\" : {\n    \"comment\" : \"1st field\"\n  },\n  \"2\" : {\n    \"comment\" : \"2nd field\"\n  },\n  \"3\" : {\n    \"comment\" : \"3rd field\"\n  }\n}"
+  },
+  "current-snapshot-id" : -1,
+  "snapshots" : [ ],
+  "snapshot-log" : [ ],
+  "metadata-log" : [ ]
+}

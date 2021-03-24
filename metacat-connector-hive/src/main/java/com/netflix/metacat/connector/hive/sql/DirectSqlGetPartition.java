@@ -41,8 +41,10 @@ import com.netflix.metacat.common.server.partition.visitor.PartitionParamParserE
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
+import com.netflix.metacat.connector.hive.util.HivePartitionKeyParserEval;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
+import com.netflix.metacat.connector.hive.util.HiveFilterPartition;
 import com.netflix.metacat.connector.hive.util.PartitionFilterGenerator;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
@@ -264,7 +266,8 @@ public class DirectSqlGetPartition {
         final Sort sort,
         final Pageable pageable,
         final boolean forceDisableAudit) {
-        final FilterPartition filter = new FilterPartition();
+        final FilterPartition filter = config.escapePartitionNameOnFilter() ? new HiveFilterPartition()
+            : new FilterPartition();
         // batch exists
         final boolean isBatched =
             !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_BATCHID);
@@ -428,7 +431,8 @@ public class DirectSqlGetPartition {
         final boolean includePartitionDetails,
         final boolean forceDisableAudit
     ) {
-        final FilterPartition filter = new FilterPartition();
+        final FilterPartition filter = config.escapePartitionNameOnFilter() ? new HiveFilterPartition()
+            : new FilterPartition();
         // batch exists
         final boolean isBatched = !Strings.isNullOrEmpty(filterExpression) && filterExpression.contains(FIELD_BATCHID);
         final boolean hasDateCreated =
@@ -570,7 +574,8 @@ public class DirectSqlGetPartition {
         try {
             if (!Strings.isNullOrEmpty(filterExpression)) {
                 final PartitionFilterGenerator generator =
-                    new PartitionFilterGenerator(getPartitionKeys(databaseName, tableName, forceDisableAudit));
+                    new PartitionFilterGenerator(getPartitionKeys(databaseName, tableName, forceDisableAudit),
+                        config.escapePartitionNameOnFilter());
                 String filterSql = (String) new PartitionParser(new StringReader(filterExpression)).filter()
                     .jjtAccept(generator, null);
                 if (generator.isOptimized()) {
@@ -691,7 +696,8 @@ public class DirectSqlGetPartition {
         if (!Strings.isNullOrEmpty(filterExpression)) {
             try {
                 result = (Collection<String>) new PartitionParser(
-                    new StringReader(filterExpression)).filter().jjtAccept(new PartitionKeyParserEval(),
+                    new StringReader(filterExpression)).filter().jjtAccept(config.escapePartitionNameOnFilter()
+                        ? new HivePartitionKeyParserEval() : new PartitionKeyParserEval(),
                     null
                 );
             } catch (Throwable ignored) {

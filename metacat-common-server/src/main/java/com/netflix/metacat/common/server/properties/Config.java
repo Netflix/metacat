@@ -171,6 +171,14 @@ public interface Config {
      */
     String getHivePartitionWhitelistPattern();
 
+
+    /**
+     * If true, will escape partition names when filtering partitions.
+     *
+     * @return Whether to escape partition names when filtering partitions
+     */
+    boolean escapePartitionNameOnFilter();
+
     /**
      * Number of records to fetch in one call from Hive Metastore.
      *
@@ -422,6 +430,12 @@ public interface Config {
      * @return true if iceberg table cache is enabled
      */
     boolean isIcebergCacheEnabled();
+    /**
+     * Enable iceberg table TableMetadata cache.
+     *
+     * @return true if iceberg table cache is enabled
+     */
+    boolean isIcebergTableMetadataCacheEnabled();
 
     /**
      * Enable common view processing.
@@ -485,5 +499,13 @@ public interface Config {
      * @return True if it is.
      */
     boolean isRateLimiterEnforced();
+
+    /**
+     * Whether the update iceberg table post event handler
+     * is enabled.
+     *
+     * @return True if it is.
+     */
+    boolean isUpdateIcebergTableAsyncPostEventEnabled();
 }
 

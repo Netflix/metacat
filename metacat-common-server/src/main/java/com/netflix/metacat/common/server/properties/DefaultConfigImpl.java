@@ -227,6 +227,14 @@ public class DefaultConfigImpl implements Config {
      * {@inheritDoc}
      */
     @Override
+    public boolean escapePartitionNameOnFilter() {
+        return this.metacatProperties.getHive().getMetastore().getPartition().isEscapeNameOnFilter();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getHiveMetastoreFetchSize() {
         return this.metacatProperties.getHive().getMetastore().getFetchSize();
     }
@@ -500,6 +508,11 @@ public class DefaultConfigImpl implements Config {
         return this.metacatProperties.getHive().getIceberg().getCache().isEnabled();
     }
 
+    @Override
+    public boolean isIcebergTableMetadataCacheEnabled() {
+        return this.metacatProperties.getHive().getIceberg().getCache().getMetadata().isEnabled();
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -568,5 +581,10 @@ public class DefaultConfigImpl implements Config {
      */
     public boolean isRateLimiterEnforced() {
         return this.metacatProperties.getRateLimiterProperties().isEnforced();
+    }
+
+    @Override
+    public boolean isUpdateIcebergTableAsyncPostEventEnabled() {
+        return this.metacatProperties.getEvent().isUpdateIcebergTableAsyncPostEventEnabled();
     }
 }

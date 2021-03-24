@@ -594,11 +594,11 @@ class MetacatSmokeThriftSpec extends Specification {
         when:
         result = client.getPartitionsByNames(hiveTable, ['one':'xy^:z'])
         then:
-        result.size() == 0
+        result.size() == 10
         when:
         result = client.getPartitionsByNames(hiveTable, ['one':'xy%5E%3Az'])
         then:
-        result.size() == 10
+        result.size() == 0
         cleanup:
         client.getPartitions(hiveTable).each {
             client.dropPartition(databaseName, tableName, it.getValues(), false)
