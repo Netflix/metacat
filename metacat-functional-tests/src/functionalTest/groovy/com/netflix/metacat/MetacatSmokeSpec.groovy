@@ -1637,6 +1637,23 @@ class MetacatSmokeSpec extends Specification {
         'embedded-hive-metastore/smoke_db/dm'       | true
     }
 
+    def "List definition metadata valid and invalid sortBy" () {
+        given:
+        def qName = "embedded-hive-metastore/smoke_db/dm"
+        when:
+        metadataApi.getDefinitionMetadataList("zz_invalid", null, null, null, null, null, qName, null)
+        then:
+        thrown(MetacatBadRequestException)
+        when:
+        metadataApi.getDefinitionMetadataList("created_by", null, null, null, null, null, qName, null)
+        then:
+        noExceptionThrown()
+        when:
+        metadataApi.getDefinitionMetadataList("created_by", SortOrder.ASC, null, null, null, null, qName, null)
+        then:
+        noExceptionThrown()
+    }
+
     @Unroll
     @Ignore
     def "Delete definition metadata for non-existant #name"() {

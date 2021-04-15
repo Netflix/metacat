@@ -36,6 +36,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.SqlParameterValue;
@@ -68,6 +69,9 @@ import java.util.stream.Collectors;
 public class MysqlUserMetadataService extends BaseUserMetadataService {
     private static final String NAME_OWNER = "owner";
     private static final String NAME_USERID = "userId";
+    private static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
+        "date_created", "created_by", "last_updated_by", "name", "last_updated");
+    private static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
     private final MetacatJson metacatJson;
     private final Config config;
     private JdbcTemplate jdbcTemplate;
@@ -856,10 +860,26 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         SearchMetadataQuery buildSearchMetadataQuery(@Nullable final Set<String> propertyNames,
                                                      @Nullable final String type,
                                                      @Nullable final String name,
-                                                     @Nullable final String sortBy,
-                                                     @Nullable final String sortOrder,
+                                                     @Nullable final String sortByStr,
+                                                     @Nullable final String sortOrderStr,
                                                      @Nullable final Integer offset,
                                                      @Nullable final Integer limit) {
+            String sortBy = null;
+            if (StringUtils.isNotBlank(sortByStr)) {
+                sortBy = sortByStr.trim().toLowerCase();
+                if (!DEFINITION_METADATA_SORT_BY_COLUMNS.contains(sortBy)) {
+                    throw new IllegalArgumentException(String.format("Invalid sortBy column %s", sortBy));
+                }
+            }
+
+            String sortOrder = null;
+            if (StringUtils.isNotBlank(sortOrderStr)) {
+                sortOrder = sortOrderStr.trim().toUpperCase();
+                if (!VALID_SORT_ORDER.contains(sortOrder)) {
+                    throw new IllegalArgumentException("Invalid sort order. Expected ASC or DESC");
+                }
+            }
+
             if (type != null) {
                 String typeRegex = null;
                 switch (type) {
