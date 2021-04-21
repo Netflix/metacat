@@ -243,6 +243,8 @@ class MetacatSmokeSpec extends Specification {
             assert table.getSerde().getSerdeInfoParameters().get('serialization.format') == '1'
             table = api.getTable(catalogName, databaseName, tableName, true, true, false)
             assert table.getFields().get(0).type == 'chararray'
+            assert table.getFields().find{it.name=='field4'}.jsonType ==
+                metacatJson.parseJsonObject('{"elementType": {"type": "row","fields": [{"name": "version","type": "chararray"},{"name": "ts","type": "long"}]},"type": "array"}')
             // from the cache
             def cachedTable = hiveContextApi.getTable(catalogName, databaseName, tableName, true, true, false)
             assert cachedTable.getFields().get(0).type == 'string'

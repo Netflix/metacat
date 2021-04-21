@@ -8,6 +8,8 @@ import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
 import com.netflix.metacat.common.server.converter.ConverterUtil
+import com.netflix.metacat.common.server.converter.DefaultTypeConverter
+import com.netflix.metacat.common.server.converter.DozerJsonTypeConverter
 import com.netflix.metacat.common.server.converter.DozerTypeConverter
 import com.netflix.metacat.common.server.converter.TypeConverterFactory
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
@@ -29,7 +31,8 @@ import spock.lang.Specification
  */
 class DirectSqlSavePartitionSpec extends Specification {
     def config = new DefaultConfigImpl(new MetacatProperties())
-    def converter = new ConverterUtil(new DozerTypeConverter(new TypeConverterFactory(config)))
+    def typeFactory = new TypeConverterFactory(new DefaultTypeConverter())
+    def converter = new ConverterUtil(new DozerTypeConverter(typeFactory), new DozerJsonTypeConverter(typeFactory))
     def registry = new NoopRegistry()
     def context = DataDtoProvider.newContext(config, null)
     def metric = new HiveConnectorFastServiceMetric(registry)

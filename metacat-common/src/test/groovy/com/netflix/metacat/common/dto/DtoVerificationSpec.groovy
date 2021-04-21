@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.common.dto
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.reflect.ClassPath
 import com.netflix.metacat.common.QualifiedName
@@ -122,6 +123,10 @@ class DtoVerificationSpec extends Specification {
                 }
                 return map
             case ObjectNode:
+                ObjectNode node = metacatJson.emptyObjectNode()
+                node.put(RandomStringUtils.randomAlphabetic(4), RandomStringUtils.randomAlphabetic(4))
+                return node
+            case JsonNode:
                 ObjectNode node = metacatJson.emptyObjectNode()
                 node.put(RandomStringUtils.randomAlphabetic(4), RandomStringUtils.randomAlphabetic(4))
                 return node

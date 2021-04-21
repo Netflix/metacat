@@ -17,10 +17,8 @@
  */
 package com.netflix.metacat.common.server.converter;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.common.server.properties.Config;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -33,17 +31,18 @@ import java.util.Map;
  * @since 1.0.0
  */
 public class TypeConverterFactory {
-
-    private final Config config;
+    private static final String METACAT_TYPE_CONTEXT = "metacat";
     private Map<String, ConnectorTypeConverter> registry = Maps.newHashMap();
+    private ConnectorTypeConverter defaultTypeConverter;
 
     /**
      * Constructor.
      *
-     * @param config config
+     * @param defaultTypeConverter default type converter
      */
-    public TypeConverterFactory(final Config config) {
-        this.config = config;
+    public TypeConverterFactory(final ConnectorTypeConverter defaultTypeConverter) {
+        this.defaultTypeConverter = defaultTypeConverter;
+        this.registry.put(METACAT_TYPE_CONTEXT, new DefaultTypeConverter());
     }
 
     /**
@@ -64,21 +63,12 @@ public class TypeConverterFactory {
      */
     public ConnectorTypeConverter get(@Nullable final String context) {
         if (context == null) {
-            return this.getDefaultConverter();
+            return defaultTypeConverter;
         }
         final ConnectorTypeConverter result = this.registry.get(context);
         if (result == null) {
             throw new IllegalArgumentException("No handler for " + context);
         }
         return result;
-    }
-
-    // TODO: Why is this not a singleton?
-    private ConnectorTypeConverter getDefaultConverter() {
-        try {
-            return (ConnectorTypeConverter) Class.forName(this.config.getDefaultTypeConverter()).newInstance();
-        } catch (Exception e) {
-            throw Throwables.propagate(e);
-        }
     }
 }
