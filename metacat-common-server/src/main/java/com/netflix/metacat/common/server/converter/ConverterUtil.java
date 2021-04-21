@@ -52,6 +52,7 @@ import org.dozer.DozerBeanMapper;
 import org.dozer.Mapper;
 import org.dozer.loader.api.BeanMappingBuilder;
 import org.dozer.loader.api.FieldsMappingOptions;
+import org.dozer.loader.api.TypeMappingOptions;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -64,22 +65,31 @@ import java.util.Map;
  * @since 1.0.0
  */
 public class ConverterUtil {
+    private static final String ID_TYPE_CONVERTER = "typeConverter";
+    private static final String ID_JSON_TYPE_CONVERTER = "jsonTypeConverter";
     private final Mapper mapper;
 
     /**
      * Constructor.
      *
      * @param dozerTypeConverter custom dozer converter for types
+     * @param dozerJsonTypeConverter custom dozer converter for types to JSON format
      */
-    public ConverterUtil(@Nonnull @NonNull final DozerTypeConverter dozerTypeConverter) {
+    public ConverterUtil(@Nonnull @NonNull final DozerTypeConverter dozerTypeConverter,
+                         @Nonnull @NonNull final DozerJsonTypeConverter dozerJsonTypeConverter) {
         final DozerBeanMapper dozerBeanMapper = new DozerBeanMapper();
         final BeanMappingBuilder builder = new BeanMappingBuilder() {
             @Override
             protected void configure() {
-                mapping(FieldDto.class, FieldInfo.class)
-                    .fields("type", "type", FieldsMappingOptions.customConverterId("typeConverter"))
+                mapping(FieldDto.class, FieldInfo.class, TypeMappingOptions.oneWay())
+                    .fields("type", "type", FieldsMappingOptions.customConverterId(ID_TYPE_CONVERTER))
                     .fields("partition_key", "partitionKey", FieldsMappingOptions.copyByReference())
                     .fields("source_type", "sourceType", FieldsMappingOptions.copyByReference());
+                mapping(FieldInfo.class, FieldDto.class, TypeMappingOptions.oneWay())
+                    .fields("type", "type", FieldsMappingOptions.customConverterId(ID_TYPE_CONVERTER))
+                    .fields("partitionKey", "partition_key", FieldsMappingOptions.copyByReference())
+                    .fields("sourceType", "source_type", FieldsMappingOptions.copyByReference())
+                    .fields("type", "jsonType", FieldsMappingOptions.customConverterId(ID_JSON_TYPE_CONVERTER));
                 mapping(TableDto.class, TableInfo.class)
                     .fields("name", "name", FieldsMappingOptions.copyByReference());
                 mapping(DatabaseDto.class, DatabaseInfo.class)
@@ -95,7 +105,8 @@ public class ConverterUtil {
         };
         dozerBeanMapper.addMapping(builder);
         final Map<String, CustomConverter> customConverterMap = Maps.newHashMap();
-        customConverterMap.put("typeConverter", dozerTypeConverter);
+        customConverterMap.put(ID_TYPE_CONVERTER, dozerTypeConverter);
+        customConverterMap.put(ID_JSON_TYPE_CONVERTER, dozerJsonTypeConverter);
         dozerBeanMapper.setCustomConvertersWithId(customConverterMap);
         this.mapper = dozerBeanMapper;
     }

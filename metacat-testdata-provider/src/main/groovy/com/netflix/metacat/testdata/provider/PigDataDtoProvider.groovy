@@ -76,7 +76,7 @@ class PigDataDtoProvider {
                                 comment: 'added 4st',
                                 name: 'field4',
                                 pos: 3,
-                                type: 'chararray',
+                                type: '{(version: chararray,ts: long)}',
                                 partition_key: false
                         )
                 ],

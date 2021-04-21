@@ -22,6 +22,8 @@ import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.converter.ConverterUtil
+import com.netflix.metacat.common.server.converter.DefaultTypeConverter
+import com.netflix.metacat.common.server.converter.DozerJsonTypeConverter
 import com.netflix.metacat.common.server.converter.DozerTypeConverter
 import com.netflix.metacat.common.server.converter.TypeConverterFactory
 import com.netflix.metacat.common.server.events.MetacatEventBus
@@ -54,15 +56,9 @@ class PartitionServiceImplSpec extends Specification{
     def usermetadataService = Mock(UserMetadataService)
     def eventBus = Mock(MetacatEventBus)
     @Shared
-    def converterUtil = new ConverterUtil(
-        new DozerTypeConverter(
-            new TypeConverterFactory(
-                new DefaultConfigImpl(
-                    new MetacatProperties()
-                )
-            )
-        )
-    )
+    def typeFactory = new TypeConverterFactory(new DefaultTypeConverter())
+    @Shared
+    def converterUtil = new ConverterUtil(new DozerTypeConverter(typeFactory), new DozerJsonTypeConverter(typeFactory))
     def registry = new NoopRegistry()
     def config = Mock(Config)
     def threadServiceManager = Mock(ThreadServiceManager)

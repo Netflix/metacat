@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.common.dto;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -52,6 +53,9 @@ public class FieldDto extends BaseDto {
     private String source_type;
     @ApiModelProperty(value = "Type of the field/column", required = true)
     private String type;
+    @ApiModelProperty(value = "Type of the field/column in JSON format",
+        accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    private JsonNode jsonType;
     @ApiModelProperty(value = "Can the field/column be null")
     private Boolean isNullable;
     @ApiModelProperty(value = "Size of the field/column")

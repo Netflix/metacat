@@ -1,9 +1,8 @@
 package com.netflix.metacat.common.server.converter
 
+import com.fasterxml.jackson.databind.node.TextNode
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
-import com.netflix.metacat.common.server.properties.DefaultConfigImpl
-import com.netflix.metacat.common.server.properties.MetacatProperties
 import org.dozer.MappingException
 import spock.lang.Shared
 import spock.lang.Specification
@@ -16,15 +15,9 @@ import spock.lang.Specification
  */
 class ConverterUtilSpec extends Specification {
     @Shared
-    def converter = new ConverterUtil(
-        new DozerTypeConverter(
-            new TypeConverterFactory(
-                new DefaultConfigImpl(
-                    new MetacatProperties()
-                )
-            )
-        )
-    )
+    def typeFactory = new TypeConverterFactory(new DefaultTypeConverter())
+    @Shared
+    def converter = new ConverterUtil(new DozerTypeConverter(typeFactory), new DozerJsonTypeConverter(typeFactory))
 
     def testDatabaseConversion() {
         given:
@@ -57,7 +50,7 @@ class ConverterUtilSpec extends Specification {
         given:
         def dto = new TableDto(name: QualifiedName.ofTable('prodhive', 'amajumdar', 'part'),
             audit: new AuditDto('test', new Date(), 'test', new Date()),
-            fields: [new FieldDto(null, 'esn', true, 0, 'string', 'string', false, null, null, false, false)],
+            fields: [FieldDto.builder().name('esn').type('string').source_type('string').jsonType(new TextNode('string')).pos(0).build()] ,
             serde: new StorageDto(owner: 'test'))
         when:
         def info = converter.fromTableDto(dto)
@@ -70,7 +63,7 @@ class ConverterUtilSpec extends Specification {
         given:
         def dto = new TableDto(name: QualifiedName.ofTable('prodhive', 'amajumdar', 'part'),
             audit: new AuditDto('test', new Date(), 'test', new Date()),
-            fields: [new FieldDto(null, 'esn', true, 0, 'string', 'string', false, null, null, false, false)],
+            fields: [FieldDto.builder().name('esn').type('string').source_type('string').jsonType(new TextNode('string')).pos(0).build()],
             serde: new StorageDto(owner: 'test'),
             view: new ViewDto("select test", "select test2"))
         when:

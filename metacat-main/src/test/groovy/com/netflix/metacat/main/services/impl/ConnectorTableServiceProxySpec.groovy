@@ -20,6 +20,8 @@ import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.ConnectorTableService
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.common.server.converter.ConverterUtil
+import com.netflix.metacat.common.server.converter.DefaultTypeConverter
+import com.netflix.metacat.common.server.converter.DozerJsonTypeConverter
 import com.netflix.metacat.common.server.converter.DozerTypeConverter
 import com.netflix.metacat.common.server.converter.TypeConverterFactory
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
@@ -38,7 +40,8 @@ import spock.lang.Specification
 class ConnectorTableServiceProxySpec extends Specification {
     def connectorManager = Mock(ConnectorManager)
     def connectorTableService = Mock(ConnectorTableService)
-    def converterUtil = new ConverterUtil(new DozerTypeConverter(new TypeConverterFactory(new DefaultConfigImpl(new MetacatProperties()))))
+    def typeFactory = new TypeConverterFactory(new DefaultTypeConverter())
+    def converterUtil = new ConverterUtil(new DozerTypeConverter(typeFactory), new DozerJsonTypeConverter(typeFactory))
     def tableInfo = converterUtil.fromTableDto(DataDtoProvider.getTable('a', 'b', 'c', "amajumdar", "s3:/a/b"))
     def name = tableInfo.name
     ConnectorTableServiceProxy service

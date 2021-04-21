@@ -20,9 +20,12 @@ package com.netflix.metacat.main.configs;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Throwables;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonLocator;
+import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
+import com.netflix.metacat.common.server.converter.DozerJsonTypeConverter;
 import com.netflix.metacat.common.server.converter.DozerTypeConverter;
 import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import com.netflix.metacat.common.server.events.MetacatApplicationEventMulticaster;
@@ -33,6 +36,7 @@ import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.spectator.api.Registry;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.Bean;
@@ -47,6 +51,7 @@ import org.springframework.context.event.EventListenerFactory;
  */
 @Configuration
 public class CommonServerConfig {
+    private static final String DEFAULT_TYPE_CONVERTER = "defaultTypeConverter";
 
     /**
      * An object mapper bean to use if none already exists.
@@ -121,12 +126,28 @@ public class CommonServerConfig {
     /**
      * The type converter factory to use.
      *
-     * @param config The system configuration
+     * @param defaultTypeConverter default type converter
      * @return The type converter factory
      */
     @Bean
-    public TypeConverterFactory typeConverterFactory(final Config config) {
-        return new TypeConverterFactory(config);
+    public TypeConverterFactory typeConverterFactory(@Qualifier(DEFAULT_TYPE_CONVERTER)
+                                                         final ConnectorTypeConverter defaultTypeConverter) {
+        return new TypeConverterFactory(defaultTypeConverter);
+    }
+
+    /**
+     * The default type converter.
+     *
+     * @param config The system configuration
+     * @return default type converter
+     */
+    @Bean(DEFAULT_TYPE_CONVERTER)
+    public ConnectorTypeConverter defaultTypeConverter(final Config config) {
+        try {
+            return (ConnectorTypeConverter) Class.forName(config.getDefaultTypeConverter()).newInstance();
+        } catch (Exception e) {
+            throw Throwables.propagate(e);
+        }
     }
 
     /**
@@ -141,14 +162,27 @@ public class CommonServerConfig {
     }
 
     /**
+     * The dozer type converter to JSON format.
+     *
+     * @param typeConverterFactory The type converter factory to use
+     * @return type converter
+     */
+    @Bean
+    public DozerJsonTypeConverter dozerJsonTypeConverter(final TypeConverterFactory typeConverterFactory) {
+        return new DozerJsonTypeConverter(typeConverterFactory);
+    }
+
+    /**
      * Converter utility bean.
      *
      * @param dozerTypeConverter The Dozer type converter to use.
+     * @param dozerJsonTypeConverter The dozer type converter to JSON format.
      * @return The converter util instance
      */
     @Bean
-    public ConverterUtil converterUtil(final DozerTypeConverter dozerTypeConverter) {
-        return new ConverterUtil(dozerTypeConverter);
+    public ConverterUtil converterUtil(final DozerTypeConverter dozerTypeConverter,
+                                       final DozerJsonTypeConverter dozerJsonTypeConverter) {
+        return new ConverterUtil(dozerTypeConverter, dozerJsonTypeConverter);
     }
 
     /**

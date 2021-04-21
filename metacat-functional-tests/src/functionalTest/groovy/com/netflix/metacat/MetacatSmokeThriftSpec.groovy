@@ -18,6 +18,8 @@ package com.netflix.metacat
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.converter.ConverterUtil
+import com.netflix.metacat.common.server.converter.DefaultTypeConverter
+import com.netflix.metacat.common.server.converter.DozerJsonTypeConverter
 import com.netflix.metacat.common.server.converter.DozerTypeConverter
 import com.netflix.metacat.common.server.converter.TypeConverterFactory
 import com.netflix.metacat.common.server.partition.util.PartitionUtil
@@ -78,15 +80,8 @@ class MetacatSmokeThriftSpec extends Specification {
         SessionState.setCurrentSessionState(new SessionState(localFastConf))
         clients.put('localfast', Hive.get(localFastConf))
         ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("ROOT")).setLevel(ch.qos.logback.classic.Level.OFF)
-        converter = new ConverterUtil(
-            new DozerTypeConverter(
-                new TypeConverterFactory(
-                    new DefaultConfigImpl(
-                        new MetacatProperties()
-                    )
-                )
-            )
-        )
+        def typeFactory = new TypeConverterFactory(new DefaultTypeConverter())
+        converter = new ConverterUtil(new DozerTypeConverter(typeFactory), new DozerJsonTypeConverter(typeFactory))
         hiveConverter = new HiveConnectorInfoConverter(new HiveTypeConverter())
     }
     @Shared
