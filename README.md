@@ -53,7 +53,7 @@ Take the build WAR in `metacat-war/build/libs` and deploy it to an existing Tomc
 
 The REST API can be accessed @ [http://localhost:8080/mds/v1/catalog](http://localhost:8080/mds/v1/catalog)
 
-Swagger API documentation can be accessed @ [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+Swagger API documentation can be accessed @ [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 
 ### Docker Compose Example
 
@@ -72,7 +72,7 @@ Look for the mapped port (`MAPPED_PORT`) to port 8080.
 
 REST API can be accessed @ `http://localhost:<MAPPED_PORT>/mds/v1/catalog`
 
-Swagger API documentation can be accessed @ `http://localhost:<MAPPED_PORT>/swagger-ui.html`
+Swagger API documentation can be accessed @ `http://localhost:<MAPPED_PORT>/swagger-ui/index.html`
 
 To stop the docker compose cluster:
 
