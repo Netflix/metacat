@@ -29,6 +29,7 @@ import com.netflix.metacat.common.type.ParametricType;
 import com.netflix.metacat.common.type.RowType;
 import com.netflix.metacat.common.type.Type;
 import com.netflix.metacat.common.type.TypeEnum;
+import com.netflix.metacat.common.type.VarbinaryType;
 import com.netflix.metacat.common.type.VarcharType;
 
 /**
@@ -67,7 +68,8 @@ public interface ConnectorTypeConverter {
         final TypeEnum base = type.getTypeSignature().getBase();
         if (!base.isParametricType()) {
             result =  new TextNode(fromMetacatType(type));
-        } else if (type instanceof DecimalType || type instanceof CharType || type instanceof VarcharType) {
+        } else if (type instanceof DecimalType || type instanceof CharType
+            || type instanceof VarcharType || type instanceof VarbinaryType) {
             final ObjectNode node = json.emptyObjectNode();
             final String typeText = fromMetacatType(type);
             final int index = typeText.indexOf('(');
@@ -80,8 +82,10 @@ public interface ConnectorTypeConverter {
                     node.put("scale", ((DecimalType) type).getScale());
                 } else if (type instanceof CharType) {
                     node.put("length", ((CharType) type).getLength());
-                } else {
+                } else if (type instanceof  VarcharType) {
                     node.put("length", ((VarcharType) type).getLength());
+                } else {
+                    node.put("length", ((VarbinaryType) type).getLength());
                 }
             }
             result = node;
