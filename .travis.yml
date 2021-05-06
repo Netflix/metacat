@@ -5,10 +5,15 @@ jdk:
 - openjdk8
 services:
 - docker
+addons:
+  apt:
+    packages:
+      - pass
 git:
   depth: 250
 install: "./installViaTravis.sh"
 script: "./buildViaTravis.sh"
+before_install: "./beforeInstall.sh"
 env:
   global:
   - secure: D9jQQd2Mu4ssneMNh3yPWTRsXTntfhurFHoUKVHOpt9lK+80xmIVObTUSimEyQUZqYnhj2UKTNmuxSlNgASwEqMnWyron/eGkJP0z9A8cQysTm24b+eLI/mxb4Y/heut00VDYPD3D0gDdom1WZiUKxPM7r+10+CusTc5ZnLI4C9CzMwIt4uJpuEc/JjZNl56vX7j5M7E1Q0XyeqC3ZL2JPhRIfQE0OPShl9BI7UZcohYxIerNLuY3w2Bce5amrrEs+RgD4aTLnTaxjYuFJpP3bDlx3sF8WsZVFCRoVH0RQI3mJXCFetaYmE+TXUDdzY3nS8aKbFL1HVUZBbGB/iR2XsA9Bid7VJZCWzw15BeLnwyM5FedfmGZz4QQ6tcjwNHsXx6cKX5F7wjiVnElmRJ9nZuekZXXf2uueWwY43/h7w8j22pEJgR/oFmEYzWZ4WyNSrYlO4pylNio3HC17x+PeUQT4GVI7ZMz8qzQJIKwozLR2IZKkLzEPk+RNFopXsCFuWaqy7zpowl8QipRx8EMMdHbR6DAUYpqWGpJo2SH7DYa2dS3JM2Zi/de1r6JJg066/HBXXVnvUyOGbyVESoVMBd2quel40K4pB4t2TFpz2K7tjv12lLV5IzYxA0YONYdIf70VbKY2BII9TniLV2czKbvOBjGxX17M660tUauqw=
