@@ -210,7 +210,7 @@ public interface MetacatV1 {
      * @return database with details
      */
     DatabaseDto getDatabase(final String catalogName, final String databaseName, final boolean includeUserMetadata,
-        final boolean includeTableNames);
+        final Boolean includeTableNames);
 
     /**
      * Get the catalog by name.

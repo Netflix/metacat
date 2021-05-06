@@ -271,6 +271,20 @@ public interface Config {
     int getMaxPartitionsThreshold();
 
     /**
+     * Threshold for list of partitions to be added.
+     *
+     * @return Threshold for list of partitions to be added
+     */
+    int getMaxAddedPartitionsThreshold();
+
+    /**
+     * Threshold for list of partitions to be deleted.
+     *
+     * @return Threshold for list of partitions to be deleted
+     */
+    int getMaxDeletedPartitionsThreshold();
+
+    /**
      * Elastic search index.
      *
      * @return elastic search index name
@@ -507,5 +521,26 @@ public interface Config {
      * @return True if it is.
      */
     boolean isUpdateIcebergTableAsyncPostEventEnabled();
+
+    /**
+     * Whether to list table names by default on getDatabase request call.
+     *
+     * @return True if it is.
+     */
+    boolean listTableNamesByDefaultOnGetDatabase();
+
+    /**
+     * Metadata query timeout in seconds.
+     *
+     * @return Metadata query timeout in seconds
+     */
+    int getMetadataQueryTimeout();
+
+    /**
+     * Whether to check the existence of the iceberg metadata location before updating the table.
+     *
+     * @return Whether to check the existence of the iceberg metadata location before updating the table
+     */
+    boolean isIcebergPreviousMetadataLocationCheckEnabled();
 }
 

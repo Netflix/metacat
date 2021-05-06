@@ -171,6 +171,7 @@ public class HiveConnectorFastServiceConfig {
      * @param hiveJdbcTemplate       hive JDBC template
      * @param serviceMetric          fast service metric
      * @param directSqlSavePartition partition service involving direct sqls
+     * @param warehouse              warehouse
      * @return DirectSqlTable
      */
     @Bean
@@ -178,13 +179,15 @@ public class HiveConnectorFastServiceConfig {
         final ConnectorContext connectorContext,
         @Qualifier("hiveWriteJdbcTemplate") final JdbcTemplate hiveJdbcTemplate,
         final HiveConnectorFastServiceMetric serviceMetric,
-        final DirectSqlSavePartition directSqlSavePartition
+        final DirectSqlSavePartition directSqlSavePartition,
+        final Warehouse warehouse
     ) {
         return new DirectSqlTable(
             connectorContext,
             hiveJdbcTemplate,
             serviceMetric,
-            directSqlSavePartition
+            directSqlSavePartition,
+            warehouse
         );
     }
 

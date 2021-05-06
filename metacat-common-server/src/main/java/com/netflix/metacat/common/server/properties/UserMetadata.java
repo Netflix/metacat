@@ -30,6 +30,7 @@ import lombok.NonNull;
 public class UserMetadata {
     @NonNull
     private Config config = new Config();
+    private int queryTimeoutInSeconds = 60;
 
     /**
      * config related properties.

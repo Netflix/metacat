@@ -42,6 +42,7 @@ import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.AliasService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
@@ -50,6 +51,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotNull;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -130,9 +132,29 @@ public final class RequestWrapper {
         final QualifiedName name,
         final String resourceRequestName,
         final Supplier<R> supplier) {
+        return processRequest(name, resourceRequestName, Collections.emptyMap(), supplier);
+    }
+
+    /**
+     * Request wrapper to to process request.
+     *
+     * @param name                name
+     * @param resourceRequestName request name
+     * @param requestTags         tags that needs to be added to the registry
+     * @param supplier            supplier
+     * @param <R>                 response
+     * @return response of supplier
+     */
+    public <R> R processRequest(
+        final QualifiedName name,
+        final String resourceRequestName,
+        final Map<String, String> requestTags,
+        final Supplier<R> supplier) {
         final long start = registry.clock().wallTime();
         final Map<String, String> tags = new HashMap<>(name.parts());
+        tags.putAll(requestTags);
         tags.put("request", resourceRequestName);
+        tags.put("scheme", MetacatContextManager.getContext().getScheme());
         registry.counter(requestCounterId.withTags(tags)).increment();
         checkRequestRateLimit(name, resourceRequestName, tags);
 

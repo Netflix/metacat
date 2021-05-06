@@ -38,6 +38,7 @@ public enum HiveMetrics {
     CounterHivePartitionFileSystemCall(Type.counter,"partitionFileSystemCall"),
     CounterHiveGetPartitionsExceedThresholdFailure(Type.counter,"getPartitionsExceedThresholdFailure"),
     CounterHiveFileSystemFailure(Type.counter,"fileSystemFailure"),
+    CounterFileSystemReadFailure(Type.counter,"fileSystemReadFailure"),
 
     /**
      * Gauge.

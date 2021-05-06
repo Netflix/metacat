@@ -140,12 +140,16 @@ public class MySqlUserMetadataConfig {
      * mySql metadata JDBC template.
      *
      * @param mySqlDataSource metadata data source
+     * @param config System config to use
      * @return metadata JDBC template
      */
     @Bean
     public JdbcTemplate metadataJdbcTemplate(
-        @Qualifier("metadataDataSource") final DataSource mySqlDataSource) {
-        return new JdbcTemplate(mySqlDataSource);
+        @Qualifier("metadataDataSource") final DataSource mySqlDataSource,
+        final Config config) {
+        final JdbcTemplate result = new JdbcTemplate(mySqlDataSource);
+        result.setQueryTimeout(config.getMetadataQueryTimeout());
+        return result;
     }
 
 }

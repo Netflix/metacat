@@ -38,6 +38,7 @@ import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,6 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Nullable;
 import java.net.HttpURLConnection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -280,6 +282,7 @@ public class PartitionController implements PartitionV1 {
         return this.requestWrapper.processRequest(
             name,
             "getPartitions",
+            Collections.singletonMap("filterPassed", StringUtils.isEmpty(filter) ? "false" : "true"),
             () -> this.partitionService.list(
                 name,
                 new Sort(sortBy, sortOrder),
@@ -355,6 +358,7 @@ public class PartitionController implements PartitionV1 {
         return this.requestWrapper.processRequest(
             name,
             "getPartitions",
+            Collections.singletonMap("filterPassed", StringUtils.isEmpty(filter) ? "false" : "true"),
             () -> this.mViewService.listPartitions(
                 name,
                 new Sort(sortBy, sortOrder),
@@ -1298,6 +1302,9 @@ public class PartitionController implements PartitionV1 {
         return this.requestWrapper.processRequest(
             name,
             "getPartitions",
+            Collections.singletonMap("filterPassed",
+                getPartitionsRequestDto == null || StringUtils.isEmpty(
+                    getPartitionsRequestDto.getFilter()) ? "false" : "true"),
             () -> partitionService.list(
                 name,
                 new Sort(sortBy, sortOrder),
@@ -1327,6 +1334,9 @@ public class PartitionController implements PartitionV1 {
         return this.requestWrapper.processRequest(
             name,
             "getPartitions",
+            Collections.singletonMap("filterPassed",
+                getPartitionsRequestDto == null || StringUtils.isEmpty(
+                    getPartitionsRequestDto.getFilter()) ? "false" : "true"),
             () -> this.mViewService.listPartitions(
                 name,
                 new Sort(sortBy, sortOrder),
@@ -1354,6 +1364,9 @@ public class PartitionController implements PartitionV1 {
         return this.requestWrapper.processRequest(
             name,
             "getPartitionUris",
+            Collections.singletonMap("filterPassed",
+                getPartitionsRequestDto == null || StringUtils.isEmpty(
+                    getPartitionsRequestDto.getFilter()) ? "false" : "true"),
             () -> this.partitionService.getPartitionUris(
                 name,
                 new Sort(sortBy, sortOrder),
@@ -1382,6 +1395,9 @@ public class PartitionController implements PartitionV1 {
         return this.requestWrapper.processRequest(
             name,
             "getMViewPartitionKeys",
+            Collections.singletonMap("filterPassed",
+                getPartitionsRequestDto == null || StringUtils.isEmpty(
+                    getPartitionsRequestDto.getFilter()) ? "false" : "true"),
             () -> this.mViewService.getPartitionKeys(
                 name,
                 new Sort(sortBy, sortOrder),
@@ -1409,6 +1425,9 @@ public class PartitionController implements PartitionV1 {
         return this.requestWrapper.processRequest(
             name,
             "getMViewPartitionUris",
+            Collections.singletonMap("filterPassed",
+                getPartitionsRequestDto == null || StringUtils.isEmpty(
+                    getPartitionsRequestDto.getFilter()) ? "false" : "true"),
             () -> this.mViewService.getPartitionUris(
                 name,
                 new Sort(sortBy, sortOrder),
@@ -1436,6 +1455,9 @@ public class PartitionController implements PartitionV1 {
         return this.requestWrapper.processRequest(
             name,
             "getPartitionKeys",
+            Collections.singletonMap("filterPassed",
+                getPartitionsRequestDto == null || StringUtils.isEmpty(
+                    getPartitionsRequestDto.getFilter()) ? "false" : "true"),
             () -> partitionService.getPartitionKeys(
                 name,
                 new Sort(sortBy, sortOrder),

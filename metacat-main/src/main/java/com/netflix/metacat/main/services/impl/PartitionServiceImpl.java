@@ -264,6 +264,7 @@ public class PartitionServiceImpl implements PartitionService {
         final MetacatRequestContext metacatRequestContext,
         final PartitionsSaveRequestDto dto,
         final QualifiedName name, final List<PartitionDto> partitionDtos) {
+        validateAdds(name, partitionDtos.size());
         registry.distributionSummary(
             this.partitionMetadataOnlyAddDistSummary.withTags(name.parts())).record(partitionDtos.size());
         eventBus.post(
@@ -297,6 +298,7 @@ public class PartitionServiceImpl implements PartitionService {
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         List<HasMetadata> deletePartitions = Lists.newArrayList();
         List<PartitionDto> deletePartitionDtos = Lists.newArrayList();
+        validate(name, dto);
         registry.distributionSummary(
             this.partitionAddDistSummary.withTags(name.parts())).record(partitionDtos.size());
         final List<String> partitionIdsForDeletes = dto.getPartitionIdsForDeletes();
@@ -346,11 +348,37 @@ public class PartitionServiceImpl implements PartitionService {
         return result;
     }
 
+    private void validate(final QualifiedName name, final PartitionsSaveRequestDto dto) {
+        validateDeletes(name, dto.getPartitionIdsForDeletes() != null ? dto.getPartitionIdsForDeletes().size() : 0);
+        validateAdds(name, dto.getPartitions() != null ? dto.getPartitions().size() : 0);
+    }
+
+    private void validateDeletes(final QualifiedName name, final int noOfDeletes) {
+        if (noOfDeletes > config.getMaxDeletedPartitionsThreshold()) {
+            final String message =
+                String.format("Number of partitions to be deleted for table %s exceeded the threshold %d",
+                    name, config.getMaxDeletedPartitionsThreshold());
+            log.warn(message);
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    private void validateAdds(final QualifiedName name, final int noOfAdds) {
+        if (noOfAdds > config.getMaxAddedPartitionsThreshold()) {
+            final String message =
+                String.format("Number of partitions to be added/updated for table %s exceeded the threshold %d",
+                    name, config.getMaxAddedPartitionsThreshold());
+            log.warn(message);
+            throw new IllegalArgumentException(message);
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public void delete(final QualifiedName name, final List<String> partitionIds) {
+        validateDeletes(name, partitionIds != null ? partitionIds.size() : 0);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         registry.distributionSummary(
             this.partitionDeleteDistSummary.withTags(name.parts())).record(partitionIds.size());
