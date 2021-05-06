@@ -35,6 +35,9 @@ import feign.Util;
 import lombok.AllArgsConstructor;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 
 /**
  * Module that provides a error decoder, used to parse errors.
@@ -80,7 +83,8 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                 case 429:
                     return new RetryableException(response.status(), message,
                         response.request() == null ? null : response.request().httpMethod(),
-                        new MetacatTooManyRequestsException(message), null, response.request());
+                        new MetacatTooManyRequestsException(message),
+                        Date.from(Instant.now().plus(1, ChronoUnit.MINUTES)), response.request());
                 case 500: //INTERNAL_SERVER_ERROR
                 case 503: //SERVICE_UNAVAILABLE
                     return new RetryableException(response.status(), message,

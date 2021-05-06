@@ -108,6 +108,7 @@ public class HiveProperties {
         private long maxMetadataFileSizeBytes = 500 * 1024 * 1024; //500m
         /*iceberg://<db-name.table-name>/<partition>/snapshot_time=<dateCreated> */
         private String partitionUriScheme = "iceberg";
+        private boolean isIcebergPreviousMetadataLocationCheckEnabled = true;
     }
 
     /**

@@ -70,7 +70,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     private static final String NAME_OWNER = "owner";
     private static final String NAME_USERID = "userId";
     private static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
-        "date_created", "created_by", "last_updated_by", "name", "last_updated");
+        "id", "date_created", "created_by", "last_updated_by", "name", "last_updated");
     private static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
     private final MetacatJson metacatJson;
     private final Config config;

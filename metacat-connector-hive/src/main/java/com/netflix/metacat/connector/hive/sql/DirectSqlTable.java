@@ -30,12 +30,15 @@ import com.netflix.metacat.common.server.connectors.exception.InvalidMetaExcepti
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.metastore.Warehouse;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -106,6 +109,8 @@ public class DirectSqlTable {
     private final HiveConnectorFastServiceMetric fastServiceMetric;
     private final String catalogName;
     private final DirectSqlSavePartition directSqlSavePartition;
+    private final Warehouse warehouse;
+    private final Config config;
 
     /**
      * Constructor.
@@ -114,18 +119,22 @@ public class DirectSqlTable {
      * @param jdbcTemplate           JDBC template
      * @param fastServiceMetric      fast service metric
      * @param directSqlSavePartition direct sql partition service
+     * @param warehouse              warehouse
      */
     public DirectSqlTable(
         final ConnectorContext connectorContext,
         final JdbcTemplate jdbcTemplate,
         final HiveConnectorFastServiceMetric fastServiceMetric,
-        final DirectSqlSavePartition directSqlSavePartition
+        final DirectSqlSavePartition directSqlSavePartition,
+        final Warehouse warehouse
     ) {
         this.catalogName = connectorContext.getCatalogName();
         this.registry = connectorContext.getRegistry();
         this.jdbcTemplate = jdbcTemplate;
         this.fastServiceMetric = fastServiceMetric;
         this.directSqlSavePartition = directSqlSavePartition;
+        this.warehouse = warehouse;
+        this.config = connectorContext.getConfig();
     }
 
     /**
@@ -223,6 +232,25 @@ public class DirectSqlTable {
             log.warn(message);
             throw new InvalidMetaException(tableName, message, null);
         }
+        //
+        // If the previous metadata location is not empty, check if it is valid.
+        //
+        final String previousMetadataLocation = newTableMetadata.get(PARAM_PREVIOUS_METADATA_LOCATION);
+        if (config.isIcebergPreviousMetadataLocationCheckEnabled() && !StringUtils.isBlank(previousMetadataLocation)) {
+            boolean doesPathExists = true;
+            try {
+                final Path previousMetadataPath = new Path(previousMetadataLocation);
+                doesPathExists = warehouse.getFs(previousMetadataPath).exists(previousMetadataPath);
+            } catch (Exception ignored) {
+                log.warn(String.format("Failed getting the filesystem for %s", previousMetadataLocation));
+                registry.counter(HiveMetrics.CounterFileSystemReadFailure.name()).increment();
+            }
+            if (!doesPathExists) {
+                throw new InvalidMetaException(tableName,
+                    String.format("Invalid metadata for %s..Location %s does not exist",
+                        tableName, previousMetadataLocation), null);
+            }
+        }
         final Long tableId = getTableId(tableName);
         Map<String, String> existingTableMetadata = null;
         log.debug("Lock Iceberg table {}", tableName);
@@ -245,17 +273,19 @@ public class DirectSqlTable {
         if (existingTableMetadata == null) {
             existingTableMetadata = Maps.newHashMap();
         }
-        validateIcebergUpdate(tableName, existingTableMetadata, newTableMetadata);
-        final MapDifference<String, String> diff = Maps.difference(existingTableMetadata, newTableMetadata);
-        insertTableParams(tableId, diff.entriesOnlyOnRight());
-        final Map<String, String> updateParams = diff.entriesDiffering().entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, s -> s.getValue().rightValue()));
-        updateTableParams(tableId, updateParams);
-        //
-        // In addition to updating the table params, the table location in HMS needs to be updated for usage by
-        // external tools, that access HMS directly
-        //
-        updateTableLocation(tableId, tableInfo);
+        final boolean needUpdate = validateIcebergUpdate(tableName, existingTableMetadata, newTableMetadata);
+        if (needUpdate) {
+            final MapDifference<String, String> diff = Maps.difference(existingTableMetadata, newTableMetadata);
+            insertTableParams(tableId, diff.entriesOnlyOnRight());
+            final Map<String, String> updateParams = diff.entriesDiffering().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, s -> s.getValue().rightValue()));
+            updateTableParams(tableId, updateParams);
+            //
+            // In addition to updating the table params, the table location in HMS needs to be updated for usage by
+            // external tools, that access HMS directly
+            //
+            updateTableLocation(tableId, tableInfo);
+        }
         log.debug("Unlocked Iceberg table {}", tableName);
     }
 
@@ -273,7 +303,7 @@ public class DirectSqlTable {
         throw new InvalidMetaException(tableName, message, null);
     }
 
-    private void validateIcebergUpdate(final QualifiedName tableName,
+    private boolean validateIcebergUpdate(final QualifiedName tableName,
                                        final Map<String, String> existingTableMetadata,
                                        final Map<String, String> newTableMetadata) {
         // Validate the type of the table stored in the RDS
@@ -287,6 +317,7 @@ public class DirectSqlTable {
         // 3. If the provided previous metadata location does not match the saved metadata location, then the table
         //    update should fail.
         //
+        boolean needUpdate = false;
         if (StringUtils.isBlank(existingMetadataLocation)) {
             final String message = String
                 .format("Invalid metadata location for iceberg table %s. Existing location is empty.",
@@ -310,14 +341,16 @@ public class DirectSqlTable {
                 throw new TablePreconditionFailedException(tableName, message, existingMetadataLocation,
                     previousMetadataLocation);
             }
+            needUpdate = true;
         }
+        return needUpdate;
     }
 
     private void updateTableLocation(final Long tableId, final TableInfo tableInfo) {
         final String uri = tableInfo.getSerde() != null ? tableInfo.getSerde().getUri() : null;
         if (!Strings.isNullOrEmpty(uri)) {
             jdbcTemplate.update(SQL.UPDATE_SDS_LOCATION, new SqlParameterValue(Types.VARCHAR, uri),
-                new SqlParameterValue(Types.BIGINT, tableId));
+                new SqlParameterValue(Types.BIGINT, tableId), new SqlParameterValue(Types.VARCHAR, uri));
         }
     }
 
@@ -443,7 +476,7 @@ public class DirectSqlTable {
         static final String INSERT_TABLE_PARAMS =
             "insert into TABLE_PARAMS(tbl_id,param_key,param_value) values (?,?,?)";
         static final String UPDATE_SDS_LOCATION =
-            "UPDATE SDS SET LOCATION=? WHERE SD_ID= (SELECT SD_ID FROM TBLS WHERE TBL_ID=?)";
+            "UPDATE SDS s join TBLS t on s.sd_id=t.sd_id SET s.LOCATION=? WHERE t.TBL_ID=? and s.LOCATION != ?";
         static final String UPDATE_SDS_CD = "UPDATE SDS SET CD_ID=? WHERE SD_ID=?";
         static final String DELETE_COLUMNS_OLD = "DELETE FROM COLUMNS_OLD WHERE SD_ID=?";
         static final String DELETE_COLUMNS_V2 = "DELETE FROM COLUMNS_V2 WHERE CD_ID=?";

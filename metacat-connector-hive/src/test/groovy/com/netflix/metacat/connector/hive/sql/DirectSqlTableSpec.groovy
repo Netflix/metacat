@@ -1,19 +1,19 @@
 package com.netflix.metacat.connector.hive.sql
 
-import com.google.common.collect.Maps
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
+import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.spectator.api.NoopRegistry
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.hive.metastore.Warehouse
 import org.springframework.dao.CannotAcquireLockException
-import org.springframework.dao.DataAccessException
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import spock.lang.Specification
@@ -32,7 +32,9 @@ class DirectSqlTableSpec extends Specification {
     def metric = new HiveConnectorFastServiceMetric(registry)
     def jdbcTemplate = Mock(JdbcTemplate)
     def directSqlSavePartition = Mock(DirectSqlSavePartition)
-    def service = new DirectSqlTable(context, jdbcTemplate, metric, directSqlSavePartition)
+    def fs = Mock(FileSystem)
+    def warehouse = Mock(Warehouse)
+    def service = new DirectSqlTable(context, jdbcTemplate, metric, directSqlSavePartition, warehouse)
     def catalogName = 'c'
     def databaseName = 'd'
     def tableName = 't'
@@ -78,6 +80,8 @@ class DirectSqlTableSpec extends Specification {
         1 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.INSERT_TABLE_PARAMS,_,_)
         1 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_,_)
         1 * jdbcTemplate.query(DirectSqlTable.SQL.TABLE_PARAMS_LOCK,_,_) >> ['table_type':DirectSqlTable.ICEBERG_TABLE_TYPE, 'metadata_location':'s3:/c/d/t']
+        1 * warehouse.getFs(_) >> fs
+        1 * fs.exists(_) >> true
         noExceptionThrown()
         when:
         service.updateIcebergTable(table)
@@ -85,6 +89,8 @@ class DirectSqlTableSpec extends Specification {
         0 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.INSERT_TABLE_PARAMS,_,_)
         1 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_,_)
         1 * jdbcTemplate.query(DirectSqlTable.SQL.TABLE_PARAMS_LOCK,_,_) >> ['table_type':DirectSqlTable.ICEBERG_TABLE_TYPE, 'metadata_location':'s3:/c/d/t', 'previous_metadata_location':'']
+        1 * warehouse.getFs(_) >> fs
+        1 * fs.exists(_) >> true
         noExceptionThrown()
         when:
         service.updateIcebergTable(table)
@@ -92,6 +98,8 @@ class DirectSqlTableSpec extends Specification {
         0 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.INSERT_TABLE_PARAMS,_,_)
         0 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_,_)
         1 * jdbcTemplate.query(DirectSqlTable.SQL.TABLE_PARAMS_LOCK,_,_) >> ['table_type':DirectSqlTable.ICEBERG_TABLE_TYPE, 'metadata_location':'s3:/c/d/t1', 'previous_metadata_location':'s3:/c/d/t']
+        1 * warehouse.getFs(_) >> fs
+        1 * fs.exists(_) >> true
         noExceptionThrown()
         when:
         service.updateIcebergTable(new TableInfo(name: qualifiedName, metadata: ['metadata_location':'s3:/c/d/t1']))
@@ -99,6 +107,7 @@ class DirectSqlTableSpec extends Specification {
         0 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.INSERT_TABLE_PARAMS,_,_)
         0 * jdbcTemplate.batchUpdate(DirectSqlTable.SQL.UPDATE_TABLE_PARAMS,_,_)
         1 * jdbcTemplate.query(DirectSqlTable.SQL.TABLE_PARAMS_LOCK,_,_) >> ['table_type':DirectSqlTable.ICEBERG_TABLE_TYPE, 'metadata_location':'s3:/c/d/t1']
+        0 * warehouse.getFs(_) >> fs
         noExceptionThrown()
         when:
         service.updateIcebergTable(table)

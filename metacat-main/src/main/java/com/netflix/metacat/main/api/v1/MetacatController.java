@@ -26,6 +26,7 @@ import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
@@ -54,6 +55,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
 import java.net.HttpURLConnection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -78,6 +80,7 @@ public class MetacatController implements MetacatV1 {
     private final MViewService mViewService;
     private final TableService tableService;
     private final RequestWrapper requestWrapper;
+    private final Config config;
 
     /**
      * Constructor.
@@ -87,6 +90,7 @@ public class MetacatController implements MetacatV1 {
      * @param mViewService    view service
      * @param tableService    table service
      * @param requestWrapper  request wrapper obj
+     * @param config Config
      */
     @Autowired
     public MetacatController(
@@ -94,13 +98,15 @@ public class MetacatController implements MetacatV1 {
         final DatabaseService databaseService,
         final MViewService mViewService,
         final TableService tableService,
-        final RequestWrapper requestWrapper
-    ) {
+        final RequestWrapper requestWrapper,
+        final Config config
+        ) {
         this.catalogService = catalogService;
         this.databaseService = databaseService;
         this.mViewService = mViewService;
         this.tableService = tableService;
         this.requestWrapper = requestWrapper;
+        this.config = config;
     }
 
     /**
@@ -586,7 +592,7 @@ public class MetacatController implements MetacatV1 {
         @ApiParam(value = "Whether to include user metadata information to the response")
         @RequestParam(name = "includeUserMetadata", defaultValue = "true") final boolean includeUserMetadata,
         @ApiParam(value = "Whether to include list of table names")
-        @RequestParam(name = "includeTableNames", defaultValue = "true") final boolean includeTableNames
+        @Nullable @RequestParam(name = "includeTableNames", required = false) final Boolean includeTableNames
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofDatabase(catalogName, databaseName)
@@ -594,10 +600,12 @@ public class MetacatController implements MetacatV1 {
         return this.requestWrapper.processRequest(
             name,
             "getDatabase",
+            Collections.singletonMap("includeTableNamesPassed", includeTableNames == null ? "false" : "true"),
             () -> databaseService.get(name,
                 GetDatabaseServiceParameters.builder()
                     .includeUserMetadata(includeUserMetadata)
-                    .includeTableNames(includeTableNames)
+                    .includeTableNames(includeTableNames == null
+                        ? config.listTableNamesByDefaultOnGetDatabase() : includeTableNames)
                     .disableOnReadMetadataIntercetor(false)
                     .build())
         );

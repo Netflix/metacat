@@ -353,6 +353,34 @@ public class DefaultConfigImpl implements Config {
      * {@inheritDoc}
      */
     @Override
+    public int getMaxAddedPartitionsThreshold() {
+        return this.metacatProperties
+            .getService()
+            .getTables()
+            .getError()
+            .getList()
+            .getPartitions()
+            .getAddThreshold();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getMaxDeletedPartitionsThreshold() {
+        return this.metacatProperties
+            .getService()
+            .getTables()
+            .getError()
+            .getList()
+            .getPartitions()
+            .getDeleteThreshold();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getEsIndex() {
         return this.metacatProperties.getElasticsearch().getIndex().getName();
     }
@@ -586,5 +614,20 @@ public class DefaultConfigImpl implements Config {
     @Override
     public boolean isUpdateIcebergTableAsyncPostEventEnabled() {
         return this.metacatProperties.getEvent().isUpdateIcebergTableAsyncPostEventEnabled();
+    }
+
+    @Override
+    public boolean listTableNamesByDefaultOnGetDatabase() {
+        return this.metacatProperties.getService().isListTableNamesByDefaultOnGetDatabase();
+    }
+
+    @Override
+    public int getMetadataQueryTimeout() {
+        return this.metacatProperties.getUsermetadata().getQueryTimeoutInSeconds();
+    }
+
+    @Override
+    public boolean isIcebergPreviousMetadataLocationCheckEnabled() {
+        return this.metacatProperties.getHive().getIceberg().isIcebergPreviousMetadataLocationCheckEnabled();
     }
 }

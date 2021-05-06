@@ -299,7 +299,10 @@ public final class Client {
             }
             Preconditions.checkArgument(host != null, "Host cannot be null");
             if (retryer == null) {
-                retryer = new Retryer.Default(TimeUnit.MINUTES.toMillis(30), TimeUnit.MINUTES.toMillis(30), 0);
+                //
+                // Retry exponentially with a starting delay of 500ms for upto 3 retries.
+                //
+                retryer = new Retryer.Default(TimeUnit.MILLISECONDS.toMillis(500), TimeUnit.MINUTES.toMillis(2), 3);
             }
             final RequestInterceptor interceptor = template -> {
                 template.header(MetacatRequestContext.HEADER_KEY_USER_NAME, userName);
@@ -311,8 +314,11 @@ public final class Client {
                 }
             };
             if (requestOptions == null) {
-                requestOptions = new Request.Options((int) TimeUnit.MINUTES.toMillis(10),
-                    (int) TimeUnit.MINUTES.toMillis(30));
+                //
+                // connection timeout: 30secs, socket timeout: 60secs
+                //
+                requestOptions = new Request.Options((int) TimeUnit.SECONDS.toMillis(30),
+                    (int) TimeUnit.MINUTES.toMillis(1));
             }
             if (logLevel == null) {
                 logLevel = feign.Logger.Level.BASIC;

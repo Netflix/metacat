@@ -35,6 +35,7 @@ public class ServiceProperties {
     private Max max = new Max();
     @NonNull
     private Tables tables = new Tables();
+    private boolean listTableNamesByDefaultOnGetDatabase = true;
 
     /**
      * Max related properties.
@@ -105,6 +106,8 @@ public class ServiceProperties {
                 @Data
                 public static class Partitions {
                     private int threshold = Integer.MAX_VALUE;
+                    private int addThreshold = Integer.MAX_VALUE;
+                    private int deleteThreshold = Integer.MAX_VALUE;
                     @NonNull
                     private No no = new No();
 
