@@ -74,3 +74,5 @@ metacat-functional-tests/metacat-test-cluster/build/
 
 # publishing secrets
 secrets/signing-key
+
+docker-credential-pass
