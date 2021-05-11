@@ -251,7 +251,7 @@ public class ElasticSearchRefresh {
                 final List<ListenableFuture<Void>> inputFuturesWithoutNulls = input.stream().filter(NOT_NULL)
                     .collect(Collectors.toList());
                 return Futures.transform(Futures.successfulAsList(inputFuturesWithoutNulls),
-                    Functions.constant(null));
+                    Functions.constant(null), defaultService);
             }, defaultService);
         return Futures.transformAsync(processPartitionsFuture, input -> {
             elasticSearchUtil.refresh();
