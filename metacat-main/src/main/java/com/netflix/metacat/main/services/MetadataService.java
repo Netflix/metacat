@@ -13,12 +13,8 @@
 
 package com.netflix.metacat.main.services;
 
-import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.BaseDto;
@@ -29,7 +25,6 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
-import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.spectator.api.Registry;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -151,28 +146,22 @@ public class MetadataService {
         List<DefinitionMetadataDto> dtos = null;
         int offset = 0;
         final int limit = 10000;
-        final ThreadServiceManager threadServiceManager =
-            new ThreadServiceManager(registry, 10, 20000, "definition");
-        final ListeningExecutorService service = threadServiceManager.getExecutor();
         int totalDeletes = 0;
         while (offset == 0 || dtos.size() == limit) {
             dtos = userMetadataService.searchDefinitionMetadata(null, null, null, null,
                 "id", null, offset, limit);
-            int deletes = 0;
-            final List<ListenableFuture<Boolean>> futures = dtos.stream().map(dto ->
-                service.submit(() -> deleteDefinitionMetadata(dto.getName(), false, metacatRequestContext)))
-                .collect(Collectors.toList());
-            try {
-                deletes = Futures.transform(Futures.successfulAsList(futures),
-                    (Function<List<Boolean>, Integer>) input ->
-                        (int) (input != null ? input.stream().filter(b -> b != null && b).count() : 0)).get();
-            } catch (Exception e) {
-                log.warn("Failed deleting obsolete definition metadata for offset {}.", offset, e);
-            }
+            final long deletes = dtos.parallelStream().map(dto -> {
+                try {
+                    return deleteDefinitionMetadata(dto.getName(), false, metacatRequestContext);
+                } catch (Exception e) {
+                    log.warn("Failed deleting obsolete definition metadata for table {}", dto.getName(), e);
+                    return false;
+                }
+                })
+                .filter(b -> b).count();
             totalDeletes += deletes;
             offset += limit - deletes;
         }
-        threadServiceManager.stop();
         log.info("End deleting obsolete definition metadata. Deleted {} number of definition metadatas", totalDeletes);
     }
 

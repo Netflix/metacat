@@ -172,6 +172,18 @@
                   }
                 }
               }
+            },
+            "extendedSchema": {
+              "type": "object",
+              "enabled": false
+            },
+            "data_dependency": {
+              "type": "object",
+              "enabled": false
+            },
+            "table_cost": {
+              "type": "object",
+              "enabled": false
             }
           }
         },
@@ -258,6 +270,10 @@
               "type": "keyword",
               "index": true
             },
+            "jsonType": {
+              "type": "object",
+              "enabled": false
+            },
             "source_type": {
               "type": "keyword",
               "index": true
@@ -277,6 +293,10 @@
             "type": {
               "type": "keyword",
               "index": true
+            },
+            "jsonType": {
+              "type": "object",
+              "enabled": false
             }
           }
         }
