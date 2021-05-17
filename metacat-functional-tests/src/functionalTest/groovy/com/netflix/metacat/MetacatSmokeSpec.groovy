@@ -234,6 +234,7 @@ class MetacatSmokeSpec extends Specification {
             e.class == error
         }
         if (!error) {
+            assert api.doesTableExist(catalogName, databaseName, tableName)
             def table = api.getTable(catalogName, databaseName, tableName, true, true, false)
             assert table != null && table.name.tableName == tableName
             assert table.getDefinitionMetadata() != null
@@ -298,6 +299,7 @@ class MetacatSmokeSpec extends Specification {
         tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, null, uri)
         api.createTable(catalogName, databaseName, tableName, tableDto)
         then:
+        assert api.doesTableExist(catalogName, databaseName, tableName)
         api.getTable(catalogName, databaseName, tableName, false, true, false).definitionMetadata.at('/owner/userId').textValue() == 'metacat-test'
         api.deleteTable(catalogName, databaseName, tableName)
         when:
@@ -488,6 +490,7 @@ class MetacatSmokeSpec extends Specification {
         def updatedTable = api.getTable(catalogName, databaseName, tableName, true, false, false)
         then:
         noExceptionThrown()
+        api.doesTableExist(catalogName, databaseName, tableName)
         updatedTable.getMetadata().get('metadata_location') == metadataLocation1
         updatedTable != null
         updatedTable.getDataUri() == updatedUri
@@ -544,6 +547,7 @@ class MetacatSmokeSpec extends Specification {
         // delete table on an invalid metadata location shouldn't fail
         api.deleteTable(catalogName, databaseName, tableName)
         then:
+        !api.doesTableExist(catalogName, databaseName, tableName)
         noExceptionThrown()
         cleanup:
         FileUtils.deleteQuietly(icebergManifestFile)

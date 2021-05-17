@@ -25,11 +25,13 @@ import com.netflix.metacat.common.dto.CreateCatalogDto;
 import com.netflix.metacat.common.dto.DatabaseCreateRequestDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.exception.MetacatNotFoundException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -303,6 +305,39 @@ public interface MetacatV1 {
         @QueryParam("includeInfoDetails")
             Boolean includeInfoDetails
     );
+
+    /**
+     * Returns true, if table exists.
+     * @param catalogName catalog name
+     * @param databaseName database name
+     * @param tableName table name
+     * @return true, if table exists.
+     */
+    default boolean doesTableExist(String catalogName, String databaseName, String tableName) {
+        boolean result = true;
+        try {
+            tableExists(catalogName, databaseName, tableName);
+        } catch (MetacatNotFoundException e) {
+            result = false;
+        }
+        return result;
+    }
+
+    /**
+     * Check if the table exists.
+     *
+     * @param catalogName               catalog name
+     * @param databaseName              database name
+     * @param tableName                 table name.
+     */
+    @HEAD
+    @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}")
+    void tableExists(@PathParam("catalog-name")
+                         String catalogName,
+                     @PathParam("database-name")
+                         String databaseName,
+                     @PathParam("table-name")
+                         String tableName);
 
     /**
      * Returns a filtered list of table names.

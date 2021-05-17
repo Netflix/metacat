@@ -694,6 +694,55 @@ public class MetacatController implements MetacatV1 {
         );
     }
 
+    /**
+     * Check if the table exists.
+     *
+     * @param catalogName               catalog name
+     * @param databaseName              database name
+     * @param tableName                 table name.
+     */
+    @RequestMapping(
+        method = RequestMethod.HEAD,
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}"
+    )
+    @ApiOperation(
+        position = 1,
+        value = "Table information",
+        notes = "Table information for the given table name under the given catalog and database")
+    @ApiResponses(
+        {
+            @ApiResponse(
+                code = HttpURLConnection.HTTP_OK,
+                message = "Table exists"
+            ),
+            @ApiResponse(
+                code = HttpURLConnection.HTTP_NOT_FOUND,
+                message = "Table does not exists"
+            )
+        }
+    )
+    @Override
+    public void tableExists(@ApiParam(value = "The name of the catalog", required = true)
+                                @PathVariable("catalog-name") final String catalogName,
+                            @ApiParam(value = "The name of the database", required = true)
+                                @PathVariable("database-name") final String databaseName,
+                            @ApiParam(value = "The name of the table", required = true)
+                                @PathVariable("table-name") final String tableName) {
+        final Supplier<QualifiedName> qualifiedNameSupplier =
+            () -> QualifiedName.ofTable(catalogName, databaseName, tableName);
+        final QualifiedName name = this.requestWrapper.qualifyName(qualifiedNameSupplier);
+        this.requestWrapper.processRequest(
+            name,
+            "exists",
+            () -> {
+                if (!tableService.exists(name)) {
+                    throw new TableNotFoundException(name);
+                }
+                return null;
+            }
+        );
+    }
+
     @RequestMapping(
         method = RequestMethod.GET,
         path = "/catalog/{catalog-name}/table-names"

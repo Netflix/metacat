@@ -82,6 +82,19 @@ public interface MetacatV1 {
     );
 
     /**
+     * Returns true, if table exists.
+     *
+     * @param catalogName               catalog name
+     * @param databaseName              database name
+     * @param tableName                 table name.
+     */
+    void tableExists(
+        final String catalogName,
+        final String databaseName,
+        final String tableName
+    );
+
+    /**
      * Returns a filtered list of table names.
      * @param catalogName  catalog name
      * @param filter       filter expression
