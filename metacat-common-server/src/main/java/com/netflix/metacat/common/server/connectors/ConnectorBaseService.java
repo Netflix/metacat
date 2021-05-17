@@ -20,6 +20,7 @@ package com.netflix.metacat.common.server.connectors;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.model.BaseInfo;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -94,7 +95,13 @@ public interface ConnectorBaseService<T extends BaseInfo> {
      */
     @SuppressFBWarnings
     default boolean exists(final ConnectorRequestContext context, final QualifiedName name) {
-        return get(context, name) != null;
+        boolean result = false;
+        try {
+            result = get(context, name) != null;
+        } catch (NotFoundException ignored) {
+            // name does not exists.
+        }
+        return result;
     }
 
     /**
