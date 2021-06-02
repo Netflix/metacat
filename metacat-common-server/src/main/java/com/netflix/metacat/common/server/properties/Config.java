@@ -530,6 +530,13 @@ public interface Config {
     boolean listTableNamesByDefaultOnGetDatabase();
 
     /**
+     * Whether to list database names by default on getCatalog request call.
+     *
+     * @return True if it is.
+     */
+    boolean listDatabaseNameByDefaultOnGetCatalog();
+
+    /**
      * Metadata query timeout in seconds.
      *
      * @return Metadata query timeout in seconds

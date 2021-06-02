@@ -163,7 +163,6 @@ public class ServicesConfig {
      * @param userMetadataService  User metadata service to use
      * @param metacatEventBus      Event bus to use
      * @param converterUtil        Converter utilities
-     * @param catalogService       The catalog service to use
      * @param authorizationService authorization Service
      * @return Catalog service implementation
      */
@@ -173,11 +172,9 @@ public class ServicesConfig {
         final UserMetadataService userMetadataService,
         final MetacatEventBus metacatEventBus,
         final ConverterUtil converterUtil,
-        final CatalogService catalogService,
         final AuthorizationService authorizationService
     ) {
         return new DatabaseServiceImpl(
-            catalogService,
             connectorManager,
             userMetadataService,
             metacatEventBus,

@@ -36,6 +36,7 @@ public class ServiceProperties {
     @NonNull
     private Tables tables = new Tables();
     private boolean listTableNamesByDefaultOnGetDatabase = true;
+    private boolean listDatabaseNameByDefaultOnGetCatalog = true;
 
     /**
      * Max related properties.

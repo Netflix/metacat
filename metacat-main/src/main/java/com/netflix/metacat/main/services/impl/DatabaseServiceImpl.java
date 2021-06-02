@@ -17,12 +17,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.CatalogDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatCreateDatabasePostEvent;
 import com.netflix.metacat.common.server.events.MetacatCreateDatabasePreEvent;
@@ -37,9 +37,9 @@ import com.netflix.metacat.common.server.usermetadata.MetacatOperation;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
-import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.GetDatabaseServiceParameters;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
@@ -53,7 +53,6 @@ import java.util.stream.Stream;
  */
 @Slf4j
 public class DatabaseServiceImpl implements DatabaseService {
-    private final CatalogService catalogService;
     private final ConnectorManager connectorManager;
     private final UserMetadataService userMetadataService;
 
@@ -64,7 +63,6 @@ public class DatabaseServiceImpl implements DatabaseService {
     /**
      * Constructor.
      *
-     * @param catalogService       catalog service
      * @param connectorManager     connector manager
      * @param userMetadataService  user metadata service
      * @param eventBus             internal event bus
@@ -72,14 +70,12 @@ public class DatabaseServiceImpl implements DatabaseService {
      * @param authorizationService authorization service
      */
     public DatabaseServiceImpl(
-        final CatalogService catalogService,
         final ConnectorManager connectorManager,
         final UserMetadataService userMetadataService,
         final MetacatEventBus eventBus,
         final ConverterUtil converterUtil,
         final AuthorizationService authorizationService
     ) {
-        this.catalogService = catalogService;
         this.connectorManager = connectorManager;
         this.userMetadataService = userMetadataService;
         this.eventBus = eventBus;
@@ -239,10 +235,18 @@ public class DatabaseServiceImpl implements DatabaseService {
     /**
      * {@inheritDoc}
      */
+    @SuppressFBWarnings
     @Override
     public boolean exists(final QualifiedName name) {
-        final CatalogDto catalogDto = catalogService.get(QualifiedName.ofCatalog(name.getCatalogName()));
-        return catalogDto.getDatabases().contains(name.getDatabaseName());
+        boolean result = false;
+        try {
+            result = get(name, GetDatabaseServiceParameters.builder()
+                .disableOnReadMetadataIntercetor(true).includeTableNames(false)
+                .includeUserMetadata(false).build()) != null;
+        } catch (NotFoundException ignored) {
+            // name does not exists.
+        }
+        return result;
     }
 
     private void validate(final QualifiedName name) {

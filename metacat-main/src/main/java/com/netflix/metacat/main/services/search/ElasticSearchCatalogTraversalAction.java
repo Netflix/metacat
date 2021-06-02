@@ -22,7 +22,6 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.TableDto;
-import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.monitoring.Metrics;
@@ -32,8 +31,6 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.main.services.CatalogTraversal;
 import com.netflix.metacat.main.services.CatalogTraversalAction;
 import com.netflix.metacat.main.services.DatabaseService;
-import com.netflix.metacat.main.services.GetDatabaseServiceParameters;
-import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
@@ -124,17 +121,7 @@ public class ElasticSearchCatalogTraversalAction implements CatalogTraversalActi
                     boolean result = false;
                     try {
                         unmarkedDatabaseNames.add(databaseDto.getName().toString());
-                        final DatabaseDto dto = databaseService.get(databaseDto.getName(),
-                            GetDatabaseServiceParameters.builder()
-                                .includeUserMetadata(false)
-                                .includeTableNames(false)
-                                .disableOnReadMetadataIntercetor(false)
-                                .build());
-                        if (dto == null) {
-                            result = true;
-                        }
-                    } catch (DatabaseNotFoundException de) {
-                        result = true;
+                        result = !databaseService.exists(databaseDto.getName());
                     } catch (Exception e) {
                         log.warn("Ignoring exception during deleteUnmarkedEntities for {}. Message: {}",
                             databaseDto.getName(), e.getMessage());
@@ -174,16 +161,7 @@ public class ElasticSearchCatalogTraversalAction implements CatalogTraversalActi
                     boolean result = false;
                     try {
                         unmarkedTableNames.add(tableDto.getName().toString());
-                        final Optional<TableDto> dto = tableService.get(tableDto.getName(),
-                            GetTableServiceParameters.builder()
-                                .includeDataMetadata(false)
-                                .disableOnReadMetadataIntercetor(false)
-                                .includeInfo(true)
-                                .includeDefinitionMetadata(false)
-                                .build());
-                        if (!dto.isPresent()) {
-                            result = true;
-                        }
+                        result = !tableService.exists(tableDto.getName());
                     } catch (Exception e) {
                         log.warn("Ignoring exception during deleteUnmarkedEntities for {}. Message: {}",
                             tableDto.getName(), e.getMessage());
