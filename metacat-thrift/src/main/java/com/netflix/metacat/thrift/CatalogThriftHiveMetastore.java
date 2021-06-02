@@ -903,7 +903,8 @@ public class CatalogThriftHiveMetastore extends FacebookBase
      */
     @Override
     public List<String> get_all_databases() throws TException {
-        return requestWrapper("get_all_databases", new Object[]{}, () -> v1.getCatalog(catalogName).getDatabases());
+        return requestWrapper("get_all_databases", new Object[]{},
+            () -> v1.getCatalog(catalogName, true, false).getDatabases());
     }
 
     /**
@@ -950,7 +951,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
     @Override
     public List<String> get_databases(final String hivePattern) throws TException {
         return requestWrapper("get_databases", new Object[]{hivePattern}, () -> {
-            List<String> result = v1.getCatalog(catalogName).getDatabases();
+            List<String> result = v1.getCatalog(catalogName, true, false).getDatabases();
             if (hivePattern != null) {
                 // Unsure about the pattern format.  I couldn't find any tests.  Assuming it is regex.
                 final Pattern pattern = PATTERNS.getUnchecked("(?i)" + hivePattern.replaceAll("\\*", ".*"));

@@ -622,6 +622,11 @@ public class DefaultConfigImpl implements Config {
     }
 
     @Override
+    public boolean listDatabaseNameByDefaultOnGetCatalog() {
+        return this.metacatProperties.getService().isListDatabaseNameByDefaultOnGetCatalog();
+    }
+
+    @Override
     public int getMetadataQueryTimeout() {
         return this.metacatProperties.getUsermetadata().getQueryTimeoutInSeconds();
     }

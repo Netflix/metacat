@@ -241,6 +241,6 @@ public interface MetacatV1 {
      * @param includeUserMetadata if true, the response includes the user metadata
      * @return catalog
      */
-    CatalogDto getCatalog(final String catalogName, final boolean includeDatabaseNames,
+    CatalogDto getCatalog(final String catalogName, final Boolean includeDatabaseNames,
                           final boolean includeUserMetadata);
 }

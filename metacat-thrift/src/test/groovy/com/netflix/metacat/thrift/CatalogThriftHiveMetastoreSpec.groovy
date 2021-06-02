@@ -1392,7 +1392,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
         given:
         def databases = ['db1', 'db2', 'db3']
-        metacatV1.getCatalog(_) >> new CatalogDto(databases: databases)
+        metacatV1.getCatalog(_,_,_) >> new CatalogDto(databases: databases)
 
         when:
         def result = ms.get_all_databases()
@@ -1485,7 +1485,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         def ms = new CatalogThriftHiveMetastore(config, hiveConverters, metacatV1, partitionV1, catalogName, registry)
 
         given:
-        metacatV1.getCatalog(_) >> new CatalogDto(
+        metacatV1.getCatalog(_,_,_) >> new CatalogDto(
                 databases: ['adb', 'bdb', 'cdb', 'ddb', 'ddb1', 'ddb2', 'ddb3', 'edb', 'fdb']
         )
 

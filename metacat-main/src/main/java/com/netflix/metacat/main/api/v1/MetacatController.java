@@ -476,6 +476,11 @@ public class MetacatController implements MetacatV1 {
         );
     }
 
+    @Override
+    public CatalogDto getCatalog(final String catalogName) {
+        return getCatalog(catalogName, true, true);
+    }
+
     /**
      * Get the catalog by name.
      *
@@ -504,23 +509,19 @@ public class MetacatController implements MetacatV1 {
     @Override
     public CatalogDto getCatalog(
         @ApiParam(value = "The name of the catalog", required = true)
-        @PathVariable("catalog-name") final String catalogName
-    ) {
-        return getCatalog(catalogName, true, true);
-    }
-
-    @Override
-    public CatalogDto getCatalog(
-        final String catalogName,
-        final boolean includeUserMetadata,
-        final boolean includeDatabaseNames
-    ) {
+        @PathVariable("catalog-name") final String catalogName,
+        @ApiParam(value = "Whether to include list of database names")
+        @Nullable @RequestParam(name = "includeDatabaseNames", required = false) final Boolean includeDatabaseNames,
+        @ApiParam(value = "Whether to include user metadata information to the response")
+        @RequestParam(name = "includeUserMetadata", defaultValue = "true") final boolean includeUserMetadata) {
         final QualifiedName name = this.requestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
         return this.requestWrapper.processRequest(
             name,
             "getCatalog",
             () -> this.catalogService.get(name, GetCatalogServiceParameters.builder()
-                .includeDatabaseNames(includeDatabaseNames).includeUserMetadata(includeUserMetadata).build())
+                .includeDatabaseNames(includeDatabaseNames == null
+                    ? config.listDatabaseNameByDefaultOnGetCatalog() : includeDatabaseNames)
+                .includeUserMetadata(includeUserMetadata).build())
         );
     }
 
