@@ -19,6 +19,7 @@ package com.netflix.metacat.main.api;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
@@ -47,6 +48,7 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -152,7 +154,9 @@ public final class RequestWrapper {
         final Supplier<R> supplier) {
         final long start = registry.clock().wallTime();
         final Map<String, String> tags = new HashMap<>(name.parts());
-        tags.putAll(requestTags);
+        if (requestTags != null) {
+            tags.putAll(requestTags);
+        }
         tags.put("request", resourceRequestName);
         tags.put("scheme", MetacatContextManager.getContext().getScheme());
         registry.counter(requestCounterId.withTags(tags)).increment();
@@ -216,7 +220,16 @@ public final class RequestWrapper {
         } finally {
             final long duration = registry.clock().wallTime() - start;
             log.info("### Time taken to complete {} for {} is {} ms", resourceRequestName, name, duration);
+            tryAddTableTypeTag(tags, name);
             this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private static void tryAddTableTypeTag(final Map<String, String> tags, final QualifiedName qualifiedName) {
+        final MetacatRequestContext context = MetacatContextManager.getContext();
+        final String tableType = context.getTableType(qualifiedName);
+        if (!StringUtils.isBlank(tableType)) {
+            tags.put("tableType", tableType.toLowerCase());
         }
     }
 

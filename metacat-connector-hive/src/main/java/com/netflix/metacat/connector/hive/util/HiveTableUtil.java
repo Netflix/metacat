@@ -17,9 +17,12 @@ package com.netflix.metacat.connector.hive.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
@@ -110,10 +113,26 @@ public final class HiveTableUtil {
      * @return true for iceberg table
      */
     public static boolean isIcebergTable(final TableInfo tableInfo) {
-        return tableInfo.getMetadata() != null
-            && tableInfo.getMetadata().containsKey(DirectSqlTable.PARAM_TABLE_TYPE)
-            && DirectSqlTable.ICEBERG_TABLE_TYPE
-            .equalsIgnoreCase(tableInfo.getMetadata().get(DirectSqlTable.PARAM_TABLE_TYPE));
+        final String tableTypeVal = getTableType(tableInfo);
+        return DirectSqlTable.ICEBERG_TABLE_TYPE.equalsIgnoreCase(tableTypeVal);
+    }
+
+    private static String getTableType(final TableInfo tableInfo) {
+        final QualifiedName tableName = tableInfo.getName();
+        final String fallbackTableType = "unknown";
+        final MetacatRequestContext context = MetacatContextManager.getContext();
+        final Map<String, String> metadata = tableInfo.getMetadata();
+
+        if (metadata == null) {
+            context.updateTableTypeMap(tableName, fallbackTableType);
+            return null;
+        }
+        String tableType = metadata.get(DirectSqlTable.PARAM_TABLE_TYPE);
+        if (StringUtils.isBlank(tableType)) {
+            tableType = fallbackTableType;
+        }
+        context.updateTableTypeMap(tableName, tableType);
+        return tableType;
     }
 
     /**
