@@ -17,12 +17,17 @@
  */
 package com.netflix.metacat.common;
 
+import java.util.HashMap;
+import java.util.Map;
+import lombok.AccessLevel;
 import lombok.Getter;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
+import lombok.NonNull;
+import lombok.Setter;
 
 /**
  * The context of the request to metacat.
@@ -60,13 +65,21 @@ public class MetacatRequestContext implements Serializable {
     // TODO: Move to Java 8 and use java.time.Instant
     private final long timestamp = new Date().getTime();
 
-    private String userName;
+    // the following fields are immutable.
     private final String clientAppName;
     private final String clientId;
     private final String jobId;
     private final String dataTypeContext;
     private final String apiUri;
     private final String scheme;
+
+    // The following fields are set during request processing and are mutable.
+    // The general expectation is that these would be set zero or one times.
+    @Setter
+    private String userName;
+
+    @Getter(AccessLevel.NONE)
+    private Map<QualifiedName, String> tableTypeMap;
 
     /**
      * Constructor.
@@ -79,6 +92,7 @@ public class MetacatRequestContext implements Serializable {
         this.dataTypeContext = null;
         this.apiUri = UNKNOWN;
         this.scheme = UNKNOWN;
+        this.tableTypeMap = new HashMap<>();
     }
 
     /**
@@ -108,6 +122,7 @@ public class MetacatRequestContext implements Serializable {
         this.dataTypeContext = dataTypeContext;
         this.apiUri = apiUri;
         this.scheme = scheme;
+        this.tableTypeMap = new HashMap<>();
     }
 
     @Override
@@ -122,16 +137,28 @@ public class MetacatRequestContext implements Serializable {
         sb.append(", dataTypeContext='").append(dataTypeContext).append('\'');
         sb.append(", apiUri='").append(apiUri).append('\'');
         sb.append(", scheme='").append(scheme).append('\'');
+        sb.append(", tableTypeMap='").append(tableTypeMap).append('\'');
         sb.append('}');
         return sb.toString();
     }
 
+
     /**
-     * Returns the username.
-     * @param userName user name
+     * Store the tableType associated with table specified by qualifiedName param.
+     * @param qualifiedName fully qualified name of table
+     * @param tableType table type of table
      */
-    public void setUserName(final String userName) {
-        this.userName = userName;
+    public void updateTableTypeMap(@NonNull final QualifiedName qualifiedName, final String tableType) {
+        this.tableTypeMap.put(qualifiedName, tableType);
+    }
+
+    /**
+     * Gets tableType.
+     * @param qualifiedName fully qualified name of the table
+     * @return the tableType associated with table specified by qualifiedName param.
+     */
+    public String getTableType(@NonNull final QualifiedName qualifiedName) {
+        return this.tableTypeMap.get(qualifiedName);
     }
 
     /**
