@@ -14,6 +14,7 @@
 package com.netflix.metacat.common.server.util;
 
 import com.google.common.collect.Maps;
+import java.sql.SQLException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jdbc.pool.DataSourceFactory;
 import org.apache.tomcat.jdbc.pool.DataSourceProxy;
@@ -83,6 +84,24 @@ public final class DataSourceManager {
      */
     public DataSource get(final String name) {
         return dataSources.get(name);
+    }
+
+    /**
+     * Refresh the Connection Pool of the data source.
+     * @param name of the DataSource whose ConnectionPool has to be refreshed.
+     * @throws SQLException if pool cannot be re-created.
+     * @return true if success. false otherwise.
+     */
+    public synchronized boolean refreshConnectionPool(final String name) throws SQLException {
+        final DataSource source = dataSources.get(name);
+        if (!(source instanceof DataSourceProxy)) {
+            return false;
+        }
+
+        final DataSourceProxy proxy = (DataSourceProxy) source;
+        proxy.close(true);
+        proxy.createPool();
+        return true;
     }
 
     private synchronized void createDataSource(final String name, final Map props) {
