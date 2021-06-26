@@ -45,10 +45,7 @@ public final class QualifiedName implements Serializable {
     private final String partitionName;
     private final String tableName;
     private final String viewName;
-    private String qualifiedName;
-    private Map<String, String> qualifiedNameMap;
-    private Map<String, String> parts;
-    private Type type;
+    private final Type type;
 
     private QualifiedName(
         @NonNull final String catalogName,
@@ -471,31 +468,27 @@ public final class QualifiedName implements Serializable {
      */
     @JsonValue
     public Map<String, String> toJson() {
-        if (qualifiedNameMap == null) {
-            final Map<String, String> map = new HashMap<>(5);
-            map.put("qualifiedName", toString());
-            map.put("catalogName", catalogName);
+        final Map<String, String> map = new HashMap<>(5);
+        map.put("qualifiedName", toString());
+        map.put("catalogName", catalogName);
 
-            if (!databaseName.isEmpty()) {
-                map.put("databaseName", databaseName);
-            }
-
-            if (!tableName.isEmpty()) {
-                map.put("tableName", tableName);
-            }
-
-            if (!partitionName.isEmpty()) {
-                map.put("partitionName", partitionName);
-            }
-
-            if (!viewName.isEmpty()) {
-                map.put("viewName", viewName);
-            }
-
-            qualifiedNameMap = map;
+        if (!databaseName.isEmpty()) {
+            map.put("databaseName", databaseName);
         }
 
-        return qualifiedNameMap;
+        if (!tableName.isEmpty()) {
+            map.put("tableName", tableName);
+        }
+
+        if (!partitionName.isEmpty()) {
+            map.put("partitionName", partitionName);
+        }
+
+        if (!viewName.isEmpty()) {
+            map.put("viewName", viewName);
+        }
+
+        return map;
     }
 
     /**
@@ -504,30 +497,26 @@ public final class QualifiedName implements Serializable {
      * @return parts of the qualified name as a Map
      */
     public Map<String, String> parts() {
-        if (parts == null) {
-            final Map<String, String> map = new HashMap<>(4);
-            map.put("catalogName", catalogName);
+        final Map<String, String> map = new HashMap<>(5);
+        map.put("catalogName", catalogName);
 
-            if (!databaseName.isEmpty()) {
-                map.put("databaseName", databaseName);
-            }
-
-            if (!tableName.isEmpty()) {
-                map.put("tableName", tableName);
-            }
-
-            if (!partitionName.isEmpty()) {
-                map.put("partitionName", partitionName);
-            }
-
-            if (!viewName.isEmpty()) {
-                map.put("viewName", viewName);
-            }
-
-            parts = map;
+        if (!databaseName.isEmpty()) {
+            map.put("databaseName", databaseName);
         }
 
-        return parts;
+        if (!tableName.isEmpty()) {
+            map.put("tableName", tableName);
+        }
+
+        if (!partitionName.isEmpty()) {
+            map.put("partitionName", partitionName);
+        }
+
+        if (!viewName.isEmpty()) {
+            map.put("viewName", viewName);
+        }
+
+        return map;
     }
 
     public boolean isViewDefinition() {
@@ -568,32 +557,29 @@ public final class QualifiedName implements Serializable {
      */
     @Override
     public String toString() {
-        if (qualifiedName == null) {
-            final StringBuilder sb = new StringBuilder(catalogName);
+        final StringBuilder sb = new StringBuilder(catalogName);
 
-            if (!databaseName.isEmpty()) {
-                sb.append('/');
-                sb.append(databaseName);
-            }
-
-            if (!tableName.isEmpty()) {
-                sb.append('/');
-                sb.append(tableName);
-            }
-
-            if (!partitionName.isEmpty()) {
-                sb.append('/');
-                sb.append(partitionName);
-            }
-
-            if (!viewName.isEmpty()) {
-                sb.append('/');
-                sb.append(viewName);
-            }
-            qualifiedName = sb.toString();
+        if (!databaseName.isEmpty()) {
+            sb.append('/');
+            sb.append(databaseName);
         }
 
-        return qualifiedName;
+        if (!tableName.isEmpty()) {
+            sb.append('/');
+            sb.append(tableName);
+        }
+
+        if (!partitionName.isEmpty()) {
+            sb.append('/');
+            sb.append(partitionName);
+        }
+
+        if (!viewName.isEmpty()) {
+            sb.append('/');
+            sb.append(viewName);
+        }
+
+        return sb.toString();
     }
 
 
