@@ -160,9 +160,11 @@ public final class RequestWrapper {
         tags.put("request", resourceRequestName);
         tags.put("scheme", MetacatContextManager.getContext().getScheme());
         registry.counter(requestCounterId.withTags(tags)).increment();
-        checkRequestRateLimit(name, resourceRequestName, tags);
 
         try {
+            // check rate limit in try-catch block in case ratelimiter throws exception.
+            // those exceptions can be tracked correctly, by the existing finally block that logs metrics.
+            checkRequestRateLimit(name, resourceRequestName, tags);
             log.info("### Calling method: {} for {}", resourceRequestName, name);
             return supplier.get();
         } catch (UnsupportedOperationException e) {
@@ -210,6 +212,9 @@ public final class RequestWrapper {
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
+            throw e;
+        } catch (MetacatTooManyRequestsException e) {
+            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             throw e;
         } catch (Exception e) {
             collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
@@ -296,10 +301,7 @@ public final class RequestWrapper {
             log.warn(errorMsg);
             registry.counter(requestRateLimitExceededId.withTags(tags)).increment();
             if (this.config.isRateLimiterEnforced()) {
-                final MetacatTooManyRequestsException ex =
-                    new MetacatTooManyRequestsException(errorMsg);
-                this.collectRequestExceptionMetrics(tags, ex.getClass().getSimpleName());
-                throw ex;
+                throw new MetacatTooManyRequestsException(errorMsg);
             }
         }
     }
