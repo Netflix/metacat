@@ -27,7 +27,6 @@ import com.netflix.metacat.common.exception.MetacatException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.exception.MetacatPreconditionFailedException;
-import com.netflix.metacat.common.exception.MetacatUnAuthorizedException;
 import com.netflix.metacat.common.exception.MetacatUserMetadataException;
 import com.netflix.metacat.common.exception.MetacatTooManyRequestsException;
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
@@ -207,21 +206,16 @@ public final class RequestWrapper {
             final String message = String.format("%s.%s -- %s usermetadata operation failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             throw new MetacatUserMetadataException(message);
-        } catch (MetacatUnAuthorizedException e) {
+        }  catch (Exception e) {
             collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
             final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
             log.error(message, e);
-            throw e;
-        } catch (MetacatTooManyRequestsException e) {
-            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
-            throw e;
-        } catch (Exception e) {
-            collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
-            final String message = String.format("%s.%s -- %s failed for %s", e.getMessage(),
-                e.getCause() == null ? "" : e.getCause().getMessage(), resourceRequestName, name);
-            log.error(message, e);
-            throw new MetacatException(message, e);
+            if (e instanceof MetacatException) {
+                throw e;
+            } else {
+                throw new MetacatException(message, e);
+            }
         } finally {
             final long duration = registry.clock().wallTime() - start;
             log.info("### Time taken to complete {} for {} is {} ms", resourceRequestName, name, duration);
@@ -272,7 +266,11 @@ public final class RequestWrapper {
                     e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage(),
                     resourceRequestName);
             log.error(message, e);
-            throw new MetacatException(message, e);
+            if (e instanceof MetacatException) {
+                throw e;
+            } else {
+                throw new MetacatException(message, e);
+            }
         } finally {
             final long duration = registry.clock().wallTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
