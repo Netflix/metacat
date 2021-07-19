@@ -33,6 +33,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -60,7 +61,7 @@ public final class SNSNotificationServiceUtil {
     //ISO basic date format: 20180101
     private static final Pattern TIMESTAMP_FORMAT = Pattern.compile("^(?<time>\\d{10})(?:\\d{3})?(?:\\.\\d+)?$");
     private static final Pattern ISO_BASIC = Pattern.compile("^\\d{8}$");
-    private static final int PARTS_UPDATED_LIST_MAX_SIZE = 1000;
+    private static final int PARTITIONS_UPDATED_LIST_MAX_SIZE = 1000;
     private UserMetadataService userMetadataService;
     private final DateFormat simpleDateFormatRegional = new SimpleDateFormat("yyyyMMdd");
     private final DateFormat simpleDateFormatUTC = new SimpleDateFormat("yyyyMMdd");
@@ -179,17 +180,20 @@ public final class SNSNotificationServiceUtil {
     }
 
     /**
-     * get partition name list from list of partitionDtos
+     * get partition name list from list of partitionDtos. The returned list is capped at
+     * the first PARTITIONS_UPDATED_LIST_MAX_SIZE elements, if there are more than that number of elements
+     * in the input then the return is empty which serves as a signal that complete list cannot be included
      *
      * @param partitionDtos partition DTOs
-     * @return descending order deletion column
+     * @return list of partition ids from the input list
      */
-    @VisibleForTesting
     protected static List<String> getPartitionNameListFromDtos(final List<PartitionDto> partitionDtos) {
+        if (partitionDtos.size() > PARTITIONS_UPDATED_LIST_MAX_SIZE) {
+            // empty list signals
+            return Collections.emptyList();
+        }
         return partitionDtos.stream()
-            .limit(PARTS_UPDATED_LIST_MAX_SIZE)
-            .map(PartitionDto::getName)
-            .map(QualifiedName::getPartitionName)
+            .map(dto -> dto.getName().getPartitionName())
             .collect(Collectors.toList());
     }
 
