@@ -123,7 +123,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 createTablePartitionsUpdatePayload(event.getPartitions(), event);
         } else {
             partitionsUpdatePayload = new TablePartitionsUpdatePayload(null, event.getPartitions().size(), 0,
-                SNSNotificationPartitionAddMsg.PARTITION_KEY_UNABLED.name());
+                SNSNotificationPartitionAddMsg.PARTITION_KEY_UNABLED.name(),
+                SNSNotificationServiceUtil.getPartitionNameListFromDtos(event.getPartitions()));
         }
         final UpdateTablePartitionsMessage tableMessage = new UpdateTablePartitionsMessage(
             UUID.randomUUID().toString(),
@@ -182,7 +183,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final String requestId = event.getRequestContext().getId();
         final TablePartitionsUpdatePayload partitionsUpdatePayload;
         partitionsUpdatePayload = new TablePartitionsUpdatePayload(null, 0, event.getPartitions().size(),
-            SNSNotificationPartitionAddMsg.PARTITION_KEY_UNABLED.name());
+            SNSNotificationPartitionAddMsg.PARTITION_KEY_UNABLED.name(),
+            SNSNotificationServiceUtil.getPartitionNameListFromDtos(event.getPartitions()));
 
         final UpdateTablePartitionsMessage tableMessage = new UpdateTablePartitionsMessage(
             UUID.randomUUID().toString(),

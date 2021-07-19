@@ -60,6 +60,7 @@ public final class SNSNotificationServiceUtil {
     //ISO basic date format: 20180101
     private static final Pattern TIMESTAMP_FORMAT = Pattern.compile("^(?<time>\\d{10})(?:\\d{3})?(?:\\.\\d+)?$");
     private static final Pattern ISO_BASIC = Pattern.compile("^\\d{8}$");
+    private static final int PARTS_UPDATED_LIST_MAX_SIZE = 1000;
     private UserMetadataService userMetadataService;
     private final DateFormat simpleDateFormatRegional = new SimpleDateFormat("yyyyMMdd");
     private final DateFormat simpleDateFormatUTC = new SimpleDateFormat("yyyyMMdd");
@@ -111,9 +112,11 @@ public final class SNSNotificationServiceUtil {
                         null,
                         partitionDtos.size(),
                         0,
-                        SNSNotificationPartitionAddMsg.EMPTY_DELETE_COLUMN.name()
+                        SNSNotificationPartitionAddMsg.EMPTY_DELETE_COLUMN.name(),
+                        getPartitionNameListFromDtos(partitionDtos)
                     );
                 }
+
                 deleteColumnValues = getSortedDeletionPartitionKeys(partitionDtos, deleteColumn);
                 //Calculate the latest partition key from candidates
                 if (deleteColumnValues != null && !deleteColumnValues.isEmpty()) {
@@ -153,7 +156,8 @@ public final class SNSNotificationServiceUtil {
             latestDeleteColumnValue,
             partitionDtos.size(),
             0,
-            message
+            message,
+            getPartitionNameListFromDtos(partitionDtos)
         );
     }
 
@@ -171,6 +175,21 @@ public final class SNSNotificationServiceUtil {
             .map(x -> PartitionUtil.getPartitionKeyValues(x.getName().toString()).get(deleteColumn))
             .filter(Objects::nonNull)
             .sorted(Comparator.reverseOrder())
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * get partition name list from list of partitionDtos
+     *
+     * @param partitionDtos partition DTOs
+     * @return descending order deletion column
+     */
+    @VisibleForTesting
+    protected static List<String> getPartitionNameListFromDtos(final List<PartitionDto> partitionDtos) {
+        return partitionDtos.stream()
+            .limit(PARTS_UPDATED_LIST_MAX_SIZE)
+            .map(PartitionDto::getName)
+            .map(QualifiedName::getPartitionName)
             .collect(Collectors.toList());
     }
 

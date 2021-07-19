@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.ToString;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 /**
  * Information about how the partitions have changed when a table was updated.
@@ -39,6 +40,7 @@ public class TablePartitionsUpdatePayload {
     private final int numCreatedPartitions;
     private final int numDeletedPartitions;
     private final String message;
+    private final List<String> partitionsUpdated;
 
     /**
      * Constructor.
@@ -46,16 +48,19 @@ public class TablePartitionsUpdatePayload {
      * @param numCreatedPartitions The number of partitions that were created for the table
      * @param numDeletedPartitions The number of partitions that were deleted from the table
      * @param message The message about the partition ids.
+     * @param partitionsUpdated The list of ids of the partitions that were updated
      */
     @JsonCreator
     public TablePartitionsUpdatePayload(
         @Nullable @JsonProperty("latestDeleteColumnValue") final String latestDeleteColumnValue,
         @JsonProperty("numCreatedPartitions") final int numCreatedPartitions,
         @JsonProperty("numDeletedPartitions") final int numDeletedPartitions,
-        @JsonProperty("message") final String message) {
+        @JsonProperty("message") final String message,
+        @JsonProperty("partitionsUpdated") final List<String> partitionsUpdated) {
         this.latestDeleteColumnValue = latestDeleteColumnValue;
         this.numCreatedPartitions = numCreatedPartitions;
         this.numDeletedPartitions = numDeletedPartitions;
         this.message = message;
+        this.partitionsUpdated = partitionsUpdated;
     }
 }
