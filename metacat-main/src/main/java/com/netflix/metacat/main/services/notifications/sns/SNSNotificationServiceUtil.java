@@ -33,6 +33,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +61,7 @@ public final class SNSNotificationServiceUtil {
     //ISO basic date format: 20180101
     private static final Pattern TIMESTAMP_FORMAT = Pattern.compile("^(?<time>\\d{10})(?:\\d{3})?(?:\\.\\d+)?$");
     private static final Pattern ISO_BASIC = Pattern.compile("^\\d{8}$");
+    private static final int PARTITIONS_UPDATED_LIST_MAX_SIZE = 1000;
     private UserMetadataService userMetadataService;
     private final DateFormat simpleDateFormatRegional = new SimpleDateFormat("yyyyMMdd");
     private final DateFormat simpleDateFormatUTC = new SimpleDateFormat("yyyyMMdd");
@@ -111,9 +113,11 @@ public final class SNSNotificationServiceUtil {
                         null,
                         partitionDtos.size(),
                         0,
-                        SNSNotificationPartitionAddMsg.EMPTY_DELETE_COLUMN.name()
+                        SNSNotificationPartitionAddMsg.EMPTY_DELETE_COLUMN.name(),
+                        getPartitionNameListFromDtos(partitionDtos)
                     );
                 }
+
                 deleteColumnValues = getSortedDeletionPartitionKeys(partitionDtos, deleteColumn);
                 //Calculate the latest partition key from candidates
                 if (deleteColumnValues != null && !deleteColumnValues.isEmpty()) {
@@ -153,7 +157,8 @@ public final class SNSNotificationServiceUtil {
             latestDeleteColumnValue,
             partitionDtos.size(),
             0,
-            message
+            message,
+            getPartitionNameListFromDtos(partitionDtos)
         );
     }
 
@@ -171,6 +176,24 @@ public final class SNSNotificationServiceUtil {
             .map(x -> PartitionUtil.getPartitionKeyValues(x.getName().toString()).get(deleteColumn))
             .filter(Objects::nonNull)
             .sorted(Comparator.reverseOrder())
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * get partition name list from list of partitionDtos. The returned list is capped at
+     * the first PARTITIONS_UPDATED_LIST_MAX_SIZE elements, if there are more than that number of elements
+     * in the input then the return is empty which serves as a signal that complete list cannot be included
+     *
+     * @param partitionDtos partition DTOs
+     * @return list of partition ids from the input list
+     */
+    protected static List<String> getPartitionNameListFromDtos(final List<PartitionDto> partitionDtos) {
+        if (partitionDtos.size() > PARTITIONS_UPDATED_LIST_MAX_SIZE) {
+            // empty list signals
+            return Collections.emptyList();
+        }
+        return partitionDtos.stream()
+            .map(dto -> dto.getName().getPartitionName())
             .collect(Collectors.toList());
     }
 
