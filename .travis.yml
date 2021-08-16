@@ -10,7 +10,7 @@ addons:
     packages:
       - pass
 git:
-  depth: 250
+  depth: 3
 install: "./installViaTravis.sh"
 script: "./buildViaTravis.sh"
 before_install: "./beforeInstall.sh"
