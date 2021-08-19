@@ -72,6 +72,10 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
     //Naming as view required by dozer mapping
     private ViewDto view;
 
+    @ApiModelProperty(value = "keys defined in the table")
+    @JsonProperty
+    private KeySetDto keys;
+
     @Nonnull
     @Override
     @JsonIgnore
@@ -97,19 +101,9 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
     @JsonProperty
     @SuppressWarnings("checkstyle:methodname")
     public List<String> getPartition_keys() {
-        if (fields == null) {
-            return null;
-        } else if (fields.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        final List<String> keys = new LinkedList<>();
-        for (FieldDto field : fields) {
-            if (field.isPartition_key()) {
-                keys.add(field.getName());
-            }
-        }
-        return keys;
+        return fields == null
+            ? null
+            : (this.keys.partition.isEmpty() ? Collections.EMPTY_LIST : this.keys.partition.get(0).fields);
     }
 
     /**
