@@ -4,15 +4,22 @@ import com.netflix.metacat.common.dto.BaseDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * Key Info.
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = false)
 public class KeyInfo extends BaseDto {
-    public String name;
-    public List<String> fields;
+    private static final long serialVersionUID = 7254898853779135216L;
+
+    private String name;
+    private List<String> fields;
 }

@@ -42,14 +42,6 @@ public class TableInfo extends BaseInfo {
     private ViewInfo view;
     private KeySetInfo keys;
 
-    private KeySetInfo getKeys()
-    {
-        if (this.keys != null) {
-            return keys;
-        }
-        return KeySetInfo.buildKeySet(this.fields);
-    }
-
     /**
      * Constructor.
      *
@@ -74,5 +66,17 @@ public class TableInfo extends BaseInfo {
         this.serde = serde;
         this.view = view;
         this.keys = keys;
+    }
+
+    private KeySetInfo getKeys() {
+        if (this.keys != null) {
+            return keys;
+        }
+        keys = KeySetInfo.buildKeySet(this.fields);
+        return keys;
+    }
+
+    public void setKeys(final KeySetInfo keys) {
+       this.keys = keys;
     }
 }

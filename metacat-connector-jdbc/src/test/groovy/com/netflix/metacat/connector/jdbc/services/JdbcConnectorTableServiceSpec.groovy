@@ -99,13 +99,14 @@ class JdbcConnectorTableServiceSpec extends Specification {
         def connection = Mock(Connection)
         def metadata = Mock(DatabaseMetaData)
         def columnResultSet = Mock(ResultSet)
+        def primaryKeyResultSet = Mock(ResultSet)
 
         when:
         def tableInfo = this.service.get(this.context, qName)
 
         then:
         1 * this.dataSource.getConnection() >> connection
-        1 * connection.getMetaData() >> metadata
+        2 * connection.getMetaData() >> metadata
         1 * metadata.getColumns(database, database, table, JdbcConnectorUtils.MULTI_CHARACTER_SEARCH) >> columnResultSet
         4 * columnResultSet.next() >>> [true, true, true, false]
         3 * columnResultSet.getString("REMARKS") >>> ["comment1", "comment2", "comment3"]
@@ -125,8 +126,23 @@ class JdbcConnectorTableServiceSpec extends Specification {
         tableInfo.getFields().get(0).getName() == "column1"
         tableInfo.getFields().get(1).getName() == "column2"
         tableInfo.getFields().get(2).getName() == "column3"
-    }
 
+        1 * metadata.getPrimaryKeys(database, database, table) >> primaryKeyResultSet
+        4 * primaryKeyResultSet.next() >>> [true, true, true, false]
+        3 * primaryKeyResultSet.getString("TABLE_NAME") >>> [table, table, table]
+        3 * primaryKeyResultSet.getString("PK_NAME") >>> ["PK1", "PK1", "PK2"]
+        3 * primaryKeyResultSet.getString("COLUMN_NAME") >>> ["column1", "column2", "column3"]
+        3 * primaryKeyResultSet.getString("KEY_SEQ") >>> ["1", "0", "0"]
+
+        tableInfo.keys.primary.size() == 2
+        def pk1 = tableInfo.keys.primary.find {keyInfo -> keyInfo.name == "PK1"}
+        pk1.fields.size() == 2
+        pk1.fields.get(0) == "column2"
+        pk1.fields.get(1) == "column1"
+        def pk2 = tableInfo.keys.primary.find {keyInfo -> keyInfo.name == "PK2"}
+        pk2.fields.size() == 1
+        pk2.fields.get(0) == "column3"
+    }
 
     def "Cannot get table metadata"() {
         def catalog = UUID.randomUUID().toString()

@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.KeyDto;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
@@ -147,17 +146,19 @@ public class JdbcConnectorTableService implements ConnectorTableService {
                 throw new TableNotFoundException(name);
             }
 
-            Map<String, List<String>> pkMap = new HashMap<>();
-            try (ResultSet primaryKeys = this.getPrimaryKeys(connection, name)){
-                while(primaryKeys.next())
-                {
+            final Map<String, List<String>> pkMap = new HashMap<>();
+            try (ResultSet primaryKeys = this.getPrimaryKeys(connection, name)) {
+                while (primaryKeys.next()) {
+                    final String tableName = primaryKeys.getString("TABLE_NAME");
+                    if (!tableName.equals(name.getTableName())) {
+                        continue;
+                    }
                     final String pkName = primaryKeys.getString("PK_NAME");
                     final String columnName = primaryKeys.getString("COLUMN_NAME");
                     final int keySeq = Integer.parseInt(primaryKeys.getString("KEY_SEQ"));
-                    if(pkMap.containsKey(pkName)) {
+                    if (pkMap.containsKey(pkName)) {
                         pkMap.get(pkName).add(keySeq, columnName);
-                    }
-                    else {
+                    } else {
                         final List<String> columnArray = new ArrayList<>();
                         columnArray.add(columnName);
                         pkMap.put(pkName, columnArray);
