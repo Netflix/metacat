@@ -70,7 +70,11 @@ class ConverterUtilSpec extends Specification {
             audit: new AuditDto('test', new Date(), 'test', new Date()),
             fields: [FieldDto.builder().name('esn').type('string').source_type('string').jsonType(new TextNode('string')).pos(0).build()],
             serde: new StorageDto(owner: 'test'),
-            view: new ViewDto("select test", "select test2"))
+            view: new ViewDto("select test", "select test2"),
+            keys: KeySetDto.builder()
+                .partition(Arrays.asList(KeyDto.builder().name('partition').fields(Arrays.asList('esn')).build()))
+                .build()
+        )
         when:
         def info = converter.fromTableDto(dto)
         def resultDto = converter.toTableDto(info)

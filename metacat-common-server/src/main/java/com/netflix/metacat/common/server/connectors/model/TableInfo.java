@@ -68,7 +68,12 @@ public class TableInfo extends BaseInfo {
         this.keys = keys;
     }
 
-    private KeySetInfo getKeys() {
+    /**
+     * builds key set info from the fields.
+     *
+     * @return key set
+     */
+    public KeySetInfo getKeys() {
         if (this.keys != null) {
             return keys;
         }
@@ -76,6 +81,11 @@ public class TableInfo extends BaseInfo {
         return keys;
     }
 
+    /**
+     * sets the keyset.
+     *
+     * @param keys keyset to be set
+     */
     public void setKeys(final KeySetInfo keys) {
        this.keys = keys;
     }
