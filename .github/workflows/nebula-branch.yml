@@ -1,11 +1,10 @@
-name: "CI"
+name: "Build Branch"
 on:
   push:
     branches:
       - '*'
     tags-ignore:
       - '*'
-  pull_request:
 
 jobs:
   build:
