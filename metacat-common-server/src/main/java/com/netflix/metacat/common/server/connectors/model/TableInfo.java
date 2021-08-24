@@ -40,6 +40,7 @@ public class TableInfo extends BaseInfo {
     private List<FieldInfo> fields;
     private StorageInfo serde;
     private ViewInfo view;
+    private KeySetInfo keys;
 
     /**
      * Constructor.
@@ -57,11 +58,35 @@ public class TableInfo extends BaseInfo {
         final Map<String, String> metadata,
         final List<FieldInfo> fields,
         final StorageInfo serde,
-        final ViewInfo view
+        final ViewInfo view,
+        final KeySetInfo keys
     ) {
         super(name, auditInfo, metadata);
         this.fields = fields;
         this.serde = serde;
         this.view = view;
+        this.keys = keys;
+    }
+
+    /**
+     * builds key set info from the fields.
+     *
+     * @return key set
+     */
+    public KeySetInfo getKeys() {
+        if (this.keys != null) {
+            return keys;
+        }
+        keys = KeySetInfo.buildKeySet(this.fields);
+        return keys;
+    }
+
+    /**
+     * sets the keyset.
+     *
+     * @param keys keyset to be set
+     */
+    public void setKeys(final KeySetInfo keys) {
+       this.keys = keys;
     }
 }

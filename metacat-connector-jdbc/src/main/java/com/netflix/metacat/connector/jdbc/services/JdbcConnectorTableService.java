@@ -28,6 +28,8 @@ import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
+import com.netflix.metacat.common.server.connectors.model.KeyInfo;
+import com.netflix.metacat.common.server.connectors.model.KeySetInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.jdbc.JdbcExceptionMapper;
 import com.netflix.metacat.connector.jdbc.JdbcTypeConverter;
@@ -45,8 +47,11 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Generic JDBC implementation of the ConnectorTableService.
@@ -140,9 +145,37 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             if (fieldInfos.isEmpty() && !exists(context, name)) {
                 throw new TableNotFoundException(name);
             }
+
+            final Map<String, List<String>> pkMap = new HashMap<>();
+            try (ResultSet primaryKeys = this.getPrimaryKeys(connection, name)) {
+                while (primaryKeys.next()) {
+                    final String tableName = primaryKeys.getString("TABLE_NAME");
+                    if (!tableName.equals(name.getTableName())) {
+                        continue;
+                    }
+                    final String pkName = primaryKeys.getString("PK_NAME");
+                    final String columnName = primaryKeys.getString("COLUMN_NAME");
+                    final int keySeq = Integer.parseInt(primaryKeys.getString("KEY_SEQ"));
+                    if (pkMap.containsKey(pkName)) {
+                        pkMap.get(pkName).add(keySeq, columnName);
+                    } else {
+                        final List<String> columnArray = new ArrayList<>();
+                        columnArray.add(columnName);
+                        pkMap.put(pkName, columnArray);
+                    }
+                }
+            }
+
+            final List<KeyInfo> primaryKeys = new ArrayList<>();
+            for (Map.Entry<String, List<String>> entry : pkMap.entrySet()) {
+                primaryKeys.add(KeyInfo.builder().name(entry.getKey()).fields(entry.getValue()).build());
+            }
+            final KeySetInfo keySetInfo = KeySetInfo.buildKeySet(fieldInfos, primaryKeys);
+
             // Set table details
             final TableInfo result = TableInfo.builder().name(name).fields(fields.build()).build();
             setTableInfoDetails(connection, result);
+            result.setKeys(keySetInfo);
             log.debug("Finished getting table metadata for qualified name {} for request {}", name, context);
             return result;
         } catch (final SQLException se) {
@@ -340,7 +373,18 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         );
     }
 
-    /**
+    protected ResultSet getPrimaryKeys(
+        @Nonnull @NonNull final Connection connection,
+        @Nonnull @NonNull final QualifiedName name) throws SQLException {
+        final String database = name.getDatabaseName();
+        final DatabaseMetaData metaData = connection.getMetaData();
+        return metaData.getPrimaryKeys(
+            database,
+            database,
+            name.getTableName());
+    }
+
+        /**
      * Rebuild a source type definition.
      *
      * @param type      The base type e.g. VARCHAR
