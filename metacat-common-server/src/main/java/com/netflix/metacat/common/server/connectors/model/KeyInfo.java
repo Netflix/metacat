@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-public class KeyInfo extends BaseDto {
+public class KeyInfo extends Serializable {
     private static final long serialVersionUID = 7254898853779135216L;
 
     private String name;
