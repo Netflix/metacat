@@ -1,12 +1,12 @@
 package com.netflix.metacat.common.server.connectors.model;
 
-import com.netflix.metacat.common.dto.BaseDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-public class KeyInfo extends Serializable {
+public class KeyInfo implements Serializable {
     private static final long serialVersionUID = 7254898853779135216L;
 
     private String name;
