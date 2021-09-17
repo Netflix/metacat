@@ -250,28 +250,10 @@ public class IcebergTableHandler {
                              final DirectSqlTable directSqlTable,
                              final TableInfo tableInfo) {
         requestContext.setIgnoreErrorsAfterUpdate(true);
-        final boolean icebergTableUpdated = this.update(tableInfo);
-        if (icebergTableUpdated) {
-            try {
-                RETRY_ICEBERG_TABLE_UPDATE.call(() -> {
-                    try {
-                        directSqlTable.updateIcebergTable(tableInfo);
-                    } catch (TablePreconditionFailedException e) {
-                        tableInfo.getMetadata()
-                            .put(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION, e.getMetadataLocation());
-                        this.update(tableInfo);
-                        throw e;
-                    }
-                    return null;
-                });
-            } catch (RetryException e) {
-                Throwables.propagate(e.getLastFailedAttempt().getExceptionCause());
-            } catch (ExecutionException e) {
-                Throwables.propagate(e.getCause());
-            }
-        } else {
-            directSqlTable.updateIcebergTable(tableInfo);
-        }
+        this.update(tableInfo);
+        // TODO: only trying once for correctness for now to fix a race condition that could lead to data loss
+        // but this needs more retries in case of schema updates for better user experience
+        directSqlTable.updateIcebergTable(tableInfo);
     }
 
     /**
