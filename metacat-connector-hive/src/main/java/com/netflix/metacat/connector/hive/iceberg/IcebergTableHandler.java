@@ -19,12 +19,10 @@ package com.netflix.metacat.connector.hive.iceberg;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
@@ -59,7 +57,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -91,7 +88,7 @@ public class IcebergTableHandler {
      * @param connectorContext      connector context
      * @param icebergTableCriteria  iceberg table criteria
      * @param icebergTableOpWrapper iceberg table operation
-     * @param icebergTableOpsProxy IcebergTableOps proxy
+     * @param icebergTableOpsProxy  IcebergTableOps proxy
      */
     public IcebergTableHandler(final ConnectorContext connectorContext,
                                final IcebergTableCriteria icebergTableCriteria,
