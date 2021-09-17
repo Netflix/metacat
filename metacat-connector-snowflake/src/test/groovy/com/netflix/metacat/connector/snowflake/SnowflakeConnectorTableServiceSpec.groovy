@@ -98,7 +98,6 @@ class SnowflakeConnectorTableServiceSpec extends Specification {
         def metadata = Mock(DatabaseMetaData)
         def resultset = Mock(ResultSet)
         def resultset1 = Mock(ResultSet)
-        def primaryKeyResultSet = Mock(ResultSet)
         dataSource.getConnection() >> connection
         connection.getMetaData() >> metadata
         def database = UUID.randomUUID().toString().toUpperCase()
@@ -114,8 +113,6 @@ class SnowflakeConnectorTableServiceSpec extends Specification {
         1 * resultset.next() >> false
         1 * metadata.getTables(_,_,_,_) >> resultset1
         1 * resultset1.next() >> true
-        1 * metadata.getPrimaryKeys(_,_,_) >> primaryKeyResultSet
-        1 * primaryKeyResultSet.next() >> false
 
         when:
         this.service.get(context, qName)

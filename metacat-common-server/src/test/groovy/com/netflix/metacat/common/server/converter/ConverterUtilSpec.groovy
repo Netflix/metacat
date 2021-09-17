@@ -50,13 +50,8 @@ class ConverterUtilSpec extends Specification {
         given:
         def dto = new TableDto(name: QualifiedName.ofTable('prodhive', 'amajumdar', 'part'),
             audit: new AuditDto('test', new Date(), 'test', new Date()),
-            fields: [FieldDto.builder().name('esn').type('string').source_type('string')
-                         .jsonType(new TextNode('string')).pos(0).build()] ,
-            serde: new StorageDto(owner: 'test'),
-            keys: KeySetDto.builder()
-                .partition(Arrays.asList(KeyDto.builder().name('partition').fields(Arrays.asList('esn')).build()))
-                .build()
-        )
+            fields: [FieldDto.builder().name('esn').type('string').source_type('string').jsonType(new TextNode('string')).pos(0).build()] ,
+            serde: new StorageDto(owner: 'test'))
         when:
         def info = converter.fromTableDto(dto)
         def resultDto = converter.toTableDto(info)
@@ -70,11 +65,7 @@ class ConverterUtilSpec extends Specification {
             audit: new AuditDto('test', new Date(), 'test', new Date()),
             fields: [FieldDto.builder().name('esn').type('string').source_type('string').jsonType(new TextNode('string')).pos(0).build()],
             serde: new StorageDto(owner: 'test'),
-            view: new ViewDto("select test", "select test2"),
-            keys: KeySetDto.builder()
-                .partition(Arrays.asList(KeyDto.builder().name('partition').fields(Arrays.asList('esn')).build()))
-                .build()
-        )
+            view: new ViewDto("select test", "select test2"))
         when:
         def info = converter.fromTableDto(dto)
         def resultDto = converter.toTableDto(info)
