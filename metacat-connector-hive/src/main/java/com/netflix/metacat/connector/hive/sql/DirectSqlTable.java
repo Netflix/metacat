@@ -274,6 +274,11 @@ public class DirectSqlTable {
             existingTableMetadata = Maps.newHashMap();
         }
         final boolean needUpdate = validateIcebergUpdate(tableName, existingTableMetadata, newTableMetadata);
+        final String existingMetadataLocation = existingTableMetadata.get(PARAM_METADATA_LOCATION);
+        final String newMetadataLocation = newTableMetadata.get(PARAM_METADATA_LOCATION);
+        log.info("Servicing Iceberg commit request with tableId: {}, needUpdate: {}, "
+                + "previousLocation: {}, existingLocation: {}, newLocation: {}",
+                tableId, needUpdate, previousMetadataLocation, existingMetadataLocation, newMetadataLocation);
         if (needUpdate) {
             final MapDifference<String, String> diff = Maps.difference(existingTableMetadata, newTableMetadata);
             insertTableParams(tableId, diff.entriesOnlyOnRight());
@@ -285,6 +290,7 @@ public class DirectSqlTable {
             // external tools, that access HMS directly
             //
             updateTableLocation(tableId, tableInfo);
+            log.info("Finished updating Iceberg table with tableId: {}", tableId);
         }
         log.debug("Unlocked Iceberg table {}", tableName);
     }
