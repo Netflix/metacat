@@ -25,8 +25,6 @@ import com.netflix.metacat.common.dto.ClusterDto;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.FieldDto;
 import com.netflix.metacat.common.dto.GetPartitionsRequestDto;
-import com.netflix.metacat.common.dto.KeyDto;
-import com.netflix.metacat.common.dto.KeySetDto;
 import com.netflix.metacat.common.dto.ViewDto;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.PartitionDto;
@@ -41,8 +39,6 @@ import com.netflix.metacat.common.server.connectors.model.CatalogInfo;
 import com.netflix.metacat.common.server.connectors.model.ClusterInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
-import com.netflix.metacat.common.server.connectors.model.KeyInfo;
-import com.netflix.metacat.common.server.connectors.model.KeySetInfo;
 import com.netflix.metacat.common.server.connectors.model.ViewInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
@@ -105,8 +101,6 @@ public class ConverterUtil {
                 mapping(AuditDto.class, AuditInfo.class);
                 mapping(ViewDto.class, ViewInfo.class);
                 mapping(StorageDto.class, StorageInfo.class);
-                mapping(KeySetDto.class, KeySetInfo.class);
-                mapping(KeyDto.class, KeyInfo.class);
             }
         };
         dozerBeanMapper.addMapping(builder);

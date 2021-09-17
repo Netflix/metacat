@@ -39,60 +39,54 @@ class DataDtoProvider {
             uri = String.format("s3://wh/%s.db/%s", databaseName, tableName);
         }
         return new TableDto(
-            name: QualifiedName.ofTable(sourceName, databaseName, tableName),
-            serde: new StorageDto(
-                owner: owner,
-                inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
-                outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
-                serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
-                serdeInfoParameters: [
-                    'serialization.format': '1'
+                name: QualifiedName.ofTable(sourceName, databaseName, tableName),
+                serde: new StorageDto(
+                        owner: owner,
+                        inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                        outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                        serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                        serdeInfoParameters: [
+                                'serialization.format': '1'
+                        ],
+                        uri: uri
+                ),
+                audit: new AuditDto(
+                        createdBy: owner,
+                        createdDate: new Date(),
+                        lastModifiedBy: owner,
+                        lastModifiedDate: new Date()
+                ),
+                fields: [
+                        new FieldDto(
+                                comment: 'added 1st - partition key',
+                                name: 'field1',
+                                pos: 0,
+                                type: 'string',
+                                partition_key: true
+                        ),
+                        new FieldDto(
+                                comment: 'added 2st',
+                                name: 'field2',
+                                pos: 1,
+                                type: 'string',
+                                partition_key: false
+                        ),
+                        new FieldDto(
+                                comment: 'added 3st - partition key',
+                                name: 'field3',
+                                pos: 2,
+                                type: 'string',
+                                partition_key: true
+                        ),
+                        new FieldDto(
+                                comment: 'added 4st',
+                                name: 'field4',
+                                pos: 3,
+                                type: 'string',
+                                partition_key: false
+                        )
                 ],
-                uri: uri
-            ),
-            audit: new AuditDto(
-                createdBy: owner,
-                createdDate: new Date(),
-                lastModifiedBy: owner,
-                lastModifiedDate: new Date()
-            ),
-            fields: [
-                new FieldDto(
-                    comment: 'added 1st - partition key',
-                    name: 'field1',
-                    pos: 0,
-                    type: 'string',
-                    partition_key: true
-                ),
-                new FieldDto(
-                    comment: 'added 2st',
-                    name: 'field2',
-                    pos: 1,
-                    type: 'string',
-                    partition_key: false
-                ),
-                new FieldDto(
-                    comment: 'added 3st - partition key',
-                    name: 'field3',
-                    pos: 2,
-                    type: 'string',
-                    partition_key: true
-                ),
-                new FieldDto(
-                    comment: 'added 4st',
-                    name: 'field4',
-                    pos: 3,
-                    type: 'string',
-                    partition_key: false
-                )
-            ],
-            definitionMetadata: getDefinitionMetadata(owner),
-            keys: new KeySetDto(
-                partition: [ new KeyDto(
-                    name: "primary",
-                    fields: ["field1", "field3"]
-                )]
-            )
+                definitionMetadata: getDefinitionMetadata(owner)
         )
     }
 
