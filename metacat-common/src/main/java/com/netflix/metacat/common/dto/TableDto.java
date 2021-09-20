@@ -72,6 +72,10 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
     //Naming as view required by dozer mapping
     private ViewDto view;
 
+    @ApiModelProperty(value = "keys defined in the table")
+    @JsonProperty
+    private KeySetDto keys;
+
     @Nonnull
     @Override
     @JsonIgnore
@@ -97,19 +101,25 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
     @JsonProperty
     @SuppressWarnings("checkstyle:methodname")
     public List<String> getPartition_keys() {
-        if (fields == null) {
-            return null;
-        } else if (fields.isEmpty()) {
-            return Collections.emptyList();
+        if (this.keys == null) {
+            if (fields == null) {
+                return null;
+            } else if (fields.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            final List<String> partitionKeys = new LinkedList<>();
+            for (FieldDto field : fields) {
+                if (field.isPartition_key()) {
+                    partitionKeys.add(field.getName());
+                }
+            }
+            return partitionKeys;
         }
 
-        final List<String> keys = new LinkedList<>();
-        for (FieldDto field : fields) {
-            if (field.isPartition_key()) {
-                keys.add(field.getName());
-            }
-        }
-        return keys;
+        return this.keys.getPartition().isEmpty()
+            ? Collections.EMPTY_LIST
+            : this.keys.getPartition().get(0).getFields();
     }
 
     /**
@@ -118,6 +128,19 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
      */
     @SuppressWarnings({"EmptyMethod", "checkstyle:methodname"})
     public void setPartition_keys(final List<String> ignored) {
+    }
+
+    @JsonIgnore
+    public KeySetDto getKeys() {
+        return keys;
+    }
+
+    /**
+     * Sets the keyset.
+     * @param keys keyset
+     */
+    public void setKeys(final KeySetDto keys) {
+        this.keys = keys;
     }
 
     @Override
