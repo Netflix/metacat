@@ -13,20 +13,15 @@
 
 package com.netflix.metacat.metadata.mysql;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.io.Reader;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.Set;
 
@@ -74,18 +69,15 @@ public final class MySqlServiceUtil {
     public static void loadMySqlDataSource(final DataSourceManager dataSourceManager,
                                            final String configLocation) throws Exception {
 
-        final URL url = Thread.currentThread().getContextClassLoader().getResource(configLocation);
-        final Path filePath;
-        if (url != null) {
-            filePath = Paths.get(url.toURI());
-        } else {
-            filePath = FileSystems.getDefault().getPath(configLocation);
+        URL url = Thread.currentThread().getContextClassLoader().getResource(configLocation);
+        if (url == null) {
+            url = FileSystems.getDefault().getPath(configLocation).toUri().toURL();
         }
-        Preconditions
-            .checkState(filePath != null, "Unable to read from user metadata config file '%s'", configLocation);
         final Properties connectionProperties = new Properties();
-        try (Reader reader = Files.newBufferedReader(filePath, Charsets.UTF_8)) {
-            connectionProperties.load(reader);
+        try (InputStream is = url.openStream()) {
+            connectionProperties.load(is);
+        } catch (Exception e) {
+            throw new Exception(String.format("Unable to read from user metadata config file %s", configLocation), e);
         }
         dataSourceManager.load(UserMetadataService.NAME_DATASOURCE, connectionProperties);
     }
