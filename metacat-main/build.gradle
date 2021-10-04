@@ -66,6 +66,7 @@ dependencies {
 
     runtime(project(":metacat-connector-cassandra"))
     runtime(project(":metacat-connector-hive"))
+    runtime(project(":metacat-connector-polaris"))
     runtime(project(":metacat-connector-mysql"))
     runtime(project(":metacat-connector-postgresql"))
     runtime(project(":metacat-connector-redshift"))
