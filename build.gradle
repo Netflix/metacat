@@ -146,6 +146,8 @@ configure(javaProjects) {
             dependency("com.esotericsoftware.kryo:kryo:2.22")
             dependency("org.apache.iceberg:iceberg-spark-runtime:${iceberg_version}")
             dependency("com.datastax.cassandra:cassandra-driver-core:3.7.2")
+            dependency("org.springframework.data:spring-data-jpa:2.5.5")
+            dependency("jakarta.persistence:jakarta.persistence-api:2.2.3")
         }
     }
 
@@ -171,6 +173,8 @@ configure(javaProjects) {
         /*******************************
          * Runtime Dependencies
          *******************************/
+        implementation('com.zaxxer:HikariCP:3.4.5')
+        implementation('org.hibernate:hibernate-core:5.5.8.Final')
 
         /*******************************
          * Test Dependencies
