@@ -31,11 +31,12 @@ import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.GetCatalogServiceParameters;
+import com.netflix.metacat.main.services.GetDatabaseServiceParameters;
 import com.netflix.metacat.main.services.GetTableNamesServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.TableService;
-import com.netflix.metacat.main.services.GetDatabaseServiceParameters;
+import com.netflix.metacat.main.services.impl.MViewServiceImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -254,6 +255,7 @@ public class MetacatController implements MetacatV1 {
         return this.requestWrapper.processRequest(
             name,
             "createTable",
+            Collections.singletonMap("isIceberg", String.valueOf(MViewServiceImpl.isIcebergTable(table))),
             () -> {
                 Preconditions.checkArgument(
                     table.getName() != null
@@ -266,7 +268,6 @@ public class MetacatController implements MetacatV1 {
             }
         );
     }
-
 
     /**
      * Creates a metacat view. A staging table that can contain partitions referring to the table partition locations.
