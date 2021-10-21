@@ -50,6 +50,14 @@ import java.util.List;
  * @author amajumdar
  */
 public class MetacatServiceHelper {
+    /**
+     * Defines the table type.
+     */
+    public static final String PARAM_TABLE_TYPE = "table_type";
+    /**
+     * Iceberg table type.
+     */
+    public static final String ICEBERG_TABLE_TYPE = "ICEBERG";
     private final DatabaseService databaseService;
     private final TableService tableService;
     private final PartitionService partitionService;
@@ -256,5 +264,18 @@ public class MetacatServiceHelper {
         } else {
             throw new IllegalArgumentException(String.format("Invalid name %s", name));
         }
+    }
+
+    /**
+     * check if the table is an Iceberg Table.
+     *
+     * @param tableDto table dto
+     * @return true for iceberg table
+     */
+    public static boolean isIcebergTable(final TableDto tableDto) {
+        return tableDto.getMetadata() != null
+            && tableDto.getMetadata().containsKey(PARAM_TABLE_TYPE)
+            && ICEBERG_TABLE_TYPE
+            .equalsIgnoreCase(tableDto.getMetadata().get(PARAM_TABLE_TYPE));
     }
 }
