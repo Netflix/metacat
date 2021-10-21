@@ -27,6 +27,7 @@ import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.CatalogService;
 import com.netflix.metacat.main.services.DatabaseService;
@@ -35,8 +36,8 @@ import com.netflix.metacat.main.services.GetDatabaseServiceParameters;
 import com.netflix.metacat.main.services.GetTableNamesServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
+import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.TableService;
-import com.netflix.metacat.main.services.impl.MViewServiceImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -252,10 +253,12 @@ public class MetacatController implements MetacatV1 {
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
+        if (MetacatServiceHelper.isIcebergTable(table)) {
+            MetacatContextManager.getContext().updateTableTypeMap(name, MetacatServiceHelper.ICEBERG_TABLE_TYPE);
+        }
         return this.requestWrapper.processRequest(
             name,
             "createTable",
-            Collections.singletonMap("isIceberg", String.valueOf(MViewServiceImpl.isIcebergTable(table))),
             () -> {
                 Preconditions.checkArgument(
                     table.getName() != null

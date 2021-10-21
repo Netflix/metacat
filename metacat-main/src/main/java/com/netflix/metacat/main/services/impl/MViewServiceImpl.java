@@ -47,6 +47,7 @@ import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorPara
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
+import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
@@ -65,14 +66,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class MViewServiceImpl implements MViewService {
-    /**
-     * Defines the table type.
-     */
-    public static final String PARAM_TABLE_TYPE = "table_type";
-    /**
-     * Iceberg table type.
-     */
-    public static final String ICEBERG_TABLE_TYPE = "ICEBERG";
     /**
      * Hive database name where views are stored.
      */
@@ -165,7 +158,7 @@ public class MViewServiceImpl implements MViewService {
                 // The issue is caused by a mismatch with field source types.
                 // The check for iceberg table is needed to not disrupt the previous logic for other table types.
                 //
-                if (isIcebergTable(table)) {
+                if (MetacatServiceHelper.isIcebergTable(table)) {
                     table.getFields().forEach(f -> f.setSource_type(null));
                 }
                 result = tableService.copy(table, targetName);
@@ -182,19 +175,6 @@ public class MViewServiceImpl implements MViewService {
             throw new TableNotFoundException(name);
         }
         return result;
-    }
-
-    /**
-     * check if the table is an Iceberg Table.
-     *
-     * @param tableDto table dto
-     * @return true for iceberg table
-     */
-    public static boolean isIcebergTable(final TableDto tableDto) {
-        return tableDto.getMetadata() != null
-            && tableDto.getMetadata().containsKey(PARAM_TABLE_TYPE)
-            && ICEBERG_TABLE_TYPE
-            .equalsIgnoreCase(tableDto.getMetadata().get(PARAM_TABLE_TYPE));
     }
 
     /**
