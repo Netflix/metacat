@@ -47,10 +47,12 @@ public class PolarisPersistenceConfig {
   /**
    * Get an implementation of {@link PolarisConnector}.
    * @param repo - PolarisDatabaseRepository
+   * @param tblRepo - PolarisTableRepository
    * @return PolarisConnector
    */
   @Bean
-  public PolarisConnector polarisConnector(final PolarisDatabaseRepository repo) {
-    return new PolarisConnector(repo);
+  public PolarisConnector polarisConnector(
+      final PolarisDatabaseRepository repo, final PolarisTableRepository tblRepo) {
+    return new PolarisConnector(repo, tblRepo);
   }
 }
