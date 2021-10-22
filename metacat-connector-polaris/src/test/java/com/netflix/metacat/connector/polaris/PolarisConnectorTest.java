@@ -1,15 +1,18 @@
 package com.netflix.metacat.connector.polaris;
 
 
-import org.junit.After;
+import org.junit.jupiter.api.Assertions;
+
+import java.util.Random;
 import org.junit.Assert;
-import org.junit.Before;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataAccessException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -22,21 +25,45 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @AutoConfigureDataJpa
 public class PolarisConnectorTest {
     private static final String DB_NAME_FOO = "foo";
+    private static final String TBL_NAME_BAR = "bar";
+    private static Random random = new Random(System.currentTimeMillis());
 
     @Autowired
     private PolarisDatabaseRepository repo;
 
     @Autowired
+    private PolarisTableRepository tblRepo;
+
+    @Autowired
     private PolarisConnector polarisConnector;
 
-    /**
-     * Test set up.
-     */
-    @Before
-    @After
-    public void setup() {
-        Assert.assertNotNull(repo);
-        repo.deleteAll();
+    private static String generateDatabaseName() {
+        return DB_NAME_FOO + "_" + random.nextLong();
+    }
+
+    private static String generateTableName() {
+        return TBL_NAME_BAR + "_" + random.nextLong();
+    }
+
+    private PolarisDatabaseEntity createDB(final String dbName) {
+        final PolarisDatabaseEntity entity = polarisConnector.createDatabase(dbName);
+        Assert.assertTrue(polarisConnector.databaseExists(entity.getDbId()));
+        Assert.assertEquals(0L, entity.getVersion().longValue());
+        Assert.assertTrue(entity.getDbId().length() > 0);
+        Assert.assertEquals(dbName, entity.getDbName());
+        return entity;
+    }
+
+    private PolarisTableEntity createTable(final String dbName, final String tblName) {
+        final PolarisTableEntity entity = polarisConnector.createTable(dbName, tblName);
+        Assert.assertTrue(polarisConnector.tableExists(entity.getTblId()));
+        Assert.assertTrue(entity.getTblId().length() > 0);
+        Assert.assertTrue(entity.getVersion() >= 0);
+
+        Assert.assertEquals(dbName, entity.getDbName());
+        Assert.assertEquals(tblName, entity.getTblName());
+
+        return entity;
     }
 
     /**
@@ -44,9 +71,30 @@ public class PolarisConnectorTest {
      */
     @Test
     public void testCreateDB() {
-        final PolarisDatabaseEntity newEntity = new PolarisDatabaseEntity(DB_NAME_FOO);
-        final PolarisDatabaseEntity savedEntity = repo.save(newEntity);
-        Assert.assertEquals(DB_NAME_FOO, newEntity.getDbName());
-        Assert.assertEquals(0L, savedEntity.getVersion().longValue());
+        final PolarisDatabaseEntity savedEntity = createDB(generateDatabaseName());
+    }
+
+    /**
+     * Test that a table cannot be created if database is absent.
+     */
+    @Test
+    public void testTableCreationFailIfDatabaseIsAbsent() {
+        Assertions.assertThrows(DataAccessException.class, () ->
+            polarisConnector.createTable(generateDatabaseName(), generateTableName()));
+    }
+
+    /**
+     * Test table creation if database exists.
+     * Verify table deletion
+     */
+    @Test
+    public void testTableCreationAndDeletion() {
+        final String dbName = generateDatabaseName();
+        final String tblName = generateTableName();
+        final PolarisDatabaseEntity dbEntity = createDB(dbName);
+        final PolarisTableEntity tblEntity = createTable(dbName, tblName);
+
+        polarisConnector.deleteTable(dbName, tblName);
+        Assert.assertFalse(polarisConnector.tableExists(tblEntity.getTblId()));
     }
 }
