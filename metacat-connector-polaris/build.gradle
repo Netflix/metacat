@@ -20,7 +20,7 @@ dependencies {
     /*******************************
      * Compile Dependencies
      *******************************/
-
+    compile(project(":metacat-connector-jdbc"))
     compile(project(":metacat-common-server"))
     compile('org.springframework.data:spring-data-jpa')
     compile("com.h2database:h2")
