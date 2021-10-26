@@ -1,6 +1,7 @@
 package com.netflix.metacat.connector.polaris;
 
 
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 
 import java.util.Random;
@@ -96,5 +97,29 @@ public class PolarisConnectorTest {
 
         polarisConnector.deleteTable(dbName, tblName);
         Assert.assertFalse(polarisConnector.tableExists(tblEntity.getTblId()));
+    }
+
+    /**
+     * Test to verify that table names fetch works.
+     */
+    @Test
+    public void testPaginatedFetch() {
+        final String dbName = generateDatabaseName();
+        final PolarisDatabaseEntity dbEntity = createDB(dbName);
+        List<String> tblNames = polarisConnector.getTables(dbName, "");
+        Assert.assertEquals(0, tblNames.size());
+
+        final String tblNameA = "A_" + generateTableName();
+        final String tblNameB = "B_" + generateTableName();
+        final String tblNameC = "C_" + generateTableName();
+        createTable(dbName, tblNameA);
+        createTable(dbName, tblNameB);
+        createTable(dbName, tblNameC);
+
+        tblNames = polarisConnector.getTables(dbName, "");
+        Assert.assertEquals(3, tblNames.size());
+        Assert.assertEquals(tblNameA, tblNames.get(0));
+        Assert.assertEquals(tblNameB, tblNames.get(1));
+        Assert.assertEquals(tblNameC, tblNames.get(2));
     }
 }
