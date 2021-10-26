@@ -15,3 +15,5 @@ create table TBLS (
   constraint uniq_name unique(db_name, tbl_name),
   foreign key (db_name) references DBS(name)
 );
+
+CREATE INDEX DB_NAME_IDX ON TBLS(db_name);

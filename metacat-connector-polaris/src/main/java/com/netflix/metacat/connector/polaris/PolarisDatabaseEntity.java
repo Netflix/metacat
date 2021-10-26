@@ -5,7 +5,6 @@ import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -22,12 +21,7 @@ import javax.persistence.Version;
 @EqualsAndHashCode
 @Entity
 @ToString(callSuper = true)
-@Table(name = "DBS",
-      uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"id"}),
-        @UniqueConstraint(columnNames = {"name"})
-      }
-    )
+@Table(name = "DBS")
 
 public class PolarisDatabaseEntity {
     @Version

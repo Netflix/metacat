@@ -1,7 +1,13 @@
 package com.netflix.metacat.connector.polaris;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -49,5 +55,29 @@ public class PolarisConnector {
 
     boolean tableExists(final String tblId) {
         return tblRepo.existsById(tblId);
+    }
+
+    /**
+     * Fetch table names for given database.
+     * @param databaseName database name
+     * @param tableNamePrefix table name prefix. can be empty.
+     * @return table names in the database.
+     */
+    public List<String> getTables(final String databaseName, final String tableNamePrefix) {
+        final int pageFetchSize = 1000;
+        final List<String> retval = new ArrayList<>();
+        final String tblPrefix =  tableNamePrefix == null ? "" : tableNamePrefix;
+        Pageable page = PageRequest.of(0, pageFetchSize, Sort.by("tblName").ascending());
+        Slice<String> tblNames = null;
+        boolean hasNext = true;
+        do {
+            tblNames = tblRepo.findAllByDbNameAndTablePrefix(databaseName, tblPrefix, page);
+            retval.addAll(tblNames.toList());
+            hasNext = tblNames.hasNext();
+            if (hasNext) {
+                page = tblNames.nextPageable();
+            }
+        } while (hasNext);
+        return retval;
     }
 }

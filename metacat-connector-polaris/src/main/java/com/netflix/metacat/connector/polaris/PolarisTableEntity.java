@@ -7,7 +7,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import javax.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -22,11 +21,7 @@ import lombok.ToString;
 @EqualsAndHashCode
 @Entity
 @ToString(callSuper = true)
-@Table(name = "TBLS",
-    uniqueConstraints = {
-      @UniqueConstraint(columnNames = {"id"}),
-      @UniqueConstraint(columnNames = {"db_name", "tbl_name"})
-    })
+@Table(name = "TBLS")
 public class PolarisTableEntity {
     @Version
     private Long version;
@@ -38,11 +33,11 @@ public class PolarisTableEntity {
     private String tblId;
 
     @Basic
-    @Column(name = "db_name", nullable = false, unique = true, updatable = true)
+    @Column(name = "db_name", nullable = false, updatable = false)
     private final String dbName;
 
     @Basic
-    @Column(name = "tbl_name", nullable = false, unique = true, updatable = false)
+    @Column(name = "tbl_name", nullable = false)
     private final String tblName;
 
     PolarisTableEntity(final String dbName, final String tblName) {
