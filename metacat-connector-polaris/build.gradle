@@ -16,6 +16,18 @@
  *
  */
 
+apply plugin: 'nebula.facet'
+
+facets {
+    functionalTest {
+        parentSourceSet = "test"
+        includeInCheckLifecycle = true
+    }
+}
+ext {
+    runDockerContainers = project.hasProperty('startCluster') ? Boolean.getBoolean('startCluster') : true
+}
+
 dependencies {
     /*******************************
      * Compile Dependencies
@@ -50,9 +62,35 @@ dependencies {
 
     testImplementation 'org.junit.platform:junit-platform-launcher:1.8.1'
     testImplementation 'org.junit.platform:junit-platform-runner:1.8.1'
+
+    testImplementation 'org.postgresql:postgresql'
+
 }
 
 test {
     useJUnitPlatform {
     }
 }
+
+task startCrdbCluster(type: Exec) {
+    commandLine '/bin/echo',  project.file('src/functionalTest/scripts/start_docker_containers.sh')
+    commandLine 'sh',
+       project.file('src/functionalTest/scripts/start_docker_containers.sh'),
+       project.file('src/functionalTest/scripts/docker-compose.yml')
+}
+
+task stopCrdbCluster(type: Exec) {
+   commandLine 'sh',
+     project.file('src/functionalTest/scripts/stop_docker_containers.sh'),
+     project.file('src/functionalTest/scripts/docker-compose.yml')
+}
+
+functionalTest {
+    if (project.ext.runDockerContainers) {
+        useJUnitPlatform {
+        }
+        dependsOn 'startCrdbCluster'
+        finalizedBy 'stopCrdbCluster'
+    }
+}
+
