@@ -17,6 +17,6 @@
  */
 
 /**
- * Polaris test classes.
+ * Polaris config classes.
  */
-package com.netflix.metacat.connector.polaris;
+package com.netflix.metacat.connector.polaris.configs;

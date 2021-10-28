@@ -1,21 +1,20 @@
-package com.netflix.metacat.connector.polaris;
+package com.netflix.metacat.connector.polaris.data;
 
 
-import java.util.List;
-import org.junit.jupiter.api.Assertions;
-
-import java.util.Random;
+import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import org.junit.Assert;
-
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataAccessException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.List;
+import java.util.Random;
 
 /**
  * Test persistence operations on Database objects.
