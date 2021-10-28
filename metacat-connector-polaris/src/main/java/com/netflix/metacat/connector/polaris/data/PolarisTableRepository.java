@@ -1,4 +1,4 @@
-package com.netflix.metacat.connector.polaris;
+package com.netflix.metacat.connector.polaris.data;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
