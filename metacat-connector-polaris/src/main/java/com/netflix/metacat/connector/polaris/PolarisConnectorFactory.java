@@ -1,28 +1,38 @@
 package com.netflix.metacat.connector.polaris;
 
-import com.google.common.collect.Lists;
-import com.netflix.metacat.common.server.connectors.DefaultConnectorFactory;
-
-import java.util.Map;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
+import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
+import com.netflix.metacat.common.server.connectors.SpringConnectorFactory;
+import com.netflix.metacat.connector.polaris.configs.PolarisConnectorConfig;
+import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 
 /**
  * Connector Factory for Polaris.
  */
-class PolarisConnectorFactory extends DefaultConnectorFactory {
+class PolarisConnectorFactory extends SpringConnectorFactory {
 
     /**
      * Constructor.
      *
-     * @param catalogName       catalog name
-     * @param catalogShardName  catalog shard name
-     * @param configuration     catalog configuration
+     * @param infoConverter    info converter
+     * @param connectorContext connector config
      */
     PolarisConnectorFactory(
-        final String catalogName,
-        final String catalogShardName,
-        final Map<String, String> configuration
+        final ConnectorInfoConverter infoConverter,
+        final ConnectorContext connectorContext
     ) {
-        super(catalogName, catalogShardName,
-            Lists.newArrayList(new PolarisConnectorModule(catalogShardName, configuration)));
+        super(infoConverter, connectorContext);
+        super.registerClazz(PolarisConnectorConfig.class,
+            PolarisPersistenceConfig.class);
+        super.refresh();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ConnectorDatabaseService getDatabaseService() {
+        return this.ctx.getBean(PolarisConnectorDatabaseService.class);
     }
 }
