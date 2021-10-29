@@ -635,4 +635,9 @@ public class DefaultConfigImpl implements Config {
     public boolean isIcebergPreviousMetadataLocationCheckEnabled() {
         return this.metacatProperties.getHive().getIceberg().isIcebergPreviousMetadataLocationCheckEnabled();
     }
+
+    @Override
+    public boolean disablePartitionDefinitionMetadata() {
+        return this.metacatProperties.getDefinition().getMetadata().isDisablePartitionDefinitionMetadata();
+    }
 }

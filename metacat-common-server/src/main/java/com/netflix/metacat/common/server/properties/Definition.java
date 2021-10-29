@@ -46,6 +46,7 @@ public class Definition {
 
         @NonNull
         private Delete delete = new Delete();
+        private boolean disablePartitionDefinitionMetadata;
 
         /**
          * Delete related properties.
