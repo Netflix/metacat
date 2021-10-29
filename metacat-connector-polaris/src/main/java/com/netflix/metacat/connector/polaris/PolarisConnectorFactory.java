@@ -3,6 +3,7 @@ package com.netflix.metacat.connector.polaris;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
+import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.SpringConnectorFactory;
 import com.netflix.metacat.connector.polaris.configs.PolarisConnectorConfig;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
@@ -34,5 +35,13 @@ class PolarisConnectorFactory extends SpringConnectorFactory {
     @Override
     public ConnectorDatabaseService getDatabaseService() {
         return this.ctx.getBean(PolarisConnectorDatabaseService.class);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ConnectorTableService getTableService() {
+        return this.ctx.getBean(PolarisConnectorTableService.class);
     }
 }
