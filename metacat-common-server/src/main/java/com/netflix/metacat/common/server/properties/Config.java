@@ -549,5 +549,12 @@ public interface Config {
      * @return Whether to check the existence of the iceberg metadata location before updating the table
      */
     boolean isIcebergPreviousMetadataLocationCheckEnabled();
+
+    /**
+     * Whether partition definition metadata should be disabled.
+     *
+     * @return True if it should be blocked.
+     */
+    boolean disablePartitionDefinitionMetadata();
 }
 

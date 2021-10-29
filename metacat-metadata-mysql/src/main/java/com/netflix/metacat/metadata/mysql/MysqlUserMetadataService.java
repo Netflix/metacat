@@ -24,6 +24,7 @@ import com.netflix.metacat.common.dto.DefinitionMetadataDto;
 import com.netflix.metacat.common.dto.HasDataMetadata;
 import com.netflix.metacat.common.dto.HasDefinitionMetadata;
 import com.netflix.metacat.common.dto.HasMetadata;
+import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.json.MetacatJsonException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetadataException;
@@ -537,6 +538,12 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
+    private void throwIfPartitionDefinitionMetadataDisabled() {
+        if (config.disablePartitionDefinitionMetadata()) {
+            throw new MetacatBadRequestException("Partition Definition metadata updates are disabled");
+        }
+    }
+
     @Override
     public void saveDataMetadata(
         @Nonnull final String uri,
@@ -578,9 +585,15 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             }
             //apply interceptor to change the object node
             this.metadataInterceptor.onWrite(this, name, merged);
+            String query;
+            if (name.isPartitionDefinition()) {
+                throwIfPartitionDefinitionMetadataDisabled();
+                query = SQL.UPDATE_PARTITION_DEFINITION_METADATA;
+            } else {
+                query = SQL.UPDATE_DEFINITION_METADATA;
+            }
             count = executeUpdateForKey(
-                name.isPartitionDefinition()
-                    ? SQL.UPDATE_PARTITION_DEFINITION_METADATA : SQL.UPDATE_DEFINITION_METADATA,
+                query,
                 merged.toString(),
                 userId,
                 name.toString());
@@ -590,9 +603,15 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             if (metadata.isPresent()) {
                 this.metadataInterceptor.onWrite(this, name, metadata.get());
             }
+            String queryToExecute;
+            if (name.isPartitionDefinition()) {
+                throwIfPartitionDefinitionMetadataDisabled();
+                queryToExecute = SQL.INSERT_PARTITION_DEFINITION_METADATA;
+            } else {
+                queryToExecute = SQL.INSERT_DEFINITION_METADATA;
+            }
             count = metadata.map(jsonNodes -> executeUpdateForKey(
-                name.isPartitionDefinition()
-                    ? SQL.INSERT_PARTITION_DEFINITION_METADATA : SQL.INSERT_DEFINITION_METADATA,
+                queryToExecute,
                 jsonNodes.toString(),
                 userId,
                 userId,
@@ -715,11 +734,13 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                             new int[]{Types.VARCHAR, Types.VARCHAR, Types.VARCHAR});
                     }
                     if (!insertPartitionDefinitionMetadatas.isEmpty()) {
+                        throwIfPartitionDefinitionMetadataDisabled();
                         jdbcTemplate.batchUpdate(SQL.INSERT_PARTITION_DEFINITION_METADATA,
                             insertPartitionDefinitionMetadatas,
                             new int[]{Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR});
                     }
                     if (!updatePartitionDefinitionMetadatas.isEmpty()) {
+                        throwIfPartitionDefinitionMetadataDisabled();
                         jdbcTemplate.batchUpdate(SQL.UPDATE_PARTITION_DEFINITION_METADATA,
                             updatePartitionDefinitionMetadatas,
                             new int[]{Types.VARCHAR, Types.VARCHAR, Types.VARCHAR});
