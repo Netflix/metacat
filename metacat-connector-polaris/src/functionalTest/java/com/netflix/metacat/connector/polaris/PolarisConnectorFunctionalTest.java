@@ -2,7 +2,7 @@ package com.netflix.metacat.connector.polaris;
 
 
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
-import com.netflix.metacat.connector.polaris.data.PolarisConnectorTest;
+import com.netflix.metacat.connector.polaris.store.PolarisConnectorTest;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;

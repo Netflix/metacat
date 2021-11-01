@@ -5,13 +5,13 @@ import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
-import com.netflix.metacat.connector.polaris.data.PolarisConnector;
+import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
 
 /**
  * database service for polaris connector.
  */
 public class PolarisConnectorDatabaseService implements ConnectorDatabaseService {
-    private final PolarisConnector polarisConnector;
+    private final PolarisStoreConnector polarisConnector;
 
     /**
      * Constructor.
@@ -19,7 +19,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
      * @param polarisConnector polaris connector
      */
     public PolarisConnectorDatabaseService(
-        final PolarisConnector polarisConnector
+        final PolarisStoreConnector polarisConnector
     ) {
         this.polarisConnector = polarisConnector;
     }

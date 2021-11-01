@@ -1,4 +1,4 @@
-package com.netflix.metacat.connector.polaris.data;
+package com.netflix.metacat.connector.polaris.store.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -38,7 +38,11 @@ public class PolarisDatabaseEntity {
     @Column(name = "name", nullable = false, unique = true, updatable = false)
     private final String dbName;
 
-    PolarisDatabaseEntity(final String dbName) {
+    /**
+     * Constructor for Polaris Database Entity.
+     * @param dbName database name
+     */
+    public PolarisDatabaseEntity(final String dbName) {
         this.dbName = dbName;
     }
 }

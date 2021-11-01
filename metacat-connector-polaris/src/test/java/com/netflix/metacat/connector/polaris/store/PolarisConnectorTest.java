@@ -1,7 +1,11 @@
-package com.netflix.metacat.connector.polaris.data;
+package com.netflix.metacat.connector.polaris.store;
 
 
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
+import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
+import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
+import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
+import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -35,7 +39,7 @@ public class PolarisConnectorTest {
     private PolarisTableRepository tblRepo;
 
     @Autowired
-    private PolarisConnector polarisConnector;
+    private PolarisStoreConnector polarisConnector;
 
     private static String generateDatabaseName() {
         return DB_NAME_FOO + "_" + random.nextLong();
