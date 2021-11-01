@@ -1,7 +1,7 @@
 package com.netflix.metacat.connector.polaris.configs;
 
 import com.netflix.metacat.connector.polaris.PolarisConnectorDatabaseService;
-import com.netflix.metacat.connector.polaris.data.PolarisConnector;
+import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 
@@ -18,7 +18,7 @@ public class PolarisConnectorConfig {
     @Bean
     @ConditionalOnMissingBean(PolarisConnectorDatabaseService.class)
     public PolarisConnectorDatabaseService polarisDatabaseService(
-        final PolarisConnector polarisConnector
+        final PolarisStoreConnector polarisConnector
     ) {
         return new PolarisConnectorDatabaseService(polarisConnector);
     }

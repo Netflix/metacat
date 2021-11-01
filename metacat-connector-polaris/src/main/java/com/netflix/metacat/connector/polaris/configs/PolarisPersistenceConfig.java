@@ -1,9 +1,9 @@
 package com.netflix.metacat.connector.polaris.configs;
 
 
-import com.netflix.metacat.connector.polaris.data.PolarisConnector;
-import com.netflix.metacat.connector.polaris.data.PolarisDatabaseRepository;
-import com.netflix.metacat.connector.polaris.data.PolarisTableRepository;
+import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
+import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
+import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -20,8 +20,8 @@ import javax.sql.DataSource;
  *
  */
 @Configuration
-@EntityScan("com.netflix.metacat.connector.polaris")
-@EnableJpaRepositories("com.netflix.metacat.connector.polaris.data")
+@EntityScan("com.netflix.metacat.connector.polaris.store.entities")
+@EnableJpaRepositories("com.netflix.metacat.connector.polaris.store.repos")
 public class PolarisPersistenceConfig {
 
   /**
@@ -49,14 +49,14 @@ public class PolarisPersistenceConfig {
   }
 
   /**
-   * Get an implementation of {@link PolarisConnector}.
+   * Get an implementation of {@link PolarisStoreConnector}.
    * @param repo - PolarisDatabaseRepository
    * @param tblRepo - PolarisTableRepository
-   * @return PolarisConnector
+   * @return PolarisStoreConnector
    */
   @Bean
-  public PolarisConnector polarisConnector(
+  public PolarisStoreConnector polarisConnector(
       final PolarisDatabaseRepository repo, final PolarisTableRepository tblRepo) {
-    return new PolarisConnector(repo, tblRepo);
+    return new PolarisStoreConnector(repo, tblRepo);
   }
 }

@@ -1,5 +1,6 @@
-package com.netflix.metacat.connector.polaris.data;
+package com.netflix.metacat.connector.polaris.store.repos;
 
+import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
