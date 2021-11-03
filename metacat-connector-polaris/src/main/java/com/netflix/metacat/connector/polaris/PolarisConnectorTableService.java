@@ -62,9 +62,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             polarisConnector.createTable(name.getDatabaseName(), name.getTableName());
         } catch (Exception exception) {
             // TODO: distinguish between different constraint exceptions once data model supports get APIs
-            String msg = String.format("Failed creating polaris table %s", name);
-            log.error(msg);
-            log.error(exception.getMessage(), exception);
+            final String msg = String.format("Failed creating polaris table %s", name);
+            log.error(msg, exception);
             throw new ConnectorException(msg, exception);
         }
     }
@@ -78,9 +77,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             // TODO: implement once data model supports this operation
             return null;
         } catch (Exception exception) {
-            String msg = String.format("Failed getting polaris table %s", name);
-            log.error(msg);
-            log.error(exception.getMessage(), exception);
+            final String msg = String.format("Failed getting polaris table %s", name);
+            log.error(msg, exception);
             throw new ConnectorException(msg, exception);
         }
     }
@@ -112,9 +110,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             }
             return ConnectorUtils.paginate(qualifiedNames, pageable);
         } catch (Exception exception) {
-            String msg = String.format("Failed polaris list table names %s using prefix %s", name, prefix);
-            log.error(msg);
-            log.error(exception.getMessage(), exception);
+            final String msg = String.format("Failed polaris list table names %s using prefix %s", name, prefix);
+            log.error(msg, exception);
             throw new ConnectorException(msg, exception);
         }
     }
@@ -127,9 +124,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         try {
             // TODO: implement once data model supports this operation
         } catch (Exception exception) {
-            String msg = String.format("Failed updating polaris table %s", tableInfo.getName());
-            log.error(msg);
-            log.error(exception.getMessage(), exception);
+            final String msg = String.format("Failed updating polaris table %s", tableInfo.getName());
+            log.error(msg, exception);
             throw new ConnectorException(msg, exception);
         }
     }
@@ -143,9 +139,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             polarisConnector.deleteTable(name.getDatabaseName(), name.getTableName());
         } catch (Exception exception) {
             // TODO: handle db not exist once data model supports get APIs
-            String msg = String.format("Failed updating polaris table %s", name);
-            log.error(msg);
-            log.error(exception.getMessage(), exception);
+            final String msg = String.format("Failed deleting polaris table %s", name);
+            log.error(msg, exception);
             throw new ConnectorException(msg, exception);
         }
     }
