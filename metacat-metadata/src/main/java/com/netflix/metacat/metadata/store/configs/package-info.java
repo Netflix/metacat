@@ -17,7 +17,6 @@
  */
 
 /**
- *  Metacat metadata test classes.
+ * User metadata store config classes.
  */
-package com.netflix.metacat.metadata;
-
+package com.netflix.metacat.metadata.store.configs;

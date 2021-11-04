@@ -17,6 +17,6 @@
  */
 
 /**
- * Metacat Metadata classes.
+ * Metacat User metadata classes.
  */
 package com.netflix.metacat.metadata;
