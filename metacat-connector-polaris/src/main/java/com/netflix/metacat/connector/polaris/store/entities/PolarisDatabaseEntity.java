@@ -3,6 +3,7 @@ package com.netflix.metacat.connector.polaris.store.entities;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.Basic;
@@ -19,6 +20,7 @@ import javax.persistence.Version;
  */
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode
 @Entity
 @ToString(callSuper = true)
@@ -36,7 +38,7 @@ public class PolarisDatabaseEntity {
 
     @Basic
     @Column(name = "name", nullable = false, unique = true, updatable = false)
-    private final String dbName;
+    private String dbName;
 
     /**
      * Constructor for Polaris Database Entity.

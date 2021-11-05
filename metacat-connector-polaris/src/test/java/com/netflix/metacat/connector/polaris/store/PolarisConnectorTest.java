@@ -6,6 +6,7 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntit
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,10 @@ public class PolarisConnectorTest {
         Assert.assertEquals(0L, entity.getVersion().longValue());
         Assert.assertTrue(entity.getDbId().length() > 0);
         Assert.assertEquals(dbName, entity.getDbName());
+
+        final Optional<PolarisDatabaseEntity> fetchedEntity = polarisConnector.getDatabase(dbName);
+        Assert.assertTrue(fetchedEntity.isPresent());
+        Assert.assertEquals(entity, fetchedEntity.get());
         return entity;
     }
 
@@ -66,6 +71,10 @@ public class PolarisConnectorTest {
 
         Assert.assertEquals(dbName, entity.getDbName());
         Assert.assertEquals(tblName, entity.getTblName());
+
+        final Optional<PolarisTableEntity> fetchedEntity = polarisConnector.getTable(dbName, tblName);
+        Assert.assertTrue(fetchedEntity.isPresent());
+        Assert.assertEquals(entity, fetchedEntity.get());
 
         return entity;
     }
@@ -124,5 +133,23 @@ public class PolarisConnectorTest {
         Assert.assertEquals(tblNameA, tblNames.get(0));
         Assert.assertEquals(tblNameB, tblNames.get(1));
         Assert.assertEquals(tblNameC, tblNames.get(2));
+    }
+
+    /**
+     * Test to verify that table name can be updated.
+     */
+    @Test
+    public void testTableUpdate() {
+        // Create Table Entity in DB
+        final String dbName = generateDatabaseName();
+        final String tblName = generateTableName();
+        final PolarisDatabaseEntity dbEntity = createDB(dbName);
+        final PolarisTableEntity tblEntity = createTable(dbName, tblName);
+
+        // Update table name
+        final String newTblName = generateTableName();
+        tblEntity.setTblName(newTblName);
+        final PolarisTableEntity updatedTblEntity = polarisConnector.saveTable(tblEntity);
+        Assert.assertEquals(newTblName, updatedTblEntity.getTblName());
     }
 }
