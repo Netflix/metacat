@@ -27,8 +27,9 @@ public interface PolarisStoreService {
     /**
      * Updates existing database entity.
      * @param databaseEntity databaseEntity to save.
+     * @return the saved database entity.
      */
-    void updateDatabase(PolarisDatabaseEntity databaseEntity);
+    PolarisDatabaseEntity saveDatabase(PolarisDatabaseEntity databaseEntity);
 
     /**
      * Creates a table entry.
@@ -40,16 +41,18 @@ public interface PolarisStoreService {
 
     /**
      * Fetches table entry.
+     * @param dbName database name
      * @param tableName table name
      * @return Polaris Table entity
      */
-    Optional<PolarisTableEntity> getTable(String tableName);
+    Optional<PolarisTableEntity> getTable(String dbName, String tableName);
 
     /**
-     * Updates existing table entry.
+     * Updates existing or creates new table entry.
      * @param tableEntity tableEntity to save.
+     * @return The saved entity.
      */
-    void updateTable(PolarisTableEntity tableEntity);
+    PolarisTableEntity saveTable(PolarisTableEntity tableEntity);
 
     /**
      * Deletes the table entry.

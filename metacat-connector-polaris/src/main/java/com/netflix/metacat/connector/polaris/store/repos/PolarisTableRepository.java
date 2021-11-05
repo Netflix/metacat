@@ -1,6 +1,7 @@
 package com.netflix.metacat.connector.polaris.store.repos;
 
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
+import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,4 +41,14 @@ public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity
         @Param("dbName") final String dbName,
         @Param("tableNamePrefix") final String tableNamePrefix,
         Pageable page);
+
+    /**
+     * Fetch table entry.
+     * @param dbName database name
+     * @param tblName table name
+     * @return optional table entry
+     */
+    Optional<PolarisTableEntity> findByDbNameAndTblName(
+        @Param("dbName") final String dbName,
+        @Param("tblName") final String tblName);
 }

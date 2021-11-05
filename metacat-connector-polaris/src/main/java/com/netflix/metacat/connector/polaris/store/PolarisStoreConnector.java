@@ -43,18 +43,18 @@ public class PolarisStoreConnector implements PolarisStoreService {
      */
     @Override
     public Optional<PolarisDatabaseEntity> getDatabase(final String databaseName) {
-        // TODO
-        return Optional.empty();
+        return dbRepo.findByDbName(databaseName);
     }
 
     /**
-     * Updates existing database entity.
+     * Updates existing database entity, or creates a new one if not present.
      *
      * @param databaseEntity databaseEntity to save.
+     * @return the saved database entity.
      */
     @Override
-    public void updateDatabase(final PolarisDatabaseEntity databaseEntity) {
-        // TODO
+    public PolarisDatabaseEntity saveDatabase(final PolarisDatabaseEntity databaseEntity) {
+        return dbRepo.save(databaseEntity);
     }
 
     boolean databaseExists(final String dbId) {
@@ -80,19 +80,19 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return Polaris Table entity
      */
     @Override
-    public Optional<PolarisTableEntity> getTable(final String tableName) {
-        // TODO
-        return Optional.empty();
+    public Optional<PolarisTableEntity> getTable(final String dbName, final String tableName) {
+        return tblRepo.findByDbNameAndTblName(dbName, tableName);
     }
 
     /**
      * Updates existing table entry.
      *
      * @param tableEntity tableEntity to save.
+     * @return The saved entity.
      */
     @Override
-    public void updateTable(final PolarisTableEntity tableEntity) {
-        // TODO
+    public PolarisTableEntity saveTable(final PolarisTableEntity tableEntity) {
+        return tblRepo.save(tableEntity);
     }
 
     /**
