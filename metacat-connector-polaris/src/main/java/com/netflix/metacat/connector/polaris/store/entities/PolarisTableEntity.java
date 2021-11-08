@@ -1,6 +1,7 @@
 package com.netflix.metacat.connector.polaris.store.entities;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,7 @@ import javax.persistence.Version;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @EqualsAndHashCode
 @Entity
 @ToString(callSuper = true)
