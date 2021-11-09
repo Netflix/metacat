@@ -51,4 +51,15 @@ public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity
     Optional<PolarisTableEntity> findByDbNameAndTblName(
         @Param("dbName") final String dbName,
         @Param("tblName") final String tblName);
+
+
+    /**
+     * Checks if table with the database name and table name exists.
+     * @param dbName database name of the table to be looked up.
+     * @param tblName table name to be looked up.
+     * @return true, if table exists. false, otherwise.
+     */
+    boolean existsByDbNameAndTblName(
+        @Param("dbName") final String dbName,
+        @Param("tblName") final String tblName);
 }

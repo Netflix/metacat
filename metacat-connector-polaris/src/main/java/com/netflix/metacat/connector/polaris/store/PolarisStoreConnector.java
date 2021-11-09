@@ -47,6 +47,17 @@ public class PolarisStoreConnector implements PolarisStoreService {
     }
 
     /**
+     * Checks if database with the name exists.
+     *
+     * @param databaseName database name to look up.
+     * @return true, if database exists. false, otherwise.
+     */
+    @Override
+    public boolean databaseExists(final String databaseName) {
+        return dbRepo.existsByDbName(databaseName);
+    }
+
+    /**
      * Updates existing database entity, or creates a new one if not present.
      *
      * @param databaseEntity databaseEntity to save.
@@ -57,7 +68,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
         return dbRepo.save(databaseEntity);
     }
 
-    boolean databaseExists(final String dbId) {
+    boolean databaseExistsById(final String dbId) {
         return dbRepo.existsById(dbId);
     }
 
@@ -106,7 +117,18 @@ public class PolarisStoreConnector implements PolarisStoreService {
         tblRepo.deleteByName(dbName, tableName);
     }
 
-    boolean tableExists(final String tblId) {
+    /**
+     * Checks if table with the name exists.
+     *
+     * @param tableName table name to look up.
+     * @return true, if table exists. false, otherwise.
+     */
+    @Override
+    public boolean tableExists(final String databaseName, final String tableName) {
+        return tblRepo.existsByDbNameAndTblName(databaseName, tableName);
+    }
+
+    boolean tableExistsById(final String tblId) {
         return tblRepo.existsById(tblId);
     }
 
