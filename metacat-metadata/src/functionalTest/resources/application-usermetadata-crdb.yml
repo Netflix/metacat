@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    platform: crdb
+    url: jdbc:postgresql://127.0.0.1:26257/defaultdb?sslmode=disable
+    username: admin
+    password:
+    schema: classpath:/crdb/schema.sql
+    initialization-mode: always
+    driverClassName: org.postgresql.Driver
+    hikari:
+      connection-timeout: 5000 # 5 seconds
+      max-lifetime: 580000 # 9 minutes 40 seconds
+      data-source-properties:
+        loginTimeout: 5 # 5 seconds
+        socketTimeout: 30 # 30 seconds
+        ApplicationName: polaris
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect:  org.hibernate.dialect.PostgreSQLDialect

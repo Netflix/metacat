@@ -17,7 +17,7 @@
  */
 
 /**
- *  Metacat metadata test classes.
+ *  Metacat metadata utility classes.
  */
-package com.netflix.metacat.metadata;
+package com.netflix.metacat.metadata.util;
 

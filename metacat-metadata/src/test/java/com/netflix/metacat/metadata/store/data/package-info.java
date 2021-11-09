@@ -19,5 +19,4 @@
 /**
  *  Metacat metadata test classes.
  */
-package com.netflix.metacat.metadata;
-
+package com.netflix.metacat.metadata.store.data;
