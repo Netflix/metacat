@@ -52,7 +52,11 @@ public class PolarisConnectorTest {
 
     private PolarisDatabaseEntity createDB(final String dbName) {
         final PolarisDatabaseEntity entity = polarisConnector.createDatabase(dbName);
-        Assert.assertTrue(polarisConnector.databaseExists(entity.getDbId()));
+
+        // assert that database exists, post-creation.
+        Assert.assertTrue(polarisConnector.databaseExistsById(entity.getDbId()));
+        Assert.assertTrue(polarisConnector.databaseExists(dbName));
+
         Assert.assertEquals(0L, entity.getVersion().longValue());
         Assert.assertTrue(entity.getDbId().length() > 0);
         Assert.assertEquals(dbName, entity.getDbName());
@@ -65,7 +69,10 @@ public class PolarisConnectorTest {
 
     private PolarisTableEntity createTable(final String dbName, final String tblName) {
         final PolarisTableEntity entity = polarisConnector.createTable(dbName, tblName);
-        Assert.assertTrue(polarisConnector.tableExists(entity.getTblId()));
+
+        Assert.assertTrue(polarisConnector.tableExistsById(entity.getTblId()));
+        Assert.assertTrue(polarisConnector.tableExists(dbName, tblName));
+
         Assert.assertTrue(entity.getTblId().length() > 0);
         Assert.assertTrue(entity.getVersion() >= 0);
 
@@ -108,7 +115,7 @@ public class PolarisConnectorTest {
         final PolarisTableEntity tblEntity = createTable(dbName, tblName);
 
         polarisConnector.deleteTable(dbName, tblName);
-        Assert.assertFalse(polarisConnector.tableExists(tblEntity.getTblId()));
+        Assert.assertFalse(polarisConnector.tableExistsById(tblEntity.getTblId()));
     }
 
     /**

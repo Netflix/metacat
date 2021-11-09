@@ -21,4 +21,10 @@ public interface PolarisDatabaseRepository extends JpaRepository<PolarisDatabase
      */
     Optional<PolarisDatabaseEntity> findByDbName(@Param("dbName") final String dbName);
 
+    /**
+     * Check if database with that name exists.
+     * @param dbName database name to look up.
+     * @return true, if database exists. false, otherwise.
+     */
+    boolean existsByDbName(@Param("dbName") final String dbName);
 }

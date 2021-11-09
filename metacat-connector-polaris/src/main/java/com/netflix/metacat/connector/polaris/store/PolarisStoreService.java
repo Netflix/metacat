@@ -25,6 +25,13 @@ public interface PolarisStoreService {
     Optional<PolarisDatabaseEntity> getDatabase(String databaseName);
 
     /**
+     * Checks if database with the name exists.
+     * @param databaseName database name to look up.
+     * @return true, if database exists. false, otherwise.
+     */
+    boolean databaseExists(String databaseName);
+
+    /**
      * Updates existing database entity.
      * @param databaseEntity databaseEntity to save.
      * @return the saved database entity.
@@ -60,6 +67,14 @@ public interface PolarisStoreService {
      * @param tableName table name.
      */
     void deleteTable(String dbName, String tableName);
+
+    /**
+     * Checks if table with the name exists.
+     * @param databaseName database name of the table to be looked up.
+     * @param tableName table name to look up.
+     * @return true, if table exists. false, otherwise.
+     */
+    boolean tableExists(String databaseName, String tableName);
 
     /**
      * Gets tables in the database and tableName prefix.
