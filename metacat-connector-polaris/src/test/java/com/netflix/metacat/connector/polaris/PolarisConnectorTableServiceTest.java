@@ -8,11 +8,17 @@ import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
 import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -54,18 +60,35 @@ public class PolarisConnectorTableServiceTest {
     @Shared
     private ConnectorContext connectorContext = Mockito.mock(ConnectorContext.class);
 
+    @Shared
+    private ThreadServiceManager serviceManager = Mockito.mock(ThreadServiceManager.class);
+
+    @Shared
+    private PolarisConnectorTableService polarisConnectorTableService;
+
+    /**
+     * Initialization.
+     */
+    @BeforeEach
+    public void init() {
+        polarisConnectorTableService = new PolarisConnectorTableService(
+            polarisConnector,
+            CATALOG_NAME,
+            polarisDBService,
+            new HiveConnectorInfoConverter(new HiveTypeConverter()),
+            new IcebergTableHandler(connectorContext,
+                new IcebergTableCriteriaImpl(connectorContext),
+                new IcebergTableOpWrapper(connectorContext, serviceManager),
+                new IcebergTableOpsProxy()),
+            connectorContext
+        );
+    }
+
     /**
      * Test empty list tables.
      */
     @Test
     public void testListTablesEmpty() {
-        final PolarisConnectorTableService polarisConnectorTableService = new PolarisConnectorTableService(
-            polarisConnector,
-            CATALOG_NAME,
-            polarisDBService,
-            new HiveConnectorInfoConverter(new HiveTypeConverter()),
-            connectorContext
-        );
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "");
         final List<QualifiedName> names = polarisConnectorTableService.listNames(
             requestContext, DB_QUALIFIED_NAME, qualifiedName, new Sort(null, SortOrder.ASC), new Pageable(2, 0));
@@ -77,13 +100,6 @@ public class PolarisConnectorTableServiceTest {
      */
     @Test
     public void testTableCreationAndList() {
-        final PolarisConnectorTableService polarisConnectorTableService = new PolarisConnectorTableService(
-            polarisConnector,
-            CATALOG_NAME,
-            polarisDBService,
-            new HiveConnectorInfoConverter(new HiveTypeConverter()),
-            connectorContext
-        );
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
         final TableInfo tableInfo = TableInfo.builder().name(qualifiedName).build();
         polarisConnectorTableService.create(requestContext, tableInfo);
@@ -97,13 +113,6 @@ public class PolarisConnectorTableServiceTest {
      */
     @Test
     public void testMultipleTableCreationAndList() {
-        final PolarisConnectorTableService polarisConnectorTableService = new PolarisConnectorTableService(
-            polarisConnector,
-            CATALOG_NAME,
-            polarisDBService,
-            new HiveConnectorInfoConverter(new HiveTypeConverter()),
-            connectorContext
-        );
         final List<QualifiedName> createdTables = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table" + i);

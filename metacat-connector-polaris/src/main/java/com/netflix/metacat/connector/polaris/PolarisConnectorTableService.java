@@ -9,14 +9,21 @@ import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
+import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
+import com.netflix.metacat.connector.hive.util.HiveTableUtil;
+import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
+import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * table service for polaris connector.
@@ -27,6 +34,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     protected final PolarisConnectorDatabaseService polarisConnectorDatabaseService;
     protected final HiveConnectorInfoConverter connectorConverter;
     protected final ConnectorContext connectorContext;
+    protected final IcebergTableHandler icebergTableHandler;
     protected final String catalogName;
 
     /**
@@ -36,6 +44,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
      * @param catalogName                       catalog name
      * @param polarisConnectorDatabaseService   connector database service
      * @param connectorConverter                converter
+     * @param icebergTableHandler               iceberg table handler
      * @param connectorContext                  the connector context
      */
     public PolarisConnectorTableService(
@@ -43,12 +52,14 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final String catalogName,
         final PolarisConnectorDatabaseService polarisConnectorDatabaseService,
         final HiveConnectorInfoConverter connectorConverter,
+        final IcebergTableHandler icebergTableHandler,
         final ConnectorContext connectorContext
     ) {
         this.polarisConnector = polarisConnector;
         this.polarisConnectorDatabaseService = polarisConnectorDatabaseService;
         this.connectorConverter = connectorConverter;
         this.connectorContext = connectorContext;
+        this.icebergTableHandler = icebergTableHandler;
         this.catalogName = catalogName;
     }
 
@@ -74,8 +85,20 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     @Override
     public TableInfo get(final ConnectorRequestContext requestContext, final QualifiedName name) {
         try {
-            // TODO: implement once data model supports this operation
-            return null;
+            final Optional<PolarisTableEntity> polarisTableEntity =
+                polarisConnector.getTable(name.getDatabaseName(), name.getTableName());
+            if (!polarisTableEntity.isPresent()) {
+                throw new TableNotFoundException(name);
+            }
+            final PolarisTableMapper mapper = new PolarisTableMapper(name.getCatalogName());
+            final TableInfo info = mapper.toInfo(polarisTableEntity.get());
+            final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
+            final IcebergTableWrapper icebergTable = icebergTableHandler.getIcebergTable(
+                name, tableLoc, connectorContext.getConfig().isIcebergCacheEnabled());
+            return connectorConverter.fromIcebergTableToTableInfo(name, icebergTable, tableLoc, info);
+        } catch (TableNotFoundException exception) {
+            log.error(String.format("Not found exception for polaris table %s", name), exception);
+            throw exception;
         } catch (Exception exception) {
             final String msg = String.format("Failed getting polaris table %s", name);
             log.error(msg, exception);
