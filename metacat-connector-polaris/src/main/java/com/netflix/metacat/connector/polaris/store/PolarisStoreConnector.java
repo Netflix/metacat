@@ -4,7 +4,6 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntit
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -15,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * This class exposes APIs for CRUD operations.
@@ -44,6 +44,39 @@ public class PolarisStoreConnector implements PolarisStoreService {
     @Override
     public Optional<PolarisDatabaseEntity> getDatabase(final String databaseName) {
         return dbRepo.findByDbName(databaseName);
+    }
+
+    /**
+     * Deletes the database entry.
+     *
+     * @param dbName database name.
+     */
+    @Override
+    @Transactional
+    public void deleteDatabase(final String dbName) {
+        dbRepo.deleteByName(dbName);
+    }
+
+    /**
+     * Fetches all database entities.
+     *
+     * @return Polaris Database entities
+     */
+    @Override
+    public List<PolarisDatabaseEntity> getAllDatabases() {
+        final int pageFetchSize = 1000;
+        final List<PolarisDatabaseEntity> retval = new ArrayList<>();
+        Pageable page = PageRequest.of(0, pageFetchSize);
+        boolean hasNext;
+        do {
+            final Slice<PolarisDatabaseEntity> dbs = dbRepo.getDatabases(page);
+            retval.addAll(dbs.toList());
+            hasNext = dbs.hasNext();
+            if (hasNext) {
+                page = dbs.nextPageable();
+            }
+        } while (hasNext);
+        return retval;
     }
 
     /**
