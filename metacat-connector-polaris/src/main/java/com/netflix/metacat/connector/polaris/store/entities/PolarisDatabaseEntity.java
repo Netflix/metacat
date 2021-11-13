@@ -22,7 +22,7 @@ import javax.persistence.Version;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 @EqualsAndHashCode
 @Entity
 @ToString(callSuper = true)

@@ -420,6 +420,16 @@ public final class QualifiedName implements Serializable {
         return tableName;
     }
 
+    /**
+     * Returns whether other is prefix of this.
+     *
+     * @param other the other QualifiedName
+     * @return whether other is prefix
+     */
+    public boolean startsWith(final QualifiedName other) {
+        return other == null ? true : toString().startsWith(other.toString());
+    }
+
     public boolean isCatalogDefinition() {
         return !catalogName.isEmpty();
     }

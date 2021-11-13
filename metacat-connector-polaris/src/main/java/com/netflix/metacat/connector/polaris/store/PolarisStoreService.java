@@ -25,6 +25,18 @@ public interface PolarisStoreService {
     Optional<PolarisDatabaseEntity> getDatabase(String databaseName);
 
     /**
+     * Deletes the database entry.
+     * @param dbName database name.
+     */
+    void deleteDatabase(String dbName);
+
+    /**
+     * Fetches all database entities.
+     * @return Polaris Database entities
+     */
+    List<PolarisDatabaseEntity> getAllDatabases();
+
+    /**
      * Checks if database with the name exists.
      * @param databaseName database name to look up.
      * @return true, if database exists. false, otherwise.
