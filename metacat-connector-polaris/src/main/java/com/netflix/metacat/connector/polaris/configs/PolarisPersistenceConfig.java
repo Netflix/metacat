@@ -2,6 +2,7 @@ package com.netflix.metacat.connector.polaris.configs;
 
 
 import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
+import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 import com.zaxxer.hikari.HikariDataSource;
@@ -55,7 +56,7 @@ public class PolarisPersistenceConfig {
    * @return PolarisStoreConnector
    */
   @Bean
-  public PolarisStoreConnector polarisConnector(
+  public PolarisStoreService polarisConnector(
       final PolarisDatabaseRepository repo, final PolarisTableRepository tblRepo) {
     return new PolarisStoreConnector(repo, tblRepo);
   }
