@@ -28,7 +28,7 @@ import java.util.Random;
 @SpringBootTest(classes = {PolarisPersistenceConfig.class})
 @ActiveProfiles(profiles = {"polaristest"})
 @AutoConfigureDataJpa
-public class PolarisConnectorTest {
+public class PolarisStoreConnectorTest {
     private static final String DB_NAME_FOO = "foo";
     private static final String TBL_NAME_BAR = "bar";
     private static Random random = new Random(System.currentTimeMillis());
@@ -158,5 +158,23 @@ public class PolarisConnectorTest {
         tblEntity.setTblName(newTblName);
         final PolarisTableEntity updatedTblEntity = polarisConnector.saveTable(tblEntity);
         Assert.assertEquals(newTblName, updatedTblEntity.getTblName());
+    }
+
+    /**
+     * Test to validate that the table can be created via a PolarisTableEntity parameter.
+     * Also tests that metadata_location is getting stored.
+     */
+    @Test
+    public void createTableWithSaveApi() {
+        final String dbName = generateDatabaseName();
+        createDB(dbName);
+
+        final String tblName = generateTableName();
+        final String metadataLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/foo";
+        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName);
+        e.setMetadataLocation(metadataLocation);
+
+        final PolarisTableEntity savedEntity = polarisConnector.saveTable(e);
+        Assert.assertEquals(metadataLocation, savedEntity.getMetadataLocation());
     }
 }

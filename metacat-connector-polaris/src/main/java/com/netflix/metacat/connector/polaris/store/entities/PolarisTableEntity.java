@@ -47,6 +47,12 @@ public class PolarisTableEntity {
     @Column(name = "tbl_name", nullable = false)
     private String tblName;
 
+    @Basic
+    @Setter
+    @Column(name = "metadata_location", nullable = true, updatable = true)
+    private String metadataLocation;
+
+
     /**
      * Constructor for Polaris Table Entity.
      * @param dbName database name
