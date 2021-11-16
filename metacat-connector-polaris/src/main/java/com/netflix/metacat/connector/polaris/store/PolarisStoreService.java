@@ -83,4 +83,15 @@ public interface PolarisStoreService {
      * @return list of table names in the database with the table name prefix.
      */
     List<String> getTables(String databaseName, String tableNamePrefix);
+
+    /**
+     * Do an atomic compare-and-swap to update the table's metadata location.
+     * @param databaseName database name of the table
+     * @param tableName table name
+     * @param expectedLocation expected current metadata-location of the table
+     * @param newLocation new metadata location of the table
+     * @return true, if update was successful. false, otherwise.
+     */
+    boolean updateTableMetadataLocation(
+        String databaseName, String tableName, String expectedLocation, String newLocation);
 }

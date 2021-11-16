@@ -177,4 +177,35 @@ public class PolarisStoreConnectorTest {
         final PolarisTableEntity savedEntity = polarisConnector.saveTable(e);
         Assert.assertEquals(metadataLocation, savedEntity.getMetadataLocation());
     }
+
+    /**
+     * Test to verify that compare-and-swap update of the metadata location works as expected.
+     */
+    @Test
+    public void updateMetadataLocation() {
+        final String dbName = generateDatabaseName();
+        createDB(dbName);
+
+        final String tblName = generateTableName();
+        final String metadataLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/foo";
+        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName);
+        e.setMetadataLocation(metadataLocation);
+        final PolarisTableEntity savedEntity = polarisConnector.saveTable(e);
+
+        final String newLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/bar";
+
+        // update should fail since the expected location is not going to match.
+        boolean updatedSuccess = polarisConnector.updateTableMetadataLocation(
+            dbName, tblName, "unexpected_location", newLocation);
+        Assert.assertFalse(updatedSuccess);
+
+        // successful update should happen.
+        updatedSuccess = polarisConnector.updateTableMetadataLocation(dbName, tblName, metadataLocation, newLocation);
+        Assert.assertTrue(updatedSuccess);
+
+
+        // after the successful update, the same call should fail, since the current metadataLocation has changed.
+        updatedSuccess = polarisConnector.updateTableMetadataLocation(dbName, tblName, metadataLocation, newLocation);
+        Assert.assertFalse(updatedSuccess);
+    }
 }

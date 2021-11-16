@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * JPA repository implementation for storing PolarisTableEntity.
@@ -62,4 +63,24 @@ public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity
     boolean existsByDbNameAndTblName(
         @Param("dbName") final String dbName,
         @Param("tblName") final String tblName);
+
+
+
+    /**
+     * Do an atomic compare-and-swap on the metadata location of the table.
+     * @param dbName database name of the table
+     * @param tableName table name
+     * @param expectedLocation expected metadata location before the update is done.
+     * @param newLocation new metadata location of the table.
+     * @return number of rows that are updated.
+     */
+    @Modifying
+    @Query("UPDATE PolarisTableEntity t SET t.metadataLocation = :newLocation "
+        + "WHERE t.metadataLocation = :expectedLocation AND t.dbName = :dbName AND t.tblName = :tableName")
+    @Transactional
+    int updateMetadataLocation(
+        @Param("dbName") final String dbName,
+        @Param("tableName") final String tableName,
+        @Param("expectedLocation") final String expectedLocation,
+        @Param("newLocation") final String newLocation);
 }

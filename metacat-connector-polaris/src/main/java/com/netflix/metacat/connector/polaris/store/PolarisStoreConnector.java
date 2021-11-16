@@ -156,4 +156,21 @@ public class PolarisStoreConnector implements PolarisStoreService {
         } while (hasNext);
         return retval;
     }
+
+    /**
+     * Do an atomic compare-and-swap to update the table's metadata location.
+     *
+     * @param databaseName     database name of the table
+     * @param tableName        table name
+     * @param expectedLocation expected current metadata-location of the table
+     * @param newLocation      new metadata location of the table
+     * @return true, if update was successful. false, otherwise.
+     */
+    @Override
+    public boolean updateTableMetadataLocation(final String databaseName, final String tableName,
+        final String expectedLocation, final String newLocation) {
+        final int updatedRowCount =
+            tblRepo.updateMetadataLocation(databaseName, tableName, expectedLocation, newLocation);
+        return updatedRowCount > 0;
+    }
 }
