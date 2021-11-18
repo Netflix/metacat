@@ -6,7 +6,6 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntit
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
-import java.util.Optional;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -20,6 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 /**
@@ -69,7 +69,7 @@ public class PolarisStoreConnectorTest {
     }
 
     private PolarisTableEntity createTable(final String dbName, final String tblName) {
-        final PolarisTableEntity entity = polarisConnector.createTable(dbName, tblName);
+        final PolarisTableEntity entity = polarisConnector.createTable(dbName, tblName, "loc");
 
         Assert.assertTrue(polarisConnector.tableExistsById(entity.getTblId()));
         Assert.assertTrue(polarisConnector.tableExists(dbName, tblName));
@@ -101,7 +101,7 @@ public class PolarisStoreConnectorTest {
     @Test
     public void testTableCreationFailIfDatabaseIsAbsent() {
         Assertions.assertThrows(DataAccessException.class, () ->
-            polarisConnector.createTable(generateDatabaseName(), generateTableName()));
+            polarisConnector.createTable(generateDatabaseName(), generateTableName(), "loc"));
     }
 
     /**

@@ -2,6 +2,7 @@ package com.netflix.metacat.connector.polaris.store;
 
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -54,9 +55,10 @@ public interface PolarisStoreService {
      * Creates a table entry.
      * @param dbName database name
      * @param tableName table name
+     * @param metadataLocation metadata location
      * @return Polaris Table entity.
      */
-    PolarisTableEntity createTable(String dbName, String tableName);
+    PolarisTableEntity createTable(String dbName, String tableName, String metadataLocation);
 
     /**
      * Fetches table entry.
@@ -65,6 +67,14 @@ public interface PolarisStoreService {
      * @return Polaris Table entity
      */
     Optional<PolarisTableEntity> getTable(String dbName, String tableName);
+
+    /**
+     * Fetch table entities for given database.
+     * @param databaseName database name
+     * @param tableNamePrefix table name prefix. can be empty.
+     * @return table entities in the database.
+     */
+    List<PolarisTableEntity> getTableEntities(final String databaseName, final String tableNamePrefix);
 
     /**
      * Updates existing or creates new table entry.

@@ -112,8 +112,12 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return entity corresponding to created table entry
      */
     @Override
-    public PolarisTableEntity createTable(final String dbName, final String tableName) {
-        final PolarisTableEntity e = new PolarisTableEntity(dbName, tableName);
+    public PolarisTableEntity createTable(final String dbName, final String tableName, final String metadataLocation) {
+        final PolarisTableEntity e = PolarisTableEntity.builder()
+            .dbName(dbName)
+            .tblName(tableName)
+            .metadataLocation(metadataLocation)
+            .build();
         return tblRepo.save(e);
     }
 
@@ -126,6 +130,31 @@ public class PolarisStoreConnector implements PolarisStoreService {
     @Override
     public Optional<PolarisTableEntity> getTable(final String dbName, final String tableName) {
         return tblRepo.findByDbNameAndTblName(dbName, tableName);
+    }
+
+    /**
+     * Fetch table entities for given database.
+     * @param databaseName database name
+     * @param tableNamePrefix table name prefix. can be empty.
+     * @return table entities in the database.
+     */
+    @Override
+    public List<PolarisTableEntity> getTableEntities(final String databaseName, final String tableNamePrefix) {
+        final int pageFetchSize = 1000;
+        final List<PolarisTableEntity> retval = new ArrayList<>();
+        final String tblPrefix =  tableNamePrefix == null ? "" : tableNamePrefix;
+        Pageable page = PageRequest.of(0, pageFetchSize, Sort.by("tblName").ascending());
+        Slice<PolarisTableEntity> tbls;
+        boolean hasNext;
+        do {
+            tbls = tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tblPrefix, page);
+            retval.addAll(tbls.toList());
+            hasNext = tbls.hasNext();
+            if (hasNext) {
+                page = tbls.nextPageable();
+            }
+        } while (hasNext);
+        return retval;
     }
 
     /**
