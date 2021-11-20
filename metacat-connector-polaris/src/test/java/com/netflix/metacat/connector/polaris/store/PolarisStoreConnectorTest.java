@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -207,5 +208,36 @@ public class PolarisStoreConnectorTest {
         // after the successful update, the same call should fail, since the current metadataLocation has changed.
         updatedSuccess = polarisConnector.updateTableMetadataLocation(dbName, tblName, metadataLocation, newLocation);
         Assert.assertFalse(updatedSuccess);
+    }
+
+    /**
+     * Test updateLocation(...) while save(...) is called in interleaved fashion.
+     */
+    @Test
+    public void updateMetadataLocationWithInterleavedSave() {
+        final String dbName = generateDatabaseName();
+        createDB(dbName);
+
+        final String tblName = generateTableName();
+        final String location0 = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/location0";
+        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName);
+        e.setMetadataLocation(location0);
+        final PolarisTableEntity savedEntity = polarisConnector.saveTable(e);
+
+        final String location1 = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/location1";
+
+        // update the metadata location.
+        final boolean updatedSuccess =
+            polarisConnector.updateTableMetadataLocation(dbName, tblName, location0, location1);
+        Assert.assertTrue(updatedSuccess);
+
+
+        final String location2 = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/location2";
+        // At this point, savedEntity is stale, and any updates to savedEntity should not be allowed
+        // to persist.
+        savedEntity.setMetadataLocation(location2);
+        Assertions.assertThrows(OptimisticLockingFailureException.class, () -> {
+            polarisConnector.saveTable(savedEntity);
+        });
     }
 }
