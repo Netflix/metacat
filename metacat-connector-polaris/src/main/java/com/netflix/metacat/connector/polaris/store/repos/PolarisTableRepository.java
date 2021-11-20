@@ -74,7 +74,7 @@ public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity
      * @param newLocation new metadata location of the table.
      * @return number of rows that are updated.
      */
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE PolarisTableEntity t SET t.metadataLocation = :newLocation, t.version = t.version + 1 "
         + "WHERE t.metadataLocation = :expectedLocation AND t.dbName = :dbName AND t.tblName = :tableName")
     @Transactional
