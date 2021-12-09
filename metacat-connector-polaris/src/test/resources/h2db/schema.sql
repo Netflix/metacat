@@ -14,7 +14,7 @@ create table TBLS (
   tbl_name varchar(255) not null,
   metadata_location varchar(1024),
   constraint uniq_name unique(db_name, tbl_name),
-  foreign key (db_name) references DBS(name)
+  foreign key (db_name) references DBS(name) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE INDEX DB_NAME_IDX ON TBLS(db_name);

@@ -10,6 +10,8 @@ import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl;
@@ -25,6 +27,7 @@ import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
 import com.netflix.spectator.api.NoopRegistry;
 import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +42,9 @@ import spock.lang.Shared;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -250,6 +255,64 @@ public class PolarisConnectorTableServiceTest {
         Assert.assertEquals(fields.get(2).getName(), "dateint");
         Assert.assertEquals(fields.get(2).getComment(), "3rd field");
         Assert.assertEquals(fields.get(2).getSourceType(), "int");
+    }
+
+    /**
+     * Test update table reject cases.
+     */
+    @Test
+    public void testUpdateTableReject() {
+        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
+        final String location0 = "src/test/resources/metadata/00000-9b5d4c36-130c-4288-9599-7d850c203d11.metadata.json";
+        final String location1 = "src/test/resources/metadata/00001-abf48887-aa4f-4bcc-9219-1e1721314ee1.metadata.json";
+        final String location2 = "src/test/resources/metadata/00002-2d6c1951-31d5-4bea-8edd-e35746b172f3.metadata.json";
+        final Map<String, String> metadata = new HashMap<>();
+        metadata.put("metadata_location", location0);
+        final TableInfo tableInfo0 = TableInfo.builder().name(qualifiedName).metadata(metadata).build();
+        polarisTableService.create(requestContext, tableInfo0);
+        final TableInfo tableResult0 = polarisTableService.get(requestContext, qualifiedName);
+        Assert.assertEquals(tableResult0.getMetadata().get("metadata_location"), location0);
+        // check update location without setting prev location fails
+        metadata.put("metadata_location", location1);
+        final TableInfo tableInfo1 = TableInfo.builder().name(qualifiedName).metadata(metadata).build();
+        Assertions.assertThrows(InvalidMetaException.class,
+            () -> polarisTableService.update(requestContext, tableInfo1));
+        // check update location to new location equals blank fails
+        metadata.put("previous_metadata_location", location0);
+        metadata.put("metadata_location", "");
+        final TableInfo tableInfo2 = TableInfo.builder().name(qualifiedName).metadata(metadata).build();
+        Assertions.assertThrows(InvalidMetaException.class,
+            () -> polarisTableService.update(requestContext, tableInfo2));
+        // check update location existing and previous location do not match fails
+        metadata.put("previous_metadata_location", location1);
+        metadata.put("metadata_location", location2);
+        final TableInfo tableInfo3 = TableInfo.builder().name(qualifiedName).metadata(metadata).build();
+        Assertions.assertThrows(TablePreconditionFailedException.class,
+            () -> polarisTableService.update(requestContext, tableInfo3));
+    }
+
+    /**
+     * Test update table using metadata json resource file.
+     */
+    @Test
+    public void testUpdateTableAccept() {
+        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
+        final String location0 = "src/test/resources/metadata/00000-9b5d4c36-130c-4288-9599-7d850c203d11.metadata.json";
+        final TableInfo tableInfo0 = TableInfo.builder()
+            .name(qualifiedName)
+            .metadata(ImmutableMap.of("metadata_location", location0))
+            .build();
+        polarisTableService.create(requestContext, tableInfo0);
+        final TableInfo tableResult0 = polarisTableService.get(requestContext, qualifiedName);
+        Assert.assertEquals(tableResult0.getMetadata().get("metadata_location"), location0);
+        final String location1 = "src/test/resources/metadata/00001-abf48887-aa4f-4bcc-9219-1e1721314ee1.metadata.json";
+        final TableInfo tableInfo1 = TableInfo.builder()
+            .name(qualifiedName)
+            .metadata(ImmutableMap.of("previous_metadata_location", location0, "metadata_location", location1))
+            .build();
+        polarisTableService.update(requestContext, tableInfo1);
+        final TableInfo tableResult1 = polarisTableService.get(requestContext, qualifiedName);
+        Assert.assertEquals(tableResult1.getMetadata().get("metadata_location"), location1);
     }
 }
 
