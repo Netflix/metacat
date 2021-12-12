@@ -1,7 +1,6 @@
 package com.netflix.metacat.connector.polaris.store.repos;
 
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
-import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 /**
  * JPA repository implementation for storing PolarisTableEntity.
@@ -64,7 +65,18 @@ public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity
         @Param("dbName") final String dbName,
         @Param("tblName") final String tblName);
 
-
+    /**
+     * Fetch table entities in database.
+     * @param dbName database name
+     * @param tableNamePrefix table name prefix. can be empty.
+     * @param page pageable.
+     * @return table entities that belong to the database.
+     */
+    @Query("SELECT e FROM PolarisTableEntity e WHERE e.dbName = :dbName AND e.tblName LIKE :tableNamePrefix%")
+    Slice<PolarisTableEntity> findAllTablesByDbNameAndTablePrefix(
+        @Param("dbName") final String dbName,
+        @Param("tableNamePrefix") final String tableNamePrefix,
+        Pageable page);
 
     /**
      * Do an atomic compare-and-swap on the metadata location of the table.
