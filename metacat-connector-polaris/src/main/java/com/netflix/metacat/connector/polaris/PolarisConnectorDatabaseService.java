@@ -12,7 +12,7 @@ import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundEx
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.connector.polaris.mappers.PolarisDatabaseMapper;
-import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
+import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -28,17 +28,17 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class PolarisConnectorDatabaseService implements ConnectorDatabaseService {
-    private final PolarisStoreConnector polarisConnector;
+    private final PolarisStoreService polarisStoreService;
 
     /**
      * Constructor.
      *
-     * @param polarisConnector polaris connector
+     * @param polarisStoreService polaris connector
      */
     public PolarisConnectorDatabaseService(
-        final PolarisStoreConnector polarisConnector
+        final PolarisStoreService polarisStoreService
     ) {
-        this.polarisConnector = polarisConnector;
+        this.polarisStoreService = polarisStoreService;
     }
 
     /**
@@ -52,7 +52,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             throw new DatabaseAlreadyExistsException(name);
         }
         try {
-            this.polarisConnector.createDatabase(name.getDatabaseName());
+            this.polarisStoreService.createDatabase(name.getDatabaseName());
         } catch (DataIntegrityViolationException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
@@ -71,7 +71,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             throw new DatabaseNotFoundException(name);
         }
         try {
-            this.polarisConnector.deleteDatabase(name.getDatabaseName());
+            this.polarisStoreService.deleteDatabase(name.getDatabaseName());
         } catch (DataIntegrityViolationException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
@@ -87,10 +87,10 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     public void update(final ConnectorRequestContext context, final DatabaseInfo databaseInfo) {
         final QualifiedName name = databaseInfo.getName();
         try {
-            final PolarisDatabaseEntity db = polarisConnector.getDatabase(name.getDatabaseName())
+            final PolarisDatabaseEntity db = polarisStoreService.getDatabase(name.getDatabaseName())
                 .orElseThrow(() -> new DatabaseNotFoundException(name));
             // currently db objects have no mutable fields so this is noop
-            polarisConnector.saveDatabase(db.toBuilder().build());
+            polarisStoreService.saveDatabase(db.toBuilder().build());
         } catch (DatabaseNotFoundException exception) {
             log.error(String.format("Not found exception for polaris database %s", name), exception);
             throw exception;
@@ -109,7 +109,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     public DatabaseInfo get(final ConnectorRequestContext context, final QualifiedName name) {
         try {
             final PolarisDatabaseMapper mapper = new PolarisDatabaseMapper(name.getCatalogName());
-            final PolarisDatabaseEntity db = polarisConnector.getDatabase(name.getDatabaseName())
+            final PolarisDatabaseEntity db = polarisStoreService.getDatabase(name.getDatabaseName())
                 .orElseThrow(() -> new DatabaseNotFoundException(name));
             return mapper.toInfo(db);
         } catch (DatabaseNotFoundException exception) {
@@ -127,7 +127,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     @Override
     public boolean exists(final ConnectorRequestContext context, final QualifiedName name) {
         try {
-            return polarisConnector.getDatabase(name.getDatabaseName()).isPresent();
+            return polarisStoreService.getDatabase(name.getDatabaseName()).isPresent();
         } catch (Exception exception) {
             throw new ConnectorException(
                 String.format("Failed exists polaris database %s", name), exception);
@@ -146,7 +146,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         @Nullable final Pageable pageable
     ) {
         try {
-            List<QualifiedName> qualifiedNames = polarisConnector.getAllDatabases().stream()
+            List<QualifiedName> qualifiedNames = polarisStoreService.getAllDatabases().stream()
                 .map(d -> QualifiedName.ofDatabase(name.getCatalogName(), d.getDbName()))
                 .collect(Collectors.toCollection(ArrayList::new));
             if (prefix != null) {
@@ -177,7 +177,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     ) {
         try {
             final PolarisDatabaseMapper mapper = new PolarisDatabaseMapper(name.getCatalogName());
-            List<PolarisDatabaseEntity> dbs = polarisConnector.getAllDatabases();
+            List<PolarisDatabaseEntity> dbs = polarisStoreService.getAllDatabases();
             if (prefix != null) {
                 dbs = dbs.stream()
                     .filter(n -> QualifiedName.ofDatabase(name.getCatalogName(), n.getDbName()).startsWith(prefix))

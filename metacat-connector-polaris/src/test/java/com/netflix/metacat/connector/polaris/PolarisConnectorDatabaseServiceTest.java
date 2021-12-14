@@ -8,7 +8,7 @@ import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExi
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
-import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
+import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +41,7 @@ public class PolarisConnectorDatabaseServiceTest {
     private static final QualifiedName DB2_QUALIFIED_NAME = QualifiedName.ofDatabase(CATALOG_NAME, DB2_NAME);
 
     @Autowired
-    private PolarisStoreConnector polarisConnector;
+    private PolarisStoreService polarisStoreService;
 
     @Shared
     private ConnectorRequestContext requestContext = new ConnectorRequestContext();
@@ -54,7 +54,7 @@ public class PolarisConnectorDatabaseServiceTest {
      */
     @BeforeEach
     public void init() {
-        polarisDBService = new PolarisConnectorDatabaseService(polarisConnector);
+        polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService);
     }
 
     /**

@@ -5,6 +5,7 @@
 -- Finland, http://www.stat.fi/worldinfigures.
 --
 
+DROP DATABASE IF EXISTS world;
 CREATE DATABASE world;
 \c world;
 

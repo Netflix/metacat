@@ -22,7 +22,7 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
-import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
+import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.spectator.api.NoopRegistry;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,7 +57,7 @@ public class PolarisConnectorTableServiceTest {
     private static final QualifiedName DB_QUALIFIED_NAME = QualifiedName.ofDatabase(CATALOG_NAME, DB_NAME);
 
     @Autowired
-    private PolarisStoreConnector polarisConnector;
+    private PolarisStoreService polarisStoreService;
 
     @Shared
     private ConnectorRequestContext requestContext = new ConnectorRequestContext();
@@ -81,9 +81,9 @@ public class PolarisConnectorTableServiceTest {
     public void init() {
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
             new DefaultConfigImpl(new MetacatProperties()), new NoopRegistry(), null,  Maps.newHashMap());
-        polarisDBService = new PolarisConnectorDatabaseService(polarisConnector);
+        polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService);
         polarisTableService = new PolarisConnectorTableService(
-            polarisConnector,
+            polarisStoreService,
             CATALOG_NAME,
             polarisDBService,
             new HiveConnectorInfoConverter(new HiveTypeConverter()),
