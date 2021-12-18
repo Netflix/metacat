@@ -20,7 +20,7 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
-import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
+import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class PolarisConnectorTableService implements ConnectorTableService {
-    protected final PolarisStoreConnector polarisConnector;
+    protected final PolarisStoreService polarisStoreService;
     protected final PolarisConnectorDatabaseService polarisConnectorDatabaseService;
     protected final HiveConnectorInfoConverter connectorConverter;
     protected final ConnectorContext connectorContext;
@@ -49,7 +49,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     /**
      * Constructor.
      *
-     * @param polarisConnector                  polaris connector
+     * @param polarisStoreService               polaris connector
      * @param catalogName                       catalog name
      * @param polarisConnectorDatabaseService   connector database service
      * @param connectorConverter                converter
@@ -57,14 +57,14 @@ public class PolarisConnectorTableService implements ConnectorTableService {
      * @param connectorContext                  the connector context
      */
     public PolarisConnectorTableService(
-        final PolarisStoreConnector polarisConnector,
+        final PolarisStoreService polarisStoreService,
         final String catalogName,
         final PolarisConnectorDatabaseService polarisConnectorDatabaseService,
         final HiveConnectorInfoConverter connectorConverter,
         final IcebergTableHandler icebergTableHandler,
         final ConnectorContext connectorContext
     ) {
-        this.polarisConnector = polarisConnector;
+        this.polarisStoreService = polarisStoreService;
         this.polarisConnectorDatabaseService = polarisConnectorDatabaseService;
         this.connectorConverter = connectorConverter;
         this.connectorContext = connectorContext;
@@ -85,7 +85,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         try {
             final PolarisTableMapper mapper = new PolarisTableMapper(name.getCatalogName());
             final PolarisTableEntity entity = mapper.toEntity(tableInfo);
-            polarisConnector.createTable(entity.getDbName(), entity.getTblName(), entity.getMetadataLocation());
+            polarisStoreService.createTable(entity.getDbName(), entity.getTblName(), entity.getMetadataLocation());
         } catch (DataIntegrityViolationException | InvalidMetaException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
@@ -109,10 +109,10 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             throw new TableAlreadyExistsException(newName);
         }
         try {
-            final PolarisTableEntity table = polarisConnector
+            final PolarisTableEntity table = polarisStoreService
                 .getTable(oldName.getDatabaseName(), oldName.getTableName())
                 .orElseThrow(() -> new TableNotFoundException(oldName));
-            polarisConnector.saveTable(table.toBuilder().tblName(newName.getTableName()).build());
+            polarisStoreService.saveTable(table.toBuilder().tblName(newName.getTableName()).build());
         } catch (TableNotFoundException exception) {
             log.error(String.format("Not found exception for polaris table %s", oldName), exception);
             throw exception;
@@ -131,7 +131,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     @Override
     public TableInfo get(final ConnectorRequestContext requestContext, final QualifiedName name) {
         try {
-            final PolarisTableEntity polarisTableEntity = polarisConnector
+            final PolarisTableEntity polarisTableEntity = polarisStoreService
                 .getTable(name.getDatabaseName(), name.getTableName())
                 .orElseThrow(() -> new TableNotFoundException(name));
             final PolarisTableMapper mapper = new PolarisTableMapper(name.getCatalogName());
@@ -164,7 +164,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         try {
             final List<QualifiedName> qualifiedNames = Lists.newArrayList();
             final String tableFilter = (prefix != null && prefix.isTableDefinition()) ? prefix.getTableName() : "";
-            for (String tableName : polarisConnector.getTables(name.getDatabaseName(), tableFilter)) {
+            for (String tableName : polarisStoreService.getTables(name.getDatabaseName(), tableFilter)) {
                 final QualifiedName qualifiedName =
                     QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName);
                 if (prefix != null && !qualifiedName.toString().startsWith(prefix.toString())) {
@@ -245,7 +245,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     @Override
     public boolean exists(final ConnectorRequestContext requestContext, final QualifiedName name) {
         try {
-            return polarisConnector.tableExists(name.getDatabaseName(), name.getTableName());
+            return polarisStoreService.tableExists(name.getDatabaseName(), name.getTableName());
         } catch (Exception exception) {
             final String msg = String.format("Failed exists polaris table %s", name);
             log.error(msg, exception);
@@ -263,7 +263,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             throw new TableNotFoundException(name);
         }
         try {
-            polarisConnector.deleteTable(name.getDatabaseName(), name.getTableName());
+            polarisStoreService.deleteTable(name.getDatabaseName(), name.getTableName());
         } catch (DataIntegrityViolationException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
@@ -288,7 +288,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             final PolarisTableMapper mapper = new PolarisTableMapper(name.getCatalogName());
             final String tableFilter = (prefix != null && prefix.isTableDefinition()) ? prefix.getTableName() : "";
             final List<PolarisTableEntity> tbls =
-                polarisConnector.getTableEntities(name.getDatabaseName(), tableFilter);
+                polarisStoreService.getTableEntities(name.getDatabaseName(), tableFilter);
             if (sort != null) {
                 ConnectorUtils.sort(tbls, sort, Comparator.comparing(t -> t.getTblName()));
             }

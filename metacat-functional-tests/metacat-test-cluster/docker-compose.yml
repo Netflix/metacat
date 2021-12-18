@@ -24,6 +24,7 @@ services:
             - hive-metastore
             - hive-metastore-db
             - postgresql
+            - polaris-crdb-init
         ports:
             - '8080'
             - '8000'
@@ -32,6 +33,7 @@ services:
             - '12004'
         volumes:
             - ../build/metacat-war-expanded/ROOT:/usr/local/tomcat/webapps/ROOT
+            - ./resources/log4j.properties:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/log4j.properties
             - ./resources/logging.properties:/usr/local/tomcat/conf/logging.properties
             - ../build/logs/metacat:/usr/local/tomcat/logs
             - ../build/logs/metacat:/var/log/metacat
@@ -45,7 +47,8 @@ services:
                 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
                 -noverify
                 -Dnetflix.environment=test
-                -Dlogging.path=/var/log/metacat
+                -Dlogging.level.org.springframework.web=INFO
+                -Dlogging.level.org.hibernate=INFO
                 -Dnetflix.discovery.registration.enabled=false
                 -Dnetflix.appinfo.validateInstanceId=false
                 -Dnetflix.appinfo.vipAddress=
@@ -108,11 +111,40 @@ services:
         labels:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.hive"
+    polaris-crdb:
+        image: cockroachdb/cockroach:v21.1.11
+        ports:
+            - '26257:26257'
+            - '8081:8080'
+        command: start-single-node --insecure
+        labels:
+            - "com.netflix.metacat.oss.test"
+            - "com.netflix.metacat.oss.polaris.crdb"
+    polaris-crdb-barrier:
+        image: martin/wait:latest
+        depends_on:
+            - polaris-crdb
+        environment:
+            - TARGETS=polaris-crdb:8080,polaris-crdb:26257
+        labels:
+            - "com.netflix.metacat.oss.test"
+            - "com.netflix.metacat.oss.polaris.crdb-barrier"
+    polaris-crdb-init:
+        image: cockroachdb/cockroach:v21.1.11
+        depends_on:
+            - polaris-crdb-barrier
+        volumes:
+            - ./datastores/crdb/sql:/cockroach/sql
+        command: sql --insecure --host=polaris-crdb:26257 --file /cockroach/sql/schema.sql
+        labels:
+            - "com.netflix.metacat.oss.test"
+            - "com.netflix.metacat.oss.polaris.crdb-init"
     storage-barrier:
         image: martin/wait:latest
         depends_on:
             - hive-metastore-db
             - postgresql
+            - polaris-crdb-init
         environment:
             - TARGETS=postgresql:5432,hive-metastore-db:3306
         labels:

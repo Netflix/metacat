@@ -385,6 +385,10 @@ class MetacatFunctionalSpec extends Specification {
                 owner: 'metacat-test'
             )
         )
+        def exceptionThrown = MetacatNotSupportedException.class
+        if (catalog.type == "polaris") {
+            exceptionThrown = MetacatBadRequestException.class
+        }
 
         when:
         def database = api.getDatabase(catalog.name, databaseName, false, true)
@@ -396,7 +400,7 @@ class MetacatFunctionalSpec extends Specification {
         api.createTable(catalog.name, databaseName, tableName, dto)
 
         then:
-        thrown(MetacatNotSupportedException)
+        thrown(exceptionThrown)
 
         where:
         catalog << TestCatalogs.getCanNotCreateTable(TestCatalogs.ALL)
@@ -976,7 +980,6 @@ class MetacatFunctionalSpec extends Specification {
             }
         }.flatten()
     }
-
 
     def 'test partition filtering expressions in #name'() {
         given:
@@ -1691,7 +1694,6 @@ class MetacatFunctionalSpec extends Specification {
         name << TestCatalogs.getCreatedDatabases(TestCatalogs.getCanDeleteDatabase(TestCatalogs.ALL))
             .collect { QualifiedName.ofDatabase(it.catalogName, 'does_not_exist') }
     }
-
 
     def 'deleteDatabase: can delete #name'() {
         when:

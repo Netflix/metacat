@@ -10,7 +10,7 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.polaris.PolarisConnectorDatabaseService;
 import com.netflix.metacat.connector.polaris.PolarisConnectorTableService;
-import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
+import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 
@@ -21,21 +21,21 @@ public class PolarisConnectorConfig {
     /**
      * Create polaris connector database service.
      *
-     * @param polarisConnector polaris connector
+     * @param polarisStoreService polaris store service.
      * @return PolarisConnectorDatabaseService
      */
     @Bean
     @ConditionalOnMissingBean(PolarisConnectorDatabaseService.class)
     public PolarisConnectorDatabaseService polarisDatabaseService(
-        final PolarisStoreConnector polarisConnector
+        final PolarisStoreService polarisStoreService
     ) {
-        return new PolarisConnectorDatabaseService(polarisConnector);
+        return new PolarisConnectorDatabaseService(polarisStoreService);
     }
 
     /**
      * Create polaris connector table service.
      *
-     * @param polarisConnector          polaris connector
+     * @param polarisStoreService       polaris connector
      * @param connectorConverter        connector converter
      * @param connectorDatabaseService  polaris database service
      * @param icebergTableHandler       iceberg table handler
@@ -45,14 +45,14 @@ public class PolarisConnectorConfig {
     @Bean
     @ConditionalOnMissingBean(PolarisConnectorTableService.class)
     public PolarisConnectorTableService polarisTableService(
-        final PolarisStoreConnector polarisConnector,
+        final PolarisStoreService polarisStoreService,
         final HiveConnectorInfoConverter connectorConverter,
         final PolarisConnectorDatabaseService connectorDatabaseService,
         final IcebergTableHandler icebergTableHandler,
         final ConnectorContext connectorContext
     ) {
         return new PolarisConnectorTableService(
-            polarisConnector,
+            polarisStoreService,
             connectorContext.getCatalogName(),
             connectorDatabaseService,
             connectorConverter,

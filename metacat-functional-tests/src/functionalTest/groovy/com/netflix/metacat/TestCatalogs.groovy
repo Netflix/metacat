@@ -125,6 +125,11 @@ class TestCatalogs {
             validateCreatedDate: false,
             type: 'postgresql',
         ),
+        new TestCatalog(
+           name: 'polaris-metastore',
+           type: 'polaris',
+           createDatabase: true,
+        ),
     ]
 
     static TestCatalog findByCatalogName(String name) {

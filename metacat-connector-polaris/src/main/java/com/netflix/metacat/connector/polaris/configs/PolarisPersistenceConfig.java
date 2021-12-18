@@ -6,6 +6,7 @@ import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -23,6 +24,7 @@ import javax.sql.DataSource;
 @Configuration
 @EntityScan("com.netflix.metacat.connector.polaris.store.entities")
 @EnableJpaRepositories("com.netflix.metacat.connector.polaris.store.repos")
+@EnableAutoConfiguration
 public class PolarisPersistenceConfig {
 
   /**
@@ -56,7 +58,7 @@ public class PolarisPersistenceConfig {
    * @return PolarisStoreConnector
    */
   @Bean
-  public PolarisStoreService polarisConnector(
+  public PolarisStoreService polarisStoreService(
       final PolarisDatabaseRepository repo, final PolarisTableRepository tblRepo) {
     return new PolarisStoreConnector(repo, tblRepo);
   }
