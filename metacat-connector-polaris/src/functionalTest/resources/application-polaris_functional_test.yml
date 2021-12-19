@@ -21,3 +21,9 @@ spring:
     properties:
       hibernate:
         dialect:  org.hibernate.dialect.PostgreSQLDialect
+        show_sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type: TRACE

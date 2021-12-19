@@ -36,6 +36,8 @@ dependencies {
     compile(project(":metacat-connector-jdbc"))
     compile(project(":metacat-common-server"))
     compile('org.springframework.data:spring-data-jpa')
+    compile('org.springframework.boot:spring-boot-starter-aop')
+    compile('org.springframework.retry:spring-retry')
     compile("com.h2database:h2")
 
     /*******************************
