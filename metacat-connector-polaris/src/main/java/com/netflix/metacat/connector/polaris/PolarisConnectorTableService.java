@@ -206,13 +206,13 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 throw new InvalidMetaException(name, message, null);
             }
             // optimistically attempt to update metadata location
-            final boolean updated = polarisConnector.updateTableMetadataLocation(
+            final boolean updated = polarisStoreService.updateTableMetadataLocation(
                 name.getDatabaseName(), name.getTableName(), prevLoc, newLoc);
             // if succeeded then done, else try to figure out why and throw corresponding exception
             if (updated) {
                 return;
             }
-            final PolarisTableEntity table = polarisConnector
+            final PolarisTableEntity table = polarisStoreService
                 .getTable(name.getDatabaseName(), name.getTableName())
                 .orElseThrow(() -> new TableNotFoundException(name));
             final String existingLoc = table.getMetadataLocation();
