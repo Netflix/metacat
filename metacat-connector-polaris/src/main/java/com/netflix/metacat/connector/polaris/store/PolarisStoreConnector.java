@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.Optional;
 /**
  * This class exposes APIs for CRUD operations.
  */
+@Transactional(rollbackFor = Exception.class)
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class PolarisStoreConnector implements PolarisStoreService {
     private final PolarisDatabaseRepository dbRepo;
@@ -52,7 +54,6 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @param dbName database name.
      */
     @Override
-    @Transactional
     public void deleteDatabase(final String dbName) {
         dbRepo.deleteByName(dbName);
     }
@@ -63,6 +64,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return Polaris Database entities
      */
     @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<PolarisDatabaseEntity> getAllDatabases() {
         final int pageFetchSize = 1000;
         final List<PolarisDatabaseEntity> retval = new ArrayList<>();
@@ -139,6 +141,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return table entities in the database.
      */
     @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<PolarisTableEntity> getTableEntities(final String databaseName, final String tableNamePrefix) {
         final int pageFetchSize = 1000;
         final List<PolarisTableEntity> retval = new ArrayList<>();
@@ -174,7 +177,6 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @param tableName table name
      */
     @Override
-    @Transactional
     public void deleteTable(final String dbName, final String tableName) {
         tblRepo.deleteByName(dbName, tableName);
     }
@@ -201,6 +203,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return table names in the database.
      */
     @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<String> getTables(final String databaseName, final String tableNamePrefix) {
         final int pageFetchSize = 1000;
         final List<String> retval = new ArrayList<>();

@@ -50,6 +50,7 @@ public enum Metrics {
      */
     CounterRequestCount(Component.server, Type.counter, "request"),
     CounterRequestFailureCount(Component.server, Type.counter, "requestfailure"),
+    CounterTransactionRetryFailure(Component.server, Type.counter, "transactionRetryFailure"),
     CounterDeleteMetaData(Component.server, Type.counter, "deleteMetadata"),
     CounterCatalogTraversal(Component.server, Type.counter, "catalogTraversal"),
     CounterCatalogTraversalAlreadyRunning(Component.server, Type.counter, "catalogTraversalAlreadyRunning"),
