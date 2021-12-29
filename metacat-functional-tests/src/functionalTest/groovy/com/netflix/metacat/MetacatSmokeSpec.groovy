@@ -445,9 +445,8 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
-    def "Test create/update iceberg table"() {
+    def "Test create/update iceberg table in #catalogName"() {
         given:
-        def catalogName = 'embedded-fast-hive-metastore'
         def databaseName = 'iceberg_db'
         def tableName = 'iceberg_table'
         def renamedTableName = 'iceberg_table_rename'
@@ -493,8 +492,10 @@ class MetacatSmokeSpec extends Specification {
         api.doesTableExist(catalogName, databaseName, tableName)
         updatedTable.getMetadata().get('metadata_location') == metadataLocation1
         updatedTable != null
-        updatedTable.getDataUri() == updatedUri
-        updatedTable.getSerde().getInputFormat() == 'org.apache.hadoop.mapred.TextInputFormat'
+        if (catalogName == 'embedded-fast-hive-metastore') {
+            updatedTable.getDataUri() == updatedUri
+            updatedTable.getSerde().getInputFormat() == 'org.apache.hadoop.mapred.TextInputFormat'
+        }
         when:
         def metadataLocation2 = '/tmp/data/metadata/00002-2d6c1951-31d5-4bea-8edd-e35746b172f3.metadata.json'
         def metadata2 = [table_type: 'ICEBERG', metadata_location: metadataLocation2, previous_metadata_location: metadataLocation1, 'partition_spec': 'invalid']
@@ -516,6 +517,7 @@ class MetacatSmokeSpec extends Specification {
         api.deleteTable(catalogName, databaseName, renamedTableName)
         api.renameTable(catalogName, databaseName, tableName, renamedTableName)
         def t = api.getTable(catalogName, databaseName, renamedTableName, true, false, false)
+        t.getMetadata().put('previous_metadata_location', metadataLocation1)
         api.updateTable(catalogName, databaseName, renamedTableName, t)
         then:
         noExceptionThrown()
@@ -551,6 +553,8 @@ class MetacatSmokeSpec extends Specification {
         noExceptionThrown()
         cleanup:
         FileUtils.deleteQuietly(icebergManifestFile)
+        where:
+        catalogName << ['polaris-metastore', 'embedded-fast-hive-metastore']
     }
 
     @Unroll

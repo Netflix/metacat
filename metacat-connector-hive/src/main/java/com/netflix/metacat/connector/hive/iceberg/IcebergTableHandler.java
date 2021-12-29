@@ -35,13 +35,16 @@ import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.partition.parser.ParseException;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
+import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.metacat.connector.hive.util.IcebergFilterGenerator;
 import com.netflix.servo.util.VisibleForTesting;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.iceberg.ScanSummary;
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.Table;
@@ -50,6 +53,7 @@ import org.apache.iceberg.UpdateSchema;
 import org.apache.iceberg.exceptions.NoSuchTableException;
 import org.apache.iceberg.exceptions.NotFoundException;
 import org.apache.iceberg.expressions.Expression;
+import org.apache.iceberg.hadoop.Util;
 import org.apache.iceberg.types.Types;
 
 import java.io.StringReader;
@@ -264,6 +268,29 @@ public class IcebergTableHandler {
         final ObjectNode root = JsonNodeFactory.instance.objectNode();
         root.set(DataMetadataMetricConstants.DATA_METADATA_METRIC_NAME, getMetricValueNode(metrics));
         return root;
+    }
+
+    /**
+     * Checks if the given iceberg table metadata location exists.
+     *
+     * @param tableName The table name.
+     * @param metadataLocation The metadata location.
+     * @return True if the location exists.
+     */
+    public boolean doesMetadataLocationExist(final QualifiedName tableName,
+                                             final String metadataLocation) {
+        boolean result = false;
+        if (!StringUtils.isBlank(metadataLocation)) {
+            try {
+                final Path metadataPath = new Path(metadataLocation);
+                result = Util.getFs(metadataPath, conf).exists(metadataPath);
+            } catch (Exception ignored) {
+                log.warn(String.format("Failed getting the filesystem for metadata location: %s tableName: %s",
+                        metadataLocation, tableName));
+                registry.counter(HiveMetrics.CounterFileSystemReadFailure.name()).increment();
+            }
+        }
+        return result;
     }
 
     private ObjectNode getMetricValueNode(final ScanSummary.PartitionMetrics metrics) {
