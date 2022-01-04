@@ -14,6 +14,7 @@ import com.netflix.metacat.common.server.connectors.exception.TableAlreadyExists
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
@@ -138,15 +139,18 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             final TableInfo info = mapper.toInfo(polarisTableEntity);
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
             final IcebergTableWrapper icebergTable = icebergTableHandler.getIcebergTable(
-                name, tableLoc, connectorContext.getConfig().isIcebergCacheEnabled());
+                name, tableLoc, requestContext.isIncludeMetadata());
             return connectorConverter.fromIcebergTableToTableInfo(name, icebergTable, tableLoc, info);
-        } catch (TableNotFoundException exception) {
+        } catch (TableNotFoundException | IllegalArgumentException exception) {
             log.error(String.format("Not found exception for polaris table %s", name), exception);
             throw exception;
+        } catch (ConnectorException connectorException) {
+            log.error("Encountered connector exception for polaris table {}. {}", name, connectorException);
+            throw connectorException;
         } catch (Exception exception) {
             final String msg = String.format("Failed getting polaris table %s", name);
             log.error(msg, exception);
-            throw new ConnectorException(msg, exception);
+            throw exception;
         }
     }
 
@@ -189,6 +193,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     @Override
     public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         final QualifiedName name = tableInfo.getName();
+        final Config conf = connectorContext.getConfig();
         try {
             final Map<String, String> newTableMetadata = tableInfo.getMetadata();
             if (MapUtils.isEmpty(newTableMetadata)) {
@@ -200,31 +205,45 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             final String newLoc = newTableMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION);
             if (StringUtils.isBlank(prevLoc) || StringUtils.isBlank(newLoc)) {
                 final String message = String.format(
-                    "Invalid metadata for %s. Provided previous %s or new %s location is empty.",
-                    name, prevLoc, newLoc);
+                        "Invalid metadata for %s. Provided previous %s or new %s location is empty.",
+                        name, prevLoc, newLoc);
+                log.error(message);
+                throw new InvalidMetaException(name, message, null);
+            }
+            if (conf.isIcebergPreviousMetadataLocationCheckEnabled()
+                    && !icebergTableHandler.doesMetadataLocationExist(name, prevLoc)) {
+                final String message = String.format(
+                        "Provided previous metadata location: %s for table: %s does not exist.",
+                        name, prevLoc);
                 log.error(message);
                 throw new InvalidMetaException(name, message, null);
             }
             // optimistically attempt to update metadata location
             final boolean updated = polarisStoreService.updateTableMetadataLocation(
-                name.getDatabaseName(), name.getTableName(), prevLoc, newLoc);
+                    name.getDatabaseName(), name.getTableName(), prevLoc, newLoc);
             // if succeeded then done, else try to figure out why and throw corresponding exception
             if (updated) {
+                requestContext.setIgnoreErrorsAfterUpdate(true);
                 return;
             }
             final PolarisTableEntity table = polarisStoreService
-                .getTable(name.getDatabaseName(), name.getTableName())
-                .orElseThrow(() -> new TableNotFoundException(name));
+                    .getTable(name.getDatabaseName(), name.getTableName())
+                    .orElseThrow(() -> new TableNotFoundException(name));
             final String existingLoc = table.getMetadataLocation();
             if (StringUtils.isBlank(existingLoc)) {
                 final String message = String.format(
-                    "Invalid metadata location for %s existing location is empty.", name);
+                        "Invalid metadata location for %s existing location is empty.", name);
                 log.error(message);
                 throw new TablePreconditionFailedException(name, message, existingLoc, prevLoc);
             }
+            if (StringUtils.equalsIgnoreCase(existingLoc, newLoc)) {
+                log.warn("Existing metadata location is the same as new. Existing: {}, New: {}",
+                        existingLoc, newLoc);
+                return;
+            }
             if (!Objects.equals(existingLoc, prevLoc)) {
                 final String message = String.format(
-                    "Invalid metadata location for %s expected: %s, provided: %s", name, existingLoc, prevLoc);
+                        "Invalid metadata location for %s expected: %s, provided: %s", name, existingLoc, prevLoc);
                 log.error(message);
                 throw new TablePreconditionFailedException(name, message, existingLoc, prevLoc);
             }
