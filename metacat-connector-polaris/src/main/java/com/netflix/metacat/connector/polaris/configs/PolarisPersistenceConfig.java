@@ -6,9 +6,12 @@ import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 import com.zaxxer.hikari.HikariDataSource;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +27,8 @@ import javax.sql.DataSource;
 @Configuration
 @EntityScan("com.netflix.metacat.connector.polaris.store.entities")
 @EnableJpaRepositories("com.netflix.metacat.connector.polaris.store.repos")
-@EnableAutoConfiguration
+@ImportAutoConfiguration({DataSourceAutoConfiguration.class,
+        DataSourceTransactionManagerAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 public class PolarisPersistenceConfig {
 
   /**
@@ -42,6 +46,7 @@ public class PolarisPersistenceConfig {
 
   /**
    * Datasource properties.
+   *
    * @return DataSourceProperties
    */
   @Bean
@@ -53,13 +58,14 @@ public class PolarisPersistenceConfig {
 
   /**
    * Get an implementation of {@link PolarisStoreConnector}.
-   * @param repo - PolarisDatabaseRepository
+   *
+   * @param repo    - PolarisDatabaseRepository
    * @param tblRepo - PolarisTableRepository
    * @return PolarisStoreConnector
    */
   @Bean
   public PolarisStoreService polarisStoreService(
-      final PolarisDatabaseRepository repo, final PolarisTableRepository tblRepo) {
+          final PolarisDatabaseRepository repo, final PolarisTableRepository tblRepo) {
     return new PolarisStoreConnector(repo, tblRepo);
   }
 }
