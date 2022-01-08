@@ -49,6 +49,11 @@ public class PolarisTableEntity {
 
     @Basic
     @Setter
+    @Column(name = "previous_metadata_location", nullable = true, updatable = true)
+    private String previousMetadataLocation;
+
+    @Basic
+    @Setter
     @Column(name = "metadata_location", nullable = true, updatable = true)
     private String metadataLocation;
 
