@@ -13,6 +13,7 @@ import com.netflix.metacat.connector.polaris.PolarisConnectorDatabaseService;
 import com.netflix.metacat.connector.polaris.PolarisConnectorTableService;
 import com.netflix.metacat.connector.polaris.common.PolarisConnectorConsts;
 import com.netflix.metacat.connector.polaris.common.TransactionRetryAspect;
+import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -47,6 +48,7 @@ public class PolarisConnectorConfig {
      * @param connectorConverter        connector converter
      * @param connectorDatabaseService  polaris database service
      * @param icebergTableHandler       iceberg table handler
+     * @param polarisTableMapper        polaris table mapper
      * @param connectorContext          connector context
      * @return PolarisConnectorTableService
      */
@@ -57,6 +59,7 @@ public class PolarisConnectorConfig {
         final HiveConnectorInfoConverter connectorConverter,
         final PolarisConnectorDatabaseService connectorDatabaseService,
         final IcebergTableHandler icebergTableHandler,
+        final PolarisTableMapper polarisTableMapper,
         final ConnectorContext connectorContext
     ) {
         return new PolarisConnectorTableService(
@@ -65,8 +68,19 @@ public class PolarisConnectorConfig {
             connectorDatabaseService,
             connectorConverter,
             icebergTableHandler,
+            polarisTableMapper,
             connectorContext
         );
+    }
+
+    /**
+     * Create PolarisTableMapper.
+     * @param connectorContext server context
+     * @return PolarisTableMapper.
+     */
+    @Bean
+    public PolarisTableMapper polarisTableMapper(final ConnectorContext connectorContext) {
+        return new PolarisTableMapper(connectorContext.getCatalogName());
     }
 
     /**
@@ -90,7 +104,6 @@ public class PolarisConnectorConfig {
     }
 
     /**
-     *
      * Create iceberg table criteria.
      * @param connectorContext server context
      * @return IcebergTableCriteria
