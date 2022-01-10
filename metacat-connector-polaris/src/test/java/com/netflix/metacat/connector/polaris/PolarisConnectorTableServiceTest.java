@@ -24,6 +24,7 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
+import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.spectator.api.NoopRegistry;
 import org.junit.Assert;
@@ -96,6 +97,7 @@ public class PolarisConnectorTableServiceTest {
                 new IcebergTableCriteriaImpl(connectorContext),
                 new IcebergTableOpWrapper(connectorContext, serviceManager),
                 new IcebergTableOpsProxy()),
+            new PolarisTableMapper(CATALOG_NAME),
             connectorContext);
     }
 

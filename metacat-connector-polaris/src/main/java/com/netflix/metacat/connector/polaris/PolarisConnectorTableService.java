@@ -45,6 +45,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     protected final HiveConnectorInfoConverter connectorConverter;
     protected final ConnectorContext connectorContext;
     protected final IcebergTableHandler icebergTableHandler;
+    protected final PolarisTableMapper polarisTableMapper;
     protected final String catalogName;
 
     /**
@@ -55,6 +56,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
      * @param polarisConnectorDatabaseService   connector database service
      * @param connectorConverter                converter
      * @param icebergTableHandler               iceberg table handler
+     * @param polarisTableMapper                polaris table polarisTableMapper
      * @param connectorContext                  the connector context
      */
     public PolarisConnectorTableService(
@@ -63,6 +65,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final PolarisConnectorDatabaseService polarisConnectorDatabaseService,
         final HiveConnectorInfoConverter connectorConverter,
         final IcebergTableHandler icebergTableHandler,
+        final PolarisTableMapper polarisTableMapper,
         final ConnectorContext connectorContext
     ) {
         this.polarisStoreService = polarisStoreService;
@@ -70,6 +73,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         this.connectorConverter = connectorConverter;
         this.connectorContext = connectorContext;
         this.icebergTableHandler = icebergTableHandler;
+        this.polarisTableMapper = polarisTableMapper;
         this.catalogName = catalogName;
     }
 
@@ -84,8 +88,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             throw new TableAlreadyExistsException(name);
         }
         try {
-            final PolarisTableMapper mapper = new PolarisTableMapper(name.getCatalogName());
-            final PolarisTableEntity entity = mapper.toEntity(tableInfo);
+            final PolarisTableEntity entity = polarisTableMapper.toEntity(tableInfo);
             polarisStoreService.createTable(entity.getDbName(), entity.getTblName(), entity.getMetadataLocation());
         } catch (DataIntegrityViolationException | InvalidMetaException exception) {
             throw new InvalidMetaException(name, exception);
@@ -135,8 +138,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             final PolarisTableEntity polarisTableEntity = polarisStoreService
                 .getTable(name.getDatabaseName(), name.getTableName())
                 .orElseThrow(() -> new TableNotFoundException(name));
-            final PolarisTableMapper mapper = new PolarisTableMapper(name.getCatalogName());
-            final TableInfo info = mapper.toInfo(polarisTableEntity);
+            final TableInfo info = polarisTableMapper.toInfo(polarisTableEntity);
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
             final IcebergTableWrapper icebergTable = icebergTableHandler.getIcebergTable(
                 name, tableLoc, requestContext.isIncludeMetadata());
@@ -304,7 +306,6 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         @Nullable final Pageable pageable
     ) {
         try {
-            final PolarisTableMapper mapper = new PolarisTableMapper(name.getCatalogName());
             final String tableFilter = (prefix != null && prefix.isTableDefinition()) ? prefix.getTableName() : "";
             final List<PolarisTableEntity> tbls =
                 polarisStoreService.getTableEntities(name.getDatabaseName(), tableFilter);
@@ -312,7 +313,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 ConnectorUtils.sort(tbls, sort, Comparator.comparing(t -> t.getTblName()));
             }
             return ConnectorUtils.paginate(tbls, pageable).stream()
-                .map(t -> mapper.toInfo(t)).collect(Collectors.toList());
+                .map(t -> polarisTableMapper.toInfo(t)).collect(Collectors.toList());
         } catch (Exception exception) {
             final String msg = String.format("Failed polaris list tables %s using prefix %s", name, prefix);
             log.error(msg, exception);

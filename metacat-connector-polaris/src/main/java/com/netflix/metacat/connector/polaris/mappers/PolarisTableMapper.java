@@ -3,6 +3,7 @@ package com.netflix.metacat.connector.polaris.mappers;
 import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
@@ -18,7 +19,8 @@ public class PolarisTableMapper implements
     EntityToInfoMapper<PolarisTableEntity, TableInfo>,
     InfoToEntityMapper<TableInfo, PolarisTableEntity> {
 
-    // TODO: this can be reworked if PolarisTableEntity starts tracking catalog name
+    private static final String PARAMETER_SPARK_SQL_PROVIDER = "spark.sql.sources.provider";
+    private static final String PARAMETER_EXTERNAL = "EXTERNAL";
     private final String catalogName;
 
     /**
@@ -36,7 +38,14 @@ public class PolarisTableMapper implements
     public TableInfo toInfo(final PolarisTableEntity entity) {
         final TableInfo tableInfo = TableInfo.builder()
             .name(QualifiedName.ofTable(catalogName, entity.getDbName(), entity.getTblName()))
-            .metadata(ImmutableMap.of(DirectSqlTable.PARAM_METADATA_LOCATION, entity.getMetadataLocation()))
+            .metadata(ImmutableMap.of(
+                DirectSqlTable.PARAM_METADATA_LOCATION, entity.getMetadataLocation(),
+                PARAMETER_EXTERNAL, "TRUE", PARAMETER_SPARK_SQL_PROVIDER, "iceberg",
+                DirectSqlTable.PARAM_TABLE_TYPE, DirectSqlTable.ICEBERG_TABLE_TYPE))
+            .serde(StorageInfo.builder().inputFormat("org.apache.hadoop.mapred.FileInputFormat")
+                .outputFormat("org.apache.hadoop.mapred.FileOutputFormat")
+                .serializationLib("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe")
+                .build())
             .build();
         return tableInfo;
     }
