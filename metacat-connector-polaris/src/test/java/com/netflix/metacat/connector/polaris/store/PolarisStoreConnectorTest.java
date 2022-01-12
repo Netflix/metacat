@@ -203,7 +203,9 @@ public class PolarisStoreConnectorTest {
         // successful update should happen.
         updatedSuccess = polarisConnector.updateTableMetadataLocation(dbName, tblName, metadataLocation, newLocation);
         Assert.assertTrue(updatedSuccess);
-
+        final PolarisTableEntity updatedEntity = polarisConnector.
+                getTable(dbName, tblName).orElseThrow(() -> new RuntimeException("Expected to find saved entity"));
+        Assert.assertEquals(updatedEntity.getPreviousMetadataLocation(), metadataLocation);
 
         // after the successful update, the same call should fail, since the current metadataLocation has changed.
         updatedSuccess = polarisConnector.updateTableMetadataLocation(dbName, tblName, metadataLocation, newLocation);
