@@ -44,6 +44,7 @@ import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.iceberg.ScanSummary;
 import org.apache.iceberg.Schema;
@@ -53,9 +54,9 @@ import org.apache.iceberg.UpdateSchema;
 import org.apache.iceberg.exceptions.NoSuchTableException;
 import org.apache.iceberg.exceptions.NotFoundException;
 import org.apache.iceberg.expressions.Expression;
-import org.apache.iceberg.hadoop.Util;
 import org.apache.iceberg.types.Types;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.List;
@@ -283,7 +284,7 @@ public class IcebergTableHandler {
         if (!StringUtils.isBlank(metadataLocation)) {
             try {
                 final Path metadataPath = new Path(metadataLocation);
-                result = Util.getFs(metadataPath, conf).exists(metadataPath);
+                result = getFs(metadataPath, conf).exists(metadataPath);
             } catch (Exception ignored) {
                 log.warn(String.format("Failed getting the filesystem for metadata location: %s tableName: %s",
                         metadataLocation, tableName));
@@ -291,6 +292,15 @@ public class IcebergTableHandler {
             }
         }
         return result;
+    }
+
+    private static FileSystem getFs(final Path path,
+                                    final Configuration conf) {
+        try {
+            return path.getFileSystem(conf);
+        } catch (IOException ex) {
+            throw new RuntimeException(String.format("Failed to get file system for path: %s", path));
+        }
     }
 
     private ObjectNode getMetricValueNode(final ScanSummary.PartitionMetrics metrics) {

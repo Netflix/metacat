@@ -27,6 +27,7 @@ public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity
      */
     @Modifying
     @Query("DELETE FROM PolarisTableEntity e WHERE e.dbName = :dbName AND e.tblName = :tblName")
+    @Transactional
     void deleteByName(
         @Param("dbName") final String dbName,
         @Param("tblName") final String tblName);
