@@ -260,6 +260,28 @@ public class PolarisConnectorTableServiceTest {
     }
 
     /**
+     * Test table serde fields.
+     */
+    @Test
+    public void testTableSerde() {
+        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
+        final String location = "src/test/resources/metadata/00000-9b5d4c36-130c-4288-9599-7d850c203d11.metadata.json";
+        final TableInfo tableInfo = TableInfo.builder()
+            .name(qualifiedName)
+            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", location))
+            .build();
+        polarisTableService.create(requestContext, tableInfo);
+        final TableInfo tableResult = polarisTableService.get(requestContext, qualifiedName);
+        // check serde info
+        Assert.assertNotNull(tableResult.getSerde());
+        Assert.assertEquals(tableResult.getSerde().getUri(), "src/test/resources");
+        Assert.assertEquals(tableResult.getSerde().getInputFormat(), "org.apache.hadoop.mapred.FileInputFormat");
+        Assert.assertEquals(tableResult.getSerde().getOutputFormat(), "org.apache.hadoop.mapred.FileOutputFormat");
+        Assert.assertEquals(tableResult.getSerde().getSerializationLib(),
+            "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe");
+    }
+
+    /**
      * Test update table reject cases.
      */
     @Test
