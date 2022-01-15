@@ -21,6 +21,7 @@ public class PolarisTableMapper implements
 
     private static final String PARAMETER_SPARK_SQL_PROVIDER = "spark.sql.sources.provider";
     private static final String PARAMETER_EXTERNAL = "EXTERNAL";
+    private static final String PARAMETER_METADATA_PREFIX = "/metadata/";
     private final String catalogName;
 
     /**
@@ -36,6 +37,7 @@ public class PolarisTableMapper implements
      */
     @Override
     public TableInfo toInfo(final PolarisTableEntity entity) {
+        final int uriIndex = entity.getMetadataLocation().indexOf(PARAMETER_METADATA_PREFIX);
         final TableInfo tableInfo = TableInfo.builder()
             .name(QualifiedName.ofTable(catalogName, entity.getDbName(), entity.getTblName()))
             .metadata(ImmutableMap.of(
@@ -45,6 +47,7 @@ public class PolarisTableMapper implements
             .serde(StorageInfo.builder().inputFormat("org.apache.hadoop.mapred.FileInputFormat")
                 .outputFormat("org.apache.hadoop.mapred.FileOutputFormat")
                 .serializationLib("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe")
+                .uri(uriIndex > 0 ? entity.getMetadataLocation().substring(0, uriIndex) : "")
                 .build())
             .build();
         return tableInfo;
