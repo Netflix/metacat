@@ -52,7 +52,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             throw new DatabaseAlreadyExistsException(name);
         }
         try {
-            this.polarisStoreService.createDatabase(name.getDatabaseName());
+            this.polarisStoreService.createDatabase(name.getDatabaseName(), null /* TODO: add default */);
         } catch (DataIntegrityViolationException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {

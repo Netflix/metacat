@@ -4,7 +4,8 @@ drop table DBS if exists;
 create table DBS (
   version bigint not null,
   id IDENTITY not null primary key,
-  name varchar(255) not null unique
+  name varchar(255) not null unique,
+  location varchar(1024)
 );
 
 create table TBLS (
