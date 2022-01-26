@@ -42,11 +42,18 @@ public class PolarisDatabaseEntity {
     @Column(name = "name", nullable = false, unique = true, updatable = false)
     private String dbName;
 
+    @Basic
+    @Column(name = "location", updatable = false)
+    private String location;
+
     /**
      * Constructor for Polaris Database Entity.
      * @param dbName database name
+     * @param location database location.
      */
-    public PolarisDatabaseEntity(final String dbName) {
+    public PolarisDatabaseEntity(final String dbName,
+                                 final String location) {
         this.dbName = dbName;
+        this.location = location;
     }
 }

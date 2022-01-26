@@ -52,7 +52,8 @@ public class PolarisStoreConnectorTest {
     }
 
     private PolarisDatabaseEntity createDB(final String dbName) {
-        final PolarisDatabaseEntity entity = polarisConnector.createDatabase(dbName);
+        final String location = "file://temp";
+        final PolarisDatabaseEntity entity = polarisConnector.createDatabase(dbName, location);
 
         // assert that database exists, post-creation.
         Assert.assertTrue(polarisConnector.databaseExistsById(entity.getDbId()));
@@ -61,6 +62,7 @@ public class PolarisStoreConnectorTest {
         Assert.assertEquals(0L, entity.getVersion().longValue());
         Assert.assertTrue(entity.getDbId().length() > 0);
         Assert.assertEquals(dbName, entity.getDbName());
+        Assert.assertEquals(location, entity.getLocation());
 
         final Optional<PolarisDatabaseEntity> fetchedEntity = polarisConnector.getDatabase(dbName);
         Assert.assertTrue(fetchedEntity.isPresent());

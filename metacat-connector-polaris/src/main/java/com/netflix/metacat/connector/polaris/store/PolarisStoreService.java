@@ -14,9 +14,10 @@ public interface PolarisStoreService {
     /**
      * Creates a database entry.
      * @param databaseName database name
+     * @param location the database location.
      * @return Polaris Database entity.
      */
-    PolarisDatabaseEntity createDatabase(String databaseName);
+    PolarisDatabaseEntity createDatabase(String databaseName, String location);
 
     /**
      * Fetches database entry.

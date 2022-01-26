@@ -4,7 +4,8 @@ drop table IF EXISTS DBS;
 create table DBS (
   version bigint not null,
   id uuid default gen_random_uuid() not null primary key,
-  name varchar(255) not null unique
+  name varchar(255) not null unique,
+  location varchar(8192)
 );
 
 create table TBLS (
