@@ -3,6 +3,7 @@ package com.netflix.metacat.connector.polaris;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
@@ -28,17 +29,23 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class PolarisConnectorDatabaseService implements ConnectorDatabaseService {
+    private static final String DEFAULT_LOCATION_SUFFIX = ".db";
+    private static final String DB_DEFAULT_LOCATION = "polaris.db-default-location";
+    private final String defaultLocationPrefix;
     private final PolarisStoreService polarisStoreService;
 
     /**
      * Constructor.
      *
      * @param polarisStoreService polaris connector
+     * @param connectorContext    connector context
      */
     public PolarisConnectorDatabaseService(
-        final PolarisStoreService polarisStoreService
+        final PolarisStoreService polarisStoreService,
+        final ConnectorContext connectorContext
     ) {
         this.polarisStoreService = polarisStoreService;
+        this.defaultLocationPrefix = connectorContext.getConfiguration().getOrDefault(DB_DEFAULT_LOCATION, "");
     }
 
     /**
@@ -52,7 +59,9 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             throw new DatabaseAlreadyExistsException(name);
         }
         try {
-            this.polarisStoreService.createDatabase(name.getDatabaseName(), null /* TODO: add default */);
+            final String location = databaseInfo.getUri() == null
+                ? this.defaultLocationPrefix + name.getDatabaseName() + DEFAULT_LOCATION_SUFFIX : databaseInfo.getUri();
+            this.polarisStoreService.createDatabase(name.getDatabaseName(), location);
         } catch (DataIntegrityViolationException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
