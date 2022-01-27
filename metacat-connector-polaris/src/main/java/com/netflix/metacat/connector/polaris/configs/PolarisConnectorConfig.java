@@ -30,15 +30,17 @@ public class PolarisConnectorConfig {
     /**
      * Create polaris connector database service.
      *
-     * @param polarisStoreService polaris store service.
+     * @param polarisStoreService polaris store service
+     * @param connectorContext    connector context
      * @return PolarisConnectorDatabaseService
      */
     @Bean
     @ConditionalOnMissingBean(PolarisConnectorDatabaseService.class)
     public PolarisConnectorDatabaseService polarisDatabaseService(
-        final PolarisStoreService polarisStoreService
+        final PolarisStoreService polarisStoreService,
+        final ConnectorContext connectorContext
     ) {
-        return new PolarisConnectorDatabaseService(polarisStoreService);
+        return new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
     }
 
     /**

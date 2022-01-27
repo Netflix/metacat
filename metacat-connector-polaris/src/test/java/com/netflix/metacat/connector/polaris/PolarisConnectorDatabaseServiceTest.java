@@ -1,14 +1,19 @@
 
 package com.netflix.metacat.connector.polaris;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
+import com.netflix.metacat.common.server.properties.DefaultConfigImpl;
+import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
+import com.netflix.spectator.api.NoopRegistry;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +49,9 @@ public class PolarisConnectorDatabaseServiceTest {
     private PolarisStoreService polarisStoreService;
 
     @Shared
+    private ConnectorContext connectorContext;
+
+    @Shared
     private ConnectorRequestContext requestContext = new ConnectorRequestContext();
 
     @Shared
@@ -54,7 +62,9 @@ public class PolarisConnectorDatabaseServiceTest {
      */
     @BeforeEach
     public void init() {
-        polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService);
+        connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
+            new DefaultConfigImpl(new MetacatProperties()), new NoopRegistry(), null,  Maps.newHashMap());
+        polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
     }
 
     /**
@@ -72,7 +82,7 @@ public class PolarisConnectorDatabaseServiceTest {
      */
     @Test
     public void testGetDb() {
-        final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
+        final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).uri("uri").build();
         polarisDBService.create(requestContext, info);
         final DatabaseInfo result = polarisDBService.get(requestContext, DB1_QUALIFIED_NAME);
         Assert.assertEquals(info, result);
@@ -100,11 +110,24 @@ public class PolarisConnectorDatabaseServiceTest {
     }
 
     /**
+     * Test create database with no uri set should fallback to default uri.
+     */
+    @Test
+    public void testCreateDbDefaultUri() {
+        final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
+        polarisDBService.create(requestContext, info);
+        final DatabaseInfo infoExpected = DatabaseInfo.builder()
+            .name(DB1_QUALIFIED_NAME).uri("db1_name.db").build();
+        final DatabaseInfo result = polarisDBService.get(requestContext, DB1_QUALIFIED_NAME);
+        Assert.assertEquals(infoExpected, result);
+    }
+
+    /**
      * Test update database.
      */
     @Test
     public void testUpdateDb() {
-        final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
+        final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).uri("uri").build();
         polarisDBService.create(requestContext, info);
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
         polarisDBService.update(requestContext, info);
@@ -129,8 +152,8 @@ public class PolarisConnectorDatabaseServiceTest {
      */
     @Test
     public void testListDb() {
-        final DatabaseInfo db1 = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
-        final DatabaseInfo db2 = DatabaseInfo.builder().name(DB2_QUALIFIED_NAME).build();
+        final DatabaseInfo db1 = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).uri("uri1").build();
+        final DatabaseInfo db2 = DatabaseInfo.builder().name(DB2_QUALIFIED_NAME).uri("uri2").build();
         polarisDBService.create(requestContext, db1);
         polarisDBService.create(requestContext, db2);
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
