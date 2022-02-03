@@ -339,4 +339,3 @@ public class PolarisConnectorTableServiceTest {
         Assert.assertEquals(tableResult1.getMetadata().get("metadata_location"), location1);
     }
 }
-

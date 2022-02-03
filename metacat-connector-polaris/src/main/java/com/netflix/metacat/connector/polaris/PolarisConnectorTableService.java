@@ -26,6 +26,7 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import javax.annotation.Nullable;
@@ -140,9 +141,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 .orElseThrow(() -> new TableNotFoundException(name));
             final TableInfo info = polarisTableMapper.toInfo(polarisTableEntity);
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
-            final IcebergTableWrapper icebergTable = icebergTableHandler.getIcebergTable(
-                name, tableLoc, requestContext.isIncludeMetadata());
-            return connectorConverter.fromIcebergTableToTableInfo(name, icebergTable, tableLoc, info);
+            return getIcebergTable(name, tableLoc, info,
+                requestContext.isIncludeMetadata(), connectorContext.getConfig().isIcebergCacheEnabled());
         } catch (TableNotFoundException | IllegalArgumentException exception) {
             log.error(String.format("Not found exception for polaris table %s", name), exception);
             throw exception;
@@ -319,5 +319,25 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             log.error(msg, exception);
             throw new ConnectorException(msg, exception);
         }
+    }
+
+    /**
+     * Return the table metadata from cache if exists else make the iceberg call and refresh it.
+     * @param tableName             table name
+     * @param tableMetadataLocation table metadata location
+     * @param info                  table info stored in hive metastore
+     * @param includeInfoDetails    if true, will include more details like the manifest file content
+     * @param useCache              true, if table can be retrieved from cache
+     * @return TableInfo
+     */
+    @Cacheable(key = "'iceberg.table.' + #includeInfoDetails + '.' + #tableMetadataLocation", condition = "#useCache")
+    public TableInfo getIcebergTable(final QualifiedName tableName,
+                                     final String tableMetadataLocation,
+                                     final TableInfo info,
+                                     final boolean includeInfoDetails,
+                                     final boolean useCache) {
+        final IcebergTableWrapper icebergTable =
+            this.icebergTableHandler.getIcebergTable(tableName, tableMetadataLocation, includeInfoDetails);
+        return connectorConverter.fromIcebergTableToTableInfo(tableName, icebergTable, tableMetadataLocation, info);
     }
 }
