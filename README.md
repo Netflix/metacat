@@ -1,10 +1,10 @@
 # Metacat
 
-[![Download](https://api.bintray.com/packages/netflixoss/maven/metacat/images/download.svg)](https://bintray.com/netflixoss/maven/metacat/_latestVersion)
+[![Download](https://img.shields.io/github/downloads/Netflix/metacat/total)](https://bintray.com/netflixoss/maven/metacat/_latestVersion)
 [![License](https://img.shields.io/github/license/Netflix/metacat.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Issues](https://img.shields.io/github/issues/Netflix/metacat.svg)](https://github.com/Netflix/metacat/issues)
 [![NetflixOSS Lifecycle](https://img.shields.io/osslifecycle/Netflix/metacat.svg)]()
-
+[![Dependencies status](https://img.shields.io/librariesio/github/netflix/metacat)](https://mvnrepository.com/artifact/com.netflix.metacat/metacat-main/1.2.2)
 ## Introduction
 
 Metacat is a unified metadata exploration API service. You can explore Hive, RDS, Teradata, Redshift, S3 and Cassandra.
