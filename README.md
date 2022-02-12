@@ -24,7 +24,7 @@ TODO
 
 ## Releases
 
-[Releases](https://github.com/Netflix/metacat/releases/)
+[![Releases](https://img.shields.io/github/v/release/Netflix/metacat?display_name=tag)](https://github.com/Netflix/metacat/releases/)
 
 ## Builds
 
