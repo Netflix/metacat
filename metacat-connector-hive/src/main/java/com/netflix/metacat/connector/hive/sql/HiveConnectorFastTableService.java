@@ -146,8 +146,12 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
                 return info;
             }
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
-            return hiveConnectorFastTableServiceProxy.getIcebergTable(name, tableLoc, info,
+            final TableInfo result = hiveConnectorFastTableServiceProxy.getIcebergTable(name, tableLoc, info,
                 requestContext.isIncludeMetadata(), connectorContext.getConfig().isIcebergCacheEnabled());
+            // Renamed tables could still be cached with the old table name.
+            // Set it to the qName in the request.
+            result.setName(name);
+            return result;
         } catch (IllegalStateException e) {
             throw handleException(e);
         }
