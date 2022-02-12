@@ -18,6 +18,7 @@ package com.netflix.metacat.connector.hive.client.embedded;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.partition.util.PartitionUtil;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
 import com.netflix.metacat.connector.hive.metastore.IMetacatHMSHandler;
@@ -27,9 +28,11 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
+import org.datanucleus.exceptions.NucleusDataStoreException;
 
 import javax.annotation.Nullable;
 import java.sql.SQLException;
@@ -371,6 +374,12 @@ public class EmbeddedHiveClient implements IMetacatHiveClient {
 
         try {
             return supplier.call();
+        } catch (MetaException e) {
+            handleSqlException(e);
+            if (e.getCause() instanceof NucleusDataStoreException) {
+                throw new ConnectorException(e.getMessage(), e.getCause());
+            }
+            throw e;
         } catch (TException e) {
             handleSqlException(e);
             throw e;
