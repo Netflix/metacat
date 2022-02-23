@@ -12,6 +12,7 @@ import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExi
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
+import com.netflix.metacat.connector.polaris.common.PolarisUtils;
 import com.netflix.metacat.connector.polaris.mappers.PolarisDatabaseMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
@@ -54,6 +55,8 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     @Override
     public void create(final ConnectorRequestContext context, final DatabaseInfo databaseInfo) {
         final QualifiedName name = databaseInfo.getName();
+        final String createdBy = PolarisUtils.getUserOrDefault(context);
+
         // check exists then create in non-transactional optimistic manner
         if (exists(context, name)) {
             throw new DatabaseAlreadyExistsException(name);
@@ -61,7 +64,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         try {
             final String location = databaseInfo.getUri() == null
                 ? this.defaultLocationPrefix + name.getDatabaseName() + DEFAULT_LOCATION_SUFFIX : databaseInfo.getUri();
-            this.polarisStoreService.createDatabase(name.getDatabaseName(), location);
+            this.polarisStoreService.createDatabase(name.getDatabaseName(), location, createdBy);
         } catch (DataIntegrityViolationException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
@@ -99,6 +102,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             final PolarisDatabaseEntity db = polarisStoreService.getDatabase(name.getDatabaseName())
                 .orElseThrow(() -> new DatabaseNotFoundException(name));
             // currently db objects have no mutable fields so this is noop
+            db.getAudit().setLastModifiedBy(PolarisUtils.getUserOrDefault(context));
             polarisStoreService.saveDatabase(db.toBuilder().build());
         } catch (DatabaseNotFoundException exception) {
             log.error(String.format("Not found exception for polaris database %s", name), exception);

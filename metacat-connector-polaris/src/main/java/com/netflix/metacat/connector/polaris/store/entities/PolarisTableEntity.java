@@ -7,15 +7,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Version;
+
 
 /**
  * Entity class for Table object.
@@ -28,6 +32,7 @@ import javax.persistence.Version;
 @Entity
 @ToString(callSuper = true)
 @Table(name = "TBLS")
+@EntityListeners(AuditingEntityListener.class)
 public class PolarisTableEntity {
     @Version
     private Long version;
@@ -57,14 +62,25 @@ public class PolarisTableEntity {
     @Column(name = "metadata_location", nullable = true, updatable = true)
     private String metadataLocation;
 
+    @Embedded
+    private AuditEntity audit;
 
     /**
      * Constructor for Polaris Table Entity.
-     * @param dbName database name
-     * @param tblName table name
+     *
+     * @param dbName    database name
+     * @param tblName   table name
+     * @param createdBy user that created this entity.
      */
-    public PolarisTableEntity(final String dbName, final String tblName) {
+    public PolarisTableEntity(final String dbName,
+                              final String tblName,
+                              final String createdBy) {
         this.dbName = dbName;
         this.tblName = tblName;
+        this.audit = AuditEntity
+                .builder()
+                .createdBy(createdBy)
+                .lastModifiedBy(createdBy)
+                .build();
     }
 }

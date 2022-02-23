@@ -20,6 +20,7 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
+import com.netflix.metacat.connector.polaris.common.PolarisUtils;
 import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
@@ -84,13 +85,15 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     @Override
     public void create(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         final QualifiedName name = tableInfo.getName();
+        final String createdBy = PolarisUtils.getUserOrDefault(requestContext);
         // check exists then create in non-transactional optimistic manner
         if (exists(requestContext, name)) {
             throw new TableAlreadyExistsException(name);
         }
         try {
             final PolarisTableEntity entity = polarisTableMapper.toEntity(tableInfo);
-            polarisStoreService.createTable(entity.getDbName(), entity.getTblName(), entity.getMetadataLocation());
+            polarisStoreService.createTable(entity.getDbName(), entity.getTblName(),
+                    entity.getMetadataLocation(), createdBy);
         } catch (DataIntegrityViolationException | InvalidMetaException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
@@ -114,9 +117,11 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             throw new TableAlreadyExistsException(newName);
         }
         try {
+            final String lastModifiedBy = PolarisUtils.getUserOrDefault(context);
             final PolarisTableEntity table = polarisStoreService
-                .getTable(oldName.getDatabaseName(), oldName.getTableName())
-                .orElseThrow(() -> new TableNotFoundException(oldName));
+                    .getTable(oldName.getDatabaseName(), oldName.getTableName())
+                    .orElseThrow(() -> new TableNotFoundException(oldName));
+            table.getAudit().setLastModifiedBy(lastModifiedBy);
             polarisStoreService.saveTable(table.toBuilder().tblName(newName.getTableName()).build());
         } catch (TableNotFoundException exception) {
             log.error(String.format("Not found exception for polaris table %s", oldName), exception);
@@ -196,6 +201,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         final QualifiedName name = tableInfo.getName();
         final Config conf = connectorContext.getConfig();
+        final String lastModifiedBy = PolarisUtils.getUserOrDefault(requestContext);
         try {
             final Map<String, String> newTableMetadata = tableInfo.getMetadata();
             if (MapUtils.isEmpty(newTableMetadata)) {
@@ -222,7 +228,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             }
             // optimistically attempt to update metadata location
             final boolean updated = polarisStoreService.updateTableMetadataLocation(
-                    name.getDatabaseName(), name.getTableName(), prevLoc, newLoc);
+                    name.getDatabaseName(), name.getTableName(),
+                    prevLoc, newLoc, lastModifiedBy);
             // if succeeded then done, else try to figure out why and throw corresponding exception
             if (updated) {
                 requestContext.setIgnoreErrorsAfterUpdate(true);

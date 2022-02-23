@@ -17,6 +17,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -29,6 +30,7 @@ import javax.sql.DataSource;
 @Configuration
 @EntityScan("com.netflix.metacat.connector.polaris.store.entities")
 @EnableJpaRepositories("com.netflix.metacat.connector.polaris.store.repos")
+@EnableJpaAuditing
 @EnableTransactionManagement(proxyTargetClass = true)
 @ImportAutoConfiguration({DataSourceAutoConfiguration.class,
         DataSourceTransactionManagerAutoConfiguration.class, HibernateJpaAutoConfiguration.class,
