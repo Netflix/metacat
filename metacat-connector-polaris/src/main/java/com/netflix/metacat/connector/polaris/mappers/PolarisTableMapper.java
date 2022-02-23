@@ -3,6 +3,7 @@ package com.netflix.metacat.connector.polaris.mappers;
 import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
@@ -10,6 +11,7 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 
+import java.sql.Date;
 import java.util.Map;
 
 /**
@@ -49,6 +51,12 @@ public class PolarisTableMapper implements
                 .serializationLib("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe")
                 .uri(uriIndex > 0 ? entity.getMetadataLocation().substring(0, uriIndex) : "")
                 .build())
+            .auditInfo(AuditInfo.builder()
+                    .createdBy(entity.getAudit().getCreatedBy())
+                    .createdDate(Date.from(entity.getAudit().getCreatedDate()))
+                    .lastModifiedBy(entity.getAudit().getLastModifiedBy())
+                    .lastModifiedDate(Date.from(entity.getAudit().getLastModifiedDate()))
+                    .build())
             .build();
         return tableInfo;
     }

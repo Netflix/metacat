@@ -15,9 +15,10 @@ public interface PolarisStoreService {
      * Creates a database entry.
      * @param databaseName database name
      * @param location the database location.
+     * @param createdBy user creating this database.
      * @return Polaris Database entity.
      */
-    PolarisDatabaseEntity createDatabase(String databaseName, String location);
+    PolarisDatabaseEntity createDatabase(String databaseName, String location, String createdBy);
 
     /**
      * Fetches database entry.
@@ -57,9 +58,10 @@ public interface PolarisStoreService {
      * @param dbName database name
      * @param tableName table name
      * @param metadataLocation metadata location
+     * @param createdBy user creating this table.
      * @return Polaris Table entity.
      */
-    PolarisTableEntity createTable(String dbName, String tableName, String metadataLocation);
+    PolarisTableEntity createTable(String dbName, String tableName, String metadataLocation, String createdBy);
 
     /**
      * Fetches table entry.
@@ -113,8 +115,11 @@ public interface PolarisStoreService {
      * @param tableName table name
      * @param expectedLocation expected current metadata-location of the table
      * @param newLocation new metadata location of the table
+     * @param lastModifiedBy   user updating the location.
      * @return true, if update was successful. false, otherwise.
      */
     boolean updateTableMetadataLocation(
-        String databaseName, String tableName, String expectedLocation, String newLocation);
+        String databaseName, String tableName,
+        String expectedLocation, String newLocation,
+        String lastModifiedBy);
 }

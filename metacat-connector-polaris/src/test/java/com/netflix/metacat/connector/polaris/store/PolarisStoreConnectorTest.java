@@ -1,6 +1,7 @@
 package com.netflix.metacat.connector.polaris.store;
 
 
+import com.netflix.metacat.connector.polaris.common.PolarisUtils;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
@@ -32,6 +33,7 @@ import java.util.Random;
 public class PolarisStoreConnectorTest {
     private static final String DB_NAME_FOO = "foo";
     private static final String TBL_NAME_BAR = "bar";
+    private static final String DEFAULT_METACAT_USER = "metacat_user";
     private static Random random = new Random(System.currentTimeMillis());
 
     @Autowired
@@ -53,7 +55,7 @@ public class PolarisStoreConnectorTest {
 
     private PolarisDatabaseEntity createDB(final String dbName) {
         final String location = "file://temp";
-        final PolarisDatabaseEntity entity = polarisConnector.createDatabase(dbName, location);
+        final PolarisDatabaseEntity entity = polarisConnector.createDatabase(dbName, location, "metacat_user");
 
         // assert that database exists, post-creation.
         Assert.assertTrue(polarisConnector.databaseExistsById(entity.getDbId()));
@@ -63,6 +65,7 @@ public class PolarisStoreConnectorTest {
         Assert.assertTrue(entity.getDbId().length() > 0);
         Assert.assertEquals(dbName, entity.getDbName());
         Assert.assertEquals(location, entity.getLocation());
+        Assert.assertEquals(DEFAULT_METACAT_USER, entity.getAudit().getCreatedBy());
 
         final Optional<PolarisDatabaseEntity> fetchedEntity = polarisConnector.getDatabase(dbName);
         Assert.assertTrue(fetchedEntity.isPresent());
@@ -71,7 +74,8 @@ public class PolarisStoreConnectorTest {
     }
 
     private PolarisTableEntity createTable(final String dbName, final String tblName) {
-        final PolarisTableEntity entity = polarisConnector.createTable(dbName, tblName, "loc");
+        final PolarisTableEntity entity = polarisConnector.createTable(dbName, tblName,
+                "loc", PolarisUtils.DEFAULT_METACAT_USER);
 
         Assert.assertTrue(polarisConnector.tableExistsById(entity.getTblId()));
         Assert.assertTrue(polarisConnector.tableExists(dbName, tblName));
@@ -103,7 +107,8 @@ public class PolarisStoreConnectorTest {
     @Test
     public void testTableCreationFailIfDatabaseIsAbsent() {
         Assertions.assertThrows(DataAccessException.class, () ->
-            polarisConnector.createTable(generateDatabaseName(), generateTableName(), "loc"));
+            polarisConnector.createTable(generateDatabaseName(), generateTableName(),
+                    "loc", PolarisUtils.DEFAULT_METACAT_USER));
     }
 
     /**
@@ -174,7 +179,7 @@ public class PolarisStoreConnectorTest {
 
         final String tblName = generateTableName();
         final String metadataLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/foo";
-        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName);
+        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName, "metacatuser");
         e.setMetadataLocation(metadataLocation);
 
         final PolarisTableEntity savedEntity = polarisConnector.saveTable(e);
@@ -191,7 +196,7 @@ public class PolarisStoreConnectorTest {
 
         final String tblName = generateTableName();
         final String metadataLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/foo";
-        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName);
+        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName, "metacatuser");
         e.setMetadataLocation(metadataLocation);
         final PolarisTableEntity savedEntity = polarisConnector.saveTable(e);
 
@@ -199,18 +204,21 @@ public class PolarisStoreConnectorTest {
 
         // update should fail since the expected location is not going to match.
         boolean updatedSuccess = polarisConnector.updateTableMetadataLocation(
-            dbName, tblName, "unexpected_location", newLocation);
+                dbName, tblName, "unexpected_location",
+                newLocation, PolarisUtils.DEFAULT_METACAT_USER);
         Assert.assertFalse(updatedSuccess);
 
         // successful update should happen.
-        updatedSuccess = polarisConnector.updateTableMetadataLocation(dbName, tblName, metadataLocation, newLocation);
+        updatedSuccess = polarisConnector.updateTableMetadataLocation(dbName, tblName, metadataLocation,
+                newLocation, "new_user");
         Assert.assertTrue(updatedSuccess);
         final PolarisTableEntity updatedEntity = polarisConnector.
                 getTable(dbName, tblName).orElseThrow(() -> new RuntimeException("Expected to find saved entity"));
         Assert.assertEquals(updatedEntity.getPreviousMetadataLocation(), metadataLocation);
 
         // after the successful update, the same call should fail, since the current metadataLocation has changed.
-        updatedSuccess = polarisConnector.updateTableMetadataLocation(dbName, tblName, metadataLocation, newLocation);
+        updatedSuccess = polarisConnector.updateTableMetadataLocation(dbName, tblName, metadataLocation,
+                newLocation, PolarisUtils.DEFAULT_METACAT_USER);
         Assert.assertFalse(updatedSuccess);
     }
 
@@ -224,7 +232,7 @@ public class PolarisStoreConnectorTest {
 
         final String tblName = generateTableName();
         final String location0 = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/location0";
-        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName);
+        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName, "metacatuser");
         e.setMetadataLocation(location0);
         final PolarisTableEntity savedEntity = polarisConnector.saveTable(e);
 
@@ -232,7 +240,7 @@ public class PolarisStoreConnectorTest {
 
         // update the metadata location.
         final boolean updatedSuccess =
-            polarisConnector.updateTableMetadataLocation(dbName, tblName, location0, location1);
+            polarisConnector.updateTableMetadataLocation(dbName, tblName, location0, location1, "new_user");
         Assert.assertTrue(updatedSuccess);
 
 

@@ -1,5 +1,6 @@
 package com.netflix.metacat.connector.polaris.store;
 
+import com.netflix.metacat.connector.polaris.store.entities.AuditEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,8 +35,9 @@ public class PolarisStoreConnector implements PolarisStoreService {
      */
     @Override
     public PolarisDatabaseEntity createDatabase(final String databaseName,
-                                                final String location) {
-        final PolarisDatabaseEntity e = new PolarisDatabaseEntity(databaseName, location);
+                                                final String location,
+                                                final String createdBy) {
+        final PolarisDatabaseEntity e = new PolarisDatabaseEntity(databaseName, location, createdBy);
         return dbRepo.save(e);
     }
 
@@ -112,15 +115,25 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * Creates entry for new table.
      * @param dbName database name
      * @param tableName table name
+     * @param metadataLocation metadata location of the table.
+     * @param createdBy user creating this table.
      * @return entity corresponding to created table entry
      */
     @Override
-    public PolarisTableEntity createTable(final String dbName, final String tableName, final String metadataLocation) {
+    public PolarisTableEntity createTable(final String dbName,
+                                          final String tableName,
+                                          final String metadataLocation,
+                                          final String createdBy) {
+        final AuditEntity auditEntity = AuditEntity.builder()
+                .createdBy(createdBy)
+                .lastModifiedBy(createdBy)
+                .build();
         final PolarisTableEntity e = PolarisTableEntity.builder()
-            .dbName(dbName)
-            .tblName(tableName)
-            .metadataLocation(metadataLocation)
-            .build();
+                .audit(auditEntity)
+                .dbName(dbName)
+                .tblName(tableName)
+                .metadataLocation(metadataLocation)
+                .build();
         return tblRepo.save(e);
     }
 
@@ -230,13 +243,17 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @param tableName        table name
      * @param expectedLocation expected current metadata-location of the table
      * @param newLocation      new metadata location of the table
+     * @param lastModifiedBy   user updating the location.
      * @return true, if update was successful. false, otherwise.
      */
     @Override
-    public boolean updateTableMetadataLocation(final String databaseName, final String tableName,
-        final String expectedLocation, final String newLocation) {
+    public boolean updateTableMetadataLocation(
+            final String databaseName, final String tableName,
+            final String expectedLocation, final String newLocation,
+            final String lastModifiedBy) {
         final int updatedRowCount =
-            tblRepo.updateMetadataLocation(databaseName, tableName, expectedLocation, newLocation);
+                tblRepo.updateMetadataLocation(databaseName, tableName,
+                        expectedLocation, newLocation, lastModifiedBy, Instant.now());
         return updatedRowCount > 0;
     }
 }
