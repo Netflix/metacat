@@ -173,7 +173,7 @@ public class IcebergTableHandler {
             this.icebergTableCriteria.checkCriteria(tableName, tableMetadataLocation);
             log.debug("Loading icebergTable {} from {}", tableName, tableMetadataLocation);
             final IcebergMetastoreTables icebergMetastoreTables = new IcebergMetastoreTables(
-                new IcebergTableOps(conf, tableMetadataLocation,
+                new IcebergTableOps(conf, tableMetadataLocation, tableName.getTableName(),
                     connectorContext.getConfig(),
                     icebergTableOpsProxy));
             final Table table = icebergMetastoreTables.loadTable(
@@ -214,7 +214,7 @@ public class IcebergTableHandler {
                 throw new MetacatBadRequestException(message);
             }
             final IcebergMetastoreTables icebergMetastoreTables = new IcebergMetastoreTables(
-                new IcebergTableOps(conf, tableMetadataLocation,
+                new IcebergTableOps(conf, tableMetadataLocation, tableName.getTableName(),
                     connectorContext.getConfig(),
                     icebergTableOpsProxy));
             final Table table = icebergMetastoreTables.loadTable(
