@@ -15,6 +15,7 @@ import org.apache.iceberg.io.FileIO;
  */
 public class IcebergTableOps extends BaseMetastoreTableOperations {
     private String location;
+    private String tableName;
     private final Configuration conf;
     private final Config config;
     private final IcebergTableOpsProxy icebergTableOpsProxy;
@@ -24,17 +25,25 @@ public class IcebergTableOps extends BaseMetastoreTableOperations {
      * Constructor.
      * @param conf hive configuration
      * @param location table manifest location
+     * @param tableName table name
      * @param config server config
      * @param icebergTableOpsProxy IcebergTableOps proxy
      */
     public IcebergTableOps(final Configuration conf,
                            final String location,
+                           final String tableName,
                            final Config config,
                            final IcebergTableOpsProxy icebergTableOpsProxy) {
         this.location = location;
+        this.tableName = tableName;
         this.conf = conf;
         this.config = config;
         this.icebergTableOpsProxy = icebergTableOpsProxy;
+    }
+
+    @Override
+    protected String tableName() {
+        return tableName;
     }
 
     @Override
