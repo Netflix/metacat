@@ -481,6 +481,7 @@ public interface Config {
 
     /**
      * Whether the table alias is enabled.
+     *
      * @return True if it is.
      */
     boolean isTableAliasEnabled();
@@ -556,5 +557,12 @@ public interface Config {
      * @return True if it should be blocked.
      */
     boolean disablePartitionDefinitionMetadata();
+
+    /**
+     * Whether the request flag to only fetch the iceberg metadata location should be respected.
+     *
+     * @return True if it should be.
+     */
+    boolean shouldFetchOnlyMetadataLocationEnabled();
 }
 

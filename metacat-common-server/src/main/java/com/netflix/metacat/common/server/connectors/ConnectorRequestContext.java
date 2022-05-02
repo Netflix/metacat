@@ -35,6 +35,7 @@ public class ConnectorRequestContext {
     private long timestamp;
     private String userName;
     private boolean includeMetadata;
+    private boolean includeMetadataLocationOnly;
     //TODO: Move this to a response object.
     private boolean ignoreErrorsAfterUpdate;
 }
