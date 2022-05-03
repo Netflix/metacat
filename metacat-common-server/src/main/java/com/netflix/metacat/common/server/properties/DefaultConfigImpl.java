@@ -640,4 +640,9 @@ public class DefaultConfigImpl implements Config {
     public boolean disablePartitionDefinitionMetadata() {
         return this.metacatProperties.getDefinition().getMetadata().isDisablePartitionDefinitionMetadata();
     }
+
+    @Override
+    public boolean shouldFetchOnlyMetadataLocationEnabled() {
+        return this.metacatProperties.getHive().getIceberg().isShouldFetchOnlyMetadataLocationEnabled();
+    }
 }

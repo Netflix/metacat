@@ -480,6 +480,11 @@ class MetacatSmokeSpec extends Specification {
         then:
         noExceptionThrown()
         when:
+        def tableMetadataOnly = api.getTable(catalogName, databaseName, tableName, true, false, false, false, true)
+        then:
+        tableMetadataOnly.getFields().size() == 0
+        tableMetadataOnly.getMetadata().get('metadata_location') != null
+        when:
         FileUtils.moveFile(metadataFile, new File(metadataFile.getAbsolutePath() + '1'))
         api.getTable(catalogName, databaseName, tableName, true, false, false)
         then:

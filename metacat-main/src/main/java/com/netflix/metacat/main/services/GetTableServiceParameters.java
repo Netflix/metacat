@@ -35,4 +35,5 @@ public class GetTableServiceParameters {
     private final boolean disableOnReadMetadataIntercetor;
     private final boolean useCache;
     private final boolean includeMetadataFromConnector;
+    private final boolean includeMetadataLocationOnly;
 }

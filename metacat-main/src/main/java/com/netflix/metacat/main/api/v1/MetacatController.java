@@ -669,33 +669,38 @@ public class MetacatController implements MetacatV1 {
         @RequestParam(name = "includeDataMetadata", defaultValue = "true") final boolean includeDataMetadata,
         @ApiParam(value = "Whether to include more info details to the response. This value is considered only if "
             + "includeInfo is true.")
-        @RequestParam(name = "includeInfoDetails", defaultValue = "false") final boolean includeInfoDetails
+        @RequestParam(name = "includeInfoDetails", defaultValue = "false") final boolean includeInfoDetails,
+        @ApiParam(value = "Whether to include only the metadata location in the response")
+        @RequestParam(
+                name = "includeMetadataLocationOnly",
+                defaultValue = "false") final boolean includeMetadataLocationOnly
     ) {
         final Supplier<QualifiedName> qualifiedNameSupplier =
-            () -> QualifiedName.ofTable(catalogName, databaseName, tableName);
+                () -> QualifiedName.ofTable(catalogName, databaseName, tableName);
         final QualifiedName name = this.requestWrapper.qualifyName(qualifiedNameSupplier);
         return this.requestWrapper.processRequest(
-            name,
-            "getTable",
-            () -> {
-                final Optional<TableDto> table = this.tableService.get(
-                    name,
-                    GetTableServiceParameters.builder()
-                        .includeInfo(includeInfo)
-                        .includeDefinitionMetadata(includeDefinitionMetadata)
-                        .includeDataMetadata(includeDataMetadata)
-                        .disableOnReadMetadataIntercetor(false)
-                        .includeMetadataFromConnector(includeInfoDetails)
-                        .useCache(true)
-                        .build()
-                );
+                name,
+                "getTable",
+                () -> {
+                    final Optional<TableDto> table = this.tableService.get(
+                            name,
+                            GetTableServiceParameters.builder()
+                                    .includeInfo(includeInfo)
+                                    .includeDefinitionMetadata(includeDefinitionMetadata)
+                                    .includeDataMetadata(includeDataMetadata)
+                                    .disableOnReadMetadataIntercetor(false)
+                                    .includeMetadataFromConnector(includeInfoDetails)
+                                    .includeMetadataLocationOnly(includeMetadataLocationOnly)
+                                    .useCache(true)
+                                    .build()
+                    );
 
-                final TableDto tableDto = table.orElseThrow(() -> new TableNotFoundException(name));
-                // Set the name to whatever the request was for because
-                // for aliases, this could've been set to the original name
-                tableDto.setName(qualifiedNameSupplier.get());
-                return tableDto;
-            }
+                    final TableDto tableDto = table.orElseThrow(() -> new TableNotFoundException(name));
+                    // Set the name to whatever the request was for because
+                    // for aliases, this could've been set to the original name
+                    tableDto.setName(qualifiedNameSupplier.get());
+                    return tableDto;
+                }
         );
     }
 

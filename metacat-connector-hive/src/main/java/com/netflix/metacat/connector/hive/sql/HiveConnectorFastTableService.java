@@ -145,6 +145,11 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             if (!connectorContext.getConfig().isIcebergEnabled() || !HiveTableUtil.isIcebergTable(info)) {
                 return info;
             }
+            // Return the iceberg table with just the metadata location included.
+            if (connectorContext.getConfig().shouldFetchOnlyMetadataLocationEnabled()
+                && requestContext.isIncludeMetadataLocationOnly()) {
+                return info;
+            }
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
             final TableInfo result = hiveConnectorFastTableServiceProxy.getIcebergTable(name, tableLoc, info,
                 requestContext.isIncludeMetadata(), connectorContext.getConfig().isIcebergCacheEnabled());

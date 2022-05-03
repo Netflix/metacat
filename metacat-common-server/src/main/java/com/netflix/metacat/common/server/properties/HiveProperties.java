@@ -109,6 +109,7 @@ public class HiveProperties {
         /*iceberg://<db-name.table-name>/<partition>/snapshot_time=<dateCreated> */
         private String partitionUriScheme = "iceberg";
         private boolean isIcebergPreviousMetadataLocationCheckEnabled = true;
+        private boolean isShouldFetchOnlyMetadataLocationEnabled = true;
     }
 
     /**

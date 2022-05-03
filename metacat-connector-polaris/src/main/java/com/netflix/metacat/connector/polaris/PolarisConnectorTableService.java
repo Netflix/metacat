@@ -1,6 +1,7 @@
 package com.netflix.metacat.connector.polaris;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
@@ -31,6 +32,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -146,6 +148,14 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 .orElseThrow(() -> new TableNotFoundException(name));
             final TableInfo info = polarisTableMapper.toInfo(polarisTableEntity);
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
+            // Return the iceberg table with just the metadata location included if requested.
+            if (connectorContext.getConfig().shouldFetchOnlyMetadataLocationEnabled()
+                    && requestContext.isIncludeMetadataLocationOnly()) {
+                return TableInfo.builder()
+                        .metadata(Maps.newHashMap(info.getMetadata()))
+                        .fields(Collections.emptyList())
+                        .build();
+            }
             return getIcebergTable(name, tableLoc, info,
                 requestContext.isIncludeMetadata(), connectorContext.getConfig().isIcebergCacheEnabled());
         } catch (TableNotFoundException | IllegalArgumentException exception) {

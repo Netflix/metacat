@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 
 import java.util.Collection;
 import java.util.List;
@@ -77,7 +78,10 @@ public class ConnectorTableServiceProxy {
      * Calls the connector table service delete method.
      * @param name table name
      */
-    @CacheEvict(key = "'table.' + #name")
+    @Caching(evict = {
+            @CacheEvict(key = "'table.' + #name"),
+            @CacheEvict(key = "'table.metadataLocationOnly.' + #name")
+    })
     public void delete(final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name);
@@ -97,13 +101,16 @@ public class ConnectorTableServiceProxy {
      * @param useCache true, if table can be retrieved from cache
      * @return table dto
      */
-    @Cacheable(key = "'table.' + #name", condition = "#useCache")
+    @Cacheable(key = "{#getTableServiceParameters.isIncludeMetadataLocationOnly() ? "
+            + "'table.metadataLocationOnly.' + #name : 'table.' + #name}", condition = "#useCache")
     public TableInfo get(final QualifiedName name,
                          final GetTableServiceParameters getTableServiceParameters,
                          final boolean useCache) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         connectorRequestContext.setIncludeMetadata(getTableServiceParameters.isIncludeMetadataFromConnector());
+        connectorRequestContext.setIncludeMetadataLocationOnly(
+                getTableServiceParameters.isIncludeMetadataLocationOnly());
         final ConnectorTableService service = connectorManager.getTableService(name);
         return service.get(connectorRequestContext, name);
     }
@@ -114,7 +121,10 @@ public class ConnectorTableServiceProxy {
      * @param newName new table name
      * @param isMView true, if the object is a view
      */
-    @CacheEvict(key = "'table.' + #oldName")
+    @Caching(evict = {
+            @CacheEvict(key = "'table.' + #oldName"),
+            @CacheEvict(key = "'table.metadataLocationOnly.' + #oldName")
+    })
     public void rename(
         final QualifiedName oldName,
         final QualifiedName newName,
@@ -138,7 +148,10 @@ public class ConnectorTableServiceProxy {
      * @param tableInfo table object
      * @return true if errors after this should be ignored.
      */
-    @CacheEvict(key = "'table.' + #name")
+    @Caching(evict = {
+            @CacheEvict(key = "'table.' + #name"),
+            @CacheEvict(key = "'table.metadataLocationOnly.' + #name")
+    })
     public boolean update(final QualifiedName name, final TableInfo tableInfo) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name);
