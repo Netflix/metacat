@@ -1,6 +1,7 @@
 
 package com.netflix.metacat.connector.polaris;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -230,6 +231,34 @@ public class PolarisConnectorTableServiceTest {
         polarisTableService.delete(requestContext, qualifiedName);
         exists = polarisTableService.exists(requestContext, qualifiedName);
         Assert.assertFalse(exists);
+    }
+
+    /**
+     * Test get table names.
+     */
+    @Test
+    public void testGetTableNames() {
+        final QualifiedName name1 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
+        final TableInfo tableInfo1 = TableInfo.builder()
+            .name(name1)
+            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc1"))
+            .build();
+        polarisTableService.create(requestContext, tableInfo1);
+        final QualifiedName name2 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table2");
+        final TableInfo tableInfo2 = TableInfo.builder()
+            .name(name2)
+            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc2"))
+            .build();
+        polarisTableService.create(requestContext, tableInfo2);
+        final QualifiedName name3 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table3");
+        final TableInfo tableInfo3 = TableInfo.builder()
+            .name(name3)
+            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc3"))
+            .build();
+        polarisTableService.create(requestContext, tableInfo3);
+        final List<QualifiedName> tables = polarisTableService.getTableNames(requestContext, DB_QUALIFIED_NAME, "", -1);
+        Assert.assertEquals(tables.size(), 3);
+        Assert.assertEquals(tables, ImmutableList.of(name1, name2, name3));
     }
 
     /**
