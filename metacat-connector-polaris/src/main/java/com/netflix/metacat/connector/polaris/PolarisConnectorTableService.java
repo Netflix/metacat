@@ -1,10 +1,13 @@
 package com.netflix.metacat.connector.polaris;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
@@ -356,5 +359,37 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final IcebergTableWrapper icebergTable =
             this.icebergTableHandler.getIcebergTable(tableName, tableMetadataLocation, includeInfoDetails);
         return connectorConverter.fromIcebergTableToTableInfo(tableName, icebergTable, tableMetadataLocation, info);
+    }
+
+    @Override
+    public List<QualifiedName> getTableNames(
+        final ConnectorRequestContext context,
+        final QualifiedName name,
+        final String filter,
+        @Nullable final Integer limit) {
+        try {
+            if (!Strings.isNullOrEmpty(filter)) {
+                throw new MetacatNotSupportedException(
+                    String.format("Calling Polaris getTableNames with nonempty filter %s not supported", filter));
+            }
+            final List<String> databaseNames = name.isDatabaseDefinition() ? ImmutableList.of(name.getDatabaseName())
+                : polarisStoreService.getAllDatabases().stream().map(d -> d.getDbName()).collect(Collectors.toList());
+            int limitSize = limit == null || limit < 0 ? Integer.MAX_VALUE : limit;
+            final List<QualifiedName> result = Lists.newArrayList();
+            for (int i = 0; i < databaseNames.size() && limitSize > 0; i++) {
+                final String databaseName = databaseNames.get(i);
+                final List<String> tableNames = polarisStoreService.getTables(name.getDatabaseName(), "");
+                result.addAll(tableNames.stream()
+                    .map(n -> QualifiedName.ofTable(name.getCatalogName(), databaseName, n))
+                    .limit(limitSize)
+                    .collect(Collectors.toList()));
+                limitSize = limitSize - tableNames.size();
+            }
+            return result;
+        } catch (Exception exception) {
+            final String msg = String.format("Failed polaris get table names using %s", name);
+            log.error(msg, exception);
+            throw new ConnectorException(msg, exception);
+        }
     }
 }
