@@ -30,6 +30,7 @@ import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePreEvent;
@@ -324,10 +325,10 @@ public class TableServiceImpl implements TableService {
             || (getTableServiceParameters.isIncludeDefinitionMetadata() && catalogConfig.isInterceptorEnabled()
             && !getTableServiceParameters.isDisableOnReadMetadataIntercetor())) {
             try {
-                tableInternal = converterUtil.toTableDto(connectorTableServiceProxy
-                    .get(name, getTableServiceParameters,
-                        getTableServiceParameters.isUseCache() && config.isCacheEnabled()
-                            && catalogConfig.isCacheEnabled()));
+                final boolean useCache = getTableServiceParameters.isUseCache() && config.isCacheEnabled()
+                    && catalogConfig.isCacheEnabled();
+                tableInternal = converterUtil.toTableDto(
+                    getFromTableServiceProxy(name, getTableServiceParameters, useCache));
             } catch (NotFoundException ignored) {
                 return Optional.empty();
             }
@@ -350,10 +351,9 @@ public class TableServiceImpl implements TableService {
             TableDto dto = table;
             if (tableInternal == null && !getTableServiceParameters.isIncludeInfo()) {
                 try {
-                    dto = converterUtil.toTableDto(connectorTableServiceProxy
-                        .get(name,
-                            getTableServiceParameters,
-                            getTableServiceParameters.isUseCache() && config.isCacheEnabled()));
+                    final boolean useCache = getTableServiceParameters.isUseCache() && config.isCacheEnabled();
+                    dto = converterUtil.toTableDto(
+                        getFromTableServiceProxy(name, getTableServiceParameters, useCache));
                 } catch (NotFoundException ignored) {
                 }
             }
@@ -688,6 +688,14 @@ public class TableServiceImpl implements TableService {
             throw new MetacatBadRequestException("Filter expression cannot be empty");
         }
         return connectorTableServiceProxy.getQualifiedNames(name, parameters);
+    }
+
+    private TableInfo getFromTableServiceProxy(final QualifiedName name,
+                                               final GetTableServiceParameters getTableServiceParameters,
+                                               final boolean useCache) {
+        return getTableServiceParameters.isIncludeMetadataLocationOnly()
+                ? connectorTableServiceProxy.getWithMetadataLocationOnly(name, getTableServiceParameters, useCache)
+                : connectorTableServiceProxy.get(name, getTableServiceParameters, useCache);
     }
 
     /**
