@@ -91,6 +91,24 @@ public class ConnectorTableServiceProxy {
         service.delete(connectorRequestContext, name);
     }
 
+    /**
+     * Returns an info object that's populated only with the metadata location. Fetches from the cache if
+     * useCache is set to true.
+     * @param name the table name
+     * @param getTableServiceParameters the table service parameters
+     * @param useCache true, if the location can be retrieved from the cache
+     * @return The table info object with the metadata location.
+     */
+    @Cacheable(key = "'table.metadataLocationOnly.' + #name", condition = "#useCache")
+    public TableInfo getWithMetadataLocationOnly(final QualifiedName name,
+                                                 final GetTableServiceParameters getTableServiceParameters,
+                                                 final boolean useCache) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
+        connectorRequestContext.setIncludeMetadataLocationOnly(
+                getTableServiceParameters.isIncludeMetadataLocationOnly());
+        return getInternal(name, connectorRequestContext);
+    }
 
     /**
      *
@@ -101,16 +119,24 @@ public class ConnectorTableServiceProxy {
      * @param useCache true, if table can be retrieved from cache
      * @return table dto
      */
-    @Cacheable(key = "{#getTableServiceParameters.isIncludeMetadataLocationOnly() ? "
-            + "'table.metadataLocationOnly.' + #name : 'table.' + #name}", condition = "#useCache")
+    @Cacheable(key = "'table.' + #name", condition = "#useCache")
     public TableInfo get(final QualifiedName name,
                          final GetTableServiceParameters getTableServiceParameters,
                          final boolean useCache) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorRequestContext connectorRequestContext = converterUtil.toConnectorContext(metacatRequestContext);
         connectorRequestContext.setIncludeMetadata(getTableServiceParameters.isIncludeMetadataFromConnector());
-        connectorRequestContext.setIncludeMetadataLocationOnly(
-                getTableServiceParameters.isIncludeMetadataLocationOnly());
+        return getInternal(name, connectorRequestContext);
+    }
+
+    /**
+     * Internal get implementation.
+     * @param name The table name.
+     * @param connectorRequestContext The connector request context.
+     * @return The tableinfo instance.
+     */
+    private TableInfo getInternal(final QualifiedName name,
+                                  final ConnectorRequestContext connectorRequestContext) {
         final ConnectorTableService service = connectorManager.getTableService(name);
         return service.get(connectorRequestContext, name);
     }
