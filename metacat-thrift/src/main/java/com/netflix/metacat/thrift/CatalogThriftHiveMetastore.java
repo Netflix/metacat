@@ -1838,6 +1838,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
         registry.counter(registry.createId(Metrics.CounterThrift.getMetricName() + "." + methodName)).increment();
         try {
             final MetacatRequestContext requestContext = MetacatContextManager.getContext();
+            requestContext.clearTableTypeMap();
             log.info("+++ Thrift({}): Calling {}({}). Request Context: {}",
                 catalogName, methodName, args, requestContext);
             return supplier.get();
