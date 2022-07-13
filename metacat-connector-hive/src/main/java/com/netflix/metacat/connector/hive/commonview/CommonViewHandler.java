@@ -29,6 +29,8 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import com.netflix.spectator.api.Registry;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.util.concurrent.ExecutionException;
 
@@ -38,6 +40,7 @@ import java.util.concurrent.ExecutionException;
  * @author zhenl
  */
 //TODO: in case a third iceberg table like object we should refactor them as a common iceberg-like handler
+@CacheConfig(cacheNames = "metacat")
 public class CommonViewHandler {
     private static final Retryer<Void> RETRY_ICEBERG_TABLE_UPDATE = RetryerBuilder.<Void>newBuilder()
         .retryIfExceptionOfType(TablePreconditionFailedException.class)
@@ -90,10 +93,13 @@ public class CommonViewHandler {
      * @param requestContext    request context
      * @param directSqlTable    direct sql table object
      * @param tableInfo         table info
+     * @param tableMetadataLocation the common view table metadata location.
      */
+    @CacheEvict(key = "'iceberg.view.' + #tableMetadataLocation", beforeInvocation = true)
     public void handleUpdate(final ConnectorRequestContext requestContext,
                              final DirectSqlTable directSqlTable,
-                             final TableInfo tableInfo) {
+                             final TableInfo tableInfo,
+                             final String tableMetadataLocation) {
         requestContext.setIgnoreErrorsAfterUpdate(true);
         final boolean viewUpdated = this.update(tableInfo);
         if (viewUpdated) {
@@ -103,7 +109,7 @@ public class CommonViewHandler {
                         directSqlTable.updateIcebergTable(tableInfo);
                     } catch (TablePreconditionFailedException e) {
                         tableInfo.getMetadata()
-                            .put(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION, e.getMetadataLocation());
+                                .put(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION, e.getMetadataLocation());
                         this.update(tableInfo);
                         throw e;
                     }

@@ -188,8 +188,12 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             if (HiveTableUtil.isIcebergTable(tableInfo)) {
                 icebergTableHandler.handleUpdate(requestContext, this.directSqlTable, tableInfo);
             } else if (connectorContext.getConfig().isCommonViewEnabled()
-                && HiveTableUtil.isCommonView(tableInfo)) {
-                commonViewHandler.handleUpdate(requestContext, this.directSqlTable, tableInfo);
+                    && HiveTableUtil.isCommonView(tableInfo)) {
+                final QualifiedName tableName = tableInfo.getName();
+                HiveTableUtil.throwIfTableMetadataNullOrEmpty(tableName, tableInfo.getMetadata());
+                final String tableMetadataLocation = HiveTableUtil.getCommonViewMetadataLocation(tableInfo);
+                commonViewHandler.handleUpdate(requestContext, this.directSqlTable,
+                        tableInfo, tableMetadataLocation);
             } else {
                 super.update(requestContext, tableInfo);
             }
@@ -197,6 +201,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
             throw handleException(e);
         }
     }
+
     /**
      * {@inheritDoc}.
      */
