@@ -19,9 +19,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.JavaUtils;
@@ -48,6 +50,7 @@ import java.util.Properties;
  * @since 1.0.0
  */
 @SuppressWarnings("deprecation")
+@Slf4j
 public final class HiveTableUtil {
     private static final String PARQUET_HIVE_SERDE = "parquet.hive.serde.ParquetHiveSerDe";
 
@@ -184,5 +187,21 @@ public final class HiveTableUtil {
      */
     public static String getCommonViewMetadataLocation(final TableInfo tableInfo) {
         return tableInfo.getMetadata().get(DirectSqlTable.PARAM_METADATA_LOCATION);
+    }
+
+    /**
+     * Throws an invalid meta exception
+     * if the metadata for a table is null or empty.
+     *
+     * @param tableName the table name.
+     * @param metadata the table metadata.
+     */
+    public static void throwIfTableMetadataNullOrEmpty(final QualifiedName tableName,
+                                                       final Map<String, String> metadata) {
+        if (metadata == null || metadata.isEmpty()) {
+            final String message = String.format("No parameters defined for iceberg table %s", tableName);
+            log.warn(message);
+            throw new InvalidMetaException(tableName, message, null);
+        }
     }
 }

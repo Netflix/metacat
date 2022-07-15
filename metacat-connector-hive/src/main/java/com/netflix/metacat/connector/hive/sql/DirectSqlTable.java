@@ -227,11 +227,8 @@ public class DirectSqlTable {
         //
         // Table info should have the table parameters with the metadata location.
         //
-        if (newTableMetadata == null || newTableMetadata.isEmpty()) {
-            final String message = String.format("No parameters defined for iceberg table %s", tableName);
-            log.warn(message);
-            throw new InvalidMetaException(tableName, message, null);
-        }
+        HiveTableUtil.throwIfTableMetadataNullOrEmpty(tableName, newTableMetadata);
+
         //
         // If the previous metadata location is not empty, check if it is valid.
         //
