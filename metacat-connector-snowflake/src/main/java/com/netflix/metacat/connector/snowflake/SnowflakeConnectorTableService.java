@@ -55,6 +55,8 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     private static final String SQL_GET_AUDIT_INFO
         = "select created, last_altered from information_schema.tables"
         + " where table_catalog=? and table_schema=? and table_name=?";
+    private static final String JDBC_UNDERSCORE = "_";
+    private static final String JDBC_ESCAPE_UNDERSCORE = "\\_";
 
     /**
      * Constructor.
@@ -88,6 +90,19 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
      */
     private QualifiedName getSnowflakeName(final QualifiedName name) {
         return name.cloneWithUpperCase();
+    }
+
+    /**
+     * Returns a normalized string that escapes JDBC special characters like "_".
+     *
+     * @param input object name.
+     * @return the normalized string.
+     */
+    private static String getJdbcNormalizedSnowflakeName(final String input) {
+        if (!StringUtils.isBlank(input) && input.contains(JDBC_UNDERSCORE)) {
+            return StringUtils.replace(input, JDBC_UNDERSCORE, JDBC_ESCAPE_UNDERSCORE);
+        }
+        return input;
     }
 
     /**
@@ -164,10 +179,10 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     ) throws SQLException {
         try {
             return connection.getMetaData().getColumns(
-                connection.getCatalog(),
-                name.getDatabaseName(),
-                name.getTableName(),
-                JdbcConnectorUtils.MULTI_CHARACTER_SEARCH
+                    connection.getCatalog(),
+                    getJdbcNormalizedSnowflakeName(name.getDatabaseName()),
+                    getJdbcNormalizedSnowflakeName(name.getTableName()),
+                    JdbcConnectorUtils.MULTI_CHARACTER_SEARCH
             );
         } catch (SQLException e) {
             throw this.exceptionMapper.toConnectorException(e, name);
@@ -217,7 +232,7 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
         @Nullable final QualifiedName prefix,
         final boolean multiCharacterSearch
     ) throws SQLException {
-        final String schema = name.getDatabaseName();
+        final String schema = getJdbcNormalizedSnowflakeName(name.getDatabaseName());
         final DatabaseMetaData metaData = connection.getMetaData();
         return prefix == null || StringUtils.isEmpty(prefix.getTableName())
             ? metaData.getTables(connection.getCatalog(), schema, null, TABLE_TYPES)
@@ -225,8 +240,9 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
             .getTables(
                 connection.getCatalog(),
                 schema,
-                multiCharacterSearch ? prefix.getTableName() + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH
-                    : prefix.getTableName(),
+                multiCharacterSearch ? getJdbcNormalizedSnowflakeName(prefix.getTableName())
+                        + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH
+                    : getJdbcNormalizedSnowflakeName(prefix.getTableName()),
                 TABLE_TYPES
             );
     }
