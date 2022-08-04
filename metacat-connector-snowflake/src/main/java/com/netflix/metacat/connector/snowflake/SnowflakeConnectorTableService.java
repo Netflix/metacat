@@ -54,7 +54,7 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
     private static final String COL_LAST_ALTERED = "LAST_ALTERED";
     private static final String SQL_GET_AUDIT_INFO
         = "select created, last_altered from information_schema.tables"
-        + " where table_catalog=? and table_schema=? and table_name=?";
+        + " where table_schema=? and table_name=?";
     private static final String JDBC_UNDERSCORE = "_";
     private static final String JDBC_ESCAPE_UNDERSCORE = "\\_";
 
@@ -199,8 +199,7 @@ public class SnowflakeConnectorTableService extends JdbcConnectorTableService {
             PreparedStatement statement = connection.prepareStatement(SQL_GET_AUDIT_INFO)
         ) {
             statement.setString(1, tableName.getDatabaseName());
-            statement.setString(2, tableName.getDatabaseName());
-            statement.setString(3, tableName.getTableName());
+            statement.setString(2, tableName.getTableName());
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     final AuditInfo auditInfo =
