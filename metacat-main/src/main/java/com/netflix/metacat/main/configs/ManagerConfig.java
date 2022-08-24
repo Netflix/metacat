@@ -22,9 +22,11 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.type.TypeManager;
 import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.main.manager.CatalogManager;
+import com.netflix.metacat.main.manager.DefaultCatalogManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.manager.PluginManager;
 import com.netflix.spectator.api.Registry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -83,11 +85,12 @@ public class ManagerConfig {
      * @return Configured catalog manager
      */
     @Bean
+    @ConditionalOnMissingBean(CatalogManager.class)
     public CatalogManager catalogManager(
         final ConnectorManager connectorManager,
         final Config config,
         final Registry registry
     ) {
-        return new CatalogManager(connectorManager, config, registry);
+        return new DefaultCatalogManager(connectorManager, config, registry);
     }
 }

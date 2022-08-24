@@ -19,6 +19,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.context.ApplicationContext;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,4 +57,8 @@ public class ConnectorContext {
      * Metacat catalog configuration.
      */
     private final Map<String, String> configuration;
+    /**
+     * Nested connector contexts.
+     */
+    private final List<ConnectorContext> nestedConnectorContexts = Collections.emptyList();
 }
