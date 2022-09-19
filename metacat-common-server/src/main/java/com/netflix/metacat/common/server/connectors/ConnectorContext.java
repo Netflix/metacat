@@ -15,7 +15,9 @@ package com.netflix.metacat.common.server.connectors;
 
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.spectator.api.Registry;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import org.springframework.context.ApplicationContext;
 
@@ -26,7 +28,8 @@ import java.util.Map;
 /**
  * Connector Config.
  */
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 @Data
 public class ConnectorContext {
     /**
@@ -60,5 +63,23 @@ public class ConnectorContext {
     /**
      * Nested connector contexts.
      */
-    private final List<ConnectorContext> nestedConnectorContexts = Collections.emptyList();
+    private final List<ConnectorContext> nestedConnectorContexts;
+
+    /**
+     * Default Ctor.
+     *
+     * @param catalogName        the catalog name.
+     * @param catalogShardName   the catalog shard name
+     * @param connectorType      the connector type.
+     * @param config             the application config.
+     * @param registry           the registry.
+     * @param applicationContext the application context.
+     * @param configuration      the connector properties.
+     */
+    public ConnectorContext(final String catalogName, final String catalogShardName, final String connectorType,
+                            final Config config, final Registry registry,
+                            final ApplicationContext applicationContext, final Map<String, String> configuration) {
+        this(catalogName, catalogShardName, connectorType, config, registry,
+                applicationContext, configuration, Collections.emptyList());
+    }
 }
