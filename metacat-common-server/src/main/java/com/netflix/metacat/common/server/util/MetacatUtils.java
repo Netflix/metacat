@@ -49,7 +49,7 @@ public class MetacatUtils {
      *
      * @param file Properties file.
      * @return A Map of properties.
-     * @throws Exception
+     * @throws Exception IOException on failure to load file.
      */
     public static Map<String, String> loadProperties(final File file) throws Exception {
         Preconditions.checkNotNull(file, "file is null");
