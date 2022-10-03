@@ -314,7 +314,7 @@ public class ConnectorManager {
      * @param connectorType connector type
      * @return Returns the plugin for the given <code>catalogName</code>
      */
-    private ConnectorPlugin getPlugin(final String connectorType) {
+    public ConnectorPlugin getPlugin(final String connectorType) {
         Preconditions.checkNotNull(connectorType, "connectorType is null");
         final ConnectorPlugin result = plugins.get(connectorType);
         Preconditions.checkNotNull(result, "No connector plugin exists for type %s", connectorType);
