@@ -33,7 +33,6 @@ dependencies {
     /*******************************
      * Implementation Dependencies
      *******************************/
-    compile("com.netflix.spectator:spectator-reg-servo")
     compile("com.netflix.spectator:spectator-api")
     compile("com.google.guava:guava")
     compile("org.slf4j:slf4j-api")
