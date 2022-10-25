@@ -4,7 +4,6 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
-import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
@@ -18,6 +17,8 @@ import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import spock.lang.Specification
 
+import javax.sql.DataSource
+import java.sql.Connection
 import java.util.function.Supplier
 
 /**
@@ -40,6 +41,8 @@ class DirectSqlTableSpec extends Specification {
     def tableName = 't'
     def qualifiedName = QualifiedName.ofTable(catalogName, databaseName, tableName)
     def tableUpdateService = Mock(Supplier)
+    def dataSource = Mock(DataSource)
+    def connection = Mock(Connection)
 
     def "Test table exists check"() {
         when:
@@ -143,5 +146,19 @@ class DirectSqlTableSpec extends Specification {
         then:
         1 * jdbcTemplate.queryForObject(DirectSqlTable.SQL.TABLE_SEQUENCE_IDS,_,_,_) >> new TableSequenceIds(1,1,1,1)
         noExceptionThrown()
+    }
+
+    def "Test get-connection"() {
+        given:
+        jdbcTemplate.getDataSource() >> dataSource
+
+        and:
+        dataSource.getConnection() >> connection
+
+        when:
+        def actualConnection = service.getConnection()
+
+        then:
+        actualConnection == connection
     }
 }

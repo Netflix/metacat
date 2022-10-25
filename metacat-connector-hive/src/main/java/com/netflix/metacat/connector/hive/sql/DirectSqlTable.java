@@ -47,6 +47,8 @@ import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
 import java.util.Map;
@@ -135,6 +137,16 @@ public class DirectSqlTable {
         this.directSqlSavePartition = directSqlSavePartition;
         this.warehouse = warehouse;
         this.config = connectorContext.getConfig();
+    }
+
+    /**
+     * Returns the Jdbc connection of the underlying database
+     *
+     * @return the Jdbc connection of the underlying database
+     * @throws SQLException is the connection could not be fetched
+     */
+    public Connection getConnection() throws SQLException {
+        return jdbcTemplate.getDataSource().getConnection();
     }
 
     /**

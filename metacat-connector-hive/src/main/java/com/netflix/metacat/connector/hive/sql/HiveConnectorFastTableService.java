@@ -35,6 +35,8 @@ import com.netflix.spectator.api.Registry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.fs.FileSystem;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -82,6 +84,16 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
         this.icebergTableHandler = icebergTableHandler;
         this.commonViewHandler = commonViewHandler;
         this.hiveConnectorFastTableServiceProxy = hiveConnectorFastTableServiceProxy;
+    }
+
+    /**
+     * Returns the Jdbc connection of the underlying database
+     *
+     * @return the Jdbc connection of the underlying database
+     * @throws SQLException is the connection could not be fetched
+     */
+    public Connection getConnection() throws SQLException {
+        return directSqlTable.getConnection();
     }
 
     @Override

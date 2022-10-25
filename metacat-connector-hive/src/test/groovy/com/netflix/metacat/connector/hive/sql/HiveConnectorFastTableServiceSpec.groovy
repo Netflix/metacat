@@ -38,6 +38,8 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor
 import org.apache.hadoop.hive.metastore.api.Table
 import spock.lang.Specification
 
+import java.sql.Connection
+
 class HiveConnectorFastTableServiceSpec extends Specification {
     MetacatHiveClient metacatHiveClient = Mock(MetacatHiveClient)
     HiveConnectorDatabaseService hiveConnectorDatabaseService = Mock(HiveConnectorDatabaseService)
@@ -47,6 +49,7 @@ class HiveConnectorFastTableServiceSpec extends Specification {
     DirectSqlTable directSqlTable = Mock(DirectSqlTable)
     HiveConnectorInfoConverter infoConverter = new HiveConnectorInfoConverter(new HiveTypeConverter())
     CommonViewHandler commonViewHandler = new CommonViewHandler(connectorContext)
+    Connection connection = Mock(Connection)
     HiveConnectorTableService service = new HiveConnectorFastTableService(
         "testhive",
         metacatHiveClient,
@@ -79,5 +82,16 @@ class HiveConnectorFastTableServiceSpec extends Specification {
         then:
         thrown(TableNotFoundException)
         metacatHiveClient.getTableByName(_,_) >> { throw new NoSuchObjectException()}
+    }
+
+    def "Test get-connection"() {
+        given:
+        directSqlTable.getConnection() >> connection
+
+        when:
+        def actualConnection = service.getConnection()
+
+        then:
+        actualConnection == connection
     }
 }
