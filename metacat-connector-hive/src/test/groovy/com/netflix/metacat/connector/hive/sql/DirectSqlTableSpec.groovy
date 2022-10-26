@@ -161,4 +161,12 @@ class DirectSqlTableSpec extends Specification {
         then:
         actualConnection == connection
     }
+
+    def "Test get-connection when no data source configured"() {
+        when:
+        service.getConnection()
+
+        then:
+        thrown(NullPointerException)
+    }
 }

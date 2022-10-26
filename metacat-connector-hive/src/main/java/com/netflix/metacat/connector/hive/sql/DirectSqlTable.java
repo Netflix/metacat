@@ -35,6 +35,7 @@ import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.spectator.api.Registry;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.Path;
@@ -143,8 +144,10 @@ public class DirectSqlTable {
      * Returns the Jdbc connection of the underlying database.
      *
      * @return the Jdbc connection of the underlying database
-     * @throws SQLException is the connection could not be fetched
+     * @throws SQLException if the connection could not be fetched
+     * @throws NullPointerException if no data source has been configured
      */
+    @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
     public Connection getConnection() throws SQLException {
         return jdbcTemplate.getDataSource().getConnection();
     }
