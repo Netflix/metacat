@@ -87,7 +87,7 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
     }
 
     /**
-     * Returns the Jdbc connection of the underlying database
+     * Returns the Jdbc connection of the underlying database.
      *
      * @return the Jdbc connection of the underlying database
      * @throws SQLException is the connection could not be fetched
