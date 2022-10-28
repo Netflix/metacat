@@ -32,6 +32,7 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
 import com.netflix.spectator.api.Registry;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.fs.FileSystem;
 
@@ -49,6 +50,7 @@ import java.util.Map;
 @Slf4j
 public class HiveConnectorFastTableService extends HiveConnectorTableService {
     private final Registry registry;
+    @Getter
     private final DirectSqlTable directSqlTable;
     private final IcebergTableHandler icebergTableHandler;
     private final CommonViewHandler commonViewHandler;
