@@ -14,6 +14,7 @@
 package com.netflix.metacat.main.api.v1;
 
 import com.google.common.base.Preconditions;
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
@@ -38,11 +39,13 @@ import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.spectator.api.Registry;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -76,6 +79,7 @@ import java.util.function.Supplier;
     produces = MediaType.APPLICATION_JSON_VALUE,
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
+@Slf4j
 public class MetacatController implements MetacatV1 {
     private final CatalogService catalogService;
     private final DatabaseService databaseService;
@@ -83,6 +87,7 @@ public class MetacatController implements MetacatV1 {
     private final TableService tableService;
     private final RequestWrapper requestWrapper;
     private final Config config;
+    private final Registry registry;
 
     /**
      * Constructor.
@@ -93,6 +98,7 @@ public class MetacatController implements MetacatV1 {
      * @param tableService    table service
      * @param requestWrapper  request wrapper obj
      * @param config Config
+     * @param
      */
     @Autowired
     public MetacatController(
@@ -101,7 +107,8 @@ public class MetacatController implements MetacatV1 {
         final MViewService mViewService,
         final TableService tableService,
         final RequestWrapper requestWrapper,
-        final Config config
+        final Config config,
+        final Registry registry
         ) {
         this.catalogService = catalogService;
         this.databaseService = databaseService;
@@ -109,6 +116,7 @@ public class MetacatController implements MetacatV1 {
         this.tableService = tableService;
         this.requestWrapper = requestWrapper;
         this.config = config;
+        this.registry = registry;
     }
 
     /**
@@ -250,6 +258,15 @@ public class MetacatController implements MetacatV1 {
         @ApiParam(value = "The table information", required = true)
         @Valid @RequestBody final TableDto table
     ) {
+        MetacatRequestContext requestContext = MetacatContextManager.getContext();
+        if (requestContext.getUserName() == null || "metacat".equals(requestContext.getUserName())) {
+            log.info("Create table with unknown user. catalog: {}, database: {}, table-name: {}, table-info{}, context: {}",
+                catalogName, databaseName, tableName, table, requestContext);
+
+            registry.counter(
+                "unauth.user.create.table", "catalog", catalogName, "database", databaseName).increment();
+        }
+
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
