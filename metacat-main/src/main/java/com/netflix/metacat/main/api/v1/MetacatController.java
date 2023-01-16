@@ -56,12 +56,18 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.net.HttpURLConnection;
 import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -260,12 +266,32 @@ public class MetacatController implements MetacatV1 {
     ) {
         final MetacatRequestContext requestContext = MetacatContextManager.getContext();
         if (requestContext.getUserName() == null || "metacat".equals(requestContext.getUserName())) {
-            log.info("Create table with unknown user. "
-                    + "catalog: {}, database: {}, table-name: {}, table-info{}, context: {}",
-                catalogName, databaseName, tableName, table, requestContext);
-
             registry.counter(
                 "unauth.user.create.table", "catalog", catalogName, "database", databaseName).increment();
+
+            final Map<String, String> requestHeaders = new HashMap<>();
+
+            if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes) {
+                final ServletRequestAttributes requestAttributes
+                    = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+                if (requestAttributes.getRequest() != null) {
+                    final HttpServletRequest servletRequest = requestAttributes.getRequest();
+
+                    Enumeration<String> headerNames = servletRequest.getHeaderNames();
+
+                    if (headerNames != null) {
+                        while (headerNames.hasMoreElements()) {
+                            String header = headerNames.nextElement();
+                            requestHeaders.put(header, servletRequest.getHeader(header));
+                        }
+                    }
+                }
+            }
+
+            log.info("Create table with unknown user. "
+                    + "catalog: {}, database: {}, table-name: {}, table-info: {}, context: {}, headers: {}",
+                catalogName, databaseName, tableName, table, requestContext, requestHeaders);
         }
 
         final QualifiedName name = this.requestWrapper.qualifyName(
