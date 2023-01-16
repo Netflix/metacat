@@ -56,6 +56,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -271,18 +272,19 @@ public class MetacatController implements MetacatV1 {
 
             final Map<String, String> requestHeaders = new HashMap<>();
 
-            if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes) {
-                final ServletRequestAttributes requestAttributes
-                    = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            final RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
 
-                if (requestAttributes.getRequest() != null) {
-                    final HttpServletRequest servletRequest = requestAttributes.getRequest();
+            if (requestAttributes instanceof ServletRequestAttributes) {
+                final ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) requestAttributes;
 
-                    Enumeration<String> headerNames = servletRequest.getHeaderNames();
+                final HttpServletRequest servletRequest = servletRequestAttributes.getRequest();
+
+                if (servletRequest != null) {
+                    final Enumeration<String> headerNames = servletRequest.getHeaderNames();
 
                     if (headerNames != null) {
                         while (headerNames.hasMoreElements()) {
-                            String header = headerNames.nextElement();
+                            final String header = headerNames.nextElement();
                             requestHeaders.put(header, servletRequest.getHeader(header));
                         }
                     }
