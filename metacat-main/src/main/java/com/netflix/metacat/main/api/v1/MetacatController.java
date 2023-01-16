@@ -258,9 +258,10 @@ public class MetacatController implements MetacatV1 {
         @ApiParam(value = "The table information", required = true)
         @Valid @RequestBody final TableDto table
     ) {
-        MetacatRequestContext requestContext = MetacatContextManager.getContext();
+        final MetacatRequestContext requestContext = MetacatContextManager.getContext();
         if (requestContext.getUserName() == null || "metacat".equals(requestContext.getUserName())) {
-            log.info("Create table with unknown user. catalog: {}, database: {}, table-name: {}, table-info{}, context: {}",
+            log.info("Create table with unknown user. "
+                    + "catalog: {}, database: {}, table-name: {}, table-info{}, context: {}",
                 catalogName, databaseName, tableName, table, requestContext);
 
             registry.counter(
