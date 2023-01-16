@@ -98,7 +98,7 @@ public class MetacatController implements MetacatV1 {
      * @param tableService    table service
      * @param requestWrapper  request wrapper obj
      * @param config Config
-     * @param
+     * @param registry the spectator registry
      */
     @Autowired
     public MetacatController(
