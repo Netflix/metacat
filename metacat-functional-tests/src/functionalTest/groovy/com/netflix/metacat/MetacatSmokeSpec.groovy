@@ -27,13 +27,16 @@ import com.netflix.metacat.common.exception.MetacatBadRequestException
 import com.netflix.metacat.common.exception.MetacatNotFoundException
 import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.exception.MetacatPreconditionFailedException
+import com.netflix.metacat.common.exception.MetacatTooManyRequestsException
 import com.netflix.metacat.common.exception.MetacatUnAuthorizedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
+import com.netflix.metacat.common.server.connectors.exception.TableMigrationInProgressException
 import com.netflix.metacat.connector.hive.util.PartitionUtil
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.Logger
+import feign.RetryableException
 import groovy.sql.Sql
 import org.apache.commons.io.FileUtils
 import org.joda.time.Instant
@@ -480,6 +483,21 @@ class MetacatSmokeSpec extends Specification {
         then:
         noExceptionThrown()
         when:
+        tagApi.setTableTags(catalogName, databaseName, tableName, ['do_not_drop','iceberg_migration_do_not_modify'] as Set)
+        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        then:
+        thrown(RetryableException)
+        when:
+        tagApi.setTableTags(catalogName, databaseName, tableName, ['do_not_drop'] as Set)
+        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        then:
+        noExceptionThrown()
+        when:
+        tagApi.removeTableTags(catalogName, databaseName, tableName, true, [] as Set)
+        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        then:
+        noExceptionThrown()
+        when:
         def tableMetadataOnly = api.getTable(catalogName, databaseName, tableName, true, false, false, false, true)
         then:
         tableMetadataOnly.getFields().size() == 0
@@ -823,6 +841,11 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatBadRequestException)
         when:
+        tagApi.setTableTags(catalogName, databaseName, tableNameTagNoDelete, ['do_not_drop', 'iceberg_migration_do_not_modify'] as Set)
+        api.deleteTable(catalogName, databaseName, tableNameTagNoDelete)
+        then:
+        thrown(RetryableException)
+        when:
         tagApi.removeTableTags(catalogName, databaseName, tableNameTagNoDelete, true, [] as Set)
         api.deleteTable(catalogName, databaseName, tableNameTagNoDelete)
         then:
@@ -832,6 +855,11 @@ class MetacatSmokeSpec extends Specification {
         api.renameTable(catalogName, databaseName, tableNameTagNoRename, tableNameTagNoRenamed)
         then:
         thrown(MetacatBadRequestException)
+        when:
+        tagApi.setTableTags(catalogName, databaseName, tableNameTagNoRename, ['do_not_drop','iceberg_migration_do_not_modify'] as Set)
+        api.renameTable(catalogName, databaseName, tableNameTagNoRename, tableNameTagNoRenamed)
+        then:
+        thrown(RetryableException)
         when:
         tagApi.removeTableTags(catalogName, databaseName, tableNameTagNoRename, false, ['do_not_rename'] as Set)
         api.renameTable(catalogName, databaseName, tableNameTagNoRename, tableNameTagNoRenamed)

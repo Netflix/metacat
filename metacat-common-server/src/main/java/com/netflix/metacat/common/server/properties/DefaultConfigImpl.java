@@ -591,6 +591,11 @@ public class DefaultConfigImpl implements Config {
         return this.metacatProperties.getTable().getRename().getNoRenameOnTagsSet();
     }
 
+    @Override
+    public Set<String> getNoTableUpdateOnTags() {
+        return this.metacatProperties.getTable().getUpdate().getNoUpdateOnTagsSet();
+    }
+
     /**
      * Whether the rate limiter is enabled.
      *
