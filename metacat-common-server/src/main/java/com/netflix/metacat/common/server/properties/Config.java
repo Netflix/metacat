@@ -501,6 +501,13 @@ public interface Config {
     Set<String> getNoTableRenameOnTags();
 
     /**
+     * Set of tags that disable table update.
+     *
+     * @return set of tags
+     */
+    Set<String> getNoTableUpdateOnTags();
+
+    /**
      * Whether the rate limiter is enabled.
      *
      * @return True if it is.

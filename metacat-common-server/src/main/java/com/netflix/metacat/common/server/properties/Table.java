@@ -38,6 +38,8 @@ public class Table {
     private Delete delete = new Delete();
     @NonNull
     private Rename rename = new Rename();
+    @NonNull
+    private Update update = new Update();
 
     /**
      * Delete related properties.
@@ -126,6 +128,36 @@ public class Table {
                 }
             }
             return noRenameOnTagsSet;
+        }
+    }
+
+    /**
+     * Update related properties.
+     */
+    @lombok.Data
+    public static class Update {
+
+        private String noUpdateOnTags;
+        private Set<String> noUpdateOnTagsSet;
+
+        /**
+         * Get the tags that disable table updates.
+         *
+         * @return Set of tags
+         */
+        @JsonIgnore
+        public Set<String> getNoUpdateOnTagsSet() {
+            if (noUpdateOnTagsSet == null) {
+                if (StringUtils.isNotBlank(noUpdateOnTags)) {
+                    noUpdateOnTagsSet = new HashSet<>(Splitter.on(',')
+                            .omitEmptyStrings()
+                            .trimResults()
+                            .splitToList(noUpdateOnTags));
+                } else {
+                    noUpdateOnTagsSet = new HashSet<>();
+                }
+            }
+            return noUpdateOnTagsSet;
         }
     }
 }

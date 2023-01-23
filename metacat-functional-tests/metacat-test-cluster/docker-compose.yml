@@ -68,8 +68,9 @@ services:
                 -Dmetacat.authorization.createAcl.createAclStr=embedded-fast-hive-metastore/fsmoke_acl:metacat-prod
                 -Dmetacat.authorization.deleteAcl.deleteAclStr=embedded-fast-hive-metastore/fsmoke_acl:metacat-prod
                 -Dmetacat.service.tables.error.list.partitions.threshold=100
-                -Dmetacat.table.delete.noDeleteOnTags=do_not_drop
-                -Dmetacat.table.rename.noRenameOnTags=do_not_rename
+                -Dmetacat.table.delete.noDeleteOnTags=do_not_drop,iceberg_migration_do_not_modify
+                -Dmetacat.table.rename.noRenameOnTags=do_not_rename,iceberg_migration_do_not_modify
+                -Dmetacat.table.update.noUpdateOnTags=iceberg_migration_do_not_modify
                 -Dmetacat.event.updateIcebergTablePostEventEnabled=true'
         labels:
           - "com.netflix.metacat.oss.test"

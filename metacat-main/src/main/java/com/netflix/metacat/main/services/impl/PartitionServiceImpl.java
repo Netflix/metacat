@@ -29,8 +29,10 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.PartitionsSaveRequestDto;
 import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
+import com.netflix.metacat.common.server.connectors.exception.TableMigrationInProgressException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
@@ -48,6 +50,7 @@ import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
+import com.netflix.metacat.common.server.util.MetacatUtils;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.CatalogService;
@@ -243,6 +246,16 @@ public class PartitionServiceImpl implements PartitionService {
         if (!tableService.exists(name)) {
             throw new TableNotFoundException(name);
         }
+
+        // Fetch tableDto only if no update on tags configs exist.
+        if (MetacatUtils.configHasDoNotModifyForIcebergMigrationTag(config.getNoTableUpdateOnTags())) {
+            final TableDto tableDto = getTableDto(name);
+            if (MetacatUtils.hasDoNotModifyForIcebergMigrationTag(tableDto, config.getNoTableUpdateOnTags())) {
+                throw new TableMigrationInProgressException(
+                        MetacatUtils.getIcebergMigrationExceptionMsg("PartitionUpdate", name.getTableName()));
+            }
+        }
+
         //optimization for metadata only updates (e.g. squirrel) , assuming only validate partitions are requested
         if (dto.getSaveMetadataOnly()) {
             return savePartitionMetadataOnly(metacatRequestContext, dto, name, partitionDtos);
@@ -385,6 +398,16 @@ public class PartitionServiceImpl implements PartitionService {
         if (!tableService.exists(name)) {
             throw new TableNotFoundException(name);
         }
+
+        // Fetch tableDto only if no update on tags configs exist.
+        if (MetacatUtils.configHasDoNotModifyForIcebergMigrationTag(config.getNoTableDeleteOnTags())) {
+            final TableDto tableDto = getTableDto(name);
+            if (MetacatUtils.hasDoNotModifyForIcebergMigrationTag(tableDto, config.getNoTableDeleteOnTags())) {
+                throw new TableMigrationInProgressException(
+                        MetacatUtils.getIcebergMigrationExceptionMsg("PartitionDelete", name.getTableName()));
+            }
+        }
+
         if (!partitionIds.isEmpty()) {
             final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
             dto.setPartitionIdsForDeletes(partitionIds);
@@ -591,10 +614,13 @@ public class PartitionServiceImpl implements PartitionService {
         return get(name) != null;
     }
 
+    private TableDto getTableDto(final QualifiedName name) {
+        return this.tableService.get(name,
+                GetTableServiceParameters.builder().includeInfo(true)
+                        .useCache(true).build()).orElseThrow(() -> new TableNotFoundException(name));
+    }
+
     private TableInfo getTableInfo(final QualifiedName name) {
-        return converterUtil.fromTableDto(this.tableService.get(name,
-            GetTableServiceParameters.builder().includeInfo(true)
-                .useCache(true).build()).orElseThrow(() -> new TableNotFoundException(name)
-        ));
+        return converterUtil.fromTableDto(getTableDto(name));
     }
 }

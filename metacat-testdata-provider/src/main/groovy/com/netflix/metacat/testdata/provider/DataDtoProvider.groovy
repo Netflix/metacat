@@ -24,6 +24,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
+import com.netflix.metacat.common.server.util.MetacatUtils
 import com.netflix.spectator.api.NoopRegistry
 
 /**
@@ -88,6 +89,16 @@ class DataDtoProvider {
                 ],
                 definitionMetadata: getDefinitionMetadata(owner)
         )
+    }
+
+    def static TableDto getTable(String sourceName, String databaseName, String tableName, String owner, String uri, Set<String> tags) {
+        def tableDto = getTable(sourceName, databaseName, tableName, owner, uri)
+        def tagArrayNode = metacatJson.getObjectMapper().createArrayNode()
+        for (String tag : tags) {
+            tagArrayNode.add(tag)
+        }
+        tableDto.getDefinitionMetadata().set(MetacatUtils.NAME_TAGS, tagArrayNode)
+        return tableDto
     }
 
     /**

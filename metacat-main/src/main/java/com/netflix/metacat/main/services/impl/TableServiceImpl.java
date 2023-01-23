@@ -13,14 +13,12 @@
 
 package com.netflix.metacat.main.services.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
@@ -29,6 +27,7 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.TableMigrationInProgressException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
@@ -51,6 +50,7 @@ import com.netflix.metacat.common.server.usermetadata.MetacatOperation;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
+import com.netflix.metacat.common.server.util.MetacatUtils;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.GetTableNamesServiceParameters;
@@ -73,7 +73,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class TableServiceImpl implements TableService {
-    private static final String NAME_TAGS = "tags";
     private final ConnectorManager connectorManager;
     private final DatabaseService databaseService;
     private final TagService tagService;
@@ -192,24 +191,11 @@ public class TableServiceImpl implements TableService {
 
     @SuppressFBWarnings
     private void tag(final QualifiedName name, final ObjectNode definitionMetadata) {
-        final Set<String> tags = getTableTags(definitionMetadata);
+        final Set<String> tags = MetacatUtils.getTableTags(definitionMetadata);
         if (!tags.isEmpty()) {
             log.info("Setting tags {} for table {}", tags, name);
             final Set<String> result = tagService.setTags(name, tags, false);
         }
-    }
-
-    private Set<String> getTableTags(@Nullable final ObjectNode definitionMetadata) {
-        final Set<String> tags = Sets.newHashSet();
-        if (definitionMetadata != null && definitionMetadata.get(NAME_TAGS) != null) {
-            final JsonNode tagsNode = definitionMetadata.get(NAME_TAGS);
-            if (tagsNode.isArray() && tagsNode.size() > 0) {
-                for (JsonNode tagNode : tagsNode) {
-                    tags.add(tagNode.textValue());
-                }
-            }
-        }
-        return tags;
     }
 
     /**
@@ -242,9 +228,14 @@ public class TableServiceImpl implements TableService {
 
         // Fail if the table is tagged not to be deleted.
         if (hasTags(tableDto, config.getNoTableDeleteOnTags())) {
-            throw new IllegalArgumentException(
-                String.format("Table %s cannot be deleted because it is tagged with %s.", name,
-                    config.getNoTableDeleteOnTags()));
+            if (MetacatUtils.hasDoNotModifyForIcebergMigrationTag(tableDto, config.getNoTableDeleteOnTags())) {
+                throw new TableMigrationInProgressException(
+                        MetacatUtils.getIcebergMigrationExceptionMsg("Delete", name.toString()));
+            } else {
+                throw new IllegalArgumentException(
+                        String.format("Table %s cannot be deleted because it is tagged with %s.", name,
+                                config.getNoTableDeleteOnTags()));
+            }
         }
 
         // Try to delete the table even if get above fails
@@ -272,7 +263,7 @@ public class TableServiceImpl implements TableService {
 
     private boolean hasTags(@Nullable final TableDto tableDto, final Set<String> hasTags) {
         if (!hasTags.isEmpty() && tableDto != null) {
-            final Set<String> tags = getTableTags(tableDto.getDefinitionMetadata());
+            final Set<String> tags = MetacatUtils.getTableTags(tableDto.getDefinitionMetadata());
             if (!tags.isEmpty()) {
                 for (String t: hasTags) {
                     if (tags.contains(t)) {
@@ -389,9 +380,14 @@ public class TableServiceImpl implements TableService {
 
         // Fail if the table is tagged not to be renamed.
         if (hasTags(oldTable, config.getNoTableRenameOnTags())) {
-            throw new IllegalArgumentException(
-                String.format("Table %s cannot be renamed because it is tagged with %s.", oldName,
-                    config.getNoTableRenameOnTags()));
+            if (MetacatUtils.hasDoNotModifyForIcebergMigrationTag(oldTable, config.getNoTableRenameOnTags())) {
+                throw new TableMigrationInProgressException(
+                        MetacatUtils.getIcebergMigrationExceptionMsg("Rename", oldName.toString()));
+            } else {
+                throw new IllegalArgumentException(
+                        String.format("Table %s cannot be renamed because it is tagged with %s.", oldName,
+                                config.getNoTableRenameOnTags()));
+            }
         }
 
         if (oldTable != null) {
@@ -435,6 +431,12 @@ public class TableServiceImpl implements TableService {
             .includeDefinitionMetadata(true)
             .build()).orElseThrow(() -> new TableNotFoundException(name));
         eventBus.post(new MetacatUpdateTablePreEvent(name, metacatRequestContext, this, oldTable, tableDto));
+
+        if (MetacatUtils.hasDoNotModifyForIcebergMigrationTag(oldTable, config.getNoTableUpdateOnTags())) {
+            throw new TableMigrationInProgressException(
+                    MetacatUtils.getIcebergMigrationExceptionMsg("Updates", name.toString()));
+        }
+
         //
         // Check if the table schema info is provided. If provided, we should continue calling the update on the table
         // schema. Uri may exist in the serde when updating data metadata for a table.
