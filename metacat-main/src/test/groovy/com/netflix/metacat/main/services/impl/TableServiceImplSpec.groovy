@@ -18,6 +18,10 @@
 
 package com.netflix.metacat.main.services.impl
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.AuditDto
 import com.netflix.metacat.common.dto.StorageDto
@@ -39,8 +43,10 @@ import com.netflix.metacat.main.manager.ConnectorManager
 import com.netflix.metacat.main.services.DatabaseService
 import com.netflix.metacat.main.services.GetTableServiceParameters
 import com.netflix.metacat.testdata.provider.DataDtoProvider
+import com.netflix.spectator.api.DefaultRegistry
 import com.netflix.spectator.api.NoopRegistry
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Tests for the TableServiceImpl.
@@ -49,6 +55,10 @@ import spock.lang.Specification
  * @since 1.2.0
  */
 class TableServiceImplSpec extends Specification {
+    def objectMapper = new ObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .setSerializationInclusion(JsonInclude.Include.ALWAYS)
+
     def connectorManager = Mock(ConnectorManager)
     def connectorTableService = Mock(ConnectorTableService)
     def databaseService = Mock(DatabaseService)
@@ -268,5 +278,40 @@ class TableServiceImplSpec extends Specification {
         1 * connectorTableService.update(_,_) >> {args -> ((ConnectorRequestContext) args[0]).setIgnoreErrorsAfterUpdate(true)}
         result == updatedTableDto
         noExceptionThrown()
+    }
+
+    @Unroll
+    def "test ownership diagnostic logging"() {
+        given:
+        def definitionMetadataJson = definitionMetadata == null
+            ? null : (objectMapper.readTree(definitionMetadata as String) as ObjectNode)
+        tableDto = new TableDto(
+            name: name,
+            definitionMetadata: definitionMetadataJson
+        )
+        registry = new DefaultRegistry()
+        TableServiceImpl tableService = new TableServiceImpl(
+            connectorManager, connectorTableServiceProxy, databaseService, tagService,
+            usermetadataService, eventBus, registry, config, converterUtil, authorizationService)
+
+        when:
+        tableService.logOwnershipDiagnosticDetails(name, tableDto)
+
+        then:
+        registry.counter(
+            "unauth.user.create.table",
+        "catalog", "a",
+        "database", "b",
+        "owner", (expectedOwner as String)).count() == 1
+
+        where:
+        definitionMetadata                     | expectedOwner
+        null                                   | "null"
+        "{}"                                   | "null"
+        "{\"owner\":null}"                     | "null"
+        "{\"owner\":{}}"                       | "null"
+        "{\"owner\":{\"userId\":null}}"        | "null"
+        "{\"owner\":{\"userId\":\"metacat\"}}" | "metacat"
+        "{\"owner\":{\"userId\":\"root\"}}"    | "root"
     }
 }

@@ -59,8 +59,14 @@ import com.netflix.metacat.main.services.TableService;
 import com.netflix.spectator.api.Registry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -136,6 +142,8 @@ public class TableServiceImpl implements TableService {
         // Set the owner,if null, with the session user name.
         //
         setOwnerIfNull(tableDto, metacatRequestContext.getUserName());
+        logOwnershipDiagnosticDetails(name, tableDto);
+
         log.info("Creating table {}", name);
         eventBus.post(new MetacatCreateTablePreEvent(name, metacatRequestContext, this, tableDto));
 
@@ -170,6 +178,66 @@ public class TableServiceImpl implements TableService {
             handleExceptionOnCreate(name, "postEvent", e);
         }
         return dto;
+    }
+
+    /**
+     * Logs diagnostic data for debugging invalid owners.
+     *
+     * @param name the qualified name of the resource
+     * @param tableDto the table details after all processing has been done on the owner
+     */
+    private void logOwnershipDiagnosticDetails(final QualifiedName name, final TableDto tableDto) {
+        try {
+            final String tableOwner = Optional.ofNullable(tableDto.getDefinitionMetadata())
+                                          .map(node -> node.get("owner"))
+                                          .map(owner -> owner.get("userId"))
+                                          .map(JsonNode::textValue)
+                                          .orElse(null);
+
+            if (tableOwner == null || "metacat".equals(tableOwner) || "root".equals(tableOwner)) {
+                registry.counter(
+                    "unauth.user.create.table",
+                    "catalog", name.getCatalogName(),
+                    "database", name.getDatabaseName(),
+                    "owner", Objects.toString(tableOwner)
+                ).increment();
+
+                log.info("Create table with invalid owner: {}. name: {}, table-dto: {}, context: {}, headers: {}",
+                    tableOwner, name, tableDto, MetacatContextManager.getContext(), getHttpHeaders());
+            }
+        } catch (Exception ex) {
+            log.warn("Error when logging diagnostic data for invalid owner table creation. name: {}, table: {}",
+                name, tableDto, ex);
+        }
+    }
+
+    /**
+     * Returns all the Http headers for the current request.
+     * @return the Http headers
+     */
+    private Map<String, String> getHttpHeaders() {
+        final Map<String, String> requestHeaders = new HashMap<>();
+
+        final RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+
+        if (requestAttributes instanceof ServletRequestAttributes) {
+            final ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) requestAttributes;
+
+            final HttpServletRequest servletRequest = servletRequestAttributes.getRequest();
+
+            if (servletRequest != null) {
+                final Enumeration<String> headerNames = servletRequest.getHeaderNames();
+
+                if (headerNames != null) {
+                    while (headerNames.hasMoreElements()) {
+                        final String header = headerNames.nextElement();
+                        requestHeaders.put(header, servletRequest.getHeader(header));
+                    }
+                }
+            }
+        }
+
+        return requestHeaders;
     }
 
     private void setOwnerIfNull(final TableDto tableDto, final String user) {
