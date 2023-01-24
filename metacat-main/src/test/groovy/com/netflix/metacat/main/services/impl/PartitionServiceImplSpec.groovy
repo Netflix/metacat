@@ -17,9 +17,15 @@
 
 package com.netflix.metacat.main.services.impl
 
+import com.google.common.collect.Sets
+import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.GetPartitionsRequestDto
+import com.netflix.metacat.common.dto.PartitionsSaveRequestDto
+import com.netflix.metacat.common.dto.PartitionsSaveResponseDto
 import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService
+import com.netflix.metacat.common.server.connectors.exception.TableMigrationInProgressException
+import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.converter.ConverterUtil
 import com.netflix.metacat.common.server.converter.DefaultTypeConverter
@@ -31,16 +37,20 @@ import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
+import com.netflix.metacat.common.server.util.MetacatUtils
 import com.netflix.metacat.common.server.util.ThreadServiceManager
 import com.netflix.metacat.main.manager.ConnectorManager
 import com.netflix.metacat.main.services.CatalogService
 import com.netflix.metacat.main.services.TableService
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.metacat.testdata.provider.MetacatDataInfoProvider
+import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import com.netflix.spectator.api.NoopRegistry
 import org.assertj.core.util.Lists
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.util.stream.Collectors
 
 /**
  * Tests for the PartitionServiceImpl.
@@ -100,5 +110,46 @@ class PartitionServiceImplSpec extends Specification{
         then:
         noExceptionThrown()
 
+    }
+
+    def "Test Save/Delete Partitions Handling When Hive To Iceberg Migration In Progress"() {
+        given:
+        def testTable = QualifiedName.fromString("prodhive/account/test")
+        def tagSet = Sets.newHashSet(MetacatUtils.ICEBERG_MIGRATION_DO_NOT_MODIFY_TAG)
+        def tableDtoWithTags = DataDtoProvider.getTable(testTable.getCatalogName(), testTable.getDatabaseName(), testTable.getTableName(),
+                "warehouse", "s3://prodhive/account/test", tagSet)
+        def partitionService = new PartitionServiceImpl(catalogService, connectorManager, tableService, usermetadataService,
+                threadServiceManager, config, eventBus, converterUtil, registry)
+        def partitions = PigDataDtoProvider.getPartitions(testTable.getCatalogName(), testTable.getDatabaseName(), testTable.getTableName(),
+                'field1=xyz/field3=abc', "s3://prodhive/account/test", 5)
+
+        when:
+        partitionService.save(tableDtoWithTags.getName(), new PartitionsSaveRequestDto(partitions: partitions))
+
+        then:
+        1 * tableService.exists(testTable) >> true
+        2 * config.getNoTableUpdateOnTags() >> Sets.newHashSet(tagSet)
+        1 * tableService.get(testTable, _) >> Optional.of(tableDtoWithTags)
+        thrown(TableMigrationInProgressException)
+
+        when:
+        partitionService.delete(tableDtoWithTags.getName(), partitions.stream().map({ p -> p.name }).collect(Collectors.toList()))
+
+        then:
+        1 * config.getMaxDeletedPartitionsThreshold() >> 1000
+        1 * tableService.exists(testTable) >> true
+        2 * config.getNoTableDeleteOnTags() >> Sets.newHashSet(tagSet)
+        1 * tableService.get(testTable, _) >> Optional.of(tableDtoWithTags)
+        thrown(TableMigrationInProgressException)
+
+        when:
+        partitionService.save(tableDtoWithTags.getName(), new PartitionsSaveRequestDto(partitions: partitions))
+
+        then:
+        1 * tableService.exists(testTable) >> true
+        1 * config.getNoTableUpdateOnTags() >> Sets.newHashSet("do_not_rename", "uncategorized")
+        1 * config.getMaxAddedPartitionsThreshold() >> 1000
+        1 * connectorPartitionService.savePartitions(_, _, _) >> new PartitionsSaveResponse()
+        noExceptionThrown()
     }
 }

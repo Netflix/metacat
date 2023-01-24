@@ -1,26 +1,37 @@
 //CHECKSTYLE:OFF
 package com.netflix.metacat.common.server.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
 import com.netflix.spectator.api.Registry;
 import org.springframework.context.ApplicationContext;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * General metacat utility methods.
  */
 public class MetacatUtils {
+
+    public static final String ICEBERG_MIGRATION_DO_NOT_MODIFY_TAG = "iceberg_migration_do_not_modify";
+    public static final String NAME_TAGS = "tags";
 
     /**
      * Default Ctor.
@@ -78,5 +89,42 @@ public class MetacatUtils {
 
         return new ConnectorContext(catalogName, catalogShardName, connectorType, config, registry,
                 applicationContext, properties);
+    }
+
+    public static boolean configHasDoNotModifyForIcebergMigrationTag(final Set<String> tags) {
+        return Optional.ofNullable(tags).orElse(Collections.emptySet()).stream().
+                anyMatch(t -> t.trim().equalsIgnoreCase(ICEBERG_MIGRATION_DO_NOT_MODIFY_TAG));
+    }
+
+    public static boolean hasDoNotModifyForIcebergMigrationTag(@Nullable final TableDto tableDto,
+                                                               final Set<String> tags) {
+        if (tableDto != null) {
+            final Set<String> tableTags = getTableTags(tableDto.getDefinitionMetadata());
+            if (tableTags != null) {
+                return configHasDoNotModifyForIcebergMigrationTag(tags) &&
+                        tableTags.stream().anyMatch(t -> t.trim().equalsIgnoreCase(ICEBERG_MIGRATION_DO_NOT_MODIFY_TAG));
+            }
+        }
+        return false;
+    }
+
+    public static Set<String> getTableTags(@Nullable final ObjectNode definitionMetadata) {
+        final Set<String> tags = Sets.newHashSet();
+        if (definitionMetadata != null && definitionMetadata.get(NAME_TAGS) != null) {
+            final JsonNode tagsNode = definitionMetadata.get(NAME_TAGS);
+            if (tagsNode.isArray() && tagsNode.size() > 0) {
+                for (JsonNode tagNode : tagsNode) {
+                    tags.add(tagNode.textValue().trim());
+                }
+            }
+        }
+        return tags;
+    }
+
+    public static String getIcebergMigrationExceptionMsg(final String requestType,
+                                                         final String tableName) {
+        return String.format("%s to hive table: %s are temporarily blocked " +
+                        "for automated migration to iceberg. Please retry",
+                requestType, tableName);
     }
 }
