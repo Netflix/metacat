@@ -26,6 +26,7 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.AuditDto
 import com.netflix.metacat.common.dto.StorageDto
 import com.netflix.metacat.common.dto.TableDto
+import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.ConnectorTableService
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetadataException
@@ -39,6 +40,7 @@ import com.netflix.metacat.common.server.spi.MetacatCatalogConfig
 import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService
 import com.netflix.metacat.common.server.usermetadata.TagService
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
+import com.netflix.metacat.common.server.util.MetacatContextManager
 import com.netflix.metacat.main.manager.ConnectorManager
 import com.netflix.metacat.main.services.DatabaseService
 import com.netflix.metacat.main.services.GetTableServiceParameters
@@ -90,7 +92,8 @@ class TableServiceImplSpec extends Specification {
         connectorTableServiceProxy = new ConnectorTableServiceProxy(connectorManager, converterUtil)
         authorizationService = new DefaultAuthorizationService(config)
         service = new TableServiceImpl(connectorManager, connectorTableServiceProxy, databaseService, tagService,
-            usermetadataService, eventBus, registry, config, converterUtil, authorizationService)
+            usermetadataService, new MetacatJsonLocator(),
+            eventBus, registry, config, converterUtil, authorizationService)
     }
 
     def testTableGet() {
@@ -283,8 +286,7 @@ class TableServiceImplSpec extends Specification {
     @Unroll
     def "test ownership diagnostic logging"() {
         given:
-        def definitionMetadataJson = definitionMetadata == null
-            ? null : (objectMapper.readTree(definitionMetadata as String) as ObjectNode)
+        def definitionMetadataJson = toObjectNode(definitionMetadata)
         tableDto = new TableDto(
             name: name,
             definitionMetadata: definitionMetadataJson
@@ -292,7 +294,7 @@ class TableServiceImplSpec extends Specification {
         registry = new DefaultRegistry()
         TableServiceImpl tableService = new TableServiceImpl(
             connectorManager, connectorTableServiceProxy, databaseService, tagService,
-            usermetadataService, eventBus, registry, config, converterUtil, authorizationService)
+            usermetadataService, new MetacatJsonLocator(), eventBus, registry, config, converterUtil, authorizationService)
 
         when:
         tableService.logOwnershipDiagnosticDetails(name, tableDto)
@@ -315,5 +317,44 @@ class TableServiceImplSpec extends Specification {
         "{\"owner\":{\"userId\":\" \"}}"       | "null"
         "{\"owner\":{\"userId\":\"metacat\"}}" | "metacat"
         "{\"owner\":{\"userId\":\"root\"}}"    | "root"
+    }
+
+    @Unroll
+    def "test default attributes"() {
+        given:
+        def tableService = new TableServiceImpl(
+            connectorManager, connectorTableServiceProxy, databaseService, tagService,
+            usermetadataService, new MetacatJsonLocator(),
+            eventBus, new DefaultRegistry(), config, converterUtil, authorizationService)
+
+        def initialDefinitionMetadataJson = toObjectNode(initialDefinitionMetadata)
+        tableDto = new TableDto(
+            name: name,
+            definitionMetadata: initialDefinitionMetadataJson,
+            serde: initialSerde
+        )
+
+        MetacatContextManager.getContext().setUserName(sessionUser)
+
+        when:
+        tableService.setDefaultAttributes(tableDto)
+
+        then:
+        tableDto.getDefinitionMetadata() == toObjectNode(expectedDefMetadata)
+        tableDto.getSerde() == expectedSerde
+
+        where:
+        initialDefinitionMetadata              | sessionUser | initialSerde                      || expectedDefMetadata                     | expectedSerde
+        null                                   | null        | null                              || "{}"                                    | new StorageDto()
+        null                                   | "ssarma"    | null                              || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto()
+        "{\"owner\":{\"userId\":\"ssarma\"}}"  | "asdf"      | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga")
+        "{\"owner\":{\"userId\":\"metacat\"}}" | "ssarma"    | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga")
+        "{\"owner\":{\"userId\":\"root\"}}"    | "ssarma"    | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga")
+        "{\"owner\":{\"userId\":\"root\"}}"    | "metacat"   | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"swaranga\"}}" | new StorageDto(owner: "swaranga")
+        "{\"owner\":{\"userId\":\"root\"}}"    | "metacat"   | new StorageDto(owner: "metacat")  || "{\"owner\":{\"userId\":\"root\"}}"     | new StorageDto(owner: "metacat")
+    }
+
+    ObjectNode toObjectNode(jsonString) {
+        return jsonString == null ? null : (objectMapper.readTree(jsonString as String) as ObjectNode)
     }
 }

@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.main.configs;
 
+import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.api.ratelimiter.DefaultRateLimiter;
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
@@ -191,6 +192,7 @@ public class ServicesConfig {
      * @param databaseService            database service
      * @param tagService                 tag service
      * @param userMetadataService        user metadata service
+     * @param metacatJson                metacat json utility
      * @param eventBus                   Internal event bus
      * @param registry                   registry handle
      * @param config                     configurations
@@ -205,6 +207,7 @@ public class ServicesConfig {
         final DatabaseService databaseService,
         final TagService tagService,
         final UserMetadataService userMetadataService,
+        final MetacatJson metacatJson,
         final MetacatEventBus eventBus,
         final Registry registry,
         final Config config,
@@ -217,6 +220,7 @@ public class ServicesConfig {
             databaseService,
             tagService,
             userMetadataService,
+            metacatJson,
             eventBus,
             registry,
             config,

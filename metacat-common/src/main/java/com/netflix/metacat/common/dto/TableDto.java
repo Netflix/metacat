@@ -19,6 +19,7 @@ package com.netflix.metacat.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 import io.swagger.annotations.ApiModel;
@@ -37,6 +38,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Table DTO.
@@ -87,6 +89,14 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
     @JsonIgnore
     public QualifiedName getDefinitionName() {
         return name;
+    }
+
+    @JsonIgnore
+    public Optional<String> getTableOwner() {
+        return Optional.ofNullable(definitionMetadata)
+                   .map(definitionMetadataJson -> definitionMetadataJson.get("owner"))
+                   .map(ownerJson -> ownerJson.get("userId"))
+                   .map(JsonNode::textValue);
     }
 
     /**
