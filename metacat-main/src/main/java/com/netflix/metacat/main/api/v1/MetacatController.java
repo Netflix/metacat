@@ -14,7 +14,6 @@
 package com.netflix.metacat.main.api.v1;
 
 import com.google.common.base.Preconditions;
-import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
@@ -39,7 +38,6 @@ import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.TableService;
-import com.netflix.spectator.api.Registry;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -56,19 +54,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.net.HttpURLConnection;
 import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -94,7 +85,6 @@ public class MetacatController implements MetacatV1 {
     private final TableService tableService;
     private final RequestWrapper requestWrapper;
     private final Config config;
-    private final Registry registry;
 
     /**
      * Constructor.
@@ -105,7 +95,6 @@ public class MetacatController implements MetacatV1 {
      * @param tableService    table service
      * @param requestWrapper  request wrapper obj
      * @param config Config
-     * @param registry the spectator registry
      */
     @Autowired
     public MetacatController(
@@ -114,8 +103,7 @@ public class MetacatController implements MetacatV1 {
         final MViewService mViewService,
         final TableService tableService,
         final RequestWrapper requestWrapper,
-        final Config config,
-        final Registry registry
+        final Config config
         ) {
         this.catalogService = catalogService;
         this.databaseService = databaseService;
@@ -123,7 +111,6 @@ public class MetacatController implements MetacatV1 {
         this.tableService = tableService;
         this.requestWrapper = requestWrapper;
         this.config = config;
-        this.registry = registry;
     }
 
     /**
@@ -265,43 +252,15 @@ public class MetacatController implements MetacatV1 {
         @ApiParam(value = "The table information", required = true)
         @Valid @RequestBody final TableDto table
     ) {
-        final MetacatRequestContext requestContext = MetacatContextManager.getContext();
-        if (requestContext.getUserName() == null || "metacat".equals(requestContext.getUserName())) {
-            registry.counter(
-                "unauth.user.create.table", "catalog", catalogName, "database", databaseName).increment();
-
-            final Map<String, String> requestHeaders = new HashMap<>();
-
-            final RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-
-            if (requestAttributes instanceof ServletRequestAttributes) {
-                final ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) requestAttributes;
-
-                final HttpServletRequest servletRequest = servletRequestAttributes.getRequest();
-
-                if (servletRequest != null) {
-                    final Enumeration<String> headerNames = servletRequest.getHeaderNames();
-
-                    if (headerNames != null) {
-                        while (headerNames.hasMoreElements()) {
-                            final String header = headerNames.nextElement();
-                            requestHeaders.put(header, servletRequest.getHeader(header));
-                        }
-                    }
-                }
-            }
-
-            log.info("Create table with unknown user. "
-                    + "catalog: {}, database: {}, table-name: {}, table-info: {}, context: {}, headers: {}",
-                catalogName, databaseName, tableName, table, requestContext, requestHeaders);
-        }
-
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         if (MetacatServiceHelper.isIcebergTable(table)) {
             MetacatContextManager.getContext().updateTableTypeMap(name, MetacatServiceHelper.ICEBERG_TABLE_TYPE);
         }
+
+        log.info("Creating table: {} with info: {}", name, table);
+
         return this.requestWrapper.processRequest(
             name,
             "createTable",
