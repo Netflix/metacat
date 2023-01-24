@@ -311,6 +311,8 @@ class TableServiceImplSpec extends Specification {
         "{\"owner\":null}"                     | "null"
         "{\"owner\":{}}"                       | "null"
         "{\"owner\":{\"userId\":null}}"        | "null"
+        "{\"owner\":{\"userId\":\"\"}}"        | "null"
+        "{\"owner\":{\"userId\":\" \"}}"       | "null"
         "{\"owner\":{\"userId\":\"metacat\"}}" | "metacat"
         "{\"owner\":{\"userId\":\"root\"}}"    | "root"
     }

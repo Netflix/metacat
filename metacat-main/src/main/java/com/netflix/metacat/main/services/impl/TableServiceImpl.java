@@ -59,6 +59,7 @@ import com.netflix.metacat.main.services.TableService;
 import com.netflix.spectator.api.Registry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -194,12 +195,12 @@ public class TableServiceImpl implements TableService {
                                           .map(JsonNode::textValue)
                                           .orElse(null);
 
-            if (tableOwner == null || "metacat".equals(tableOwner) || "root".equals(tableOwner)) {
+            if (StringUtils.isBlank(tableOwner) || "metacat".equals(tableOwner) || "root".equals(tableOwner)) {
                 registry.counter(
                     "unauth.user.create.table",
                     "catalog", name.getCatalogName(),
                     "database", name.getDatabaseName(),
-                    "owner", Objects.toString(tableOwner)
+                    "owner", StringUtils.isBlank(tableOwner) ? "null" : tableOwner
                 ).increment();
 
                 log.info("Create table with invalid owner: {}. name: {}, table-dto: {}, context: {}, headers: {}",
