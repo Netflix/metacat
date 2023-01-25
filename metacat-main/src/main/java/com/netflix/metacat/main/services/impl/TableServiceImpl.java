@@ -13,7 +13,6 @@
 
 package com.netflix.metacat.main.services.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -27,6 +26,7 @@ import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
+import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.TableMigrationInProgressException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
@@ -59,6 +59,7 @@ import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.spectator.api.Registry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.context.request.RequestAttributes;
@@ -80,55 +81,19 @@ import java.util.concurrent.TimeUnit;
  * Table service implementation.
  */
 @Slf4j
+@RequiredArgsConstructor
 public class TableServiceImpl implements TableService {
     private final ConnectorManager connectorManager;
+    private final ConnectorTableServiceProxy connectorTableServiceProxy;
     private final DatabaseService databaseService;
     private final TagService tagService;
     private final UserMetadataService userMetadataService;
+    private final MetacatJson metacatJson;
     private final MetacatEventBus eventBus;
     private final Registry registry;
     private final Config config;
     private final ConverterUtil converterUtil;
-    private final ConnectorTableServiceProxy connectorTableServiceProxy;
     private final AuthorizationService authorizationService;
-
-    /**
-     * Constructor.
-     *
-     * @param connectorManager Connector manager to use
-     * @param connectorTableServiceProxy connector table service proxy
-     * @param databaseService            database service
-     * @param tagService                 tag service
-     * @param userMetadataService        user metadata service
-     * @param eventBus                   Internal event bus
-     * @param registry                   registry handle
-     * @param config                     configurations
-     * @param converterUtil              utility to convert to/from Dto to connector resources
-     * @param authorizationService       authorization service
-     */
-    public TableServiceImpl(
-        final ConnectorManager connectorManager,
-        final ConnectorTableServiceProxy connectorTableServiceProxy,
-        final DatabaseService databaseService,
-        final TagService tagService,
-        final UserMetadataService userMetadataService,
-        final MetacatEventBus eventBus,
-        final Registry registry,
-        final Config config,
-        final ConverterUtil converterUtil,
-        final AuthorizationService authorizationService
-    ) {
-        this.connectorManager = connectorManager;
-        this.connectorTableServiceProxy = connectorTableServiceProxy;
-        this.databaseService = databaseService;
-        this.tagService = tagService;
-        this.userMetadataService = userMetadataService;
-        this.eventBus = eventBus;
-        this.registry = registry;
-        this.config = config;
-        this.authorizationService = authorizationService;
-        this.converterUtil = converterUtil;
-    }
 
     /**
      * {@inheritDoc}
@@ -139,10 +104,8 @@ public class TableServiceImpl implements TableService {
         validate(name);
         this.authorizationService.checkPermission(metacatRequestContext.getUserName(),
             tableDto.getName(), MetacatOperation.CREATE);
-        //
-        // Set the owner,if null, with the session user name.
-        //
-        setOwnerIfNull(tableDto, metacatRequestContext.getUserName());
+
+        setDefaultAttributes(tableDto);
         logOwnershipDiagnosticDetails(name, tableDto);
 
         log.info("Creating table {}", name);
@@ -181,6 +144,12 @@ public class TableServiceImpl implements TableService {
         return dto;
     }
 
+    private void setDefaultAttributes(final TableDto tableDto) {
+        setDefaultSerdeIfNull(tableDto);
+        setDefaultDefinitionMetadataIfNull(tableDto);
+        setOwnerIfNull(tableDto);
+    }
+
     /**
      * Logs diagnostic data for debugging invalid owners.
      *
@@ -189,13 +158,9 @@ public class TableServiceImpl implements TableService {
      */
     private void logOwnershipDiagnosticDetails(final QualifiedName name, final TableDto tableDto) {
         try {
-            final String tableOwner = Optional.ofNullable(tableDto.getDefinitionMetadata())
-                                          .map(node -> node.get("owner"))
-                                          .map(owner -> owner.get("userId"))
-                                          .map(JsonNode::textValue)
-                                          .orElse(null);
+            final String tableOwner = tableDto.getTableOwner().orElse(null);
 
-            if (StringUtils.isBlank(tableOwner) || "metacat".equals(tableOwner) || "root".equals(tableOwner)) {
+            if (!isOwnerValid(tableOwner)) {
                 registry.counter(
                     "unauth.user.create.table",
                     "catalog", name.getCatalogName(),
@@ -241,22 +206,73 @@ public class TableServiceImpl implements TableService {
         return requestHeaders;
     }
 
-    private void setOwnerIfNull(final TableDto tableDto, final String user) {
-        String owner = user;
+    private void setDefaultDefinitionMetadataIfNull(final TableDto tableDto) {
+        ObjectNode definitionMetadata = tableDto.getDefinitionMetadata();
+        if (definitionMetadata == null) {
+            definitionMetadata = metacatJson.emptyObjectNode();
+            tableDto.setDefinitionMetadata(definitionMetadata);
+        }
+    }
+
+    private void setDefaultSerdeIfNull(final TableDto tableDto) {
         StorageDto serde = tableDto.getSerde();
         if (serde == null) {
             serde = new StorageDto();
             tableDto.setSerde(serde);
         }
-        final String serdeOwner = serde.getOwner();
-        if (Strings.isNullOrEmpty(serdeOwner)) {
-            serde.setOwner(user);
-        } else {
-            owner = serdeOwner;
+    }
+
+    /**
+     * Sets the owner of the table. The order of priority of selecting the owner is:
+     * <pre>
+     *     1. Explicitly set in the table dto
+     *     2. Username from the request headers
+     *     3. Owner set in the serde
+     * </pre>
+     *
+     * @param tableDto the table DTO
+     */
+    private void setOwnerIfNull(final TableDto tableDto) {
+        final String ownerInDto = tableDto.getTableOwner().orElse(null);
+        if (isOwnerValid(ownerInDto)) {
+            return;
         }
-        if (!Strings.isNullOrEmpty(owner)) {
-            userMetadataService.populateOwnerIfMissing(tableDto, owner);
+
+        final String userInContext = MetacatContextManager.getContext().getUserName();
+        if (isOwnerValid(userInContext)) {
+            updateTableOwner(tableDto, userInContext);
+            return;
         }
+
+        final String serdeOwner = tableDto.getSerde().getOwner();
+        if (isOwnerValid(serdeOwner)) {
+            updateTableOwner(tableDto, serdeOwner);
+        }
+
+        // At this point, if we still have not found a valid user,
+        // cycle through the list again and use the first non-null value
+
+        if (ownerInDto != null) {
+            return;
+        }
+
+        if (userInContext != null) {
+            updateTableOwner(tableDto, userInContext);
+            return;
+        }
+
+        if (serdeOwner != null) {
+            updateTableOwner(tableDto, serdeOwner);
+        }
+    }
+
+    void updateTableOwner(final TableDto tableDto, final String userId) {
+        final ObjectNode ownerNode = tableDto.getDefinitionMetadata().with("owner");
+        ownerNode.put("userId", userId);
+    }
+
+    private boolean isOwnerValid(@Nullable final String userId) {
+        return StringUtils.isNotBlank(userId) && !"metacat".equals(userId) && !"root".equals(userId);
     }
 
     @SuppressFBWarnings
