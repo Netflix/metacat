@@ -230,7 +230,7 @@ public class MySqlTagService implements TagService {
             final QualifiedName newName = QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(),
                 newTableName);
             if (get(newName) != null) {
-                delete(newName, true);
+                delete(newName, false /*don't delete existing definition metadata with the new name*/);
             }
             jdbcTemplate.update(SQL_UPDATE_TAG_ITEM, new String[]{newName.toString(), name.toString()},
                 new int[]{Types.VARCHAR, Types.VARCHAR});
