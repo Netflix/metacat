@@ -271,13 +271,17 @@ public class MySqlTagService implements TagService {
      */
     public void remove(final QualifiedName name, final Set<String> tags, final boolean updateUserMetadata) {
         try {
+            final TagItem tagItem = get(name);
+            if (tagItem == null || tagItem.getValues().isEmpty()) {
+                log.info(String.format("No tags or tagItems found for table %s", name));
+                return;
+            }
             final List<SqlParameterValue> params = Lists.newArrayList();
             params.add(new SqlParameterValue(Types.VARCHAR, name.toString()));
             jdbcTemplate.update(String.format(SQL_DELETE_TAG_ITEM_TAGS_BY_NAME_TAGS,
                 buildParametrizedInClause(tags, params, params.size())),
                 params.toArray());
             if (updateUserMetadata) {
-                final TagItem tagItem = get(name);
                 tagItem.getValues().removeAll(tags);
                 final Map<String, Set<String>> data = Maps.newHashMap();
                 data.put(NAME_TAGS, tagItem.getValues());
