@@ -224,7 +224,12 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             }
             final String prevLoc = newTableMetadata.get(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION);
             final String newLoc = newTableMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION);
-            if (StringUtils.isBlank(prevLoc) || StringUtils.isBlank(newLoc)) {
+            if (StringUtils.isBlank(prevLoc)) {
+                log.info("Provided previous {} empty for {} with new {}, treating as no location update needed.",
+                        prevLoc, name, newLoc);
+                return;
+            }
+            if (StringUtils.isBlank(newLoc)) {
                 final String message = String.format(
                         "Invalid metadata for %s. Provided previous %s or new %s location is empty.",
                         name, prevLoc, newLoc);
@@ -246,12 +251,18 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             // if succeeded then done, else try to figure out why and throw corresponding exception
             if (updated) {
                 requestContext.setIgnoreErrorsAfterUpdate(true);
+                log.warn("Success servicing Iceberg commit request for table: {}, "
+                        + "previousLocation: {}, newLocation: {}",
+                        tableInfo.getName(), prevLoc, newLoc);
                 return;
             }
             final PolarisTableEntity table = polarisStoreService
                     .getTable(name.getDatabaseName(), name.getTableName())
                     .orElseThrow(() -> new TableNotFoundException(name));
             final String existingLoc = table.getMetadataLocation();
+            log.warn("Error servicing Iceberg commit request for tableId: {}, "
+                    + "previousLocation: {}, existingLocation: {}, newLocation: {}",
+                    table.getTblId(), prevLoc, existingLoc, newLoc);
             if (StringUtils.isBlank(existingLoc)) {
                 final String message = String.format(
                         "Invalid metadata location for %s existing location is empty.", name);

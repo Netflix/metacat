@@ -325,8 +325,9 @@ public class PolarisConnectorTableServiceTest {
         polarisTableService.create(requestContext, tableInfo0);
         final TableInfo tableResult0 = polarisTableService.get(requestContext, qualifiedName);
         Assert.assertEquals(tableResult0.getMetadata().get("metadata_location"), location0);
-        // check update location without setting prev location fails
-        metadata.put("metadata_location", location1);
+        // check update location without setting location fails
+        metadata.put("previous_metadata_location", location1);
+        metadata.remove("metadata_location");
         final TableInfo tableInfo1 = TableInfo.builder().name(qualifiedName).metadata(metadata).build();
         Assertions.assertThrows(InvalidMetaException.class,
             () -> polarisTableService.update(requestContext, tableInfo1));
