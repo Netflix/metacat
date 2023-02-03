@@ -170,6 +170,18 @@ public class TableServiceImpl implements TableService {
 
                 log.info("Create table with invalid owner: {}. name: {}, table-dto: {}, context: {}, headers: {}",
                     tableOwner, name, tableDto, MetacatContextManager.getContext(), getHttpHeaders());
+            } else if (!isOwnerValid(MetacatContextManager.getContext().getUserName())) {
+                registry.counter(
+                    "unauth.user.createTable.requestContext",
+                    "catalog", name.getCatalogName(),
+                    "database", name.getDatabaseName(),
+                    "owner", StringUtils.isBlank(MetacatContextManager.getContext().getUserName()) ? "null" : tableOwner
+                ).increment();
+
+                log.info("Create table called with invalid owner: {} in request context."
+                             + " name: {}, table-dto: {}, context: {}, headers: {}",
+                    MetacatContextManager.getContext().getUserName(), name, tableDto,
+                    MetacatContextManager.getContext(), getHttpHeaders());
             }
         } catch (Exception ex) {
             log.warn("Error when logging diagnostic data for invalid owner table creation. name: {}, table: {}",
@@ -247,6 +259,7 @@ public class TableServiceImpl implements TableService {
         final String serdeOwner = tableDto.getSerde().getOwner();
         if (isOwnerValid(serdeOwner)) {
             updateTableOwner(tableDto, serdeOwner);
+            return;
         }
 
         // At this point, if we still have not found a valid user,
