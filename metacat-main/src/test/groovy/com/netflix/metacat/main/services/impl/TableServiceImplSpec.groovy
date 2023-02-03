@@ -347,6 +347,7 @@ class TableServiceImplSpec extends Specification {
         initialDefinitionMetadata              | sessionUser | initialSerde                      || expectedDefMetadata                     | expectedSerde
         null                                   | null        | null                              || "{}"                                    | new StorageDto()
         null                                   | "ssarma"    | null                              || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto()
+        null                                   | "root"      | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"swaranga\"}}" | new StorageDto(owner: "swaranga")
         "{\"owner\":{\"userId\":\"ssarma\"}}"  | "asdf"      | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga")
         "{\"owner\":{\"userId\":\"metacat\"}}" | "ssarma"    | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga")
         "{\"owner\":{\"userId\":\"root\"}}"    | "ssarma"    | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga")
