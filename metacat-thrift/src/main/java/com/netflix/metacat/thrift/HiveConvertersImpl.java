@@ -16,6 +16,8 @@
  */
 package com.netflix.metacat.thrift;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -28,6 +30,7 @@ import com.netflix.metacat.common.dto.PartitionDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.dto.ViewDto;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
@@ -54,6 +57,7 @@ import java.util.stream.Collectors;
  * Hive converter.
  */
 public class HiveConvertersImpl implements HiveConverters {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @VisibleForTesting
     Integer dateToEpochSeconds(@Nullable final Date date) {
@@ -121,6 +125,15 @@ public class HiveConvertersImpl implements HiveConverters {
         dto.setFields(allFields);
         dto.setView(new ViewDto(table.getViewOriginalText(),
             table.getViewExpandedText()));
+
+        if (StringUtils.isNotBlank(table.getOwner())) {
+            final ObjectNode definitionMetadata = OBJECT_MAPPER.createObjectNode();
+            final ObjectNode ownerNode = definitionMetadata.with("owner");
+            ownerNode.put("userId", table.getOwner());
+
+            dto.setDefinitionMetadata(definitionMetadata);
+        }
+
         return dto;
     }
 
@@ -208,6 +221,9 @@ public class HiveConvertersImpl implements HiveConverters {
             table.setPartitionKeys(partitionFields);
             table.getSd().setCols(nonPartitionFields);
         }
+
+        dto.getTableOwner().ifPresent(table::setOwner);
+
         return table;
     }
 

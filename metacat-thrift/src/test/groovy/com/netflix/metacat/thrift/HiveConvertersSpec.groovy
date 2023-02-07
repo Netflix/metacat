@@ -13,15 +13,13 @@
 
 package com.netflix.metacat.thrift
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.type.VarcharType
-import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.api.*
-import org.apache.hadoop.hive.ql.metadata.Hive
-import org.apache.hadoop.hive.ql.session.SessionState
 import org.joda.time.Instant
 import spock.lang.Specification
 
@@ -32,6 +30,8 @@ import java.util.Date
 
 class HiveConvertersSpec extends Specification {
     private static final ZoneOffset PACIFIC = LocalDateTime.now().atZone(ZoneId.of('America/Los_Angeles')).offset
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+
     Config config = Mock(Config)
 //    TypeManager typeManager = Mock(TypeManager)
     HiveConvertersImpl converter
@@ -134,6 +134,15 @@ class HiveConvertersSpec extends Specification {
         table.partitionKeys != null
         table.parameters != null
         table.tableType != null
+
+        when:
+        def definitionMetadata = MAPPER.createObjectNode()
+        def ownerNode = definitionMetadata.with("owner")
+        ownerNode.put("userId", "asdf")
+        dto.setDefinitionMetadata(definitionMetadata)
+
+        then:
+        converter.metacatToHiveTable(dto).owner == "asdf"
     }
 
     def 'test metacatToHiveTable'() {
@@ -224,6 +233,8 @@ class HiveConvertersSpec extends Specification {
         }
         dto.fields.findAll { it.partition_key }.size() == 2
         dto.metadata == tableParams
+        dto.definitionMetadata.get("owner").get("userId").asText() == owner
+        dto.getTableOwner().get() == owner
 
         where:
         databaseName = 'database'
