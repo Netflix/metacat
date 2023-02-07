@@ -221,6 +221,9 @@ public class HiveConvertersImpl implements HiveConverters {
             table.setPartitionKeys(partitionFields);
             table.getSd().setCols(nonPartitionFields);
         }
+
+        dto.getTableOwner().ifPresent(table::setOwner);
+
         return table;
     }
 

@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.thrift
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter
@@ -29,6 +30,8 @@ import java.util.Date
 
 class HiveConvertersSpec extends Specification {
     private static final ZoneOffset PACIFIC = LocalDateTime.now().atZone(ZoneId.of('America/Los_Angeles')).offset
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+
     Config config = Mock(Config)
 //    TypeManager typeManager = Mock(TypeManager)
     HiveConvertersImpl converter
@@ -131,6 +134,15 @@ class HiveConvertersSpec extends Specification {
         table.partitionKeys != null
         table.parameters != null
         table.tableType != null
+
+        when:
+        def definitionMetadata = MAPPER.createObjectNode()
+        def ownerNode = definitionMetadata.with("owner")
+        ownerNode.put("userId", "asdf")
+        dto.setDefinitionMetadata(definitionMetadata)
+
+        then:
+        converter.metacatToHiveTable(dto).owner == "asdf"
     }
 
     def 'test metacatToHiveTable'() {
