@@ -342,18 +342,19 @@ class TableServiceImplSpec extends Specification {
         then:
         tableDto.getDefinitionMetadata() == toObjectNode(expectedDefMetadata)
         tableDto.getSerde() == expectedSerde
+        tableDto.getTableOwner() == Optional.ofNullable(expetedFinalOwner)
 
         where:
-        initialDefinitionMetadata                               | sessionUser | initialSerde                      || expectedDefMetadata                     | expectedSerde
-        null                                                    | null        | null                              || "{}"                                    | new StorageDto()
-        null                                                    | "ssarma"    | null                              || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto()
-        null                                                    | "root"      | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"swaranga\"}}" | new StorageDto(owner: "swaranga")
-        "{\"owner\":{\"userId\":\"ssarma\"}}"                   | "asdf"      | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga")
-        "{\"owner\":{\"userId\":\"metacat\"}}"                  | "ssarma"    | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga")
-        "{\"owner\":{\"userId\":\"root\"}}"                     | "ssarma"    | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga")
-        "{\"owner\":{\"userId\":\"root\"}}"                     | "metacat"   | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"swaranga\"}}" | new StorageDto(owner: "swaranga")
-        "{\"owner\":{\"userId\":\"root\"}}"                     | "metacat"   | new StorageDto(owner: "metacat")  || "{\"owner\":{\"userId\":\"root\"}}"     | new StorageDto(owner: "metacat")
-        "{\"owner\":{\"userId\":\"metacat-thrift-interface\"}}" | "ssarma"    | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga")
+        initialDefinitionMetadata                               | sessionUser | initialSerde                      || expectedDefMetadata                     | expectedSerde                     | expetedFinalOwner
+        null                                                    | null        | null                              || "{}"                                    | new StorageDto()                  | null
+        null                                                    | "ssarma"    | null                              || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto()                  | "ssarma"
+        null                                                    | "root"      | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"swaranga\"}}" | new StorageDto(owner: "swaranga") | "swaranga"
+        "{\"owner\":{\"userId\":\"ssarma\"}}"                   | "asdf"      | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga") | "ssarma"
+        "{\"owner\":{\"userId\":\"metacat\"}}"                  | "ssarma"    | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga") | "ssarma"
+        "{\"owner\":{\"userId\":\"root\"}}"                     | "ssarma"    | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga") | "ssarma"
+        "{\"owner\":{\"userId\":\"root\"}}"                     | "metacat"   | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"swaranga\"}}" | new StorageDto(owner: "swaranga") | "swaranga"
+        "{\"owner\":{\"userId\":\"root\"}}"                     | "metacat"   | new StorageDto(owner: "metacat")  || "{\"owner\":{\"userId\":\"root\"}}"     | new StorageDto(owner: "metacat")  | "root"
+        "{\"owner\":{\"userId\":\"metacat-thrift-interface\"}}" | "ssarma"    | new StorageDto(owner: "swaranga") || "{\"owner\":{\"userId\":\"ssarma\"}}"   | new StorageDto(owner: "swaranga") | "ssarma"
     }
 
     ObjectNode toObjectNode(jsonString) {

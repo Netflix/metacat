@@ -234,6 +234,7 @@ class HiveConvertersSpec extends Specification {
         dto.fields.findAll { it.partition_key }.size() == 2
         dto.metadata == tableParams
         dto.definitionMetadata.get("owner").get("userId").asText() == owner
+        dto.getTableOwner().get() == owner
 
         where:
         databaseName = 'database'
