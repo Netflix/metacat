@@ -285,7 +285,10 @@ public class TableServiceImpl implements TableService {
     }
 
     private boolean isOwnerValid(@Nullable final String userId) {
-        return StringUtils.isNotBlank(userId) && !"metacat".equals(userId) && !"root".equals(userId);
+        return StringUtils.isNotBlank(userId)
+                   && !"metacat".equals(userId)
+                   && !"root".equals(userId)
+                   && !"metacat-thrift-interface".equals(userId);
     }
 
     @SuppressFBWarnings
