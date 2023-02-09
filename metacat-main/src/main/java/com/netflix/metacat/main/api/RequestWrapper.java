@@ -31,6 +31,7 @@ import com.netflix.metacat.common.exception.MetacatUserMetadataException;
 import com.netflix.metacat.common.exception.MetacatTooManyRequestsException;
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiterRequestContext;
+import com.netflix.metacat.common.server.api.traffic_control.RequestGateway;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
@@ -70,6 +71,7 @@ public final class RequestWrapper {
     private final Registry registry;
     private final Config config;
     private final AliasService aliasService;
+    private final RequestGateway requestGateway;
     private final RateLimiter rateLimiter;
 
     //Metrics
@@ -84,16 +86,19 @@ public final class RequestWrapper {
      * @param registry registry
      * @param config Config
      * @param aliasService AliasService
+     * @param requestGateway RequestGateway
      * @param rateLimiter RateLimiter
      */
     @Autowired
     public RequestWrapper(@NotNull @NonNull final Registry registry,
                           @NotNull @NonNull final Config config,
                           @NotNull @NonNull final AliasService aliasService,
+                          @NotNull @NonNull final RequestGateway requestGateway,
                           @NotNull @NonNull final RateLimiter rateLimiter) {
         this.registry = registry;
         this.config = config;
         this.aliasService = aliasService;
+        this.requestGateway = requestGateway;
         this.rateLimiter = rateLimiter;
         requestCounterId = registry.createId(Metrics.CounterRequestCount.getMetricName());
         requestFailureCounterId = registry.createId(Metrics.CounterRequestFailureCount.getMetricName());
@@ -163,7 +168,7 @@ public final class RequestWrapper {
         try {
             // check rate limit in try-catch block in case ratelimiter throws exception.
             // those exceptions can be tracked correctly, by the existing finally block that logs metrics.
-            checkRequestRateLimit(name, resourceRequestName, tags);
+            checkRequest(name, resourceRequestName, tags);
             log.info("### Calling method: {} for {}", resourceRequestName, name);
             return supplier.get();
         } catch (UnsupportedOperationException e) {
@@ -282,6 +287,18 @@ public final class RequestWrapper {
     private void collectRequestExceptionMetrics(final Map<String, String> tags, final String exceptionName) {
         tags.put("exception", exceptionName);
         registry.counter(requestFailureCounterId.withTags(tags)).increment();
+    }
+
+    private void checkRequest(@NonNull final QualifiedName name,
+                              @NonNull final String requestName,
+                              @NonNull final Map<String, String> tags) {
+        checkRequestBlocklist(name, requestName);
+        checkRequestRateLimit(name, requestName, tags);
+    }
+
+    private void checkRequestBlocklist(@NonNull final QualifiedName name,
+                                       @NonNull final String requestName) {
+        requestGateway.validateRequest(requestName, name);
     }
 
     private void checkRequestRateLimit(@NonNull final QualifiedName name,
