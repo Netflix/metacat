@@ -18,8 +18,10 @@
 package com.netflix.metacat.main.api
 
 import com.netflix.metacat.common.QualifiedName
+import com.netflix.metacat.common.exception.MetacatBadRequestException
 import com.netflix.metacat.common.exception.MetacatTooManyRequestsException
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter
+import com.netflix.metacat.common.server.api.traffic_control.RequestGateway
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.usermetadata.AliasService
 import com.netflix.spectator.api.Clock
@@ -36,6 +38,7 @@ class RequestWrapperSpec extends Specification {
     def registry = Mock(Registry)
     def config = Mock(Config)
     def aliasService = Mock(AliasService)
+    def requestGateway = Mock(RequestGateway)
     def rateLimiter = Mock(RateLimiter)
     def timer = Mock(Timer)
     def clock = Mock(Clock)
@@ -52,7 +55,28 @@ class RequestWrapperSpec extends Specification {
         this.registry.counter(_) >> counter
         this.registry.createId(_) >> id
         this.supplier.get() >> null
-        requestWrapper = new RequestWrapper(registry, config, aliasService, rateLimiter)
+        requestWrapper = new RequestWrapper(registry, config, aliasService, requestGateway, rateLimiter)
+    }
+
+    def "gateway is invoked for each request"() {
+        when:
+        requestWrapper.processRequest(QualifiedName.fromString("a/b/c"), "getTable", supplier)
+
+        then:
+        1 * requestGateway.validateRequest("getTable", QualifiedName.fromString("a/b/c"))
+    }
+
+    def "throws the same exception from gateway"() {
+        given:
+        requestGateway.validateRequest("getTable", QualifiedName.fromString("a/b/c")) >> {
+            throw new MetacatBadRequestException("asdf")
+        }
+
+        when:
+        requestWrapper.processRequest(QualifiedName.fromString("a/b/c"), "getTable", supplier)
+
+        then:
+        thrown(MetacatBadRequestException)
     }
 
     def "Rate limiter is not invoked when disabled"() {
