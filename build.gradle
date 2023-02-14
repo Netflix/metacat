@@ -202,6 +202,10 @@ configure(javaProjects) {
         configFile = new File(project.parent.projectDir, "codequality/checkstyle/checkstyle.xml")
     }
 
+    checkstyleTest {
+        configFile = new File(project.parent.projectDir, "codequality/checkstyle/checkstyle-test.xml")
+    }
+
     spotbugs {
         toolVersion = '4.0.6'
         excludeFilter = new File(project.parent.projectDir, "codequality/findbugs/excludeFilter.xml")

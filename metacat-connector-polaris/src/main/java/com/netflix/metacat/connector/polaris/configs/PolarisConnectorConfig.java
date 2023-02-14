@@ -10,6 +10,7 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.polaris.PolarisConnectorDatabaseService;
+import com.netflix.metacat.connector.polaris.PolarisConnectorPartitionService;
 import com.netflix.metacat.connector.polaris.PolarisConnectorTableService;
 import com.netflix.metacat.connector.polaris.common.PolarisConnectorConsts;
 import com.netflix.metacat.connector.polaris.common.TransactionRetryAspect;
@@ -27,6 +28,22 @@ import org.springframework.retry.support.RetryTemplate;
  * Config for polaris connector.
  */
 public class PolarisConnectorConfig {
+    /**
+     * Creates a new instance of a polaris connector partition service.
+     *
+     * @param icebergTableHandler iceberg table handler
+     * @param connectorContext connector context
+     * @param polarisTableService polaris table service
+     * @return PolarisConnectorPartitionService
+     */
+    @Bean
+    public PolarisConnectorPartitionService polarisConnectorPartitionService(
+        final IcebergTableHandler icebergTableHandler,
+        final ConnectorContext connectorContext,
+        final PolarisConnectorTableService polarisTableService) {
+        return new PolarisConnectorPartitionService(connectorContext, icebergTableHandler, polarisTableService);
+    }
+
     /**
      * Create polaris connector database service.
      *

@@ -50,11 +50,6 @@
         <!-- Check that finds import statements that use the * notation. -->
         <module name="AvoidStarImport"/>
 
-        <!-- Check that finds static imports. -->
-        <module name="AvoidStaticImport">
-            <property name="excludes" value="org.mockito.Mockito.*,org.assertj.core.api.Assertions.*"/>
-        </module>
-
         <!-- Checks that constant names conform to a format specified by the format property. -->
         <module name="ConstantName"/>
 
@@ -94,12 +89,6 @@
         <!-- Checks that class which has only private ctors is declared as final. -->
         <module name="FinalClass"/>
 
-        <!-- Ensures that local variables that never get their values changed, must be declared final. -->
-        <module name="FinalLocalVariable"/>
-
-        <!-- Check that method/constructor/catch/foreach parameters are final. -->
-        <module name="FinalParameters"/>
-
         <!-- Checks that the whitespace around the Generic tokens < and > are correct to the typical convention. -->
         <module name="GenericWhitespace"/>
 
@@ -131,30 +120,6 @@
         <!-- Implements Bloch, Effective Java, Item 17 - Use Interfaces only to define types. -->
         <module name="InterfaceIsType"/>
 
-        <!-- Checks the Javadoc of a method or constructor. -->
-        <module name="JavadocMethod">
-            <property name="scope" value="public"/>
-            <property name="allowThrowsTagsForSubclasses" value="true"/>
-            <property name="allowUndeclaredRTE" value="true"/>
-            <property name="allowMissingPropertyJavadoc" value="true"/>
-        </module>
-
-        <!-- Custom Checkstyle Check to validate Javadoc. -->
-        <module name="JavadocStyle">
-            <property name="checkEmptyJavadoc" value="true"/>
-        </module>
-
-        <!-- Checks the Javadoc of a type. -->
-        <module name="JavadocType">
-            <property name="scope" value="public"/>
-        </module>
-
-        <!-- Checks that a variable has Javadoc comment. -->
-        <module name="JavadocVariable">
-            <property name="scope" value="public"/>
-            <property name="ignoreNamePattern" value="Counter..*|Tracer..*|Gauge..*"/>
-        </module>
-
         <!-- Checks the placement of left curly braces on types, methods and other blocks. -->
         <module name="LeftCurly"/>
 
@@ -175,11 +140,6 @@
 
         <!-- Checks that instance variable names conform to a format specified by the format property. -->
         <module name="MemberName"/>
-
-        <!-- Checks for long methods. -->
-        <module name="MethodLength">
-            <property name="max" value="200"/>
-        </module>
 
         <!-- Checks that method names conform to a format specified by the format property. -->
         <module name="MethodName"/>
@@ -259,12 +219,6 @@
 
         <!-- Checks that string literals are not used with == or !=. -->
         <module name="StringLiteralEquality"/>
-
-        <!-- A check for TODO comments. -->
-        <!--<module name="TodoComment">-->
-        <!--<property name="format" value="TODO"/>-->
-        <!--<property name="severity" value="info"/>-->
-        <!--</module>-->
 
         <!-- Checks the padding of parentheses for typecasts. -->
         <module name="TypecastParenPad"/>

@@ -16,15 +16,11 @@
 package com.netflix.metacat.connector.hive.sql;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.iceberg.ScanSummary;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.Pageable;
-import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
-import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
@@ -47,10 +43,6 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.time.Instant;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -356,69 +348,15 @@ public class HiveConnectorFastPartitionService extends HiveConnectorPartitionSer
     private List<PartitionInfo> getIcebergPartitionInfos(
         final TableInfo tableInfo,
         final PartitionListRequest partitionsRequest) {
-        final QualifiedName tableName = tableInfo.getName();
-        final org.apache.iceberg.Table icebergTable = this.icebergTableHandler.getIcebergTable(tableName,
-            HiveTableUtil.getIcebergTableMetadataLocation(tableInfo), false).getTable();
-        final Pageable pageable = partitionsRequest.getPageable();
-        final Map<String, ScanSummary.PartitionMetrics> partitionMap
-            = icebergTableHandler.getIcebergTablePartitionMap(tableName, partitionsRequest, icebergTable);
-
-        final List<String> partitionIds = partitionsRequest.getPartitionNames();
-        final Sort sort = partitionsRequest.getSort();
-        final AuditInfo tableAuditInfo = tableInfo.getAudit();
-
-
-        final List<PartitionInfo> filteredPartitionList = partitionMap.keySet().stream()
-            .filter(partitionName -> partitionIds == null || partitionIds.contains(partitionName))
-            .map(partitionName -> PartitionInfo.builder().name(
-                QualifiedName.ofPartition(tableName.getCatalogName(),
-                    tableName.getDatabaseName(),
-                    tableName.getTableName(),
-                    partitionName))
-                .serde(StorageInfo.builder().uri(
-                    getIcebergPartitionURI(tableName.getDatabaseName(),
-                        tableName.getTableName(),
-                        partitionName,
-                        partitionMap.get(partitionName).dataTimestampMillis()
-                    )).build()) //set uri to empty string for supporting psycho pattern
-                .dataMetrics(icebergTableHandler.getDataMetadataFromIcebergMetrics(partitionMap.get(partitionName)))
-                .auditInfo(AuditInfo.builder().createdBy(tableAuditInfo.getCreatedBy())
-                    .createdDate(fromEpochMilliToDate(partitionMap.get(partitionName).dataTimestampMillis()))
-                    .lastModifiedDate(fromEpochMilliToDate(partitionMap.get(partitionName).dataTimestampMillis()))
-                    .build()).build())
-            .collect(Collectors.toList());
-
-        if (sort != null) {
-            if (sort.hasSort() && sort.getSortBy().equalsIgnoreCase(DirectSqlGetPartition.FIELD_DATE_CREATED)) {
-                final Comparator<PartitionInfo> dateCreatedComparator = Comparator.comparing(
-                    p -> p.getAudit() != null ? p.getAudit().getCreatedDate() : null,
-                    Comparator.nullsLast(Date::compareTo));
-
-                ConnectorUtils.sort(filteredPartitionList, sort, dateCreatedComparator);
-            } else {
-                // Sort using the partition name by default
-                final Comparator<PartitionInfo> nameComparator = Comparator.comparing(p -> p.getName().toString());
-                ConnectorUtils.sort(filteredPartitionList, sort, nameComparator);
-            }
-        }
-        return ConnectorUtils.paginate(filteredPartitionList, pageable);
-    }
-
-    private Date fromEpochMilliToDate(@Nullable final Long l) {
-        return (l == null) ? null : Date.from(Instant.ofEpochMilli(l));
-    }
-
-    //iceberg://<db-name.table-name>/<partition>/snapshot_time=<dateCreated>
-    private String getIcebergPartitionURI(final String databaseName,
-                                          final String tableName,
-                                          final String partitionName,
-                                          @Nullable final Long dataTimestampMillis) {
-        return String.format("%s://%s.%s/%s/snapshot_time=%s",
-            context.getConfig().getIcebergPartitionUriScheme(),
-            databaseName,
-            tableName,
-            partitionName,
-            (dataTimestampMillis == null) ? partitionName.hashCode()
-                : Instant.ofEpochMilli(dataTimestampMillis).getEpochSecond());
+        return ConnectorUtils.paginate(
+            icebergTableHandler.getPartitions(
+                tableInfo,
+                context,
+                partitionsRequest.getFilter(),
+                partitionsRequest.getPartitionNames(),
+                partitionsRequest.getSort()
+            ),
+            partitionsRequest.getPageable()
+        );
     }
 }
