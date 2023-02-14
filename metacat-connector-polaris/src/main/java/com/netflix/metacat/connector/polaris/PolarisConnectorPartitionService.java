@@ -20,10 +20,7 @@ import java.util.stream.Collectors;
 /**
  * Partition service for Iceberg tables in Polaris.
  *
- * Delegates to the Hive implementation that has support for Iceberg tables
- * for specific methods. For all other methods that are not supported in the
- * Hive service for iceberg tables, we use the default implementation which
- * throws {@link UnsupportedOperationException}.
+ * Currently, supports read-only methods with the exception of getPartitionNames.
  */
 @RequiredArgsConstructor
 public class PolarisConnectorPartitionService implements ConnectorPartitionService {

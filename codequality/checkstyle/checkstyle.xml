@@ -51,9 +51,7 @@
         <module name="AvoidStarImport"/>
 
         <!-- Check that finds static imports. -->
-        <module name="AvoidStaticImport">
-            <property name="excludes" value="org.mockito.Mockito.*,org.assertj.core.api.Assertions.*"/>
-        </module>
+        <module name="AvoidStaticImport"/>
 
         <!-- Checks that constant names conform to a format specified by the format property. -->
         <module name="ConstantName"/>
