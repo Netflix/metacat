@@ -3,6 +3,7 @@ package com.netflix.metacat.connector.polaris;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
+import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.SpringConnectorFactory;
 import com.netflix.metacat.connector.polaris.configs.PolarisConnectorConfig;
@@ -32,6 +33,11 @@ class PolarisConnectorFactory extends SpringConnectorFactory {
         super.addEnvProperties(new MapPropertySource(
                 "polaris_connector", Collections.unmodifiableMap(connectorContext.getConfiguration())));
         super.refresh();
+    }
+
+    @Override
+    public ConnectorPartitionService getPartitionService() {
+        return ctx.getBean(PolarisConnectorPartitionService.class);
     }
 
     /**

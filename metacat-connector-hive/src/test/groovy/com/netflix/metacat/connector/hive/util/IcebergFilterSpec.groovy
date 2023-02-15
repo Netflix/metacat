@@ -106,7 +106,7 @@ class IcebergFilterSpec extends Specification{
         def icebergUtil = new IcebergTableHandler(DataDtoProvider.newContext(null, ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")), icebergTableCriteria, icebergOpWrapper, new HiveConnectorFastServiceConfig().icebergTableOps())
 
         when:
-        icebergUtil.getIcebergTablePartitionMap(QualifiedName.fromString("tableName"), partRequest, icebergTable)
+        icebergUtil.getIcebergTablePartitionMap(QualifiedName.fromString("tableName"), null, icebergTable)
 
         then:
         noExceptionThrown()
@@ -122,11 +122,10 @@ class IcebergFilterSpec extends Specification{
         def dateint = Mock(Types.NestedField)
         def type = Mock(Type)
         def app = Mock(Types.NestedField)
-        def partRequest = new PartitionListRequest('dateint==1', [], false, null, null, false)
         def icebergUtil = new IcebergTableHandler(DataDtoProvider.newContext(null, ImmutableMap.of(HiveConfigConstants.ALLOW_RENAME_TABLE, "true")), icebergTableCriteria, icebergTableHelper, new HiveConnectorFastServiceConfig().icebergTableOps())
 
         when:
-        icebergUtil.getIcebergTablePartitionMap(QualifiedName.fromString("tableName"),partRequest, icebergTable)
+        icebergUtil.getIcebergTablePartitionMap(QualifiedName.fromString("tableName"), "dateint==1", icebergTable)
 
         then:
         noExceptionThrown()
