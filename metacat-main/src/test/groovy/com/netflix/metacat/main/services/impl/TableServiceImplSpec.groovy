@@ -44,11 +44,14 @@ import com.netflix.metacat.common.server.util.MetacatContextManager
 import com.netflix.metacat.main.manager.ConnectorManager
 import com.netflix.metacat.main.services.DatabaseService
 import com.netflix.metacat.main.services.GetTableServiceParameters
+import com.netflix.metacat.main.services.OwnerValidationService
 import com.netflix.metacat.testdata.provider.DataDtoProvider
 import com.netflix.spectator.api.DefaultRegistry
 import com.netflix.spectator.api.NoopRegistry
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import javax.annotation.meta.When
 
 /**
  * Tests for the TableServiceImpl.
@@ -76,6 +79,7 @@ class TableServiceImplSpec extends Specification {
     def name = tableDto.name
     def connectorTableServiceProxy
     def authorizationService
+    def ownerValidationService
 
     def service
     def setup() {
@@ -91,9 +95,11 @@ class TableServiceImplSpec extends Specification {
         usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
         connectorTableServiceProxy = new ConnectorTableServiceProxy(connectorManager, converterUtil)
         authorizationService = new DefaultAuthorizationService(config)
+        ownerValidationService = Mock(OwnerValidationService)
+
         service = new TableServiceImpl(connectorManager, connectorTableServiceProxy, databaseService, tagService,
             usermetadataService, new MetacatJsonLocator(),
-            eventBus, registry, config, converterUtil, authorizationService)
+            eventBus, registry, config, converterUtil, authorizationService, ownerValidationService)
     }
 
     def testTableGet() {
@@ -247,6 +253,14 @@ class TableServiceImplSpec extends Specification {
                 e.latestCurrentTable && e.currentTable == this.tableDto
         })
         result == this.tableDto
+        0 * ownerValidationService.enforceOwnerValidation("updateTable", name, updatedTableDto)
+
+        when:
+        updatedTableDto.setDefinitionMetadata(toObjectNode("{\"owner\":{\"userId\":\"ssarma\"}}"))
+        service.updateAndReturn(name, updatedTableDto)
+
+        then:
+        1 * ownerValidationService.enforceOwnerValidation("updateTable", name, updatedTableDto)
     }
 
     def "Will not throw on Successful Table Update with Failed Get"() {
@@ -284,48 +298,13 @@ class TableServiceImplSpec extends Specification {
     }
 
     @Unroll
-    def "test ownership diagnostic logging"() {
-        given:
-        def definitionMetadataJson = toObjectNode(definitionMetadata)
-        tableDto = new TableDto(
-            name: name,
-            definitionMetadata: definitionMetadataJson
-        )
-        registry = new DefaultRegistry()
-        TableServiceImpl tableService = new TableServiceImpl(
-            connectorManager, connectorTableServiceProxy, databaseService, tagService,
-            usermetadataService, new MetacatJsonLocator(), eventBus, registry, config, converterUtil, authorizationService)
-
-        when:
-        tableService.logOwnershipDiagnosticDetails(name, tableDto)
-
-        then:
-        registry.counter(
-            "unauth.user.create.table",
-        "catalog", "a",
-        "database", "b",
-        "owner", (expectedOwner as String)).count() == 1
-
-        where:
-        definitionMetadata                     | expectedOwner
-        null                                   | "null"
-        "{}"                                   | "null"
-        "{\"owner\":null}"                     | "null"
-        "{\"owner\":{}}"                       | "null"
-        "{\"owner\":{\"userId\":null}}"        | "null"
-        "{\"owner\":{\"userId\":\"\"}}"        | "null"
-        "{\"owner\":{\"userId\":\" \"}}"       | "null"
-        "{\"owner\":{\"userId\":\"metacat\"}}" | "metacat"
-        "{\"owner\":{\"userId\":\"root\"}}"    | "root"
-    }
-
-    @Unroll
     def "test default attributes"() {
         given:
         def tableService = new TableServiceImpl(
             connectorManager, connectorTableServiceProxy, databaseService, tagService,
             usermetadataService, new MetacatJsonLocator(),
-            eventBus, new DefaultRegistry(), config, converterUtil, authorizationService)
+            eventBus, new DefaultRegistry(), config, converterUtil, authorizationService,
+            new DefaultOwnerValidationService(new NoopRegistry()))
 
         def initialDefinitionMetadataJson = toObjectNode(initialDefinitionMetadata)
         tableDto = new TableDto(
