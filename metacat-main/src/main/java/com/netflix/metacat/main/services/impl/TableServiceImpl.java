@@ -56,20 +56,14 @@ import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.GetTableNamesServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
+import com.netflix.metacat.main.services.OwnerValidationService;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.spectator.api.Registry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -94,6 +88,7 @@ public class TableServiceImpl implements TableService {
     private final Config config;
     private final ConverterUtil converterUtil;
     private final AuthorizationService authorizationService;
+    private final OwnerValidationService ownerValidationService;
 
     /**
      * {@inheritDoc}
@@ -106,7 +101,7 @@ public class TableServiceImpl implements TableService {
             tableDto.getName(), MetacatOperation.CREATE);
 
         setDefaultAttributes(tableDto);
-        logOwnershipDiagnosticDetails(name, tableDto);
+        ownerValidationService.enforceOwnerValidation("createTable", name, tableDto);
 
         log.info("Creating table {}", name);
         eventBus.post(new MetacatCreateTablePreEvent(name, metacatRequestContext, this, tableDto));
@@ -148,74 +143,6 @@ public class TableServiceImpl implements TableService {
         setDefaultSerdeIfNull(tableDto);
         setDefaultDefinitionMetadataIfNull(tableDto);
         setOwnerIfNull(tableDto);
-    }
-
-    /**
-     * Logs diagnostic data for debugging invalid owners.
-     *
-     * @param name the qualified name of the resource
-     * @param tableDto the table details after all processing has been done on the owner
-     */
-    private void logOwnershipDiagnosticDetails(final QualifiedName name, final TableDto tableDto) {
-        try {
-            final String tableOwner = tableDto.getTableOwner().orElse(null);
-
-            if (!isOwnerValid(tableOwner)) {
-                registry.counter(
-                    "unauth.user.create.table",
-                    "catalog", name.getCatalogName(),
-                    "database", name.getDatabaseName(),
-                    "owner", StringUtils.isBlank(tableOwner) ? "null" : tableOwner
-                ).increment();
-
-                log.info("Create table with invalid owner: {}. name: {}, table-dto: {}, context: {}, headers: {}",
-                    tableOwner, name, tableDto, MetacatContextManager.getContext(), getHttpHeaders());
-            } else if (!isOwnerValid(MetacatContextManager.getContext().getUserName())) {
-                registry.counter(
-                    "unauth.user.createTable.requestContext",
-                    "catalog", name.getCatalogName(),
-                    "database", name.getDatabaseName(),
-                    "owner", StringUtils.isBlank(MetacatContextManager.getContext().getUserName()) ? "null" : tableOwner
-                ).increment();
-
-                log.info("Create table called with invalid owner: {} in request context."
-                             + " name: {}, table-dto: {}, context: {}, headers: {}",
-                    MetacatContextManager.getContext().getUserName(), name, tableDto,
-                    MetacatContextManager.getContext(), getHttpHeaders());
-            }
-        } catch (Exception ex) {
-            log.warn("Error when logging diagnostic data for invalid owner table creation. name: {}, table: {}",
-                name, tableDto, ex);
-        }
-    }
-
-    /**
-     * Returns all the Http headers for the current request.
-     * @return the Http headers
-     */
-    private Map<String, String> getHttpHeaders() {
-        final Map<String, String> requestHeaders = new HashMap<>();
-
-        final RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-
-        if (requestAttributes instanceof ServletRequestAttributes) {
-            final ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) requestAttributes;
-
-            final HttpServletRequest servletRequest = servletRequestAttributes.getRequest();
-
-            if (servletRequest != null) {
-                final Enumeration<String> headerNames = servletRequest.getHeaderNames();
-
-                if (headerNames != null) {
-                    while (headerNames.hasMoreElements()) {
-                        final String header = headerNames.nextElement();
-                        requestHeaders.put(header, servletRequest.getHeader(header));
-                    }
-                }
-            }
-        }
-
-        return requestHeaders;
     }
 
     private void setDefaultDefinitionMetadataIfNull(final TableDto tableDto) {
@@ -285,10 +212,7 @@ public class TableServiceImpl implements TableService {
     }
 
     private boolean isOwnerValid(@Nullable final String userId) {
-        return StringUtils.isNotBlank(userId)
-                   && !"metacat".equals(userId)
-                   && !"root".equals(userId)
-                   && !"metacat-thrift-interface".equals(userId);
+        return ownerValidationService.isUserValid(userId);
     }
 
     @SuppressFBWarnings
@@ -546,6 +470,12 @@ public class TableServiceImpl implements TableService {
         boolean ignoreErrorsAfterUpdate = false;
         if (isTableInfoProvided(tableDto, oldTable)) {
             ignoreErrorsAfterUpdate = connectorTableServiceProxy.update(name, converterUtil.fromTableDto(tableDto));
+        }
+
+        // we do ownership validation and enforcement only if table owner is set in the dto
+        // because if it is null, we do not update the owner in the existing metadata record
+        if (tableDto.getTableOwner().isPresent()) {
+            ownerValidationService.enforceOwnerValidation("updateTable", name, tableDto);
         }
 
         try {

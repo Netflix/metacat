@@ -46,11 +46,13 @@ import com.netflix.metacat.main.services.MetacatInitializationService;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.MetacatThriftService;
 import com.netflix.metacat.main.services.MetadataService;
+import com.netflix.metacat.main.services.OwnerValidationService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.metacat.main.services.impl.CatalogServiceImpl;
 import com.netflix.metacat.main.services.impl.ConnectorTableServiceProxy;
 import com.netflix.metacat.main.services.impl.DatabaseServiceImpl;
+import com.netflix.metacat.main.services.impl.DefaultOwnerValidationService;
 import com.netflix.metacat.main.services.impl.MViewServiceImpl;
 import com.netflix.metacat.main.services.impl.PartitionServiceImpl;
 import com.netflix.metacat.main.services.impl.TableServiceImpl;
@@ -103,6 +105,17 @@ public class ServicesConfig {
         final Config config
     ) {
         return new DefaultAuthorizationService(config);
+    }
+
+    /**
+     * Owner validation service.
+     * @param registry the spectator registry
+     * @return the owner validation service
+     */
+    @Bean
+    @ConditionalOnMissingBean(OwnerValidationService.class)
+    public OwnerValidationService ownerValidationService(final Registry registry) {
+        return new DefaultOwnerValidationService(registry);
     }
 
     /**
@@ -198,6 +211,8 @@ public class ServicesConfig {
      * @param config                     configurations
      * @param converterUtil              converter utilities
      * @param authorizationService       authorization Service
+     * @param ownerValidationService     owner validation service
+     *
      * @return The table service bean
      */
     @Bean
@@ -212,8 +227,8 @@ public class ServicesConfig {
         final Registry registry,
         final Config config,
         final ConverterUtil converterUtil,
-        final AuthorizationService authorizationService
-    ) {
+        final AuthorizationService authorizationService,
+        final OwnerValidationService ownerValidationService) {
         return new TableServiceImpl(
             connectorManager,
             connectorTableServiceProxy,
@@ -225,7 +240,8 @@ public class ServicesConfig {
             registry,
             config,
             converterUtil,
-            authorizationService
+            authorizationService,
+            ownerValidationService
         );
     }
 
