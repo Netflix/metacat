@@ -261,6 +261,13 @@ class TableServiceImplSpec extends Specification {
 
         then:
         1 * ownerValidationService.enforceOwnerValidation("updateTable", name, updatedTableDto)
+
+        when:
+        tableDto.setDefinitionMetadata(toObjectNode("{\"owner\":{\"userId\":\"ssarma\"}}"))
+        service.updateAndReturn(name, updatedTableDto)
+
+        then:
+        0 * ownerValidationService.enforceOwnerValidation(_, _, _)
     }
 
     def "Will not throw on Successful Table Update with Failed Get"() {
