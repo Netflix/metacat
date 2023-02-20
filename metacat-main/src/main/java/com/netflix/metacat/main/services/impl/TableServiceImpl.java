@@ -475,7 +475,11 @@ public class TableServiceImpl implements TableService {
         // we do ownership validation and enforcement only if table owner is set in the dto
         // because if it is null, we do not update the owner in the existing metadata record
         if (tableDto.getTableOwner().isPresent()) {
-            ownerValidationService.enforceOwnerValidation("updateTable", name, tableDto);
+            // only if the owner is different from the previous, we run the enforcement
+            // for backwards compatibility
+            if (!tableDto.getTableOwner().get().equals(oldTable.getTableOwner().orElse(null))) {
+                ownerValidationService.enforceOwnerValidation("updateTable", name, tableDto);
+            }
         }
 
         try {
