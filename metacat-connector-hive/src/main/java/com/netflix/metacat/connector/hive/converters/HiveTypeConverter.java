@@ -51,6 +51,8 @@ import org.apache.iceberg.types.Types;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -61,6 +63,20 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class HiveTypeConverter implements ConnectorTypeConverter {
+
+    // matches decimal declarations with only scale, ex: decimal(38)
+    // matches declarations with spaces around '(', the scale and ')'
+    private static final String DECIMAL_WITH_SCALE
+        = "decimal\\s*\\(\\s*[0-9]+\\s*\\)";
+
+    // matches decimal declarations with scale and precision, ex: decimal(38,9)
+    // matches declarations with spaces around '(', the scale, the precision, the comma and ')'
+    private static final String DECIMAL_WITH_SCALE_AND_PRECISION
+        = "decimal\\s*\\(\\s*[0-9]+\\s*,\\s*[0-9]*\\s*\\)";
+
+    // combined compiled pattern to match both
+    private static final Pattern DECIMAL_TYPE
+        = Pattern.compile(DECIMAL_WITH_SCALE + "|" + DECIMAL_WITH_SCALE_AND_PRECISION, Pattern.CASE_INSENSITIVE);
 
     private static Type getPrimitiveType(final ObjectInspector fieldInspector) {
         final PrimitiveCategory primitiveCategory = ((PrimitiveObjectInspector) fieldInspector)
@@ -89,8 +105,7 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
     @Override
     public Type toMetacatType(final String type) {
         // Hack to fix presto "varchar" type coming in with no length which is required by Hive.
-        final TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(
-            "varchar".equals(type.toLowerCase()) ? serdeConstants.STRING_TYPE_NAME : type);
+        final TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(sanitizeType(type));
         ObjectInspector oi = TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(typeInfo);
         // The standard struct object inspector forces field names to lower case, however in Metacat we need to preserve
         // the original case of the struct fields so we wrap it with our wrapper to force the fieldNames to keep
@@ -218,6 +233,73 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
             prefix = rowField.getName() + ":";
         }
         return prefix + fromMetacatType(rowField.getType());
+    }
+
+    /**
+     * Sanitize the type to handle Hive type conversion edge cases.
+     *
+     * @param type the type to sanitize
+     * @return the sanitized type
+     */
+    public static String sanitizeType(final String type) {
+        if ("varchar".equalsIgnoreCase(type)) {
+            return serdeConstants.STRING_TYPE_NAME;
+        } else {
+            // the current version of Hive (1.2.1) cannot handle spaces in column definitions
+            // this was fixed in 1.3.0. See: https://issues.apache.org/jira/browse/HIVE-11476
+            // this bug caused an error in loading the table information in Metacat
+            // see: https://netflix.slack.com/archives/G0SUNC804/p1676930065306799
+            // Here the offending column definition was decimal(38, 9)
+            // which had a space between the command and the digit 9
+
+            // instead of upgrading the Hive version, we are making a targeted "fix"
+            // to handle this space in a decimal column declaration
+
+            // the regex we use tries to match various decimal declarations
+            // and handles decimal types inside other type declarations like array and struct
+            // see the unit test for those method for all the cases handled
+            final Matcher matcher = DECIMAL_TYPE.matcher(type);
+            final StringBuilder replacedType = new StringBuilder();
+
+            // keep track of the start of the substring that we haven't matched yet
+            // more explanation on how this is used is below
+            int prevStart = 0;
+
+            // we cannot simply use matcher.matches() and matcher.replaceAll()
+            // because that will replace the decimal declaration itself
+            // instead we use the region APIs to find the substring that matched
+            // and then apply the replace function to remove spaces in the decimal declaration
+            // we do this for all the matches in the type declaration and hence the usage of the while loop
+            while (matcher.find()) {
+                // this index represents the start index (inclusive) of our current match
+                final int currMatchStart = matcher.regionStart();
+
+                // this represents the end index (exclusive) of our current match
+                final int currMatchEnd = matcher.regionEnd();
+
+                replacedType
+                    // first append any part of the string that did not match
+                    // this is represented by the prevStart (inclusive) till the start of the current match (exclusive)
+                    // this append should not need any replacement and can be added verbatim
+                    .append(type, prevStart, currMatchStart)
+
+                    // Then append the matching part which should be a decimal declaration
+                    // The matching part is start (inclusive) and end (exclusive)
+                    // This part should go through a replacement to remove spaces
+                    .append(type.substring(currMatchStart, currMatchEnd).replaceAll("\\s", ""));
+
+                // update the prevStart marker so that for the next match
+                // we know where to start to add the non-matching part
+                prevStart = currMatchEnd;
+            }
+
+            // append any remaining part of the input type to the final answer
+            // again, no replacement necessary for this part since it should not contain and decimal declarations
+            // phew!
+            replacedType.append(type.substring(prevStart));
+
+            return replacedType.toString();
+        }
     }
 
     /**
