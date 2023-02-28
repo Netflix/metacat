@@ -105,6 +105,11 @@ class HiveTypeConverterSpec extends Specification {
             "struct<field1:string,field2:decimal (38,9 ),field3:bigint>",
             "struct<field1:string,field2:decimal (38),field3:bigint>",
             "struct<field1:string,field2:decimal(38 ),field3:bigint>",
+
+            "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>",
+            "struct<prediction_date:int,lower_confidence_amt:decimal(30, 2),upper_confidence_amt:decimal(30,2),model_short_name:string>",
+            "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30, 2),model_short_name:string>",
+            "struct<prediction_date:int,lower_confidence_amt:decimal(30, 2),upper_confidence_amt:decimal(30, 2),model_short_name:string>",
         ]
     }
 
@@ -190,6 +195,12 @@ class HiveTypeConverterSpec extends Specification {
         "struct<field1:string,field2:decimal (38,9 ),field3:bigint>"  || "struct<field1:string,field2:decimal(38,9),field3:bigint>"
         "struct<field1:string,field2:decimal (38),field3:bigint>"     || "struct<field1:string,field2:decimal(38),field3:bigint>"
         "struct<field1:string,field2:decimal(38 ),field3:bigint>"     || "struct<field1:string,field2:decimal(38),field3:bigint>"
+
+
+        "struct<prediction_date:int,lower_confidence_amt:decimal(30, 2),upper_confidence_amt:decimal(30,2),model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>"
+        "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30, 2),model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>"
+        "struct<prediction_date:int,lower_confidence_amt:decimal(30, 2),upper_confidence_amt:decimal(30, 2),model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>"
+        "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>"
     }
 
     @Unroll
