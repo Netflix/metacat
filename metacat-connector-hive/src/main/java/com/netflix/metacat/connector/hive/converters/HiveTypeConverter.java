@@ -267,15 +267,15 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
 
             // we cannot simply use matcher.matches() and matcher.replaceAll()
             // because that will replace the decimal declaration itself
-            // instead we use the region APIs to find the substring that matched
+            // instead we use the region APIs (start() and end()) to find the substring that matched
             // and then apply the replace function to remove spaces in the decimal declaration
             // we do this for all the matches in the type declaration and hence the usage of the while loop
             while (matcher.find()) {
                 // this index represents the start index (inclusive) of our current match
-                final int currMatchStart = matcher.regionStart();
+                final int currMatchStart = matcher.start();
 
                 // this represents the end index (exclusive) of our current match
-                final int currMatchEnd = matcher.regionEnd();
+                final int currMatchEnd = matcher.end();
 
                 replacedType
                     // first append any part of the string that did not match
