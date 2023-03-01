@@ -19,11 +19,12 @@ package com.netflix.metacat.main.configs;
 
 import com.netflix.metacat.main.api.ApiFilter;
 import com.netflix.metacat.main.api.MetacatErrorController;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.WebRequest;
@@ -69,15 +70,26 @@ public class ApiConfig extends WebMvcConfigurerAdapter {
     /**
      * The rest filter registration bean.
      *
+     * @param apiFilter the api filter
      * @return The rest filter
      */
     @Bean
-    public FilterRegistrationBean metacatApiFilter() {
+    public FilterRegistrationBean metacatApiFilter(final ApiFilter apiFilter) {
         final FilterRegistrationBean registrationBean = new FilterRegistrationBean();
-        final ApiFilter filter = new ApiFilter();
-        registrationBean.setFilter(filter);
+        registrationBean.setFilter(apiFilter);
         registrationBean.addUrlPatterns("/mds/*");
         return registrationBean;
+    }
+
+    /**
+     * The API filter.
+     *
+     * @return the API filter.
+     */
+    @Bean
+    @ConditionalOnMissingBean(ApiFilter.class)
+    public ApiFilter apiFilter() {
+        return new ApiFilter();
     }
 
     /**
