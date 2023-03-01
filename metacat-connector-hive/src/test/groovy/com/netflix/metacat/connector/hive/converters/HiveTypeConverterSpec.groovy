@@ -110,6 +110,15 @@ class HiveTypeConverterSpec extends Specification {
             "struct<prediction_date:int,lower_confidence_amt:decimal(30, 2),upper_confidence_amt:decimal(30,2),model_short_name:string>",
             "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30, 2),model_short_name:string>",
             "struct<prediction_date:int,lower_confidence_amt:decimal(30, 2),upper_confidence_amt:decimal(30, 2),model_short_name:string>",
+
+            "struct<prediction_cnt:int,first_prediction_date:int,last_prediction_date:int>",
+            "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>",
+            "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2)>",
+            "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string,compression_factor:double>",
+            "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string,pmvs_sticker_pts:double,pmvs_sticker_pts_lower_confidence_amt:double,pmvs_sticker_pts_upper_confidence_amt:double,pmvs_dt_pts:double,pmvs_dt_pct:double,pmvs_baseline_dt_pct:double,thumber_cnt:int,thumber_threshold_met:boolean,pmvs_dt_pts_ignoring_threshold:double,pmvs_dt_rmse:double,pmvs_baseline_dt_rmse:double>",
+            "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string>",
+            "struct<prediction_date:int,lower_confidence_amt:int,upper_confidence_amt:int,model_short_name:string>",
+            "struct<prediction_date:int,prediction_source:string>",
         ]
     }
 
@@ -196,11 +205,19 @@ class HiveTypeConverterSpec extends Specification {
         "struct<field1:string,field2:decimal (38),field3:bigint>"     || "struct<field1:string,field2:decimal(38),field3:bigint>"
         "struct<field1:string,field2:decimal(38 ),field3:bigint>"     || "struct<field1:string,field2:decimal(38),field3:bigint>"
 
-
         "struct<prediction_date:int,lower_confidence_amt:decimal(30, 2),upper_confidence_amt:decimal(30,2),model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>"
         "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30, 2),model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>"
         "struct<prediction_date:int,lower_confidence_amt:decimal(30, 2),upper_confidence_amt:decimal(30, 2),model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>"
         "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>"
+
+        "struct<prediction_cnt:int,first_prediction_date:int,last_prediction_date:int>" || "struct<prediction_cnt:int,first_prediction_date:int,last_prediction_date:int>"
+        "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2),model_short_name:string>"
+        "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2)>" || "struct<prediction_date:int,lower_confidence_amt:decimal(30,2),upper_confidence_amt:decimal(30,2)>"
+        "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string,compression_factor:double>" || "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string,compression_factor:double>"
+        "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string,pmvs_sticker_pts:double,pmvs_sticker_pts_lower_confidence_amt:double,pmvs_sticker_pts_upper_confidence_amt:double,pmvs_dt_pts:double,pmvs_dt_pct:double,pmvs_baseline_dt_pct:double,thumber_cnt:int,thumber_threshold_met:boolean,pmvs_dt_pts_ignoring_threshold:double,pmvs_dt_rmse:double,pmvs_baseline_dt_rmse:double>" || "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string,pmvs_sticker_pts:double,pmvs_sticker_pts_lower_confidence_amt:double,pmvs_sticker_pts_upper_confidence_amt:double,pmvs_dt_pts:double,pmvs_dt_pct:double,pmvs_baseline_dt_pct:double,thumber_cnt:int,thumber_threshold_met:boolean,pmvs_dt_pts_ignoring_threshold:double,pmvs_dt_rmse:double,pmvs_baseline_dt_rmse:double>"
+        "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string>"
+        "struct<prediction_date:int,lower_confidence_amt:int,upper_confidence_amt:int,model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:int,upper_confidence_amt:int,model_short_name:string>"
+        "struct<prediction_date:int,prediction_source:string>" || "struct<prediction_date:int,prediction_source:string>"
     }
 
     @Unroll
