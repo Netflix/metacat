@@ -81,6 +81,9 @@ public class MetacatRequestContext implements Serializable {
     @Getter(AccessLevel.NONE)
     private Map<QualifiedName, String> tableTypeMap;
 
+    @Getter
+    private final Map<String, String> additionalContext = new HashMap<>();
+
     /**
      * Constructor.
      */
@@ -137,6 +140,7 @@ public class MetacatRequestContext implements Serializable {
         sb.append(", dataTypeContext='").append(dataTypeContext).append('\'');
         sb.append(", apiUri='").append(apiUri).append('\'');
         sb.append(", scheme='").append(scheme).append('\'');
+        sb.append(", additionalContext='").append(additionalContext).append('\'');
         sb.append('}');
         return sb.toString();
     }
