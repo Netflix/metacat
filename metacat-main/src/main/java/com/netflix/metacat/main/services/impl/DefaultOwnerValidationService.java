@@ -88,9 +88,11 @@ public class DefaultOwnerValidationService implements OwnerValidationService {
                                                  final Map<String, String> requestHeaders) {
         try {
             if (!tableOwnerValid) {
+                System.out.println("scheme: " + context.getScheme());
                 registry.counter(
                     "metacat.table.owner.invalid",
                     "operation", operationName,
+                    "scheme", String.valueOf(context.getScheme()),
                     "catalogAndDb", name.getCatalogName() + "_" + name.getDatabaseName()
                 ).increment();
 

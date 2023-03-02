@@ -40,7 +40,8 @@ class DefaultOwnerValidationServiceSpec extends Specification {
         registry.counter(
             "metacat.table.owner.invalid",
             "operation", "op",
-            "catalogAndDb", "c_d"
+            "catalogAndDb", "c_d",
+            "scheme", "UNKNOWN"
         ).count() == metricCount
 
         where:
