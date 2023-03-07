@@ -20,6 +20,7 @@ package com.netflix.metacat.common.server.api.ratelimiter;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 /**
@@ -30,6 +31,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Builder
 @Getter
+@EqualsAndHashCode
 public class RateLimiterRequestContext {
     /**
      * The API request. eg. getTable, updateTable etc.

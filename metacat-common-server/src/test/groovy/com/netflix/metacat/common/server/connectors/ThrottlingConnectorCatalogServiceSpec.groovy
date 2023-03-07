@@ -33,12 +33,11 @@ class ThrottlingConnectorCatalogServiceSpec extends Specification {
         rateLimiterContext = new RateLimiterRequestContext("r1", name)
 
         service = new ThrottlingConnectorCatalogService(delegate, rateLimiter)
+
+        MetacatContextManager.getContext().setRequestName("r1")
     }
 
     def "create"() {
-        given:
-        MetacatContextManager.getContext().setRequestName("r1")
-
         when:
         service.create(context, resource)
         throw new Success()

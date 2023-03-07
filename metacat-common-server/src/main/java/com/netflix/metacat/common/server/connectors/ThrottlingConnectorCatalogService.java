@@ -17,6 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 import java.util.List;
 
+/**
+ * Connector that throttles calls to the connector based on the contextual request name
+ * and the resource. Not all APIs can be throttles since we may not have a resource
+ * but those are a small monitory
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class ThrottlingConnectorCatalogService implements ConnectorCatalogService {

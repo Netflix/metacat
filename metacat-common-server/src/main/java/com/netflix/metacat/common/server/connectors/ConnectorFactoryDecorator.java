@@ -23,8 +23,8 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         ConnectorCatalogService service = delegate.getCatalogService();
 
         if (isRateLimiterEnabled()) {
-            log.info("Creating rate-limited connector catalog services for connector-type: {}, " +
-                         "plugin-type: {}, catalog: {}, shard: {}",
+            log.info("Creating rate-limited connector catalog services for connector-type: {}, "
+                         + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
             service = new ThrottlingConnectorCatalogService(service, rateLimiter);
@@ -38,8 +38,8 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         ConnectorDatabaseService service = delegate.getDatabaseService();
 
         if (isRateLimiterEnabled()) {
-            log.info("Creating rate-limited connector database services for connector-type: {}, " +
-                         "plugin-type: {}, catalog: {}, shard: {}",
+            log.info("Creating rate-limited connector database services for connector-type: {}, "
+                         + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
             service = new ThrottlingConnectorDatabaseService(service, rateLimiter);
@@ -53,8 +53,8 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         ConnectorTableService service = delegate.getTableService();
 
         if (isRateLimiterEnabled()) {
-            log.info("Creating rate-limited connector table services for connector-type: {}, " +
-                         "plugin-type: {}, catalog: {}, shard: {}",
+            log.info("Creating rate-limited connector table services for connector-type: {}, "
+                         + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
             service = new ThrottlingConnectorTableService(service, rateLimiter);
@@ -68,8 +68,8 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         ConnectorPartitionService service = delegate.getPartitionService();
 
         if (isRateLimiterEnabled()) {
-            log.info("Creating rate-limited connector partition services for connector-type: {}, " +
-                         "plugin-type: {}, catalog: {}, shard: {}",
+            log.info("Creating rate-limited connector partition services for connector-type: {}, "
+                         + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
             service = new ThrottlingConnectorPartitionService(service, rateLimiter);
