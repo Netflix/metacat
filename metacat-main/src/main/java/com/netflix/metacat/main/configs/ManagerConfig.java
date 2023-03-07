@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.main.configs;
 
+import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
 import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.type.TypeManager;
@@ -43,11 +44,12 @@ public class ManagerConfig {
      * Manager of the connectors.
      *
      * @param config System config
+     * @param rateLimiter the rate limiter
      * @return The connector manager instance to use.
      */
     @Bean
-    public ConnectorManager connectorManager(final Config config) {
-        return new ConnectorManager(config);
+    public ConnectorManager connectorManager(final Config config, final RateLimiter rateLimiter) {
+        return new ConnectorManager(config, rateLimiter);
     }
 
     /**

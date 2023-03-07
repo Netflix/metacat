@@ -32,10 +32,12 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
 import com.netflix.metacat.common.server.connectors.ConnectorCatalogService;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
+import com.netflix.metacat.common.server.connectors.ConnectorFactoryDecorator;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
@@ -48,6 +50,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.common.Strings;
 
@@ -67,6 +70,7 @@ import java.util.stream.Stream;
  * Connector manager.
  */
 @Slf4j
+@RequiredArgsConstructor
 public class ConnectorManager {
     private static final String EMPTY_STRING = "";
     // Map of connector plugins registered.
@@ -83,16 +87,9 @@ public class ConnectorManager {
     private final Set<ConnectorTableService> tableServices = Sets.newHashSet();
     private final Set<ConnectorPartitionService> partitionServices = Sets.newHashSet();
     private final AtomicBoolean stopped = new AtomicBoolean();
-    private final Config config;
 
-    /**
-     * Constructor.
-     *
-     * @param config System configuration
-     */
-    public ConnectorManager(final Config config) {
-        this.config = config;
-    }
+    private final Config config;
+    private final RateLimiter rateLimiter;
 
     /**
      * Stop.
@@ -131,6 +128,7 @@ public class ConnectorManager {
         final String catalogName = connectorContext.getCatalogName();
         final String catalogShardName = connectorContext.getCatalogShardName();
         final ConnectorPlugin connectorPlugin = plugins.get(connectorType);
+
         if (connectorPlugin != null) {
             final MetacatCatalogConfig catalogConfig =
                 MetacatCatalogConfig.createFromMapAndRemoveProperties(connectorType, catalogName,
@@ -145,24 +143,34 @@ public class ConnectorManager {
                         "A catalog with name %s for database %s already exists", catalogName, databaseName);
                 });
             }
+
             catalogConfigs.add(catalogConfig);
-            final ConnectorFactory connectorFactory = connectorPlugin.create(connectorContext);
+
+            final ConnectorFactory connectorFactory = new ConnectorFactoryDecorator(
+                connectorPlugin,
+                connectorPlugin.create(connectorContext),
+                connectorContext, rateLimiter
+            );
+
             try {
                 databaseServices.add(connectorFactory.getDatabaseService());
             } catch (UnsupportedOperationException e) {
                 log.debug("Catalog {}:{} doesn't support getDatabaseService. Ignoring.", catalogName, catalogShardName);
             }
+
             try {
                 tableServices.add(connectorFactory.getTableService());
             } catch (UnsupportedOperationException e) {
                 log.debug("Catalog {}:{} doesn't support getTableService. Ignoring.", catalogName, catalogShardName);
             }
+
             try {
                 partitionServices.add(connectorFactory.getPartitionService());
             } catch (UnsupportedOperationException e) {
                 log.debug("Catalog {}:{} doesn't support getPartitionService. Ignoring.",
                     catalogName, catalogShardName);
             }
+
             final CatalogHolder catalogHolder = new CatalogHolder(catalogConfig, connectorFactory);
             if (databaseNames.isEmpty()) {
                 catalogs.put(catalogName, EMPTY_STRING, catalogHolder);
