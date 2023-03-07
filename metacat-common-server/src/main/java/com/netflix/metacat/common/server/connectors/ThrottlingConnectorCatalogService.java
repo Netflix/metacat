@@ -86,10 +86,7 @@ public class ThrottlingConnectorCatalogService implements ConnectorCatalogServic
     }
 
     private void checkThrottling(final String requestName, final QualifiedName resource) {
-        System.out.println("requestName = " + requestName);
-        System.out.println("resource = " + resource);
         if (rateLimiter.hasExceededRequestLimit(new RateLimiterRequestContext(requestName, resource))) {
-            System.out.println("Too many");
             final String errorMsg = String.format("Too many requests for resource %s. Request: %s",
                 resource, requestName);
             log.warn(errorMsg);
