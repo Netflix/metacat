@@ -654,7 +654,7 @@ class MetacatFunctionalSpec extends Specification {
         catalog << TestCatalogs.getCanCreateTable(TestCatalogs.ALL)
     }
 
-    def 'updateTable: #name'() {
+    def 'updateTable'() {
         given:
         def now = new Date()
 

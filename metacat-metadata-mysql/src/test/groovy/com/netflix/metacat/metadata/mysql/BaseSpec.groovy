@@ -42,7 +42,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import static java.lang.String.format
 
 @Ignore
-@JdbcTest
 class BaseSpec extends Specification {
     private static final AtomicBoolean initialized = new AtomicBoolean();
     @Shared

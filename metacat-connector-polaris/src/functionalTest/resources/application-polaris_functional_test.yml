@@ -1,11 +1,8 @@
 spring:
   datasource:
-    platform: h2db
     url: jdbc:postgresql://127.0.0.1:26257/defaultdb?sslmode=disable
     username: admin
     password:
-    schema: classpath:schema.sql
-    initialization-mode: always
     driverClassName: org.postgresql.Driver
     hikari:
       connection-timeout: 5000 # 5 seconds
@@ -22,6 +19,11 @@ spring:
       hibernate:
         dialect:  org.hibernate.dialect.PostgreSQLDialect
         show_sql: true
+  sql:
+    init:
+      schema-locations: classpath:schema.sql
+      mode: always
+      platform: h2db
 
 logging:
   level:

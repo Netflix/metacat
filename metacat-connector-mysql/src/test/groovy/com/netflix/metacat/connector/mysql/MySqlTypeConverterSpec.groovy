@@ -33,7 +33,7 @@ class MySqlTypeConverterSpec extends Specification {
     def converter = new MySqlTypeConverter()
 
     @Unroll
-    "Can convert MySQL string: #type to Metacat Type: #signature"() {
+    "Can convert MySQL string: #type to Metacat Type: #metacatType"() {
 
         expect:
         this.converter.toMetacatType(type) == metacatType

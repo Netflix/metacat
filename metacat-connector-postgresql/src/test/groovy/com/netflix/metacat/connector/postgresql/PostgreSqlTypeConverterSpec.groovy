@@ -33,7 +33,7 @@ class PostgreSqlTypeConverterSpec extends Specification {
     def converter = new PostgreSqlTypeConverter()
 
     @Unroll
-    "Can convert PostgreSQL string: #type to Metacat Type: #signature"() {
+    "Can convert PostgreSQL string: #type to Metacat Type: #metacatType"() {
 
         expect:
         this.converter.toMetacatType(type) == metacatType

@@ -40,7 +40,7 @@ jar {
 }
 
 springBoot {
-    mainClassName = "com.netflix.metacat.MetacatApplication"
+    mainClass = "com.netflix.metacat.MetacatApplication"
 }
 
 def env = project.hasProperty("env") ? project.getProperty("env") : "dev"

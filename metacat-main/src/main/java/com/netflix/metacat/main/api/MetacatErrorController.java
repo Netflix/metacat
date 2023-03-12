@@ -80,7 +80,6 @@ public class MetacatErrorController extends AbstractErrorController {
             case ALWAYS:
                 return true;
             case ON_PARAM:
-            case ON_TRACE_PARAM:
                 return getBooleanParameter(request, "trace");
             default:
                 return false;
@@ -96,10 +95,5 @@ public class MetacatErrorController extends AbstractErrorController {
             default:
                 return false;
         }
-    }
-
-    @Override
-    public String getErrorPath() {
-        return this.errorProperties.getPath();
     }
 }

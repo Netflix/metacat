@@ -145,6 +145,7 @@ configure(javaProjects) {
             dependency("com.esotericsoftware.kryo:kryo:2.22")
             dependency("org.apache.iceberg:iceberg-spark-runtime:${iceberg_version}")
             dependency("com.datastax.cassandra:cassandra-driver-core:3.7.2")
+            dependency("mysql:mysql-connector-java:8.0.27")
         }
     }
 
@@ -184,8 +185,17 @@ configure(javaProjects) {
         testCompile("org.spockframework:spock-core")
         testCompile("org.spockframework:spock-guice")
         testCompile("org.spockframework:spock-spring")
-        testCompile("org.springframework.boot:spring-boot-starter-test")
+        testCompile("org.springframework.boot:spring-boot-starter-test") {
+            exclude group: 'com.vaadin.external.google', module: 'android-json'
+        }
         testRuntime("org.hsqldb:hsqldb")
+        testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
+        testCompile("org.junit.jupiter:junit-jupiter-api:5.4.2")
+        testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
+        testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
+        testRuntimeOnly "org.junit.platform:junit-platform-commons:1.7.0"
+        testImplementation 'org.junit.platform:junit-platform-launcher:1.8.1'
+        testImplementation 'org.junit.platform:junit-platform-runner:1.8.1'
     }
 
     compileJava {
@@ -229,8 +239,10 @@ configure(javaProjects) {
 
     // Print out full stack traces when our tests fail to assist debugging (e.g., when scanning Jenkins console output)
     tasks.withType(Test) {
+        useJUnitPlatform()
         testLogging {
             exceptionFormat = "full"
+            events "PASSED", "FAILED", "SKIPPED"
         }
     }
 

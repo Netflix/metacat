@@ -53,6 +53,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-logging")
     compile("org.springframework.boot:spring-boot-starter-tomcat")
     compile("javax.validation:validation-api")
+    implementation 'io.springfox:springfox-boot-starter'
 
     /*******************************
      * Provided Dependencies
@@ -76,9 +77,10 @@ dependencies {
     runtime(project(":metacat-connector-druid"))
 
     runtime("io.springfox:springfox-swagger-ui")
-    runtime("org.webjars:hal-browser")
+    runtime("org.webjars:hal-browser:3325375")
     runtime("org.springframework:spring-aspects")
     runtime("org.apache.logging.log4j:log4j-core")
+    runtime("mysql:mysql-connector-java:8.0.27")
 
     /*******************************
      * Test Dependencies
