@@ -861,7 +861,7 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(RetryableException)
         when:
-        tagApi.removeTableTags(catalogName, databaseName, tableNameTagNoRename, false, ['do_not_rename'] as Set)
+        tagApi.removeTableTags(catalogName, databaseName, tableNameTagNoRename, false, ['iceberg_migration_do_not_modify'] as Set)
         api.renameTable(catalogName, databaseName, tableNameTagNoRename, tableNameTagNoRenamed)
         tagApi.removeTableTags(catalogName, databaseName, tableNameTagNoRenamed, true, [] as Set)
         then:

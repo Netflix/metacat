@@ -1007,7 +1007,10 @@ class MetacatFunctionalSpec extends Specification {
                     type: 'chararray',
                     partition_key: false
                 ),
-            ]
+            ],
+            serde: new StorageDto(
+                owner: 'ssarma'
+            )
         )
 
         when:
