@@ -124,14 +124,12 @@ class MetacatSmokeSpec extends Specification {
                 newTable.getMetadata() == null? newTable.setMetadata(metadata): newTable.getMetadata().putAll(metadata)
             }
 
-            if (tableName == 's3-mysql-db') {
-                if (newTable.getSerde() == null) {
-                    newTable.setSerde(new StorageDto(owner: owner))
-                }
+            if (newTable.getSerde() == null) {
+                newTable.setSerde(new StorageDto(owner: owner))
+            }
 
-                if (newTable.getSerde().getOwner() == null) {
-                    newTable.getSerde().setOwner(owner)
-                }
+            if (newTable.getSerde().getOwner() == null) {
+                newTable.getSerde().setOwner(owner)
             }
             api.createTable(catalogName, databaseName, tableName, newTable)
         }
