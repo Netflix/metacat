@@ -123,6 +123,16 @@ class MetacatSmokeSpec extends Specification {
             if (metadata != null) {
                 newTable.getMetadata() == null? newTable.setMetadata(metadata): newTable.getMetadata().putAll(metadata)
             }
+
+            if (tableName == 's3-mysql-db') {
+                if (newTable.getSerde() == null) {
+                    newTable.setSerde(new StorageDto(owner: owner))
+                }
+
+                if (newTable.getSerde().getOwner() == null) {
+                    newTable.getSerde().setOwner(owner)
+                }
+            }
             api.createTable(catalogName, databaseName, tableName, newTable)
         }
     }
@@ -1265,7 +1275,10 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatNotFoundException)
         when:
-        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(
+            name: QualifiedName.ofTable('invalid', 'invalid', 'invalid'),
+            serde: new StorageDto(owner: 'ssarma')
+        ))
         then:
         thrown(MetacatNotFoundException)
         when:
@@ -1336,7 +1349,10 @@ class MetacatSmokeSpec extends Specification {
         thrown(MetacatNotFoundException)
         when:
         createTable(catalogName, 'invalid', 'invalid')
-        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(
+            name: QualifiedName.ofTable('invalid', 'invalid', 'invalid'),
+            serde: new StorageDto(owner: 'ssarma')
+        ))
         then:
         thrown(MetacatAlreadyExistsException)
         when:
