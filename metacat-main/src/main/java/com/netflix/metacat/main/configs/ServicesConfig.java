@@ -20,6 +20,8 @@ package com.netflix.metacat.main.configs;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.api.ratelimiter.DefaultRateLimiter;
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
+import com.netflix.metacat.common.server.api.traffic_control.DefaultRequestGateway;
+import com.netflix.metacat.common.server.api.traffic_control.RequestGateway;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.properties.Config;
@@ -149,6 +151,17 @@ public class ServicesConfig {
     @ConditionalOnMissingBean(RateLimiter.class)
     public RateLimiter rateLimiter() {
         return new DefaultRateLimiter();
+    }
+
+    /**
+     * The default {@link RequestGateway} bean.
+     *
+     * @return the default {@link RequestGateway} bean.
+     */
+    @Bean
+    @ConditionalOnMissingBean(RequestGateway.class)
+    public RequestGateway requestGateway() {
+        return new DefaultRequestGateway();
     }
 
     /**

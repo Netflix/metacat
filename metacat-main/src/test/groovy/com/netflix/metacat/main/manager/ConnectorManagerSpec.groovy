@@ -19,9 +19,12 @@
 package com.netflix.metacat.main.manager
 
 import com.netflix.metacat.common.QualifiedName
+import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter
+import com.netflix.metacat.common.server.connectors.ConnectorCatalogService
 import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService
 import com.netflix.metacat.common.server.connectors.ConnectorFactory
+import com.netflix.metacat.common.server.connectors.ConnectorFactoryDecorator
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin
@@ -39,6 +42,7 @@ import spock.lang.Specification
 class ConnectorManagerSpec extends Specification {
     def config = Mock(Config)
     def plugin = Mock(ConnectorPlugin)
+    def rateLimiter = Mock(RateLimiter)
 
     def setup() {
         plugin.create(_) >> Mock(ConnectorFactory)
@@ -49,7 +53,7 @@ class ConnectorManagerSpec extends Specification {
 
     def testAddPlugin(){
         given:
-        def connectorManager = new ConnectorManager(config)
+        def connectorManager = new ConnectorManager(config, rateLimiter)
         when:
         connectorManager.addPlugin(plugin)
         then:
@@ -58,106 +62,135 @@ class ConnectorManagerSpec extends Specification {
 
     def testCreateConnection(){
         given:
-        def connectorManager = new ConnectorManager(config)
+        def connectorManager = new ConnectorManager(config, rateLimiter)
         def context = Mock(ConnectorContext)
+
         connectorManager.addPlugin(plugin)
+
         def hivePlugin = Mock(ConnectorPlugin)
         def hiveConnectorFactory = Mock(ConnectorFactory)
         def databaseService = Mock(ConnectorDatabaseService)
         def tableService = Mock(ConnectorTableService)
         def partitionService = Mock(ConnectorPartitionService)
+
         hiveConnectorFactory.getDatabaseService() >> databaseService
         hiveConnectorFactory.getTableService() >> tableService
         hiveConnectorFactory.getPartitionService() >> partitionService
+
         def hiveConnectorFactory1 = Mock(ConnectorFactory)
         def databaseService1 = Mock(ConnectorDatabaseService)
         def tableService1 = Mock(ConnectorTableService)
         def partitionService1 = Mock(ConnectorPartitionService)
+
         hiveConnectorFactory1.getDatabaseService() >> databaseService1
         hiveConnectorFactory1.getTableService() >> tableService1
         hiveConnectorFactory1.getPartitionService() >> partitionService1
+
         def hiveConnectorFactory2 = Mock(ConnectorFactory)
         def databaseService2 = Mock(ConnectorDatabaseService)
         def tableService2 = Mock(ConnectorTableService)
         def partitionService2 = Mock(ConnectorPartitionService)
+
         hiveConnectorFactory2.getDatabaseService() >> databaseService2
         hiveConnectorFactory2.getTableService() >> tableService2
         hiveConnectorFactory2.getPartitionService() >> partitionService2
         hivePlugin.create(_) >>> [hiveConnectorFactory, hiveConnectorFactory1, hiveConnectorFactory2]
+
         def connectorInfoConverter = Mock(ConnectorInfoConverter)
         def connectorTypeConverter = Mock(ConnectorTypeConverter)
+
         hivePlugin.getInfoConverter() >> connectorInfoConverter
         hivePlugin.getType() >> 'hive'
         hivePlugin.getTypeConverter() >> connectorTypeConverter
         connectorManager.addPlugin(hivePlugin)
+
         when:
         connectorManager.createConnection(context)
+
         then:
         1 * context.getConnectorType() >> 'invalid'
-        0 * context.getConfiguration()
+        0 * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
         noExceptionThrown()
+
         when:
         connectorManager.createConnection(context)
+
         then:
-        1 * context.getConnectorType() >> 'default'
-        1 * context.getCatalogName() >> 'a'
-        1 * context.getConfiguration() >> [:]
+        (1.._) * context.getConnectorType() >> 'default'
+        (1.._) * context.getCatalogName() >> 'a'
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
         noExceptionThrown()
+
         when:
         connectorManager.createConnection(context)
+
         then:
-        1 * context.getConnectorType() >> 'hive'
-        1 * context.getCatalogName() >> 'h'
-        1 * context.getConfiguration() >> [:]
+        (1.._) * context.getConnectorType() >> 'hive'
+        (1.._) * context.getCatalogName() >> 'h'
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
         noExceptionThrown()
+
         when:
         connectorManager.createConnection(context)
+
         then:
-        1 * context.getConnectorType() >> 'default'
-        1 * context.getCatalogName() >> 'a'
-        1 * context.getConfiguration() >> [:]
+        (1.._) * context.getConnectorType() >> 'default'
+        (1.._) * context.getCatalogName() >> 'a'
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
         thrown(IllegalStateException)
+
         when:
         connectorManager.createConnection(context)
+
         then:
-        1 * context.getConnectorType() >> 'default'
-        1 * context.getCatalogName() >> 'a1'
-        1 * context.getConfiguration() >> [:]
+        (1.._) * context.getConnectorType() >> 'default'
+        (1.._) * context.getCatalogName() >> 'a1'
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
         noExceptionThrown()
+
         when:
         connectorManager.createConnection(context)
+
         then:
-        1 * context.getConnectorType() >> 'default'
-        1 * context.getCatalogName() >> 'a'
-        1 * context.getConfiguration() >> ['metacat.schema.whitelist':'d1']
+        (1.._) * context.getConnectorType() >> 'default'
+        (1.._) * context.getCatalogName() >> 'a'
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", 'metacat.schema.whitelist':'d1']
         noExceptionThrown()
+
         when:
         connectorManager.createConnection(context)
+
         then:
-        1 * context.getConnectorType() >> 'default'
-        1 * context.getCatalogName() >> 'a'
-        1 * context.getConfiguration() >> ['metacat.schema.whitelist':'d1']
+        (1.._) * context.getConnectorType() >> 'default'
+        (1.._) * context.getCatalogName() >> 'a'
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", 'metacat.schema.whitelist':'d1']
         thrown(IllegalStateException)
+
         when:
         connectorManager.createConnection(context)
+
         then:
-        1 * context.getConnectorType() >> 'default'
-        1 * context.getCatalogName() >> 'a'
-        1 * context.getConfiguration() >> ['metacat.schema.whitelist':'d2,d3']
+        (1.._) * context.getConnectorType() >> 'default'
+        (1.._) * context.getCatalogName() >> 'a'
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", 'metacat.schema.whitelist':'d2,d3']
         noExceptionThrown()
+
         when:
         connectorManager.createConnection(context)
+
         then:
-        1 * context.getConnectorType() >> 'hive'
-        1 * context.getCatalogName() >> 'h'
-        1 * context.getConfiguration() >> ['metacat.schema.whitelist':'d1,d2']
+        (1.._) * context.getConnectorType() >> 'hive'
+        (1.._) * context.getCatalogName() >> 'h'
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", 'metacat.schema.whitelist':'d1,d2']
         noExceptionThrown()
+
         when:
         connectorManager.createConnection(context)
+
         then:
-        1 * context.getConnectorType() >> 'hive'
-        1 * context.getCatalogName() >> 'h1'
-        1 * context.getConfiguration() >> [:]
+        (1.._) * context.getConnectorType() >> 'hive'
+        (1.._) * context.getCatalogName() >> 'h1'
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
         noExceptionThrown()
         expect:
         connectorManager.getCatalogConfigs().size() == 7
@@ -169,5 +202,43 @@ class ConnectorManagerSpec extends Specification {
         connectorManager.getDatabaseServices().size() == 4
         connectorManager.getTableServices().size() == 4
         connectorManager.getPartitionServices().size() == 4
+    }
+
+    def "instantiates throttling connector when enabled"() {
+        given:
+        def connectorManager = new ConnectorManager(config, rateLimiter)
+        def connectorInfoConverter = Mock(ConnectorInfoConverter)
+        def connectorTypeConverter = Mock(ConnectorTypeConverter)
+        def hivePlugin = Mock(ConnectorPlugin)
+        def hiveConnectorFactory = Mock(ConnectorFactory)
+        def catalogService = Mock(ConnectorCatalogService)
+        def databaseService = Mock(ConnectorDatabaseService)
+        def tableService = Mock(ConnectorTableService)
+        def partitionService = Mock(ConnectorPartitionService)
+
+        def context = Mock(ConnectorContext)
+        context.getConfiguration() >> ["connector.rate-limiter-exempted": "false"]
+        context.getCatalogName() >> 'h'
+        context.getConnectorType() >> "hive"
+
+        hivePlugin.create(context) >> hiveConnectorFactory
+        hivePlugin.getInfoConverter() >> connectorInfoConverter
+        hivePlugin.getType() >> 'hive'
+        hivePlugin.getTypeConverter() >> connectorTypeConverter
+
+        hiveConnectorFactory.getCatalogService() >> catalogService
+        hiveConnectorFactory.getDatabaseService() >> databaseService
+        hiveConnectorFactory.getTableService() >> tableService
+        hiveConnectorFactory.getPartitionService() >> partitionService
+
+        connectorManager.addPlugin(hivePlugin)
+
+        when:
+        connectorManager.createConnection(context)
+
+        then:
+        noExceptionThrown()
+        connectorManager.getCatalogHolder(QualifiedName.fromString("h")).connectorFactory instanceof ConnectorFactoryDecorator
+        (connectorManager.getCatalogHolder(QualifiedName.fromString("h")).connectorFactory as ConnectorFactoryDecorator).getDelegate() == hiveConnectorFactory
     }
 }

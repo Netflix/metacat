@@ -18,15 +18,12 @@
 package com.netflix.metacat.main.api
 
 import com.netflix.metacat.common.QualifiedName
-import com.netflix.metacat.common.exception.MetacatTooManyRequestsException
-import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter
+import com.netflix.metacat.common.exception.MetacatBadRequestException
+import com.netflix.metacat.common.server.api.traffic_control.RequestGateway
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.usermetadata.AliasService
-import com.netflix.spectator.api.Clock
-import com.netflix.spectator.api.Counter
-import com.netflix.spectator.api.Id
-import com.netflix.spectator.api.Registry
-import com.netflix.spectator.api.Timer
+import com.netflix.metacat.common.server.util.MetacatContextManager
+import com.netflix.spectator.api.*
 import spock.lang.Specification
 
 import java.util.function.Supplier
@@ -36,7 +33,7 @@ class RequestWrapperSpec extends Specification {
     def registry = Mock(Registry)
     def config = Mock(Config)
     def aliasService = Mock(AliasService)
-    def rateLimiter = Mock(RateLimiter)
+    def requestGateway = Mock(RequestGateway)
     def timer = Mock(Timer)
     def clock = Mock(Clock)
     def counter = Mock(Counter)
@@ -52,37 +49,35 @@ class RequestWrapperSpec extends Specification {
         this.registry.counter(_) >> counter
         this.registry.createId(_) >> id
         this.supplier.get() >> null
-        requestWrapper = new RequestWrapper(registry, config, aliasService, rateLimiter)
+        requestWrapper = new RequestWrapper(registry, config, aliasService, requestGateway)
     }
 
-    def "Rate limiter is not invoked when disabled"() {
+    def "gateway is invoked for each request"() {
         when:
         requestWrapper.processRequest(QualifiedName.fromString("a/b/c"), "getTable", supplier)
 
         then:
-        1 * config.isRateLimiterEnabled() >> false
-        0 * rateLimiter.hasExceededRequestLimit(_)
+        1 * requestGateway.validateRequest("getTable", QualifiedName.fromString("a/b/c"))
     }
 
-    def "Rate limiter is not enforced when only enabled"() {
+    def "throws the same exception from gateway"() {
+        given:
+        requestGateway.validateRequest("getTable", QualifiedName.fromString("a/b/c")) >> {
+            throw new MetacatBadRequestException("asdf")
+        }
+
         when:
         requestWrapper.processRequest(QualifiedName.fromString("a/b/c"), "getTable", supplier)
 
         then:
-        1 * config.isRateLimiterEnabled() >> true
-        1 * rateLimiter.hasExceededRequestLimit(_) >> true
-        1 * config.isRateLimiterEnforced() >> false
-        noExceptionThrown()
+        thrown(MetacatBadRequestException)
     }
 
-    def "Exception is thrown when Rate limiter is enforced"() {
+    def "requestName is set in the context"() {
         when:
         requestWrapper.processRequest(QualifiedName.fromString("a/b/c"), "getTable", supplier)
 
         then:
-        1 * config.isRateLimiterEnabled() >> true
-        1 * rateLimiter.hasExceededRequestLimit(_) >> true
-        1 * config.isRateLimiterEnforced() >> true
-        thrown(MetacatTooManyRequestsException)
+        MetacatContextManager.getContext().getRequestName() == "getTable"
     }
 }

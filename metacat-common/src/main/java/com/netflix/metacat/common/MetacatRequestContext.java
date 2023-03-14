@@ -84,6 +84,9 @@ public class MetacatRequestContext implements Serializable {
     @Getter
     private final Map<String, String> additionalContext = new HashMap<>();
 
+    @Setter
+    private String requestName = UNKNOWN;
+
     /**
      * Constructor.
      */
@@ -141,6 +144,7 @@ public class MetacatRequestContext implements Serializable {
         sb.append(", apiUri='").append(apiUri).append('\'');
         sb.append(", scheme='").append(scheme).append('\'');
         sb.append(", additionalContext='").append(additionalContext).append('\'');
+        sb.append(", requestName='").append(requestName).append('\'');
         sb.append('}');
         return sb.toString();
     }
