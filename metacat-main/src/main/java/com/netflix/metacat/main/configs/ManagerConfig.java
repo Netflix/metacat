@@ -17,14 +17,13 @@
  */
 package com.netflix.metacat.main.configs;
 
-import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
 import com.netflix.metacat.common.server.converter.TypeConverterFactory;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.type.TypeManager;
 import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.main.manager.CatalogManager;
-import com.netflix.metacat.main.manager.DefaultCatalogManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
+import com.netflix.metacat.main.manager.DefaultCatalogManager;
 import com.netflix.metacat.main.manager.PluginManager;
 import com.netflix.spectator.api.Registry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -44,12 +43,11 @@ public class ManagerConfig {
      * Manager of the connectors.
      *
      * @param config System config
-     * @param rateLimiter the rate limiter
      * @return The connector manager instance to use.
      */
     @Bean
-    public ConnectorManager connectorManager(final Config config, final RateLimiter rateLimiter) {
-        return new ConnectorManager(config, rateLimiter);
+    public ConnectorManager connectorManager(final Config config) {
+        return new ConnectorManager(config);
     }
 
     /**

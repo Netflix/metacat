@@ -32,7 +32,6 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
 import com.netflix.metacat.common.server.connectors.ConnectorCatalogService;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
@@ -89,7 +88,6 @@ public class ConnectorManager {
     private final AtomicBoolean stopped = new AtomicBoolean();
 
     private final Config config;
-    private final RateLimiter rateLimiter;
 
     /**
      * Stop.
@@ -146,11 +144,7 @@ public class ConnectorManager {
 
             catalogConfigs.add(catalogConfig);
 
-            final ConnectorFactory connectorFactory = new ConnectorFactoryDecorator(
-                connectorPlugin,
-                connectorPlugin.create(connectorContext),
-                connectorContext, rateLimiter
-            );
+            final ConnectorFactory connectorFactory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext);
 
             try {
                 databaseServices.add(connectorFactory.getDatabaseService());

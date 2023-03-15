@@ -31,6 +31,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorPlugin
 import com.netflix.metacat.common.server.connectors.ConnectorTableService
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter
 import com.netflix.metacat.common.server.properties.Config
+import org.springframework.context.ApplicationContext
 import spock.lang.Specification
 
 /**
@@ -43,17 +44,22 @@ class ConnectorManagerSpec extends Specification {
     def config = Mock(Config)
     def plugin = Mock(ConnectorPlugin)
     def rateLimiter = Mock(RateLimiter)
+    def context = Mock(ConnectorContext)
+    def appContext = Mock(ApplicationContext)
 
     def setup() {
-        plugin.create(_) >> Mock(ConnectorFactory)
+        plugin.create(_ as ConnectorContext) >> Mock(ConnectorFactory)
         plugin.getInfoConverter() >> Mock(ConnectorInfoConverter)
         plugin.getType() >> 'default'
         plugin.getTypeConverter() >> Mock(ConnectorTypeConverter)
+
+        context.getApplicationContext() >> appContext
+        appContext.getBean(RateLimiter) >> rateLimiter
     }
 
     def testAddPlugin(){
         given:
-        def connectorManager = new ConnectorManager(config, rateLimiter)
+        def connectorManager = new ConnectorManager(config)
         when:
         connectorManager.addPlugin(plugin)
         then:
@@ -62,8 +68,7 @@ class ConnectorManagerSpec extends Specification {
 
     def testCreateConnection(){
         given:
-        def connectorManager = new ConnectorManager(config, rateLimiter)
-        def context = Mock(ConnectorContext)
+        def connectorManager = new ConnectorManager(config)
 
         connectorManager.addPlugin(plugin)
 
@@ -94,7 +99,7 @@ class ConnectorManagerSpec extends Specification {
         hiveConnectorFactory2.getDatabaseService() >> databaseService2
         hiveConnectorFactory2.getTableService() >> tableService2
         hiveConnectorFactory2.getPartitionService() >> partitionService2
-        hivePlugin.create(_) >>> [hiveConnectorFactory, hiveConnectorFactory1, hiveConnectorFactory2]
+        hivePlugin.create(_ as ConnectorContext) >>> [hiveConnectorFactory, hiveConnectorFactory1, hiveConnectorFactory2]
 
         def connectorInfoConverter = Mock(ConnectorInfoConverter)
         def connectorTypeConverter = Mock(ConnectorTypeConverter)
@@ -206,7 +211,7 @@ class ConnectorManagerSpec extends Specification {
 
     def "instantiates throttling connector when enabled"() {
         given:
-        def connectorManager = new ConnectorManager(config, rateLimiter)
+        def connectorManager = new ConnectorManager(config)
         def connectorInfoConverter = Mock(ConnectorInfoConverter)
         def connectorTypeConverter = Mock(ConnectorTypeConverter)
         def hivePlugin = Mock(ConnectorPlugin)
@@ -216,7 +221,6 @@ class ConnectorManagerSpec extends Specification {
         def tableService = Mock(ConnectorTableService)
         def partitionService = Mock(ConnectorPartitionService)
 
-        def context = Mock(ConnectorContext)
         context.getConfiguration() >> ["connector.rate-limiter-exempted": "false"]
         context.getCatalogName() >> 'h'
         context.getConnectorType() >> "hive"
