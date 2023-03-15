@@ -1,18 +1,20 @@
 package com.netflix.metacat.common.server.connectors
 
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter
+import org.springframework.context.ApplicationContext
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class ConnectorFactoryDecoratorSpec extends Specification {
-    def connectorPlugin
-    def delegate
-    def connectorContext
-    def rateLimiter
-    def catalogService
-    def databaseService
-    def tableService
-    def partitionService
+    ConnectorPlugin connectorPlugin
+    ConnectorFactory delegate
+    ConnectorContext connectorContext
+    RateLimiter rateLimiter
+    ApplicationContext applicationContext
+    ConnectorCatalogService catalogService
+    ConnectorDatabaseService databaseService
+    ConnectorTableService tableService
+    ConnectorPartitionService partitionService
 
     def factory
 
@@ -21,23 +23,27 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         delegate = Mock(ConnectorFactory)
         connectorContext = Mock(ConnectorContext)
         rateLimiter = Mock(RateLimiter)
+        applicationContext = Mock(ApplicationContext)
 
         catalogService = Mock(ConnectorCatalogService)
         databaseService = Mock(ConnectorDatabaseService)
         tableService = Mock(ConnectorTableService)
         partitionService = Mock(ConnectorPartitionService)
 
+        connectorPlugin.create(connectorContext) >> delegate
+        connectorContext.getApplicationContext() >> applicationContext
+        applicationContext.getBean(RateLimiter) >> rateLimiter
+
         delegate.getCatalogService() >> catalogService
         delegate.getDatabaseService() >> databaseService
         delegate.getTableService() >> tableService
         delegate.getPartitionService() >> partitionService
-
-        factory = new ConnectorFactoryDecorator(connectorPlugin, delegate, connectorContext, rateLimiter)
     }
 
     def "when rate limiting is enabled"() {
         given:
         connectorContext.getConfiguration() >> ["connector.rate-limiter-exempted": "false"]
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         when:
         def catalogSvc = factory.getCatalogService()
@@ -72,6 +78,7 @@ class ConnectorFactoryDecoratorSpec extends Specification {
     def "when rate limiting is disabled"() {
         given:
         connectorContext.getConfiguration() >> config
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         when:
         def catalogSvc = factory.getCatalogService()

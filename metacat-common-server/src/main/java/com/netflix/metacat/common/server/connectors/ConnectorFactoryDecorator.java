@@ -2,7 +2,7 @@ package com.netflix.metacat.common.server.connectors;
 
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -10,19 +10,41 @@ import lombok.extern.slf4j.Slf4j;
  * to all connector services.
  */
 @Slf4j
-@RequiredArgsConstructor
 public class ConnectorFactoryDecorator implements ConnectorFactory {
     private final ConnectorPlugin connectorPlugin;
     @Getter
     private final ConnectorFactory delegate;
     private final ConnectorContext connectorContext;
     private final RateLimiter rateLimiter;
+    private final boolean rateLimiterEnabled;
+
+    /**
+     * Creates the decorated connector factory that wraps connector services
+     * with additional wrappers.
+     *
+     * @param connectorPlugin the underlying plugin
+     * @param connectorContext the connector context for the underlying plugin
+     */
+    public ConnectorFactoryDecorator(@NonNull final ConnectorPlugin connectorPlugin,
+                                     @NonNull final ConnectorContext connectorContext) {
+        this.connectorPlugin = connectorPlugin;
+        this.delegate = connectorPlugin.create(connectorContext);
+        this.connectorContext = connectorContext;
+
+        this.rateLimiter = connectorContext.getApplicationContext().getBean(RateLimiter.class);
+
+        // we can cache this config at startup since this is the connector level config
+        // that does not change later. Actual decision to enable and enforce throttling
+        // is in the rate limiter implementation which is more dynamic and accommodates
+        // changes from the Metacat dynamic configuration.
+        this.rateLimiterEnabled = isRateLimiterEnabled();
+    }
 
     @Override
     public ConnectorCatalogService getCatalogService() {
         ConnectorCatalogService service = delegate.getCatalogService();
 
-        if (isRateLimiterEnabled()) {
+        if (rateLimiterEnabled) {
             log.info("Creating rate-limited connector catalog services for connector-type: {}, "
                          + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
@@ -37,7 +59,7 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
     public ConnectorDatabaseService getDatabaseService() {
         ConnectorDatabaseService service = delegate.getDatabaseService();
 
-        if (isRateLimiterEnabled()) {
+        if (rateLimiterEnabled) {
             log.info("Creating rate-limited connector database services for connector-type: {}, "
                          + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
@@ -52,7 +74,7 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
     public ConnectorTableService getTableService() {
         ConnectorTableService service = delegate.getTableService();
 
-        if (isRateLimiterEnabled()) {
+        if (rateLimiterEnabled) {
             log.info("Creating rate-limited connector table services for connector-type: {}, "
                          + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
@@ -67,7 +89,7 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
     public ConnectorPartitionService getPartitionService() {
         ConnectorPartitionService service = delegate.getPartitionService();
 
-        if (isRateLimiterEnabled()) {
+        if (rateLimiterEnabled) {
             log.info("Creating rate-limited connector partition services for connector-type: {}, "
                          + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
