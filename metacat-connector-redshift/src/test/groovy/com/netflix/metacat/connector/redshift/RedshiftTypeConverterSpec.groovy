@@ -33,7 +33,7 @@ class RedshiftTypeConverterSpec extends Specification {
     def converter = new RedshiftTypeConverter()
 
     @Unroll
-    "Can convert Redshift string: #type to Metacat Type: #signature"() {
+    "Can convert Redshift string: #type to Metacat Type: #metacatType"() {
 
         expect:
         this.converter.toMetacatType(type) == metacatType

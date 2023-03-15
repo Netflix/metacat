@@ -9,7 +9,7 @@ if [ ! "$DOCKER_CONTAINER" ]; then
     exit 9
 fi
 
-MAPPED_PORT=$(docker inspect $DOCKER_CONTAINER 2>/dev/null | jq ".[].NetworkSettings .Ports[\"$DOCKER_PORT_NUM/tcp\"][].HostPort" | tr -d '"')
+MAPPED_PORT=$(docker inspect $DOCKER_CONTAINER 2>/dev/null | jq ".[].NetworkSettings.Ports[\"$DOCKER_PORT_NUM/tcp\"] | .[] | select(.HostIp | contains(\"0.0.0.0\")) | .HostPort" -r)
 if [ ! "$MAPPED_PORT" ]; then
     echo "Container matching '$DOCKER_FILTER' does not export port $DOCKER_PORT_NUM"
     exit 10

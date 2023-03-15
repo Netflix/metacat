@@ -195,7 +195,7 @@ class EmbeddedEsSpec extends Specification {
     }
 
     @Unroll
-    def "Test deletes for #type"() {
+    def "Test deletes"() {
         given:
         def tables = DataDtoProvider.getTables(catalogName, databaseName, tableName, "amajumdar", "s3:/a/b", noOfTables)
         def docs = tables.collect {

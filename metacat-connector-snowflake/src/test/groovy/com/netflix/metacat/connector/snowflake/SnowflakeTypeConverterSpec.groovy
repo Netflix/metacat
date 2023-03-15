@@ -33,7 +33,7 @@ class SnowflakeTypeConverterSpec extends Specification {
     def converter = new SnowflakeTypeConverter()
 
     @Unroll
-    "Can convert Snowflake string: #type to Metacat Type: #signature"() {
+    "Can convert Snowflake string: #type to Metacat Type: #metacatType"() {
 
         expect:
         this.converter.toMetacatType(type) == metacatType
