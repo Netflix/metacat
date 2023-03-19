@@ -696,7 +696,7 @@ public class MetacatController implements MetacatV1 {
                                     .disableOnReadMetadataIntercetor(false)
                                     .includeMetadataFromConnector(includeInfoDetails)
                                     .includeMetadataLocationOnly(includeMetadataLocationOnly)
-                                    .useCache(false)
+                                    .useCache(true)
                                     .build()
                     );
 

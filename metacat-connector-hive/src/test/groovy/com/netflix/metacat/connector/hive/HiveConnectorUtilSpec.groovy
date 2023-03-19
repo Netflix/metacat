@@ -16,9 +16,9 @@
 
 package com.netflix.metacat.connector.hive
 
-import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.connectors.util.TimeUtil
+import com.netflix.metacat.common.server.util.MetacatUtils
 import com.netflix.metacat.connector.hive.util.HiveTableUtil
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -50,7 +50,7 @@ class HiveConnectorUtilSpec extends Specification{
         given:
         def tableInfo = TableInfo.builder().metadata(metadata).build()
         def isView = HiveTableUtil.isCommonView(tableInfo)
-        def isView2 = HiveTableUtil.isCommonView(tableInfo.metadata)
+        def isView2 = MetacatUtils.isCommonView(tableInfo.metadata)
         expect:
         isView == output
         isView2 == output

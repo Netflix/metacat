@@ -22,6 +22,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
+import com.netflix.metacat.common.server.util.MetacatUtils;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -158,26 +159,15 @@ public final class HiveTableUtil {
         return TableIdentifier.parse(name.toString().replace('/', '.'));
     }
 
-    /**
-     * check if the table is a common view.
+    /** check if the table is a common view.
      *
      * @param tableInfo table info
      * @return true for common view
      */
     public static boolean isCommonView(final TableInfo tableInfo) {
-        return tableInfo.getMetadata() != null && isCommonView(tableInfo.getMetadata());
+        return tableInfo != null && tableInfo.getMetadata() != null
+                && MetacatUtils.isCommonView(tableInfo.getMetadata());
     }
-
-    /**
-     * check if the table is a common view.
-     *
-     * @param tableMetadata table metadata map
-     * @return true for common view
-     */
-    public static boolean isCommonView(final Map<String, String> tableMetadata) {
-        return tableMetadata != null && Boolean.parseBoolean(tableMetadata.get(DirectSqlTable.COMMON_VIEW));
-    }
-
 
     /**
      * get common view metadata location.

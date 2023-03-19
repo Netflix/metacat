@@ -31,6 +31,7 @@ import com.netflix.metacat.common.server.connectors.exception.TableNotFoundExcep
 import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.MetacatUtils;
 import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.metacat.connector.hive.util.HiveConnectorFastServiceMetric;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
@@ -86,10 +87,6 @@ public class DirectSqlTable {
      * Iceberg table type.
      */
     public static final String ICEBERG_TABLE_TYPE = "ICEBERG";
-    /**
-     * Iceberg table type.
-     */
-    public static final String COMMON_VIEW = "common_view";
 
     /**
      * VIRTUAL_VIEW table type.
@@ -312,7 +309,7 @@ public class DirectSqlTable {
             if (ICEBERG_TABLE_TYPE.equalsIgnoreCase(tableMetadata.get(PARAM_TABLE_TYPE))) {
                 return;
             }
-            if (HiveTableUtil.isCommonView(tableMetadata)) {
+            if (MetacatUtils.isCommonView(tableMetadata)) {
                 return;
             }
         }

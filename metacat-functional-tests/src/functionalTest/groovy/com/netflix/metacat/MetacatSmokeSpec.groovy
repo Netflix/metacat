@@ -455,6 +455,43 @@ class MetacatSmokeSpec extends Specification {
         IntStream.range(0,10).forEach{ i -> api.deleteTable(catalogName, database2Name, tableName + i)}
     }
 
+    def "Test materialized common view create/drop"() {
+        given:
+        def catalogName = 'embedded-fast-hive-metastore'
+        def databaseName = 'iceberg_db'
+        def storageTableName = 'st_iceberg_table'
+        def commonViewName = 'test_common_view'
+        def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, storageTableName) : null
+        def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, storageTableName, 'test', uri)
+        tableDto.setFields([])
+        def metadataLocation = '/tmp/data/metadata/00000-9b5d4c36-130c-4288-9599-7d850c203d11.metadata.json'
+        def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
+        tableDto.setMetadata(metadata)
+        def viewUri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, commonViewName) : null
+        def commonViewDto = PigDataDtoProvider.getTable(catalogName, databaseName, commonViewName, 'test', viewUri)
+        commonViewDto.setFields([])
+        def viewMetadataLocation = '/tmp/data/metadata/00000-9b5d4c36-130c-4288-9599-7d850c203d11.metadata.json'
+        def viewMetadata = [common_view: 'true', metadata_location: viewMetadataLocation, storage_table: 'st_iceberg_table']
+        commonViewDto.setMetadata(viewMetadata)
+        when:
+        def catalog = api.getCatalog(catalogName)
+        if (!catalog.databases.contains(databaseName)) {
+            api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+        }
+        api.createTable(catalogName, databaseName, storageTableName, tableDto)
+        then:
+        noExceptionThrown()
+        when:
+        api.createTable(catalogName, databaseName, commonViewName, commonViewDto)
+        then:
+        noExceptionThrown()
+        when:
+        api.deleteTable(catalogName, databaseName, commonViewName)
+        api.getTable(catalogName, databaseName, storageTableName, true, false, false)
+        then:
+        thrown(MetacatNotFoundException)
+    }
+
     @Unroll
     def "Test create/update iceberg table in #catalogName"() {
         given:

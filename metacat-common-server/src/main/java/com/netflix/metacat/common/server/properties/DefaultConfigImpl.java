@@ -553,6 +553,14 @@ public class DefaultConfigImpl implements Config {
      * {@inheritDoc}
      */
     @Override
+    public boolean deleteCommonViewStorageTable() {
+        return this.metacatProperties.getHive().getCommonview().isDeleteStorageTable();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getIcebergRefreshFromMetadataLocationRetryNumber() {
         return this.metacatProperties.getHive().getIceberg().getRefreshFromMetadataLocationRetryNumber();
     }

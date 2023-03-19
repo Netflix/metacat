@@ -459,6 +459,14 @@ public interface Config {
     boolean isCommonViewEnabled();
 
     /**
+     * Whether the underlying storage table should be deleted
+     * for a materialized common view.
+     *
+     * @return true if the storage table should be deleted when the common view is.
+     */
+    boolean deleteCommonViewStorageTable();
+
+    /**
      * get Iceberg table refresh metadata location retry number.
      *
      * @return Refresh metadata location retry number.

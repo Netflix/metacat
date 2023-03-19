@@ -267,6 +267,20 @@ public class TableServiceImpl implements TableService {
         // Try to delete the table even if get above fails
         try {
             connectorTableServiceProxy.delete(name);
+
+            // If this is a common view, the storage_table if present
+            // should also be deleted.
+            if (MetacatUtils.isCommonView(tableDto.getMetadata())
+                    && config.deleteCommonViewStorageTable()) {
+                final Optional<String> storageTableName = MetacatUtils
+                        .getCommonViewStorageTable(tableDto.getMetadata());
+                if (storageTableName.isPresent()) {
+                    final QualifiedName qualifiedStorageTableName = QualifiedName.ofTable(name.getCatalogName(),
+                            name.getDatabaseName(), storageTableName.get());
+                    deleteCommonViewStorageTable(name, qualifiedStorageTableName);
+                }
+            }
+
         } catch (NotFoundException ignored) {
             log.debug("NotFoundException ignored for table {}", name);
         }
@@ -381,11 +395,6 @@ public class TableServiceImpl implements TableService {
             }
         }
 
-        if (table != null
-                && table.getDefinitionMetadata() != null
-                && table.getDefinitionMetadata().get("auth_policy") != null) {
-            table.getDefinitionMetadata().set("auth_policy", metacatJson.getObjectMapper().valueToTree("PERMISSIVE"));
-        }
         return Optional.of(table);
     }
 
@@ -742,6 +751,19 @@ public class TableServiceImpl implements TableService {
                 : (getTableServiceParameters.isIncludeMetadataFromConnector()
                         ? connectorTableServiceProxy.getWithInfoDetails(name, getTableServiceParameters, useCache)
                         : connectorTableServiceProxy.get(name, getTableServiceParameters, useCache));
+    }
+
+    private void deleteCommonViewStorageTable(final QualifiedName viewName,
+                                              final QualifiedName storageTableName) {
+
+        try {
+            log.warn("Deleting storage table: {} belonging to common view: {}",
+                    storageTableName, viewName);
+            deleteAndReturn(storageTableName, false);
+        } catch (Exception e) {
+            // For now only register failures to drop
+            handleException(storageTableName, true, "deleteCommonViewStorageTable", e);
+        }
     }
 
     /**
