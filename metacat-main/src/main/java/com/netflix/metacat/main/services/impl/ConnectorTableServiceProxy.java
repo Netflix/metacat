@@ -79,8 +79,8 @@ public class ConnectorTableServiceProxy {
      * @param name table name
      */
     @Caching(evict = {
-            @CacheEvict(key = "'table.' + #name"),
-            @CacheEvict(key = "'table.metadataLocationOnly.' + #name")
+            @CacheEvict(key = "'table.' + #name", beforeInvocation = true),
+            @CacheEvict(key = "'table.metadataLocationOnly.' + #name", beforeInvocation = true)
     })
     public void delete(final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -148,8 +148,8 @@ public class ConnectorTableServiceProxy {
      * @param isMView true, if the object is a view
      */
     @Caching(evict = {
-            @CacheEvict(key = "'table.' + #oldName"),
-            @CacheEvict(key = "'table.metadataLocationOnly.' + #oldName")
+            @CacheEvict(key = "'table.' + #oldName", beforeInvocation = true),
+            @CacheEvict(key = "'table.metadataLocationOnly.' + #oldName", beforeInvocation = true)
     })
     public void rename(
         final QualifiedName oldName,
@@ -175,8 +175,8 @@ public class ConnectorTableServiceProxy {
      * @return true if errors after this should be ignored.
      */
     @Caching(evict = {
-            @CacheEvict(key = "'table.' + #name"),
-            @CacheEvict(key = "'table.metadataLocationOnly.' + #name")
+            @CacheEvict(key = "'table.' + #name", beforeInvocation = true),
+            @CacheEvict(key = "'table.metadataLocationOnly.' + #name", beforeInvocation = true)
     })
     public boolean update(final QualifiedName name, final TableInfo tableInfo) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
