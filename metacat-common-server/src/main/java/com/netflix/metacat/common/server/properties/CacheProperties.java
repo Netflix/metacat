@@ -25,6 +25,11 @@ import lombok.Data;
  */
 @Data
 public class CacheProperties {
+    private static final int DEFAULT_CACHE_MUTATION_TIMEOUT_MILLIS = 20;
+
     private boolean enabled;
+    private boolean throwOnEvictionFailure;
+    private int evictionTimeoutMs = DEFAULT_CACHE_MUTATION_TIMEOUT_MILLIS;
     private String name;
 }
+
