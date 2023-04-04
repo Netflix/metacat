@@ -733,7 +733,9 @@ public class TableServiceImpl implements TableService {
                                                final boolean useCache) {
         return getTableServiceParameters.isIncludeMetadataLocationOnly()
                 ? connectorTableServiceProxy.getWithMetadataLocationOnly(name, getTableServiceParameters, useCache)
-                : connectorTableServiceProxy.get(name, getTableServiceParameters, useCache);
+                : (getTableServiceParameters.isIncludeMetadataFromConnector()
+                        ? connectorTableServiceProxy.getWithInfoDetails(name, getTableServiceParameters, useCache)
+                        : connectorTableServiceProxy.get(name, getTableServiceParameters, useCache));
     }
 
     /**
