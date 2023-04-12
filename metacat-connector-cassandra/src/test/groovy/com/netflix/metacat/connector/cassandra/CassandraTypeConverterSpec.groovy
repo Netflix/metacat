@@ -34,7 +34,7 @@ class CassandraTypeConverterSpec extends Specification {
     def converter = new CassandraTypeConverter()
 
     @Unroll
-    "Can convert Cassandra string: #type to Metacat Type: #signature"() {
+    "Can convert Cassandra string: #type to Metacat Type: #metacatType"() {
 
         expect:
         this.converter.toMetacatType(type) == metacatType

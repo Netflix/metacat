@@ -56,7 +56,9 @@ dependencies {
      * Test Dependencies
      *******************************/
     testCompile('org.springframework:spring-test')
-    testImplementation('org.springframework.boot:spring-boot-starter-test')
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'com.vaadin.external.google', module: 'android-json'
+    }
 
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
     testCompile("org.junit.jupiter:junit-jupiter-api:5.4.2")

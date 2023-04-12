@@ -55,3 +55,6 @@ spring:
       FAIL_ON_UNKNOWN_PROPERTIES: false
   main:
     allow-bean-definition-overriding: true
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher

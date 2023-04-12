@@ -16,7 +16,7 @@ package com.netflix.metacat.metadata.mysql
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.testdata.provider.DataDtoProvider
-import org.junit.Ignore
+import spock.lang.Ignore
 
 import java.time.Instant
 

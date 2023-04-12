@@ -128,13 +128,13 @@ task metacatPorts {
         ext.hive_debug_port = get_docker_port('com.netflix.metacat.oss.test.hive', 8005)
 
         println '++ Container Exposed ports ++'
-        println '+++ Metacat Web Port:' + ext.http_port
-        println '+++ Metacat Web Debug Port:' + ext.metacat_http_debug_port
-        println '+++ Metacat Hive Thrift Port:' + ext.metacat_hive_thrift_port
-        println '+++ Metacat Embedded Hive Thrift Port:' + ext.metacat_embedded_hive_thrift_port
-        println '+++ Metacat Embedded Fast Hive Thrift Port:' + ext.metacat_embedded_fast_hive_thrift_port
-        println '+++ Metacat Hive Metastore Port:' + ext.hive_thrift_port
-        println '+++ Metacat Hive Metastore Debug Port:' + ext.hive_debug_port
+        println '+++ Metacat Web Port: [' + ext.http_port + ']'
+        println '+++ Metacat Web Debug Port: [' + ext.metacat_http_debug_port + ']'
+        println '+++ Metacat Hive Thrift Port: [' + ext.metacat_hive_thrift_port + ']'
+        println '+++ Metacat Embedded Hive Thrift Port: [' + ext.metacat_embedded_hive_thrift_port + ']'
+        println '+++ Metacat Embedded Fast Hive Thrift Port: [' + ext.metacat_embedded_fast_hive_thrift_port + ']'
+        println '+++ Metacat Hive Metastore Port: [' + ext.hive_thrift_port + ']'
+        println '+++ Metacat Hive Metastore Debug Port: [' + ext.hive_debug_port + ']'
     }
 }
 

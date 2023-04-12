@@ -214,7 +214,7 @@ class MetacatSmokeThriftSpec extends Specification {
     }
 
     @Unroll
-    def "Test create table for #catalogName/#databaseName/#tableName"() {
+    def "Test create table"() {
         given:
         def databaseName = 'test_db2_' + catalogName
         def tableName = 'test_create_table'
@@ -273,7 +273,7 @@ class MetacatSmokeThriftSpec extends Specification {
     }
 
     @Unroll
-    def "Test('#repeat') save partitions for #catalogName/#databaseName/#tableName with partition name starting with #partitionName"() {
+    def "Test save partitions"() {
         given:
         def uri = isLocalEnv ? 'file:/tmp/abc' : null;
         def databaseName = 'test_db4_' + catalogName

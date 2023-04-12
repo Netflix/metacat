@@ -123,6 +123,14 @@ class MetacatSmokeSpec extends Specification {
             if (metadata != null) {
                 newTable.getMetadata() == null? newTable.setMetadata(metadata): newTable.getMetadata().putAll(metadata)
             }
+
+            if (newTable.getSerde() == null) {
+                newTable.setSerde(new StorageDto(owner: owner))
+            }
+
+            if (newTable.getSerde().getOwner() == null) {
+                newTable.getSerde().setOwner(owner)
+            }
             api.createTable(catalogName, databaseName, tableName, newTable)
         }
     }
@@ -861,7 +869,7 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(RetryableException)
         when:
-        tagApi.removeTableTags(catalogName, databaseName, tableNameTagNoRename, false, ['do_not_rename'] as Set)
+        tagApi.removeTableTags(catalogName, databaseName, tableNameTagNoRename, false, ['iceberg_migration_do_not_modify'] as Set)
         api.renameTable(catalogName, databaseName, tableNameTagNoRename, tableNameTagNoRenamed)
         tagApi.removeTableTags(catalogName, databaseName, tableNameTagNoRenamed, true, [] as Set)
         then:
@@ -1265,7 +1273,10 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatNotFoundException)
         when:
-        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(
+            name: QualifiedName.ofTable('invalid', 'invalid', 'invalid'),
+            serde: new StorageDto(owner: 'ssarma')
+        ))
         then:
         thrown(MetacatNotFoundException)
         when:
@@ -1336,7 +1347,10 @@ class MetacatSmokeSpec extends Specification {
         thrown(MetacatNotFoundException)
         when:
         createTable(catalogName, 'invalid', 'invalid')
-        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.createTable(catalogName, 'invalid', 'invalid', new TableDto(
+            name: QualifiedName.ofTable('invalid', 'invalid', 'invalid'),
+            serde: new StorageDto(owner: 'ssarma')
+        ))
         then:
         thrown(MetacatAlreadyExistsException)
         when:
