@@ -218,9 +218,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         try {
             final Map<String, String> newTableMetadata = tableInfo.getMetadata();
             if (MapUtils.isEmpty(newTableMetadata)) {
-                final String message = String.format("No parameters defined for iceberg table %s", name);
-                log.warn(message);
-                throw new InvalidMetaException(name, message, null);
+                log.warn("No parameters defined for iceberg table %s, no data update needed", name);
+                return;
             }
             final String prevLoc = newTableMetadata.get(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION);
             final String newLoc = newTableMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION);
