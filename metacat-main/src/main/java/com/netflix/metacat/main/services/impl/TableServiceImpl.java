@@ -380,6 +380,12 @@ public class TableServiceImpl implements TableService {
                 dataMetadata.ifPresent(table::setDataMetadata);
             }
         }
+
+        if (table != null
+                && table.getDefinitionMetadata() != null
+                && table.getDefinitionMetadata().get("auth_policy") != null) {
+            table.getDefinitionMetadata().set("auth_policy", metacatJson.getObjectMapper().valueToTree("PERMISSIVE"));
+        }
         return Optional.of(table);
     }
 
