@@ -28,6 +28,7 @@ import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter
 import com.netflix.metacat.testdata.provider.DataDtoProvider
+import org.apache.commons.lang3.tuple.Pair
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.TableType
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
@@ -53,13 +54,14 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.util.logging.LogManager
+import java.util.stream.Collectors
 
 /**
  * Created by amajumdar on 5/12/15.
  */
 class MetacatSmokeThriftSpec extends Specification {
     @Shared
-    Map<String, Hive> clients = [:]
+    List<Pair<String, Hive>> clients = []
     @Shared
     ConverterUtil converter
     @Shared
@@ -70,15 +72,15 @@ class MetacatSmokeThriftSpec extends Specification {
         HiveConf conf = new HiveConf()
         conf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_hive_thrift_port']}")
         SessionState.setCurrentSessionState(new SessionState(conf))
-        clients.put('remote', Hive.get(conf))
+        clients.add(Pair.of('remote', Hive.get(conf)))
         HiveConf localConf = new HiveConf()
         localConf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_embedded_hive_thrift_port']}")
         SessionState.setCurrentSessionState(new SessionState(localConf))
-        clients.put('local', Hive.get(localConf))
+        clients.add(Pair.of('local', Hive.get(localConf)))
         HiveConf localFastConf = new HiveConf()
         localFastConf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_embedded_fast_hive_thrift_port']}")
         SessionState.setCurrentSessionState(new SessionState(localFastConf))
-        clients.put('localfast', Hive.get(localFastConf))
+        clients.add(Pair.of('localfast', Hive.get(localFastConf)))
         ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("ROOT")).setLevel(ch.qos.logback.classic.Level.OFF)
         def typeFactory = new TypeConverterFactory(new DefaultTypeConverter())
         converter = new ConverterUtil(new DozerTypeConverter(typeFactory), new DozerJsonTypeConverter(typeFactory))
@@ -136,8 +138,8 @@ class MetacatSmokeThriftSpec extends Specification {
         client.dropTable(databaseName, 'part')
         client.dropTable(databaseName, 'parts')
         where:
-        client << clients.values()
-        catalogName << clients.keySet()
+        client << clients*.right
+        catalogName << clients*.left
     }
 
     @Unroll
@@ -155,8 +157,8 @@ class MetacatSmokeThriftSpec extends Specification {
         cleanup:
         client.dropDatabase(databaseName)
         where:
-        client << clients.values()
-        catalogName << clients.keySet()
+        client << clients*.right
+        catalogName << clients*.left
     }
 
     @Unroll
@@ -190,8 +192,8 @@ class MetacatSmokeThriftSpec extends Specification {
         cleanup:
         client.dropDatabase(databaseName)
         where:
-        client << clients.values()
-        catalogName << clients.keySet()
+        client << clients*.right
+        catalogName << clients*.left
     }
 
     @Unroll
@@ -209,8 +211,8 @@ class MetacatSmokeThriftSpec extends Specification {
         then:
         thrown(NoSuchObjectException)
         where:
-        client << clients.values()
-        catalogName << clients.keySet()
+        client << clients*.right
+        catalogName << clients*.left
     }
 
     @Unroll
@@ -239,8 +241,8 @@ class MetacatSmokeThriftSpec extends Specification {
         cleanup:
         client.dropTable(databaseName, tableName)
         where:
-        client << clients.values()
-        catalogName << clients.keySet()
+        client << clients*.right
+        catalogName << clients*.left
     }
 
     @Unroll
@@ -268,8 +270,8 @@ class MetacatSmokeThriftSpec extends Specification {
         cleanup:
         client.dropTable(databaseName, tableName)
         where:
-        client << clients.values()
-        catalogName << clients.keySet()
+        client << clients*.right
+        catalogName << clients*.left
     }
 
     @Unroll
@@ -301,15 +303,19 @@ class MetacatSmokeThriftSpec extends Specification {
         cleanup:
         client.dropPartition(databaseName, tableName, Lists.newArrayList(PartitionUtil.getPartitionKeyValues(partitionName).values()), false)
         where:
-        client << clients.values()
-        catalogName << clients.keySet()
+        client << clients*.right
+        catalogName << clients*.left
     }
 
     @Unroll
     def "Test: Remote Thrift connector: drop partitions"() {
         given:
         def catalogName = 'remote'
-        def client = clients.get(catalogName)
+        def client = clients.stream()
+            .filter { (catalogName == it.left) }
+            .map {it.right}
+            .findFirst().get()
+
         def databaseName = 'test_db5_' + catalogName
         def tableName = 'parts'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
@@ -349,7 +355,11 @@ class MetacatSmokeThriftSpec extends Specification {
     def "Test: Remote Thrift connector: get partitions for filter #filter returned #result partitions"() {
         when:
         def catalogName = 'remote'
-        def client = clients.get(catalogName)
+        def client = clients.stream()
+            .filter { (catalogName == it.left) }
+            .map {it.right}
+            .findFirst().get()
+
         def databaseName = 'test_db5_' + catalogName
         def tableName = 'parts'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
@@ -393,7 +403,11 @@ class MetacatSmokeThriftSpec extends Specification {
     def "Test: Remote Thrift connector: getPartitions methods"() {
         when:
         def catalogName = 'remote'
-        def client = clients.get(catalogName)
+        def client = clients.stream()
+            .filter { (catalogName == it.left) }
+            .map {it.right}
+            .findFirst().get()
+
         def databaseName = 'test_db5_' + catalogName
         def tableName = 'parts'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
@@ -459,7 +473,10 @@ class MetacatSmokeThriftSpec extends Specification {
     def "Test: Embedded Thrift connector: get partitions for filter #filter returned #result partitions"() {
         when:
         def catalogName = 'local'
-        def client = clients.get(catalogName)
+        def client = clients.stream()
+            .filter { (catalogName == it.left) }
+            .map {it.right}
+            .findFirst().get()
         def databaseName = 'test_db5_' + catalogName
         def tableName = 'parts'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
@@ -510,7 +527,10 @@ class MetacatSmokeThriftSpec extends Specification {
     def "Test: Embedded Fast Thrift connector: get partitions for filter #filter returned #result partitions"() {
         when:
         def catalogName = 'localfast'
-        def client = clients.get(catalogName)
+        def client = clients.stream()
+            .filter { (catalogName == it.left) }
+            .map {it.right}
+            .findFirst().get()
         def databaseName = 'test_db5_' + catalogName
         def tableName = 'parts'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
@@ -561,7 +581,10 @@ class MetacatSmokeThriftSpec extends Specification {
     def "Test: Embedded Fast Thrift connector: getPartitionsByNames with escape values"() {
         given:
         def catalogName = 'localfast'
-        def client = clients.get(catalogName)
+        def client = clients.stream()
+            .filter { (catalogName == it.left) }
+            .map {it.right}
+            .findFirst().get()
         def databaseName = 'test_db5_' + catalogName
         def tableName = 'parts'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
