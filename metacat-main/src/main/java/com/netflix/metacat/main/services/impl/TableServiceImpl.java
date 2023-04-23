@@ -172,37 +172,20 @@ public class TableServiceImpl implements TableService {
      * @param tableDto the table DTO
      */
     private void setOwnerIfNull(final TableDto tableDto) {
-        final String ownerInDto = tableDto.getTableOwner().orElse(null);
-        if (isOwnerValid(ownerInDto)) {
-            return;
-        }
+        final List<String> potentialOwners = ownerValidationService.extractPotentialOwners(tableDto);
 
-        final String userInContext = MetacatContextManager.getContext().getUserName();
-        if (isOwnerValid(userInContext)) {
-            updateTableOwner(tableDto, userInContext);
-            return;
-        }
+        final String validOwner = potentialOwners.stream()
+                                      .filter(this::isOwnerValid)
+                                      .findFirst()
+                                      .orElse(null);
 
-        final String serdeOwner = tableDto.getSerde().getOwner();
-        if (isOwnerValid(serdeOwner)) {
-            updateTableOwner(tableDto, serdeOwner);
-            return;
-        }
-
-        // At this point, if we still have not found a valid user,
-        // cycle through the list again and use the first non-null value
-
-        if (ownerInDto != null) {
-            return;
-        }
-
-        if (userInContext != null) {
-            updateTableOwner(tableDto, userInContext);
-            return;
-        }
-
-        if (serdeOwner != null) {
-            updateTableOwner(tableDto, serdeOwner);
+        if (validOwner != null) {
+            updateTableOwner(tableDto, validOwner);
+        } else {
+            potentialOwners.stream()
+                .filter(Objects::nonNull)
+                .findFirst()
+                .ifPresent(nonNullOwner -> updateTableOwner(tableDto, nonNullOwner));
         }
     }
 
