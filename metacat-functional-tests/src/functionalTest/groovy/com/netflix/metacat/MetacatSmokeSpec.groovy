@@ -37,6 +37,7 @@ import com.netflix.metacat.connector.hive.util.PartitionUtil
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.Logger
 import feign.RetryableException
+import feign.Retryer
 import groovy.sql.Sql
 import org.apache.commons.io.FileUtils
 import org.joda.time.Instant
@@ -70,6 +71,7 @@ class MetacatSmokeSpec extends Specification {
             .withUserName('metacat-test')
             .withClientAppName('metacat-test')
             .withLogLevel(Logger.Level.NONE)
+            .withRetryer(Retryer.NEVER_RETRY)
             .build()
         def hiveClient = Client.builder()
             .withHost(url)
@@ -77,6 +79,7 @@ class MetacatSmokeSpec extends Specification {
             .withDataTypeContext('hive')
             .withUserName('metacat-test')
             .withClientAppName('metacat-test')
+            .withRetryer(Retryer.NEVER_RETRY)
             .build()
         hiveContextApi = hiveClient.api
         api = client.api

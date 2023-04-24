@@ -218,6 +218,7 @@ configure(javaProjects) {
 
     spotbugs {
         toolVersion = '4.0.6'
+        jvmArgs = ['-Xmx4g', '-XX:+HeapDumpOnOutOfMemoryError']
         excludeFilter = new File(project.parent.projectDir, "codequality/findbugs/excludeFilter.xml")
     }
     spotbugsTest.enabled = false

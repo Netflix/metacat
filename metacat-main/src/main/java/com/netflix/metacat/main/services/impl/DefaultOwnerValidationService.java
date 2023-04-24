@@ -19,11 +19,15 @@ import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
- * A default implementation of Ownership validation service that check for srs against
+ * A default implementation of Ownership validation service that check for users against
  * known invalid userIds.
  */
 @Slf4j
@@ -33,6 +37,15 @@ public class DefaultOwnerValidationService implements OwnerValidationService {
         "root", "metacat", "metacat-thrift-interface");
 
     private final Registry registry;
+
+    @Override
+    public List<String> extractPotentialOwners(@NonNull final TableDto dto) {
+        return Stream.of(
+            dto.getTableOwner().orElse(null),
+            MetacatContextManager.getContext().getUserName(),
+            dto.getSerde().getOwner()
+        ).filter(Objects::nonNull).collect(Collectors.toList());
+    }
 
     @Override
     public boolean isUserValid(@Nullable final String user) {

@@ -31,6 +31,7 @@ import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import feign.Logger
+import feign.Retryer
 import org.apache.hadoop.hive.metastore.Warehouse
 import org.joda.time.Instant
 import org.skyscreamer.jsonassert.JSONAssert
@@ -59,6 +60,7 @@ class MetacatFunctionalSpec extends Specification {
             .withDataTypeContext('pig')
             .withUserName('metacat-test')
             .withClientAppName('metacat-test')
+            .withRetryer(Retryer.NEVER_RETRY)
             .build()
         api = client.api
         partitionApi = client.partitionApi
