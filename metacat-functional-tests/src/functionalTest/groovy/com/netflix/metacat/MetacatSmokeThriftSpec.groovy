@@ -192,7 +192,6 @@ class MetacatSmokeThriftSpec extends Specification {
         try {
             client.alterDatabase(invalidDatabaseName, new Database(invalidDatabaseName, 'test_db1', null, null))
         } catch (Exception e) {
-            e.printStackTrace()
             exceptionThrown = true
         }
         then:
