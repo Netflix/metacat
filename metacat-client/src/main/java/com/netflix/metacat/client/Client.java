@@ -39,6 +39,8 @@ import feign.jaxrs.JAXRSContract;
 import feign.slf4j.Slf4jLogger;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -175,6 +177,30 @@ public final class Client {
         private Retryer retryer;
         private RequestInterceptor requestInterceptor;
         private Request.Options requestOptions;
+        private SSLSocketFactory sslSocketFactory;
+        private HostnameVerifier hostnameVerifier;
+
+        /**
+         * Sets the SSLSocketFactory. This field is ignored when the full Feign client is specified.
+         *
+         * @param sslSocketFactory the SSLSocketFactory
+         * @return Builder
+         */
+        public Builder withSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
+            this.sslSocketFactory = sslSocketFactory;
+            return this;
+        }
+
+        /**
+         * Sets the HostnameVerifier. This field is ignored when the full Feign client is specified.
+         *
+         * @param hostnameVerifier the HostnameVerifier
+         * @return Builder
+         */
+        public Builder withHostnameVerifier(HostnameVerifier hostnameVerifier) {
+            this.hostnameVerifier = hostnameVerifier;
+            return this;
+        }
 
         /**
          * Sets the log level for the client.
@@ -324,7 +350,7 @@ public final class Client {
                 logLevel = feign.Logger.Level.BASIC;
             }
             if (client == null) {
-                client = new feign.Client.Default(null, null);
+                client = new feign.Client.Default(sslSocketFactory, hostnameVerifier);
             }
             return new Client(host, client, logLevel, interceptor, retryer, requestOptions);
         }
