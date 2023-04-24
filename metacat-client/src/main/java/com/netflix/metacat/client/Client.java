@@ -183,22 +183,22 @@ public final class Client {
         /**
          * Sets the SSLSocketFactory. This field is ignored when the full Feign client is specified.
          *
-         * @param sslSocketFactory the SSLSocketFactory
+         * @param sslFactory the SSLSocketFactory
          * @return Builder
          */
-        public Builder withSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
-            this.sslSocketFactory = sslSocketFactory;
+        public Builder withSSLSocketFactory(final SSLSocketFactory sslFactory) {
+            this.sslSocketFactory = sslFactory;
             return this;
         }
 
         /**
          * Sets the HostnameVerifier. This field is ignored when the full Feign client is specified.
          *
-         * @param hostnameVerifier the HostnameVerifier
+         * @param hostVerifier the HostnameVerifier
          * @return Builder
          */
-        public Builder withHostnameVerifier(HostnameVerifier hostnameVerifier) {
-            this.hostnameVerifier = hostnameVerifier;
+        public Builder withHostnameVerifier(final HostnameVerifier hostVerifier) {
+            this.hostnameVerifier = hostVerifier;
             return this;
         }
 
