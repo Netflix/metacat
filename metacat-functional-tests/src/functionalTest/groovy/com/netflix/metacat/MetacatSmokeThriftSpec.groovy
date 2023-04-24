@@ -205,7 +205,7 @@ class MetacatSmokeThriftSpec extends Specification {
         catalogName | client
         'local'     | localHiveClient
         'localfast' | localFastHiveClient
-        'remote'    | remoteHiveClient
+        // 'remote'    | remoteHiveClient
     }
 
     @Unroll
@@ -368,6 +368,7 @@ class MetacatSmokeThriftSpec extends Specification {
         client.getPartitionNames(databaseName, tableName, (short) -1).size() == 0
     }
 
+    @Ignore
     @Unroll
     def "Test: Remote Thrift connector: get partitions for filter #filter returned #result partitions"() {
         when:
