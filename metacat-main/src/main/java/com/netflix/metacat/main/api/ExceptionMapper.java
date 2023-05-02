@@ -57,6 +57,7 @@ public class ExceptionMapper {
         final MetacatException e
     ) throws IOException {
         final int status;
+        boolean logErrorLevel = false;
         if (e instanceof MetacatAlreadyExistsException) {
             status = HttpStatus.CONFLICT.value();
         } else if (e instanceof MetacatBadRequestException) {
@@ -66,6 +67,7 @@ public class ExceptionMapper {
         } else if (e instanceof MetacatNotFoundException) {
             status = HttpStatus.NOT_FOUND.value();
         } else if (e instanceof MetacatNotSupportedException) {
+            logErrorLevel = true;
             status = HttpStatus.NOT_IMPLEMENTED.value();
         } else if (e instanceof MetacatUserMetadataException) {
             // TODO: This makes no sense
@@ -75,9 +77,14 @@ public class ExceptionMapper {
         } else if (e instanceof MetacatUnAuthorizedException) {
             status = HttpStatus.FORBIDDEN.value();
         } else {
+            logErrorLevel = true;
             status = HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
-        log.error(e.getLocalizedMessage(), e);
+        if (logErrorLevel) {
+            log.error(e.getLocalizedMessage(), e);
+        } else {
+            log.warn(e.getLocalizedMessage(), e);
+        }
         response.sendError(status, e.getLocalizedMessage());
     }
 
