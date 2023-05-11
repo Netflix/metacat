@@ -688,8 +688,6 @@ public class MetacatController implements MetacatV1 {
                 name,
                 "getTable",
                 ImmutableMap.<String, String>builder()
-                    .put("catalog", name.getCatalogName())
-                    .put("database", name.getDatabaseName())
                     .put("includeInfo", String.valueOf(includeInfo))
                     .put("includeDefinitionMetadata", String.valueOf(includeDefinitionMetadata))
                     .put("includeDataMetadata", String.valueOf(includeDataMetadata))
