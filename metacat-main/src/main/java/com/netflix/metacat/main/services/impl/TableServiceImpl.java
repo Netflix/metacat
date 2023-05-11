@@ -318,9 +318,6 @@ public class TableServiceImpl implements TableService {
     @Override
     public Optional<TableDto> get(final QualifiedName name, final GetTableServiceParameters getTableServiceParameters) {
         validate(name);
-
-        logGetTableMetrics(name, getTableServiceParameters);
-
         TableDto tableInternal = null;
         final TableDto table;
         final MetacatCatalogConfig catalogConfig = connectorManager.getCatalogConfig(name);
@@ -510,26 +507,6 @@ public class TableServiceImpl implements TableService {
             }
             return updatedDto;
         }
-    }
-
-    /**
-     * Logs the get-table parameters as spectator metrics.
-     *
-     * @param name the qualified name of the table
-     * @param params the get-table parameters
-     */
-    private void logGetTableMetrics(final QualifiedName name,
-                                    final GetTableServiceParameters params) {
-        registry.counter(
-            "metacat.tableService.getTable",
-            "catalog", name.getCatalogName(),
-            "database", name.getDatabaseName(),
-            "includeInfo", String.valueOf(params.isIncludeInfo()),
-            "includeDefinitionMetadata", String.valueOf(params.isIncludeDefinitionMetadata()),
-            "includeDataMetadata", String.valueOf(params.isIncludeDataMetadata()),
-            "includeMetadataFromConnector", String.valueOf(params.isIncludeMetadataFromConnector()),
-            "includeMetadataLocationOnly", String.valueOf(params.isIncludeMetadataLocationOnly())
-        ).increment();
     }
 
     /**

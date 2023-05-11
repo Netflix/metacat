@@ -14,6 +14,7 @@
 package com.netflix.metacat.main.api.v1;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.NameDateDto;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.CatalogDto;
@@ -686,6 +687,15 @@ public class MetacatController implements MetacatV1 {
         return this.requestWrapper.processRequest(
                 name,
                 "getTable",
+                ImmutableMap.<String, String>builder()
+                    .put("catalog", name.getCatalogName())
+                    .put("database", name.getDatabaseName())
+                    .put("includeInfo", String.valueOf(includeInfo))
+                    .put("includeDefinitionMetadata", String.valueOf(includeDefinitionMetadata))
+                    .put("includeDataMetadata", String.valueOf(includeDataMetadata))
+                    .put("includeMetadataFromConnector", String.valueOf(includeInfoDetails))
+                    .put("includeMetadataLocationOnly", String.valueOf(includeMetadataLocationOnly))
+                    .build(),
                 () -> {
                     final Optional<TableDto> table = this.tableService.get(
                             name,
