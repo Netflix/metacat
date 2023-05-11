@@ -514,6 +514,7 @@ public class TableServiceImpl implements TableService {
 
     /**
      * Logs the get-table parameters as spectator metrics.
+     *
      * @param name the qualified name of the table
      * @param params the get-table parameters
      */
