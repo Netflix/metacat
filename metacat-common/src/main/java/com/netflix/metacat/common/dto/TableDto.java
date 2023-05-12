@@ -99,6 +99,14 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
                    .map(JsonNode::textValue);
     }
 
+    @JsonIgnore
+    public Optional<String> getTableOwnerGroup() {
+        return Optional.ofNullable(definitionMetadata)
+                   .map(definitionMetadataJson -> definitionMetadataJson.get("owner"))
+                   .map(ownerJson -> ownerJson.get("google_group"))
+                   .map(JsonNode::textValue);
+    }
+
     /**
      * Returns the list of partition keys.
      * @return list of partition keys

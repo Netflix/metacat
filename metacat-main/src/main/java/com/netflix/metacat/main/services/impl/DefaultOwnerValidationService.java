@@ -17,6 +17,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,8 @@ import java.util.stream.Stream;
 public class DefaultOwnerValidationService implements OwnerValidationService {
     private static final Set<String> KNOWN_INVALID_OWNERS = ImmutableSet.of(
         "root", "metacat", "metacat-thrift-interface");
+    private static final Set<String> KNOWN_INVALID_OWNER_GROUPS = ImmutableSet.of(
+        "root", "metacat", "metacat-thrift-interface");
 
     private final Registry registry;
 
@@ -48,8 +51,18 @@ public class DefaultOwnerValidationService implements OwnerValidationService {
     }
 
     @Override
+    public List<String> extractPotentialOwnerGroups(@NonNull final TableDto dto) {
+        return Collections.singletonList(dto.getTableOwnerGroup().orElse(null));
+    }
+
+    @Override
     public boolean isUserValid(@Nullable final String user) {
         return !isKnownInvalidUser(user);
+    }
+
+    @Override
+    public boolean isGroupValid(@Nullable final String groupName) {
+        return !isKnownInvalidGroup(groupName);
     }
 
     @Override
@@ -57,25 +70,38 @@ public class DefaultOwnerValidationService implements OwnerValidationService {
                                        @NonNull final QualifiedName tableName,
                                        @NonNull final TableDto tableDto) {
         final String tableOwner = tableDto.getTableOwner().orElse(null);
+        final String tableOwnerGroup = tableDto.getTableOwnerGroup().orElse(null);
+
         final MetacatRequestContext context = MetacatContextManager.getContext();
         final Map<String, String> requestHeaders = getHttpHeaders();
 
-        final boolean tableOwnerValid = isUserValid(tableOwner);
+        final boolean tableOwnerValid = isUserValid(tableOwner) || isGroupValid(tableOwnerGroup);
 
         logOwnershipDiagnosticDetails(
-            operationName, tableName, tableDto, tableOwner,
+            operationName, tableName, tableDto,
             context, tableOwnerValid, requestHeaders);
     }
 
     /**
-     * Checks if the user is from a know list of invalid users. Subclasses can use
-     * this method before attempting to check againt remote servies to save on latency.
+     * Checks if the user is from a known list of invalid users. Subclasses can use
+     * this method before attempting to check against remote services to save on latency.
      *
      * @param userId the user id
      * @return true if the user id is a known invalid user, else false
      */
     protected boolean isKnownInvalidUser(@Nullable final String userId) {
         return StringUtils.isBlank(userId) || knownInvalidOwners().contains(userId);
+    }
+
+    /**
+     * Checks if the group is from a known list of invalid groups. Subclasses can use
+     * this method before attempting to check against remote services to save on latency.
+     *
+     * @param groupName the group name
+     * @return true if the group is a known invalid group, else false
+     */
+    protected boolean isKnownInvalidGroup(@Nullable final String groupName) {
+        return StringUtils.isBlank(groupName) || knownInvalidOwnerGroups().contains(groupName);
     }
 
     /**
@@ -89,13 +115,22 @@ public class DefaultOwnerValidationService implements OwnerValidationService {
     }
 
     /**
+     * Returns set of known invalid owner groups. Subclasses can override to provide
+     * a list fetched from a dynamic source.
+     *
+     * @return set of known invalid groups
+     */
+    protected Set<String> knownInvalidOwnerGroups() {
+        return KNOWN_INVALID_OWNER_GROUPS;
+    }
+
+    /**
      * Logs diagnostic data for debugging invalid owners. Subclasses can use this to log
      * diagnostic data when owners are found to be invalid.
      */
     protected void logOwnershipDiagnosticDetails(final String operationName,
                                                  final QualifiedName name,
                                                  final TableDto tableDto,
-                                                 @Nullable final String tableOwner,
                                                  final MetacatRequestContext context,
                                                  final boolean tableOwnerValid,
                                                  final Map<String, String> requestHeaders) {
@@ -108,8 +143,11 @@ public class DefaultOwnerValidationService implements OwnerValidationService {
                     "catalogAndDb", name.getCatalogName() + "_" + name.getDatabaseName()
                 ).increment();
 
-                log.info("Operation: {}, invalid owner: {}. name: {}, table-dto: {}, context: {}, headers: {}",
-                    operationName, tableOwner, name, tableDto, context, requestHeaders);
+                log.info("Operation: {}, invalid owner: {}, group: {}. name: {}, dto: {}, context: {}, headers: {}",
+                    operationName,
+                    tableDto.getTableOwner().orElse("<null>"),
+                    tableDto.getTableOwnerGroup().orElse("<null>"),
+                    name, tableDto, context, requestHeaders);
             }
         } catch (final Exception ex) {
             log.warn("Error when logging diagnostic data for invalid owner for operation: {}, name: {}, table: {}",
