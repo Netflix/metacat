@@ -34,6 +34,13 @@ public class MetacatUtils {
     public static final String NAME_TAGS = "tags";
 
     /**
+     * Iceberg common view field names.
+     */
+    public static final String COMMON_VIEW = "common_view";
+    public static final String STORAGE_TABLE = "storage_table";
+
+
+    /**
      * Default Ctor.
      */
     private MetacatUtils() {
@@ -126,5 +133,28 @@ public class MetacatUtils {
         return String.format("%s to hive table: %s are temporarily blocked " +
                         "for automated migration to iceberg. Please retry",
                 requestType, tableName);
+    }
+
+    /**
+     * check if the table is a common view.
+     *
+     * @param tableMetadata table metadata map
+     * @return true for common view
+     */
+    public static boolean isCommonView(final Map<String, String> tableMetadata) {
+        return tableMetadata != null && Boolean.parseBoolean(tableMetadata.get(COMMON_VIEW));
+    }
+
+    /**
+     * Returns the name of the common view storage table if present.
+     *
+     * @param tableMetadata the table metadata
+     * @return Storage table name.
+     */
+    public static Optional<String> getCommonViewStorageTable(final Map<String, String> tableMetadata) {
+        if (tableMetadata != null) {
+            return Optional.ofNullable(tableMetadata.get(STORAGE_TABLE));
+        }
+        return Optional.empty();
     }
 }
