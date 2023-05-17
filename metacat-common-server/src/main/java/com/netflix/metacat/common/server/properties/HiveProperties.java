@@ -144,5 +144,6 @@ public class HiveProperties {
     @Data
     public static class CommonView {
         private boolean enabled;
+        private boolean deleteStorageTable;
     }
 }

@@ -73,7 +73,9 @@ public class CommonViewHandler {
                                             final String tableLoc,
                                             final TableInfo tableInfo,
                                             final HiveTypeConverter hiveTypeConverter) {
-        return TableInfo.builder().build();
+        return TableInfo.builder().name(name).auditInfo(tableInfo.getAudit())
+                .fields(tableInfo.getFields()).serde(tableInfo.getSerde())
+                .metadata(tableInfo.getMetadata()).build();
     }
 
     /**
