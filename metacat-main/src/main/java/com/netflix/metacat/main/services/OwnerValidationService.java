@@ -5,6 +5,7 @@ import com.netflix.metacat.common.dto.TableDto;
 import lombok.NonNull;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -19,6 +20,18 @@ public interface OwnerValidationService {
      * @return an ordered list of owners to use used for validation and owner assignment
      */
     List<String> extractPotentialOwners(@NonNull TableDto dto);
+
+    /**
+     * Returns an ordered list of owner groups to use used for validation and owner assignment. Since metacat owners
+     * in a request may come from a number of places (DTO, Request context) this method centralizes that order.
+     *
+     * @param dto the input Table Dto
+     * @return an ordered list of owner groups to use used for validation and owner assignment
+     */
+    default List<String> extractPotentialOwnerGroups(@NonNull TableDto dto) {
+        return Collections.emptyList();
+    }
+
     /**
      * Checks whether the given owner is valid against a registry.
      *
@@ -26,6 +39,16 @@ public interface OwnerValidationService {
      * @return true if the owner is valid, else false
      */
     boolean isUserValid(@Nullable String user);
+
+    /**
+     * Checks whether the given owner group is valid against a registry.
+     *
+     * @param groupName the groupName
+     * @return true if the owner group is valid, else false
+     */
+    default boolean isGroupValid(@Nullable String groupName) {
+        return true;
+    }
 
     /**
      * Enforces valid table owner attribute. Implementations are free to

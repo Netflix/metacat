@@ -143,6 +143,7 @@ public class TableServiceImpl implements TableService {
         setDefaultSerdeIfNull(tableDto);
         setDefaultDefinitionMetadataIfNull(tableDto);
         setOwnerIfNull(tableDto);
+        setOwnerGroupIfAvailable(tableDto);
     }
 
     private void setDefaultDefinitionMetadataIfNull(final TableDto tableDto) {
@@ -189,13 +190,32 @@ public class TableServiceImpl implements TableService {
         }
     }
 
+    private void setOwnerGroupIfAvailable(final TableDto tableDto) {
+        final List<String> potentialOwnerGroups = ownerValidationService.extractPotentialOwnerGroups(tableDto);
+
+        potentialOwnerGroups.stream()
+            .filter(this::isOwnerGroupValid)
+            .findFirst()
+            .ifPresent(validOwnerGroup -> updateTableOwnerGroup(tableDto, validOwnerGroup));
+
+    }
+
     void updateTableOwner(final TableDto tableDto, final String userId) {
         final ObjectNode ownerNode = tableDto.getDefinitionMetadata().with("owner");
         ownerNode.put("userId", userId);
     }
 
+    void updateTableOwnerGroup(final TableDto tableDto, final String groupName) {
+        final ObjectNode ownerNode = tableDto.getDefinitionMetadata().with("owner");
+        ownerNode.put("google_group", groupName);
+    }
+
     private boolean isOwnerValid(@Nullable final String userId) {
         return ownerValidationService.isUserValid(userId);
+    }
+
+    private boolean isOwnerGroupValid(@Nullable final String groupName) {
+        return ownerValidationService.isGroupValid(groupName);
     }
 
     @SuppressFBWarnings
