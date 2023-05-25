@@ -215,6 +215,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final QualifiedName name = tableInfo.getName();
         final Config conf = connectorContext.getConfig();
         final String lastModifiedBy = PolarisUtils.getUserOrDefault(requestContext);
+        icebergTableHandler.update(tableInfo);
         try {
             final Map<String, String> newTableMetadata = tableInfo.getMetadata();
             if (MapUtils.isEmpty(newTableMetadata)) {
