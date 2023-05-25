@@ -313,8 +313,7 @@ public class IcebergTableHandler {
                 final String newTableMetadataLocation = icebergMetastoreTables.getTableOps().currentMetadataLocation();
                 if (!tableMetadataLocation.equalsIgnoreCase(newTableMetadataLocation)) {
                     tableInfo.getMetadata().put(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION, tableMetadataLocation);
-                    tableInfo.getMetadata().put(DirectSqlTable.PARAM_METADATA_LOCATION,
-                        newTableMetadataLocation);
+                    tableInfo.getMetadata().put(DirectSqlTable.PARAM_METADATA_LOCATION, newTableMetadataLocation);
                 }
             }
         }
