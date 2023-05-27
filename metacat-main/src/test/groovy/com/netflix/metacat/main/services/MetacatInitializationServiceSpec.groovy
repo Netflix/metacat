@@ -23,6 +23,7 @@ import com.netflix.metacat.main.manager.ConnectorManager
 import com.netflix.metacat.main.manager.PluginManager
 import com.netflix.metacat.thrift.CatalogThriftService
 import org.springframework.boot.actuate.health.Status
+import org.springframework.context.ApplicationContext
 import org.springframework.context.event.ContextRefreshedEvent
 import spock.lang.Specification
 
@@ -46,9 +47,10 @@ class MetacatInitializationServiceSpec extends Specification {
             catalogManager,
             connectorManager,
             threadServiceManager,
-            thriftService
+            thriftService,
+            Mock(ApplicationContext)
         )
-        initializationService.start(Mock(ContextRefreshedEvent))
+        initializationService.start()
         when:
         def health = initializationService.health()
 
@@ -91,9 +93,10 @@ class MetacatInitializationServiceSpec extends Specification {
             catalogManager,
             connectorManager,
             threadServiceManager,
-            thriftService
+            thriftService,
+            Mock(ApplicationContext)
         )
-        initializationService.start(Mock(ContextRefreshedEvent))
+        initializationService.start()
         then:
         thrown(IllegalArgumentException)
     }

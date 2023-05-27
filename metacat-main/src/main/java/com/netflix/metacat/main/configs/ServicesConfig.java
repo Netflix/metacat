@@ -60,6 +60,7 @@ import com.netflix.metacat.main.services.impl.PartitionServiceImpl;
 import com.netflix.metacat.main.services.impl.TableServiceImpl;
 import com.netflix.spectator.api.Registry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -400,22 +401,25 @@ public class ServicesConfig {
      * @param connectorManager     Connector manager to use
      * @param threadServiceManager Thread service manager to use
      * @param metacatThriftService Thrift service to use
+     * @param applicationContext the application context
+     *
      * @return The initialization service bean
      */
-    @Bean
+    @Bean(initMethod = "start", destroyMethod = "stop")
     public MetacatInitializationService metacatInitializationService(
         final PluginManager pluginManager,
         final CatalogManager catalogManager,
         final ConnectorManager connectorManager,
         final ThreadServiceManager threadServiceManager,
-        final MetacatThriftService metacatThriftService
-    ) {
+        final MetacatThriftService metacatThriftService,
+        final ApplicationContext applicationContext) {
         return new MetacatInitializationService(
             pluginManager,
             catalogManager,
             connectorManager,
             threadServiceManager,
-            metacatThriftService
+            metacatThriftService,
+            applicationContext
         );
     }
 
