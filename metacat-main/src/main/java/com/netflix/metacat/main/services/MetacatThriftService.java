@@ -44,7 +44,7 @@ public class MetacatThriftService {
         this.connectorManager = connectorManager;
     }
 
-    protected List<CatalogThriftService> getCatalogThriftServices() {
+    public List<CatalogThriftService> getCatalogThriftServices() {
         return connectorManager.getCatalogConfigs()
             .stream()
             .filter(MetacatCatalogConfig::isThriftInterfaceRequested)

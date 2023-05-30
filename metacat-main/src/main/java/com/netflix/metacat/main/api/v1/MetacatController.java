@@ -39,11 +39,13 @@ import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.main.services.init.MetacatCoreInitService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -79,6 +81,7 @@ import java.util.function.Supplier;
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
 @Slf4j
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class MetacatController implements MetacatV1 {
     private final CatalogService catalogService;
     private final DatabaseService databaseService;
@@ -86,33 +89,8 @@ public class MetacatController implements MetacatV1 {
     private final TableService tableService;
     private final RequestWrapper requestWrapper;
     private final Config config;
-
-    /**
-     * Constructor.
-     *
-     * @param catalogService  catalog service
-     * @param databaseService database service
-     * @param mViewService    view service
-     * @param tableService    table service
-     * @param requestWrapper  request wrapper obj
-     * @param config Config
-     */
-    @Autowired
-    public MetacatController(
-        final CatalogService catalogService,
-        final DatabaseService databaseService,
-        final MViewService mViewService,
-        final TableService tableService,
-        final RequestWrapper requestWrapper,
-        final Config config
-        ) {
-        this.catalogService = catalogService;
-        this.databaseService = databaseService;
-        this.mViewService = mViewService;
-        this.tableService = tableService;
-        this.requestWrapper = requestWrapper;
-        this.config = config;
-    }
+    // this is needed to ensure everything is initialized before the controllers are
+    private final MetacatCoreInitService metacatCoreInitService;
 
     /**
      * Simple get on / to show API is up and available.

@@ -30,11 +30,13 @@ import com.netflix.metacat.common.server.api.v1.PartitionV1;
 import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.PartitionService;
+import com.netflix.metacat.main.services.init.MetacatCoreInitService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -68,33 +70,15 @@ import java.util.List;
     produces = MediaType.APPLICATION_JSON_VALUE,
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class PartitionController implements PartitionV1 {
 
     private final MetacatController v1;
     private final MViewService mViewService;
     private final PartitionService partitionService;
     private final RequestWrapper requestWrapper;
-
-    /**
-     * Constructor.
-     *
-     * @param v1               Metacat V1
-     * @param mViewService     view service
-     * @param partitionService partition service
-     * @param requestWrapper   request wrapper object
-     */
-    @Autowired
-    public PartitionController(
-        final MetacatController v1,
-        final MViewService mViewService,
-        final PartitionService partitionService,
-        final RequestWrapper requestWrapper
-    ) {
-        this.v1 = v1;
-        this.mViewService = mViewService;
-        this.partitionService = partitionService;
-        this.requestWrapper = requestWrapper;
-    }
+    // this is needed to ensure everything is initialized before the controllers are
+    private final MetacatCoreInitService metacatCoreInitService;
 
     /**
      * Delete named partitions from a table.

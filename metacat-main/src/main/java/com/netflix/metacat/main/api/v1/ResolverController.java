@@ -22,9 +22,11 @@ import com.netflix.metacat.common.dto.ResolveByUriResponseDto;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.main.services.init.MetacatCoreInitService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -52,21 +54,12 @@ import org.springframework.web.bind.annotation.RestController;
     produces = MediaType.APPLICATION_JSON_VALUE,
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class ResolverController {
-    private TableService tableService;
-    private PartitionService partitionService;
-
-    /**
-     * Constructor.
-     *
-     * @param tableService     table service
-     * @param partitionService partition service
-     */
-    @Autowired
-    public ResolverController(final TableService tableService, final PartitionService partitionService) {
-        this.tableService = tableService;
-        this.partitionService = partitionService;
-    }
+    private final TableService tableService;
+    private final PartitionService partitionService;
+    // this is needed to ensure everything is initialized before the controllers are
+    private final MetacatCoreInitService metacatCoreInitService;
 
     /**
      * Gets the qualified name by uri.

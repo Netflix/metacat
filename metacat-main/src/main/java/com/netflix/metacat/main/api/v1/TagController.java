@@ -35,12 +35,14 @@ import com.netflix.metacat.main.services.GetCatalogServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.main.services.init.MetacatCoreInitService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -78,6 +80,7 @@ import java.util.Set;
     produces = MediaType.APPLICATION_JSON_VALUE,
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class TagController {
 
     private final RequestWrapper requestWrapper;
@@ -87,36 +90,8 @@ public class TagController {
     private final DatabaseService databaseService;
     private final CatalogService catalogService;
     private final MViewService mViewService;
-
-    /**
-     * Constructor.
-     *
-     * @param eventBus        event bus
-     * @param tagService      tag service
-     * @param tableService    table service
-     * @param databaseService database service
-     * @param catalogService  catalog service
-     * @param mViewService    mView service
-     * @param requestWrapper  request wrapper object
-     */
-    @Autowired
-    public TagController(
-        final MetacatEventBus eventBus,
-        final TagService tagService,
-        final TableService tableService,
-        final DatabaseService databaseService,
-        final CatalogService catalogService,
-        final MViewService mViewService,
-        final RequestWrapper requestWrapper
-    ) {
-        this.tagService = tagService;
-        this.eventBus = eventBus;
-        this.tableService = tableService;
-        this.databaseService = databaseService;
-        this.catalogService = catalogService;
-        this.requestWrapper = requestWrapper;
-        this.mViewService = mViewService;
-    }
+    // this is needed to ensure everything is initialized before the controllers are
+    private final MetacatCoreInitService metacatCoreInitService;
 
     /**
      * Return the list of tags.

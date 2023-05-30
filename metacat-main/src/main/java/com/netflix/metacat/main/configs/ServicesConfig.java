@@ -44,13 +44,13 @@ import com.netflix.metacat.main.services.CatalogTraversal;
 import com.netflix.metacat.main.services.CatalogTraversalServiceHelper;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.MViewService;
-import com.netflix.metacat.main.services.MetacatInitializationService;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.MetacatThriftService;
 import com.netflix.metacat.main.services.MetadataService;
 import com.netflix.metacat.main.services.OwnerValidationService;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
+import com.netflix.metacat.main.services.health.MetacatHealthIndicator;
 import com.netflix.metacat.main.services.impl.CatalogServiceImpl;
 import com.netflix.metacat.main.services.impl.ConnectorTableServiceProxy;
 import com.netflix.metacat.main.services.impl.DatabaseServiceImpl;
@@ -58,6 +58,8 @@ import com.netflix.metacat.main.services.impl.DefaultOwnerValidationService;
 import com.netflix.metacat.main.services.impl.MViewServiceImpl;
 import com.netflix.metacat.main.services.impl.PartitionServiceImpl;
 import com.netflix.metacat.main.services.impl.TableServiceImpl;
+import com.netflix.metacat.main.services.init.MetacatCoreInitService;
+import com.netflix.metacat.main.services.init.MetacatThriftInitService;
 import com.netflix.spectator.api.Registry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationContext;
@@ -394,32 +396,59 @@ public class ServicesConfig {
     }
 
     /**
-     * The initialization service that will handle startup and shutdown of Metacat.
+     * The core initialization service that will handle startup and shutdown of the catalog.
+     * We do not configure the start and stop methods as bean lifecycle methods to Spring since they are
+     * called via the thrift init service.
      *
      * @param pluginManager        Plugin manager to use
      * @param catalogManager       Catalog manager to use
      * @param connectorManager     Connector manager to use
      * @param threadServiceManager Thread service manager to use
-     * @param metacatThriftService Thrift service to use
      * @param applicationContext the application context
      *
      * @return The initialization service bean
      */
+    @Bean
+    public MetacatCoreInitService metacatCoreInitService(final PluginManager pluginManager,
+                                                         final CatalogManager catalogManager,
+                                                         final ConnectorManager connectorManager,
+                                                         final ThreadServiceManager threadServiceManager,
+                                                         final ApplicationContext applicationContext) {
+        return new MetacatCoreInitService(
+            pluginManager, catalogManager, connectorManager,
+            threadServiceManager, applicationContext);
+    }
+
+    /**
+     * The initialization service that will handle startup and shutdown of Metacat thrift service.
+     *
+     * @param metacatCoreInitService the core init service
+     * @param metacatThriftService Thrift service to use
+     *
+     * @return The initialization service bean
+     */
     @Bean(initMethod = "start", destroyMethod = "stop")
-    public MetacatInitializationService metacatInitializationService(
-        final PluginManager pluginManager,
-        final CatalogManager catalogManager,
-        final ConnectorManager connectorManager,
-        final ThreadServiceManager threadServiceManager,
-        final MetacatThriftService metacatThriftService,
-        final ApplicationContext applicationContext) {
-        return new MetacatInitializationService(
-            pluginManager,
-            catalogManager,
-            connectorManager,
-            threadServiceManager,
+    public MetacatThriftInitService metacatThriftInitService(final MetacatCoreInitService metacatCoreInitService,
+                                                             final MetacatThriftService metacatThriftService) {
+        return new MetacatThriftInitService(
             metacatThriftService,
-            applicationContext
+            metacatCoreInitService
+        );
+    }
+
+    /**
+     * Metacat health indicator.
+     *
+     * @param metacatCoreInitService the code in it service
+     * @param metacatThriftInitService the thrift init service
+     *
+     * @return the health indicator
+     */
+    @Bean
+    public MetacatHealthIndicator metacatHealthIndicator(final MetacatCoreInitService metacatCoreInitService,
+                                                         final MetacatThriftInitService metacatThriftInitService) {
+        return new MetacatHealthIndicator(
+            metacatCoreInitService, metacatThriftInitService
         );
     }
 
