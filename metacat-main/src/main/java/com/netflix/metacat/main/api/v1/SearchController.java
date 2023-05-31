@@ -19,12 +19,12 @@ package com.netflix.metacat.main.api.v1;
 
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.main.api.RequestWrapper;
-import com.netflix.metacat.main.services.init.MetacatCoreInitService;
 import com.netflix.metacat.main.services.search.ElasticSearchUtil;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,12 +44,11 @@ import java.util.List;
     path = "/mds/v1/search",
     produces = MediaType.APPLICATION_JSON_VALUE
 )
+@DependsOn("metacatCoreInitService")
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class SearchController {
     private final ElasticSearchUtil elasticSearchUtil;
     private final RequestWrapper requestWrapper;
-    // this is needed to ensure everything is initialized before the controllers are
-    private final MetacatCoreInitService metacatCoreInitService;
 
     /**
      * Searches the list of tables for the given search string.

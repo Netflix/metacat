@@ -30,7 +30,6 @@ import com.netflix.metacat.common.server.api.v1.PartitionV1;
 import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.PartitionService;
-import com.netflix.metacat.main.services.init.MetacatCoreInitService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -38,6 +37,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
@@ -70,6 +70,7 @@ import java.util.List;
     produces = MediaType.APPLICATION_JSON_VALUE,
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
+@DependsOn("metacatCoreInitService")
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class PartitionController implements PartitionV1 {
 
@@ -77,8 +78,6 @@ public class PartitionController implements PartitionV1 {
     private final MViewService mViewService;
     private final PartitionService partitionService;
     private final RequestWrapper requestWrapper;
-    // this is needed to ensure everything is initialized before the controllers are
-    private final MetacatCoreInitService metacatCoreInitService;
 
     /**
      * Delete named partitions from a table.

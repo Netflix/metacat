@@ -35,7 +35,6 @@ import com.netflix.metacat.main.services.GetCatalogServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.TableService;
-import com.netflix.metacat.main.services.init.MetacatCoreInitService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -44,6 +43,7 @@ import io.swagger.annotations.ApiResponses;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.WebDataBinder;
@@ -80,6 +80,7 @@ import java.util.Set;
     produces = MediaType.APPLICATION_JSON_VALUE,
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
+@DependsOn("metacatCoreInitService")
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class TagController {
 
@@ -90,8 +91,6 @@ public class TagController {
     private final DatabaseService databaseService;
     private final CatalogService catalogService;
     private final MViewService mViewService;
-    // this is needed to ensure everything is initialized before the controllers are
-    private final MetacatCoreInitService metacatCoreInitService;
 
     /**
      * Return the list of tags.
