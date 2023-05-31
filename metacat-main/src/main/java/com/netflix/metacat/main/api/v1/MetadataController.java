@@ -35,7 +35,9 @@ import com.netflix.metacat.main.services.MetadataService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -66,32 +68,13 @@ import java.util.Set;
     produces = MediaType.APPLICATION_JSON_VALUE,
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
+@DependsOn("metacatCoreInitService")
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class MetadataController {
     private final UserMetadataService userMetadataService;
     private final MetacatServiceHelper helper;
     private final MetadataService metadataService;
     private final RequestWrapper requestWrapper;
-
-    /**
-     * Constructor.
-     *
-     * @param userMetadataService user metadata service
-     * @param helper              helper
-     * @param metadataService     metadata service
-     * @param requestWrapper      request wrapper object
-     */
-    @Autowired
-    public MetadataController(
-        final UserMetadataService userMetadataService,
-        final MetacatServiceHelper helper,
-        final MetadataService metadataService,
-        final RequestWrapper requestWrapper
-    ) {
-        this.userMetadataService = userMetadataService;
-        this.helper = helper;
-        this.metadataService = metadataService;
-        this.requestWrapper = requestWrapper;
-    }
 
     /**
      * Returns the data metadata.
