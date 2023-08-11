@@ -7,7 +7,6 @@ import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
@@ -380,8 +379,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         @Nullable final Integer limit) {
         try {
             if (!Strings.isNullOrEmpty(filter)) {
-                throw new MetacatNotSupportedException(
-                    String.format("Calling Polaris getTableNames with nonempty filter %s not supported", filter));
+                // workaround for trino issue, hive param filters not supported on iceberg tables
+                log.warn(String.format("Calling Polaris getTableNames with nonempty filter %s", filter));
             }
             final List<String> databaseNames = name.isDatabaseDefinition() ? ImmutableList.of(name.getDatabaseName())
                 : polarisStoreService.getAllDatabases().stream().map(d -> d.getDbName()).collect(Collectors.toList());
