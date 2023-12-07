@@ -33,6 +33,7 @@ import com.netflix.metacat.common.server.connectors.model.ViewInfo;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import com.netflix.metacat.connector.hive.util.HiveTableUtil;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hive.metastore.TableType;
@@ -217,6 +218,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
      * @return connector table
      */
     @Override
+    @SuppressFBWarnings(value = "NP_NULL_PARAM_DEREF", justification = "false positive")
     public Table fromTableInfo(final TableInfo tableInfo) {
         final QualifiedName name = tableInfo.getName();
         final String tableName = (name != null) ? name.getTableName() : "";

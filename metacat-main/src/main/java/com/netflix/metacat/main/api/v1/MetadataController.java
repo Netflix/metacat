@@ -36,7 +36,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -69,7 +68,7 @@ import java.util.Set;
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
 @DependsOn("metacatCoreInitService")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@RequiredArgsConstructor
 public class MetadataController {
     private final UserMetadataService userMetadataService;
     private final MetacatServiceHelper helper;

@@ -6,7 +6,6 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -23,7 +22,7 @@ import java.util.Optional;
  * This class exposes APIs for CRUD operations.
  */
 @Transactional(rollbackFor = Exception.class)
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@RequiredArgsConstructor
 public class PolarisStoreConnector implements PolarisStoreService {
     private final PolarisDatabaseRepository dbRepo;
     private final PolarisTableRepository tblRepo;

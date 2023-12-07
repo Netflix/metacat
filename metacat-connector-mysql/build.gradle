@@ -21,9 +21,9 @@ dependencies {
      * Compile Dependencies
      *******************************/
 
-    compile(project(":metacat-connector-jdbc"))
+    implementation(project(":metacat-connector-jdbc"))
 
-    compile("com.google.inject:guice")
+    implementation("com.google.inject:guice")
 
     /*******************************
      * Provided Dependencies
@@ -33,7 +33,7 @@ dependencies {
      * Runtime Dependencies
      *******************************/
 
-    runtime("mysql:mysql-connector-java")
+    runtimeOnly("mysql:mysql-connector-java")
 
     /*******************************
      * Test Dependencies

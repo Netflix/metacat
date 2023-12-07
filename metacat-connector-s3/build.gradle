@@ -21,16 +21,16 @@ dependencies {
      * Compile Dependencies
      *******************************/
 
-    compile(project(":metacat-common-server"))
-    compile(project(":metacat-connector-pig"))
+    implementation(project(":metacat-common-server"))
+    implementation(project(":metacat-connector-pig"))
 
-    compile("com.google.guava:guava")
-    compile("com.google.inject:guice")
-    compile("com.google.inject.extensions:guice-persist")
-    compile("com.google.inject.extensions:guice-multibindings")
-    compile("com.google.inject.extensions:guice-servlet")
-    compile("joda-time:joda-time")
-    compile("org.hibernate:hibernate-entitymanager")
+    implementation("com.google.guava:guava")
+    implementation("com.google.inject:guice")
+    implementation("com.google.inject.extensions:guice-persist")
+    implementation("com.google.inject.extensions:guice-multibindings")
+    implementation("com.google.inject.extensions:guice-servlet")
+    implementation("joda-time:joda-time:2.10.10")
+    implementation("org.hibernate:hibernate-entitymanager")
 
     /*******************************
      * Provided Dependencies
@@ -40,7 +40,7 @@ dependencies {
      * Runtime Dependencies
      *******************************/
 
-    runtime("mysql:mysql-connector-java")
+    runtimeOnly("mysql:mysql-connector-java")
 
     /*******************************
      * Test Dependencies

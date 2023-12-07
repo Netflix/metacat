@@ -9,7 +9,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import org.apache.commons.collections.MapUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.Date;
 import java.util.Map;

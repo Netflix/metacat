@@ -22,7 +22,6 @@ import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.search.ElasticSearchUtil;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
@@ -45,7 +44,7 @@ import java.util.List;
     produces = MediaType.APPLICATION_JSON_VALUE
 )
 @DependsOn("metacatCoreInitService")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@RequiredArgsConstructor
 public class SearchController {
     private final ElasticSearchUtil elasticSearchUtil;
     private final RequestWrapper requestWrapper;

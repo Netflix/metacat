@@ -22,7 +22,7 @@ buildscript {
     repositories {
         mavenCentral()
         maven {
-            url "http://repo.spring.io/milestone"
+            url "https://repo.spring.io/milestone/"
         }
         maven { url 'https://jitpack.io' }
         gradlePluginPortal()
@@ -35,12 +35,12 @@ buildscript {
 
 plugins {
     id 'com.github.kt3k.coveralls' version '2.10.1'
-    id 'nebula.netflixoss' version '9.4.1'
+    id 'nebula.netflixoss' version '10.6.0'
     id 'org.springframework.boot' version "${spring_boot_version}" apply false
-    id 'com.gorylenko.gradle-git-properties' version '2.2.2' apply false
-    id 'io.franzbecker.gradle-lombok' version '4.0.0' apply false
+    id 'com.gorylenko.gradle-git-properties' version '2.3.2' apply false
+    id 'io.franzbecker.gradle-lombok' version '5.0.0'
     id 'nebula.node' version '1.3.1' apply false
-    id 'com.github.spotbugs' version '4.4.1' apply false
+    id 'com.github.spotbugs' version '5.2.5' apply false
 }
 
 apply plugin: "nebula-aggregate-javadocs"
@@ -58,15 +58,20 @@ allprojects {
     apply plugin: "idea"
     apply plugin: "eclipse"
     apply plugin: "nebula.netflixoss"
+    apply plugin:  'java-library'
     apply plugin: "io.franzbecker.gradle-lombok"
+
+    lombok {
+        version = '1.18.30'
+    }
 
     repositories {
         mavenCentral()
         maven {
-            url "http://repo.spring.io/milestone"
+            url "https://repo.spring.io/milestone"
         }
         maven {
-            url "http://redshift-maven-repository.s3-website-us-east-1.amazonaws.com/release"
+            url "https://redshift-maven-repository.s3-website-us-east-1.amazonaws.com/release"
         }
         maven {
             url 'https://jitpack.io'
@@ -76,8 +81,8 @@ allprojects {
 
 idea {
     project {
-        jdkName = "1.8"
-        languageLevel = "1.8"
+        jdkName = "8"
+        languageLevel = "8"
         vcs = "Git"
     }
 }
@@ -93,8 +98,8 @@ configure(javaProjects) {
 
     group = "com.netflix.${githubProjectName}"
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 
     dependencyManagement {
         imports {
@@ -104,9 +109,9 @@ configure(javaProjects) {
             mavenBom "com.google.inject:guice-bom:${google_guice_version}"
         }
         dependencies {
-            dependency("com.github.spotbugs:spotbugs-annotations:4.0.6")
+            dependency("com.github.spotbugs:spotbugs-annotations:4.8.2")
             dependency("org.codehaus.groovy:groovy-all:2.5.9")
-            dependencySet(group: "org.ow2.asm", version: "8.0.1") {
+            dependencySet(group: "org.ow2.asm", version: "9.2") {
                 entry "asm"
                 entry "asm-analysis"
                 entry "asm-commons"
@@ -114,7 +119,7 @@ configure(javaProjects) {
                 entry "asm-util"
             }
             dependency("cglib:cglib-nodep:3.2.4")
-            dependency("com.amazon.redshift:redshift-jdbc42:1.2.1.1001")
+            dependency("com.amazon.redshift:redshift-jdbc42:2.1.0.21")
             dependency("com.github.fge:json-patch:1.9")
             dependency("com.github.rholder:guava-retrying:2.0.0")
             dependency("commons-dbutils:commons-dbutils:1.6")
@@ -159,7 +164,6 @@ configure(javaProjects) {
     }
 
     dependencies {
-
         /*******************************
          * Compile Dependencies
          *******************************/
@@ -168,6 +172,7 @@ configure(javaProjects) {
          * Provided Dependencies
          *******************************/
         compileOnly("com.github.spotbugs:spotbugs-annotations")
+
         /*******************************
          * Runtime Dependencies
          *******************************/
@@ -177,20 +182,20 @@ configure(javaProjects) {
         /*******************************
          * Test Dependencies
          *******************************/
-        testCompile("log4j:log4j")
-        testCompile("cglib:cglib-nodep")
-        testCompile("org.codehaus.groovy:groovy-all")
-        testCompile("org.codehaus.gpars:gpars")
-        testCompile("org.objenesis:objenesis")
-        testCompile("org.spockframework:spock-core")
-        testCompile("org.spockframework:spock-guice")
-        testCompile("org.spockframework:spock-spring")
-        testCompile("org.springframework.boot:spring-boot-starter-test") {
+        testImplementation("log4j:log4j")
+        testImplementation("cglib:cglib-nodep")
+        testImplementation("org.codehaus.groovy:groovy-all")
+        testImplementation("org.codehaus.gpars:gpars")
+        testImplementation("org.objenesis:objenesis:3.2")
+        testImplementation("org.spockframework:spock-core")
+        testImplementation("org.spockframework:spock-guice")
+        testImplementation("org.spockframework:spock-spring")
+        testImplementation("org.springframework.boot:spring-boot-starter-test") {
             exclude group: 'com.vaadin.external.google', module: 'android-json'
         }
-        testRuntime("org.hsqldb:hsqldb")
+        testRuntimeOnly("org.hsqldb:hsqldb")
         testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
-        testCompile("org.junit.jupiter:junit-jupiter-api:5.4.2")
+        testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
         testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
         testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
         testRuntimeOnly "org.junit.platform:junit-platform-commons:1.7.0"
@@ -217,7 +222,7 @@ configure(javaProjects) {
     }
 
     spotbugs {
-        toolVersion = '4.0.6'
+        toolVersion = '4.8.2'
         jvmArgs = ['-Xmx4g', '-XX:+HeapDumpOnOutOfMemoryError']
         excludeFilter = new File(project.parent.projectDir, "codequality/findbugs/excludeFilter.xml")
     }
@@ -232,9 +237,9 @@ configure(javaProjects) {
 
     jacocoTestReport {
         reports {
-            html.enabled = true
-            xml.enabled = true
-            csv.enabled = false
+            html.required = true
+            xml.required = true
+            csv.required = false
         }
     }
 

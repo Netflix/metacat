@@ -18,6 +18,7 @@ import com.netflix.metacat.common.server.partition.parser.ParseException;
 import com.netflix.metacat.common.server.partition.parser.PartitionParser;
 import com.netflix.metacat.common.server.partition.parser.TokenMgrError;
 import com.netflix.metacat.common.server.partition.visitor.PartitionParserEval;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -40,6 +41,7 @@ public class FilterPartition {
      * @return true if the expression evaluates to true
      * @throws IOException exception
      */
+
     public boolean evaluatePartitionExpression(final String partitionExpression, final String name, final String path)
         throws IOException {
         return evaluatePartitionExpression(partitionExpression, name, path, false, null);
@@ -54,6 +56,7 @@ public class FilterPartition {
      * @param values map of values
      * @return true if the expression evaluates to true
      */
+    @SuppressFBWarnings(value = "DCN_NULLPOINTER_EXCEPTION", justification = "keep the original logic")
     public boolean evaluatePartitionExpression(final String partitionExpression, final String name, final String path,
         final boolean batchid, final Map<String, String> values) {
         if (partitionExpression != null) {

@@ -25,4 +25,8 @@
         <Bug code="RCN" />
     </Match>
 
+    <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+        <Package name="~com\.netflix\.metacat\..*"/>
+    </Match>
 </FindBugsFilter>

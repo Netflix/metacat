@@ -29,10 +29,11 @@ dependencies {
      *******************************/
 
     // TODO: Fix dependencies
-    compile(project(":metacat-common"))
-    compile(project(":metacat-common-server"))
-    compile(project(":metacat-main"))
-    compile(project(":metacat-metadata-mysql"))
+    implementation(project(":metacat-common"))
+    implementation(project(":metacat-common-server"))
+    implementation(project(":metacat-main"))
+    implementation(project(":metacat-metadata-mysql"))
+    implementation 'org.springframework:spring-web'
 
     /*******************************
      * Provided Dependencies
@@ -44,7 +45,7 @@ dependencies {
      * Runtime Dependencies
      *******************************/
 
-    runtime("org.springframework:spring-aspects")
+    runtimeOnly("org.springframework:spring-aspects")
 
     /*******************************
      * Test Dependencies
@@ -57,7 +58,7 @@ task(console, dependsOn: "testClasses", type: JavaExec) {
 }
 
 war {
-    baseName = "metacat"
+    archivesBaseName = "metacat"
     doLast{
         copy{
             from(war.archivePath) {

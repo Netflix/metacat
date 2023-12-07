@@ -46,7 +46,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -82,7 +81,7 @@ import java.util.function.Supplier;
 )
 @Slf4j
 @DependsOn("metacatCoreInitService")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@RequiredArgsConstructor
 public class MetacatController implements MetacatV1 {
     private final CatalogService catalogService;
     private final DatabaseService databaseService;

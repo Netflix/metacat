@@ -14,7 +14,7 @@ dependencies {
      * Compile Dependencies
      *******************************/
 
-    compile(project(":metacat-main"))
+    implementation(project(":metacat-main"))
 
     /*******************************
      * Provided Dependencies
