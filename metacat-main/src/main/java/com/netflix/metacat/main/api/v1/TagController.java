@@ -42,7 +42,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -81,7 +80,7 @@ import java.util.Set;
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
 @DependsOn("metacatCoreInitService")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@RequiredArgsConstructor
 public class TagController {
 
     private final RequestWrapper requestWrapper;

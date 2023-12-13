@@ -36,7 +36,6 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -71,7 +70,7 @@ import java.util.List;
     consumes = MediaType.APPLICATION_JSON_VALUE
 )
 @DependsOn("metacatCoreInitService")
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@RequiredArgsConstructor
 public class PartitionController implements PartitionV1 {
 
     private final MetacatController v1;

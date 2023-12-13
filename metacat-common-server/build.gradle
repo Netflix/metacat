@@ -25,27 +25,27 @@ dependencies {
      * API Dependencies
      *******************************/
 
-    compile(project(":metacat-common"))
-    compile("com.google.inject:guice")
-    compile("net.sf.dozer:dozer")
-    compile("org.apache.tomcat:tomcat-jdbc")
+    api(project(":metacat-common"))
+    api("com.google.inject:guice")
+    api("net.sf.dozer:dozer")
+    api("org.apache.tomcat:tomcat-jdbc")
+    api("org.springframework.boot:spring-boot-starter")
+    api("org.springframework:spring-jdbc")
+    api("com.netflix.spectator:spectator-api")
 
     /*******************************
      * Implementation Dependencies
      *******************************/
-    compile("com.netflix.spectator:spectator-api")
-    compile("com.google.guava:guava")
-    compile("org.slf4j:slf4j-api")
-    compile("org.springframework.boot:spring-boot-starter")
-    compile("org.springframework.boot:spring-boot-starter-logging")
-    compile("org.springframework:spring-jdbc")
+    implementation("com.google.guava:guava")
+    implementation("org.slf4j:slf4j-api")
+    implementation("org.springframework.boot:spring-boot-starter-logging")
 
 
     /*******************************
      * Provided Dependencies
      *******************************/
 
-    compileOnly("org.springframework.boot:spring-boot-configuration-processor")
+    implementation("org.springframework.boot:spring-boot-configuration-processor")
 
     /*******************************
      * Runtime Dependencies
@@ -55,8 +55,8 @@ dependencies {
      * Test Dependencies
      *******************************/
 
-    testCompile(project(":metacat-common").sourceSets.test.output)
-    testCompile("commons-logging:commons-logging")
+    testImplementation(project(":metacat-common").sourceSets.test.output)
+    testImplementation("commons-logging:commons-logging")
 }
 
 tasks.withType(Checkstyle) {

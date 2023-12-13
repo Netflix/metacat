@@ -21,10 +21,10 @@ dependencies {
      * Compile Dependencies
      *******************************/
 
-    compile(project(":metacat-common-server"))
-    compile("org.springframework:spring-web")
-    compile("org.apache.httpcomponents:httpclient")
-    compile("org.json:json")
+    implementation(project(":metacat-common-server"))
+    implementation("org.springframework:spring-web")
+    implementation("org.apache.httpcomponents:httpclient")
+    implementation("org.json:json")
 
     /*******************************
      * Provided Dependencies

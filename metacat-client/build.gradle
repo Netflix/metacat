@@ -20,21 +20,21 @@ dependencies {
      * API Dependencies
      *******************************/
 
-    compile(project(":metacat-common"))
+    api(project(":metacat-common"))
 
-    compile("io.github.openfeign:feign-core")
+    api("io.github.openfeign:feign-core")
 
     /*******************************
      * Implementation Dependencies
      *******************************/
 
-    compile("com.fasterxml.jackson.core:jackson-databind")
-    compile("com.fasterxml.jackson.datatype:jackson-datatype-guava")
-    compile("com.fasterxml.jackson.module:jackson-module-jaxb-annotations")
-    compile("com.google.guava:guava")
-    compile("io.github.openfeign:feign-jaxrs")
-    compile("io.github.openfeign:feign-slf4j")
-    compile("org.slf4j:slf4j-api")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava")
+    implementation("com.fasterxml.jackson.module:jackson-module-jaxb-annotations")
+    implementation("com.google.guava:guava")
+    implementation("io.github.openfeign:feign-jaxrs")
+    implementation("io.github.openfeign:feign-slf4j")
+    implementation("org.slf4j:slf4j-api")
 
     /*******************************
      * Provided Dependencies
@@ -48,5 +48,5 @@ dependencies {
      * Test Dependencies
      *******************************/
 
-    testCompile(project(":metacat-common").sourceSets.test.output)
+    testImplementation(project(":metacat-common").sourceSets.test.output)
 }

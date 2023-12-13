@@ -21,17 +21,17 @@ dependencies {
      * Compile Dependencies
      *******************************/
 
-    compile(project(":metacat-common-server"))
+    implementation(project(":metacat-common-server"))
 
-    compile("org.apache.hive:hive-metastore")
-    compile("org.apache.hive:hive-exec:${hive_version}:core@jar")
-    compile("org.apache.hadoop:hadoop-core")
-    compile("com.github.rholder:guava-retrying") {
+    implementation("org.apache.hive:hive-metastore")
+    implementation("org.apache.hive:hive-exec:${hive_version}:core@jar")
+    implementation("org.apache.hadoop:hadoop-core")
+    implementation("com.github.rholder:guava-retrying") {
         exclude module: "guava"
     }
 
-    compile("commons-dbutils:commons-dbutils")
-    compile("org.apache.iceberg:iceberg-spark-runtime")
+    implementation("commons-dbutils:commons-dbutils")
+    implementation("org.apache.iceberg:iceberg-spark-runtime")
     /*******************************
      * Provided Dependencies
      *******************************/
@@ -40,11 +40,11 @@ dependencies {
      * Runtime Dependencies
      *******************************/
 
-    runtime("mysql:mysql-connector-java")
+    runtimeOnly("mysql:mysql-connector-java")
 
     /*******************************
      * Test Dependencies
      *******************************/
 
-    testCompile(project(":metacat-testdata-provider"))
+    testImplementation(project(":metacat-testdata-provider"))
 }

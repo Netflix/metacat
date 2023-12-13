@@ -21,17 +21,17 @@ dependencies {
      * API Dependencies
      *******************************/
 
-    compile(project(":metacat-common"))
-    compile(project(":metacat-common-server"))
+    api(project(":metacat-common"))
+    api(project(":metacat-common-server"))
 
     /*******************************
      * Implementation Dependencies
      *******************************/
 
-    compile("commons-dbutils:commons-dbutils")
-    compile("com.google.guava:guava")
-    compile("org.apache.tomcat:tomcat-jdbc")
-    compile("org.slf4j:slf4j-api")
+    implementation("commons-dbutils:commons-dbutils")
+    implementation("com.google.guava:guava")
+    implementation("org.apache.tomcat:tomcat-jdbc")
+    implementation("org.slf4j:slf4j-api")
     /*******************************
      * Provided Dependencies
      *******************************/
@@ -40,16 +40,16 @@ dependencies {
      * Runtime Dependencies
      *******************************/
 
-    runtime("mysql:mysql-connector-java")
+    runtimeOnly("mysql:mysql-connector-java")
 
     /*******************************
      * Test Dependencies
      *******************************/
 
-    testCompile("io.airlift:testing-mysql-server") {
+    testImplementation("io.airlift:testing-mysql-server") {
         exclude module:"bval-jsr303"
         exclude module:"validation-api"
     }
-    testCompile(project(":metacat-testdata-provider"))
-    testCompile("commons-logging:commons-logging")
+    testImplementation(project(":metacat-testdata-provider"))
+    testImplementation("commons-logging:commons-logging")
 }

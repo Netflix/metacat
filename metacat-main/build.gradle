@@ -27,32 +27,32 @@ dependencies {
      * API Dependencies
      *******************************/
 
-    compile(project(":metacat-common"))
-    compile(project(":metacat-common-server"))
-    compile(project(":metacat-thrift"))
-    compile("org.elasticsearch.client:transport")
+    api(project(":metacat-common"))
+    api(project(":metacat-common-server"))
+    api(project(":metacat-thrift"))
+    api("org.elasticsearch.client:transport")
 
-    compile("com.amazonaws:aws-java-sdk-sns")
-    compile("joda-time:joda-time")
+    api("com.amazonaws:aws-java-sdk-sns")
+    api("joda-time:joda-time")
 
     /*******************************
      * Implementation Dependencies
      *******************************/
 
-    compile(project(":metacat-metadata-mysql"))
+    implementation(project(":metacat-metadata-mysql"))
 
-    compile("com.google.guava:guava")
-    compile("com.github.rholder:guava-retrying") {
+    implementation("com.google.guava:guava")
+    implementation("com.github.rholder:guava-retrying") {
         exclude module: "guava"
     }
-    compile("io.springfox:springfox-boot-starter")
-    compile("org.springframework.boot:spring-boot-starter")
-    compile("org.springframework.boot:spring-boot-starter-web")
-    compile("org.springframework.boot:spring-boot-starter-actuator")
-    compile("org.springframework.boot:spring-boot-starter-hateoas")
-    compile("org.springframework.boot:spring-boot-starter-logging")
-    compile("org.springframework.boot:spring-boot-starter-tomcat")
-    compile("javax.validation:validation-api")
+    implementation("io.springfox:springfox-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-hateoas")
+    implementation("org.springframework.boot:spring-boot-starter-logging")
+    implementation("org.springframework.boot:spring-boot-starter-tomcat")
+    implementation("javax.validation:validation-api")
     implementation 'io.springfox:springfox-boot-starter'
 
     /*******************************
@@ -65,30 +65,30 @@ dependencies {
      * Runtime Dependencies
      *******************************/
 
-    runtime(project(":metacat-connector-cassandra"))
-    runtime(project(":metacat-connector-hive"))
-    runtime(project(":metacat-connector-polaris"))
-    runtime(project(":metacat-metadata"))
-    runtime(project(":metacat-connector-mysql"))
-    runtime(project(":metacat-connector-postgresql"))
-    runtime(project(":metacat-connector-redshift"))
-    runtime(project(":metacat-connector-snowflake"))
-    runtime(project(":metacat-connector-s3"))
-    runtime(project(":metacat-connector-druid"))
+    runtimeOnly(project(":metacat-connector-cassandra"))
+    runtimeOnly(project(":metacat-connector-hive"))
+    runtimeOnly(project(":metacat-connector-polaris"))
+    runtimeOnly(project(":metacat-metadata"))
+    runtimeOnly(project(":metacat-connector-mysql"))
+    runtimeOnly(project(":metacat-connector-postgresql"))
+    runtimeOnly(project(":metacat-connector-redshift"))
+    runtimeOnly(project(":metacat-connector-snowflake"))
+    runtimeOnly(project(":metacat-connector-s3"))
+    runtimeOnly(project(":metacat-connector-druid"))
 
-    runtime("io.springfox:springfox-swagger-ui")
-    runtime("org.webjars:hal-browser:3325375")
-    runtime("org.springframework:spring-aspects")
-    runtime("org.apache.logging.log4j:log4j-core")
-    runtime("mysql:mysql-connector-java:8.0.27")
+    runtimeOnly("io.springfox:springfox-swagger-ui")
+    runtimeOnly("org.webjars:hal-browser:3325375")
+    runtimeOnly("org.springframework:spring-aspects")
+    runtimeOnly("org.apache.logging.log4j:log4j-core")
+    runtimeOnly("mysql:mysql-connector-java:8.0.27")
 
     /*******************************
      * Test Dependencies
      *******************************/
 
-    testCompile(project(":metacat-testdata-provider"))
-    testCompile("io.airlift:testing-mysql-server")
-    testCompile("org.apache.logging.log4j:log4j-core")
+    testImplementation(project(":metacat-testdata-provider"))
+    testImplementation("io.airlift:testing-mysql-server")
+    testImplementation("org.apache.logging.log4j:log4j-core")
 
 }
 

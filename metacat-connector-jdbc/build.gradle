@@ -21,9 +21,9 @@ dependencies {
      * Compile Dependencies
      *******************************/
 
-    compile(project(":metacat-common-server"))
+    api(project(":metacat-common-server"))
 
-    compile("com.google.inject:guice")
+    implementation("com.google.inject:guice")
 
     /*******************************
      * Provided Dependencies

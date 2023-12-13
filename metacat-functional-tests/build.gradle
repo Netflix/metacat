@@ -61,17 +61,17 @@ dependencies {
      *******************************/
 
     // Test that metacat-client can be used with jersey 1
-    testCompile(project(":metacat-common-server"))
-    testCompile(project(":metacat-connector-hive"))
-    testCompile(project(":metacat-testdata-provider"))
+    testImplementation(project(":metacat-common-server"))
+    testImplementation(project(":metacat-connector-hive"))
+    testImplementation(project(":metacat-testdata-provider"))
 
-    functionalTestCompile(project(":metacat-client"))
-    functionalTestCompile("org.apache.hadoop:hadoop-core")
-    functionalTestCompile("org.apache.hive:hive-exec:${hive_version}") {
+    functionalTestImplementation(project(":metacat-client"))
+    functionalTestImplementation("org.apache.hadoop:hadoop-core")
+    functionalTestImplementation("org.apache.hive:hive-exec:${hive_version}") {
         exclude module: "pentaho-aggdesigner-algorithm"
     }
 
-    testCompile("org.skyscreamer:jsonassert")
+    testImplementation("org.skyscreamer:jsonassert")
 }
 
 task expandWar(type: Copy) {

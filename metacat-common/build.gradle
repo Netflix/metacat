@@ -20,15 +20,15 @@ dependencies {
      * API Dependencies
      *******************************/
 
-    compile("com.fasterxml.jackson.core:jackson-databind")
-    compile("com.github.fge:json-patch")
-    compile("io.swagger:swagger-annotations")
+    api("com.fasterxml.jackson.core:jackson-databind")
+    api("com.github.fge:json-patch")
+    api("io.swagger:swagger-annotations")
 
     /*******************************
      * Implementation Dependencies
      *******************************/
 
-    compile("com.google.guava:guava")
+    implementation("com.google.guava:guava")
 
     /*******************************
      * Provided Dependencies
@@ -42,6 +42,7 @@ dependencies {
      * Test Dependencies
      *******************************/
 
-    testCompile("nl.jqno.equalsverifier:equalsverifier")
-    testCompile("org.apache.commons:commons-lang3")
+    testImplementation("nl.jqno.equalsverifier:equalsverifier")
+    testImplementation("org.apache.commons:commons-lang3")
+    testImplementation 'org.reflections:reflections:0.9.12'
 }

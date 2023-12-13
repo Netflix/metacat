@@ -23,27 +23,28 @@ import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.SerializationUtils
 import spock.lang.Specification
 import spock.lang.Unroll
-
 import java.beans.Introspector
 import java.beans.PropertyDescriptor
 import java.lang.reflect.*
+import org.reflections.Reflections
+import org.reflections.scanners.SubTypesScanner
+import java.util.stream.Collectors
 
 class DtoVerificationSpec extends Specification {
     private static final Random rand = new Random()
-    private static final ClassPath classPath = ClassPath.from(BaseDto.class.classLoader)
+    private static final Reflections reflections = new Reflections(BaseDto.class.package.name, new SubTypesScanner(false))
     private static final MetacatJson metacatJson = new MetacatJsonLocator()
 
     public static Set<Class<?>> getDtoClasses() {
-        return classPath.getTopLevelClassesRecursive(BaseDto.class.package.name).collect { ClassPath.ClassInfo info ->
-            return info.load()
-        }.findAll { Class<?> theClass ->
+        def classes = reflections.getSubTypesOf(Object.class).stream().filter {theClass ->
             int modifiers = theClass.modifiers
-
             return theClass.name.endsWith('Dto') &&
-                    Modifier.isPublic(modifiers) &&
-                    !Modifier.isAbstract(modifiers) &&
-                    !Modifier.isInterface(modifiers)
-        }
+                Modifier.isPublic(modifiers) &&
+                !Modifier.isAbstract(modifiers) &&
+                !Modifier.isInterface(modifiers)
+        }.collect(Collectors.toSet())
+
+        return classes
     }
 
     public static Set<Class<?>> getHasDataMetadataClasses() {

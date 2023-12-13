@@ -21,18 +21,18 @@ dependencies {
      * API Dependencies
      *******************************/
 
-    compile(project(":metacat-common"))
-    compile(project(":metacat-common-server"))
+    api(project(":metacat-common"))
+    api(project(":metacat-common-server"))
 
-    compile("org.apache.hadoop:hadoop-core")
-    compile("org.apache.hive:hive-metastore")
-    compile("org.apache.hive:hive-exec:${hive_version}:core@jar")
-    runtime("com.esotericsoftware.kryo:kryo")
+    api("org.apache.hadoop:hadoop-core")
+    api("org.apache.hive:hive-metastore")
+    api("org.apache.hive:hive-exec:${hive_version}:core@jar")
+    runtimeOnly("com.esotericsoftware.kryo:kryo")
     /*******************************
      * Implementation Dependencies
      *******************************/
 
-    compile("com.google.guava:guava")
+    implementation("com.google.guava:guava")
 
     /*******************************
      * Provided Dependencies
@@ -46,7 +46,7 @@ dependencies {
      * Test Dependencies
      *******************************/
 
-    testCompile("de.danielbechler:java-object-diff")
+    testImplementation("de.danielbechler:java-object-diff")
 }
 
 // TODO: Remove this once we optimize this task. It running out of memory at times.

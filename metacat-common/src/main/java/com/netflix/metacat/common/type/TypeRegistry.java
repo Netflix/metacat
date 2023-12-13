@@ -19,6 +19,7 @@ package com.netflix.metacat.common.type;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,6 +69,7 @@ public final class TypeRegistry implements TypeManager {
         addParametricType(VarcharType.VARCHAR);
     }
 
+    @SuppressFBWarnings(value = "MS_EXPOSE_REP", justification = "disable errors from MS_EXPOSE_REP ")
     public static TypeRegistry getTypeRegistry() {
         return INSTANCE;
     }

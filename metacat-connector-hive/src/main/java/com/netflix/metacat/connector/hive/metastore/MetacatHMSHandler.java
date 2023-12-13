@@ -30,7 +30,6 @@ import org.apache.hadoop.hive.metastore.RawStore;
 import org.apache.hadoop.hive.metastore.RawStoreProxy;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
-import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 import org.apache.hadoop.hive.metastore.api.InvalidInputException;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -265,6 +264,8 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
      * @throws TException            any internal exception
      */
     @SuppressWarnings({"checkstyle:methodname"})
+    @Override
+    @SuppressFBWarnings(value = "NP_NULL_PARAM_DEREF", justification = "false positive")
     public boolean add_drop_partitions(final String databaseName,
                                        final String tableName, final List<Partition> addParts,
                                        final List<List<String>> dropParts, final boolean deleteData)
@@ -283,7 +284,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
         boolean ret = false;
         Exception ex = null;
         try {
-            ret = addDropPartitionsCore(getMS(), databaseName, tableName, addParts, dropParts, false, null);
+            ret = addDropPartitionsCore(getMS(), databaseName, tableName, addParts, dropParts, false);
         } catch (Exception e) {
             ex = e;
             if (e instanceof MetaException) {
@@ -306,7 +307,7 @@ public class MetacatHMSHandler extends HiveMetaStore.HMSHandler implements IMeta
 
     private boolean addDropPartitionsCore(
             final RawStore ms, final String databaseName, final String tableName, final List<Partition> addParts,
-            final List<List<String>> dropParts, final boolean ifNotExists, final EnvironmentContext envContext)
+            final List<List<String>> dropParts, final boolean ifNotExists)
             throws MetaException, InvalidObjectException, NoSuchObjectException, AlreadyExistsException,
             IOException, InvalidInputException, TException {
         logInfo("add_drop_partitions : db=" + databaseName + " tbl=" + tableName);
