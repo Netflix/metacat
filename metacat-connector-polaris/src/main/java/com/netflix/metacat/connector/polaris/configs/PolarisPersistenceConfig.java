@@ -71,7 +71,7 @@ public class PolarisPersistenceConfig {
    */
   @Bean
   public PolarisStoreService polarisStoreService(
-          final PolarisDatabaseRepository repo, final PolarisTableRepository tblRepo) {
+      final PolarisDatabaseRepository repo, final PolarisTableRepository tblRepo) {
     return new PolarisStoreConnector(repo, tblRepo);
   }
 }

@@ -7,6 +7,7 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntit
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
+import lombok.Getter;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ import java.util.Random;
 @SpringBootTest(classes = {PolarisPersistenceConfig.class})
 @ActiveProfiles(profiles = {"polaristest"})
 @AutoConfigureDataJpa
+@Getter
 public class PolarisStoreConnectorTest {
     private static final String DB_NAME_FOO = "foo";
     private static final String TBL_NAME_BAR = "bar";
@@ -45,15 +47,15 @@ public class PolarisStoreConnectorTest {
     @Autowired
     private PolarisStoreConnector polarisConnector;
 
-    private static String generateDatabaseName() {
+    public static String generateDatabaseName() {
         return DB_NAME_FOO + "_" + random.nextLong();
     }
 
-    private static String generateTableName() {
+    public static String generateTableName() {
         return TBL_NAME_BAR + "_" + random.nextLong();
     }
 
-    private PolarisDatabaseEntity createDB(final String dbName) {
+    public PolarisDatabaseEntity createDB(final String dbName) {
         final String location = "file://temp";
         final PolarisDatabaseEntity entity = polarisConnector.createDatabase(dbName, location, "metacat_user");
 
@@ -73,7 +75,7 @@ public class PolarisStoreConnectorTest {
         return entity;
     }
 
-    private PolarisTableEntity createTable(final String dbName, final String tblName) {
+    public PolarisTableEntity createTable(final String dbName, final String tblName) {
         final PolarisTableEntity entity = polarisConnector.createTable(dbName, tblName,
                 "loc", PolarisUtils.DEFAULT_METACAT_USER);
 
