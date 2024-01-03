@@ -17,5 +17,4 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ActiveProfiles(profiles = {"polaris_functional_test"})
 @AutoConfigureDataJpa
 public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTest {
-
 }

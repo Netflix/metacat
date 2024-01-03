@@ -19,7 +19,7 @@ import java.util.Optional;
  */
 @Repository
 public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity, String>,
-    JpaSpecificationExecutor {
+    JpaSpecificationExecutor, PolarisTableCustomRepository {
 
     /**
      * Delete table entry by name.
@@ -66,19 +66,6 @@ public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity
     boolean existsByDbNameAndTblName(
         @Param("dbName") final String dbName,
         @Param("tblName") final String tblName);
-
-    /**
-     * Fetch table entities in database.
-     * @param dbName database name
-     * @param tableNamePrefix table name prefix. can be empty.
-     * @param page pageable.
-     * @return table entities that belong to the database.
-     */
-    @Query("SELECT e FROM PolarisTableEntity e WHERE e.dbName = :dbName AND e.tblName LIKE :tableNamePrefix%")
-    Slice<PolarisTableEntity> findAllTablesByDbNameAndTablePrefix(
-        @Param("dbName") final String dbName,
-        @Param("tableNamePrefix") final String tableNamePrefix,
-        Pageable page);
 
     /**
      * Do an atomic compare-and-swap on the metadata location of the table.
