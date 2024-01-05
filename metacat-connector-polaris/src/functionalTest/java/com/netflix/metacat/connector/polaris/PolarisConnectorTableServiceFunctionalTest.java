@@ -8,6 +8,7 @@ import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
  * Some of the tests cannot be run in unit test as it uses h2 database, which does not support all
  * functionalities in crdb so include those tests here.
  */
+@Slf4j
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {PolarisPersistenceConfig.class})
 @ActiveProfiles(profiles = {"polaris_functional_test"})
@@ -54,7 +56,7 @@ public class PolarisConnectorTableServiceFunctionalTest extends PolarisConnector
             // pause execution for 10000 milliseconds (10 seconds)
             Thread.sleep(10000);
         } catch (InterruptedException e) {
-            System.out.println("Sleep was interrupted");
+            log.debug("Sleep was interrupted");
         }
 
         List<TableInfo> tables = this.getPolarisTableService().list(

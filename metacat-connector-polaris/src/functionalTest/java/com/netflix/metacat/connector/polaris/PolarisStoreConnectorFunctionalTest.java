@@ -4,6 +4,7 @@ package com.netflix.metacat.connector.polaris;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreConnectorTest;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +18,7 @@ import java.util.List;
 /**
  * Test persistence operations on Database objects.
  */
+@Slf4j
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {PolarisPersistenceConfig.class})
 @ActiveProfiles(profiles = {"polaris_functional_test"})
@@ -36,7 +38,7 @@ public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTe
             // pause execution for 10000 milliseconds (10 seconds)
             Thread.sleep(10000);
         } catch (InterruptedException e) {
-            System.out.println("Sleep was interrupted");
+            log.debug("Sleep was interrupted");
         }
 
         // Test when db is empty
@@ -56,7 +58,7 @@ public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTe
             // pause execution for 10000 milliseconds (10 seconds)
             Thread.sleep(10000);
         } catch (InterruptedException e) {
-            System.out.println("Sleep was interrupted");
+            log.debug("Sleep was interrupted");
         }
 
         // Test pagination and sort
