@@ -23,7 +23,7 @@ spring:
     init:
       schema-locations: classpath:schema.sql
       mode: always
-      platform: h2db
+      platform: postgresql
 
 logging:
   level:

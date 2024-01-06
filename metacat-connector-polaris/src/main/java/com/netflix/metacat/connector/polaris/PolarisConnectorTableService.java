@@ -338,7 +338,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         try {
             final String tableFilter = (prefix != null && prefix.isTableDefinition()) ? prefix.getTableName() : "";
             final List<PolarisTableEntity> tbls =
-                polarisStoreService.getTableEntities(name.getDatabaseName(), tableFilter);
+                polarisStoreService.getTableEntities(name.getDatabaseName(), tableFilter, 1000);
             if (sort != null) {
                 ConnectorUtils.sort(tbls, sort, Comparator.comparing(t -> t.getTblName()));
             }

@@ -155,22 +155,10 @@ public class PolarisStoreConnector implements PolarisStoreService {
      */
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
-    public List<PolarisTableEntity> getTableEntities(final String databaseName, final String tableNamePrefix) {
-        final int pageFetchSize = 1000;
-        final List<PolarisTableEntity> retval = new ArrayList<>();
-        final String tblPrefix =  tableNamePrefix == null ? "" : tableNamePrefix;
-        Pageable page = PageRequest.of(0, pageFetchSize, Sort.by("tblName").ascending());
-        Slice<PolarisTableEntity> tbls;
-        boolean hasNext;
-        do {
-            tbls = tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tblPrefix, page);
-            retval.addAll(tbls.toList());
-            hasNext = tbls.hasNext();
-            if (hasNext) {
-                page = tbls.nextPageable();
-            }
-        } while (hasNext);
-        return retval;
+    public List<PolarisTableEntity> getTableEntities(final String databaseName,
+                                                     final String tableNamePrefix,
+                                                     final int pageFetchSize) {
+        return tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize);
     }
 
     /**

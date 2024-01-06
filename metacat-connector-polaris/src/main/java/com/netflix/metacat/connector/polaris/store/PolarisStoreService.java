@@ -75,9 +75,10 @@ public interface PolarisStoreService {
      * Fetch table entities for given database.
      * @param databaseName database name
      * @param tableNamePrefix table name prefix. can be empty.
+     * @param pageFetchSize  target size for each page
      * @return table entities in the database.
      */
-    List<PolarisTableEntity> getTableEntities(final String databaseName, final String tableNamePrefix);
+    List<PolarisTableEntity> getTableEntities(String databaseName, String tableNamePrefix, int pageFetchSize);
 
     /**
      * Updates existing or creates new table entry.
