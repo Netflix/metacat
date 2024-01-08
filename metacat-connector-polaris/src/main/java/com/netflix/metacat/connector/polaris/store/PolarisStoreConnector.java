@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -158,7 +157,8 @@ public class PolarisStoreConnector implements PolarisStoreService {
     public List<PolarisTableEntity> getTableEntities(final String databaseName,
                                                      final String tableNamePrefix,
                                                      final int pageFetchSize) {
-        return tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize);
+        return (List<PolarisTableEntity>)
+            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, true);
     }
 
     /**
@@ -205,22 +205,9 @@ public class PolarisStoreConnector implements PolarisStoreService {
      */
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
-    public List<String> getTables(final String databaseName, final String tableNamePrefix) {
-        final int pageFetchSize = 1000;
-        final List<String> retval = new ArrayList<>();
-        final String tblPrefix =  tableNamePrefix == null ? "" : tableNamePrefix;
-        Pageable page = PageRequest.of(0, pageFetchSize, Sort.by("tblName").ascending());
-        Slice<String> tblNames = null;
-        boolean hasNext = true;
-        do {
-            tblNames = tblRepo.findAllByDbNameAndTablePrefix(databaseName, tblPrefix, page);
-            retval.addAll(tblNames.toList());
-            hasNext = tblNames.hasNext();
-            if (hasNext) {
-                page = tblNames.nextPageable();
-            }
-        } while (hasNext);
-        return retval;
+    public List<String> getTables(final String databaseName, final String tableNamePrefix, final int pageFetchSize) {
+        return (List<String>)
+            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, false);
     }
 
     /**

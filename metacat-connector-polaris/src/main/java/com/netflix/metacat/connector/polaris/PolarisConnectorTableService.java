@@ -187,7 +187,10 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         try {
             final List<QualifiedName> qualifiedNames = Lists.newArrayList();
             final String tableFilter = (prefix != null && prefix.isTableDefinition()) ? prefix.getTableName() : "";
-            for (String tableName : polarisStoreService.getTables(name.getDatabaseName(), tableFilter)) {
+            for (String tableName : polarisStoreService.getTables(name.getDatabaseName(),
+                tableFilter,
+                1000)
+            ) {
                 final QualifiedName qualifiedName =
                     QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName);
                 if (prefix != null && !qualifiedName.toString().startsWith(prefix.toString())) {
@@ -388,7 +391,10 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             final List<QualifiedName> result = Lists.newArrayList();
             for (int i = 0; i < databaseNames.size() && limitSize > 0; i++) {
                 final String databaseName = databaseNames.get(i);
-                final List<String> tableNames = polarisStoreService.getTables(name.getDatabaseName(), "");
+                final List<String> tableNames = polarisStoreService.getTables(
+                    name.getDatabaseName(),
+                    "",
+                    1000);
                 result.addAll(tableNames.stream()
                     .map(n -> QualifiedName.ofTable(name.getCatalogName(), databaseName, n))
                     .limit(limitSize)

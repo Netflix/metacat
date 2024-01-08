@@ -1,13 +1,9 @@
 
 package com.netflix.metacat.connector.polaris;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.Pageable;
-import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
@@ -42,8 +38,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import spock.lang.Shared;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,17 +99,6 @@ public class PolarisConnectorTableServiceTest {
     }
 
     /**
-     * Test empty list tables.
-     */
-    @Test
-    public void testListTablesEmpty() {
-        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "");
-        final List<QualifiedName> names = polarisTableService.listNames(
-            requestContext, DB_QUALIFIED_NAME, qualifiedName, new Sort(null, SortOrder.ASC), new Pageable(2, 0));
-        Assert.assertEquals(names, Arrays.asList());
-    }
-
-    /**
      * Test table exists.
      */
     @Test
@@ -130,43 +113,6 @@ public class PolarisConnectorTableServiceTest {
         polarisTableService.create(requestContext, tableInfo);
         exists = polarisTableService.exists(requestContext, qualifiedName);
         Assert.assertTrue(exists);
-    }
-
-    /**
-     * Test table creation then list tables.
-     */
-    @Test
-    public void testTableCreationAndList() {
-        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
-        final TableInfo tableInfo = TableInfo.builder()
-            .name(qualifiedName)
-            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc1"))
-            .build();
-        polarisTableService.create(requestContext, tableInfo);
-        final List<QualifiedName> names = polarisTableService.listNames(
-            requestContext, DB_QUALIFIED_NAME, qualifiedName, new Sort(null, SortOrder.ASC), new Pageable(2, 0));
-        Assert.assertEquals(names, Arrays.asList(qualifiedName));
-    }
-
-    /**
-     * Test multiple table creation then list tables.
-     */
-    @Test
-    public void testMultipleTableCreationAndList() {
-        final List<QualifiedName> createdTables = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table" + i);
-            final TableInfo tableInfo = TableInfo.builder()
-                .name(qualifiedName)
-                .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc" + i))
-                .build();
-            polarisTableService.create(requestContext, tableInfo);
-            createdTables.add(qualifiedName);
-        }
-        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "");
-        final List<QualifiedName> names = polarisTableService.listNames(
-            requestContext, DB_QUALIFIED_NAME, qualifiedName, new Sort(null, SortOrder.ASC), new Pageable(20, 0));
-        Assert.assertEquals(names, createdTables);
     }
 
     /**
@@ -208,34 +154,6 @@ public class PolarisConnectorTableServiceTest {
         polarisTableService.delete(requestContext, qualifiedName);
         exists = polarisTableService.exists(requestContext, qualifiedName);
         Assert.assertFalse(exists);
-    }
-
-    /**
-     * Test get table names.
-     */
-    @Test
-    public void testGetTableNames() {
-        final QualifiedName name1 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
-        final TableInfo tableInfo1 = TableInfo.builder()
-            .name(name1)
-            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc1"))
-            .build();
-        polarisTableService.create(requestContext, tableInfo1);
-        final QualifiedName name2 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table2");
-        final TableInfo tableInfo2 = TableInfo.builder()
-            .name(name2)
-            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc2"))
-            .build();
-        polarisTableService.create(requestContext, tableInfo2);
-        final QualifiedName name3 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table3");
-        final TableInfo tableInfo3 = TableInfo.builder()
-            .name(name3)
-            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc3"))
-            .build();
-        polarisTableService.create(requestContext, tableInfo3);
-        final List<QualifiedName> tables = polarisTableService.getTableNames(requestContext, DB_QUALIFIED_NAME, "", -1);
-        Assert.assertEquals(tables.size(), 3);
-        Assert.assertEquals(tables, ImmutableList.of(name1, name2, name3));
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.netflix.metacat.connector.polaris;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.netflix.metacat.common.QualifiedName;
@@ -17,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,88 @@ import java.util.stream.Collectors;
 @ActiveProfiles(profiles = {"polaris_functional_test"})
 @AutoConfigureDataJpa
 public class PolarisConnectorTableServiceFunctionalTest extends PolarisConnectorTableServiceTest {
+    /**
+     * Test get table names.
+     */
+    @Test
+    public void testGetTableNames() {
+        final QualifiedName name1 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
+        final TableInfo tableInfo1 = TableInfo.builder()
+            .name(name1)
+            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc1"))
+            .build();
+        getPolarisTableService().create(getRequestContext(), tableInfo1);
+        final QualifiedName name2 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table2");
+        final TableInfo tableInfo2 = TableInfo.builder()
+            .name(name2)
+            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc2"))
+            .build();
+        getPolarisTableService().create(getRequestContext(), tableInfo2);
+        final QualifiedName name3 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table3");
+        final TableInfo tableInfo3 = TableInfo.builder()
+            .name(name3)
+            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc3"))
+            .build();
+        getPolarisTableService().create(getRequestContext(), tableInfo3);
+
+        try {
+            // pause execution for 10000 milliseconds (10 seconds)
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            log.debug("Sleep was interrupted");
+        }
+
+        final List<QualifiedName> tables = getPolarisTableService()
+            .getTableNames(getRequestContext(), DB_QUALIFIED_NAME, "", -1);
+        Assert.assertEquals(tables.size(), 3);
+        Assert.assertEquals(tables, ImmutableList.of(name1, name2, name3));
+    }
+
+    /**
+     * Test empty list tables.
+     */
+    @Test
+    public void testListTablesEmpty() {
+        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "");
+
+        try {
+            // pause execution for 10000 milliseconds (10 seconds)
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            log.debug("Sleep was interrupted");
+        }
+
+        final List<QualifiedName> names = getPolarisTableService().listNames(
+            getRequestContext(), DB_QUALIFIED_NAME, qualifiedName,
+            new Sort(null, SortOrder.ASC), new Pageable(2, 0));
+        Assert.assertEquals(names, Arrays.asList());
+    }
+
+    /**
+     * Test table creation then list tables.
+     */
+    @Test
+    public void testTableCreationAndList() {
+        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
+        final TableInfo tableInfo = TableInfo.builder()
+            .name(qualifiedName)
+            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc1"))
+            .build();
+        getPolarisTableService().create(getRequestContext(), tableInfo);
+
+        try {
+            // pause execution for 10000 milliseconds (10 seconds)
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            log.debug("Sleep was interrupted");
+        }
+
+        final List<QualifiedName> names = getPolarisTableService().listNames(
+            getRequestContext(), DB_QUALIFIED_NAME, qualifiedName,
+            new Sort(null, SortOrder.ASC), new Pageable(2, 0));
+        Assert.assertEquals(names, Arrays.asList(qualifiedName));
+    }
+
     /**
      * Test table list.
      */
