@@ -20,7 +20,6 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
@@ -126,30 +125,6 @@ public class PolarisStoreConnectorTest {
 
         polarisConnector.deleteTable(dbName, tblName);
         Assert.assertFalse(polarisConnector.tableExistsById(tblEntity.getTblId()));
-    }
-
-    /**
-     * Test to verify that table names fetch works.
-     */
-    @Test
-    public void testPaginatedFetch() {
-        final String dbName = generateDatabaseName();
-        final PolarisDatabaseEntity dbEntity = createDB(dbName);
-        List<String> tblNames = polarisConnector.getTables(dbName, "");
-        Assert.assertEquals(0, tblNames.size());
-
-        final String tblNameA = "A_" + generateTableName();
-        final String tblNameB = "B_" + generateTableName();
-        final String tblNameC = "C_" + generateTableName();
-        createTable(dbName, tblNameA);
-        createTable(dbName, tblNameB);
-        createTable(dbName, tblNameC);
-
-        tblNames = polarisConnector.getTables(dbName, "");
-        Assert.assertEquals(3, tblNames.size());
-        Assert.assertEquals(tblNameA, tblNames.get(0));
-        Assert.assertEquals(tblNameB, tblNames.get(1));
-        Assert.assertEquals(tblNameC, tblNames.get(2));
     }
 
     /**

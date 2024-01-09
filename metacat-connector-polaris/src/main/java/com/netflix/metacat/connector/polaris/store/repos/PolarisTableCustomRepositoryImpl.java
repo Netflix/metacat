@@ -25,8 +25,8 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
     @PersistenceContext
     private EntityManager entityManager;
 
-    private Slice<PolarisTableEntity> findAllTablesByDbNameAndTablePrefixForCurrentPage(
-        final String dbName, final String tableNamePrefix, final Pageable page) {
+    private <T> Slice<T> findAllTablesByDbNameAndTablePrefixForCurrentPage(
+        final String dbName, final String tableNamePrefix, final Pageable page, final boolean selectAllColumns) {
 
         // Generate ORDER BY clause
         String orderBy = "";
@@ -37,14 +37,21 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
             orderBy = " ORDER BY " + orderBy;
         }
 
-        final String sql = "SELECT t.* FROM TBLS t "
+        final String selectClause = selectAllColumns ? "t.*" : "t.tbl_name";
+        final String sql = "SELECT " + selectClause + " FROM TBLS t "
             + "WHERE t.db_name = :dbName AND t.tbl_name LIKE :tableNamePrefix" + orderBy;
-        final Query query = entityManager.createNativeQuery(sql, PolarisTableEntity.class);
+
+        Query query;
+        if (selectAllColumns) {
+            query = entityManager.createNativeQuery(sql, PolarisTableEntity.class);
+        } else {
+            query = entityManager.createNativeQuery(sql);
+        }
         query.setParameter("dbName", dbName);
         query.setParameter("tableNamePrefix", tableNamePrefix + "%");
         query.setFirstResult(page.getPageNumber() * page.getPageSize());
         query.setMaxResults(page.getPageSize() + 1); // Fetch one extra result to determine if there is a next page
-        final List<PolarisTableEntity> resultList = query.getResultList();
+        final List<T> resultList = query.getResultList();
         // Check if there is a next page
         final boolean hasNext = resultList.size() > page.getPageSize();
         // If there is a next page, remove the last item from the list
@@ -56,18 +63,18 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
 
     @Override
     @Transactional
-    public List<PolarisTableEntity> findAllTablesByDbNameAndTablePrefix(
-        final String dbName, final String tableNamePrefix, final int pageFetchSize) {
+    public List<?> findAllTablesByDbNameAndTablePrefix(
+        final String dbName, final String tableNamePrefix, final int pageFetchSize, final boolean selectAllColumns) {
         Pageable page = PageRequest.of(0, pageFetchSize, Sort.by("tbl_name").ascending());
         entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
             .executeUpdate();
-        final List<PolarisTableEntity> retval = new ArrayList<>();
+        final List<Object> retval = new ArrayList<>();
         final String tblPrefix =  tableNamePrefix == null ? "" : tableNamePrefix;
-        Slice<PolarisTableEntity> tbls;
+        Slice<?> tbls;
         boolean hasNext;
         do {
-            tbls = findAllTablesByDbNameAndTablePrefixForCurrentPage(dbName, tblPrefix, page);
-            retval.addAll(tbls.toList());
+            tbls = findAllTablesByDbNameAndTablePrefixForCurrentPage(dbName, tblPrefix, page, selectAllColumns);
+            retval.addAll(tbls.getContent());
             hasNext = tbls.hasNext();
             if (hasNext) {
                 page = tbls.nextPageable();

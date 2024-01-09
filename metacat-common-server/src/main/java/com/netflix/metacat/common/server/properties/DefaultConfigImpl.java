@@ -640,6 +640,16 @@ public class DefaultConfigImpl implements Config {
     }
 
     @Override
+    public int getListTableEntitiesPageSize() {
+        return this.metacatProperties.getService().getListTableEntitiesPageSize();
+    }
+
+    @Override
+    public int getListTableNamesPageSize() {
+        return this.metacatProperties.getService().getListTableNamesPageSize();
+    }
+
+    @Override
     public int getMetadataQueryTimeout() {
         return this.metacatProperties.getUsermetadata().getQueryTimeoutInSeconds();
     }

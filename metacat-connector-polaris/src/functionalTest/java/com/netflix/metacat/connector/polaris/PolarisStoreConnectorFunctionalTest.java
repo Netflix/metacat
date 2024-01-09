@@ -26,6 +26,37 @@ import java.util.List;
 public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTest {
 
     /**
+     * Test to verify that table names fetch works.
+     */
+    @Test
+    public void testPaginatedFetch() {
+        final String dbName = generateDatabaseName();
+        createDB(dbName);
+        List<String> tblNames = getPolarisConnector().getTables(dbName, "", 1000);
+        Assert.assertEquals(0, tblNames.size());
+
+        final String tblNameA = "A_" + generateTableName();
+        final String tblNameB = "B_" + generateTableName();
+        final String tblNameC = "C_" + generateTableName();
+        createTable(dbName, tblNameA);
+        createTable(dbName, tblNameB);
+        createTable(dbName, tblNameC);
+
+        try {
+            // pause execution for 10000 milliseconds (10 seconds)
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            log.debug("Sleep was interrupted");
+        }
+
+        tblNames = getPolarisConnector().getTables(dbName, "", 1000);
+        Assert.assertEquals(3, tblNames.size());
+        Assert.assertEquals(tblNameA, tblNames.get(0));
+        Assert.assertEquals(tblNameB, tblNames.get(1));
+        Assert.assertEquals(tblNameC, tblNames.get(2));
+    }
+
+    /**
      * Test getTableEntities.
      */
     @Test

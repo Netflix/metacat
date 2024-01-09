@@ -106,9 +106,10 @@ public interface PolarisStoreService {
      * Gets tables in the database and tableName prefix.
      * @param databaseName database name
      * @param tableNamePrefix table name prefix
+     * @param pageFetchSize size of each page
      * @return list of table names in the database with the table name prefix.
      */
-    List<String> getTables(String databaseName, String tableNamePrefix);
+    List<String> getTables(String databaseName, String tableNamePrefix, int pageFetchSize);
 
     /**
      * Do an atomic compare-and-swap to update the table's metadata location.

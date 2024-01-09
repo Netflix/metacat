@@ -37,6 +37,8 @@ public class ServiceProperties {
     private Tables tables = new Tables();
     private boolean listTableNamesByDefaultOnGetDatabase = true;
     private boolean listDatabaseNameByDefaultOnGetCatalog = true;
+    private int listTableEntitiesPageSize = 1000;
+    private int listTableNamesPageSize = 10000;
 
     /**
      * Max related properties.
