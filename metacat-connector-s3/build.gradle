@@ -21,16 +21,16 @@ dependencies {
      * Compile Dependencies
      *******************************/
 
-    implementation(project(":metacat-common-server"))
-    implementation(project(":metacat-connector-pig"))
+    api(project(":metacat-common-server"))
+    api(project(":metacat-connector-pig"))
 
-    implementation("com.google.guava:guava")
-    implementation("com.google.inject:guice")
-    implementation("com.google.inject.extensions:guice-persist")
-    implementation("com.google.inject.extensions:guice-multibindings")
-    implementation("com.google.inject.extensions:guice-servlet")
-    implementation("joda-time:joda-time:2.10.10")
-    implementation("org.hibernate:hibernate-entitymanager")
+    api("com.google.guava:guava")
+    api("com.google.inject:guice")
+    api("com.google.inject.extensions:guice-persist")
+    api("com.google.inject.extensions:guice-multibindings")
+    api("com.google.inject.extensions:guice-servlet")
+    api("joda-time:joda-time:2.10.10")
+    api("org.hibernate:hibernate-entitymanager")
 
     /*******************************
      * Provided Dependencies

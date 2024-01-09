@@ -32,10 +32,10 @@ dependencies {
     /*******************************
      * Compile Dependencies
      *******************************/
-    implementation(project(":metacat-connector-jdbc"))
-    implementation(project(":metacat-common-server"))
-    implementation('org.springframework.data:spring-data-jpa')
-    implementation("com.h2database:h2")
+    api(project(":metacat-connector-jdbc"))
+    api(project(":metacat-common-server"))
+    api('org.springframework.data:spring-data-jpa')
+    api("com.h2database:h2")
 
     /*******************************
      * Provided Dependencies

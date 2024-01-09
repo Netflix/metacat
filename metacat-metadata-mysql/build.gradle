@@ -28,10 +28,10 @@ dependencies {
      * Implementation Dependencies
      *******************************/
 
-    implementation("commons-dbutils:commons-dbutils")
-    implementation("com.google.guava:guava")
-    implementation("org.apache.tomcat:tomcat-jdbc")
-    implementation("org.slf4j:slf4j-api")
+    api("commons-dbutils:commons-dbutils")
+    api("com.google.guava:guava")
+    api("org.apache.tomcat:tomcat-jdbc")
+    api("org.slf4j:slf4j-api")
     /*******************************
      * Provided Dependencies
      *******************************/
