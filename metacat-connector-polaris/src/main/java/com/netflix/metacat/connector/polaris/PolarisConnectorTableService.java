@@ -396,7 +396,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 final List<String> tableNames = polarisStoreService.getTables(
                     name.getDatabaseName(),
                     "",
-                    1000);
+                    connectorContext.getConfig().getListTableNamesPageSize());
                 result.addAll(tableNames.stream()
                     .map(n -> QualifiedName.ofTable(name.getCatalogName(), databaseName, n))
                     .limit(limitSize)
