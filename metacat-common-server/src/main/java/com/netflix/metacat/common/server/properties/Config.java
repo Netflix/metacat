@@ -553,6 +553,20 @@ public interface Config {
     boolean listDatabaseNameByDefaultOnGetCatalog();
 
     /**
+     * Get the page size when listing table entities.
+     *
+     * @return True if it is.
+     */
+    int getListTableEntitiesPageSize();
+
+    /**
+     * Get the page size when listing table names.
+     *
+     * @return True if it is.
+     */
+    int getListTableNamesPageSize();
+
+    /**
      * Metadata query timeout in seconds.
      *
      * @return Metadata query timeout in seconds

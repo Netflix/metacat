@@ -26,7 +26,7 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
     private EntityManager entityManager;
 
     private <T> Slice<T> findAllTablesByDbNameAndTablePrefixForCurrentPage(
-        final String dbName, final String tableNamePrefix, final Pageable page, final boolean selectAll) {
+        final String dbName, final String tableNamePrefix, final Pageable page, final boolean selectAllColumns) {
 
         // Generate ORDER BY clause
         String orderBy = "";
@@ -37,12 +37,12 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
             orderBy = " ORDER BY " + orderBy;
         }
 
-        final String selectClause = selectAll ? "t.*" : "t.tbl_name";
+        final String selectClause = selectAllColumns ? "t.*" : "t.tbl_name";
         final String sql = "SELECT " + selectClause + " FROM TBLS t "
             + "WHERE t.db_name = :dbName AND t.tbl_name LIKE :tableNamePrefix" + orderBy;
 
         Query query;
-        if (selectAll) {
+        if (selectAllColumns) {
             query = entityManager.createNativeQuery(sql, PolarisTableEntity.class);
         } else {
             query = entityManager.createNativeQuery(sql);
@@ -64,7 +64,7 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
     @Override
     @Transactional
     public List<?> findAllTablesByDbNameAndTablePrefix(
-        final String dbName, final String tableNamePrefix, final int pageFetchSize, final boolean selectAll) {
+        final String dbName, final String tableNamePrefix, final int pageFetchSize, final boolean selectAllColumns) {
         Pageable page = PageRequest.of(0, pageFetchSize, Sort.by("tbl_name").ascending());
         entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
             .executeUpdate();
@@ -73,7 +73,7 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
         Slice<?> tbls;
         boolean hasNext;
         do {
-            tbls = findAllTablesByDbNameAndTablePrefixForCurrentPage(dbName, tblPrefix, page, selectAll);
+            tbls = findAllTablesByDbNameAndTablePrefixForCurrentPage(dbName, tblPrefix, page, selectAllColumns);
             retval.addAll(tbls.getContent());
             hasNext = tbls.hasNext();
             if (hasNext) {

@@ -11,9 +11,9 @@ public interface PolarisTableCustomRepository {
      * @param dbName database name
      * @param tableNamePrefix table name prefix. can be empty.
      * @param pageSize target size for each page
-     * @param selectAll if true return the PolarisEntity else return name of the entity
+     * @param selectAllColumns if true return the PolarisEntity else return name of the entity
      * @return table entities in the database.
      */
     List<?> findAllTablesByDbNameAndTablePrefix(
-        String dbName, String tableNamePrefix, int pageSize, boolean selectAll);
+        String dbName, String tableNamePrefix, int pageSize, boolean selectAllColumns);
 }

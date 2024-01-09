@@ -189,7 +189,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             final String tableFilter = (prefix != null && prefix.isTableDefinition()) ? prefix.getTableName() : "";
             for (String tableName : polarisStoreService.getTables(name.getDatabaseName(),
                 tableFilter,
-                1000)
+                connectorContext.getConfig().getListTableNamesPageSize())
             ) {
                 final QualifiedName qualifiedName =
                     QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName);
@@ -341,7 +341,9 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         try {
             final String tableFilter = (prefix != null && prefix.isTableDefinition()) ? prefix.getTableName() : "";
             final List<PolarisTableEntity> tbls =
-                polarisStoreService.getTableEntities(name.getDatabaseName(), tableFilter, 1000);
+                polarisStoreService.getTableEntities(name.getDatabaseName(),
+                    tableFilter,
+                    connectorContext.getConfig().getListTableEntitiesPageSize());
             if (sort != null) {
                 ConnectorUtils.sort(tbls, sort, Comparator.comparing(t -> t.getTblName()));
             }
