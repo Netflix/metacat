@@ -28,13 +28,13 @@ dependencies {
      * Implementation Dependencies
      *******************************/
 
-    implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava")
-    implementation("com.fasterxml.jackson.module:jackson-module-jaxb-annotations")
-    implementation("com.google.guava:guava")
-    implementation("io.github.openfeign:feign-jaxrs")
-    implementation("io.github.openfeign:feign-slf4j")
-    implementation("org.slf4j:slf4j-api")
+    api("com.fasterxml.jackson.core:jackson-databind")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-guava")
+    api("com.fasterxml.jackson.module:jackson-module-jaxb-annotations")
+    api("com.google.guava:guava")
+    api("io.github.openfeign:feign-jaxrs")
+    api("io.github.openfeign:feign-slf4j")
+    api("org.slf4j:slf4j-api")
 
     /*******************************
      * Provided Dependencies

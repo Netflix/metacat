@@ -32,7 +32,7 @@ dependencies {
      * Implementation Dependencies
      *******************************/
 
-    implementation("com.google.guava:guava")
+    api("com.google.guava:guava")
 
     /*******************************
      * Provided Dependencies

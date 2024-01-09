@@ -32,14 +32,14 @@ dependencies {
     /*******************************
      * Compile Dependencies
      *******************************/
-    implementation(project(":metacat-connector-hive"))
-    implementation(project(":metacat-connector-jdbc"))
-    implementation(project(":metacat-common-server"))
-    implementation('org.springframework.data:spring-data-jpa')
-    implementation('org.springframework.boot:spring-boot-starter-aop')
-    implementation('org.springframework.retry:spring-retry')
-    implementation("org.springframework:spring-aspects")
-    implementation("com.h2database:h2")
+    api(project(":metacat-connector-hive"))
+    api(project(":metacat-connector-jdbc"))
+    api(project(":metacat-common-server"))
+    api('org.springframework.data:spring-data-jpa')
+    api('org.springframework.boot:spring-boot-starter-aop')
+    api('org.springframework.retry:spring-retry')
+    api("org.springframework:spring-aspects")
+    api("com.h2database:h2")
 
     /*******************************
      * Provided Dependencies

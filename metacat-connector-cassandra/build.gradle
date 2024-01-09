@@ -21,10 +21,10 @@ dependencies {
      * Compile Dependencies
      *******************************/
 
-    implementation(project(":metacat-common-server"))
+    api(project(":metacat-common-server"))
 
-    implementation("com.datastax.cassandra:cassandra-driver-core")
-    implementation("com.google.inject:guice")
+    api("com.datastax.cassandra:cassandra-driver-core")
+    api("com.google.inject:guice")
 
     /*******************************
      * Provided Dependencies

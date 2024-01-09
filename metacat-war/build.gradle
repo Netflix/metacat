@@ -29,10 +29,10 @@ dependencies {
      *******************************/
 
     // TODO: Fix dependencies
-    implementation(project(":metacat-common"))
-    implementation(project(":metacat-common-server"))
-    implementation(project(":metacat-main"))
-    implementation(project(":metacat-metadata-mysql"))
+    api(project(":metacat-common"))
+    api(project(":metacat-common-server"))
+    api(project(":metacat-main"))
+    api(project(":metacat-metadata-mysql"))
     implementation 'org.springframework:spring-web'
 
     /*******************************

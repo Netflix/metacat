@@ -39,20 +39,20 @@ dependencies {
      * Implementation Dependencies
      *******************************/
 
-    implementation(project(":metacat-metadata-mysql"))
+    api(project(":metacat-metadata-mysql"))
 
-    implementation("com.google.guava:guava")
-    implementation("com.github.rholder:guava-retrying") {
+    api("com.google.guava:guava")
+    api("com.github.rholder:guava-retrying") {
         exclude module: "guava"
     }
-    implementation("io.springfox:springfox-boot-starter")
-    implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.boot:spring-boot-starter-hateoas")
-    implementation("org.springframework.boot:spring-boot-starter-logging")
-    implementation("org.springframework.boot:spring-boot-starter-tomcat")
-    implementation("javax.validation:validation-api")
+    api("io.springfox:springfox-boot-starter")
+    api("org.springframework.boot:spring-boot-starter")
+    api("org.springframework.boot:spring-boot-starter-web")
+    api("org.springframework.boot:spring-boot-starter-actuator")
+    api("org.springframework.boot:spring-boot-starter-hateoas")
+    api("org.springframework.boot:spring-boot-starter-logging")
+    api("org.springframework.boot:spring-boot-starter-tomcat")
+    api("javax.validation:validation-api")
     implementation 'io.springfox:springfox-boot-starter'
 
     /*******************************

@@ -23,7 +23,7 @@ dependencies {
 
     api(project(":metacat-common-server"))
 
-    implementation("com.google.inject:guice")
+    api("com.google.inject:guice")
 
     /*******************************
      * Provided Dependencies

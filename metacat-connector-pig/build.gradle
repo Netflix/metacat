@@ -21,13 +21,13 @@ dependencies {
      * Compile Dependencies
      *******************************/
 
-    implementation(project(":metacat-common-server"))
+    api(project(":metacat-common-server"))
 
-    implementation("com.google.guava:guava")
-    implementation("com.google.inject:guice")
-    implementation("org.apache.pig:pig")
-    implementation("org.apache.hadoop:hadoop-core")
-    implementation("org.slf4j:slf4j-api")
+    api("com.google.guava:guava")
+    api("com.google.inject:guice")
+    api("org.apache.pig:pig")
+    api("org.apache.hadoop:hadoop-core")
+    api("org.slf4j:slf4j-api")
 
     /*******************************
      * Provided Dependencies

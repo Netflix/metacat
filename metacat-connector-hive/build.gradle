@@ -21,17 +21,17 @@ dependencies {
      * Compile Dependencies
      *******************************/
 
-    implementation(project(":metacat-common-server"))
+    api(project(":metacat-common-server"))
 
-    implementation("org.apache.hive:hive-metastore")
-    implementation("org.apache.hive:hive-exec:${hive_version}:core@jar")
-    implementation("org.apache.hadoop:hadoop-core")
-    implementation("com.github.rholder:guava-retrying") {
+    api("org.apache.hive:hive-metastore")
+    api("org.apache.hive:hive-exec:${hive_version}:core@jar")
+    api("org.apache.hadoop:hadoop-core")
+    api("com.github.rholder:guava-retrying") {
         exclude module: "guava"
     }
 
-    implementation("commons-dbutils:commons-dbutils")
-    implementation("org.apache.iceberg:iceberg-spark-runtime")
+    api("commons-dbutils:commons-dbutils")
+    api("org.apache.iceberg:iceberg-spark-runtime")
     /*******************************
      * Provided Dependencies
      *******************************/

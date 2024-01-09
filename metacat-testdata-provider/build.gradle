@@ -21,10 +21,10 @@ dependencies {
      * Compile Dependencies
      *******************************/
 
-    implementation(project(":metacat-common"))
-    implementation(project(":metacat-common-server"))
+    api(project(":metacat-common"))
+    api(project(":metacat-common-server"))
 
-    implementation("org.codehaus.groovy:groovy-all")
+    api("org.codehaus.groovy:groovy-all")
 
     /*******************************
      * Provided Dependencies
