@@ -109,7 +109,7 @@ public final class MetacatCatalogConfig {
         final String clusterEnv = properties.get(Keys.CLUSTER_ENV);
         final String clusterRegion = properties.get(Keys.CLUSTER_REGION);
         final ClusterInfo clusterInfo =
-            new ClusterInfo(clusterName, type, clusterAccount, clusterAccountId, clusterEnv, clusterRegion);
+            new ClusterInfo(clusterName, catalogType, clusterAccount, clusterAccountId, clusterEnv, clusterRegion);
 
         return new MetacatCatalogConfig(catalogType, catalogName, clusterInfo, includeViewsWithTables, schemaWhitelist,
             schemaBlacklist, thriftPort, cacheEnabled, interceptorEnabled, hasDataExternal);
