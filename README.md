@@ -12,7 +12,7 @@ Metacat provides you information about what data you have, where it resides and 
 is really data about the data. So the primary purpose of Metacat is to give a place to describe the data so that we 
 could do more useful things with it. 
 
-Metacat focusses on solving these three problems:
+Metacat focuses on solving these 3 problems:
 
 * Federate views of metadata systems.
 * Allow arbitrary metadata storage about data sets.
