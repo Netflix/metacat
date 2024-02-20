@@ -27,8 +27,10 @@ public class PolarisDatabaseMapper implements
      */
     @Override
     public DatabaseInfo toInfo(final PolarisDatabaseEntity entity) {
+        final AuditMapper mapper = new AuditMapper();
         final DatabaseInfo databaseInfo = DatabaseInfo.builder()
             .name(QualifiedName.ofDatabase(catalogName, entity.getDbName()))
+            .auditInfo(mapper.toInfo(entity.getAudit()))
             .uri(entity.getLocation())
             .build();
         return databaseInfo;
