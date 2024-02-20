@@ -8,6 +8,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
+import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
@@ -27,6 +28,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import spock.lang.Shared;
 
+import java.util.Date;
 import java.util.List;
 
 
@@ -120,6 +122,24 @@ public class PolarisConnectorDatabaseServiceTest {
             .name(DB1_QUALIFIED_NAME).uri("db1_name.db").build();
         final DatabaseInfo result = polarisDBService.get(requestContext, DB1_QUALIFIED_NAME);
         Assert.assertEquals(infoExpected, result);
+    }
+
+    /**
+     * Test create database get audit info.
+     */
+    @Test
+    public void testDbAudit() {
+        final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
+        Date date = new Date();
+        polarisDBService.create(requestContext, info);
+        final DatabaseInfo infoExpected = DatabaseInfo.builder()
+            .name(DB1_QUALIFIED_NAME).uri(DB1_NAME + ".db").build();
+        final DatabaseInfo result = polarisDBService.get(requestContext, DB1_QUALIFIED_NAME);
+        Assert.assertEquals(infoExpected, result);
+        final AuditInfo auditInfo = result.getAudit();
+        Assert.assertNotNull(auditInfo);
+        Assert.assertTrue(auditInfo.getCreatedDate().after(date));
+        Assert.assertEquals(auditInfo.getCreatedDate(), auditInfo.getLastModifiedDate());
     }
 
     /**

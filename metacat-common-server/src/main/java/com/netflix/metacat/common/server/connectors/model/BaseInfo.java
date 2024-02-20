@@ -37,9 +37,9 @@ import java.util.Map;
 public abstract class BaseInfo implements Serializable {
     private static final long serialVersionUID = 284049639636194327L;
     /* Name of the resource */
-    private QualifiedName name;
+    protected QualifiedName name;
     /* Audit information of the resource */
-    private AuditInfo audit;
+    protected AuditInfo audit;
     /* Metadata properties of the resource */
-    private Map<String, String> metadata;
+    protected Map<String, String> metadata;
 }

@@ -33,7 +33,7 @@ import java.util.Map;
  */
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(of = {"name", "uri"})
 public final class DatabaseInfo extends BaseInfo {
     /* location of the database */
     private String uri;
