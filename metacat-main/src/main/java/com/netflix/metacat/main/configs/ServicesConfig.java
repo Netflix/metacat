@@ -18,6 +18,8 @@
 package com.netflix.metacat.main.configs;
 
 import com.netflix.metacat.common.json.MetacatJson;
+import com.netflix.metacat.common.server.api.authorization.Authorization;
+import com.netflix.metacat.common.server.api.authorization.DefaultAuthorization;
 import com.netflix.metacat.common.server.api.ratelimiter.DefaultRateLimiter;
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
 import com.netflix.metacat.common.server.api.traffic_control.DefaultRequestGateway;
@@ -154,6 +156,17 @@ public class ServicesConfig {
     @ConditionalOnMissingBean(RateLimiter.class)
     public RateLimiter rateLimiter() {
         return new DefaultRateLimiter();
+    }
+
+    /**
+     * Authorization service.
+     *
+     * @return The authorization service bean.
+     */
+    @Bean
+    @ConditionalOnMissingBean(Authorization.class)
+    public Authorization authorization() {
+        return new DefaultAuthorization();
     }
 
     /**

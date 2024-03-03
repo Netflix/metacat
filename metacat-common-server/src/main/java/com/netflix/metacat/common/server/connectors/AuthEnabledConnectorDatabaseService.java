@@ -1,9 +1,13 @@
 package com.netflix.metacat.common.server.connectors;
 
+import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.exception.MetacatTooManyRequestsException;
+import com.netflix.metacat.common.exception.MetacatUnAuthorizedException;
+import com.netflix.metacat.common.server.api.authorization.Authorization;
+import com.netflix.metacat.common.server.api.authorization.AuthorizationStatus;
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiterRequestContext;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
@@ -18,47 +22,45 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 /**
- * Connector that throttles calls to the connector based on the contextual request name
- * and the resource. Not all APIs can be throttled since we may not have a resource
- * but those are a small minority
+ * Connector that authorizes requests based on the request context.
  */
 @Slf4j
 @RequiredArgsConstructor
-public class ThrottlingConnectorDatabaseService implements ConnectorDatabaseService {
+public class AuthEnabledConnectorDatabaseService implements ConnectorDatabaseService {
     @Getter
     @NonNull
     private final ConnectorDatabaseService delegate;
     @NonNull
-    private final RateLimiter rateLimiter;
+    private final Authorization authorization;
 
     @Override
     public void create(final ConnectorRequestContext context, final DatabaseInfo resource) {
-        checkThrottling(MetacatContextManager.getContext().getRequestName(), resource.getName());
+        authorize(MetacatContextManager.getContext(), resource.getName());
         delegate.create(context, resource);
     }
 
     @Override
     public void update(final ConnectorRequestContext context, final DatabaseInfo resource) {
-        checkThrottling(MetacatContextManager.getContext().getRequestName(), resource.getName());
+        authorize(MetacatContextManager.getContext(), resource.getName());
         delegate.update(context, resource);
     }
 
     @Override
     public void delete(final ConnectorRequestContext context, final QualifiedName name) {
-        checkThrottling(MetacatContextManager.getContext().getRequestName(), name);
+        authorize(MetacatContextManager.getContext(), name);
         delegate.delete(context, name);
     }
 
     @Override
     public DatabaseInfo get(final ConnectorRequestContext context, final QualifiedName name) {
-        checkThrottling(MetacatContextManager.getContext().getRequestName(), name);
+        authorize(MetacatContextManager.getContext(), name);
         return delegate.get(context, name);
     }
 
     @Override
     @SuppressFBWarnings
     public boolean exists(final ConnectorRequestContext context, final QualifiedName name) {
-        checkThrottling(MetacatContextManager.getContext().getRequestName(), name);
+        authorize(MetacatContextManager.getContext(), name);
         return delegate.exists(context, name);
     }
 
@@ -66,7 +68,7 @@ public class ThrottlingConnectorDatabaseService implements ConnectorDatabaseServ
     public List<DatabaseInfo> list(final ConnectorRequestContext context, final QualifiedName name,
                                    @Nullable final QualifiedName prefix, @Nullable final Sort sort,
                                    @Nullable final Pageable pageable) {
-        checkThrottling(MetacatContextManager.getContext().getRequestName(), name);
+        authorize(MetacatContextManager.getContext(), name);
         return delegate.list(context, name, prefix, sort, pageable);
     }
 
@@ -74,29 +76,30 @@ public class ThrottlingConnectorDatabaseService implements ConnectorDatabaseServ
     public List<QualifiedName> listNames(final ConnectorRequestContext context, final QualifiedName name,
                                          @Nullable final QualifiedName prefix, @Nullable final Sort sort,
                                          @Nullable final Pageable pageable) {
-        checkThrottling(MetacatContextManager.getContext().getRequestName(), name);
+        authorize(MetacatContextManager.getContext(), name);
         return delegate.listNames(context, name, prefix, sort, pageable);
     }
 
     @Override
     public void rename(final ConnectorRequestContext context, final QualifiedName oldName,
                        final QualifiedName newName) {
-        checkThrottling(MetacatContextManager.getContext().getRequestName(), oldName);
+        authorize(MetacatContextManager.getContext(), oldName);
         delegate.rename(context, oldName, newName);
     }
 
     @Override
     public List<QualifiedName> listViewNames(final ConnectorRequestContext context, final QualifiedName databaseName) {
-        checkThrottling(MetacatContextManager.getContext().getRequestName(), databaseName);
+        authorize(MetacatContextManager.getContext(), databaseName);
         return delegate.listViewNames(context, databaseName);
     }
 
-    private void checkThrottling(final String requestName, final QualifiedName resource) {
-        if (rateLimiter.hasExceededRequestLimit(new RateLimiterRequestContext(requestName, resource))) {
-            final String errorMsg = String.format("Too many requests for resource %s. Request: %s",
-                resource, requestName);
+    private void authorize(final MetacatRequestContext context, final QualifiedName resource) {
+        final AuthorizationStatus status = authorization.isAuthorized(context);
+        if (!status.isAuthorized()) {
+            final String errorMsg = String.format("Forbidden request %s for resource %s. Details: %s",
+                MetacatContextManager.getContext().getRequestName(), resource, status.getDetails());
             log.warn(errorMsg);
-            throw new MetacatTooManyRequestsException(errorMsg);
+            throw new MetacatUnAuthorizedException(errorMsg);
         }
     }
 
