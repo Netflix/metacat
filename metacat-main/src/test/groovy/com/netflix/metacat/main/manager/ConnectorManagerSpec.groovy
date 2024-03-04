@@ -19,6 +19,7 @@
 package com.netflix.metacat.main.manager
 
 import com.netflix.metacat.common.QualifiedName
+import com.netflix.metacat.common.server.api.authorization.Authorization
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter
 import com.netflix.metacat.common.server.connectors.ConnectorCatalogService
 import com.netflix.metacat.common.server.connectors.ConnectorContext
@@ -44,6 +45,7 @@ class ConnectorManagerSpec extends Specification {
     def config = Mock(Config)
     def plugin = Mock(ConnectorPlugin)
     def rateLimiter = Mock(RateLimiter)
+    def authorization = Mock(Authorization)
     def context = Mock(ConnectorContext)
     def appContext = Mock(ApplicationContext)
 
@@ -55,6 +57,7 @@ class ConnectorManagerSpec extends Specification {
 
         context.getApplicationContext() >> appContext
         appContext.getBean(RateLimiter) >> rateLimiter
+        appContext.getBean(Authorization) >> authorization
     }
 
     def testAddPlugin(){
@@ -114,7 +117,7 @@ class ConnectorManagerSpec extends Specification {
 
         then:
         1 * context.getConnectorType() >> 'invalid'
-        0 * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
+        0 * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", "connector.authorization-exempted": "true"]
         noExceptionThrown()
 
         when:
@@ -123,7 +126,7 @@ class ConnectorManagerSpec extends Specification {
         then:
         (1.._) * context.getConnectorType() >> 'default'
         (1.._) * context.getCatalogName() >> 'a'
-        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", "connector.authorization-exempted": "true"]
         noExceptionThrown()
 
         when:
@@ -132,7 +135,7 @@ class ConnectorManagerSpec extends Specification {
         then:
         (1.._) * context.getConnectorType() >> 'hive'
         (1.._) * context.getCatalogName() >> 'h'
-        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", "connector.authorization-exempted": "true"]
         noExceptionThrown()
 
         when:
@@ -141,7 +144,7 @@ class ConnectorManagerSpec extends Specification {
         then:
         (1.._) * context.getConnectorType() >> 'default'
         (1.._) * context.getCatalogName() >> 'a'
-        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", "connector.authorization-exempted": "true"]
         thrown(IllegalStateException)
 
         when:
@@ -150,7 +153,7 @@ class ConnectorManagerSpec extends Specification {
         then:
         (1.._) * context.getConnectorType() >> 'default'
         (1.._) * context.getCatalogName() >> 'a1'
-        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", "connector.authorization-exempted": "true"]
         noExceptionThrown()
 
         when:
@@ -159,7 +162,7 @@ class ConnectorManagerSpec extends Specification {
         then:
         (1.._) * context.getConnectorType() >> 'default'
         (1.._) * context.getCatalogName() >> 'a'
-        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", 'metacat.schema.whitelist':'d1']
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", "connector.authorization-exempted": "true", 'metacat.schema.whitelist':'d1']
         noExceptionThrown()
 
         when:
@@ -168,7 +171,7 @@ class ConnectorManagerSpec extends Specification {
         then:
         (1.._) * context.getConnectorType() >> 'default'
         (1.._) * context.getCatalogName() >> 'a'
-        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", 'metacat.schema.whitelist':'d1']
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", "connector.authorization-exempted": "true", 'metacat.schema.whitelist':'d1']
         thrown(IllegalStateException)
 
         when:
@@ -177,7 +180,7 @@ class ConnectorManagerSpec extends Specification {
         then:
         (1.._) * context.getConnectorType() >> 'default'
         (1.._) * context.getCatalogName() >> 'a'
-        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", 'metacat.schema.whitelist':'d2,d3']
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", "connector.authorization-exempted": "true", 'metacat.schema.whitelist':'d2,d3']
         noExceptionThrown()
 
         when:
@@ -186,7 +189,7 @@ class ConnectorManagerSpec extends Specification {
         then:
         (1.._) * context.getConnectorType() >> 'hive'
         (1.._) * context.getCatalogName() >> 'h'
-        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", 'metacat.schema.whitelist':'d1,d2']
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", "connector.authorization-exempted": "true", 'metacat.schema.whitelist':'d1,d2']
         noExceptionThrown()
 
         when:
@@ -195,7 +198,7 @@ class ConnectorManagerSpec extends Specification {
         then:
         (1.._) * context.getConnectorType() >> 'hive'
         (1.._) * context.getCatalogName() >> 'h1'
-        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true"]
+        (1.._) * context.getConfiguration() >> ["connector.rate-limiter-exempted": "true", "connector.authorization-exempted": "true"]
         noExceptionThrown()
         expect:
         connectorManager.getCatalogConfigs().size() == 7
@@ -209,7 +212,7 @@ class ConnectorManagerSpec extends Specification {
         connectorManager.getPartitionServices().size() == 4
     }
 
-    def "instantiates throttling connector when enabled"() {
+    def "instantiates throttling, auth enabled, or base connector correctly"() {
         given:
         def connectorManager = new ConnectorManager(config)
         def connectorInfoConverter = Mock(ConnectorInfoConverter)
@@ -221,7 +224,14 @@ class ConnectorManagerSpec extends Specification {
         def tableService = Mock(ConnectorTableService)
         def partitionService = Mock(ConnectorPartitionService)
 
-        context.getConfiguration() >> ["connector.rate-limiter-exempted": "false"]
+        def configuration = [:]
+        if (rateLimitingExempted != null) {
+            configuration['connector.rate-limiter-exempted'] = rateLimitingExempted.toString()
+        }
+        if (authExempted != null) {
+            configuration['connector.authorization-exempted'] = authExempted.toString()
+        }
+        context.getConfiguration() >> configuration
         context.getCatalogName() >> 'h'
         context.getConnectorType() >> "hive"
 
@@ -244,5 +254,17 @@ class ConnectorManagerSpec extends Specification {
         noExceptionThrown()
         connectorManager.getCatalogHolder(QualifiedName.fromString("h")).connectorFactory instanceof ConnectorFactoryDecorator
         (connectorManager.getCatalogHolder(QualifiedName.fromString("h")).connectorFactory as ConnectorFactoryDecorator).getDelegate() == hiveConnectorFactory
+
+        where:
+        rateLimitingExempted || authExempted
+        false                || true
+        false                || false
+        true                 || true
+        true                 || false
+        null                 || true
+        null                 || false
+        null                 || null
+        false                || null
+        true                 || null
     }
 }

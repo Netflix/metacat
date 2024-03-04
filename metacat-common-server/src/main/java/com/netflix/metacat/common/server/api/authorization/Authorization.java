@@ -21,7 +21,7 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import lombok.NonNull;
 
 /**
- * And interface for the authorization of requests based on request context
+ * And interface for the authorization of requests based on request context.
  *
  * @author abozigian
  */
