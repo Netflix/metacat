@@ -50,8 +50,7 @@ public class MySqlLookupService implements LookupService {
     private static final String SQL_INSERT_LOOKUP_VALUES =
         "insert into lookup_values( lookup_id, values_string) values (?,?)";
     private static final String SQL_INSERT_LOOKUP_VALUE_IF_NOT_EXIST =
-        "INSERT INTO lookup_values(lookup_id, values_string) VALUES (?,?) "
-            + "ON DUPLICATE KEY UPDATE lookup_id=lookup_id, values_string=values_string";
+        "INSERT IGNORE INTO lookup_values (lookup_id, values_string) VALUES (?, ?)";
 
     private static final String SQL_GET_LOOKUP_VALUES =
         "select values_string value from lookup_values where lookup_id=?";

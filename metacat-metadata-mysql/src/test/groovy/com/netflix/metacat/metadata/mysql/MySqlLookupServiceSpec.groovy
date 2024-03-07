@@ -50,7 +50,7 @@ class MySqlLookupServiceSpec extends Specification {
         def lookupWithValues = new Lookup(
             id: 1L,
             name: 'Test1',
-            values: new HashSet<String>(['tag1', 'tag2']),
+            values: new HashSet<String>(['tag1', 'tag1', 'tag2']),
             dateCreated: new Date(),
             lastUpdated: new Date()
         )
@@ -68,12 +68,13 @@ class MySqlLookupServiceSpec extends Specification {
         then:
         lookUpResult.values == expectedValues
         where:
-        tagsToAdd                       | includeValues | expectedValues
-        ['tag1', 'tag2'] as Set<String> |true           | ['tag1', 'tag2'] as Set<String>
-        ['tag1', 'tag2'] as Set<String> |false          | [] as Set<String>
-        ['tag1', 'tag3'] as Set<String> |true           | ['tag1', 'tag2', 'tag3'] as Set<String>
-        ['tag1', 'tag3'] as Set<String> |false          | [] as Set<String>
-        ['tag3', 'tag4'] as Set<String> |true           | ['tag1', 'tag2', 'tag3', 'tag4'] as Set<String>
-        ['tag3', 'tag4'] as Set<String> |false          | [] as Set<String>
+        tagsToAdd                               | includeValues | expectedValues
+        ['tag1', 'tag2'] as Set<String>         |true           | ['tag1', 'tag2'] as Set<String>
+        ['tag1', 'tag2'] as Set<String>         |false          | [] as Set<String>
+        ['tag1', 'tag3'] as Set<String>         |true           | ['tag1', 'tag2', 'tag3'] as Set<String>
+        ['tag1', 'tag3'] as Set<String>         |false          | [] as Set<String>
+        ['tag3', 'tag4'] as Set<String>         |true           | ['tag1', 'tag2', 'tag3', 'tag4'] as Set<String>
+        ['tag3', 'tag4'] as Set<String>         |false          | [] as Set<String>
+        ['tag3', 'tag3', 'tag4'] as Set<String> |true           | ['tag1', 'tag2', 'tag3', 'tag4'] as Set<String>
     }
 }
