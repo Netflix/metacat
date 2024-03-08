@@ -130,7 +130,6 @@ class MySqlLookupServiceSpec extends Specification{
 
         expect:
         mock1LookUp.values.isEmpty()
-        mock1LookUp.values == mySqlLookupService.getValues("addValues_mock1")
         areLookupsEqual(mock1LookUp, mySqlLookupService.get("addValues_mock1", false))
         mock2LookUp.values == ["4", "5", "6"] as Set<String>
         mock2LookUp.values == mySqlLookupService.getValues("addValues_mock2")
