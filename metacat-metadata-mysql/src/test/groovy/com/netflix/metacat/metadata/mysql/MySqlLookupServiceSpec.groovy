@@ -30,7 +30,7 @@ import java.time.Instant
  * TODO: Need to move this to integration-test
  * @author amajumdar
  */
-
+@Ignore
 class MySqlLookupServiceSpec extends Specification {
     MySqlLookupService mySqlLookupService
 
