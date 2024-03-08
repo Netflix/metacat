@@ -64,6 +64,7 @@ dependencies {
     testImplementation(project(":metacat-common-server"))
     testImplementation(project(":metacat-connector-hive"))
     testImplementation(project(":metacat-testdata-provider"))
+    testImplementation project(path: ':metacat-metadata-mysql')
 
     functionalTestImplementation(project(":metacat-client"))
     functionalTestImplementation("org.apache.hadoop:hadoop-core")

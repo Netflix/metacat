@@ -89,7 +89,7 @@ services:
             - MYSQL_PASSWORD=metacat_user_password
             - MYSQL_DATABASE=metacat
         ports:
-            - '3306'
+            - '3306:3306'
         labels:
           - "com.netflix.metacat.oss.test"
     postgresql:
