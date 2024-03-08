@@ -205,6 +205,7 @@ public class MySqlLookupService implements LookupService {
             lookup = new Lookup();
             lookup.setName(name);
             lookup.setId(lookupId);
+            lookup.setValues(Collections.emptySet());
         }
         return lookup;
     }
