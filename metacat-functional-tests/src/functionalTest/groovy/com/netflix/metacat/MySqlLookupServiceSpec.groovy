@@ -119,10 +119,11 @@ class MySqlLookupServiceSpec extends Specification{
     }
 
     def "test addValues for different id"() {
-        when:
+        setup:
         def mock1LookUp = mySqlLookupService.addValues("addValues_mock1", ["1", "2", "3"] as Set<String>)
         def mock2LookUp = mySqlLookupService.addValues("addValues_mock2", ["4", "5", "6"] as Set<String>)
-        then:
+
+        expect:
         mock1LookUp.values == ["1", "2", "3"] as Set<String>
         mock1LookUp.values == mySqlLookupService.getValues("addValues_mock1")
         areLookupsEqual(mock1LookUp, mySqlLookupService.get("addValues_mock1"))
