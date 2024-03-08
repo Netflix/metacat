@@ -64,7 +64,7 @@ class MySqlLookupServiceSpec extends Specification{
     def "test setValues with getValue/getValues iterative"() {
         setup:
         def values = valuesList as Set<String>
-        def lookup = mySqlLookupService.setValues("mock", values)
+        def lookup = mySqlLookupService.setValues("mock", values as Set<String>)
 
         expect:
         lookup.values.size() == expectedSize
