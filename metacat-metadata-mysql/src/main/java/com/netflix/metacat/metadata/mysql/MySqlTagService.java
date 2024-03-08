@@ -124,9 +124,9 @@ public class MySqlTagService implements TagService {
         this.userMetadataService = Preconditions.checkNotNull(userMetadataService, "userMetadataService is required");
     }
 
-    private Lookup addTags(final Set<String> tags, final boolean includeValues) {
+    private Lookup addTags(final Set<String> tags) {
         try {
-            return lookupService.addValues(LOOKUP_NAME_TAG, tags, includeValues);
+            return lookupService.addValues(LOOKUP_NAME_TAG, tags);
         } catch (Exception e) {
             final String message = String.format("Failed adding the tags %s", tags);
             log.error(message, e);
@@ -396,7 +396,7 @@ public class MySqlTagService implements TagService {
     @Override
     public Set<String> setTags(final QualifiedName name, final Set<String> tags,
                                final boolean updateUserMetadata) {
-        addTags(tags, false);
+        addTags(tags);
         try {
             final TagItem tagItem = findOrCreateTagItemByName(name.toString());
             final Set<String> inserts;

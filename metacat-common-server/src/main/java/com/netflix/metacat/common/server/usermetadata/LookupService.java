@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.common.server.usermetadata;
 
+import com.google.common.collect.Sets;
 import com.netflix.metacat.common.server.model.Lookup;
 
 import javax.annotation.Nullable;
@@ -34,11 +35,10 @@ public interface LookupService {
      * If includeValues = true, we will set the Lookup values with the associated name, otherwise empty set
      *
      * @param name lookup name
-     * @param includeValues whether we should set the values or not in the Lookup Object
      * @return lookup
      */
     @Nullable
-    default Lookup get(final String name, final boolean includeValues) {
+    default Lookup get(final String name) {
         return null;
     }
 
@@ -77,11 +77,10 @@ public interface LookupService {
      *
      * @param name   lookup name
      * @param values multiple values
-     * @param includeValues whether to include values in the final Lookup Object
      * @return updated lookup
      */
     @Nullable
-    default Lookup addValues(final String name, final Set<String> values, boolean includeValues) {
+    default Lookup addValues(final String name, final Set<String> values) {
         return null;
     }
 
@@ -94,6 +93,18 @@ public interface LookupService {
      */
     @Nullable
     default Lookup setValues(final String name, final Set<String> values) {
+        return null;
+    }
+
+    /**
+     * Saves the lookup value.
+     *
+     * @param name  lookup name
+     * @param value lookup value
+     * @return returns the lookup with the given name.
+     */
+
+    default Lookup setValue(final String name, final String value) {
         return null;
     }
 }

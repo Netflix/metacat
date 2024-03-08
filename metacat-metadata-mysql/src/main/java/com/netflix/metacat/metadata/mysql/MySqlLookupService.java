@@ -32,7 +32,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,12 +50,8 @@ public class MySqlLookupService implements LookupService {
             + " values (?,0,?,?,?,now(),now())";
     private static final String SQL_INSERT_LOOKUP_VALUES =
         "insert into lookup_values( lookup_id, values_string) values (?,?)";
-    private static final String SQL_INSERT_LOOKUP_VALUE_IF_NOT_EXIST =
-        "INSERT IGNORE INTO lookup_values (lookup_id, values_string) VALUES (?, ?)";
-
-    private static final String SQL_DELETE_LOOKUP_VALUES_IF_NOT_IN =
-        "delete from lookup_values where lookup_id=? and values_string not in (%s)";
-
+    private static final String SQL_DELETE_LOOKUP_VALUES =
+        "delete from lookup_values where lookup_id=? and values_string in (%s)";
     private static final String SQL_GET_LOOKUP_VALUES =
         "select values_string value from lookup_values where lookup_id=?";
     private static final String SQL_GET_LOOKUP_VALUES_BY_NAME =
@@ -84,7 +79,7 @@ public class MySqlLookupService implements LookupService {
      */
     @Override
     @Transactional(readOnly = true)
-    public Lookup get(final String name, final boolean includeValues) {
+    public Lookup get(final String name) {
         try {
             return jdbcTemplate.queryForObject(
                 SQL_GET_LOOKUP,
@@ -98,7 +93,7 @@ public class MySqlLookupService implements LookupService {
                     lookup.setLastUpdated(rs.getDate("lastUpdated"));
                     lookup.setLastUpdatedBy(rs.getString("lastUpdatedBy"));
                     lookup.setDateCreated(rs.getDate("dateCreated"));
-                    lookup.setValues(includeValues ? getValues(rs.getLong("id")) : Collections.EMPTY_SET);
+                    lookup.setValues(getValues(rs.getLong("id")));
                     return lookup;
                 });
         } catch (EmptyResultDataAccessException e) {
@@ -167,16 +162,49 @@ public class MySqlLookupService implements LookupService {
         }
     }
 
-    private void insertLookupValuesIfNotExist(final Long id, final Set<String> inserts) {
-        jdbcTemplate.batchUpdate(SQL_INSERT_LOOKUP_VALUE_IF_NOT_EXIST,
-            inserts.stream().map(insert -> new Object[]{id, insert})
+    /**
+     * Saves the lookup value.
+     *
+     * @param name   lookup name
+     * @param values multiple values
+     * @return returns the lookup with the given name.
+     */
+    @Override
+    public Lookup setValues(final String name, final Set<String> values) {
+        try {
+            final Lookup lookup = findOrCreateLookupByName(name);
+            final Set<String> inserts;
+            Set<String> deletes = Sets.newHashSet();
+            final Set<String> lookupValues = lookup.getValues();
+            if (lookupValues == null || lookupValues.isEmpty()) {
+                inserts = values;
+            } else {
+                inserts = Sets.difference(values, lookupValues).immutableCopy();
+                deletes = Sets.difference(lookupValues, values).immutableCopy();
+            }
+            lookup.setValues(values);
+            if (!inserts.isEmpty()) {
+                insertLookupValues(lookup.getId(), inserts);
+            }
+            if (!deletes.isEmpty()) {
+                deleteLookupValues(lookup.getId(), deletes);
+            }
+            return lookup;
+        } catch (Exception e) {
+            final String message = String.format("Failed to set the lookup values for name %s", name);
+            log.error(message, e);
+            throw new UserMetadataServiceException(message, e);
+        }
+    }
+
+    private void insertLookupValues(final Long id, final Set<String> inserts) {
+        jdbcTemplate.batchUpdate(SQL_INSERT_LOOKUP_VALUES, inserts.stream().map(insert -> new Object[]{id, insert})
             .collect(Collectors.toList()), new int[]{Types.BIGINT, Types.VARCHAR});
     }
 
-    private void deleteLookupValuesIfNotIn(final Long id, final Set<String> values) {
+    private void deleteLookupValues(final Long id, final Set<String> deletes) {
         jdbcTemplate.update(
-            String.format(SQL_DELETE_LOOKUP_VALUES_IF_NOT_IN,
-                "'" + Joiner.on("','").skipNulls().join(values) + "'"),
+            String.format(SQL_DELETE_LOOKUP_VALUES, "'" + Joiner.on("','").skipNulls().join(deletes) + "'"),
             new SqlParameterValue(Types.BIGINT, id));
     }
 
@@ -184,12 +212,11 @@ public class MySqlLookupService implements LookupService {
      * findOrCreateLookupByName.
      *
      * @param name name to find or create
-     * @param includeValues whether to include the values in the Lookup Object
      * @return Look up object
      * @throws SQLException sql exception
      */
-    private Lookup findOrCreateLookupByName(final String name, final boolean includeValues) throws SQLException {
-        Lookup lookup = get(name, includeValues);
+    private Lookup findOrCreateLookupByName(final String name) throws SQLException {
+        Lookup lookup = get(name);
         if (lookup == null) {
             final KeyHolder holder = new GeneratedKeyHolder();
             jdbcTemplate.update(connection -> {
@@ -217,14 +244,20 @@ public class MySqlLookupService implements LookupService {
      * @return returns the lookup with the given name.
      */
     @Override
-    public Lookup addValues(final String name, final Set<String> values, final boolean includeValues) {
+    public Lookup addValues(final String name, final Set<String> values) {
         try {
-            final Lookup lookup = findOrCreateLookupByName(name, includeValues);
-            if (!values.isEmpty()) {
-                insertLookupValuesIfNotExist(lookup.getId(), values);
+            final Lookup lookup = findOrCreateLookupByName(name);
+
+            final Set<String> inserts;
+            final Set<String> lookupValues = lookup.getValues();
+            if (lookupValues == null || lookupValues.isEmpty()) {
+                inserts = values;
+                lookup.setValues(values);
+            } else {
+                inserts = Sets.difference(values, lookupValues);
             }
-            if (includeValues) {
-                lookup.getValues().addAll(values);
+            if (!inserts.isEmpty()) {
+                insertLookupValues(lookup.getId(), inserts);
             }
             return lookup;
         } catch (Exception e) {
@@ -237,26 +270,12 @@ public class MySqlLookupService implements LookupService {
     /**
      * Saves the lookup value.
      *
-     * @param name   lookup name
-     * @param values multiple values
+     * @param name  lookup name
+     * @param value lookup value
      * @return returns the lookup with the given name.
      */
     @Override
-    public Lookup setValues(final String name, final Set<String> values) {
-        try {
-            // For set values, no need to include values from querying rds
-            // since the values will be the same as the input values
-            final Lookup lookup = findOrCreateLookupByName(name, false);
-            if (!values.isEmpty()) {
-                insertLookupValuesIfNotExist(lookup.getId(), values);
-                deleteLookupValuesIfNotIn(lookup.getId(), values);
-            }
-            lookup.setValues(values);
-            return lookup;
-        } catch (Exception e) {
-            final String message = String.format("Failed to set the lookup values for name %s", name);
-            log.error(message, e);
-            throw new UserMetadataServiceException(message, e);
-        }
+    public Lookup setValue(final String name, final String value) {
+        return setValues(name, Sets.newHashSet(value));
     }
 }
