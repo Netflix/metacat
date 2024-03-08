@@ -16,7 +16,6 @@
  *
  */
 package com.netflix.metacat.common.server.usermetadata;
-
 import com.netflix.metacat.common.server.model.Lookup;
 
 import javax.annotation.Nullable;
