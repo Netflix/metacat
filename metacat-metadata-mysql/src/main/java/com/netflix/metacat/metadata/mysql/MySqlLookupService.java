@@ -252,13 +252,13 @@ public class MySqlLookupService implements LookupService {
             final Set<String> lookupValues = lookup.getValues();
             if (lookupValues == null || lookupValues.isEmpty()) {
                 inserts = values;
-                lookup.setValues(values);
             } else {
                 inserts = Sets.difference(values, lookupValues);
             }
             if (!inserts.isEmpty()) {
                 insertLookupValues(lookup.getId(), inserts);
             }
+            lookup.getValues().addAll(values);
             return lookup;
         } catch (Exception e) {
             final String message = String.format("Failed to set the lookup values for name %s", name);
