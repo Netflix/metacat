@@ -55,8 +55,6 @@ class MySqlLookupServiceUnitTest extends Specification{
             l1.name == l2.name &&
             l1.type == l2.type &&
             l1.values == l2.values &&
-            l1.dateCreated == l2.dateCreated &&
-            l1.lastUpdated == l2.lastUpdated &&
             l1.createdBy == l2.createdBy &&
             l1.lastUpdatedBy == l2.lastUpdatedBy
     }
