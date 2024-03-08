@@ -50,30 +50,22 @@ class MySqlLookupServiceUnitTest extends Specification{
         // ... additional setup
     }
 
-    def "test get method"() {
-        when:
-        def lookup = mySqlLookupService.setValues("mock", ["1", "2", "3"] as Set<String>)
-        then:
-        lookup.values.size() == 3
-        when:
-        lookup = mySqlLookupService.setValues("mock", ["1", "2", "3", "4"] as Set<String>)
-        then:
-        lookup.values.size() == 4
-        when:
-        lookup = mySqlLookupService.setValues("mock", ["1", "2", "3", "3", "4"] as Set<String>)
-        then:
-        lookup.values.size() == 4
-        when:
-        lookup = mySqlLookupService.setValues("mock", ["3", "4"] as Set<String>)
-        then:
-        lookup.values.size() == 2
-        when:
-        lookup = mySqlLookupService.setValues("mock", ["6"] as Set<String>)
-        then:
-        lookup.values.size() == 1
-        when:
-        lookup = mySqlLookupService.setValues("mock", ["1", "6"] as Set<String>)
-        then:
-        lookup.values.size() == 0
+    def "test setValues iterative"() {
+        setup:
+        def values = valuesList as Set<String>
+        def lookup = mySqlLookupService.setValues("mock", values)
+
+        expect:
+        lookup.values.size() == expectedSize
+        lookup.values() == mySqlLookupService.getValues("mock")
+
+        where:
+        valuesList                       | expectedSize
+        ["1", "2", "3"]                  | 3
+        ["1", "2", "3", "4"]             | 4
+        ["1", "2", "3", "3", "4"]        | 4
+        ["3", "4"]                       | 2
+        ["6"]                            | 1
+        ["1", "6"]                       | 0
     }
 }
