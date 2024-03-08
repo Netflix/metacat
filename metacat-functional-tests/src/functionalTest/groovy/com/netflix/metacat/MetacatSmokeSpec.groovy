@@ -1771,4 +1771,83 @@ class MetacatSmokeSpec extends Specification {
                  'embedded-hive-metastore/invalid/dm/vm',
                  'embedded-hive-metastore/invalid/dm/vm=1']
     }
+
+    def "Test Set tags for all scenarios"() {
+        setup:
+        // The setup already contains the following 7 tags
+        // [data-category:non-customer, test, test_tag, unused, do_not_drop, iceberg_migration_do_not_modify, do_not_rename]
+        def catalogName = "hive-metastore"
+        def databaseName = "default"
+        def catalog = QualifiedName.ofCatalog(catalogName)
+        def database = QualifiedName.ofDatabase(catalogName, databaseName)
+
+        def table1Name = "table1"
+        def table1Tags = ['table1', 'mock'] as Set
+
+        def table2Name = "table2"
+        def table2Tags = ['table2', 'mock'] as Set
+
+        def table3Name = "table3"
+        def table3Tags = ['table3', 'bdow'] as Set
+        when:
+        // add 2 new tags on table1
+        createTable(catalogName, databaseName, table1Name)
+        tagApi.setTableTags(catalogName, databaseName, table1Name, table1Tags)
+        then:
+        tagApi.getTags().size() == 9
+        tagApi.list(['table1', 'mock'] as Set<String>, null, null, null, null, QualifiedName.Type.TABLE).size() == 1
+        tagApi.search('mock', null, null, null).size() == 1
+        tagApi.search('table1', null, null, null).size() == 1
+        metacatJson.convertValue(api.getTable(catalogName, databaseName, table1Name, false, true, true).getDefinitionMetadata().get('tags'), Set.class) == table1Tags
+        when:
+        // add an existing tag mock but a new tag on table 2
+        createTable(catalogName, databaseName, table2Name)
+        tagApi.setTableTags(catalogName, databaseName, table2Name, table2Tags)
+        then:
+        tagApi.getTags().size() == 10
+        tagApi.list(['table2'] as Set<String>, null, null, null, null, QualifiedName.Type.TABLE).size() == 1
+        tagApi.list(['mock'] as Set<String>, null, null, null, null, QualifiedName.Type.TABLE).size() == 2
+        tagApi.list(['table1', 'mock'] as Set<String>, null, null, null, null, QualifiedName.Type.TABLE).size() == 2
+        tagApi.search('mock', null, null, null).size() == 2
+        tagApi.search('table1', null, null, null).size() == 1
+        tagApi.search('table2', null, null, null).size() == 1
+        metacatJson.convertValue(api.getTable(catalogName, databaseName, table2Name, false, true, true).getDefinitionMetadata().get('tags'), Set.class) == table2Tags
+        when:
+        // delete table1, for now even if tag table1 is only applied to table1, we will not remove the tag from our db
+        api.deleteTable(catalogName, databaseName, "table1")
+        then:
+        tagApi.getTags().size() == 10
+        tagApi.list(['table1'] as Set<String>, null, null, null, null, QualifiedName.Type.TABLE).size() == 1
+        tagApi.list(['table2', 'mock'] as Set<String>, null, null, null, null, QualifiedName.Type.TABLE).size() == 2
+        tagApi.list(['mock'] as Set<String>, null, null, null, null, QualifiedName.Type.TABLE).size() == 2
+        tagApi.search('mock', null, null, null).size() == 2
+        tagApi.search('table1', null, null, null).size() == 1
+        tagApi.search('table2', null, null, null).size() == 1
+        when:
+        // add tags on catalog database and table level through setTags api
+        // create 1 new catalogTag on catalog
+        // create 1 new databaseTag on database
+        // create 2 new tableTags on table3
+        tagApi.setTags(TagCreateRequestDto.builder().name(catalog).tags(['mock', 'catalogTag'] as List<String>).build())
+        tagApi.setTags(TagCreateRequestDto.builder().name(database).tags(['mock', 'databaseTag'] as List<String>).build())
+        createTable(catalogName, databaseName, "table3")
+        def table3 = QualifiedName.ofTable(catalogName, databaseName, table3Name)
+        tagApi.setTags(TagCreateRequestDto.builder().name(table3).tags(table3Tags as List<String>).build())
+        then:
+        tagApi.getTags().size() == 14
+        tagApi.list(['table2', 'mock'] as Set<String>, null, null, null, null, QualifiedName.Type.TABLE).size() == 2
+        tagApi.list(['table3', 'bdow'] as Set<String>, null, null, null, null, QualifiedName.Type.TABLE).size() == 1
+        tagApi.list(['mock'] as Set<String>, null, null, null, null, QualifiedName.Type.TABLE).size() == 2
+        tagApi.list(['mock'] as Set<String>, null, null, null, null, QualifiedName.Type.DATABASE).size() == 1
+        tagApi.list(['mock'] as Set<String>, null, null, null, null, QualifiedName.Type.CATALOG).size() == 1
+        tagApi.list(['mock'] as Set<String>, null, null, null, null, null).size() == 4
+        tagApi.search('mock', null, null, null).size() == 4
+        tagApi.search('table3', null, null, null).size() == 1
+        tagApi.search('bdow', null, null, null).size() == 1
+        tagApi.search('table2', null, null, null).size() == 1
+        metacatJson.convertValue(api.getTable(catalogName, databaseName, table3Name, false, true, true).getDefinitionMetadata().get('tags'), Set.class) == table3Tags
+        cleanup:
+        api.deleteTable(catalogName, databaseName, "table2")
+        api.deleteTable(catalogName, databaseName, "table3")
+    }
 }

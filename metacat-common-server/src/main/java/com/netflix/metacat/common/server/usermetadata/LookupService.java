@@ -31,12 +31,14 @@ import java.util.Set;
 public interface LookupService {
     /**
      * Returns the lookup for the given <code>name</code>.
+     * If includeValues = true, we will set the Lookup values with the associated name, otherwise empty set
      *
      * @param name lookup name
+     * @param includeValues whether we should set the values or not in the Lookup Object
      * @return lookup
      */
     @Nullable
-    default Lookup get(final String name) {
+    default Lookup get(final String name, final boolean includeValues) {
         return null;
     }
 
@@ -75,22 +77,20 @@ public interface LookupService {
      *
      * @param name   lookup name
      * @param values multiple values
+     * @param includeValues whether to populate the values field in the Lookup Object
      * @return updated lookup
      */
-    @Nullable
-    default Lookup setValues(final String name, final Set<String> values) {
-        return null;
-    }
 
     /**
      * Saves the lookup value.
      *
      * @param name   lookup name
      * @param values multiple values
+     * @param includeValues whether to include values in the final Lookup Object
      * @return updated lookup
      */
     @Nullable
-    default Lookup addValues(final String name, final Set<String> values) {
+    default Lookup addValues(final String name, final Set<String> values, boolean includeValues) {
         return null;
     }
 
@@ -99,11 +99,7 @@ public interface LookupService {
      *
      * @param name  lookup name
      * @param value lookup value
+     * @param includeValues whether to return lookup value in the Lookup Object
      * @return updated lookup
      */
-    @Nullable
-    default Lookup setValue(final String name, final String value) {
-        return null;
-    }
-
 }
