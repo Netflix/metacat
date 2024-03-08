@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.metadata.mysql;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.server.model.Lookup;
 import com.netflix.metacat.common.server.properties.Config;
@@ -22,6 +23,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +53,9 @@ public class MySqlLookupService implements LookupService {
         "insert into lookup_values( lookup_id, values_string) values (?,?)";
     private static final String SQL_INSERT_LOOKUP_VALUE_IF_NOT_EXIST =
         "INSERT IGNORE INTO lookup_values (lookup_id, values_string) VALUES (?, ?)";
+
+    private static final String SQL_DELETE_LOOKUP_VALUES_IF_NOT_IN =
+        "delete from lookup_values where lookup_id=? and values_string not in (%s)";
 
     private static final String SQL_GET_LOOKUP_VALUES =
         "select values_string value from lookup_values where lookup_id=?";
@@ -168,6 +173,13 @@ public class MySqlLookupService implements LookupService {
             .collect(Collectors.toList()), new int[]{Types.BIGINT, Types.VARCHAR});
     }
 
+    private void deleteLookupValuesIfNotIn(final Long id, final Set<String> values) {
+        jdbcTemplate.update(
+            String.format(SQL_DELETE_LOOKUP_VALUES_IF_NOT_IN,
+                "'" + Joiner.on("','").skipNulls().join(values) + "'"),
+            new SqlParameterValue(Types.BIGINT, id));
+    }
+
     /**
      * findOrCreateLookupByName.
      *
@@ -214,6 +226,32 @@ public class MySqlLookupService implements LookupService {
             if (includeValues) {
                 lookup.getValues().addAll(values);
             }
+            return lookup;
+        } catch (Exception e) {
+            final String message = String.format("Failed to set the lookup values for name %s", name);
+            log.error(message, e);
+            throw new UserMetadataServiceException(message, e);
+        }
+    }
+
+    /**
+     * Saves the lookup value.
+     *
+     * @param name   lookup name
+     * @param values multiple values
+     * @return returns the lookup with the given name.
+     */
+    @Override
+    public Lookup setValues(final String name, final Set<String> values) {
+        try {
+            // For set values, no need to include values from querying rds
+            // since the values will be the same as the input values
+            final Lookup lookup = findOrCreateLookupByName(name, false);
+            if (!values.isEmpty()) {
+                insertLookupValuesIfNotExist(lookup.getId(), values);
+                deleteLookupValuesIfNotIn(lookup.getId(), values);
+            }
+            lookup.setValues(values);
             return lookup;
         } catch (Exception e) {
             final String message = String.format("Failed to set the lookup values for name %s", name);
