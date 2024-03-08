@@ -16,6 +16,7 @@
  */
 package com.netflix.metacat
 
+import com.netflix.metacat.common.server.model.Lookup
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.metadata.mysql.MySqlLookupService
@@ -34,6 +35,17 @@ class MySqlLookupServiceSpec extends Specification{
     @Shared
     JdbcTemplate jdbcTemplate
 
+    boolean areLookupsEqual(Lookup l1, Lookup l2) {
+        l1.id == l2.id &&
+            l1.name == l2.name &&
+            l1.type == l2.type &&
+            l1.values == l2.values &&
+            l1.dateCreated == l2.dateCreated &&
+            l1.lastUpdated == l2.lastUpdated &&
+            l1.createdBy == l2.createdBy &&
+            l1.lastUpdatedBy == l2.lastUpdatedBy
+    }
+
     def setupSpec() {
         String jdbcUrl = "jdbc:mysql://localhost:3306/metacat"
         String username = "metacat_user"
@@ -49,7 +61,7 @@ class MySqlLookupServiceSpec extends Specification{
         mySqlLookupService = new MySqlLookupService(new DefaultConfigImpl(new MetacatProperties()), jdbcTemplate)
     }
 
-    def "test setValues iterative"() {
+    def "test setValues with getValue/getValues iterative"() {
         setup:
         def values = valuesList as Set<String>
         def lookup = mySqlLookupService.setValues("mock", values)
@@ -57,6 +69,9 @@ class MySqlLookupServiceSpec extends Specification{
         expect:
         lookup.values.size() == expectedSize
         lookup.values == mySqlLookupService.getValues("mock")
+        lookup.values == mySqlLookupService.getValues(lookup.id)
+        lookup.values.contains(mySqlLookupService.getValue("mock"))
+        areLookupsEqual(lookup, mySqlLookupService.get("mock"))
 
         where:
         valuesList                       | expectedSize
@@ -75,7 +90,44 @@ class MySqlLookupServiceSpec extends Specification{
         then:
         mock1LookUp.values == ["1", "2", "3"] as Set<String>
         mock1LookUp.values == mySqlLookupService.getValues("mock1")
+        areLookupsEqual(mock1LookUp, mySqlLookupService.get("mock1"))
         mock2LookUp.values == ["4", "5", "6"] as Set<String>
         mock2LookUp.values == mySqlLookupService.getValues("mock2")
+        areLookupsEqual(mock2LookUp, mySqlLookupService.get("mock2"))
+    }
+
+    def "test addValues iterative"() {
+        setup:
+        def values = valuesList as Set<String>
+        def lookup = mySqlLookupService.addValues("mockAdd", values)
+
+        expect:
+        lookup.values.size() == expectedSize
+        lookup.values == mySqlLookupService.getValues("mockAdd")
+        lookup.values == mySqlLookupService.getValues(lookup.id)
+        lookup.values.contains(mySqlLookupService.getValue("mockAdd"))
+        areLookupsEqual(lookup, mySqlLookupService.get("mockAdd"))
+
+        where:
+        valuesList                       | expectedSize
+        ["1", "2", "3"]                  | 3
+        ["1", "2", "3", "4"]             | 4
+        ["1", "2", "3", "3", "4"]        | 4
+        ["3", "4"]                       | 4
+        ["6"]                            | 5
+        ["1", "6"]                       | 6
+    }
+
+    def "test addValues for different id"() {
+        when:
+        def mock1LookUp = mySqlLookupService.addValues("addValues_mock1", ["1", "2", "3"] as Set<String>)
+        def mock2LookUp = mySqlLookupService.addValues("addValues_mock2", ["4", "5", "6"] as Set<String>)
+        then:
+        mock1LookUp.values == ["1", "2", "3"] as Set<String>
+        mock1LookUp.values == mySqlLookupService.getValues("addValues_mock1")
+        areLookupsEqual(mock1LookUp, mySqlLookupService.get("addValues_mock1"))
+        mock2LookUp.values == ["4", "5", "6"] as Set<String>
+        mock2LookUp.values == mySqlLookupService.getValues("addValues_mock2")
+        areLookupsEqual(mock2LookUp, mySqlLookupService.get("addValues_mock2"))
     }
 }
