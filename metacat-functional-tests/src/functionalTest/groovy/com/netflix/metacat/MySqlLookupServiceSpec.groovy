@@ -57,7 +57,7 @@ class MySqlLookupServiceSpec extends Specification{
 
         expect:
         lookup.values.size() == expectedSize
-        lookup.values() == mySqlLookupService.getValues("mock")
+        lookup.values == mySqlLookupService.getValues("mock")
 
         where:
         valuesList                       | expectedSize
