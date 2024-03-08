@@ -126,7 +126,7 @@ class MySqlLookupServiceSpec extends Specification{
         ["1", "2", "3", "3", "4"]        | 4
         ["3", "4"]                       | 4
         ["6"]                            | 5
-        ["1", "6"]                       | 6
+        ["1", "6"]                       | 5
     }
 
     def "test addValues for different id"() {
