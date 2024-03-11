@@ -212,7 +212,7 @@ class ConnectorManagerSpec extends Specification {
         connectorManager.getPartitionServices().size() == 4
     }
 
-    def "instantiates throttling, auth enabled, or base connector correctly"() {
+    def "instantiates validating (throttling and/or auth enabled) or base connector correctly"() {
         given:
         def connectorManager = new ConnectorManager(config)
         def connectorInfoConverter = Mock(ConnectorInfoConverter)
