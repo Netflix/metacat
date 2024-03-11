@@ -138,15 +138,15 @@ class MySqlLookupServiceSpec extends Specification{
 
     def "test setValue for different id"(){
         when:
-        def mock1LookUp = mySqlLookupService.setValues("mock1", ["1", "2", "3"] as Set<String>)
-        def mock2LookUp = mySqlLookupService.setValues("mock2", ["4", "5", "6"] as Set<String>)
+        def mock1LookUp = mySqlLookupService.setValue("setValue_mock1", "1")
+        def mock2LookUp = mySqlLookupService.setValue("setValue_mock2",  "2")
         then:
-        mock1LookUp.values == ["1", "2", "3"] as Set<String>
-        mock1LookUp.values == mySqlLookupService.getValues("mock1")
-        areLookupsEqual(mock1LookUp, mySqlLookupService.get("mock1", true))
-        mock2LookUp.values == ["4", "5", "6"] as Set<String>
-        mock2LookUp.values == mySqlLookupService.getValues("mock2")
-        areLookupsEqual(mock2LookUp, mySqlLookupService.get("mock2", true))
+        mock1LookUp.values == ["1"] as Set<String>
+        mock1LookUp.values == mySqlLookupService.getValues("setValue_mock1")
+        areLookupsEqual(mock1LookUp, mySqlLookupService.get("setValue_mock1", true))
+        mock2LookUp.values == ["2"] as Set<String>
+        mock2LookUp.values == mySqlLookupService.getValues("setValue_mock2")
+        areLookupsEqual(mock2LookUp, mySqlLookupService.get("setValue_mock2", true))
     }
 }
 
