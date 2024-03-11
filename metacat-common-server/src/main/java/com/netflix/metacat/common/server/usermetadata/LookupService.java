@@ -77,15 +77,6 @@ public interface LookupService {
      *
      * @param name   lookup name
      * @param values multiple values
-     * @param includeValues whether to populate the values field in the Lookup Object
-     * @return updated lookup
-     */
-
-    /**
-     * Saves the lookup value.
-     *
-     * @param name   lookup name
-     * @param values multiple values
      * @param includeValues whether to include values in the final Lookup Object
      * @return updated lookup
      */
@@ -98,8 +89,22 @@ public interface LookupService {
      * Saves the lookup value.
      *
      * @param name  lookup name
-     * @param value lookup value
-     * @param includeValues whether to return lookup value in the Lookup Object
+     * @param values lookup value
      * @return updated lookup
      */
+    @Nullable
+    default Lookup setValues(final String name, final Set<String> values) {
+        return null;
+    }
+
+    /**
+     * Save single lookup Value.
+     * @param name  lookup name
+     * @param value lookup value
+     * @return returns the lookup with the given name.
+     */
+    @Nullable
+    default Lookup setValue(final String name, final String value) {
+        return null;
+    }
 }
