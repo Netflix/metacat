@@ -172,7 +172,7 @@ public class ValidatingConnectorTableService implements ConnectorTableService {
     }
 
     /**
-     * Authorizes calls to the connector based on the request context
+     * Authorizes calls to the connector based on the request context.
      */
     private void authorize(final MetacatRequestContext context, final String resource) {
         final AuthorizationStatus status = authorization.isAuthorized(context);

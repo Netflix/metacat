@@ -56,7 +56,13 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
                     + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
-            service = new ValidatingConnectorCatalogService(service, rateLimiter, rateLimiterEnabled, authorization, authorizationEnabled);
+            service = new ValidatingConnectorCatalogService(
+                service,
+                rateLimiter,
+                rateLimiterEnabled,
+                authorization,
+                authorizationEnabled
+            );
         }
 
         return service;
@@ -71,7 +77,13 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
                     + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
-            service = new ValidatingConnectorDatabaseService(service, rateLimiter, rateLimiterEnabled, authorization, authorizationEnabled);
+            service = new ValidatingConnectorDatabaseService(
+                service,
+                rateLimiter,
+                rateLimiterEnabled,
+                authorization,
+                authorizationEnabled
+            );
         }
 
         return service;
@@ -86,7 +98,13 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
                     + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
-            service = new ValidatingConnectorTableService(service, rateLimiter, rateLimiterEnabled, authorization, authorizationEnabled);
+            service = new ValidatingConnectorTableService(
+                service,
+                rateLimiter,
+                rateLimiterEnabled,
+                authorization,
+                authorizationEnabled
+            );
         }
 
         return service;
@@ -101,7 +119,13 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
                     + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
-            service = new ValidatingConnectorPartitionService(service, rateLimiter, rateLimiterEnabled, authorization, authorizationEnabled);
+            service = new ValidatingConnectorPartitionService(
+                service,
+                rateLimiter,
+                rateLimiterEnabled,
+                authorization,
+                authorizationEnabled
+            );
         }
 
         return service;
