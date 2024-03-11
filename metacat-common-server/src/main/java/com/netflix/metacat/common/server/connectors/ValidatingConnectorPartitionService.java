@@ -4,9 +4,12 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.exception.MetacatTooManyRequestsException;
 import com.netflix.metacat.common.exception.MetacatUnAuthorizedException;
 import com.netflix.metacat.common.server.api.authorization.Authorization;
 import com.netflix.metacat.common.server.api.authorization.AuthorizationStatus;
+import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
+import com.netflix.metacat.common.server.api.ratelimiter.RateLimiterRequestContext;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
@@ -24,23 +27,32 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Connector that authorizes requests based on the request context.
+ * Connector that validates requests based on the request context and/or resource.
  */
 @Slf4j
 @RequiredArgsConstructor
-public class AuthEnabledConnectorPartitionService implements ConnectorPartitionService {
+public class ValidatingConnectorPartitionService implements ConnectorPartitionService {
     @Getter
     @NonNull
     private final ConnectorPartitionService delegate;
     @NonNull
+    private final RateLimiter rateLimiter;
+    private final boolean rateLimiterEnabled;
+    @NonNull
     private final Authorization authorization;
+    private final boolean authorizationEnabled;
 
     @Override
     public List<PartitionInfo> getPartitions(final ConnectorRequestContext context,
                                              final QualifiedName table,
                                              final PartitionListRequest partitionsRequest,
                                              final TableInfo tableInfo) {
-        authorize(MetacatContextManager.getContext(), table.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), table);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), table.toString());
+        }
         return delegate.getPartitions(context, table, partitionsRequest, tableInfo);
     }
 
@@ -48,7 +60,12 @@ public class AuthEnabledConnectorPartitionService implements ConnectorPartitionS
     public PartitionsSaveResponse savePartitions(final ConnectorRequestContext context,
                                                  final QualifiedName table,
                                                  final PartitionsSaveRequest partitionsSaveRequest) {
-        authorize(MetacatContextManager.getContext(), table.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), table);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), table.toString());
+        }
         return delegate.savePartitions(context, table, partitionsSaveRequest);
     }
 
@@ -57,7 +74,12 @@ public class AuthEnabledConnectorPartitionService implements ConnectorPartitionS
                                  final QualifiedName tableName,
                                  final List<String> partitionNames,
                                  final TableInfo tableInfo) {
-        authorize(MetacatContextManager.getContext(), tableName.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), tableName);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), tableName.toString());
+        }
         delegate.deletePartitions(context, tableName, partitionNames, tableInfo);
     }
 
@@ -65,7 +87,12 @@ public class AuthEnabledConnectorPartitionService implements ConnectorPartitionS
     public int getPartitionCount(final ConnectorRequestContext context,
                                  final QualifiedName table,
                                  final TableInfo tableInfo) {
-        authorize(MetacatContextManager.getContext(), table.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), table);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), table.toString());
+        }
         return delegate.getPartitionCount(context, table, tableInfo);
     }
 
@@ -73,7 +100,9 @@ public class AuthEnabledConnectorPartitionService implements ConnectorPartitionS
     public Map<String, List<QualifiedName>> getPartitionNames(final ConnectorRequestContext context,
                                                               final List<String> uris,
                                                               final boolean prefixSearch) {
-        authorize(MetacatContextManager.getContext(), "N/A");
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), "N/A");
+        }
         return delegate.getPartitionNames(context, uris, prefixSearch);
     }
 
@@ -82,7 +111,12 @@ public class AuthEnabledConnectorPartitionService implements ConnectorPartitionS
                                          final QualifiedName table,
                                          final PartitionListRequest partitionsRequest,
                                          final TableInfo tableInfo) {
-        authorize(MetacatContextManager.getContext(), table.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), table);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), table.toString());
+        }
         return delegate.getPartitionKeys(context, table, partitionsRequest, tableInfo);
     }
 
@@ -91,38 +125,68 @@ public class AuthEnabledConnectorPartitionService implements ConnectorPartitionS
                                          final QualifiedName table,
                                          final PartitionListRequest partitionsRequest,
                                          final TableInfo tableInfo) {
-        authorize(MetacatContextManager.getContext(), table.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), table);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), table.toString());
+        }
         return delegate.getPartitionUris(context, table, partitionsRequest, tableInfo);
     }
 
     @Override
     public void create(final ConnectorRequestContext context, final PartitionInfo resource) {
-        authorize(MetacatContextManager.getContext(), resource.getName().toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), resource.getName());
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), resource.getName().toString());
+        }
         delegate.create(context, resource);
     }
 
     @Override
     public void update(final ConnectorRequestContext context, final PartitionInfo resource) {
-        authorize(MetacatContextManager.getContext(), resource.getName().toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), resource.getName());
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), resource.getName().toString());
+        }
         delegate.update(context, resource);
     }
 
     @Override
     public void delete(final ConnectorRequestContext context, final QualifiedName name) {
-        authorize(MetacatContextManager.getContext(), name.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), name);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), name.toString());
+        }
         delegate.delete(context, name);
     }
 
     @Override
     public PartitionInfo get(final ConnectorRequestContext context, final QualifiedName name) {
-        authorize(MetacatContextManager.getContext(), name.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), name);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), name.toString());
+        }
         return delegate.get(context, name);
     }
 
     @Override
     @SuppressFBWarnings
     public boolean exists(final ConnectorRequestContext context, final QualifiedName name) {
-        authorize(MetacatContextManager.getContext(), name.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), name);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), name.toString());
+        }
         return delegate.exists(context, name);
     }
 
@@ -130,7 +194,12 @@ public class AuthEnabledConnectorPartitionService implements ConnectorPartitionS
     public List<PartitionInfo> list(final ConnectorRequestContext context, final QualifiedName name,
                                     @Nullable final QualifiedName prefix, @Nullable final Sort sort,
                                     @Nullable final Pageable pageable) {
-        authorize(MetacatContextManager.getContext(), name.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), name);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), name.toString());
+        }
         return delegate.list(context, name, prefix, sort, pageable);
     }
 
@@ -138,17 +207,43 @@ public class AuthEnabledConnectorPartitionService implements ConnectorPartitionS
     public List<QualifiedName> listNames(final ConnectorRequestContext context, final QualifiedName name,
                                          @Nullable final QualifiedName prefix,
                                          @Nullable final Sort sort, @Nullable final Pageable pageable) {
-        authorize(MetacatContextManager.getContext(), name.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), name);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), name.toString());
+        }
         return delegate.listNames(context, name, prefix, sort, pageable);
     }
 
     @Override
     public void rename(final ConnectorRequestContext context, final QualifiedName oldName,
                        final QualifiedName newName) {
-        authorize(MetacatContextManager.getContext(), oldName.toString());
+        if (rateLimiterEnabled) {
+            checkThrottling(MetacatContextManager.getContext().getRequestName(), oldName);
+        }
+        if (authorizationEnabled) {
+            authorize(MetacatContextManager.getContext(), oldName.toString());
+        }
         delegate.rename(context, oldName, newName);
     }
 
+    /**
+     * Throttles calls to the connector based on the contextual request name
+     * and the resource. Only APIs with a resource are subject to throttling
+     */
+    private void checkThrottling(final String requestName, final QualifiedName resource) {
+        if (rateLimiter.hasExceededRequestLimit(new RateLimiterRequestContext(requestName, resource))) {
+            final String errorMsg = String.format("Too many requests for resource %s. Request: %s",
+                resource, requestName);
+            log.warn(errorMsg);
+            throw new MetacatTooManyRequestsException(errorMsg);
+        }
+    }
+
+    /**
+     * Authorizes calls to the connector based on the request context
+     */
     private void authorize(final MetacatRequestContext context, final String resource) {
         final AuthorizationStatus status = authorization.isAuthorized(context);
         if (!status.isAuthorized()) {

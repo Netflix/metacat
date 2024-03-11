@@ -77,23 +77,13 @@ class ConnectorFactoryDecoratorSpec extends Specification {
     }
 
     void validate(Object svc, Object baseSvc, String svcName, @Nullable Boolean rateLimitingExempted, @Nullable Boolean authExempted) {
-        Class throttlingConnectorClass = Class.forName("com.netflix.metacat.common.server.connectors.ThrottlingConnector${svcName}Service")
-        Class authEnabledConnectorClass = Class.forName("com.netflix.metacat.common.server.connectors.AuthEnabledConnector${svcName}Service")
+        Class validatingConnectorClass = Class.forName("com.netflix.metacat.common.server.connectors.ValidatingConnector${svcName}Service")
 
-        if (rateLimitingExempted == null || !rateLimitingExempted) {
-            assert throttlingConnectorClass.isAssignableFrom(svc.getClass()) : "${svcName} service should be ThrottlingConnector${svcName}Service when rate limiting is enabled"
-            if (authExempted == null || !authExempted) {
-                assert authEnabledConnectorClass.isAssignableFrom(svc.getDelegate().getClass()) : "${svcName} service delegate should be AuthEnabledConnector${svcName}Service when rate limiting and auth are enabled"
-            } else {
-                assert svc.getDelegate() == baseSvc : "${svcName} service delegate should be base service when when rate limiting is enabled and auth is disabled"
-            }
+        if ((rateLimitingExempted == null || !rateLimitingExempted) || (authExempted == null || !authExempted)) {
+            assert validatingConnectorClass.isAssignableFrom(svc.getClass()) : "${svcName} service should be ValidatingConnector${svcName}Service when rate limiting or auth is enabled"
+            assert svc.getDelegate() == baseSvc : "${svcName} service delegate should be base service when when rate limiting or auth is enabled"
         } else {
-            if (authExempted == null || !authExempted) {
-                assert authEnabledConnectorClass.isAssignableFrom(svc.getClass()) : "${svcName} service should be AuthEnabledConnector${svcName}Service when rate limiting is disabled and auth is enabled"
-                assert svc.getDelegate() == baseSvc : "${svcName} service delegate should be the base service when rate limiting is disabled and auth is enabled"
-            } else {
-                assert svc == baseSvc : "${svcName} service should be the base service when both rate limiting and throttling are disabled"
-            }
+            assert svc == baseSvc : "${svcName} service should be the base service when both rate limiting and throttling are disabled"
         }
     }
 }
