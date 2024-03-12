@@ -1,5 +1,6 @@
 package com.netflix.metacat.common.server.connectors;
 
+import com.netflix.metacat.common.server.api.authorization.Authorization;
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
 import lombok.Getter;
 import lombok.NonNull;
@@ -17,6 +18,9 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
     private final ConnectorContext connectorContext;
     private final RateLimiter rateLimiter;
     private final boolean rateLimiterEnabled;
+    private final Authorization authorization;
+    private final boolean authorizationEnabled;
+    private final boolean validationEnabled;
 
     /**
      * Creates the decorated connector factory that wraps connector services
@@ -32,24 +36,33 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         this.connectorContext = connectorContext;
 
         this.rateLimiter = connectorContext.getApplicationContext().getBean(RateLimiter.class);
+        this.authorization = connectorContext.getApplicationContext().getBean(Authorization.class);
 
-        // we can cache this config at startup since this is the connector level config
-        // that does not change later. Actual decision to enable and enforce throttling
-        // is in the rate limiter implementation which is more dynamic and accommodates
-        // changes from the Metacat dynamic configuration.
+        // we can cache these configs at startup since this is the connector level config
+        // that does not change later. Actual decision to enable and enforce throttling and/or
+        // authorization is in the rate limiter or auth implementations which are more dynamic
+        // and accommodate changes from the Metacat dynamic configuration.
         this.rateLimiterEnabled = isRateLimiterEnabled();
+        this.authorizationEnabled = isAuthorizationEnabled();
+        this.validationEnabled = isValidationEnabled();
     }
 
     @Override
     public ConnectorCatalogService getCatalogService() {
         ConnectorCatalogService service = delegate.getCatalogService();
 
-        if (rateLimiterEnabled) {
-            log.info("Creating rate-limited connector catalog services for connector-type: {}, "
-                         + "plugin-type: {}, catalog: {}, shard: {}",
+        if (validationEnabled) {
+            log.info("Creating validating connector catalog services for connector-type: {}, "
+                    + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
-            service = new ThrottlingConnectorCatalogService(service, rateLimiter);
+            service = new ValidatingConnectorCatalogService(
+                service,
+                rateLimiter,
+                rateLimiterEnabled,
+                authorization,
+                authorizationEnabled
+            );
         }
 
         return service;
@@ -59,12 +72,18 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
     public ConnectorDatabaseService getDatabaseService() {
         ConnectorDatabaseService service = delegate.getDatabaseService();
 
-        if (rateLimiterEnabled) {
-            log.info("Creating rate-limited connector database services for connector-type: {}, "
-                         + "plugin-type: {}, catalog: {}, shard: {}",
+        if (validationEnabled) {
+            log.info("Creating validating connector database services for connector-type: {}, "
+                    + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
-            service = new ThrottlingConnectorDatabaseService(service, rateLimiter);
+            service = new ValidatingConnectorDatabaseService(
+                service,
+                rateLimiter,
+                rateLimiterEnabled,
+                authorization,
+                authorizationEnabled
+            );
         }
 
         return service;
@@ -74,12 +93,18 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
     public ConnectorTableService getTableService() {
         ConnectorTableService service = delegate.getTableService();
 
-        if (rateLimiterEnabled) {
-            log.info("Creating rate-limited connector table services for connector-type: {}, "
-                         + "plugin-type: {}, catalog: {}, shard: {}",
+        if (validationEnabled) {
+            log.info("Creating validating connector table services for connector-type: {}, "
+                    + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
-            service = new ThrottlingConnectorTableService(service, rateLimiter);
+            service = new ValidatingConnectorTableService(
+                service,
+                rateLimiter,
+                rateLimiterEnabled,
+                authorization,
+                authorizationEnabled
+            );
         }
 
         return service;
@@ -89,12 +114,18 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
     public ConnectorPartitionService getPartitionService() {
         ConnectorPartitionService service = delegate.getPartitionService();
 
-        if (rateLimiterEnabled) {
-            log.info("Creating rate-limited connector partition services for connector-type: {}, "
-                         + "plugin-type: {}, catalog: {}, shard: {}",
+        if (validationEnabled) {
+            log.info("Creating validating connector partition services for connector-type: {}, "
+                    + "plugin-type: {}, catalog: {}, shard: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
-            service = new ThrottlingConnectorPartitionService(service, rateLimiter);
+            service = new ValidatingConnectorPartitionService(
+                service,
+                rateLimiter,
+                rateLimiterEnabled,
+                authorization,
+                authorizationEnabled
+            );
         }
 
         return service;
@@ -123,5 +154,18 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         return !Boolean.parseBoolean(
             connectorContext.getConfiguration().getOrDefault("connector.rate-limiter-exempted", "false")
         );
+    }
+
+    private boolean isAuthorizationEnabled() {
+        if (connectorContext.getConfiguration() == null) {
+            return true;
+        }
+
+        return !Boolean.parseBoolean(
+            connectorContext.getConfiguration().getOrDefault("connector.authorization-exempted", "false")
+        );
+    }
+    private boolean isValidationEnabled() {
+        return isRateLimiterEnabled() || isAuthorizationEnabled();
     }
 }

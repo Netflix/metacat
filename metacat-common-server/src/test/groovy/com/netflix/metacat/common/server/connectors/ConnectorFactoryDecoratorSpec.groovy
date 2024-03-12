@@ -1,6 +1,8 @@
 package com.netflix.metacat.common.server.connectors
 
+import com.netflix.metacat.common.server.api.authorization.Authorization
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter
+import org.spockframework.util.Nullable
 import org.springframework.context.ApplicationContext
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -10,6 +12,7 @@ class ConnectorFactoryDecoratorSpec extends Specification {
     ConnectorFactory delegate
     ConnectorContext connectorContext
     RateLimiter rateLimiter
+    Authorization authorization
     ApplicationContext applicationContext
     ConnectorCatalogService catalogService
     ConnectorDatabaseService databaseService
@@ -23,6 +26,7 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         delegate = Mock(ConnectorFactory)
         connectorContext = Mock(ConnectorContext)
         rateLimiter = Mock(RateLimiter)
+        authorization = Mock(Authorization)
         applicationContext = Mock(ApplicationContext)
 
         catalogService = Mock(ConnectorCatalogService)
@@ -33,6 +37,7 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         connectorPlugin.create(connectorContext) >> delegate
         connectorContext.getApplicationContext() >> applicationContext
         applicationContext.getBean(RateLimiter) >> rateLimiter
+        applicationContext.getBean(Authorization) >> authorization
 
         delegate.getCatalogService() >> catalogService
         delegate.getDatabaseService() >> databaseService
@@ -40,74 +45,46 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         delegate.getPartitionService() >> partitionService
     }
 
-    def "when rate limiting is enabled"() {
-        given:
-        connectorContext.getConfiguration() >> ["connector.rate-limiter-exempted": "false"]
-        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
-
-        when:
-        def catalogSvc = factory.getCatalogService()
-
-        then:
-        catalogSvc instanceof ThrottlingConnectorCatalogService
-        (catalogSvc as ThrottlingConnectorCatalogService).getDelegate() == catalogService
-
-        when:
-        def dbSvc = factory.getDatabaseService()
-
-        then:
-        dbSvc instanceof ThrottlingConnectorDatabaseService
-        (dbSvc as ThrottlingConnectorDatabaseService).getDelegate() == databaseService
-
-        when:
-        def tblSvc = factory.getTableService()
-
-        then:
-        tblSvc instanceof ThrottlingConnectorTableService
-        (tblSvc as ThrottlingConnectorTableService).getDelegate() == tableService
-
-        when:
-        def partitionSvc = factory.getPartitionService()
-
-        then:
-        partitionSvc instanceof ThrottlingConnectorPartitionService
-        (partitionSvc as ThrottlingConnectorPartitionService).getDelegate() == partitionService
-    }
-
     @Unroll
-    def "when rate limiting is disabled"() {
+    def "when rate limiting exempted is #rateLimitingExempted and auth exempted is #authExempted"() {
         given:
-        connectorContext.getConfiguration() >> config
+        connectorContext.getConfiguration() >> ["connector.rate-limiter-exempted": rateLimitingExempted.toString(), "connector.authorization-exempted": authExempted.toString()]
         factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         when:
         def catalogSvc = factory.getCatalogService()
-
-        then:
-        catalogSvc == catalogService
-
-        when:
         def dbSvc = factory.getDatabaseService()
-
-        then:
-        dbSvc == databaseService
-
-        when:
         def tblSvc = factory.getTableService()
-
-        then:
-        tblSvc == tableService
-
-        when:
         def partitionSvc = factory.getPartitionService()
 
         then:
-        partitionSvc == partitionService
+        validate(catalogSvc, catalogService, "Catalog", rateLimitingExempted, authExempted)
+        validate(dbSvc, databaseService, "Database", rateLimitingExempted, authExempted)
+        validate(tblSvc, tableService, "Table", rateLimitingExempted, authExempted)
+        validate(partitionSvc, partitionService, "Partition", rateLimitingExempted, authExempted)
 
         where:
-        config                                      | ignored
-        ["connector.rate-limiter-exempted": "true"] | null
-        null                                        | null
+        rateLimitingExempted || authExempted
+        false                || true
+        false                || false
+        true                 || true
+        true                 || false
+        null                 || true
+        null                 || false
+        null                 || null
+        false                || null
+        true                 || null
+    }
+
+    void validate(Object svc, Object baseSvc, String svcName, @Nullable Boolean rateLimitingExempted, @Nullable Boolean authExempted) {
+        Class validatingConnectorClass = Class.forName("com.netflix.metacat.common.server.connectors.ValidatingConnector${svcName}Service")
+
+        if ((rateLimitingExempted == null || !rateLimitingExempted) || (authExempted == null || !authExempted)) {
+            assert validatingConnectorClass.isAssignableFrom(svc.getClass()) : "${svcName} service should be ValidatingConnector${svcName}Service when rate limiting or auth is enabled"
+            assert svc.getDelegate() == baseSvc : "${svcName} service delegate should be base service when when rate limiting or auth is enabled"
+        } else {
+            assert svc == baseSvc : "${svcName} service should be the base service when both rate limiting and throttling are disabled"
+        }
     }
 }
 
