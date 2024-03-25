@@ -46,12 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.sql.Types;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -222,6 +217,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                         .filter(m -> m instanceof HasDataMetadata && ((HasDataMetadata) m).isDataExternal())
                         .map(m -> ((HasDataMetadata) m).getDataUri()).collect(Collectors.toList());
                     if (!uris.isEmpty()) {
+                        // TODO amboz determine if its OK to delete data metadata when DM fails onDelete
                         _softDeleteDataMetadata(userId, uris);
                     }
                 }
@@ -241,15 +237,36 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     private void _deleteDefinitionMetadata(
         @Nullable final List<QualifiedName> names
     ) {
+        List<QualifiedName> validNames = new ArrayList<>();
         if (names != null && !names.isEmpty()) {
-            final SqlParameterValue[] aNames = names.stream().filter(name -> !name.isPartitionDefinition())
+            for (QualifiedName name : names) {
+                // For each name in aNames, fetch existing data
+                final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
+                if (existingData.isPresent()) {
+                    try {
+                        // apply interceptor to validate the object node
+                        this.metadataInterceptor.onDelete(this, name, existingData.get());
+                        // add valid names to validNames
+                        validNames.add(name);
+                    } catch (Exception e) {
+                        // if onDelete throws an exception, remove this name from aNames and log it
+                        final String message = String.format("metadata onDelete for name %s encountered an exception", name);
+                        log.error(message, e);
+                    }
+                }
+            }
+        }
+
+        if (!validNames.isEmpty()) {
+            final SqlParameterValue[] aNames = validNames.stream().filter(name -> !name.isPartitionDefinition())
                 .map(n -> new SqlParameterValue(Types.VARCHAR, n))
                 .toArray(SqlParameterValue[]::new);
-            final SqlParameterValue[] aPartitionNames = names.stream().filter(QualifiedName::isPartitionDefinition)
+            final SqlParameterValue[] aPartitionNames = validNames.stream().filter(QualifiedName::isPartitionDefinition)
                 .map(n -> new SqlParameterValue(Types.VARCHAR, n))
                 .toArray(SqlParameterValue[]::new);
             if (aNames.length > 0) {
                 final List<String> paramVariables = Arrays.stream(aNames).map(s -> "?").collect(Collectors.toList());
+                // At this point, only aNames that did not encounter an exception onDelete will be deleted
                 jdbcTemplate.update(
                     String.format(SQL.DELETE_DEFINITION_METADATA, Joiner.on(",").skipNulls().join(paramVariables)),
                     (Object[]) aNames);
@@ -257,6 +274,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             if (aPartitionNames.length > 0) {
                 final List<String> paramVariables =
                     Arrays.stream(aPartitionNames).map(s -> "?").collect(Collectors.toList());
+                // At this point, only aPartitionNames that did not encounter an exception onDelete will be deleted
                 jdbcTemplate.update(
                     String.format(SQL.DELETE_PARTITION_DEFINITION_METADATA,
                         Joiner.on(",").skipNulls().join(paramVariables)), (Object[]) aPartitionNames);
@@ -583,7 +601,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             } else {
                 merged = metadata.get();
             }
-            //apply interceptor to change the object node
+            // apply interceptor to change the object node
             this.metadataInterceptor.onWrite(this, name, merged);
             String query;
             if (name.isPartitionDefinition()) {

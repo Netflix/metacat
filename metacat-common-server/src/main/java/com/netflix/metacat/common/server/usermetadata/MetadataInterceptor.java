@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
 public interface MetadataInterceptor {
 
     /**
-     * apply business rules before retrieving back. These rules may change or overriding existing
+     * Apply business rules before retrieving back. These rules may change or override existing
      * business metadata.
      *
      * @param userMetadataService user metadata service
@@ -47,14 +47,26 @@ public interface MetadataInterceptor {
     }
 
     /**
-     * Valide ObjectNode before storing it.
+     * Validate ObjectNode before storing it.
      * @param userMetadataService user metadata service
-     * @param name       qualified name
-     * @param objectNode input metadata object node
+     * @param name                qualified name
+     * @param objectNode          input metadata object node
      * @throws InvalidMetadataException business validation exception
      */
     default void onWrite(final UserMetadataService userMetadataService,
                          final QualifiedName name, final ObjectNode objectNode)
+        throws InvalidMetadataException {
+    }
+
+    /**
+     * Validate ObjectNode before deleting it.
+     * @param userMetadataService user metadata service
+     * @param name                qualified name
+     * @param objectNode          to-be-deleted metadata object node
+     * @throws InvalidMetadataException business validation exception
+     */
+    default void onDelete(final UserMetadataService userMetadataService,
+                          final QualifiedName name, final ObjectNode objectNode)
         throws InvalidMetadataException {
     }
 }
