@@ -46,7 +46,13 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.sql.Types;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -237,22 +243,20 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     private void _deleteDefinitionMetadata(
         @Nullable final List<QualifiedName> names
     ) {
-        List<QualifiedName> validNames = new ArrayList<>();
+        final List<QualifiedName> validNames = new ArrayList<>();
         if (names != null && !names.isEmpty()) {
             for (QualifiedName name : names) {
-                // For each name in aNames, fetch existing data
-                final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
-                if (existingData.isPresent()) {
-                    try {
-                        // apply interceptor to validate the object node
-                        this.metadataInterceptor.onDelete(this, name, existingData.get());
-                        // add valid names to validNames
-                        validNames.add(name);
-                    } catch (Exception e) {
-                        // if onDelete throws an exception, remove this name from aNames and log it
-                        final String message = String.format("metadata onDelete for name %s encountered an exception", name);
-                        log.error(message, e);
-                    }
+                try {
+                    // apply interceptor to validate the object node
+                    this.metadataInterceptor.onDelete(this, name);
+                    // add valid names to validNames
+                    validNames.add(name);
+                } catch (Exception e) {
+                    // if onDelete throws an exception, remove this name from aNames and log it
+                    final String message = String.format(
+                        "metadata onDelete for name %s encountered an exception", name
+                    );
+                    log.error(message, e);
                 }
             }
         }

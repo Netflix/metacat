@@ -62,11 +62,10 @@ public interface MetadataInterceptor {
      * Validate ObjectNode before deleting it.
      * @param userMetadataService user metadata service
      * @param name                qualified name
-     * @param objectNode          to-be-deleted metadata object node
      * @throws InvalidMetadataException business validation exception
      */
     default void onDelete(final UserMetadataService userMetadataService,
-                          final QualifiedName name, final ObjectNode objectNode)
+                          final QualifiedName name)
         throws InvalidMetadataException {
     }
 }
