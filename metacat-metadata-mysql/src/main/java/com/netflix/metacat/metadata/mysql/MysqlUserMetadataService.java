@@ -223,7 +223,6 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                         .filter(m -> m instanceof HasDataMetadata && ((HasDataMetadata) m).isDataExternal())
                         .map(m -> ((HasDataMetadata) m).getDataUri()).collect(Collectors.toList());
                     if (!uris.isEmpty()) {
-                        // TODO amboz determine if its OK to delete data metadata when DM fails onDelete
                         _softDeleteDataMetadata(userId, uris);
                     }
                 }
@@ -249,10 +248,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 try {
                     // apply interceptor to validate the object node
                     this.metadataInterceptor.onDelete(this, name);
-                    // add valid names to validNames
                     validNames.add(name);
                 } catch (Exception e) {
-                    // if onDelete throws an exception, remove this name from aNames and log it
                     final String message = String.format(
                         "metadata onDelete for name %s encountered an exception", name
                     );
@@ -270,7 +267,6 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 .toArray(SqlParameterValue[]::new);
             if (aNames.length > 0) {
                 final List<String> paramVariables = Arrays.stream(aNames).map(s -> "?").collect(Collectors.toList());
-                // At this point, only aNames that did not encounter an exception onDelete will be deleted
                 jdbcTemplate.update(
                     String.format(SQL.DELETE_DEFINITION_METADATA, Joiner.on(",").skipNulls().join(paramVariables)),
                     (Object[]) aNames);
@@ -278,7 +274,6 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             if (aPartitionNames.length > 0) {
                 final List<String> paramVariables =
                     Arrays.stream(aPartitionNames).map(s -> "?").collect(Collectors.toList());
-                // At this point, only aPartitionNames that did not encounter an exception onDelete will be deleted
                 jdbcTemplate.update(
                     String.format(SQL.DELETE_PARTITION_DEFINITION_METADATA,
                         Joiner.on(",").skipNulls().join(paramVariables)), (Object[]) aPartitionNames);
