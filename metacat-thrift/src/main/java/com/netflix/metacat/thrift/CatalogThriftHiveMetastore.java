@@ -441,7 +441,7 @@ public class CatalogThriftHiveMetastore extends FacebookBase
                     v1.renameTable(catalogName, oldName.getDatabaseName(), oldName.getTableName(),
                         newName.getTableName());
                 }
-                v1.updateTable(catalogName, dbname, newName.getTableName(), dto);
+                v1.updateTable(catalogName, dbname, newName.getTableName(), false, dto);
                 return null;
             });
     }

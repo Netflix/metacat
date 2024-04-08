@@ -1234,7 +1234,7 @@ public class MetacatController implements MetacatV1 {
         @PathVariable("database-name") final String databaseName,
         @ApiParam(value = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
-        @ApiParam(value = "To consider any updates to secure metadata in the request", required = false)
+        @ApiParam(value = "To consider updates to secure metadata if true", required = false)
         @RequestParam(name = "includeSecureMetadata", defaultValue = "false") final boolean includeSecureMetadata,
         @ApiParam(value = "The table information", required = true)
         @RequestBody final TableDto table

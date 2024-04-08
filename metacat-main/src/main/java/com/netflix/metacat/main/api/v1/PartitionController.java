@@ -1087,7 +1087,7 @@ public class PartitionController implements PartitionV1 {
                         dto.setName(name);
                         dto.setDefinitionMetadata(partitionsSaveRequestDto.getDefinitionMetadata());
                         dto.setDataMetadata(partitionsSaveRequestDto.getDataMetadata());
-                        this.v1.updateTable(catalogName, databaseName, tableName, dto);
+                        this.v1.updateTable(catalogName, databaseName, tableName, false, dto);
                     }
                 }
                 return result;
