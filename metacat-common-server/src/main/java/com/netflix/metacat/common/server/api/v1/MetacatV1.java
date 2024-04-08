@@ -168,16 +168,18 @@ public interface MetacatV1 {
     /**
      * Update table.
      *
-     * @param catalogName  catalog name
-     * @param databaseName database name
-     * @param tableName    table name
-     * @param table        table
+     * @param catalogName           catalog name
+     * @param databaseName          database name
+     * @param tableName             table name
+     * @param includeSecureMetadata consider updates to secure metadata if true
+     * @param table                 table
      * @return table
      */
     TableDto updateTable(
         final String catalogName,
         final String databaseName,
         final String tableName,
+        final boolean includeSecureMetadata,
         final TableDto table
     );
 

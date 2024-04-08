@@ -626,7 +626,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         } else {
             0 * metacatV1.renameTable(_, _, _, _)
         }
-        1 * metacatV1.updateTable(_, _, _, _)
+        1 * metacatV1.updateTable(_, _, _, _, _)
         registry.clock() >> clock
         registry.timer(_) >> timer
         timer.record(_, _) >> {}
@@ -659,7 +659,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         } else {
             0 * metacatV1.renameTable(_, _, _, _)
         }
-        1 * metacatV1.updateTable(_, _, _, _)
+        1 * metacatV1.updateTable(_, _, _, _, _)
         registry.clock() >> clock
         registry.timer(_) >> timer
         timer.record(_, _) >> {}
@@ -692,7 +692,7 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
         } else {
             0 * metacatV1.renameTable(_, _, _, _)
         }
-        1 * metacatV1.updateTable(_, _, _, _)
+        1 * metacatV1.updateTable(_, _, _, _, _)
         registry.clock() >> clock
         registry.timer(_) >> timer
         timer.record(_, _) >> {}

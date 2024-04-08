@@ -557,10 +557,11 @@ public interface MetacatV1 {
     /**
      * Update table.
      *
-     * @param catalogName  catalog name
-     * @param databaseName database name
-     * @param tableName    table name
-     * @param table        table
+     * @param catalogName           catalog name
+     * @param databaseName          database name
+     * @param tableName             table name
+     * @param includeSecureMetadata consider updates to secure metadata if true
+     * @param table                 table
      * @return table
      */
     @PUT
@@ -574,6 +575,9 @@ public interface MetacatV1 {
             String databaseName,
         @PathParam("table-name")
             String tableName,
+        @DefaultValue("false")
+        @QueryParam("includeSecureMetadata")
+        Boolean includeSecureMetadata,
         TableDto table
     );
 }

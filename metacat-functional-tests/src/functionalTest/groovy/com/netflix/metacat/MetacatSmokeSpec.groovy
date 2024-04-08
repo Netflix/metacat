@@ -242,7 +242,7 @@ class MetacatSmokeSpec extends Specification {
             }
             api.createTable(catalogName, databaseName, tableName, tableDto)
             tableDto.getSerde().setUri(updatedUri)
-            api.updateTable(catalogName, databaseName, tableName, tableDto)
+            api.updateTable(catalogName, databaseName, tableName, false, tableDto)
             error == null
         } catch (Exception e) {
             e.class == error
@@ -516,7 +516,7 @@ class MetacatSmokeSpec extends Specification {
         when:
         // Updating a non-iceberg table with iceberg metadata should fail
         createTable(catalogName, databaseName, tableName)
-        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        api.updateTable(catalogName, databaseName, tableName, false, tableDto)
         then:
         thrown(MetacatBadRequestException)
         when:
@@ -527,22 +527,22 @@ class MetacatSmokeSpec extends Specification {
         def updatedUri = tableDto.getDataUri() + 'updated'
         tableDto.getMetadata().putAll(metadata1)
         tableDto.getSerde().setUri(updatedUri)
-        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        api.updateTable(catalogName, databaseName, tableName, false, tableDto)
         then:
         noExceptionThrown()
         when:
         tagApi.setTableTags(catalogName, databaseName, tableName, ['do_not_drop','iceberg_migration_do_not_modify'] as Set)
-        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        api.updateTable(catalogName, databaseName, tableName, false, tableDto)
         then:
         thrown(RetryableException)
         when:
         tagApi.setTableTags(catalogName, databaseName, tableName, ['do_not_drop'] as Set)
-        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        api.updateTable(catalogName, databaseName, tableName, false, tableDto)
         then:
         noExceptionThrown()
         when:
         tagApi.removeTableTags(catalogName, databaseName, tableName, true, [] as Set)
-        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        api.updateTable(catalogName, databaseName, tableName, false, tableDto)
         then:
         noExceptionThrown()
         when:
@@ -571,7 +571,7 @@ class MetacatSmokeSpec extends Specification {
         def metadataLocation2 = '/tmp/data/metadata/00002-2d6c1951-31d5-4bea-8edd-e35746b172f3.metadata.json'
         def metadata2 = [table_type: 'ICEBERG', metadata_location: metadataLocation2, previous_metadata_location: metadataLocation1, 'partition_spec': 'invalid']
         tableDto.getMetadata().putAll(metadata2)
-        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        api.updateTable(catalogName, databaseName, tableName, false, tableDto)
         updatedTable = api.getTable(catalogName, databaseName, tableName, true, false, false)
         then:
         noExceptionThrown()
@@ -580,7 +580,7 @@ class MetacatSmokeSpec extends Specification {
         !updatedTable.getMetadata().containsKey('metadata_content')
         updatedTable.getFields().get(1).getSource_type().equals('string')
         when:
-        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        api.updateTable(catalogName, databaseName, tableName, false, tableDto)
         def tableWithDetails = api.getTable(catalogName, databaseName, tableName, true, false, false, true)
         then:
         tableWithDetails.getMetadata().get('metadata_content') != null
@@ -589,7 +589,7 @@ class MetacatSmokeSpec extends Specification {
         api.renameTable(catalogName, databaseName, tableName, renamedTableName)
         def t = api.getTable(catalogName, databaseName, renamedTableName, true, false, false)
         t.getMetadata().put('previous_metadata_location', metadataLocation1)
-        api.updateTable(catalogName, databaseName, renamedTableName, t)
+        api.updateTable(catalogName, databaseName, renamedTableName, false, t)
         then:
         noExceptionThrown()
         api.getTable(catalogName, databaseName, renamedTableName, true, false, false) != null
@@ -600,20 +600,20 @@ class MetacatSmokeSpec extends Specification {
         api.getTable(catalogName, databaseName, tableName, true, false, false) != null
         when:
         tableDto.getMetadata().putAll(metadata1)
-        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        api.updateTable(catalogName, databaseName, tableName, false, tableDto)
         then:
         thrown(MetacatPreconditionFailedException)
         when:
         metadata1.put('previous_metadata_location', '/tmp/data/metadata/filenotfound')
         tableDto.getMetadata().putAll(metadata1)
-        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        api.updateTable(catalogName, databaseName, tableName, false, tableDto)
         then:
         thrown(MetacatBadRequestException)
         when:
         // Failure to get table after a successful update shouldn't fail
         def updatedInvalidMetadata = [table_type: 'ICEBERG', metadata_location: icebergMetadataLocation, previous_metadata_location: updatedTable.getMetadata().get('metadata_location')]
         tableDto.getMetadata().putAll(updatedInvalidMetadata)
-        api.updateTable(catalogName, databaseName, tableName, tableDto)
+        api.updateTable(catalogName, databaseName, tableName, false, tableDto)
         then:
         noExceptionThrown()
         when:
@@ -1268,7 +1268,7 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatNotFoundException)
         when:
-        api.updateTable('invalid', 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.updateTable('invalid', 'invalid', 'invalid', false, new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
         then:
         thrown(MetacatNotFoundException)
         when:
@@ -1320,7 +1320,7 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatNotFoundException)
         when:
-        api.updateTable(catalogName, 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.updateTable(catalogName, 'invalid', 'invalid', false, new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
         then:
         thrown(MetacatNotFoundException)
         when:
@@ -1365,7 +1365,7 @@ class MetacatSmokeSpec extends Specification {
         then:
         thrown(MetacatNotFoundException)
         when:
-        api.updateTable(catalogName, 'invalid', 'invalid', new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
+        api.updateTable(catalogName, 'invalid', 'invalid', false, new TableDto(name: QualifiedName.ofTable('invalid', 'invalid', 'invalid')))
         then:
         thrown(MetacatNotFoundException)
         when:

@@ -680,7 +680,7 @@ class MetacatFunctionalSpec extends Specification {
         table.serde.uri = updatedDataUri
 
         and:
-        api.updateTable(catalog.name, databaseName, tableName, table)
+        api.updateTable(catalog.name, databaseName, tableName, false, table)
         table = api.getTable(catalog.name, databaseName, tableName, true, true, true)
 
         then: 'saving should merge or insert metadata'
@@ -696,7 +696,7 @@ class MetacatFunctionalSpec extends Specification {
         table.serde.uri = origDataUri
         table.definitionMetadata = null
         table.dataMetadata = null
-        api.updateTable(catalog.name, databaseName, tableName, table)
+        api.updateTable(catalog.name, databaseName, tableName, false, table)
         table = api.getTable(catalog.name, databaseName, tableName, true, true, true)
 
         then: 'the old data metadata should be back'
