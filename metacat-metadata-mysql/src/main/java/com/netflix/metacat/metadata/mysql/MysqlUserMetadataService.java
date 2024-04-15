@@ -242,6 +242,9 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         @Nullable final List<QualifiedName> names
     ) {
         if (names != null && !names.isEmpty()) {
+            for (QualifiedName name : names) {
+                this.metadataInterceptor.onDelete(this, name);
+            }
             final SqlParameterValue[] aNames = names.stream().filter(name -> !name.isPartitionDefinition())
                 .map(n -> new SqlParameterValue(Types.VARCHAR, n))
                 .toArray(SqlParameterValue[]::new);
@@ -599,7 +602,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 name.toString());
 
         } else {
-            //apply interceptor to change the object node
+            // apply interceptor to change the object node
             if (metadata.isPresent()) {
                 this.metadataInterceptor.onWrite(this, name, metadata.get());
             }
