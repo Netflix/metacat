@@ -119,6 +119,11 @@ class HiveTypeConverterSpec extends Specification {
             "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string>",
             "struct<prediction_date:int,lower_confidence_amt:int,upper_confidence_amt:int,model_short_name:string>",
             "struct<prediction_date:int,prediction_source:string>",
+
+            // Nested Type with UpperCase
+            'array<struct<date:string,countryCodes:array<string>,source:string>>',
+            "struct<Field3:struct<Nested_Field1:bigint,Nested_Field2:bigint>>",
+            "struct<Field1:bigint,Field2:bigint,field3:struct<NESTED_Field1:bigint,NesteD_Field2:bigint>>"
         ]
     }
 
@@ -218,6 +223,10 @@ class HiveTypeConverterSpec extends Specification {
         "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:double,upper_confidence_amt:double,model_short_name:string>"
         "struct<prediction_date:int,lower_confidence_amt:int,upper_confidence_amt:int,model_short_name:string>" || "struct<prediction_date:int,lower_confidence_amt:int,upper_confidence_amt:int,model_short_name:string>"
         "struct<prediction_date:int,prediction_source:string>" || "struct<prediction_date:int,prediction_source:string>"
+
+        'array<struct<field2:decimal(38 ),countryCodes:array<string>,source:string>>' || 'array<struct<field2:decimal(38),countryCodes:array<string>,source:string>>'
+        "struct<Field3:struct<Nested_Field1:bigint,Nested_Field2:bigint,Nested_FIELD3:decimal( 38, 9)>>" || "struct<Field3:struct<Nested_Field1:bigint,Nested_Field2:bigint,Nested_FIELD3:decimal(38,9)>>"
+        "struct<Field1:decimal (38,9 ),Field2:bigint,field3:struct<NESTED_Field1:decimal ( 38,9 ),NesteD_Field2:bigint>>" || "struct<Field1:decimal(38,9),Field2:bigint,field3:struct<NESTED_Field1:decimal(38,9),NesteD_Field2:bigint>>"
     }
 
     @Unroll
@@ -233,4 +242,17 @@ class HiveTypeConverterSpec extends Specification {
         ]
     }
 
+    @Unroll
+    def 'case reserve fieldName Fidelity'(String typeString, String expectedString) {
+        expect:
+        def result = converter.fromMetacatTypeToJson(converter.toMetacatType(typeString)).toString()
+
+        assert result == expectedString
+
+        where:
+        typeString | expectedString
+        "struct<Field1:bigint,Field2:bigint,field3:struct<nested_Field1:bigint,nested_Field2:bigint>>" | """{"type":"row","fields":[{"name":"Field1","type":"bigint"},{"name":"Field2","type":"bigint"},{"name":"field3","type":{"type":"row","fields":[{"name":"nested_Field1","type":"bigint"},{"name":"nested_Field2","type":"bigint"}]}}]}"""
+        "array<struct<date:string,countryCodes:array<string>,source:string>>" | """{"type":"array","elementType":{"type":"row","fields":[{"name":"date","type":"string"},{"name":"countryCodes","type":{"type":"array","elementType":"string"}},{"name":"source","type":"string"}]}}"""
+        "array<struct<Date:string,nestedArray:array<struct<date:string,countryCodes:array<string>,source:string>>>>" | """{"type":"array","elementType":{"type":"row","fields":[{"name":"Date","type":"string"},{"name":"nestedArray","type":{"type":"array","elementType":{"type":"row","fields":[{"name":"date","type":"string"},{"name":"countryCodes","type":{"type":"array","elementType":"string"}},{"name":"source","type":"string"}]}}}]}}"""
+    }
 }

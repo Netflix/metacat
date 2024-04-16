@@ -1,0 +1,157 @@
+{
+  "format-version" : 1,
+  "table-uuid" : "6d9ede8f-61cb-469e-a590-4757602df691",
+  "location" : "file:/tmp/data",
+  "last-updated-ms" : 1712701649817,
+  "last-column-id" : 9,
+  "schema" : {
+    "type" : "struct",
+    "schema-id" : 0,
+    "fields" : [ {
+      "id" : 1,
+      "name" : "dateint",
+      "required" : false,
+      "type" : "long"
+    }, {
+      "id" : 2,
+      "name" : "info",
+      "required" : false,
+      "type" : {
+        "type" : "struct",
+        "fields" : [ {
+          "id" : 3,
+          "name" : "name",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "id" : 4,
+          "name" : "address",
+          "required" : false,
+          "type" : {
+            "type" : "struct",
+            "fields" : [ {
+              "id" : 6,
+              "name" : "NAME",
+              "required" : false,
+              "type" : "string"
+            } ]
+          }
+        }, {
+          "id" : 5,
+          "name" : "nestedArray",
+          "required" : false,
+          "type" : {
+            "type" : "list",
+            "element-id" : 7,
+            "element" : {
+              "type" : "struct",
+              "fields" : [ {
+                "id" : 8,
+                "name" : "FIELD1",
+                "required" : false,
+                "type" : "string"
+              }, {
+                "id" : 9,
+                "name" : "field2",
+                "required" : false,
+                "type" : "string"
+              } ]
+            },
+            "element-required" : false
+          }
+        } ]
+      }
+    } ]
+  },
+  "current-schema-id" : 0,
+  "schemas" : [ {
+    "type" : "struct",
+    "schema-id" : 0,
+    "fields" : [ {
+      "id" : 1,
+      "name" : "dateint",
+      "required" : false,
+      "type" : "long"
+    }, {
+      "id" : 2,
+      "name" : "info",
+      "required" : false,
+      "type" : {
+        "type" : "struct",
+        "fields" : [ {
+          "id" : 3,
+          "name" : "name",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "id" : 4,
+          "name" : "address",
+          "required" : false,
+          "type" : {
+            "type" : "struct",
+            "fields" : [ {
+              "id" : 6,
+              "name" : "NAME",
+              "required" : false,
+              "type" : "string"
+            } ]
+          }
+        }, {
+          "id" : 5,
+          "name" : "nestedArray",
+          "required" : false,
+          "type" : {
+            "type" : "list",
+            "element-id" : 7,
+            "element" : {
+              "type" : "struct",
+              "fields" : [ {
+                "id" : 8,
+                "name" : "FIELD1",
+                "required" : false,
+                "type" : "string"
+              }, {
+                "id" : 9,
+                "name" : "field2",
+                "required" : false,
+                "type" : "string"
+              } ]
+            },
+            "element-required" : false
+          }
+        } ]
+      }
+    } ]
+  } ],
+  "partition-spec" : [ {
+    "name" : "dateint",
+    "transform" : "identity",
+    "source-id" : 1,
+    "field-id" : 1000
+  } ],
+  "default-spec-id" : 0,
+  "partition-specs" : [ {
+    "spec-id" : 0,
+    "fields" : [ {
+      "name" : "dateint",
+      "transform" : "identity",
+      "source-id" : 1,
+      "field-id" : 1000
+    } ]
+  } ],
+  "last-partition-id" : 1000,
+  "default-sort-order-id" : 0,
+  "sort-orders" : [ {
+    "order-id" : 0,
+    "fields" : [ ]
+  } ],
+  "properties" : {
+    "field.metadata.json" : "{\"1\":{},\"2\":{},\"3\":{},\"4\":{},\"5\":{},\"6\":{},\"8\":{},\"9\":{}}"
+  },
+  "current-snapshot-id" : -1,
+  "refs" : { },
+  "snapshots" : [ ],
+  "statistics" : [ ],
+  "snapshot-log" : [ ],
+  "metadata-log" : [ ]
+}
