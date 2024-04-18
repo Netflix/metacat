@@ -272,6 +272,7 @@ class MetacatSmokeSpec extends Specification {
             """
 
         JSONAssert.assertEquals(nestedFieldDto.jsonType.toString(), expectedJsonString, false)
+        JSONAssert.assertEquals("", expectedJsonString, false)
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
         where:
