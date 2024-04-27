@@ -18,10 +18,10 @@ import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -77,6 +77,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
      * {@inheritDoc}.
      */
     @Override
+    @Transactional
     public void delete(final ConnectorRequestContext context, final QualifiedName name) {
         // check exists then delete in non-transactional optimistic manner
         if (!exists(context, name)) {
@@ -159,17 +160,12 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         @Nullable final Pageable pageable
     ) {
         try {
-            List<QualifiedName> qualifiedNames = polarisStoreService.getAllDatabases().stream()
-                .map(d -> QualifiedName.ofDatabase(name.getCatalogName(), d.getDbName()))
+            final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
+            final List<QualifiedName> qualifiedNames = polarisStoreService.getDatabaseNames(
+                dbPrefix, sort, 1000)
+                .stream()
+                .map(dbName -> QualifiedName.ofDatabase(name.getCatalogName(), dbName))
                 .collect(Collectors.toCollection(ArrayList::new));
-            if (prefix != null) {
-                qualifiedNames = qualifiedNames.stream()
-                    .filter(n -> n.startsWith(prefix))
-                    .collect(Collectors.toCollection(ArrayList::new));
-            }
-            if (sort != null) {
-                ConnectorUtils.sort(qualifiedNames, sort, Comparator.comparing(QualifiedName::toString));
-            }
             return ConnectorUtils.paginate(qualifiedNames, pageable);
         } catch (Exception exception) {
             throw new ConnectorException(
@@ -190,15 +186,12 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     ) {
         try {
             final PolarisDatabaseMapper mapper = new PolarisDatabaseMapper(name.getCatalogName());
-            List<PolarisDatabaseEntity> dbs = polarisStoreService.getAllDatabases();
-            if (prefix != null) {
-                dbs = dbs.stream()
-                    .filter(n -> QualifiedName.ofDatabase(name.getCatalogName(), n.getDbName()).startsWith(prefix))
-                    .collect(Collectors.toCollection(ArrayList::new));
-            }
-            if (sort != null) {
-                ConnectorUtils.sort(dbs, sort, Comparator.comparing(p -> p.getDbName()));
-            }
+            final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
+
+            final List<PolarisDatabaseEntity> dbs = polarisStoreService.getDatabases(
+                dbPrefix, sort, 1000
+            );
+
             return ConnectorUtils.paginate(dbs, pageable).stream()
                 .map(d -> mapper.toInfo(d)).collect(Collectors.toList());
         } catch (Exception exception) {

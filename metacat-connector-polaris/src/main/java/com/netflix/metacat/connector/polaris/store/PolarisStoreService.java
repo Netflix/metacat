@@ -1,5 +1,6 @@
 package com.netflix.metacat.connector.polaris.store;
 
+import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 
@@ -35,9 +36,21 @@ public interface PolarisStoreService {
 
     /**
      * Fetches all database entities.
+     * @param dbNamePrefix dbNamePrefix to return
+     * @param pageSize db page size
+     * @param sort the order of the result
      * @return Polaris Database entities
      */
-    List<PolarisDatabaseEntity> getAllDatabases();
+    List<PolarisDatabaseEntity> getDatabases(String dbNamePrefix, Sort sort, int pageSize);
+
+    /**
+     * Fetches all database entities.
+     * @param dbNamePrefix dbNamePrefix to return
+     * @param sort the order of the result
+     * @param pageSize db page size
+     * @return Polaris Database entities
+     */
+    List<String> getDatabaseNames(String dbNamePrefix, Sort sort, int pageSize);
 
     /**
      * Checks if database with the name exists.
