@@ -388,7 +388,9 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 log.warn(String.format("Calling Polaris getTableNames with nonempty filter %s", filter));
             }
             final List<String> databaseNames = name.isDatabaseDefinition() ? ImmutableList.of(name.getDatabaseName())
-                : polarisStoreService.getDatabaseNames(null, null, 1000);
+                : polarisStoreService.getDatabaseNames(null, null,
+                connectorContext.getConfig().getListDatabaseNamesPageSize()
+            );
             int limitSize = limit == null || limit < 0 ? Integer.MAX_VALUE : limit;
             final List<QualifiedName> result = Lists.newArrayList();
             for (int i = 0; i < databaseNames.size() && limitSize > 0; i++) {

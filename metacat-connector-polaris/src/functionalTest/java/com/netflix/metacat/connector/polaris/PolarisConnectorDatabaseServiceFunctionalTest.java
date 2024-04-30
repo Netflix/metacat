@@ -29,22 +29,13 @@ import java.util.List;
 @ActiveProfiles(profiles = {"polaris_functional_test"})
 @AutoConfigureDataJpa
 public class PolarisConnectorDatabaseServiceFunctionalTest extends PolarisConnectorDatabaseServiceTest {
-    private void simulateDelay() {
-        try {
-            Thread.sleep(10000); // 10 seconds delay
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // Restore the interrupted status
-            log.debug("Sleep was interrupted", e);
-        }
-    }
-
     /**
      * Test SimpleDBList.
      */
     @Test
     public void testSimpleListDb() {
         // Simulate a delay so that the dbs schema is visible
-        simulateDelay();
+        TestUtil.simulateDelay();
         final DatabaseInfo db1 = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).uri("uri1").build();
         final DatabaseInfo db2 = DatabaseInfo.builder().name(DB2_QUALIFIED_NAME).uri("uri2").build();
         getPolarisDBService().create(getRequestContext(), db1);
@@ -64,7 +55,7 @@ public class PolarisConnectorDatabaseServiceFunctionalTest extends PolarisConnec
 
 
         // After sufficient time, the dbs should return using follower_read_timestamp
-        simulateDelay();
+        TestUtil.simulateDelay();
         dbNames = getPolarisDBService().listNames(
             getRequestContext(), QualifiedName.ofCatalog(CATALOG_NAME), null, null, null);
         Assert.assertEquals(dbNames, Arrays.asList(DB1_QUALIFIED_NAME, DB2_QUALIFIED_NAME));

@@ -28,15 +28,6 @@ import java.util.stream.Collectors;
 @AutoConfigureDataJpa
 public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTest {
 
-    private void simulateDelay() {
-        try {
-            Thread.sleep(10000); // 10 seconds delay
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // Restore the interrupted status
-            log.debug("Sleep was interrupted", e);
-        }
-    }
-
     /**
      * Test to verify that table names fetch works.
      */
@@ -54,7 +45,7 @@ public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTe
         createTable(dbName, tblNameB);
         createTable(dbName, tblNameC);
 
-        simulateDelay();
+        TestUtil.simulateDelay();
 
         tblNames = getPolarisConnector().getTables(dbName, "", 1000);
         Assert.assertEquals(3, tblNames.size());
@@ -72,7 +63,7 @@ public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTe
         final String dbName = generateDatabaseName();
         createDB(dbName);
 
-        simulateDelay();
+        TestUtil.simulateDelay();
 
         // Test when db is empty
         List<PolarisTableEntity> entities = getPolarisConnector().getTableEntities(dbName, "", 1);
@@ -87,12 +78,7 @@ public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTe
         createTable(dbName, tblNameB);
         createTable(dbName, tblNameC);
 
-        try {
-            // pause execution for 10000 milliseconds (10 seconds)
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            log.debug("Sleep was interrupted");
-        }
+        TestUtil.simulateDelay();
 
         // Test pagination and sort
         entities = getPolarisConnector().getTableEntities(dbName, "", 1);
@@ -129,7 +115,7 @@ public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTe
         createDB("db2");
         createDB("db3");
 
-        simulateDelay();
+        TestUtil.simulateDelay();
 
         List<String> dbNames = getPolarisConnector().getDatabaseNames("db", null, 1);
         List<PolarisDatabaseEntity> dbs = getPolarisConnector().getDatabases("db", null, 1);

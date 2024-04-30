@@ -555,16 +555,30 @@ public interface Config {
     /**
      * Get the page size when listing table entities.
      *
-     * @return True if it is.
+     * @return size of the page
      */
     int getListTableEntitiesPageSize();
 
     /**
      * Get the page size when listing table names.
      *
-     * @return True if it is.
+     * @return size of the page
      */
     int getListTableNamesPageSize();
+
+    /**
+     * Get the page size when listing db entities.
+     *
+     * @return size of the page
+     */
+    int getListDatabaseEntitiesPageSize();
+
+    /**
+     * Get the page size when listing db names.
+     *
+     * @return size of the page
+     */
+    int getListDatabaseNamesPageSize();
 
     /**
      * Metadata query timeout in seconds.

@@ -18,7 +18,6 @@ import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -35,6 +34,8 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     private final String defaultLocationPrefix;
     private final PolarisStoreService polarisStoreService;
 
+    private final ConnectorContext connectorContext;
+
     /**
      * Constructor.
      *
@@ -46,6 +47,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         final ConnectorContext connectorContext
     ) {
         this.polarisStoreService = polarisStoreService;
+        this.connectorContext = connectorContext;
         this.defaultLocationPrefix = connectorContext.getConfiguration().getOrDefault(DB_DEFAULT_LOCATION, "");
     }
 
@@ -77,7 +79,6 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
      * {@inheritDoc}.
      */
     @Override
-    @Transactional
     public void delete(final ConnectorRequestContext context, final QualifiedName name) {
         // check exists then delete in non-transactional optimistic manner
         if (!exists(context, name)) {
@@ -162,7 +163,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         try {
             final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
             final List<QualifiedName> qualifiedNames = polarisStoreService.getDatabaseNames(
-                dbPrefix, sort, 1000)
+                dbPrefix, sort, this.connectorContext.getConfig().getListDatabaseNamesPageSize())
                 .stream()
                 .map(dbName -> QualifiedName.ofDatabase(name.getCatalogName(), dbName))
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -189,7 +190,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
 
             final List<PolarisDatabaseEntity> dbs = polarisStoreService.getDatabases(
-                dbPrefix, sort, 1000
+                dbPrefix, sort, this.connectorContext.getConfig().getListDatabaseEntitiesPageSize()
             );
 
             return ConnectorUtils.paginate(dbs, pageable).stream()
