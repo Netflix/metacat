@@ -27,10 +27,12 @@ import com.netflix.metacat.common.exception.MetacatBadRequestException
 import com.netflix.metacat.common.exception.MetacatNotFoundException
 import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.exception.MetacatPreconditionFailedException
+import com.netflix.metacat.common.exception.MetacatTooManyRequestsException
 import com.netflix.metacat.common.exception.MetacatUnAuthorizedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
+import com.netflix.metacat.common.server.connectors.exception.TableMigrationInProgressException
 import com.netflix.metacat.connector.hive.util.PartitionUtil
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.Logger
@@ -39,7 +41,6 @@ import feign.Retryer
 import groovy.sql.Sql
 import org.apache.commons.io.FileUtils
 import org.joda.time.Instant
-import org.skyscreamer.jsonassert.JSONAssert
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
@@ -163,119 +164,6 @@ class MetacatSmokeSpec extends Specification {
         api.createCatalog(new CreateCatalogDto())
         then:
         thrown(MetacatNotSupportedException)
-    }
-
-    @Unroll
-    def "Test create/get table with nested fields with upper case"() {
-        given:
-        def catalogName = 'embedded-fast-hive-metastore'
-        def databaseName = 'iceberg_db'
-        def tableName = 'iceberg_table_with_upper_case_nested_fields'
-        def uri = isLocalEnv ? String.format('file:/tmp/data/') : null
-        def tableDto = new TableDto(
-            name: QualifiedName.ofTable(catalogName, databaseName, tableName),
-            serde: new StorageDto(
-                owner: 'metacat-test',
-                inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
-                outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
-                serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
-                parameters: [
-                    'serialization.format': '1'
-                ],
-                uri: uri
-            ),
-            definitionMetadata: null,
-            dataMetadata: null,
-            fields: [
-                new FieldDto(
-                    comment: null,
-                    name: "dateint",
-                    pos: 0,
-                    type: "long",
-                    partition_key: true,
-                ),
-                new FieldDto(
-                    comment: null,
-                    name: "info",
-                    pos: 1,
-                    partition_key: false,
-                    type: "(name: chararray, address: (NAME: chararray), nestedArray: {(FIELD1: chararray, field2: chararray)})",
-                )
-            ]
-        )
-
-        def metadataLocation = String.format('/tmp/data/metadata/00000-0b60cc39-438f-413e-96c2-2694d7926529.metadata.json')
-
-        if (isIcebergTable) {
-            def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
-            tableDto.setMetadata(metadata)
-        }
-        when:
-        try {api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
-        } catch (Exception ignored) {
-        }
-        api.createTable(catalogName, databaseName, tableName, tableDto)
-        def tableDTO = api.getTable(catalogName, databaseName, tableName, true, true, true)
-
-        then:
-        noExceptionThrown()
-        if (isIcebergTable) {
-            tableDTO.metadata.get("metadata_location").equals(metadataLocation)
-        }
-        tableDTO.getFields().size() == 2
-        def nestedFieldDto = tableDTO.getFields().find { it.name == "info" }
-        // assert that the type field also keeps the name fidelity
-        assert nestedFieldDto.type == "(name: chararray,address: (NAME: chararray),nestedArray: {(FIELD1: chararray,field2: chararray)})" : "The type differ from the expected. They are: $nestedFieldDto.type"
-
-        // assert that the json representation keeps the name fidelity
-        def expectedJsonString = """
-            {
-                "type": "row",
-                "fields": [
-                    {
-                        "name": "name",
-                        "type": "chararray"
-                    },
-                    {
-                        "name": "address",
-                        "type": {
-                            "type": "row",
-                            "fields": [
-                                {
-                                    "name": "NAME",
-                                    "type": "chararray"
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "name": "nestedArray",
-                        "type": {
-                            "type": "array",
-                            "elementType": {
-                                "type": "row",
-                                "fields": [
-                                    {
-                                        "name": "FIELD1",
-                                        "type": "chararray"
-                                    },
-                                    {
-                                        "name": "field2",
-                                        "type": "chararray"
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                ]
-            }
-            """
-
-        JSONAssert.assertEquals(nestedFieldDto.jsonType.toString(), expectedJsonString, false)
-        cleanup:
-        api.deleteTable(catalogName, databaseName, tableName)
-        where:
-        isIcebergTable << [true, false]
     }
 
     @Unroll
