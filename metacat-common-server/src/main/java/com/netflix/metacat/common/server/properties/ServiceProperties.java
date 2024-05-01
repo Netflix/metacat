@@ -39,6 +39,8 @@ public class ServiceProperties {
     private boolean listDatabaseNameByDefaultOnGetCatalog = true;
     private int listTableEntitiesPageSize = 1000;
     private int listTableNamesPageSize = 10000;
+    private int listDatabaseEntitiesPageSize = 1000;
+    private int listDatabaseNamesPageSize = 10000;
 
     /**
      * Max related properties.

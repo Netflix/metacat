@@ -21,7 +21,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +34,8 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     private final String defaultLocationPrefix;
     private final PolarisStoreService polarisStoreService;
 
+    private final ConnectorContext connectorContext;
+
     /**
      * Constructor.
      *
@@ -46,6 +47,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         final ConnectorContext connectorContext
     ) {
         this.polarisStoreService = polarisStoreService;
+        this.connectorContext = connectorContext;
         this.defaultLocationPrefix = connectorContext.getConfiguration().getOrDefault(DB_DEFAULT_LOCATION, "");
     }
 
@@ -159,17 +161,12 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         @Nullable final Pageable pageable
     ) {
         try {
-            List<QualifiedName> qualifiedNames = polarisStoreService.getAllDatabases().stream()
-                .map(d -> QualifiedName.ofDatabase(name.getCatalogName(), d.getDbName()))
+            final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
+            final List<QualifiedName> qualifiedNames = polarisStoreService.getDatabaseNames(
+                dbPrefix, sort, this.connectorContext.getConfig().getListDatabaseNamesPageSize())
+                .stream()
+                .map(dbName -> QualifiedName.ofDatabase(name.getCatalogName(), dbName))
                 .collect(Collectors.toCollection(ArrayList::new));
-            if (prefix != null) {
-                qualifiedNames = qualifiedNames.stream()
-                    .filter(n -> n.startsWith(prefix))
-                    .collect(Collectors.toCollection(ArrayList::new));
-            }
-            if (sort != null) {
-                ConnectorUtils.sort(qualifiedNames, sort, Comparator.comparing(QualifiedName::toString));
-            }
             return ConnectorUtils.paginate(qualifiedNames, pageable);
         } catch (Exception exception) {
             throw new ConnectorException(
@@ -190,15 +187,12 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     ) {
         try {
             final PolarisDatabaseMapper mapper = new PolarisDatabaseMapper(name.getCatalogName());
-            List<PolarisDatabaseEntity> dbs = polarisStoreService.getAllDatabases();
-            if (prefix != null) {
-                dbs = dbs.stream()
-                    .filter(n -> QualifiedName.ofDatabase(name.getCatalogName(), n.getDbName()).startsWith(prefix))
-                    .collect(Collectors.toCollection(ArrayList::new));
-            }
-            if (sort != null) {
-                ConnectorUtils.sort(dbs, sort, Comparator.comparing(p -> p.getDbName()));
-            }
+            final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
+
+            final List<PolarisDatabaseEntity> dbs = polarisStoreService.getDatabases(
+                dbPrefix, sort, this.connectorContext.getConfig().getListDatabaseEntitiesPageSize()
+            );
+
             return ConnectorUtils.paginate(dbs, pageable).stream()
                 .map(d -> mapper.toInfo(d)).collect(Collectors.toList());
         } catch (Exception exception) {

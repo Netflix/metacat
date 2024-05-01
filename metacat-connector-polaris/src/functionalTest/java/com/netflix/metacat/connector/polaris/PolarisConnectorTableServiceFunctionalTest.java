@@ -57,12 +57,7 @@ public class PolarisConnectorTableServiceFunctionalTest extends PolarisConnector
             .build();
         getPolarisTableService().create(getRequestContext(), tableInfo3);
 
-        try {
-            // pause execution for 10000 milliseconds (10 seconds)
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            log.debug("Sleep was interrupted");
-        }
+        TestUtil.simulateDelay();
 
         final List<QualifiedName> tables = getPolarisTableService()
             .getTableNames(getRequestContext(), DB_QUALIFIED_NAME, "", -1);
@@ -77,12 +72,7 @@ public class PolarisConnectorTableServiceFunctionalTest extends PolarisConnector
     public void testListTablesEmpty() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "");
 
-        try {
-            // pause execution for 10000 milliseconds (10 seconds)
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            log.debug("Sleep was interrupted");
-        }
+        TestUtil.simulateDelay();
 
         final List<QualifiedName> names = getPolarisTableService().listNames(
             getRequestContext(), DB_QUALIFIED_NAME, qualifiedName,
@@ -102,12 +92,7 @@ public class PolarisConnectorTableServiceFunctionalTest extends PolarisConnector
             .build();
         getPolarisTableService().create(getRequestContext(), tableInfo);
 
-        try {
-            // pause execution for 10000 milliseconds (10 seconds)
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            log.debug("Sleep was interrupted");
-        }
+        TestUtil.simulateDelay();
 
         final List<QualifiedName> names = getPolarisTableService().listNames(
             getRequestContext(), DB_QUALIFIED_NAME, qualifiedName,
@@ -136,12 +121,7 @@ public class PolarisConnectorTableServiceFunctionalTest extends PolarisConnector
 
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "");
 
-        try {
-            // pause execution for 10000 milliseconds (10 seconds)
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            log.debug("Sleep was interrupted");
-        }
+        TestUtil.simulateDelay();
 
         List<TableInfo> tables = this.getPolarisTableService().list(
             this.getRequestContext(), DB_QUALIFIED_NAME, qualifiedName, new Sort(null, SortOrder.ASC),

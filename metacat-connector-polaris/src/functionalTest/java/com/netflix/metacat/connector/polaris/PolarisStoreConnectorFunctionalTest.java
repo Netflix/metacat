@@ -4,6 +4,7 @@ package com.netflix.metacat.connector.polaris;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreConnectorTest;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
+import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Test persistence operations on Database objects.
@@ -42,12 +45,7 @@ public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTe
         createTable(dbName, tblNameB);
         createTable(dbName, tblNameC);
 
-        try {
-            // pause execution for 10000 milliseconds (10 seconds)
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            log.debug("Sleep was interrupted");
-        }
+        TestUtil.simulateDelay();
 
         tblNames = getPolarisConnector().getTables(dbName, "", 1000);
         Assert.assertEquals(3, tblNames.size());
@@ -65,12 +63,7 @@ public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTe
         final String dbName = generateDatabaseName();
         createDB(dbName);
 
-        try {
-            // pause execution for 10000 milliseconds (10 seconds)
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            log.debug("Sleep was interrupted");
-        }
+        TestUtil.simulateDelay();
 
         // Test when db is empty
         List<PolarisTableEntity> entities = getPolarisConnector().getTableEntities(dbName, "", 1);
@@ -85,12 +78,7 @@ public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTe
         createTable(dbName, tblNameB);
         createTable(dbName, tblNameC);
 
-        try {
-            // pause execution for 10000 milliseconds (10 seconds)
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            log.debug("Sleep was interrupted");
-        }
+        TestUtil.simulateDelay();
 
         // Test pagination and sort
         entities = getPolarisConnector().getTableEntities(dbName, "", 1);
@@ -116,5 +104,41 @@ public class PolarisStoreConnectorFunctionalTest extends PolarisStoreConnectorTe
         Assert.assertEquals(tblNameA, entities.get(0).getTblName());
         Assert.assertEquals(tblNameB, entities.get(1).getTblName());
         Assert.assertEquals(tblNameC, entities.get(2).getTblName());
+    }
+
+    /**
+     * test list database with different db page size config.
+     */
+    @Test
+    public void testListDbPage() {
+        createDB("db1");
+        createDB("db2");
+        createDB("db3");
+
+        TestUtil.simulateDelay();
+
+        List<String> dbNames = getPolarisConnector().getDatabaseNames("db", null, 1);
+        List<PolarisDatabaseEntity> dbs = getPolarisConnector().getDatabases("db", null, 1);
+        Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
+        Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
+            dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
+
+        dbNames = getPolarisConnector().getDatabaseNames("db", null, 2);
+        dbs = getPolarisConnector().getDatabases("db", null, 2);
+        Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
+        Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
+            dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
+
+        dbNames = getPolarisConnector().getDatabaseNames("db", null, 3);
+        dbs = getPolarisConnector().getDatabases("db", null, 3);
+        Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
+        Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
+            dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
+
+        dbNames = getPolarisConnector().getDatabaseNames("db", null, 4);
+        dbs = getPolarisConnector().getDatabases("db", null, 4);
+        Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
+        Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
+            dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
     }
 }

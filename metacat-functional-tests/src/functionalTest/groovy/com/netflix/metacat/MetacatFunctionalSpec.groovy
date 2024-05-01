@@ -226,6 +226,7 @@ class MetacatFunctionalSpec extends Specification {
 
         when:
         api.createDatabase(catalog.name, databaseName, dto)
+        Thread.sleep(5000)
         catalogResponse = api.getCatalog(catalog.name)
 
         then:
@@ -269,6 +270,7 @@ class MetacatFunctionalSpec extends Specification {
 
         when:
         api.createDatabase(catalog.name, databaseName, dto)
+        Thread.sleep(5000)
         catalogResponse = api.getCatalog(catalog.name)
 
         then:

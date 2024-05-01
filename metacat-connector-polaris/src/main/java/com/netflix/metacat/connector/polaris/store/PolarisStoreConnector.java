@@ -1,19 +1,17 @@
 package com.netflix.metacat.connector.polaris.store;
 
+import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.connector.polaris.store.entities.AuditEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Nullable;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,27 +58,22 @@ public class PolarisStoreConnector implements PolarisStoreService {
         dbRepo.deleteByName(dbName);
     }
 
-    /**
-     * Fetches all database entities.
-     *
-     * @return Polaris Database entities
-     */
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
-    public List<PolarisDatabaseEntity> getAllDatabases() {
-        final int pageFetchSize = 1000;
-        final List<PolarisDatabaseEntity> retval = new ArrayList<>();
-        Pageable page = PageRequest.of(0, pageFetchSize);
-        boolean hasNext;
-        do {
-            final Slice<PolarisDatabaseEntity> dbs = dbRepo.getDatabases(page);
-            retval.addAll(dbs.toList());
-            hasNext = dbs.hasNext();
-            if (hasNext) {
-                page = dbs.nextPageable();
-            }
-        } while (hasNext);
-        return retval;
+    public List<PolarisDatabaseEntity> getDatabases(
+        @Nullable final String dbNamePrefix,
+        @Nullable final Sort sort,
+        final int pageSize) {
+        return (List<PolarisDatabaseEntity>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, true);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public List<String> getDatabaseNames(
+        @Nullable final String dbNamePrefix,
+        @Nullable final Sort sort,
+        final int pageSize) {
+        return (List<String>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, false);
     }
 
     /**
