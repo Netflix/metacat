@@ -2,7 +2,6 @@
 package com.netflix.metacat.connector.polaris;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
@@ -15,6 +14,7 @@ import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.spectator.api.NoopRegistry;
+import lombok.Getter;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +29,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import spock.lang.Shared;
 
 import java.util.Date;
-import java.util.List;
 
 
 /**
@@ -40,12 +39,13 @@ import java.util.List;
 @ActiveProfiles(profiles = {"polarisconnectortest"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureDataJpa
+@Getter
 public class PolarisConnectorDatabaseServiceTest {
-    private static final String CATALOG_NAME = "catalog_name";
-    private static final String DB1_NAME = "db1_name";
-    private static final String DB2_NAME = "db2_name";
-    private static final QualifiedName DB1_QUALIFIED_NAME = QualifiedName.ofDatabase(CATALOG_NAME, DB1_NAME);
-    private static final QualifiedName DB2_QUALIFIED_NAME = QualifiedName.ofDatabase(CATALOG_NAME, DB2_NAME);
+    public static final String CATALOG_NAME = "catalog_name";
+    public static final String DB1_NAME = "db1_name";
+    public static final String DB2_NAME = "db2_name";
+    public static final QualifiedName DB1_QUALIFIED_NAME = QualifiedName.ofDatabase(CATALOG_NAME, DB1_NAME);
+    public static final QualifiedName DB2_QUALIFIED_NAME = QualifiedName.ofDatabase(CATALOG_NAME, DB2_NAME);
 
     @Autowired
     private PolarisStoreService polarisStoreService;
@@ -165,25 +165,6 @@ public class PolarisConnectorDatabaseServiceTest {
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
         polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME);
         Assert.assertFalse(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
-    }
-
-    /**
-     * Test list databases.
-     */
-    @Test
-    public void testListDb() {
-        final DatabaseInfo db1 = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).uri("uri1").build();
-        final DatabaseInfo db2 = DatabaseInfo.builder().name(DB2_QUALIFIED_NAME).uri("uri2").build();
-        polarisDBService.create(requestContext, db1);
-        polarisDBService.create(requestContext, db2);
-        Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
-        Assert.assertTrue(polarisDBService.exists(requestContext, DB2_QUALIFIED_NAME));
-        final List<QualifiedName> dbNames =
-            polarisDBService.listNames(requestContext, QualifiedName.ofCatalog(CATALOG_NAME), null, null, null);
-        Assert.assertEquals(Sets.newHashSet(dbNames), Sets.newHashSet(DB1_QUALIFIED_NAME, DB2_QUALIFIED_NAME));
-        final List<DatabaseInfo> dbs =
-            polarisDBService.list(requestContext, QualifiedName.ofCatalog(CATALOG_NAME), null, null, null);
-        Assert.assertEquals(Sets.newHashSet(dbs), Sets.newHashSet(db1, db2));
     }
 }
 
