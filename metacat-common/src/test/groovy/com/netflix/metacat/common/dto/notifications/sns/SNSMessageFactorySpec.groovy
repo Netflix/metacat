@@ -92,6 +92,7 @@ class SNSMessageFactorySpec extends Specification {
                 Instant.now().toEpochMilli(),
                 UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
                 new UpdatePayload<TableDto>(
                     new TableDto(),
                     JsonDiff.asJsonPatch(

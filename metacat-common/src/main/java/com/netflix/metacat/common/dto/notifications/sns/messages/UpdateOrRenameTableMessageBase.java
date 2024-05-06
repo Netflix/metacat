@@ -27,6 +27,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
+import javax.annotation.Nullable;
+
 /**
  * Base message type for Update and Rename messages.
  *
@@ -53,7 +55,7 @@ public abstract class UpdateOrRenameTableMessageBase extends SNSMessage<UpdatePa
         @JsonProperty("timestamp") final long timestamp,
         @JsonProperty("requestId") final String requestId,
         @JsonProperty("name") final String name,
-        @JsonProperty("payload") final UpdatePayload<TableDto> payload,
+        @Nullable @JsonProperty("payload") final UpdatePayload<TableDto> payload,
         final SNSMessageType messageType
     ) {
         super(id, timestamp, requestId, messageType, name, payload);

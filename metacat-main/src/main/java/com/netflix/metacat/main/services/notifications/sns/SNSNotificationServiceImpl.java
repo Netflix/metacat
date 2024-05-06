@@ -349,11 +349,13 @@ public class SNSNotificationServiceImpl implements NotificationService {
                     new UpdatePayload<>(oldTable, patch)
                 );
             } else {
+                final QualifiedName newName = currentTable == null ? null : currentTable.getName();
                 return new RenameTableMessage(
                     id,
                     timestamp,
                     requestId,
                     name.toString(),
+                    newName == null ? "" : newName.toString(),
                     new UpdatePayload<>(oldTable, patch)
                 );
             }
@@ -413,10 +415,18 @@ public class SNSNotificationServiceImpl implements NotificationService {
             log.error("SNS Publish message failed.", exception);
             notificationMetric.counterIncrement(
                 Metrics.CounterSNSNotificationPublishMessageSizeExceeded.getMetricName());
-            final SNSMessage<Void> voidMessage = new SNSMessage<>(message.getId(),
-                message.getTimestamp(), message.getRequestId(), message.getType(), message.getName(),
-                null);
-            result = publishNotification(arn, this.mapper.writeValueAsString(voidMessage));
+            if (message instanceof RenameTableMessage) {
+                final RenameTableMessage renameMessage = (RenameTableMessage) message;
+                final RenameTableMessage voidRenameMessage = new RenameTableMessage(renameMessage.getId(),
+                    renameMessage.getTimestamp(), renameMessage.getRequestId(), renameMessage.getName(),
+                    renameMessage.getNewName(), null);
+                result = publishNotification(arn, this.mapper.writeValueAsString(voidRenameMessage));
+            } else {
+                final SNSMessage<Void> voidMessage = new SNSMessage<>(message.getId(),
+                    message.getTimestamp(), message.getRequestId(), message.getType(), message.getName(),
+                    null);
+                result = publishNotification(arn, this.mapper.writeValueAsString(voidMessage));
+            }
         }
         log.info("Successfully published message to topic {} with id {}", arn, result.getMessageId());
         log.debug("Successfully published message {} to topic {} with id {}", message, arn, result.getMessageId());
