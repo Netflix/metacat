@@ -45,6 +45,21 @@ CREATE TABLE data_metadata_delete (
 ) DEFAULT CHARSET=latin1;
 
 --
+-- Table structure for table `parent_child_relation`
+--
+DROP TABLE IF EXISTS `parent_child_relation`;
+CREATE TABLE `parent_child_relation` (
+                                       `parent` varchar(255) NOT NULL,
+                                       `parent_uuid` varchar(255) NOT NULL,
+                                       `child` varchar(255) NOT NULL,
+                                       `child_uuid` varchar(255) NOT NULL,
+                                       `relation_type` varchar(255) NOT NULL,
+                                       PRIMARY KEY (`parent`, `child`, `parent_uuid`, `child_uuid`, `relation_type`),
+                                       INDEX `idx_child` (`child`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `definition_metadata`
 --
 

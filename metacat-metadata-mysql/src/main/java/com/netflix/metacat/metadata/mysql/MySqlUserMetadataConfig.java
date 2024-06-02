@@ -16,11 +16,12 @@ package com.netflix.metacat.metadata.mysql;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
-import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
-import com.netflix.metacat.common.server.usermetadata.LookupService;
-import com.netflix.metacat.common.server.usermetadata.MetadataInterceptorImpl;
-import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.server.usermetadata.LookupService;
+import com.netflix.metacat.common.server.usermetadata.TagService;
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
+import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataInterceptorImpl;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -41,7 +42,6 @@ import javax.sql.DataSource;
 @Configuration
 @ConditionalOnProperty(value = "metacat.mysqlmetadataservice.enabled", havingValue = "true")
 public class MySqlUserMetadataConfig {
-
     /**
      * business Metadata Manager.
      * @return business Metadata Manager
@@ -106,6 +106,19 @@ public class MySqlUserMetadataConfig {
         final UserMetadataService userMetadataService
     ) {
         return new MySqlTagService(config, jdbcTemplate, lookupService, metacatJson, userMetadataService);
+    }
+
+    /**
+     * The parentChildRelMetadataService to use.
+     *
+     * @param jdbcTemplate        JDBC template
+     * @return The parentChildRelMetadataService implementation backed by MySQL
+     */
+    @Bean
+    ParentChildRelMetadataService parentChildRelMetadataService(
+        @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate
+    ) {
+        return new MySqlParentChildRelMetaDataService(jdbcTemplate);
     }
 
     /**

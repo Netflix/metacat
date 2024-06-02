@@ -1962,4 +1962,313 @@ class MetacatSmokeSpec extends Specification {
         api.deleteTable(catalogName, databaseName, "table2")
         api.deleteTable(catalogName, databaseName, "table3")
     }
+
+    def 'testCloneTableE2E'() {
+        given:
+        def catalogName = 'embedded-fast-hive-metastore'
+        def databaseName = 'iceberg_db'
+
+        // First parent child connected component
+        def parent1 = "parent1"
+        def parent1UUID = "p1_uuid"
+        def renameParent1 = "rename_parent1"
+        def parent1Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, parent1) : null
+        def parent1FullName = catalogName + "." + databaseName + "." + parent1
+
+        def child11 = "child11"
+        def child11UUID = "c11_uuid"
+        def renameChild11 = "rename_child11"
+        def child11Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, child11) : null
+        def child11FullName = catalogName + "." + databaseName + "." + child11
+
+        def child12 = "child12"
+        def child12UUID = "c12_uuid"
+        def child12Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, child12) : null
+
+        def grandChild121 = "grandchild121"
+        def grandChild121UUID= "gc121_uuid"
+
+
+        // Second parent child connected component
+        def parent2 = "parent2"
+        def parent2UUID = "p2_uuid"
+        def parent2Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, parent2) : null
+        def parent2FullName = catalogName + "." + databaseName + "." + parent2
+        def child21 = "child21"
+        def child21UUID = "c21_uuid"
+        def child21Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, child21) : null
+
+        try {
+            api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+        } catch (Exception ignored) {
+        }
+
+        /*
+        Step 1: Create one Parent (parent1) and one Child (child11)
+         */
+        when:
+        // Create Parent1
+        def parent1TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, parent1, 'amajumdar', parent1Uri)
+        api.createTable(catalogName, databaseName, parent1, parent1TableDto)
+
+        // Create child11 Table with parent = parent1
+        def child11TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, child11, 'amajumdar', child11Uri)
+        child11TableDto.definitionMetadata.put("root_table_name", parent1FullName)
+        child11TableDto.definitionMetadata.put("root_table_uuid", parent1UUID)
+        child11TableDto.definitionMetadata.put("child_table_uuid", child11UUID)
+        api.createTable(catalogName, databaseName, child11, child11TableDto)
+
+        def parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
+        def parent1ParentChildRelationInfo = parent1Table.definitionMetadata.get("parentChildRelationInfo")
+        def child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
+        def child11ParentChildRelationInfo = child11Table.definitionMetadata.get("parentChildRelationInfo")
+        then:
+        // Test Parent 1 parentChildInfo
+        assert !parent1ParentChildRelationInfo.has("parentInfo")
+        JSONAssert.assertEquals(parent1ParentChildRelationInfo.toString(),
+            '{"childInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/child11","relationType":"CLONE", "uuid":"c11_uuid"}]}',
+            false)
+
+        // Test Child11 parentChildInfo
+        JSONAssert.assertEquals(child11ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
+            false)
+        assert !child11ParentChildRelationInfo.has("childInfos")
+
+        /*
+        Step 2: Create a second child (child12) pointing to parent = parent1
+         */
+        when:
+        // Create Child2 Table
+        def child12TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, child12, 'amajumdar', child12Uri)
+        child12TableDto.definitionMetadata.put("root_table_name", parent1FullName)
+        child12TableDto.definitionMetadata.put("root_table_uuid", parent1UUID)
+        child12TableDto.definitionMetadata.put("child_table_uuid", child12UUID)
+        api.createTable(catalogName, databaseName, child12, child12TableDto)
+        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
+        parent1ParentChildRelationInfo = parent1Table.definitionMetadata.get("parentChildRelationInfo")
+        def child12Table = api.getTable(catalogName, databaseName, child12, true, true, false)
+        def child12ParentChildRelationInfo = child12Table.definitionMetadata.get("parentChildRelationInfo")
+
+        then:
+        // Test Parent 1 parentChildInfo
+        assert !parent1ParentChildRelationInfo.has("parentInfo")
+        JSONAssert.assertEquals(parent1ParentChildRelationInfo.toString(),
+            '{"childInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/child11","relationType":"CLONE","uuid":"c11_uuid"}, {"name":"embedded-fast-hive-metastore/iceberg_db/child12","relationType":"CLONE","uuid":"c12_uuid"}]}',
+            false)
+
+        // Test Child12 parentChildInfo
+        JSONAssert.assertEquals(child12ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            false)
+        assert !child12ParentChildRelationInfo.has("childInfos")
+
+        /*
+        Step 3: Create one grandChild As a Parent of A child table should fail
+         */
+        when:
+        def grandchild121TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, grandChild121, 'amajumdar', null)
+        grandchild121TableDto.definitionMetadata.put("root_table_name", child11FullName)
+        grandchild121TableDto.definitionMetadata.put("root_table_uuid", child11UUID)
+        grandchild121TableDto.definitionMetadata.put("child_table_uuid", grandChild121UUID)
+        api.createTable(catalogName, databaseName, grandChild121, grandchild121TableDto)
+
+        then:
+        thrown(Exception)
+
+        /*
+        Step 4: Create another parent child that is disconnected with the above
+         */
+        when:
+        // Create Parent2
+        def parent2TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, parent2, 'amajumdar', parent2Uri)
+        api.createTable(catalogName, databaseName, parent2, parent2TableDto)
+
+        // Create child21 Table with parent = parent2
+        def child21TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, child21, 'amajumdar', child21Uri)
+        child21TableDto.definitionMetadata.put("root_table_name", parent2FullName)
+        child21TableDto.definitionMetadata.put("root_table_uuid", parent2UUID)
+        child21TableDto.definitionMetadata.put("child_table_uuid", child21UUID)
+        api.createTable(catalogName, databaseName, child21, child21TableDto)
+        def parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false)
+        def parent2ParentChildRelationInfo = parent2Table.definitionMetadata.get("parentChildRelationInfo")
+        def child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
+        def child21ParentChildRelationInfo = child21Table.definitionMetadata.get("parentChildRelationInfo")
+
+        then:
+        // Test Parent 2 parentChildInfo
+        assert !parent2ParentChildRelationInfo.has("parentInfo")
+        JSONAssert.assertEquals(parent2ParentChildRelationInfo.toString(),
+            '{"childInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/child21","relationType":"CLONE","uuid":"c21_uuid"}]}',
+            false)
+
+        // Test Child21 parentChildInfo
+        JSONAssert.assertEquals(child21ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
+            false)
+        assert !child21ParentChildRelationInfo.has("childInfos")
+
+        /*
+        Step 5: Rename parent1 to newParent1
+         */
+        when:
+        api.renameTable(catalogName, databaseName, parent1, renameParent1)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
+        parent1ParentChildRelationInfo = parent1Table.definitionMetadata.get("parentChildRelationInfo")
+        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
+        child11ParentChildRelationInfo = child11Table.definitionMetadata.get("parentChildRelationInfo")
+        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false)
+        child12ParentChildRelationInfo = child12Table.definitionMetadata.get("parentChildRelationInfo")
+
+        then:
+        // Test Parent 1 parentChildInfo newName
+        assert !parent1ParentChildRelationInfo.has("parentInfo")
+        JSONAssert.assertEquals(parent1ParentChildRelationInfo.toString(),
+            '{"childInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/child11","relationType":"CLONE","uuid":"c11_uuid"}, {"name":"embedded-fast-hive-metastore/iceberg_db/child12","relationType":"CLONE","uuid":"c12_uuid"}]}',
+            false)
+
+        // Test Child11 parentChildInfo
+        JSONAssert.assertEquals(child11ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            false)
+        assert !child11ParentChildRelationInfo.has("childInfos")
+
+        // Test Child12 parentChildInfo
+        JSONAssert.assertEquals(child12ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            false)
+        assert !child12ParentChildRelationInfo.has("childInfos")
+
+        /*
+        Step 6: Rename child11 to renameChild11
+         */
+        when:
+        api.renameTable(catalogName, databaseName, child11, renameChild11)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
+        parent1ParentChildRelationInfo = parent1Table.definitionMetadata.get("parentChildRelationInfo")
+        child11Table = api.getTable(catalogName, databaseName, renameChild11, true, true, false)
+        child11ParentChildRelationInfo = child11Table.definitionMetadata.get("parentChildRelationInfo")
+        then:
+        assert !parent1ParentChildRelationInfo.has("parentInfo")
+        JSONAssert.assertEquals(parent1ParentChildRelationInfo.toString(),
+            '{"childInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_child11","relationType":"CLONE","uuid":"c11_uuid"}, {"name":"embedded-fast-hive-metastore/iceberg_db/child12","relationType":"CLONE","uuid":"c12_uuid"}]}',
+            false)
+
+        // Test Child11 parentChildInfo with newName
+        JSONAssert.assertEquals(child11ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            false)
+        assert !child12ParentChildRelationInfo.has("childInfos")
+
+        /*
+        Step 7: Drop parent renameParent1
+         */
+        when:
+        api.deleteTable(catalogName, databaseName, renameParent1)
+
+        then:
+        def e = thrown(Exception)
+        e.message.contains("because it still has child table")
+
+        /*
+        Step 8: Drop renameChild11
+         */
+        when:
+        api.deleteTable(catalogName, databaseName, renameChild11)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
+        parent1ParentChildRelationInfo = parent1Table.definitionMetadata.get("parentChildRelationInfo")
+
+        then:
+        // Test parent1 Table
+        assert !parent1ParentChildRelationInfo.has("parentInfo")
+        JSONAssert.assertEquals(parent1ParentChildRelationInfo.toString(),
+            '{"childInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/child12","relationType":"CLONE","uuid":"c12_uuid"}]}',
+            false)
+
+        /*
+        Step 9: Drop child12
+         */
+        when:
+        api.deleteTable(catalogName, databaseName, child12)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
+        then:
+        assert !parent1Table.definitionMetadata.has("parentChildRelationInfo")
+
+        /*
+        Step 10: Drop renameParent1
+         */
+        when:
+        api.deleteTable(catalogName, databaseName, renameParent1)
+        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false)
+        parent2ParentChildRelationInfo = parent2Table.definitionMetadata.get("parentChildRelationInfo")
+        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
+        child21ParentChildRelationInfo = child21Table.definitionMetadata.get("parentChildRelationInfo")
+
+        then:
+        // Since all the operations above are on the first connected relationship, the second connected relationship
+        // should remain the same
+        // Test Parent 2 parentChildInfo
+        assert !parent2ParentChildRelationInfo.has("parentInfo")
+        JSONAssert.assertEquals(parent2ParentChildRelationInfo.toString(),
+            '{"childInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/child21","relationType":"CLONE","uuid":"c21_uuid"}]}',
+            false)
+
+        // Test Child21 parentChildInfo
+        JSONAssert.assertEquals(child21ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
+            false)
+        assert !child21ParentChildRelationInfo.has("childInfos")
+
+        /*
+        Step 11: update parent2 with random parentChildRelationInfo
+         */
+        when:
+        def updateParent2Dto = parent2Table
+        updateParent2Dto.definitionMetadata.put("parent", "CLONE")
+        updateParent2Dto.definitionMetadata.put("childInfos", "CLONE")
+        api.updateTable(catalogName, databaseName, parent2, updateParent2Dto)
+
+        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false)
+        parent2ParentChildRelationInfo = parent2Table.definitionMetadata.get("parentChildRelationInfo")
+        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
+        child21ParentChildRelationInfo = child21Table.definitionMetadata.get("parentChildRelationInfo")
+        then:
+        // Test Parent 2 parentChildInfo
+        assert !parent2ParentChildRelationInfo.has("parentInfo")
+        JSONAssert.assertEquals(parent2ParentChildRelationInfo.toString(),
+            '{"childInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/child21","relationType":"CLONE","uuid":"c21_uuid"}]}',
+            false)
+
+        // Test Child21 parentChildInfo
+        JSONAssert.assertEquals(child21ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
+            false)
+        assert !child21ParentChildRelationInfo.has("childInfos")
+
+        /*
+        Step 12: update child21 with random parentChildRelationInfo
+         */
+        when:
+        def updateChild21Dto = child21Table
+        updateChild21Dto.definitionMetadata.put("parent", "CLONE")
+        updateChild21Dto.definitionMetadata.put("childInfos", "CLONE")
+        api.updateTable(catalogName, databaseName, child21, updateChild21Dto)
+
+        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false)
+        parent2ParentChildRelationInfo = parent2Table.definitionMetadata.get("parentChildRelationInfo")
+        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
+        child21ParentChildRelationInfo = child21Table.definitionMetadata.get("parentChildRelationInfo")
+        then:
+        // Test Parent 2 parentChildInfo
+        assert !parent2ParentChildRelationInfo.has("parentInfo")
+        JSONAssert.assertEquals(parent2ParentChildRelationInfo.toString(),
+            '{"childInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/child21","relationType":"CLONE","uuid":"c21_uuid"}]}',
+            false)
+
+        // Test Child21 parentChildInfo
+        JSONAssert.assertEquals(child21ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
+            false)
+        assert !child21ParentChildRelationInfo.has("childInfos")
+    }
 }

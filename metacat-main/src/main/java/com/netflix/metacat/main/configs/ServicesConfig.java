@@ -35,6 +35,7 @@ import com.netflix.metacat.common.server.usermetadata.DefaultUserMetadataService
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.main.manager.CatalogManager;
 import com.netflix.metacat.main.manager.ConnectorManager;
@@ -228,6 +229,7 @@ public class ServicesConfig {
      * @param converterUtil              converter utilities
      * @param authorizationService       authorization Service
      * @param ownerValidationService     owner validation service
+     * @param parentChildRelMetadataService parentChildRelMetadataService
      *
      * @return The table service bean
      */
@@ -244,7 +246,8 @@ public class ServicesConfig {
         final Config config,
         final ConverterUtil converterUtil,
         final AuthorizationService authorizationService,
-        final OwnerValidationService ownerValidationService) {
+        final OwnerValidationService ownerValidationService,
+        final ParentChildRelMetadataService parentChildRelMetadataService) {
         return new TableServiceImpl(
             connectorManager,
             connectorTableServiceProxy,
@@ -257,7 +260,8 @@ public class ServicesConfig {
             config,
             converterUtil,
             authorizationService,
-            ownerValidationService
+            ownerValidationService,
+            parentChildRelMetadataService
         );
     }
 
