@@ -35,9 +35,12 @@ import com.netflix.metacat.common.server.converter.ConverterUtil
 import com.netflix.metacat.common.server.events.MetacatEventBus
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent
+import com.netflix.metacat.common.server.model.ChildInfo
+import com.netflix.metacat.common.server.model.ParentInfo
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig
 import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService
+import com.netflix.metacat.common.server.usermetadata.TableUUIDProvider
 import com.netflix.metacat.common.server.usermetadata.TagService
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.metacat.common.server.util.MetacatContextManager
@@ -50,6 +53,7 @@ import com.netflix.spectator.api.DefaultRegistry
 import com.netflix.spectator.api.NoopRegistry
 import spock.lang.Specification
 import spock.lang.Unroll
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
 
 import javax.annotation.meta.When
 
@@ -80,6 +84,8 @@ class TableServiceImplSpec extends Specification {
     def connectorTableServiceProxy
     def authorizationService
     def ownerValidationService
+    def parentChildRelSvc
+    def tableUUIDProvider
 
     def service
     def setup() {
@@ -93,13 +99,16 @@ class TableServiceImplSpec extends Specification {
         usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
         usermetadataService.getDataMetadata(_) >> Optional.empty()
         usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
-        connectorTableServiceProxy = new ConnectorTableServiceProxy(connectorManager, converterUtil)
+        connectorTableServiceProxy = Spy(new ConnectorTableServiceProxy(connectorManager, converterUtil))
         authorizationService = new DefaultAuthorizationService(config)
         ownerValidationService = Mock(OwnerValidationService)
+        parentChildRelSvc = Mock(ParentChildRelMetadataService)
+        tableUUIDProvider = Mock(TableUUIDProvider)
 
         service = new TableServiceImpl(connectorManager, connectorTableServiceProxy, databaseService, tagService,
             usermetadataService, new MetacatJsonLocator(),
-            eventBus, registry, config, converterUtil, authorizationService, ownerValidationService)
+            eventBus, registry, config, converterUtil, authorizationService, ownerValidationService, parentChildRelSvc,
+            tableUUIDProvider)
     }
 
     def testTableGet() {
@@ -270,6 +279,70 @@ class TableServiceImplSpec extends Specification {
         0 * ownerValidationService.enforceOwnerValidation(_, _, _)
     }
 
+    def "Test Create - Clone Table Fail to create table"() {
+        given:
+        def childTableName = QualifiedName.ofTable("clone", "clone", "c")
+        def parentTableName = QualifiedName.ofTable("clone", "clone", "p")
+        def createTableDto = new TableDto(
+            name: childTableName,
+            definitionMetadata: toObjectNode('{\"root_table_name\":\"clone.clone.p\", \"root_table_uuid\":\"p_uuid\", \"child_table_uuid\":\"child_uuid\"}'),
+            serde: new StorageDto(uri: 's3:/clone/clone/c')
+        )
+        when:
+        service.create(childTableName, createTableDto)
+        then:
+        1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
+        1 * ownerValidationService.isUserValid(_) >> true
+        1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
+        1 * ownerValidationService.isGroupValid(_) >> true
+
+        1 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
+        1 * connectorTableServiceProxy.create(_, _) >> {throw new RuntimeException("Fail to create")}
+        1 * parentChildRelSvc.deleteParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
+        thrown(RuntimeException)
+    }
+
+    def "Test Rename - Clone Table Fail to update parent child relation"() {
+        given:
+        def oldName = QualifiedName.ofTable("clone", "clone", "oldChild")
+        def newName = QualifiedName.ofTable("clone", "clone", "newChild")
+        when:
+        service.rename(oldName, newName, false)
+
+        then:
+        1 * config.getNoTableRenameOnTags() >> []
+        2 * tableUUIDProvider.getUUID(_) >> { Optional.of("uuid")}
+        1 * parentChildRelSvc.rename(oldName, newName, Optional.of("uuid"))
+        1 * connectorTableServiceProxy.rename(oldName, newName, _) >> {throw new RuntimeException("Fail to rename")}
+        1 * parentChildRelSvc.rename(newName, oldName, Optional.of("uuid"))
+        thrown(RuntimeException)
+    }
+
+    def "Test Drop - Clone Table Fail to drop parent child relation"() {
+        given:
+        def name = QualifiedName.ofTable("clone", "clone", "child")
+
+        when:
+        service.delete(name)
+        then:
+        2 * tableUUIDProvider.getUUID(_) >> { Optional.of("uuid")}
+        1 * parentChildRelSvc.getParents(name, Optional.of("uuid")) >> {[new ParentInfo("parent", "clone", "parent_uuid")] as Set}
+        2 * parentChildRelSvc.getChildren(name, Optional.of("uuid")) >> {[new ChildInfo("child", "clone", "child_uuid")] as Set}
+        1 * config.getNoTableDeleteOnTags() >> []
+        thrown(RuntimeException)
+
+        when:
+        service.delete(name)
+        then:
+        2 * tableUUIDProvider.getUUID(_) >> { Optional.of("uuid")}
+        1 * parentChildRelSvc.getParents(name, Optional.of("uuid"))
+        2 * parentChildRelSvc.getChildren(name, Optional.of("uuid"))
+        1 * config.getNoTableDeleteOnTags() >> []
+        1 * connectorTableServiceProxy.delete(_) >> {throw new RuntimeException("Fail to drop")}
+        0 * parentChildRelSvc.drop(_, _)
+        thrown(RuntimeException)
+    }
+
     def "Will not throw on Successful Table Update with Failed Get"() {
         given:
         def updatedTableDto = new TableDto(name: name, serde: new StorageDto(uri: 's3:/a/b/c'))
@@ -311,7 +384,7 @@ class TableServiceImplSpec extends Specification {
             connectorManager, connectorTableServiceProxy, databaseService, tagService,
             usermetadataService, new MetacatJsonLocator(),
             eventBus, new DefaultRegistry(), config, converterUtil, authorizationService,
-            new DefaultOwnerValidationService(new NoopRegistry()))
+            new DefaultOwnerValidationService(new NoopRegistry()), parentChildRelSvc, tableUUIDProvider)
 
         def initialDefinitionMetadataJson = toObjectNode(initialDefinitionMetadata)
         tableDto = new TableDto(
