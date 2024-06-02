@@ -16,10 +16,11 @@ package com.netflix.metacat.metadata.mysql;
 import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
-import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
-import com.netflix.metacat.common.server.usermetadata.MetadataInterceptorImpl;
+import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
 import com.netflix.metacat.common.server.usermetadata.TagService;
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
+import com.netflix.metacat.common.server.usermetadata.MetadataInterceptorImpl;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.DataSourceManager;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -29,6 +30,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.retry.backoff.ExponentialBackOffPolicy;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 
 import javax.sql.DataSource;
 
@@ -106,6 +110,44 @@ public class MySqlUserMetadataConfig {
         final UserMetadataService userMetadataService
     ) {
         return new MySqlTagService(config, jdbcTemplate, lookupService, metacatJson, userMetadataService);
+    }
+
+    /**
+     * RetryTemplate for parentChildRelMetadataService.
+     * @return RetryTemplate for parentChildRelMetadataService
+     */
+    @Bean
+    RetryTemplate parentChildRelMetadataServiceRetryTemplate() {
+        final RetryTemplate retryTemplate = new RetryTemplate();
+
+        // Configure exponential backoff policy
+        final ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
+        backOffPolicy.setInitialInterval(500); // Initial interval in milliseconds
+        backOffPolicy.setMultiplier(2.0); // Multiplier for the backoff interval
+        backOffPolicy.setMaxInterval(5000); // Maximum backoff interval
+
+        // Configure retry policy
+        final SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
+        retryPolicy.setMaxAttempts(3); // Maximum number of retry attempts
+
+        retryTemplate.setRetryPolicy(retryPolicy);
+        retryTemplate.setBackOffPolicy(backOffPolicy);
+        return retryTemplate;
+    }
+
+    /**
+     * The parentChildRelMetadataService to use.
+     *
+     * @param jdbcTemplate        JDBC template
+     * @param retryTemplate       RetryTemplate
+     * @return The parentChildRelMetadataService implementation backed by MySQL
+     */
+    @Bean
+    ParentChildRelMetadataService parentChildRelMetadataService(
+        @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
+        @Qualifier("parentChildRelMetadataServiceRetryTemplate") final RetryTemplate retryTemplate
+    ) {
+        return new MySqlParentChildRelMetaDataService(jdbcTemplate, retryTemplate);
     }
 
     /**
