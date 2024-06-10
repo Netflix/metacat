@@ -14,6 +14,7 @@
 package com.netflix.metacat.metadata.mysql;
 
 import com.netflix.metacat.common.json.MetacatJson;
+import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
@@ -116,9 +117,10 @@ public class MySqlUserMetadataConfig {
      */
     @Bean
     ParentChildRelMetadataService parentChildRelMetadataService(
-        @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate
+        @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
+        final ConverterUtil converterUtil
     ) {
-        return new MySqlParentChildRelMetaDataService(jdbcTemplate);
+        return new MySqlParentChildRelMetaDataService(jdbcTemplate, converterUtil);
     }
 
     /**

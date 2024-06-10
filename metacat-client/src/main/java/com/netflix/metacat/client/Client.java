@@ -21,15 +21,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import com.google.common.base.Preconditions;
+import com.netflix.metacat.client.api.MetacatV1;
+import com.netflix.metacat.client.api.MetadataV1;
+import com.netflix.metacat.client.api.ParentChildRelV1;
+import com.netflix.metacat.client.api.PartitionV1;
+import com.netflix.metacat.client.api.ResolverV1;
 import com.netflix.metacat.client.api.TagV1;
 import com.netflix.metacat.client.module.JacksonDecoder;
 import com.netflix.metacat.client.module.JacksonEncoder;
 import com.netflix.metacat.client.module.MetacatErrorDecoder;
 import com.netflix.metacat.common.MetacatRequestContext;
-import com.netflix.metacat.client.api.MetacatV1;
-import com.netflix.metacat.client.api.MetadataV1;
-import com.netflix.metacat.client.api.PartitionV1;
-import com.netflix.metacat.client.api.ResolverV1;
 import com.netflix.metacat.common.json.MetacatJsonLocator;
 import feign.Feign;
 import feign.Request;
@@ -57,6 +58,8 @@ public final class Client {
     private final MetadataV1 metadataApi;
     private final ResolverV1 resolverApi;
     private final TagV1 tagApi;
+
+    private final ParentChildRelV1 parentChildRelApi;
 
     private Client(
         final String host,
@@ -93,6 +96,7 @@ public final class Client {
         metadataApi = getApiClient(MetadataV1.class);
         resolverApi = getApiClient(ResolverV1.class);
         tagApi = getApiClient(TagV1.class);
+        parentChildRelApi = getApiClient(ParentChildRelV1.class);
     }
 
     /**
@@ -161,6 +165,15 @@ public final class Client {
      */
     public TagV1 getTagApi() {
         return tagApi;
+    }
+
+    /**
+     * Return an API instance that can be used to interact with
+     * the metacat server for parent child relationship metadata.
+     * @return An instance api conforming to ParentChildRelV1 interface
+     */
+    public ParentChildRelV1 getParentChildRelApi() {
+        return parentChildRelApi;
     }
 
     /**

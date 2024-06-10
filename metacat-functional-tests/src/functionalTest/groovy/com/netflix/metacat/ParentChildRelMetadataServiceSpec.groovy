@@ -1,6 +1,11 @@
 package com.netflix.metacat
 
 import com.netflix.metacat.common.QualifiedName
+import com.netflix.metacat.common.server.converter.ConverterUtil
+import com.netflix.metacat.common.server.converter.DefaultTypeConverter
+import com.netflix.metacat.common.server.converter.DozerJsonTypeConverter
+import com.netflix.metacat.common.server.converter.DozerTypeConverter
+import com.netflix.metacat.common.server.converter.TypeConverterFactory
 import com.netflix.metacat.common.server.model.ChildInfo
 import com.netflix.metacat.common.server.model.ParentInfo
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService
@@ -10,14 +15,14 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource
 import spock.lang.Shared
 import spock.lang.Specification
 
-import java.sql.Connection
-import java.sql.PreparedStatement
-
 class ParentChildRelMetadataServiceSpec extends Specification{
     @Shared
     private ParentChildRelMetadataService service;
     @Shared
     private JdbcTemplate jdbcTemplate;
+
+    @Shared
+    private ConverterUtil converterUtil;
 
     @Shared
     private String catalog = "prodhive"
@@ -36,7 +41,9 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         dataSource.setPassword(password)
 
         jdbcTemplate = new JdbcTemplate(dataSource)
-        service = new MySqlParentChildRelMetaDataService(jdbcTemplate)
+        def typeFactory = new TypeConverterFactory(new DefaultTypeConverter())
+        def converter = new ConverterUtil(new DozerTypeConverter(typeFactory), new DozerJsonTypeConverter(typeFactory))
+        service = new MySqlParentChildRelMetaDataService(jdbcTemplate, converter)
     }
 
     def cleanup() {

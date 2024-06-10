@@ -153,11 +153,11 @@ public class TableServiceImpl implements TableService {
         return dto;
     }
 
-    private ObjectNode createParentChildObjectNode(@Nullable final Set<ParentInfo> parentInfos,
-                                                   @Nullable final Set<ChildInfo> childInfos) {
+    private ObjectNode createParentChildObjectNode(@Nullable final Set<ParentInfo> parentInfos) {
         final ObjectMapper objectMapper = new ObjectMapper();
         final ObjectNode rootNode = objectMapper.createObjectNode();
 
+        // For now, we only populate parent information for a child table.
         if (parentInfos != null && !parentInfos.isEmpty()) {
             final ArrayNode parentArrayNode = objectMapper.createArrayNode();
             for (ParentInfo parentInfo : parentInfos) {
@@ -168,18 +168,6 @@ public class TableServiceImpl implements TableService {
                 parentArrayNode.add(parentNode);
             }
             rootNode.set(ParentChildRelMetadataConstants.PARENTINFOS, parentArrayNode);
-        }
-
-        if (childInfos != null && !childInfos.isEmpty()) {
-            final ArrayNode childrenArrayNode = objectMapper.createArrayNode();
-            for (ChildInfo childInfo : childInfos) {
-                final ObjectNode childNode = objectMapper.createObjectNode();
-                childNode.put("name", childInfo.getName());
-                childNode.put("relationType", childInfo.getRelationType());
-                childNode.put("uuid", childInfo.getUuid());
-                childrenArrayNode.add(childNode);
-            }
-            rootNode.set(ParentChildRelMetadataConstants.CHILDINFOS, childrenArrayNode);
         }
         return rootNode;
     }
@@ -493,8 +481,7 @@ public class TableServiceImpl implements TableService {
                     GetMetadataInterceptorParameters.builder().hasMetadata(tableInternal).build());
             // Always get the source of truth for parent child relation from the parentChildRelMetadataService
             final Set<ParentInfo> parentInfo = parentChildRelMetadataService.getParents(name);
-            final Set<ChildInfo> childInfos = parentChildRelMetadataService.getChildren(name);
-            final ObjectNode parentChildRelObjectNode = createParentChildObjectNode(parentInfo, childInfos);
+            final ObjectNode parentChildRelObjectNode = createParentChildObjectNode(parentInfo);
             if (definitionMetadata.isPresent()) {
                 if (!parentChildRelObjectNode.isEmpty()) {
                     definitionMetadata.get().set(ParentChildRelMetadataConstants.PARENTCHILDRELINFO,

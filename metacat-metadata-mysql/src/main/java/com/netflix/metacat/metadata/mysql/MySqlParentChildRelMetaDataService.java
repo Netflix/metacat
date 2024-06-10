@@ -1,6 +1,8 @@
 package com.netflix.metacat.metadata.mysql;
 
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.notifications.ChildInfoDto;
+import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.model.ChildInfo;
 import com.netflix.metacat.common.server.model.ParentInfo;
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
@@ -15,6 +17,7 @@ import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 /**
  * Parent Child Relationship Metadata Service.
@@ -48,16 +51,19 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
     static final String SQL_GET_CHILDREN = "SELECT child, child_uuid, relation_type "
         + "FROM parent_child_relation WHERE parent = ?";
 
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    private final ConverterUtil converterUtil;
 
     /**
      * Constructor.
      *
      * @param jdbcTemplate jdbc template
+     * @param converterUtil converterUtil
      */
     @Autowired
-    public MySqlParentChildRelMetaDataService(final JdbcTemplate jdbcTemplate) {
+    public MySqlParentChildRelMetaDataService(final JdbcTemplate jdbcTemplate, final ConverterUtil converterUtil) {
         this.jdbcTemplate = jdbcTemplate;
+        this.converterUtil = converterUtil;
     }
 
     @Override
@@ -213,5 +219,11 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
                 return childInfo;
             });
         return new HashSet<>(children);
+    }
+
+    @Override
+    public Set<ChildInfoDto> getChildrenDto(final QualifiedName name) {
+        return getChildren(name).stream()
+            .map(converterUtil::toChildInfoDto).collect(Collectors.toSet());
     }
 }

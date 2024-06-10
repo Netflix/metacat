@@ -54,8 +54,6 @@ import spock.lang.Specification
 import spock.lang.Unroll
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
 
-import javax.annotation.meta.When
-
 /**
  * Tests for the TableServiceImpl.
  *
@@ -321,7 +319,7 @@ class TableServiceImplSpec extends Specification {
         service.delete(name)
         then:
         1 * parentChildRelSvc.getParents(name) >> {[new ParentInfo("parent", "clone", "parent_uuid")] as Set}
-        2 * parentChildRelSvc.getChildren(name) >> {[new ChildInfo("child", "clone", "child_uuid")] as Set}
+        1 * parentChildRelSvc.getChildren(name) >> {[new ChildInfo("child", "clone", "child_uuid")] as Set}
         1 * config.getNoTableDeleteOnTags() >> []
         thrown(RuntimeException)
 
@@ -329,7 +327,7 @@ class TableServiceImplSpec extends Specification {
         service.delete(name)
         then:
         1 * parentChildRelSvc.getParents(name)
-        2 * parentChildRelSvc.getChildren(name)
+        1 * parentChildRelSvc.getChildren(name)
         1 * config.getNoTableDeleteOnTags() >> []
         1 * connectorTableServiceProxy.delete(_) >> {throw new RuntimeException("Fail to drop")}
         0 * parentChildRelSvc.drop(_, _)
