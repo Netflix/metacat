@@ -161,6 +161,7 @@ configure(javaProjects) {
         all*.exclude module: "slf4j-log4j12"
         all*.exclude module: "log4j-to-slf4j"
         all*.exclude group: "asm"
+        all*.exclude group: 'org.mortbay.jetty'
     }
 
     dependencies {
