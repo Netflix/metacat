@@ -7,12 +7,9 @@
 
 ## Introduction
 
-Metacat is a unified metadata exploration API service. You can explore Hive, RDS, Teradata, Redshift, S3 and Cassandra.
-Metacat provides you information about what data you have, where it resides and how to process it. Metadata in the end 
-is really data about the data. So the primary purpose of Metacat is to give a place to describe the data so that we 
-could do more useful things with it. 
+Metacat is a unified metadata exploration API service. You can explore Hive, RDS, Teradata, Redshift, S3 and Cassandra. Metacat provides you information about what data you have, where it resides and how to process it. Metadata at the end is really data about the data.So the primary purpose of Metacat is to give a place to describe the data so that we could do more useful things with it.
 
-Metacat focusses on solving these three problems:
+Metacat is focused on solving these three problems:
 
 * Federate views of metadata systems.
 * Allow arbitrary metadata storage about data sets.
