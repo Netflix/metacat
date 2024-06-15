@@ -14,9 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.stream.Collectors;
 
 /**
@@ -35,10 +35,17 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
         "DELETE FROM parent_child_relation "
             + "WHERE parent = ? AND parent_uuid = ? AND child = ? AND child_uuid = ? AND relation_type = ?";
 
-    static final String SQL_RENAME_PARENT_ENTITY = "UPDATE parent_child_relation "
-        + "SET parent = ? WHERE parent = ?";
-    static final String SQL_RENAME_CHILD_ENTITY = "UPDATE parent_child_relation "
-        + "SET child = ? WHERE child = ?";
+    // For rename, it first duplicates the record with the name
+    static final String SQL_RENAME_SOFT_PARENT_UPDATE =
+        "INSERT INTO parent_child_relation (parent, parent_uuid, child, child_uuid, relation_type) "
+            + "SELECT ?, parent_uuid, child, child_uuid, relation_type "
+            + "FROM parent_child_relation "
+            + "WHERE parent = ?";
+    static final String SQL_RENAME_SOFT_CHILD_UPDATE =
+        "INSERT INTO parent_child_relation (parent, parent_uuid, child, child_uuid, relation_type) "
+            + "SELECT parent, parent_uuid, ?, child_uuid, relation_type "
+            + "FROM parent_child_relation "
+            + "WHERE child = ?";
 
     static final String SQL_DROP_CHILD = "DELETE FROM parent_child_relation "
         + "WHERE child = ? ";
@@ -138,30 +145,28 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
     @Override
     public void rename(final QualifiedName oldName, final QualifiedName newName) {
         try {
-            renameParent(oldName, newName);
-            renameChild(oldName, newName);
-            log.info("Successfully rename parent child relationship for oldName={}, newName={}",
-                oldName, newName
-            );
+            if (renameParent(oldName, newName) > 0 || renameChild(oldName, newName) > 0) {
+                log.info("Successfully rename parent child relationship for oldName={}, newName={}",
+                    oldName, newName);
+            }
         } catch (RuntimeException e) {
             log.error("Failed to rename entity", e);
             throw e;
         }
     }
 
-    private void renameParent(final QualifiedName oldName, final QualifiedName newName) {
-        jdbcTemplate.update(connection -> {
-            final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_PARENT_ENTITY);
+    private int renameParent(final QualifiedName oldName, final QualifiedName newName) {
+        return jdbcTemplate.update(connection -> {
+            final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_SOFT_PARENT_UPDATE);
             ps.setString(1, newName.toString());
             ps.setString(2, oldName.toString());
-
             return ps;
         });
     }
 
-    private void renameChild(final QualifiedName oldName, final QualifiedName newName) {
-        jdbcTemplate.update(connection -> {
-            final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_CHILD_ENTITY);
+    private int renameChild(final QualifiedName oldName, final QualifiedName newName) {
+        return jdbcTemplate.update(connection -> {
+            final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_SOFT_CHILD_UPDATE);
             ps.setString(1, newName.toString());
             ps.setString(2, oldName.toString());
             return ps;
@@ -170,22 +175,28 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
 
     @Override
     public void drop(final QualifiedName name) {
-        dropParent(name);
-        dropChild(name);
-        log.info("Successfully drop parent child relationship for name={}, uuid={}", name);
+        if (dropParent(name) > 0 || dropChild(name) > 0) {
+            log.info("Successfully drop parent child relationship for name={}", name);
+        }
     }
 
-    private void dropParent(final QualifiedName name) {
-        jdbcTemplate.update(connection -> {
-            final PreparedStatement ps = connection.prepareStatement(SQL_DROP_PARENT);
+    private int dropParent(final QualifiedName name) {
+        StringBuilder sqlBuilder = new StringBuilder(SQL_DROP_PARENT);
+
+        String sql = sqlBuilder.toString();
+        return jdbcTemplate.update(connection -> {
+            final PreparedStatement ps = connection.prepareStatement(sql);
             ps.setString(1, name.toString());
             return ps;
         });
     }
 
-    private void dropChild(final QualifiedName name) {
-        jdbcTemplate.update(connection -> {
-            final PreparedStatement ps = connection.prepareStatement(SQL_DROP_CHILD);
+    private int dropChild(final QualifiedName name) {
+        StringBuilder sqlBuilder = new StringBuilder(SQL_DROP_CHILD);
+
+        String sql = sqlBuilder.toString();
+        return jdbcTemplate.update(connection -> {
+            final PreparedStatement ps = connection.prepareStatement(sql);
             ps.setString(1, name.toString());
             return ps;
         });

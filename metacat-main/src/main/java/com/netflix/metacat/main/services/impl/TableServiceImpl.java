@@ -114,9 +114,9 @@ public class TableServiceImpl implements TableService {
         log.info("Creating table {}", name);
         eventBus.post(new MetacatCreateTablePreEvent(name, metacatRequestContext, this, tableDto));
 
-        final Optional<Runnable> unSaveOpOpt = saveParentChildRelationship(name, tableDto); //suceed
+        final Optional<Runnable> unSaveOpOpt = saveParentChildRelationship(name, tableDto);
         try {
-            connectorTableServiceProxy.create(name, converterUtil.fromTableDto(tableDto)); //failed
+            connectorTableServiceProxy.create(name, converterUtil.fromTableDto(tableDto));
         } catch (Exception e) {
             unSaveOpOpt.ifPresent(Runnable::run);
             throw e;
@@ -153,11 +153,12 @@ public class TableServiceImpl implements TableService {
         return dto;
     }
 
-    private ObjectNode createParentChildObjectNode(@Nullable final Set<ParentInfo> parentInfos) {
+    private ObjectNode createParentChildObjectNode(@Nullable final Set<ParentInfo> parentInfos,
+                                                   @Nullable final Set<ChildInfo> childInfos) {
         final ObjectMapper objectMapper = new ObjectMapper();
         final ObjectNode rootNode = objectMapper.createObjectNode();
 
-        // For now, we only populate parent information for a child table.
+        // For childTable, we will always populate the parent infos
         if (parentInfos != null && !parentInfos.isEmpty()) {
             final ArrayNode parentArrayNode = objectMapper.createArrayNode();
             for (ParentInfo parentInfo : parentInfos) {
@@ -168,6 +169,11 @@ public class TableServiceImpl implements TableService {
                 parentArrayNode.add(parentNode);
             }
             rootNode.set(ParentChildRelMetadataConstants.PARENTINFOS, parentArrayNode);
+        }
+
+        // For parent table, if it has a child, we will put a field to indicate that the table is a parent table.
+        if (childInfos != null && !childInfos.isEmpty()) {
+            rootNode.put(ParentChildRelMetadataConstants.HASCHILDTABLE, true);
         }
         return rootNode;
     }
@@ -481,7 +487,8 @@ public class TableServiceImpl implements TableService {
                     GetMetadataInterceptorParameters.builder().hasMetadata(tableInternal).build());
             // Always get the source of truth for parent child relation from the parentChildRelMetadataService
             final Set<ParentInfo> parentInfo = parentChildRelMetadataService.getParents(name);
-            final ObjectNode parentChildRelObjectNode = createParentChildObjectNode(parentInfo);
+            final Set<ChildInfo> childInfos = parentChildRelMetadataService.getChildren(name);
+            final ObjectNode parentChildRelObjectNode = createParentChildObjectNode(parentInfo, childInfos);
             if (definitionMetadata.isPresent()) {
                 if (!parentChildRelObjectNode.isEmpty()) {
                     definitionMetadata.get().set(ParentChildRelMetadataConstants.PARENTCHILDRELINFO,
@@ -553,14 +560,15 @@ public class TableServiceImpl implements TableService {
             eventBus.post(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, this, newName));
 
             // Before rename, first rename its parent child relation
+            // note for rename, we actually first insert duplicate records with the newName
             parentChildRelMetadataService.rename(oldName, newName);
 
             try {
                 connectorTableServiceProxy.rename(oldName, newName, isMView);
             } catch (Exception e) {
                 try {
-                    // if rename operation fail, rename back the parent child relation
-                    parentChildRelMetadataService.rename(newName, oldName);
+                    // if rename operation fail, delete the newName record
+                    parentChildRelMetadataService.drop(newName);
                 } catch (Exception renameException) {
                     log.error("parentChildRelMetadataService: Fail to rename parent child relation "
                             + "after table fail to rename from {} to {} "
@@ -569,6 +577,8 @@ public class TableServiceImpl implements TableService {
                 }
                 throw e;
             }
+            // if rename operation fail, delete the oldName record
+            parentChildRelMetadataService.drop(oldName);
             userMetadataService.renameDefinitionMetadataKey(oldName, newName);
             tagService.renameTableTags(oldName, newName.getTableName());
 

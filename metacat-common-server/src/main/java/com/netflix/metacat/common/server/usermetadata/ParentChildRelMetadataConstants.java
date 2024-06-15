@@ -34,6 +34,8 @@ public final class ParentChildRelMetadataConstants {
      */
     public static final String PARENTINFOS = "parentInfos";
 
+    public static final String HASCHILDTABLE = "hasChildTable";
+
     /**
      * During get, the nested key specified in DefinitionMetadata[PARENTCHILDRELINFO] that indicates child infos.
      */

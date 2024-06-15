@@ -71,7 +71,7 @@ public interface ParentChildRelMetadataService {
      * This involves two steps:
      * 1. drop all records where the child column = `name`
      * 2. drop all records where the parent column = `name`
-     * @param name  the name of the entity to drop
+     * @param name the name of the entity to drop
      */
     void drop(
         QualifiedName name
