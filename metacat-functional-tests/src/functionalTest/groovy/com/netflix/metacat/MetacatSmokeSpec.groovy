@@ -15,6 +15,8 @@
  */
 package com.netflix.metacat
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.metacat.client.Client
 import com.netflix.metacat.client.api.MetacatV1
 import com.netflix.metacat.client.api.MetadataV1
@@ -33,6 +35,7 @@ import com.netflix.metacat.common.exception.MetacatUnAuthorizedException
 import com.netflix.metacat.common.json.MetacatJson
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataConstants
 import com.netflix.metacat.connector.hive.util.PartitionUtil
 import com.netflix.metacat.testdata.provider.PigDataDtoProvider
 import feign.Logger
@@ -139,6 +142,19 @@ class MetacatSmokeSpec extends Specification {
             }
             api.createTable(catalogName, databaseName, tableName, newTable)
         }
+    }
+
+    static void initializeParentChildRelDefinitionMetadata(TableDto tableDto,
+                                                      String parent,
+                                                      String parent_uuid,
+                                                      String child_uuid) {
+        def mapper = new ObjectMapper()
+        def innerNode = mapper.createObjectNode()
+        innerNode.put(ParentChildRelMetadataConstants.PARENT_NAME, parent)
+        innerNode.put(ParentChildRelMetadataConstants.PARENT_UUID, parent_uuid)
+        innerNode.put(ParentChildRelMetadataConstants.CHILD_UUID, child_uuid)
+
+        tableDto.definitionMetadata.put(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO, innerNode)
     }
 
     def createAllTypesTable() {
@@ -1977,7 +1993,7 @@ class MetacatSmokeSpec extends Specification {
         def parent1UUID = "p1_uuid"
         def renameParent1 = "rename_parent1"
         def parent1Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, parent1) : null
-        def parent1FullName = catalogName + "." + databaseName + "." + parent1
+        def parent1FullName = catalogName + "/" + databaseName + "/" + parent1
 
         def child11 = "child11"
         def child11UUID = "c11_uuid"
@@ -1997,7 +2013,7 @@ class MetacatSmokeSpec extends Specification {
         def parent2 = "parent2"
         def parent2UUID = "p2_uuid"
         def parent2Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, parent2) : null
-        def parent2FullName = catalogName + "." + databaseName + "." + parent2
+        def parent2FullName = catalogName + "/" + databaseName + "/" + parent2
         def child21 = "child21"
         def child21UUID = "c21_uuid"
         def child21Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, child21) : null
@@ -2017,9 +2033,7 @@ class MetacatSmokeSpec extends Specification {
 
         // Create child11 Table with parent = parent1
         def child11TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, child11, 'amajumdar', child11Uri)
-        child11TableDto.definitionMetadata.put("root_table_name", parent1FullName)
-        child11TableDto.definitionMetadata.put("root_table_uuid", parent1UUID)
-        child11TableDto.definitionMetadata.put("child_table_uuid", child11UUID)
+        initializeParentChildRelDefinitionMetadata(child11TableDto, parent1FullName, parent1UUID, child11UUID)
         api.createTable(catalogName, databaseName, child11, child11TableDto)
 
         def parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
@@ -2027,10 +2041,11 @@ class MetacatSmokeSpec extends Specification {
         def child11ParentChildRelationInfo = child11Table.definitionMetadata.get("parentChildRelationInfo")
         then:
         // Test Parent 1 parentChildInfo
-        assert !parent1Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid")] as Set
 
         // Test Child11 parentChildInfo
+        assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child11ParentChildRelationInfo.toString(),
             '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
             false)
@@ -2042,9 +2057,7 @@ class MetacatSmokeSpec extends Specification {
         when:
         // Create Child2 Table
         def child12TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, child12, 'amajumdar', child12Uri)
-        child12TableDto.definitionMetadata.put("root_table_name", parent1FullName)
-        child12TableDto.definitionMetadata.put("root_table_uuid", parent1UUID)
-        child12TableDto.definitionMetadata.put("child_table_uuid", child12UUID)
+        initializeParentChildRelDefinitionMetadata(child12TableDto, parent1FullName, parent1UUID, child12UUID)
         api.createTable(catalogName, databaseName, child12, child12TableDto)
         parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
         def child12Table = api.getTable(catalogName, databaseName, child12, true, true, false)
@@ -2052,13 +2065,14 @@ class MetacatSmokeSpec extends Specification {
 
         then:
         // Test Parent 1 parentChildInfo
-        assert !parent1Table.definitionMetadata.get("parentChildRelationInfo")
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
         ] as Set
 
         // Test Child12 parentChildInfo
+        assert !child12Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child12ParentChildRelationInfo.toString(),
             '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
@@ -2088,9 +2102,7 @@ class MetacatSmokeSpec extends Specification {
 
         // Create child21 Table with parent = parent2
         def child21TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, child21, 'amajumdar', child21Uri)
-        child21TableDto.definitionMetadata.put("root_table_name", parent2FullName)
-        child21TableDto.definitionMetadata.put("root_table_uuid", parent2UUID)
-        child21TableDto.definitionMetadata.put("child_table_uuid", child21UUID)
+        initializeParentChildRelDefinitionMetadata(child21TableDto, parent2FullName, parent2UUID, child21UUID)
         api.createTable(catalogName, databaseName, child21, child21TableDto)
         def parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false)
         def child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
@@ -2098,7 +2110,7 @@ class MetacatSmokeSpec extends Specification {
 
         then:
         // Test Parent 2 parentChildInfo
-        assert !parent2Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
@@ -2122,19 +2134,21 @@ class MetacatSmokeSpec extends Specification {
 
         then:
         // Test Parent 1 parentChildInfo newName
-        assert !parent1Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) ==
             [
                 new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
                 new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
             ] as Set
         // Test Child11 parentChildInfo
+        assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child11ParentChildRelationInfo.toString(),
             '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child11).isEmpty()
 
         // Test Child12 parentChildInfo
+        assert !child12Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child12ParentChildRelationInfo.toString(),
             '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
@@ -2149,12 +2163,13 @@ class MetacatSmokeSpec extends Specification {
         child11Table = api.getTable(catalogName, databaseName, renameChild11, true, true, false)
         child11ParentChildRelationInfo = child11Table.definitionMetadata.get("parentChildRelationInfo")
         then:
-        assert !parent1Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_child11", "CLONE", "c11_uuid"),
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
         ] as Set
         // Test Child11 parentChildInfo with newName
+        assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child11ParentChildRelationInfo.toString(),
             '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
@@ -2179,7 +2194,7 @@ class MetacatSmokeSpec extends Specification {
 
         then:
         // Test parent1 Table
-        assert !parent1Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
         ] as Set
@@ -2206,12 +2221,13 @@ class MetacatSmokeSpec extends Specification {
         // Since all the operations above are on the first connected relationship, the second connected relationship
         // should remain the same
         // Test Parent 2 parentChildInfo
-        assert !parent2Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
 
         // Test Child21 parentChildInfo
+        assert !child21Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child21ParentChildRelationInfo.toString(),
             '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
             false)
@@ -2230,12 +2246,13 @@ class MetacatSmokeSpec extends Specification {
         child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
         child21ParentChildRelationInfo = child21Table.definitionMetadata.get("parentChildRelationInfo")
         then:
-        assert !parent2Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
 
         // Test Child21 parentChildInfo
+        assert !child21Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child21ParentChildRelationInfo.toString(),
             '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
             false)
@@ -2255,12 +2272,13 @@ class MetacatSmokeSpec extends Specification {
         child21ParentChildRelationInfo = child21Table.definitionMetadata.get("parentChildRelationInfo")
         then:
         // Test Parent 2 parentChildInfo
-        assert !parent2Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
 
         // Test Child21 parentChildInfo
+        assert !child21Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child21ParentChildRelationInfo.toString(),
             '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
             false)
