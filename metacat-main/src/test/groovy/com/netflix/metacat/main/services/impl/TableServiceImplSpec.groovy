@@ -40,6 +40,7 @@ import com.netflix.metacat.common.server.model.ParentInfo
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig
 import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataConstants
 import com.netflix.metacat.common.server.usermetadata.TagService
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.metacat.common.server.util.MetacatContextManager
@@ -277,9 +278,18 @@ class TableServiceImplSpec extends Specification {
         given:
         def childTableName = QualifiedName.ofTable("clone", "clone", "c")
         def parentTableName = QualifiedName.ofTable("clone", "clone", "p")
+        def mapper = new ObjectMapper()
+
+        def innerNode = mapper.createObjectNode()
+        innerNode.put("root_table_name", "clone/clone/p")
+        innerNode.put("root_table_uuid", "p_uuid")
+        innerNode.put("child_table_uuid", "child_uuid")
+
+        def outerNode = mapper.createObjectNode()
+        outerNode.set(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO, innerNode)
         def createTableDto = new TableDto(
             name: childTableName,
-            definitionMetadata: toObjectNode('{\"root_table_name\":\"clone.clone.p\", \"root_table_uuid\":\"p_uuid\", \"child_table_uuid\":\"child_uuid\"}'),
+            definitionMetadata: outerNode,
             serde: new StorageDto(uri: 's3:/clone/clone/c')
         )
         when:
@@ -319,7 +329,7 @@ class TableServiceImplSpec extends Specification {
         service.delete(name)
         then:
         1 * parentChildRelSvc.getParents(name) >> {[new ParentInfo("parent", "clone", "parent_uuid")] as Set}
-        1 * parentChildRelSvc.getChildren(name) >> {[new ChildInfo("child", "clone", "child_uuid")] as Set}
+        2 * parentChildRelSvc.getChildren(name) >> {[new ChildInfo("child", "clone", "child_uuid")] as Set}
         1 * config.getNoTableDeleteOnTags() >> []
         thrown(RuntimeException)
 
@@ -327,7 +337,7 @@ class TableServiceImplSpec extends Specification {
         service.delete(name)
         then:
         1 * parentChildRelSvc.getParents(name)
-        1 * parentChildRelSvc.getChildren(name)
+        2 * parentChildRelSvc.getChildren(name)
         1 * config.getNoTableDeleteOnTags() >> []
         1 * connectorTableServiceProxy.delete(_) >> {throw new RuntimeException("Fail to drop")}
         0 * parentChildRelSvc.drop(_, _)

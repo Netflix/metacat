@@ -66,16 +66,10 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         then:
         // Test Parent
         assert service.getParents(parent).isEmpty()
-        assert service.getParents(parent).isEmpty()
-
-        assert service.getChildren(parent) == parent_children_expected
         assert service.getChildren(parent) == parent_children_expected
 
         // Test Child
         assert service.getParents(child) == child_parent_expected
-        assert service.getParents(child) == child_parent_expected
-
-        assert service.getChildren(child).isEmpty()
         assert service.getParents(child) == child_parent_expected
 
         when:
@@ -84,14 +78,10 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         then:
         // Test Parent
         assert service.getParents(parent).isEmpty()
-        assert service.getParents(parent).isEmpty()
-        assert service.getChildren(parent).isEmpty()
         assert service.getChildren(parent).isEmpty()
 
         // Test Child
         assert service.getParents(child).isEmpty()
-        assert service.getParents(child).isEmpty()
-        assert service.getChildren(child).isEmpty()
         assert service.getParents(child).isEmpty()
 
     }
@@ -119,18 +109,13 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         // Test Parent
         assert service.getParents(parent).isEmpty()
         assert parent_children_expected == service.getChildren(parent)
-        assert parent_children_expected == service.getChildren(parent)
 
         // Test Children
         // Test Child 1
         assert child_parent_expected == service.getParents(child1)
-        assert child_parent_expected == service.getParents(child1)
-        assert service.getChildren(child1).isEmpty()
         assert service.getChildren(child1).isEmpty()
 
         assert child_parent_expected == service.getParents(child2)
-        assert child_parent_expected == service.getParents(child2)
-        assert service.getChildren(child2).isEmpty()
         assert service.getChildren(child2).isEmpty()
     }
 
@@ -155,9 +140,6 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         // Test Child
         def child_parent_expected = [new ParentInfo(parent1.toString(), type, parent1UUID)] as Set
         assert child_parent_expected == service.getParents(child)
-        assert child_parent_expected == service.getParents(child)
-
-        assert service.getChildren(child).isEmpty()
         assert service.getChildren(child).isEmpty()
     }
 
@@ -182,9 +164,6 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         // Test Child
         def child_parent_expected = [new ParentInfo(parent.toString(), type, parentUUID)] as Set
         assert service.getParents(child) == child_parent_expected
-        assert service.getParents(child) == child_parent_expected
-
-        assert service.getChildren(child).isEmpty()
         assert service.getChildren(child).isEmpty()
     }
 
@@ -223,22 +202,16 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         then:
         // Test Old Parent Name
         assert service.getParents(parent).isEmpty()
-        assert service.getParents(parent).isEmpty()
-        assert service.getChildren(parent).isEmpty()
         assert service.getChildren(parent).isEmpty()
 
         // Test New Parent Name
         assert service.getParents(newParent).isEmpty()
-        assert service.getParents(newParent).isEmpty()
         def newParent_children_expected = [new ChildInfo(child.toString(), type, childUUID)] as Set
-        assert service.getChildren(newParent) == newParent_children_expected
         assert service.getChildren(newParent) == newParent_children_expected
 
         // Test Child
         def child_parent_expected = [new ParentInfo(newParent.toString(), type, parentUUID)] as Set
         assert child_parent_expected == service.getParents(child)
-        assert child_parent_expected == service.getParents(child)
-        assert service.getChildren(child).isEmpty()
         assert service.getChildren(child).isEmpty()
 
         // rename back
@@ -249,20 +222,14 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         then:
         // Test new Parent Name
         assert service.getParents(newParent).isEmpty()
-        assert service.getParents(newParent).isEmpty()
-        assert service.getChildren(newParent).isEmpty()
         assert service.getChildren(newParent).isEmpty()
 
         // Test old Parent Name
         assert service.getParents(parent).isEmpty()
-        assert service.getParents(parent).isEmpty()
         assert service.getChildren(parent) == newParent_children_expected
-        assert service.getChildren(parent) == [new ChildInfo(child.toString(), type, childUUID)] as Set
 
         // Test Child
         assert child_parent_expected == service.getParents(child)
-        assert child_parent_expected == service.getParents(child)
-        assert service.getChildren(child).isEmpty()
         assert service.getChildren(child).isEmpty()
     }
 
@@ -286,9 +253,7 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         then:
         // Test Child1
         assert service.getParents(child1) == child_parent_expected
-        assert service.getParents(child1) == child_parent_expected
         //Test Child2
-        assert service.getParents(child2) == child_parent_expected
         assert service.getParents(child2) == child_parent_expected
     }
 
@@ -309,19 +274,14 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         assert service.getParents(parent).isEmpty()
         def parent_children_expected  = [new ChildInfo(newChild.toString(), type, childUUID)] as Set
         assert parent_children_expected == service.getChildren(parent)
-        assert parent_children_expected == service.getChildren(parent)
 
         // Test Child
         assert service.getParents(child).isEmpty()
-        assert service.getParents(child).isEmpty()
-        assert service.getChildren(child).isEmpty()
         assert service.getChildren(child).isEmpty()
 
         // Test New Child
         def child_parent_expected = [new ParentInfo(parent.toString(), type, parentUUID)] as Set
         assert child_parent_expected == service.getParents(newChild)
-        assert child_parent_expected == service.getParents(newChild)
-        assert service.getChildren(child).isEmpty()
         assert service.getChildren(child).isEmpty()
 
         // rename back
@@ -333,18 +293,13 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         // Test Parent
         assert service.getParents(parent).isEmpty()
         assert parent_children_expected == service.getChildren(parent)
-        assert parent_children_expected == service.getChildren(parent)
 
         // Test New Child
         assert service.getParents(newChild).isEmpty()
-        assert service.getParents(newChild).isEmpty()
-        assert service.getChildren(newChild).isEmpty()
         assert service.getChildren(newChild).isEmpty()
 
         // Test Child
         assert child_parent_expected == service.getParents(child)
-        assert child_parent_expected == service.getParents(child)
-        assert service.getChildren(child).isEmpty()
         assert service.getChildren(child).isEmpty()
     }
 
@@ -363,14 +318,38 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         then:
         // Test Parent
         assert service.getParents(parent).isEmpty()
-        assert service.getParents(parent).isEmpty()
-        assert service.getChildren(parent).isEmpty()
         assert service.getChildren(parent).isEmpty()
 
         // Test Child
         assert service.getParents(child).isEmpty()
+        assert service.getChildren(child).isEmpty()
+    }
+
+    def "Test Rename and Drop Child"() {
+        setup:
+        def parent = QualifiedName.ofTable(catalog, database, "p")
+        def parentUUID = "p_uuid"
+        def child = QualifiedName.ofTable(catalog, database, "c")
+        def newChild = QualifiedName.ofTable(catalog, database, "nc")
+        def childUUID = "c_uuid"
+        def type = "clone";
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+
+        when:
+        service.rename(child, newChild)
+        service.drop(newChild)
+
+        then:
+        // Test Parent
+        assert service.getParents(parent).isEmpty()
+        assert service.getChildren(parent).isEmpty()
+
+        // Test Child
         assert service.getParents(child).isEmpty()
         assert service.getChildren(child).isEmpty()
-        assert service.getChildren(child).isEmpty()
+
+        // Test newChild
+        assert service.getParents(newChild).isEmpty()
+        assert service.getChildren(newChild).isEmpty()
     }
 }

@@ -6,6 +6,7 @@ import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.model.ChildInfo;
 import com.netflix.metacat.common.server.model.ParentInfo;
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,7 +76,7 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
         // Validation to prevent having a child have two parents
         final Set<ParentInfo> childParents = getParents(childName);
         if (!childParents.isEmpty()) {
-            throw new RuntimeException("Cannot have a child table having more than one parent "
+            throw new ParentChildRelServiceException("Cannot have a child table having more than one parent "
                 + "- Child Table: " + childName
                 + " already have a parent Table=" + childParents.stream().findFirst().get());
         }
@@ -83,7 +84,7 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
         // Validation to prevent creating a child table as a parent of another child table
         final Set<ParentInfo> parentParents = getParents(parentName);
         if (!parentParents.isEmpty()) {
-            throw new RuntimeException("Cannot create a child table as parent "
+            throw new ParentChildRelServiceException("Cannot create a child table as parent "
                 + "- parent table: " + parentName
                 + " already have a parent table = " + parentParents.stream().findFirst().get());
         }
@@ -91,19 +92,28 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
         // Validation to prevent creating a parent on top of a table that have children
         final Set<ChildInfo> childChildren = getChildren(childName);
         if (!childChildren.isEmpty()) {
-            throw new RuntimeException("Cannot create a parent table on top of another parent "
+            throw new ParentChildRelServiceException("Cannot create a parent table on top of another parent "
                 + "- child table: " + childName + " already have child");
         }
 
-        jdbcTemplate.update(connection -> {
-            final PreparedStatement ps = connection.prepareStatement(SQL_CREATE_PARENT_CHILD_RELATIONS);
-            ps.setString(1, parentName.toString());
-            ps.setString(2, parentUUID);
-            ps.setString(3, childName.toString());
-            ps.setString(4, childUUID);
-            ps.setString(5, type);
-            return ps;
-        });
+        try {
+            jdbcTemplate.update(connection -> {
+                final PreparedStatement ps = connection.prepareStatement(SQL_CREATE_PARENT_CHILD_RELATIONS);
+                ps.setString(1, parentName.toString());
+                ps.setString(2, parentUUID);
+                ps.setString(3, childName.toString());
+                ps.setString(4, childUUID);
+                ps.setString(5, type);
+                return ps;
+            });
+        } catch (Exception e) {
+            log.error("Fail to create parent child relationship with parent={}, parentUUID={}, "
+                    + "child={}, childUUID={}, relationType = {}",
+                parentName, parentUUID, childName, childUUID, type
+            );
+            throw new ParentChildRelServiceException("Fail to create parent child relationship "
+                + "for child table:" + childName + " under parent table:" + parentName, e);
+        }
         log.info("Successfully create parent child relationship with parent={}, parentUUID={}, "
                 + "child={}, childUUID={}, relationType = {}",
             parentName, parentUUID, childName, childUUID, type
@@ -120,15 +130,25 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
                 + "child={}, childUUID={}, relationType = {}",
             parentName, parentUUID, childName, childUUID, type
         );
-        jdbcTemplate.update(connection -> {
-            final PreparedStatement ps = connection.prepareStatement(SQL_DELETE_PARENT_CHILD_RELATIONS);
-            ps.setString(1, parentName.toString());
-            ps.setString(2, parentUUID);
-            ps.setString(3, childName.toString());
-            ps.setString(4, childUUID);
-            ps.setString(5, type);
-            return ps;
-        });
+
+        try {
+            jdbcTemplate.update(connection -> {
+                final PreparedStatement ps = connection.prepareStatement(SQL_DELETE_PARENT_CHILD_RELATIONS);
+                ps.setString(1, parentName.toString());
+                ps.setString(2, parentUUID);
+                ps.setString(3, childName.toString());
+                ps.setString(4, childUUID);
+                ps.setString(5, type);
+                return ps;
+            });
+        } catch (Exception e) {
+            log.error("Fail to delete parent child relationship with parent={}, parentUUID={}, "
+                    + "child={}, childUUID={}, relationType = {}",
+                parentName, parentUUID, childName, childUUID, type
+            );
+            throw new ParentChildRelServiceException("Fail to delete parent child relationship"
+                + " for child table:" + childName + " under parent table:" + parentName, e);
+        }
         log.info("Successfully delete parent child relationship with parent={}, parentUUID={}, "
                 + "child={}, childUUID={}, relationType = {}",
             parentName, parentUUID, childName, childUUID, type
@@ -137,58 +157,73 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
 
     @Override
     public void rename(final QualifiedName oldName, final QualifiedName newName) {
-        try {
-            renameParent(oldName, newName);
-            renameChild(oldName, newName);
-            log.info("Successfully rename parent child relationship for oldName={}, newName={}",
-                oldName, newName
-            );
-        } catch (RuntimeException e) {
-            log.error("Failed to rename entity", e);
-            throw e;
-        }
+        renameParent(oldName, newName);
+        renameChild(oldName, newName);
+        log.info("Successfully rename parent child relationship for oldName={}, newName={}",
+            oldName, newName
+        );
     }
 
     private void renameParent(final QualifiedName oldName, final QualifiedName newName) {
-        jdbcTemplate.update(connection -> {
-            final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_PARENT_ENTITY);
-            ps.setString(1, newName.toString());
-            ps.setString(2, oldName.toString());
+        try {
+            jdbcTemplate.update(connection -> {
+                final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_PARENT_ENTITY);
+                ps.setString(1, newName.toString());
+                ps.setString(2, oldName.toString());
 
-            return ps;
-        });
+                return ps;
+            });
+        } catch (Exception e) {
+            throw new ParentChildRelServiceException("Fail to rename parent from oldName:" + oldName + " to " + newName
+                + " in MySqlParentChildRelMetadataService", e);
+        }
     }
 
     private void renameChild(final QualifiedName oldName, final QualifiedName newName) {
-        jdbcTemplate.update(connection -> {
-            final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_CHILD_ENTITY);
-            ps.setString(1, newName.toString());
-            ps.setString(2, oldName.toString());
-            return ps;
-        });
+        try {
+            jdbcTemplate.update(connection -> {
+                final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_CHILD_ENTITY);
+                ps.setString(1, newName.toString());
+                ps.setString(2, oldName.toString());
+                return ps;
+            });
+        } catch (Exception e) {
+            throw new ParentChildRelServiceException("Fail to rename child from oldName:" + oldName + " to " + newName
+                + " in MySqlParentChildRelMetadataService", e);
+        }
     }
 
     @Override
     public void drop(final QualifiedName name) {
         dropParent(name);
         dropChild(name);
-        log.info("Successfully drop parent child relationship for name={}, uuid={}", name);
+        log.info("Successfully drop parent child relationship for name={}", name);
     }
 
     private void dropParent(final QualifiedName name) {
-        jdbcTemplate.update(connection -> {
-            final PreparedStatement ps = connection.prepareStatement(SQL_DROP_PARENT);
-            ps.setString(1, name.toString());
-            return ps;
-        });
+        try {
+            jdbcTemplate.update(connection -> {
+                final PreparedStatement ps = connection.prepareStatement(SQL_DROP_PARENT);
+                ps.setString(1, name.toString());
+                return ps;
+            });
+        } catch (Exception e) {
+            throw new ParentChildRelServiceException("Fail to drop parent:" + name
+                + " in MySqlParentChildRelMetadataService", e);
+        }
     }
 
     private void dropChild(final QualifiedName name) {
-        jdbcTemplate.update(connection -> {
-            final PreparedStatement ps = connection.prepareStatement(SQL_DROP_CHILD);
-            ps.setString(1, name.toString());
-            return ps;
-        });
+        try {
+            jdbcTemplate.update(connection -> {
+                final PreparedStatement ps = connection.prepareStatement(SQL_DROP_CHILD);
+                ps.setString(1, name.toString());
+                return ps;
+            });
+        } catch (Exception e) {
+            throw new ParentChildRelServiceException("Fail to drop child:" + name
+                + " in MySqlParentChildRelMetadataService", e);
+        }
     }
 
     @Override
