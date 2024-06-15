@@ -2027,7 +2027,7 @@ class MetacatSmokeSpec extends Specification {
         def child11ParentChildRelationInfo = child11Table.definitionMetadata.get("parentChildRelationInfo")
         then:
         // Test Parent 1 parentChildInfo
-        assert !parent1Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid")] as Set
 
         // Test Child11 parentChildInfo
@@ -2052,7 +2052,7 @@ class MetacatSmokeSpec extends Specification {
 
         then:
         // Test Parent 1 parentChildInfo
-        assert !parent1Table.definitionMetadata.get("parentChildRelationInfo")
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
@@ -2098,7 +2098,7 @@ class MetacatSmokeSpec extends Specification {
 
         then:
         // Test Parent 2 parentChildInfo
-        assert !parent2Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
@@ -2122,7 +2122,7 @@ class MetacatSmokeSpec extends Specification {
 
         then:
         // Test Parent 1 parentChildInfo newName
-        assert !parent1Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) ==
             [
                 new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
@@ -2149,7 +2149,7 @@ class MetacatSmokeSpec extends Specification {
         child11Table = api.getTable(catalogName, databaseName, renameChild11, true, true, false)
         child11ParentChildRelationInfo = child11Table.definitionMetadata.get("parentChildRelationInfo")
         then:
-        assert !parent1Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_child11", "CLONE", "c11_uuid"),
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
@@ -2179,7 +2179,7 @@ class MetacatSmokeSpec extends Specification {
 
         then:
         // Test parent1 Table
-        assert !parent1Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
         ] as Set
@@ -2206,7 +2206,7 @@ class MetacatSmokeSpec extends Specification {
         // Since all the operations above are on the first connected relationship, the second connected relationship
         // should remain the same
         // Test Parent 2 parentChildInfo
-        assert !parent2Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
@@ -2230,7 +2230,7 @@ class MetacatSmokeSpec extends Specification {
         child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
         child21ParentChildRelationInfo = child21Table.definitionMetadata.get("parentChildRelationInfo")
         then:
-        assert !parent2Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
@@ -2255,7 +2255,7 @@ class MetacatSmokeSpec extends Specification {
         child21ParentChildRelationInfo = child21Table.definitionMetadata.get("parentChildRelationInfo")
         then:
         // Test Parent 2 parentChildInfo
-        assert !parent2Table.definitionMetadata.has("parentChildRelationInfo")
+        assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
             new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
