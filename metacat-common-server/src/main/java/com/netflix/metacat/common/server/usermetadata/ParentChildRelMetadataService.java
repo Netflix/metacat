@@ -3,7 +3,9 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.notifications.ChildInfoDto;
 import com.netflix.metacat.common.server.model.ChildInfo;
 import com.netflix.metacat.common.server.model.ParentInfo;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -60,8 +62,12 @@ public interface ParentChildRelMetadataService {
      *
      * @param oldName  the current name to be renamed
      * @param newName  the new name to rename to
+     *
+     * @return return a pair of set,
+     * where the first set represents the affected parent_uuid with name = oldName
+     * and the second set represents the affected child_uuid with name = oldName
      */
-    void rename(
+    Pair<Set<String>, Set<String>> rename(
         QualifiedName oldName,
         QualifiedName newName
     );
@@ -71,10 +77,13 @@ public interface ParentChildRelMetadataService {
      * This involves two steps:
      * 1. drop all records where the child column = `name`
      * 2. drop all records where the parent column = `name`
+     * Note if uuids are specified, it is going to drop the table with that name with the corresponding uuids
      * @param name  the name of the entity to drop
+     * @param uuids the uuids to drop, where the first pair is the parent uuid and second pair is the child uuid
      */
     void drop(
-        QualifiedName name
+        QualifiedName name,
+        Optional<Pair<Set<String>, Set<String>>> uuids
     );
 
     /**
