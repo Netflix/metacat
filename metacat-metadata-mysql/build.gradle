@@ -32,6 +32,7 @@ dependencies {
     api("com.google.guava:guava")
     api("org.apache.tomcat:tomcat-jdbc")
     api("org.slf4j:slf4j-api")
+    api('org.springframework.retry:spring-retry')
     /*******************************
      * Provided Dependencies
      *******************************/
