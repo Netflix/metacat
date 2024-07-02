@@ -13,6 +13,9 @@
 
 package com.netflix.metacat.main.services.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -42,14 +45,18 @@ import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateIcebergTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent;
+import com.netflix.metacat.common.server.model.ChildInfo;
+import com.netflix.metacat.common.server.model.ParentInfo;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
 import com.netflix.metacat.common.server.usermetadata.AuthorizationService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataConstants;
 import com.netflix.metacat.common.server.usermetadata.MetacatOperation;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.metacat.common.server.util.MetacatUtils;
 import com.netflix.metacat.main.manager.ConnectorManager;
@@ -62,6 +69,7 @@ import com.netflix.spectator.api.Registry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -70,6 +78,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+
 
 /**
  * Table service implementation.
@@ -89,6 +99,7 @@ public class TableServiceImpl implements TableService {
     private final ConverterUtil converterUtil;
     private final AuthorizationService authorizationService;
     private final OwnerValidationService ownerValidationService;
+    private final ParentChildRelMetadataService parentChildRelMetadataService;
 
     /**
      * {@inheritDoc}
@@ -106,7 +117,13 @@ public class TableServiceImpl implements TableService {
         log.info("Creating table {}", name);
         eventBus.post(new MetacatCreateTablePreEvent(name, metacatRequestContext, this, tableDto));
 
-        connectorTableServiceProxy.create(name, converterUtil.fromTableDto(tableDto));
+        final Optional<Runnable> unSaveOpOpt = saveParentChildRelationship(name, tableDto);
+        try {
+            connectorTableServiceProxy.create(name, converterUtil.fromTableDto(tableDto));
+        } catch (Exception e) {
+            unSaveOpOpt.ifPresent(Runnable::run);
+            throw e;
+        }
 
         if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for table {}", name);
@@ -137,6 +154,91 @@ public class TableServiceImpl implements TableService {
             handleExceptionOnCreate(name, "postEvent", e);
         }
         return dto;
+    }
+
+    private ObjectNode createParentChildObjectNode(@Nullable final Set<ParentInfo> parentInfos,
+                                                   @Nullable final Set<ChildInfo> childInfos) {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectNode rootNode = objectMapper.createObjectNode();
+
+        // For childTable, we will always populate the parent infos
+        if (parentInfos != null && !parentInfos.isEmpty()) {
+            final ArrayNode parentArrayNode = objectMapper.createArrayNode();
+            for (ParentInfo parentInfo : parentInfos) {
+                final ObjectNode parentNode = objectMapper.createObjectNode();
+                parentNode.put("name", parentInfo.getName());
+                parentNode.put("relationType", parentInfo.getRelationType());
+                parentNode.put("uuid", parentInfo.getUuid());
+                parentArrayNode.add(parentNode);
+            }
+            rootNode.set(ParentChildRelMetadataConstants.PARENT_INFOS, parentArrayNode);
+        }
+
+        // For parent table, if it has a child, we will put a field to indicate that the table is a parent table.
+        if (childInfos != null && !childInfos.isEmpty()) {
+            rootNode.put(ParentChildRelMetadataConstants.IS_PARENT, true);
+        }
+        return rootNode;
+    }
+
+    // Return the unSaveOperation if applicable
+    private Optional<Runnable> saveParentChildRelationship(final QualifiedName child, final TableDto tableDto) {
+        if (tableDto.getDefinitionMetadata() != null) {
+            final ObjectNode definitionMetadata = tableDto.getDefinitionMetadata();
+            if (definitionMetadata.has(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO)) {
+                final JsonNode parentChildRelInfo =
+                    definitionMetadata.get(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO);
+
+                String parentName;
+                if (!parentChildRelInfo.has(ParentChildRelMetadataConstants.PARENT_NAME)) {
+                    throw new RuntimeException("parent name is not specified");
+                }
+                parentName = parentChildRelInfo.path(ParentChildRelMetadataConstants.PARENT_NAME)
+                    .asText();
+                final QualifiedName parent = QualifiedName.fromString(parentName);
+                validate(parent);
+
+                // fetch parent and child uuid
+                String parentUUID;
+                String childUUID;
+                if (!parentChildRelInfo.has(ParentChildRelMetadataConstants.PARENT_UUID)) {
+                    throw new RuntimeException("root_table_uuid is not specified for parent table="
+                            + parentName);
+                }
+
+                if (!parentChildRelInfo.has(ParentChildRelMetadataConstants.CHILD_UUID)) {
+                    throw new RuntimeException("child_table_uuid is not specified for child table=" + child);
+                }
+                parentUUID = parentChildRelInfo.path(ParentChildRelMetadataConstants.PARENT_UUID).asText();
+                childUUID = parentChildRelInfo.path(ParentChildRelMetadataConstants.CHILD_UUID).asText();
+
+                // fetch relationshipType
+                String relationType;
+                if (parentChildRelInfo.has(ParentChildRelMetadataConstants.RELATION_TYPE)) {
+                    relationType = parentChildRelInfo.path(ParentChildRelMetadataConstants.RELATION_TYPE).asText();
+                } else {
+                    relationType = "CLONE";
+                }
+
+                // Create parent child relationship
+                parentChildRelMetadataService.createParentChildRelation(parent, parentUUID,
+                    child, childUUID, relationType);
+
+                // Return a Runnable for deleting the relationship
+                return Optional.of(() -> {
+                    try {
+                        parentChildRelMetadataService.deleteParentChildRelation(parent,
+                            parentUUID, child, childUUID, relationType);
+                    } catch (Exception e) {
+                        log.error("parentChildRelMetadataService: Failed to delete parent child relationship "
+                                + "after failing to create the table={} with the following parameters: "
+                                + "parent={}, parentUUID={}, child={}, childUUID={}, relationType={}",
+                            child, parent, parentUUID, child, childUUID, relationType, e);
+                    }
+                });
+            }
+        }
+        return Optional.empty();
     }
 
     private void setDefaultAttributes(final TableDto tableDto) {
@@ -267,10 +369,20 @@ public class TableServiceImpl implements TableService {
             }
         }
 
-        // Try to delete the table even if get above fails
+        final Set<ChildInfo> childInfos = parentChildRelMetadataService.getChildren(name);
+        if (childInfos != null && !childInfos.isEmpty()) {
+            final StringBuilder errorSb = new StringBuilder();
+            errorSb.append("Failed to drop ").append(name)
+                .append(" because it still has ")
+                .append(childInfos.size())
+                .append(" child table(s). One example is:");
+
+            errorSb.append("\n").append(childInfos.iterator().next().getName());
+
+            throw new RuntimeException(errorSb.toString());
+        }
         try {
             connectorTableServiceProxy.delete(name);
-
             // If this is a common view, the storage_table if present
             // should also be deleted.
             if (MetacatUtils.isCommonView(tableDto.getMetadata())
@@ -283,9 +395,14 @@ public class TableServiceImpl implements TableService {
                     deleteCommonViewStorageTable(name, qualifiedStorageTableName);
                 }
             }
-
         } catch (NotFoundException ignored) {
             log.debug("NotFoundException ignored for table {}", name);
+        }
+
+        try {
+            parentChildRelMetadataService.drop(name, Optional.empty());
+        } catch (Exception e) {
+            log.error("parentChildRelMetadataService: Failed to drop relation for table={}", name, e);
         }
 
         if (canDeleteMetadata(name)) {
@@ -373,11 +490,26 @@ public class TableServiceImpl implements TableService {
         }
 
         if (getTableServiceParameters.isIncludeDefinitionMetadata()) {
-            final Optional<ObjectNode> definitionMetadata =
+            Optional<ObjectNode> definitionMetadata =
                 (getTableServiceParameters.isDisableOnReadMetadataIntercetor())
                     ? userMetadataService.getDefinitionMetadata(name)
                     : userMetadataService.getDefinitionMetadataWithInterceptor(name,
                     GetMetadataInterceptorParameters.builder().hasMetadata(tableInternal).build());
+            // Always get the source of truth for parent child relation from the parentChildRelMetadataService
+            if (definitionMetadata.isPresent()
+                && definitionMetadata.get().has(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO)) {
+                definitionMetadata.get().remove(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO);
+            }
+            final Set<ParentInfo> parentInfo = parentChildRelMetadataService.getParents(name);
+            final Set<ChildInfo> childInfos = parentChildRelMetadataService.getChildren(name);
+            final ObjectNode parentChildRelObjectNode = createParentChildObjectNode(parentInfo, childInfos);
+            if (!parentChildRelObjectNode.isEmpty()) {
+                if (!definitionMetadata.isPresent()) {
+                    definitionMetadata = Optional.of(new ObjectMapper().createObjectNode());
+                }
+                definitionMetadata.get().set(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO,
+                    parentChildRelObjectNode);
+            }
             definitionMetadata.ifPresent(table::setDefinitionMetadata);
         }
 
@@ -437,7 +569,39 @@ public class TableServiceImpl implements TableService {
         if (oldTable != null) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
             eventBus.post(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, this, newName));
-            connectorTableServiceProxy.rename(oldName, newName, isMView);
+
+            // Before rename, first
+            // duplicate record with newName in parent child relation and get all uuids associated with this newName
+            // that are impacted so later during
+            // either dropping the oldName after successful connectorTableServiceProxy.rename
+            // or dropping the newName after failed connectorTableServiceProxy.rename
+            // we only touch records with those specific uuids
+            final Pair<Set<String>, Set<String>> parentChildUuidsPair =
+                parentChildRelMetadataService.rename(oldName, newName);
+            try {
+                connectorTableServiceProxy.rename(oldName, newName, isMView);
+            } catch (Exception e) {
+                try {
+                    // if rename operation fail, remove the soft inserted record
+                    parentChildRelMetadataService.drop(newName, Optional.of(parentChildUuidsPair));
+                } catch (Exception renameException) {
+                    log.error("parentChildRelMetadataService: Fail to rename parent child relation "
+                            + "after table fail to rename from {} to {} "
+                            + "with the following parameters oldName={} to newName={} and uuid pairs = {}",
+                        oldName, newName, oldName, newName, parentChildUuidsPair, renameException);
+                }
+                throw e;
+            }
+            // if rename everything succeeds, remove records with the oldName
+            try {
+                parentChildRelMetadataService.drop(oldName, Optional.of(parentChildUuidsPair));
+            } catch (Exception e) {
+                log.error("parentChildRelMetadataService: Fail to rename parent child relation "
+                        + "after table successfully rename from {} to {} "
+                        + "with the following parameters oldName={} to newName={} and uuid pairs = {}",
+                    oldName, newName, oldName, newName, parentChildUuidsPair, e);
+            }
+
             userMetadataService.renameDefinitionMetadataKey(oldName, newName);
             tagService.renameTableTags(oldName, newName.getTableName());
 
