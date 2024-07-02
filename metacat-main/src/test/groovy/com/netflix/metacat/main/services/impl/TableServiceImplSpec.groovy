@@ -53,7 +53,8 @@ import com.netflix.spectator.api.DefaultRegistry
 import com.netflix.spectator.api.NoopRegistry
 import spock.lang.Specification
 import spock.lang.Unroll
-import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService
+import org.apache.commons.lang3.tuple.Pair
 
 /**
  * Tests for the TableServiceImpl.
@@ -306,19 +307,32 @@ class TableServiceImplSpec extends Specification {
         thrown(RuntimeException)
     }
 
-    def "Test Rename - Clone Table Fail to update parent child relation"() {
+    def "Test Rename for clone"() {
         given:
         def oldName = QualifiedName.ofTable("clone", "clone", "oldChild")
         def newName = QualifiedName.ofTable("clone", "clone", "newChild")
+        def parentUuids = ["uuid1"] as Set
+        def childUuids = [""] as Set
+        def pair = Pair.of(parentUuids, childUuids)
+
         when:
         service.rename(oldName, newName, false)
 
         then:
         1 * config.getNoTableRenameOnTags() >> []
-        1 * parentChildRelSvc.rename(oldName, newName)
+        1 * parentChildRelSvc.rename(oldName, newName) >> pair
         1 * connectorTableServiceProxy.rename(oldName, newName, _) >> {throw new RuntimeException("Fail to rename")}
-        1 * parentChildRelSvc.rename(newName, oldName)
+        1 * parentChildRelSvc.drop(newName, Optional.of(pair))
         thrown(RuntimeException)
+
+        when:
+        service.rename(oldName, newName, false)
+        then:
+        1 * config.getNoTableRenameOnTags() >> []
+        1 * parentChildRelSvc.rename(oldName, newName) >> pair
+        1 * connectorTableServiceProxy.rename(oldName, newName, _)
+        1 * parentChildRelSvc.drop(oldName, Optional.of(pair))
+        noExceptionThrown()
     }
 
     def "Test Drop - Clone Table Fail to drop parent child relation"() {

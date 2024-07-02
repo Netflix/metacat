@@ -1992,12 +1992,14 @@ class MetacatSmokeSpec extends Specification {
         def parent1UUID = "p1_uuid"
         def renameParent1 = "rename_parent1"
         def parent1Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, parent1) : null
+        def renameParent1Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, parent1) : null
         def parent1FullName = catalogName + "/" + databaseName + "/" + parent1
 
         def child11 = "child11"
         def child11UUID = "c11_uuid"
         def renameChild11 = "rename_child11"
         def child11Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, child11) : null
+        def renameChild11Uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, renameChild11) : null
         def child11FullName = catalogName + "/" + databaseName + "/" + child11
 
         def child12 = "child12"
@@ -2140,6 +2142,9 @@ class MetacatSmokeSpec extends Specification {
          */
         when:
         api.createTable(catalogName, databaseName, parent1, parent1TableDto)
+        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
+        child11Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
+
         then:
         e = thrown(Exception)
         assert e.message.contains("already exists")
@@ -2203,9 +2208,47 @@ class MetacatSmokeSpec extends Specification {
         assert parentChildRelV1.getChildren(catalogName, databaseName, child21).isEmpty()
 
         /*
-        Step 9: Rename parent1 to newParent1
+        Step 9: Create a table newParent1 and attempt to rename parent1 to newParent1 should fail
+        Test the parentChildRelationship record remain the same after the revert
          */
         when:
+        def newParent1TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, renameParent1, 'amajumdar', renameParent1Uri)
+        api.createTable(catalogName, databaseName, renameParent1, newParent1TableDto)
+        api.renameTable(catalogName, databaseName, parent1, renameParent1)
+        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
+        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
+        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false)
+
+        then:
+        e = thrown(Exception)
+        assert e.message.contains("already exists")
+        // Test Parent 1 parentChildInfo
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
+        assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [
+            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
+            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
+        ] as Set
+        // Test Child11 parentChildInfo
+        assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
+        assert child11Table.definitionMetadata.get("random_key").asText() == "random_value"
+        JSONAssert.assertEquals(child11ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
+            false)
+        assert parentChildRelV1.getChildren(catalogName, databaseName, child11).isEmpty()
+
+        // Test Child12 parentChildInfo
+        assert !child12Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
+        JSONAssert.assertEquals(child12ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            false)
+        assert parentChildRelV1.getChildren(catalogName, databaseName, child12).isEmpty()
+
+
+        /*
+        Step 10: First drop the newParent1 and then Rename parent1 to newParent1 should now succeed
+         */
+        when:
+        api.deleteTable(catalogName, databaseName, renameParent1)
         api.renameTable(catalogName, databaseName, parent1, renameParent1)
         parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
         child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
@@ -2243,9 +2286,47 @@ class MetacatSmokeSpec extends Specification {
         assert e.message.contains("Unable to locate for")
 
         /*
-        Step 10: Rename child11 to renameChild11
+        Step 11: Create a table renameChild11 and then try to rename child11 to renameChild11, which should fail
+        This test to make sure the revert works properly.
          */
         when:
+        def newChild1TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, renameChild11, 'amajumdar', renameChild11Uri)
+        api.createTable(catalogName, databaseName, renameChild11, newChild1TableDto)
+        api.renameTable(catalogName, databaseName, child11, renameChild11)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
+        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
+        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false)
+
+        then:
+        e = thrown(Exception)
+        assert e.message.contains("already exists")
+        // Test Parent 1 parentChildInfo newName
+        assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
+        assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) ==
+            [
+                new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
+                new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
+            ] as Set
+        // Test Child11 parentChildInfo
+        assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
+        JSONAssert.assertEquals(child11ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            false)
+        assert parentChildRelV1.getChildren(catalogName, databaseName, child11).isEmpty()
+
+        // Test Child12 parentChildInfo
+        assert !child12Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
+        JSONAssert.assertEquals(child12ParentChildRelationInfo.toString(),
+            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            false)
+        assert parentChildRelV1.getChildren(catalogName, databaseName, child12).isEmpty()
+
+
+        /*
+        Step 12: Drop previous renameChild11 and Rename child11 to renameChild11
+         */
+        when:
+        api.deleteTable(catalogName, databaseName, renameChild11)
         api.renameTable(catalogName, databaseName, child11, renameChild11)
         parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
         child11Table = api.getTable(catalogName, databaseName, renameChild11, true, true, false)
@@ -2273,7 +2354,7 @@ class MetacatSmokeSpec extends Specification {
         assert e.message.contains("Unable to locate for")
 
         /*
-        Step 11: Drop parent renameParent1
+        Step 13: Drop parent renameParent1
          */
         when:
         api.deleteTable(catalogName, databaseName, renameParent1)
@@ -2283,7 +2364,7 @@ class MetacatSmokeSpec extends Specification {
         assert e.message.contains("because it still has")
 
         /*
-        Step 8: Drop renameChild11 should succeed
+        Step 14: Drop renameChild11 should succeed
          */
         when:
         api.deleteTable(catalogName, databaseName, renameChild11)
@@ -2297,7 +2378,7 @@ class MetacatSmokeSpec extends Specification {
         ] as Set
 
         /*
-        Step 12: Create renameChild11 and should expect random_key should appear at it is reattached
+        Step 15: Create renameChild11 and should expect random_key should appear at it is reattached
         but parent childInfo should not as it is always coming from the parent child relationship service
         which currently does not have any record
          */
@@ -2317,7 +2398,7 @@ class MetacatSmokeSpec extends Specification {
         ] as Set
 
         /*
-        Step 13: Drop child12 should succeed
+        Step 16: Drop child12 should succeed
          */
         when:
         api.deleteTable(catalogName, databaseName, child12)
@@ -2327,7 +2408,7 @@ class MetacatSmokeSpec extends Specification {
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1).isEmpty()
 
         /*
-        Step 14: Drop renameParent1 should succeed as there is no more child under it
+        Step 17: Drop renameParent1 should succeed as there is no more child under it
          */
         when:
         api.deleteTable(catalogName, databaseName, renameParent1)
@@ -2352,7 +2433,7 @@ class MetacatSmokeSpec extends Specification {
         assert parentChildRelV1.getChildren(catalogName, databaseName, child21).isEmpty()
 
         /*
-        Step 15: update parent2 with random parentChildRelationInfo to test immutability
+        Step 18: update parent2 with random parentChildRelationInfo to test immutability
          */
         when:
         def updateParent2Dto = parent2Table
@@ -2376,7 +2457,7 @@ class MetacatSmokeSpec extends Specification {
         assert parentChildRelV1.getChildren(catalogName, databaseName, child21).isEmpty()
 
         /*
-        Step 16: update child21 with random parentChildRelationInfo to test immutability
+        Step 19: update child21 with random parentChildRelationInfo to test immutability
          */
         when:
         def updateChild21Dto = child21Table

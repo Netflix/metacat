@@ -29,6 +29,16 @@ class ParentChildRelMetadataServiceSpec extends Specification{
     @Shared
     private String database = "testpc"
 
+    @Shared
+    static final String SQL_CREATE_PARENT_CHILD_RELATIONS =
+        "INSERT INTO parent_child_relation (parent, parent_uuid, child, child_uuid, relation_type) " +
+            "VALUES (?, ?, ?, ?, ?)"
+
+    private void insertNewParentChildRecord(final String pName, final String pUUID,
+                                            final String child, final String childUUID, final String type) {
+        jdbcTemplate.update(SQL_CREATE_PARENT_CHILD_RELATIONS, pName, pUUID, child, childUUID, type)
+    }
+
     def setupSpec() {
         String jdbcUrl = "jdbc:mysql://localhost:3306/metacat"
         String username = "metacat_user"
@@ -197,9 +207,13 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
 
         when:
-        service.rename(parent, newParent)
+        def pair = service.rename(parent, newParent)
+        service.drop(parent, Optional.of(pair))
 
         then:
+        assert pair.getLeft().size() == 1
+        assert pair.getRight().isEmpty()
+
         // Test Old Parent Name
         assert service.getParents(parent).isEmpty()
         assert service.getChildren(parent).isEmpty()
@@ -216,10 +230,13 @@ class ParentChildRelMetadataServiceSpec extends Specification{
 
         // rename back
         when:
-        service.rename(newParent, parent)
+        pair = service.rename(newParent, parent)
+        service.drop(newParent, Optional.of(pair))
         child_parent_expected = [new ParentInfo(parent.toString(), type, parentUUID)] as Set
 
         then:
+        assert pair.getLeft().size() == 1
+        assert pair.getRight().isEmpty()
         // Test new Parent Name
         assert service.getParents(newParent).isEmpty()
         assert service.getChildren(newParent).isEmpty()
@@ -246,11 +263,22 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         service.createParentChildRelation(parent, parentUUID, child2, child2UUID, type)
         def newParent = QualifiedName.ofTable(catalog, database, "np")
         def child_parent_expected = [new ParentInfo(newParent.toString(), type, parentUUID)] as Set
+        def newParent_children_expected = [
+            new ChildInfo(child1.toString(), type, child1UUID),
+            new ChildInfo(child2.toString(), type, child2UUID)
+        ] as Set
 
         when:
-        service.rename(parent, newParent)
+        def pair = service.rename(parent, newParent)
+        service.drop(parent, Optional.of(pair))
 
         then:
+        assert pair.getLeft().size() == 1
+        assert pair.getRight().isEmpty()
+
+        // Test newParent
+        assert service.getParents(newParent).isEmpty()
+        assert service.getChildren(newParent) == newParent_children_expected
         // Test Child1
         assert service.getParents(child1) == child_parent_expected
         //Test Child2
@@ -268,8 +296,12 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def newChild = QualifiedName.ofTable(catalog, database, "nc")
 
         when:
-        service.rename(child, newChild)
+        def pair = service.rename(child, newChild)
+        service.drop(child, Optional.of(pair))
+
         then:
+        assert pair.getLeft().isEmpty()
+        assert pair.getRight().size() == 1
         // Test Parent
         assert service.getParents(parent).isEmpty()
         def parent_children_expected  = [new ChildInfo(newChild.toString(), type, childUUID)] as Set
@@ -286,10 +318,13 @@ class ParentChildRelMetadataServiceSpec extends Specification{
 
         // rename back
         when:
-        service.rename(newChild, child)
+        pair = service.rename(newChild, child)
+        service.drop(newChild, Optional.of(pair))
         parent_children_expected  = [new ChildInfo(child.toString(), type, childUUID)] as Set
 
         then:
+        assert pair.getLeft().isEmpty()
+        assert pair.getRight().size() == 1
         // Test Parent
         assert service.getParents(parent).isEmpty()
         assert parent_children_expected == service.getChildren(parent)
@@ -313,7 +348,7 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def type = "clone";
         service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
         when:
-        service.drop(child)
+        service.drop(child, Optional.empty())
 
         then:
         // Test Parent
@@ -336,8 +371,9 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
 
         when:
-        service.rename(child, newChild)
-        service.drop(newChild)
+        def pair = service.rename(child, newChild)
+        service.drop(child, Optional.of(pair))
+        service.drop(newChild, Optional.empty())
 
         then:
         // Test Parent
@@ -352,4 +388,165 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         assert service.getParents(newChild).isEmpty()
         assert service.getChildren(newChild).isEmpty()
     }
+    def "Test Parent Rename failed and remove newName"() {
+        setup:
+        def parent = QualifiedName.ofTable(catalog, database, "p")
+        def parentUUID = "p_uuid"
+        def child = QualifiedName.ofTable(catalog, database, "c")
+        def childUUID = "c_uuid"
+        def type = "clone";
+        def newParent = QualifiedName.ofTable(catalog, database, "np")
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+
+        when:
+        def pair = service.rename(parent, newParent)
+        service.drop(newParent, Optional.of(pair))
+
+        then:
+        // Test Old Parent Name
+        assert service.getParents(newParent).isEmpty()
+        assert service.getChildren(newParent).isEmpty()
+
+        // Test New Parent Name
+        assert service.getParents(parent).isEmpty()
+        def newParent_children_expected = [new ChildInfo(child.toString(), type, childUUID)] as Set
+        assert service.getChildren(parent) == newParent_children_expected
+
+        // Test Child
+        def child_parent_expected = [new ParentInfo(parent.toString(), type, parentUUID)] as Set
+        assert child_parent_expected == service.getParents(child)
+        assert service.getChildren(child).isEmpty()
+    }
+
+    def "Test Child Rename failed and remove newName"() {
+        setup:
+        def parent = QualifiedName.ofTable(catalog, database, "p")
+        def parentUUID = "p_uuid"
+        def child = QualifiedName.ofTable(catalog, database, "c")
+        def childUUID = "c_uuid"
+        def type = "clone"
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+        def newChild = QualifiedName.ofTable(catalog, database, "nc")
+
+        when:
+        def pair = service.rename(child, newChild)
+        service.drop(newChild, Optional.of(pair))
+        then:
+        // Test Parent
+        assert service.getParents(parent).isEmpty()
+        def parent_children_expected  = [new ChildInfo(child.toString(), type, childUUID)] as Set
+        assert parent_children_expected == service.getChildren(parent)
+
+        // Test New Child
+        assert service.getParents(newChild).isEmpty()
+        assert service.getChildren(newChild).isEmpty()
+
+        // Test Child
+        def child_parent_expected = [new ParentInfo(parent.toString(), type, parentUUID)] as Set
+        assert child_parent_expected == service.getParents(child)
+        assert service.getChildren(child).isEmpty()
+    }
+
+    def "Test rename to an existing table in the parent child rel service"() {
+        given:
+        def parent = QualifiedName.ofTable(catalog, database, "p")
+        def parentUUID = "p_uuid"
+        def child = QualifiedName.ofTable(catalog, database, "c")
+        def childUUID = "c_uuid"
+        def type = "clone"
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+        def newParentQualifiedName = QualifiedName.ofTable(catalog, database, "np_name")
+        def newChildQualifiedName = QualifiedName.ofTable(catalog, database, "nc_name")
+        insertNewParentChildRecord(newParentQualifiedName.toString(), "np_uuid", newChildQualifiedName.toString(), "nc_uuid", "random")
+
+        when:
+        service.rename(parent, newParentQualifiedName)
+        then:
+        def e = thrown(RuntimeException)
+        assert e.message.contains("already exists")
+
+        when:
+        service.rename(child, newChildQualifiedName)
+
+        then:
+        e = thrown(RuntimeException)
+        assert e.message.contains("already exists")
+    }
+
+    // Add a test where between rename and drop old/new name with the same name but different uuid is added
+    // only those get from rename should be drop
+    // This case is not possible in reality but wanted to add a test to prove this
+    def "Simulate Rename child: drop only impacted uuids"() {
+        setup:
+        def parent = QualifiedName.ofTable(catalog, database, "p")
+        def parentUUID = "p_uuid"
+        def child = QualifiedName.ofTable(catalog, database, "c")
+        def childUUID = "c_uuid"
+        def type = "clone"
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+        def newChild = QualifiedName.ofTable(catalog, database, "nc")
+
+        when:
+        def pair = service.rename(child, newChild)
+        def child_parent_expected = [new ParentInfo(parent.toString(), type, parentUUID)] as Set
+        // Add a record with the same child name but different uuid and since this record is added after rename
+        // this record should not be dropped during the service.drop
+        insertNewParentChildRecord(parent.toString(), parentUUID, child.toString(), "c_uuid2", type)
+        service.drop(child, Optional.of(pair))
+        then:
+        // Test Parent
+        assert service.getParents(parent).isEmpty()
+        def parent_children_expected  = [new ChildInfo(newChild.toString(), type, childUUID),
+                                         new ChildInfo(child.toString(), type, "c_uuid2")] as Set
+        assert parent_children_expected == service.getChildren(parent)
+
+        // Test new child
+        assert service.getParents(newChild) == child_parent_expected
+        assert service.getChildren(newChild).isEmpty()
+
+        // Test old child
+        assert service.getParents(child) == child_parent_expected
+        assert service.getChildren(child).isEmpty()
+    }
+
+    // Add a test where between rename and drop old/new name same name but different uuid is added
+    // only those get from rename should be drop
+    // This case is not possible in reality but wanted to add a test to prove this
+    def "Simulate Rename Parent: drop only impacted uuids"() {
+        setup:
+        def parent = QualifiedName.ofTable(catalog, database, "p")
+        def parentUUID = "p_uuid"
+        def child = QualifiedName.ofTable(catalog, database, "c")
+        def childUUID = "c_uuid"
+        def type = "clone"
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+        def newParent = QualifiedName.ofTable(catalog, database, "np")
+
+        when:
+        def pair = service.rename(parent, newParent)
+        // Add a record with the same parent name but different uuid and since this record is added after rename
+        // this record should not be dropped during the service.drop
+        insertNewParentChildRecord(parent.toString(), "p_uuid2", child.toString(), "c_uuid1", "clone")
+        service.drop(parent, Optional.of(pair))
+        then:
+
+        // Test p
+        assert service.getParents(parent).isEmpty()
+        def parent_children_expected  = [new ChildInfo(child.toString(), "clone", "c_uuid1")] as Set
+        assert parent_children_expected == service.getChildren(parent)
+
+        // Test np
+        assert service.getParents(newParent).isEmpty()
+        def new_parent_children_expected  = [new ChildInfo(child.toString(), "clone", childUUID)] as Set
+        assert new_parent_children_expected == service.getChildren(newParent)
+
+        // Test child
+        assert service.getChildren((child)).isEmpty()
+        def child_parent_expected = [
+            new ParentInfo(newParent.toString(), "clone", parentUUID),
+            new ParentInfo(parent.toString(), "clone", "p_uuid2"),
+        ] as Set
+        assert service.getParents(child) == child_parent_expected
+    }
+
 }
