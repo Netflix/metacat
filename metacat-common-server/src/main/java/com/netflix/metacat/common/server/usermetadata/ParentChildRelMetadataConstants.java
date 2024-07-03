@@ -14,12 +14,12 @@ public final class ParentChildRelMetadataConstants {
      * During create, nested level key specified in DefinitionMetadata['parentChildRelationInfo']
      * that indicate the parent table name.
      */
-    public static final String PARENT_NAME = "root_table_name";
+    public static final String PARENT_NAME = "parent_table_name";
     /**
      * During create, nested level key specified in DefinitionMetadata['parentChildRelationInfo']
      * that indicates the parent table uuid.
      */
-    public static final String PARENT_UUID = "root_table_uuid";
+    public static final String PARENT_UUID = "parent_table_uuid";
     /**
      * During create, nested level key specified in DefinitionMetadata['parentChildRelationInfo']
      * that indicates the child table uuid.

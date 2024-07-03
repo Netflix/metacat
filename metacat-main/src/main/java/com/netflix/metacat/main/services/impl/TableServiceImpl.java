@@ -200,7 +200,7 @@ public class TableServiceImpl implements TableService {
                 String parentUUID;
                 String childUUID;
                 if (!parentChildRelInfo.has(ParentChildRelMetadataConstants.PARENT_UUID)) {
-                    throw new RuntimeException("root_table_uuid is not specified for parent table="
+                    throw new RuntimeException("parent_table_uuid is not specified for parent table="
                             + parentName);
                 }
 

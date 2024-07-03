@@ -281,8 +281,8 @@ class TableServiceImplSpec extends Specification {
         def mapper = new ObjectMapper()
 
         def innerNode = mapper.createObjectNode()
-        innerNode.put("root_table_name", "clone/clone/p")
-        innerNode.put("root_table_uuid", "p_uuid")
+        innerNode.put(ParentChildRelMetadataConstants.PARENT_NAME, "clone/clone/p")
+        innerNode.put(ParentChildRelMetadataConstants.PARENT_UUID, "p_uuid")
         innerNode.put("child_table_uuid", "child_uuid")
 
         def outerNode = mapper.createObjectNode()
