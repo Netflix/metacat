@@ -9,6 +9,9 @@ import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataServ
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +22,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.stream.Collectors;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * Parent Child Relationship Metadata Service.
@@ -51,6 +56,9 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
 
     static final String SQL_GET_CHILDREN = "SELECT child, child_uuid, relation_type "
         + "FROM parent_child_relation WHERE parent = ?";
+
+    static final String SQL_IS_PARENT_TABLE = "SELECT 1 FROM parent_child_relation WHERE parent = ?";
+    static final String SQL_IS_CHILD_TABLE = "SELECT 1 FROM parent_child_relation WHERE child = ?";
 
     private final JdbcTemplate jdbcTemplate;
     private final ConverterUtil converterUtil;
@@ -156,7 +164,15 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
     }
 
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public void rename(final QualifiedName oldName, final QualifiedName newName) {
+        if (isChildTable(newName)) {
+            throw new ParentChildRelServiceException(newName + " is already a child table");
+        }
+        if (isParentTable(newName)) {
+            throw new ParentChildRelServiceException(newName + " is already a parent table");
+        }
+
         renameParent(oldName, newName);
         renameChild(oldName, newName);
         log.info("Successfully rename parent child relationship for oldName={}, newName={}",
@@ -260,5 +276,32 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
     public Set<ChildInfoDto> getChildrenDto(final QualifiedName name) {
         return getChildren(name).stream()
             .map(converterUtil::toChildInfoDto).collect(Collectors.toSet());
+    }
+
+    @Override
+    public boolean isParentTable(final QualifiedName tableName) {
+        return tableExist(tableName.toString(), SQL_IS_PARENT_TABLE);
+    }
+
+    @Override
+    public boolean isChildTable(final QualifiedName tableName) {
+        return tableExist(tableName.toString(), SQL_IS_CHILD_TABLE);
+    }
+
+    private boolean tableExist(final String tableName, final String sql) {
+        return jdbcTemplate.query(sql,
+            new PreparedStatementSetter() {
+                @Override
+                public void setValues(final PreparedStatement ps) throws SQLException {
+                    ps.setString(1, tableName);
+                }
+            },
+            new ResultSetExtractor<Boolean>() {
+                @Override
+                public Boolean extractData(final ResultSet rs) throws SQLException {
+                    return rs.next();
+                }
+            }
+        );
     }
 }

@@ -103,4 +103,18 @@ public interface ParentChildRelMetadataService {
     Set<ChildInfoDto> getChildrenDto(
         QualifiedName name
     );
+
+    /**
+     * return whether the table is a parent.
+     * @param tableName tableName
+     * @return true if it exists
+     */
+    boolean isParentTable(final QualifiedName tableName);
+
+    /**
+     * return whether the table is a child.
+     * @param tableName tableName
+     * @return true if it exists
+     */
+    boolean isChildTable(final QualifiedName tableName);
 }

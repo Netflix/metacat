@@ -678,4 +678,24 @@ public class DefaultConfigImpl implements Config {
     public boolean shouldFetchOnlyMetadataLocationEnabled() {
         return this.metacatProperties.getHive().getIceberg().isShouldFetchOnlyMetadataLocationEnabled();
     }
+
+    @Override
+    public boolean isParentChildCreateEnabled() {
+        return this.metacatProperties.getParentChildRelationshipProperties().isParentChildCreateEnabled();
+    }
+
+    @Override
+    public boolean isParentChildRenameEnabled() {
+        return this.metacatProperties.getParentChildRelationshipProperties().isParentChildRenameEnabled();
+    }
+
+    @Override
+    public boolean isParentChildGetEnabled() {
+        return this.metacatProperties.getParentChildRelationshipProperties().isParentChildGetEnabled();
+    }
+
+    @Override
+    public boolean isParentChildDropEnabled() {
+        return this.metacatProperties.getParentChildRelationshipProperties().isParentChildDropEnabled();
+    }
 }

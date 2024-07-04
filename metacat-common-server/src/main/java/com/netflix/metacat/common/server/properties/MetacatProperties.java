@@ -67,4 +67,7 @@ public class MetacatProperties {
     private AliasServiceProperties aliasServiceProperties = new AliasServiceProperties();
     @NonNull
     private RateLimiterProperties rateLimiterProperties = new RateLimiterProperties();
+    @NonNull
+    private ParentChildRelationshipProperties parentChildRelationshipProperties
+        = new ParentChildRelationshipProperties();
 }

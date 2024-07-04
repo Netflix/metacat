@@ -607,5 +607,33 @@ public interface Config {
      * @return True if it should be.
      */
     boolean shouldFetchOnlyMetadataLocationEnabled();
+
+    /**
+     * Whether we allow parent child relationship to be created.
+     *
+     * @return True if it should be.
+     */
+    boolean isParentChildCreateEnabled();
+
+    /**
+     * Whether we allow renaming parent child relationship.
+     *
+     * @return True if it should be.
+     */
+    boolean isParentChildRenameEnabled();
+
+    /**
+     * Whether we allow getting parent child relationship in the getTable call.
+     *
+     * @return True if it should be.
+     */
+    boolean isParentChildGetEnabled();
+
+    /**
+     * Whether we allow dropping tables that are either parent or child.
+     *
+     * @return True if it should be.
+     */
+    boolean isParentChildDropEnabled();
 }
 
