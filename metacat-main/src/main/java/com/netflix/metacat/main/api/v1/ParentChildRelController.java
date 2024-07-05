@@ -1,7 +1,8 @@
 package com.netflix.metacat.main.api.v1;
 
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.notifications.ChildInfoDto;
+import com.netflix.metacat.common.dto.ChildInfoDto;
+import com.netflix.metacat.common.dto.ParentInfoDto;
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
 import com.netflix.metacat.main.api.RequestWrapper;
 import io.swagger.annotations.Api;
@@ -68,6 +69,37 @@ public class ParentChildRelController {
         return this.requestWrapper.processRequest(
             "ParentChildRelV1Resource.getChildren",
             () -> this.parentChildRelMetadataService.getChildrenDto(
+                QualifiedName.ofTable(catalogName, databaseName, tableName)
+            )
+        );
+    }
+
+    /**
+     * Return the list of children for a given table.
+     * @param catalogName catalogName
+     * @param databaseName databaseName
+     * @param tableName tableName
+     * @return list of childInfoDto
+     */
+    @RequestMapping(method = RequestMethod.GET,
+        path = "/parents/catalog/{catalog-name}/database/{database-name}/table/{table-name}")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiOperation(
+        position = 1,
+        value = "Returns the parents",
+        notes = "Returns the parents"
+    )
+    public Set<ParentInfoDto> getParents(
+        @ApiParam(value = "The name of the catalog", required = true)
+        @PathVariable("catalog-name") final String catalogName,
+        @ApiParam(value = "The name of the database", required = true)
+        @PathVariable("database-name") final String databaseName,
+        @ApiParam(value = "The name of the table", required = true)
+        @PathVariable("table-name") final String tableName
+    ) {
+        return this.requestWrapper.processRequest(
+            "ParentChildRelV1Resource.getParents",
+            () -> this.parentChildRelMetadataService.getParentsDto(
                 QualifiedName.ofTable(catalogName, databaseName, tableName)
             )
         );

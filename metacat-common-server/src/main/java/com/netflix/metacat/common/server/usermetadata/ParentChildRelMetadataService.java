@@ -1,6 +1,7 @@
 package com.netflix.metacat.common.server.usermetadata;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.notifications.ChildInfoDto;
+import com.netflix.metacat.common.dto.ChildInfoDto;
+import com.netflix.metacat.common.dto.ParentInfoDto;
 import com.netflix.metacat.common.server.model.ChildInfo;
 import com.netflix.metacat.common.server.model.ParentInfo;
 
@@ -98,11 +99,18 @@ public interface ParentChildRelMetadataService {
     /**
      * get the set of children dto for the input name.
      * @param name name
-     * @return a set of ChildInfo
+     * @return a set of ChildInfo dto
      */
     Set<ChildInfoDto> getChildrenDto(
         QualifiedName name
     );
+
+    /**
+     * get the set of parent dto for the input name.
+     * @param name name
+     * @return a set of parentInfo dto
+     */
+    Set<ParentInfoDto> getParentsDto(QualifiedName name);
 
     /**
      * return whether the table is a parent.

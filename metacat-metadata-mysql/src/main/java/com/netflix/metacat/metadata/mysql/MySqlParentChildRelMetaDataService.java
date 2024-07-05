@@ -1,7 +1,8 @@
 package com.netflix.metacat.metadata.mysql;
 
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.notifications.ChildInfoDto;
+import com.netflix.metacat.common.dto.ChildInfoDto;
+import com.netflix.metacat.common.dto.ParentInfoDto;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.model.ChildInfo;
 import com.netflix.metacat.common.server.model.ParentInfo;
@@ -291,6 +292,12 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
     public Set<ChildInfoDto> getChildrenDto(final QualifiedName name) {
         return getChildren(name).stream()
             .map(converterUtil::toChildInfoDto).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<ParentInfoDto> getParentsDto(final QualifiedName name) {
+        return getParents(name).stream()
+            .map(converterUtil::toParentInfoDto).collect(Collectors.toSet());
     }
 
     @Override

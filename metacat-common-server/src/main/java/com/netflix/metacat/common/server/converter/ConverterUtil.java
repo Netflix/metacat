@@ -33,7 +33,8 @@ import com.netflix.metacat.common.dto.PartitionsSaveResponseDto;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
-import com.netflix.metacat.common.dto.notifications.ChildInfoDto;
+import com.netflix.metacat.common.dto.ChildInfoDto;
+import com.netflix.metacat.common.dto.ParentInfoDto;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.CatalogInfo;
@@ -48,6 +49,7 @@ import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.model.ChildInfo;
+import com.netflix.metacat.common.server.model.ParentInfo;
 import lombok.NonNull;
 import org.dozer.CustomConverter;
 import org.dozer.DozerBeanMapper;
@@ -286,5 +288,15 @@ public class ConverterUtil {
      */
     public ChildInfoDto toChildInfoDto(final ChildInfo childInfo) {
         return mapper.map(childInfo, ChildInfoDto.class);
+    }
+
+    /**
+     * Convert ParentInfo to ParentInfoDto.
+     *
+     * @param parentInfo parentInfo
+     * @return parentInfo dto
+     */
+    public ParentInfoDto toParentInfoDto(final ParentInfo parentInfo) {
+        return mapper.map(parentInfo, ParentInfoDto.class);
     }
 }
