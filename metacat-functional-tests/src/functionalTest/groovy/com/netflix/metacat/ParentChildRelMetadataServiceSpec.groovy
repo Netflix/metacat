@@ -29,6 +29,16 @@ class ParentChildRelMetadataServiceSpec extends Specification{
     @Shared
     private String database = "testpc"
 
+    @Shared
+    static final String SQL_CREATE_PARENT_CHILD_RELATIONS =
+        "INSERT INTO parent_child_relation (parent, parent_uuid, child, child_uuid, relation_type) " +
+            "VALUES (?, ?, ?, ?, ?)"
+
+    private void insertNewParentChildRecord(final String pName, final String pUUID,
+                                            final String child, final String childUUID, final String type) {
+        jdbcTemplate.update(SQL_CREATE_PARENT_CHILD_RELATIONS, pName, pUUID, child, childUUID, type)
+    }
+
     def setupSpec() {
         String jdbcUrl = "jdbc:mysql://localhost:3306/metacat"
         String username = "metacat_user"
@@ -480,5 +490,37 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         assert service.getChildren(child2).isEmpty()
         assert service.isChildTable(child2)
         assert !service.isParentTable(child2)
+    }
+
+    // This could happen in 2 cases:
+    // 1. Fail to create the table but did not clean up the parent child relationship
+    // 2: Successfully Drop the table but fail to clean up the parent child relationship
+    def "simulate a record is not cleaned up and a same parent or child name is created"() {
+        given:
+        def parent = QualifiedName.ofTable(catalog, database, "p")
+        def parentUUID = "parent_uuid"
+        def child = QualifiedName.ofTable(catalog, database, "c")
+        def childUUID = "child_uuid"
+        def type = "clone"
+        def randomParent = QualifiedName.ofTable(catalog, database, "rp")
+        def randomParentUUID = "random_parent_uuid"
+        def randomChild = QualifiedName.ofTable(catalog, database, "rc")
+        def randomChildUUID = "random_child_uuid"
+
+        insertNewParentChildRecord(parent.toString(), parentUUID, child.toString(), childUUID, type)
+
+        // Same parent name is created with a different uuid should fail
+        when:
+        service.createParentChildRelation(parent, randomParentUUID, randomChild, randomChildUUID, type)
+        then:
+        def e = thrown(RuntimeException)
+        assert e.message.contains("This normally means table prodhive/testpc/p already exists")
+
+        // Same childName with a different uuid should fail
+        when:
+        service.createParentChildRelation(randomParent, randomParentUUID, child, randomChildUUID, type)
+        then:
+        e = thrown(RuntimeException)
+        assert e.message.contains("Cannot have a child table having more than one parent")
     }
 }

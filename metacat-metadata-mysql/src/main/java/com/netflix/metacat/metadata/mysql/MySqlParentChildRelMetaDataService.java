@@ -17,9 +17,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
-import java.util.Set;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.sql.ResultSet;
@@ -59,6 +60,12 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
 
     static final String SQL_IS_PARENT_TABLE = "SELECT 1 FROM parent_child_relation WHERE parent = ?";
     static final String SQL_IS_CHILD_TABLE = "SELECT 1 FROM parent_child_relation WHERE child = ?";
+
+    static final String SQL_GET_PARENT_UUIDS = "SELECT DISTINCT parent_uuid FROM parent_child_relation "
+        + "where parent = ?";
+
+    static final String SQL_GET_CHILDREN_UUIDS = "SELECT DISTINCT child_uuid FROM parent_child_relation "
+        + "where child = ?";
 
     private final JdbcTemplate jdbcTemplate;
     private final ConverterUtil converterUtil;
@@ -103,6 +110,14 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
             throw new ParentChildRelServiceException("Cannot create a parent table on top of another parent "
                 + "- child table: " + childName + " already have child");
         }
+
+        // Validation to prevent creating a parent with an uuid that is different from the existing parent uuids
+        final Set<String> existingParentUuids = getExistingUUIDS(parentName.toString());
+        validateUUIDs(parentName.toString(), existingParentUuids, parentUUID, "Parent");
+
+        // Validation to prevent creating a child with an uuid that is different from the existing child uuids
+        final Set<String> existingChildUuids = getExistingUUIDS(childName.toString());
+        validateUUIDs(childName.toString(), existingChildUuids, childUUID, "Child");
 
         try {
             jdbcTemplate.update(connection -> {
@@ -304,4 +319,48 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
             }
         );
     }
+
+    private Set<String> getExistingUUIDS(final String tableName) {
+        final Set<String> existingUUIDs = new HashSet<>();
+        existingUUIDs.addAll(getParentUuidsForParent(tableName));
+        existingUUIDs.addAll(getChildUuidsForChild(tableName));
+        return existingUUIDs;
+    }
+
+    private Set<String> getParentUuidsForParent(final String parentName) {
+        return new HashSet<>(jdbcTemplate.query(connection -> {
+            final PreparedStatement ps = connection.prepareStatement(SQL_GET_PARENT_UUIDS);
+            ps.setString(1, parentName);
+            return ps;
+        }, (rs, rowNum) -> rs.getString("parent_uuid")));
+    }
+
+    private Set<String> getChildUuidsForChild(final String childName) {
+        return new HashSet<>(jdbcTemplate.query(connection -> {
+            final PreparedStatement ps = connection.prepareStatement(SQL_GET_CHILDREN_UUIDS);
+            ps.setString(1, childName);
+            return ps;
+        }, (rs, rowNum) -> rs.getString("child_uuid")));
+    }
+
+    private void validateUUIDs(final String name,
+                               final Set<String> existingUUIDs,
+                               final String inputUUID,
+                               final String entity
+    ) throws ParentChildRelServiceException {
+        if (existingUUIDs.size() > 1 || (!existingUUIDs.isEmpty() && !existingUUIDs.contains(inputUUID))) {
+            final StringJoiner uuidJoiner = new StringJoiner(", ");
+            for (String uuid : existingUUIDs) {
+                uuidJoiner.add(uuid);
+            }
+            final String existingUuidsString = uuidJoiner.toString();
+
+            throw new ParentChildRelServiceException(
+                String.format("Cannot create parent-child relation: %s '%s' has existing UUIDs [%s] "
+                        + "that differ from the input %s UUID '%s'. This normally means table %s already exists",
+                    entity, name, existingUuidsString, entity, inputUUID, name)
+            );
+        }
+    }
+
 }

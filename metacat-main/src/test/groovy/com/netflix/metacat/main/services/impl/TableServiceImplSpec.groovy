@@ -36,7 +36,6 @@ import com.netflix.metacat.common.server.events.MetacatEventBus
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent
 import com.netflix.metacat.common.server.model.ChildInfo
-import com.netflix.metacat.common.server.model.ParentInfo
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig
 import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService
@@ -292,6 +291,23 @@ class TableServiceImplSpec extends Specification {
             definitionMetadata: outerNode,
             serde: new StorageDto(uri: 's3:/clone/clone/c')
         )
+        // mock case where create Table Fail as parent table does not exist
+        when:
+        service.create(childTableName, createTableDto)
+        then:
+        1 * config.isParentChildCreateEnabled() >> true
+        1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
+        1 * ownerValidationService.isUserValid(_) >> true
+        1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
+        1 * ownerValidationService.isGroupValid(_) >> true
+        1 * connectorTableServiceProxy.exists(_) >> false
+
+        0 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
+        0 * connectorTableServiceProxy.create(_, _) >> {throw new RuntimeException("Fail to create")}
+        0 * parentChildRelSvc.deleteParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
+        def e = thrown(RuntimeException)
+        assert e.message.contains("does not exist")
+
         // mock case where create Table Fail and revert function is triggerred
         when:
         service.create(childTableName, createTableDto)
@@ -301,6 +317,7 @@ class TableServiceImplSpec extends Specification {
         1 * ownerValidationService.isUserValid(_) >> true
         1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
         1 * ownerValidationService.isGroupValid(_) >> true
+        1 * connectorTableServiceProxy.exists(_) >> true
 
         1 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
         1 * connectorTableServiceProxy.create(_, _) >> {throw new RuntimeException("Fail to create")}
@@ -317,10 +334,11 @@ class TableServiceImplSpec extends Specification {
         1 * ownerValidationService.isUserValid(_) >> true
         1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
         1 * ownerValidationService.isGroupValid(_) >> true
+        0 * connectorTableServiceProxy.exists(_)
 
         0 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
         0 * connectorTableServiceProxy.create(_, _)
-        def e = thrown(RuntimeException)
+        e = thrown(RuntimeException)
         assert e.message.contains("is currently disabled")
 
         // mock successful case
@@ -332,6 +350,7 @@ class TableServiceImplSpec extends Specification {
         1 * ownerValidationService.isUserValid(_) >> true
         1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
         1 * ownerValidationService.isGroupValid(_) >> true
+        1 * connectorTableServiceProxy.exists(_) >> true
 
         1 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
         1 * connectorTableServiceProxy.create(_, _)
@@ -417,7 +436,8 @@ class TableServiceImplSpec extends Specification {
         1 * config.isParentChildGetEnabled() >> true
         1 * config.isParentChildDropEnabled() >> true
         1 * parentChildRelSvc.getParents(name) >> {[] as Set}
-        2 * parentChildRelSvc.getChildren(name) >> {[new ChildInfo("child", "clone", "child_uuid")] as Set}
+        1 * parentChildRelSvc.isParentTable(name) >> true
+        1 * parentChildRelSvc.getChildren(name) >> {[new ChildInfo("child", "clone", "child_uuid")] as Set}
         1 * config.getNoTableDeleteOnTags() >> []
         def e = thrown(RuntimeException)
         assert e.message.contains("because it still has")
@@ -429,7 +449,8 @@ class TableServiceImplSpec extends Specification {
         1 * config.isParentChildGetEnabled() >> true
         1 * config.isParentChildDropEnabled() >> true
         1 * parentChildRelSvc.getParents(name)
-        2 * parentChildRelSvc.getChildren(name)
+        1 * parentChildRelSvc.isParentTable(name) >> true
+        1 * parentChildRelSvc.getChildren(name)
         1 * config.getNoTableDeleteOnTags() >> []
         1 * connectorTableServiceProxy.delete(_) >> {throw new RuntimeException("Fail to drop")}
         0 * parentChildRelSvc.drop(_)
@@ -442,9 +463,9 @@ class TableServiceImplSpec extends Specification {
         1 * config.isParentChildGetEnabled() >> true
         1 * config.isParentChildDropEnabled() >> false
         1 * parentChildRelSvc.isChildTable(name) >> true
-        0 * parentChildRelSvc.isParentTable(name)
+        1 * parentChildRelSvc.isParentTable(name) >> false
         1 * parentChildRelSvc.getParents(name)
-        1 * parentChildRelSvc.getChildren(name)
+        0 * parentChildRelSvc.getChildren(name)
         1 * config.getNoTableDeleteOnTags() >> []
         0 * connectorTableServiceProxy.delete(_)
         0 * parentChildRelSvc.drop(_)
@@ -458,9 +479,9 @@ class TableServiceImplSpec extends Specification {
         1 * config.isParentChildGetEnabled() >> true
         1 * config.isParentChildDropEnabled() >> false
         1 * parentChildRelSvc.isChildTable(name) >> false
-        1 * parentChildRelSvc.isParentTable(name) >> true
+        2 * parentChildRelSvc.isParentTable(name) >> true
         1 * parentChildRelSvc.getParents(name)
-        1 * parentChildRelSvc.getChildren(name)
+        0 * parentChildRelSvc.getChildren(name)
         1 * config.getNoTableDeleteOnTags() >> []
         0 * connectorTableServiceProxy.delete(_)
         0 * parentChildRelSvc.drop(_)
@@ -475,9 +496,9 @@ class TableServiceImplSpec extends Specification {
         1 * config.isParentChildGetEnabled() >> true
         1 * config.isParentChildDropEnabled() >> false
         1 * parentChildRelSvc.isChildTable(name) >> false
-        1 * parentChildRelSvc.isParentTable(name) >> false
+        2 * parentChildRelSvc.isParentTable(name) >> false
         1 * parentChildRelSvc.getParents(name) >> {[] as Set}
-        2 * parentChildRelSvc.getChildren(name) >> {[] as Set}
+        1 * parentChildRelSvc.getChildren(name) >> {[] as Set}
         1 * config.getNoTableDeleteOnTags() >> []
         1 * connectorTableServiceProxy.delete(_)
         1 * parentChildRelSvc.drop(_)
@@ -491,9 +512,9 @@ class TableServiceImplSpec extends Specification {
         1 * config.isParentChildGetEnabled() >> true
         1 * config.isParentChildDropEnabled() >> true
         0 * parentChildRelSvc.isChildTable(name)
-        0 * parentChildRelSvc.isParentTable(name)
+        1 * parentChildRelSvc.isParentTable(name)
         1 * parentChildRelSvc.getParents(name) >> {[] as Set}
-        2 * parentChildRelSvc.getChildren(name) >> {[] as Set}
+        1 * parentChildRelSvc.getChildren(name) >> {[] as Set}
         1 * config.getNoTableDeleteOnTags() >> []
         1 * connectorTableServiceProxy.delete(_)
         1 * parentChildRelSvc.drop(_)
