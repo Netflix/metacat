@@ -8,7 +8,9 @@ import com.netflix.metacat.common.server.converter.DozerTypeConverter
 import com.netflix.metacat.common.server.converter.TypeConverterFactory
 import com.netflix.metacat.common.server.model.ChildInfo
 import com.netflix.metacat.common.server.model.ParentInfo
+import com.netflix.metacat.common.server.properties.ParentChildRelationshipProperties
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelServiceException
 import com.netflix.metacat.metadata.mysql.MySqlParentChildRelMetaDataService
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
@@ -28,6 +30,9 @@ class ParentChildRelMetadataServiceSpec extends Specification{
     private String catalog = "prodhive"
     @Shared
     private String database = "testpc"
+
+    @Shared
+    private ParentChildRelationshipProperties props = new ParentChildRelationshipProperties(null);
 
     @Shared
     static final String SQL_CREATE_PARENT_CHILD_RELATIONS =
@@ -71,7 +76,7 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def parent_children_expected  = [new ChildInfo(child.toString(), type, childUUID)] as Set
 
         when:
-        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type, props)
 
         then:
         // Test Parent
@@ -120,8 +125,8 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def child_parent_expected = [new ParentInfo(parent.toString(), type, parentUUID)] as Set
 
         when:
-        service.createParentChildRelation(parent, parentUUID, child1, child1UUID, type)
-        service.createParentChildRelation(parent, parentUUID, child2, child2UUID, type)
+        service.createParentChildRelation(parent, parentUUID, child1, child1UUID, type, props)
+        service.createParentChildRelation(parent, parentUUID, child2, child2UUID, type, props)
 
         then:
         // Test Parent
@@ -151,10 +156,10 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def child = QualifiedName.ofTable(catalog, database, "c")
         def childUUID = "c_uuid"
         def type = "clone"
-        service.createParentChildRelation(parent1, parent1UUID, child, childUUID, type)
+        service.createParentChildRelation(parent1, parent1UUID, child, childUUID, type, props)
 
         when:
-        service.createParentChildRelation(parent2, parent2UUID, child, childUUID, type)
+        service.createParentChildRelation(parent2, parent2UUID, child, childUUID, type, props)
 
         then:
         def e = thrown(RuntimeException)
@@ -177,10 +182,10 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def grandChild = QualifiedName.ofTable(catalog, database, "gc")
         def grandChildUUID = "gc_uuid"
         def type = "clone"
-        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type, props)
 
         when:
-        service.createParentChildRelation(child, childUUID, grandChild, grandChildUUID, type)
+        service.createParentChildRelation(child, childUUID, grandChild, grandChildUUID, type, props)
 
         then:
         def e = thrown(RuntimeException)
@@ -203,10 +208,10 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def grandChild = QualifiedName.ofTable(catalog, database, "gc")
         def grandChildUUID = "gc_uuid"
         def type = "clone"
-        service.createParentChildRelation(child, childUUID, grandChild, grandChildUUID, type)
+        service.createParentChildRelation(child, childUUID, grandChild, grandChildUUID, type, props)
 
         when:
-        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type, props)
 
         then:
         def e = thrown(RuntimeException)
@@ -221,7 +226,7 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def childUUID = "c_uuid"
         def type = "clone";
         def newParent = QualifiedName.ofTable(catalog, database, "np")
-        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type, props)
 
         when:
         service.rename(parent, newParent)
@@ -281,8 +286,8 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def child2 = QualifiedName.ofTable(catalog, database, "c2")
         def child2UUID = "c2_uuid"
         def type = "clone";
-        service.createParentChildRelation(parent, parentUUID, child1, child1UUID, type)
-        service.createParentChildRelation(parent, parentUUID, child2, child2UUID, type)
+        service.createParentChildRelation(parent, parentUUID, child1, child1UUID, type, props)
+        service.createParentChildRelation(parent, parentUUID, child2, child2UUID, type, props)
         def newParent = QualifiedName.ofTable(catalog, database, "np")
         def child_parent_expected = [new ParentInfo(newParent.toString(), type, parentUUID)] as Set
 
@@ -324,7 +329,7 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def child = QualifiedName.ofTable(catalog, database, "c")
         def childUUID = "c_uuid"
         def type = "clone"
-        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type, props)
         def newChild = QualifiedName.ofTable(catalog, database, "nc")
 
         when:
@@ -383,7 +388,7 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def child = QualifiedName.ofTable(catalog, database, "c")
         def childUUID = "c_uuid"
         def type = "clone";
-        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type, props)
         when:
         service.drop(child)
 
@@ -409,7 +414,7 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def newChild = QualifiedName.ofTable(catalog, database, "nc")
         def childUUID = "c_uuid"
         def type = "clone";
-        service.createParentChildRelation(parent, parentUUID, child, childUUID, type)
+        service.createParentChildRelation(parent, parentUUID, child, childUUID, type, props)
 
         when:
         service.rename(child, newChild)
@@ -446,8 +451,8 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         def child2 = QualifiedName.ofTable(catalog, database, "c2")
         def child2UUID = "c2_uuid"
         def type = "clone";
-        service.createParentChildRelation(parent1, parent1UUID, child1, child1UUID, type)
-        service.createParentChildRelation(parent2, parent2UUID, child2, child2UUID, type)
+        service.createParentChildRelation(parent1, parent1UUID, child1, child1UUID, type, props)
+        service.createParentChildRelation(parent2, parent2UUID, child2, child2UUID, type, props)
         def child1Parent = [new ParentInfo(parent1.toString(), type, parent1UUID)] as Set
         def parent1Children = [new ChildInfo(child1.toString(), type, child1UUID)] as Set
         def child2Parent = [new ParentInfo(parent2.toString(), type, parent2UUID)] as Set
@@ -511,16 +516,106 @@ class ParentChildRelMetadataServiceSpec extends Specification{
 
         // Same parent name is created with a different uuid should fail
         when:
-        service.createParentChildRelation(parent, randomParentUUID, randomChild, randomChildUUID, type)
+        service.createParentChildRelation(parent, randomParentUUID, randomChild, randomChildUUID, type, props)
         then:
         def e = thrown(RuntimeException)
         assert e.message.contains("This normally means table prodhive/testpc/p already exists")
 
         // Same childName with a different uuid should fail
         when:
-        service.createParentChildRelation(randomParent, randomParentUUID, child, randomChildUUID, type)
+        service.createParentChildRelation(randomParent, randomParentUUID, child, randomChildUUID, type, props)
         then:
         e = thrown(RuntimeException)
         assert e.message.contains("Cannot have a child table having more than one parent")
+    }
+
+    def "Test maxCloneAllow"() {
+        given:
+        def catalog = 'testhive'
+        def targetParentDB = 'test'
+        def targetParentTable = "parent"
+        def targetType = "CLONE"
+        def parentQName = QualifiedName.ofTable(catalog, targetParentDB, targetParentTable)
+
+        def targetChildDB = 'testChild'
+        def targetChildPrefix = 'testChild'
+
+        def parentChildProps = new ParentChildRelationshipProperties(null)
+        parentChildProps.setMaxAllow(maxAllow)
+        parentChildProps.setDefaultMaxAllowPerRelType(defaultMaxAllowPerRelStr)
+        parentChildProps.setMaxAllowPerDBPerRelType(maxAllowPerDBPerRelTypeStr)
+        parentChildProps.setMaxAllowPerTablePerRelType(maxAllowPerTablePerRelTypeStr)
+
+        // create expected amount of child should all succeed
+        when:
+        def String child_name = ""
+        def childQualifiedName = null
+        for (int i = 0; i < expectedChildAllowCount; i++) {
+            child_name = targetChildPrefix + i
+            childQualifiedName = QualifiedName.ofTable(catalog, targetChildDB, child_name)
+            service.createParentChildRelation(parentQName, targetParentTable, childQualifiedName, child_name, targetType, parentChildProps)
+        }
+        then:
+        noExceptionThrown()
+        service.getChildren(parentQName).size() == expectedChildAllowCount
+
+        // create one more with the same type should fail
+        when:
+        child_name = targetChildPrefix + expectedChildAllowCount
+        childQualifiedName = QualifiedName.ofTable(catalog, targetChildDB, child_name)
+        service.createParentChildRelation(parentQName, targetParentTable, childQualifiedName, child_name, targetType, parentChildProps)
+        then:
+        def e = thrown(ParentChildRelServiceException)
+        assert e.message.contains("is not allow to have more than $expectedChildAllowCount child table")
+        service.getChildren(parentQName).size() == expectedChildAllowCount
+
+        // create one more with different type should succeed
+        when:
+        service.createParentChildRelation(parentQName, targetParentTable, childQualifiedName, child_name, "random", parentChildProps)
+        then:
+        noExceptionThrown()
+        service.getChildren(parentQName).size() == (expectedChildAllowCount + 1)
+
+        //change the config to -1, and now it should allow new creation
+        when:
+        if (!maxAllowPerTablePerRelTypeStr.isEmpty() && maxAllowPerTablePerRelTypeStr.contains("CLONE,testhive/test/parent")) {
+            def p = /CLONE,testhive\/test\/parent,\d+/
+            maxAllowPerTablePerRelTypeStr = maxAllowPerTablePerRelTypeStr.replaceAll(p, "CLONE,testhive/test/parent,-1")
+            parentChildProps.setMaxAllowPerTablePerRelType(maxAllowPerTablePerRelTypeStr)
+        } else if (!maxAllowPerDBPerRelTypeStr.isEmpty() && maxAllowPerDBPerRelTypeStr.contains("CLONE,test")) {
+            def pattern = /CLONE,test,\d+/
+            maxAllowPerDBPerRelTypeStr = maxAllowPerDBPerRelTypeStr.replaceAll(pattern, "CLONE,test,-1")
+            parentChildProps.setMaxAllowPerDBPerRelType(maxAllowPerDBPerRelTypeStr)
+        } else if (!defaultMaxAllowPerRelStr.isEmpty() && defaultMaxAllowPerRelStr.contains("CLONE")) {
+            def pattern = /CLONE,\d+/
+            defaultMaxAllowPerRelStr = defaultMaxAllowPerRelStr.replaceAll(pattern, "CLONE,-1")
+            parentChildProps.setDefaultMaxAllowPerRelType(defaultMaxAllowPerRelStr)
+        } else {
+            parentChildProps.setMaxAllow(-1)
+        }
+        child_name = targetChildPrefix + (expectedChildAllowCount + 1)
+        childQualifiedName = QualifiedName.ofTable(catalog, targetChildDB, child_name)
+        service.createParentChildRelation(parentQName, targetParentTable, childQualifiedName, child_name, targetType, parentChildProps)
+
+        then:
+        noExceptionThrown()
+        service.getChildren(parentQName).size() == (expectedChildAllowCount + 2)
+        assert (parentChildProps.getMaxAllow() == -1 ? 1 : 0) +
+            (defaultMaxAllowPerRelStr.contains("-1") ? 1 : 0) +
+            (maxAllowPerDBPerRelTypeStr.contains("-1") ? 1 : 0) +
+            (maxAllowPerTablePerRelTypeStr.contains("-1") ? 1 : 0) == 1
+
+        where:
+        maxAllow | defaultMaxAllowPerRelStr | maxAllowPerDBPerRelTypeStr  | maxAllowPerTablePerRelTypeStr                                 | expectedChildAllowCount
+        3        |  ""                      | ""                          |  ""                                                           | 3
+        3        |  "Other,5"               | "Other,other,2"             |  "Other,testhive/test/other,2"                                | 3
+        1        |  "CLONE,5"               | ""                          |  ""                                                           | 5
+        1        |  "CLONE,5;Other,3"       | ""                          |  ""                                                           | 5
+        1        |  "CLONE,5;Other,3"       | "Other,other,2"             |  "Other,testhive/test/other,2"                                | 5
+        1        |  "CLONE,5"               | "CLONE,test,3"              |  ""                                                           | 3
+        1        |  "CLONE,5;Other,3"       | "CLONE,test,3;CLONE,other,2"|  ""                                                           | 3
+        1        |  "CLONE,5;Other,3"       | "CLONE,test,3;OTHER,other,2"|  "CLONE,testhive/test/other,2"                                | 3
+        1        |  "CLONE,5"               | "CLONE,test,3;OTHER,other,2"|  "CLONE,testhive/test/parent,2"                               | 2
+        1        |  "CLONE,5;Other,3"       | "CLONE,test,3;CLONE,other,2"|  "CLONE,testhive/test/parent,2;CLONE,testhive/test/other,2"   | 2
     }
 }

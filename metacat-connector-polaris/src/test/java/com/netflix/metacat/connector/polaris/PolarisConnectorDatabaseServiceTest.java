@@ -65,7 +65,7 @@ public class PolarisConnectorDatabaseServiceTest {
     @BeforeEach
     public void init() {
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
-            new DefaultConfigImpl(new MetacatProperties()), new NoopRegistry(), null,  Maps.newHashMap());
+            new DefaultConfigImpl(new MetacatProperties(null)), new NoopRegistry(), null,  Maps.newHashMap());
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
     }
 

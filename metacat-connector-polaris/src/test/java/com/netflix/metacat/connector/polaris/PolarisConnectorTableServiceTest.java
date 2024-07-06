@@ -33,6 +33,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -75,6 +76,9 @@ public class PolarisConnectorTableServiceTest {
     @Shared
     private PolarisConnectorTableService polarisTableService;
 
+    @Shared
+    private Environment env = Mockito.mock(Environment.class);
+
     /**
      * Initialization.
      */
@@ -83,7 +87,7 @@ public class PolarisConnectorTableServiceTest {
         final String location = "file://temp";
         polarisStoreService.createDatabase(DB_NAME, location, "metacat_user");
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
-            new DefaultConfigImpl(new MetacatProperties()), new NoopRegistry(), null,  Maps.newHashMap());
+            new DefaultConfigImpl(new MetacatProperties(null)), new NoopRegistry(), null,  Maps.newHashMap());
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
         polarisTableService = new PolarisConnectorTableService(
             polarisStoreService,

@@ -195,26 +195,26 @@ public class TableServiceImpl implements TableService {
 
                 String parentName;
                 if (!parentChildRelInfo.has(ParentChildRelMetadataConstants.PARENT_NAME)) {
-                    throw new RuntimeException("parent name is not specified");
+                    throw new IllegalArgumentException("parent name is not specified");
                 }
                 parentName = parentChildRelInfo.path(ParentChildRelMetadataConstants.PARENT_NAME)
                     .asText();
                 final QualifiedName parent = QualifiedName.fromString(parentName);
                 validate(parent);
                 if (!exists(parent)) {
-                    throw new RuntimeException("Parent Table:" + parent + " does not exist");
+                    throw new IllegalArgumentException("Parent Table:" + parent + " does not exist");
                 }
 
                 // fetch parent and child uuid
                 String parentUUID;
                 String childUUID;
                 if (!parentChildRelInfo.has(ParentChildRelMetadataConstants.PARENT_UUID)) {
-                    throw new RuntimeException("parent_table_uuid is not specified for parent table="
+                    throw new IllegalArgumentException("parent_table_uuid is not specified for parent table="
                             + parentName);
                 }
 
                 if (!parentChildRelInfo.has(ParentChildRelMetadataConstants.CHILD_UUID)) {
-                    throw new RuntimeException("child_table_uuid is not specified for child table=" + child);
+                    throw new IllegalArgumentException("child_table_uuid is not specified for child table=" + child);
                 }
                 parentUUID = parentChildRelInfo.path(ParentChildRelMetadataConstants.PARENT_UUID).asText();
                 childUUID = parentChildRelInfo.path(ParentChildRelMetadataConstants.CHILD_UUID).asText();
@@ -229,7 +229,7 @@ public class TableServiceImpl implements TableService {
 
                 // Create parent child relationship
                 parentChildRelMetadataService.createParentChildRelation(parent, parentUUID,
-                    child, childUUID, relationType);
+                    child, childUUID, relationType, config.getParentChildRelationshipProperties());
 
                 // Return a Runnable for deleting the relationship
                 return Optional.of(() -> {

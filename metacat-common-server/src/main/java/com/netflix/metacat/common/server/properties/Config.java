@@ -635,5 +635,12 @@ public interface Config {
      * @return True if it should be.
      */
     boolean isParentChildDropEnabled();
+
+    /**
+     * Get the parentChildRelationshipProperties config.
+     *
+     * @return parentChildRelationshipProperties
+     */
+    ParentChildRelationshipProperties getParentChildRelationshipProperties();
 }
 

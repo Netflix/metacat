@@ -37,6 +37,7 @@ import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent
 import com.netflix.metacat.common.server.model.ChildInfo
 import com.netflix.metacat.common.server.properties.Config
+import com.netflix.metacat.common.server.properties.ParentChildRelationshipProperties
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig
 import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataConstants
@@ -103,6 +104,26 @@ class TableServiceImplSpec extends Specification {
         service = new TableServiceImpl(connectorManager, connectorTableServiceProxy, databaseService, tagService,
             usermetadataService, new MetacatJsonLocator(),
             eventBus, registry, config, converterUtil, authorizationService, ownerValidationService, parentChildRelSvc)
+    }
+
+    ObjectNode createParentChildRelMetadata(String rootTableName, String rootTableUuid, String childTableUuid) {
+        ObjectMapper mapper = new ObjectMapper()
+        ObjectNode node = mapper.createObjectNode()
+
+        if (rootTableName != null) {
+            node.put(ParentChildRelMetadataConstants.PARENT_NAME, rootTableName)
+        }
+        if (rootTableUuid != null) {
+            node.put(ParentChildRelMetadataConstants.PARENT_UUID, rootTableUuid)
+        }
+        if (childTableUuid != null) {
+            node.put(ParentChildRelMetadataConstants.CHILD_UUID, childTableUuid)
+        }
+
+        ObjectNode outerNode = mapper.createObjectNode()
+        outerNode.set(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO, node)
+
+        return outerNode
     }
 
     def testTableGet() {
@@ -273,6 +294,35 @@ class TableServiceImplSpec extends Specification {
         0 * ownerValidationService.enforceOwnerValidation(_, _, _)
     }
 
+    def 'Test invalid Clone parameters' () {
+        when:
+        def dto = new TableDto()
+        def tableName = QualifiedName.ofTable("prodhive", "clone", "child");
+        dto.setName(tableName)
+        dto.setDefinitionMetadata(createParentChildRelMetadata(parentName, rootTableUuid, childTableUuid))
+        service.create(tableName, dto)
+
+        then:
+        1 * config.isParentChildCreateEnabled() >> true
+        0 * config.getParentChildRelationshipProperties()
+        1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
+        1 * ownerValidationService.isUserValid(_) >> true
+        1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
+        1 * ownerValidationService.isGroupValid(_) >> true
+        _ * connectorTableServiceProxy.exists(_) >> true
+
+        def e = thrown(IllegalArgumentException)
+        assert e.message.contains(message)
+        where:
+        parentName                           | rootTableUuid | childTableUuid | message
+        null                                 | "parent_uuid" | "child_uuid"   | "parent name is not specified"
+        "prodhive/clone/parent"              | null          | "child_uuid"   | "parent_table_uuid is not specified for parent table=prodhive/clone/parent"
+        "prodhive/clone/parent"              | "parent_uuid" | null           | "child_table_uuid is not specified for child table=prodhive/clone/child"
+        "prodhive/parent"                    | "parent_uuid" | "child_uuid"   | "does not refer to a table"
+    }
+
+
+
     def "Mock Parent Child Relationship Create"() {
         given:
         def childTableName = QualifiedName.ofTable("clone", "clone", "c")
@@ -291,11 +341,13 @@ class TableServiceImplSpec extends Specification {
             definitionMetadata: outerNode,
             serde: new StorageDto(uri: 's3:/clone/clone/c')
         )
+        def parentChildProps = new ParentChildRelationshipProperties(null)
         // mock case where create Table Fail as parent table does not exist
         when:
         service.create(childTableName, createTableDto)
         then:
         1 * config.isParentChildCreateEnabled() >> true
+        0 * config.getParentChildRelationshipProperties()
         1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
         1 * ownerValidationService.isUserValid(_) >> true
         1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
@@ -313,13 +365,14 @@ class TableServiceImplSpec extends Specification {
         service.create(childTableName, createTableDto)
         then:
         1 * config.isParentChildCreateEnabled() >> true
+        1 * config.getParentChildRelationshipProperties() >> parentChildProps
         1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
         1 * ownerValidationService.isUserValid(_) >> true
         1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
         1 * ownerValidationService.isGroupValid(_) >> true
         1 * connectorTableServiceProxy.exists(_) >> true
 
-        1 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
+        1 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE", parentChildProps)
         1 * connectorTableServiceProxy.create(_, _) >> {throw new RuntimeException("Fail to create")}
         1 * parentChildRelSvc.deleteParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
         thrown(RuntimeException)
@@ -330,13 +383,14 @@ class TableServiceImplSpec extends Specification {
 
         then:
         1 * config.isParentChildCreateEnabled() >> false
+        0 * config.getParentChildRelationshipProperties()
         1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
         1 * ownerValidationService.isUserValid(_) >> true
         1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
         1 * ownerValidationService.isGroupValid(_) >> true
         0 * connectorTableServiceProxy.exists(_)
 
-        0 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
+        0 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE", parentChildProps)
         0 * connectorTableServiceProxy.create(_, _)
         e = thrown(RuntimeException)
         assert e.message.contains("is currently disabled")
@@ -346,13 +400,14 @@ class TableServiceImplSpec extends Specification {
         service.create(childTableName, createTableDto)
         then:
         1 * config.isParentChildCreateEnabled() >> true
+        1 * config.getParentChildRelationshipProperties() >> parentChildProps
         1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
         1 * ownerValidationService.isUserValid(_) >> true
         1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
         1 * ownerValidationService.isGroupValid(_) >> true
         1 * connectorTableServiceProxy.exists(_) >> true
 
-        1 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
+        1 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE", parentChildProps)
         1 * connectorTableServiceProxy.create(_, _)
         0 * parentChildRelSvc.deleteParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
         noExceptionThrown()

@@ -4,6 +4,7 @@ import com.netflix.metacat.common.dto.ChildInfoDto;
 import com.netflix.metacat.common.dto.ParentInfoDto;
 import com.netflix.metacat.common.server.model.ChildInfo;
 import com.netflix.metacat.common.server.model.ParentInfo;
+import com.netflix.metacat.common.server.properties.ParentChildRelationshipProperties;
 
 import java.util.Set;
 
@@ -25,13 +26,15 @@ public interface ParentChildRelMetadataService {
      * @param childName     the name of the child entity
      * @param childUUID     the uuid of the child
      * @param relationType  the type of the relationship
+     * @param prop          properties config
      */
     void createParentChildRelation(
         QualifiedName parentName,
         String parentUUID,
         QualifiedName childName,
         String childUUID,
-        String relationType
+        String relationType,
+        ParentChildRelationshipProperties prop
     );
 
     /**

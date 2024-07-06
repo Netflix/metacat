@@ -6,6 +6,7 @@ import com.netflix.metacat.common.dto.ParentInfoDto;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.model.ChildInfo;
 import com.netflix.metacat.common.server.model.ParentInfo;
+import com.netflix.metacat.common.server.properties.ParentChildRelationshipProperties;
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -18,11 +19,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.StringJoiner;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -68,6 +70,9 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
     static final String SQL_GET_CHILDREN_UUIDS = "SELECT DISTINCT child_uuid FROM parent_child_relation "
         + "where child = ?";
 
+    static final String SQL_GET_CHILDREN_SIZE_PER_REL = "SELECT COUNT(*) FROM parent_child_relation "
+        + "where parent = ? and relation_type = ?";
+
     private final JdbcTemplate jdbcTemplate;
     private final ConverterUtil converterUtil;
 
@@ -83,12 +88,77 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
         this.converterUtil = converterUtil;
     }
 
-    @Override
-    public void createParentChildRelation(final QualifiedName parentName,
-                                          final String parentUUID,
-                                          final QualifiedName childName,
-                                          final String childUUID,
-                                          final String type) {
+    private Integer getMaxAllowedFromNestedMap(
+        final QualifiedName parent,
+        final String relationType,
+        final Map<String, Map<String, Integer>> maxAllowPerResourcePerRelType,
+        final boolean isTable) {
+        Integer maxCloneAllow = null;
+        final Map<String, Integer> maxAllowPerResource = maxAllowPerResourcePerRelType.get(relationType);
+        if (maxAllowPerResource != null) {
+            if (isTable) {
+                maxCloneAllow = maxAllowPerResource.get(parent.toString());
+            } else {
+                maxCloneAllow = maxAllowPerResource.get(parent.getDatabaseName());
+            }
+        }
+        return maxCloneAllow;
+    }
+
+    private void validateMaxAllow(final QualifiedName parentName,
+                                  final String type,
+                                  final ParentChildRelationshipProperties props) {
+        // Validate max clone allow
+        // First check if the parent table have configured max allowed on the table config
+        Integer maxAllow = getMaxAllowedFromNestedMap(
+            parentName,
+            type,
+            props.getMaxAllowPerTablePerRelType(),
+            true
+        );
+
+        // Then check if the parent have configured max allowed on the db config
+        if (maxAllow == null) {
+            maxAllow = getMaxAllowedFromNestedMap(
+                parentName,
+                type,
+                props.getMaxAllowPerDBPerRelType(),
+                false
+            );
+        }
+
+        // If not specified in maxAllowPerDBPerRelType,check the default max Allow based on relationType
+        if (maxAllow == null) {
+            final Integer count = props.getDefaultMaxAllowPerRelType().get(type);
+            if (count != null) {
+                maxAllow = count;
+            }
+        }
+
+        // Finally fallback to the default value for all types
+        if (maxAllow == null) {
+            maxAllow = props.getMaxAllow();
+        }
+
+        // if maxAllow < 0, this means we can create as many child table under the parent
+        if (maxAllow < 0) {
+            return;
+        }
+
+        if (getChildrenCountPerType(parentName, type) >= maxAllow) {
+            final String errorMsg = String.format(
+                "Parent table: %s is not allow to have more than %s child table",
+                parentName, maxAllow);
+            throw new ParentChildRelServiceException(errorMsg);
+        }
+    }
+
+    private void validateCreate(final QualifiedName parentName,
+                                final String parentUUID,
+                                final QualifiedName childName,
+                                final String childUUID,
+                                final String type,
+                                final ParentChildRelationshipProperties props) {
         // Validation to prevent having a child have two parents
         final Set<ParentInfo> childParents = getParents(childName);
         if (!childParents.isEmpty()) {
@@ -120,6 +190,18 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
         final Set<String> existingChildUuids = getExistingUUIDS(childName.toString());
         validateUUIDs(childName.toString(), existingChildUuids, childUUID, "Child");
 
+        // Validation to control how many children tables can be created per type
+        validateMaxAllow(parentName, type, props);
+    }
+
+    @Override
+    public void createParentChildRelation(final QualifiedName parentName,
+                                          final String parentUUID,
+                                          final QualifiedName childName,
+                                          final String childUUID,
+                                          final String type,
+                                          final ParentChildRelationshipProperties props) {
+        validateCreate(parentName, parentUUID, childName, childUUID, type, props);
         try {
             jdbcTemplate.update(connection -> {
                 final PreparedStatement ps = connection.prepareStatement(SQL_CREATE_PARENT_CHILD_RELATIONS);
@@ -370,4 +452,10 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
         }
     }
 
+    private int getChildrenCountPerType(final QualifiedName parent, final String type) {
+        final List<Object> params = new ArrayList<>();
+        params.add(parent.toString());
+        params.add(type);
+        return jdbcTemplate.queryForObject(SQL_GET_CHILDREN_SIZE_PER_REL, params.toArray(), Integer.class);
+    }
 }

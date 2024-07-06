@@ -681,21 +681,26 @@ public class DefaultConfigImpl implements Config {
 
     @Override
     public boolean isParentChildCreateEnabled() {
-        return this.metacatProperties.getParentChildRelationshipProperties().isParentChildCreateEnabled();
+        return this.metacatProperties.getParentChildRelationshipProperties().isCreateEnabled();
     }
 
     @Override
     public boolean isParentChildRenameEnabled() {
-        return this.metacatProperties.getParentChildRelationshipProperties().isParentChildRenameEnabled();
+        return this.metacatProperties.getParentChildRelationshipProperties().isRenameEnabled();
     }
 
     @Override
     public boolean isParentChildGetEnabled() {
-        return this.metacatProperties.getParentChildRelationshipProperties().isParentChildGetEnabled();
+        return this.metacatProperties.getParentChildRelationshipProperties().isGetEnabled();
     }
 
     @Override
     public boolean isParentChildDropEnabled() {
-        return this.metacatProperties.getParentChildRelationshipProperties().isParentChildDropEnabled();
+        return this.metacatProperties.getParentChildRelationshipProperties().isDropEnabled();
+    }
+
+    @Override
+    public ParentChildRelationshipProperties getParentChildRelationshipProperties() {
+        return this.metacatProperties.getParentChildRelationshipProperties();
     }
 }
