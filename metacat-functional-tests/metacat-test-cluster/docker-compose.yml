@@ -73,7 +73,11 @@ services:
                 -Dmetacat.table.delete.noDeleteOnTags=do_not_drop,iceberg_migration_do_not_modify
                 -Dmetacat.table.rename.noRenameOnTags=do_not_rename,iceberg_migration_do_not_modify
                 -Dmetacat.table.update.noUpdateOnTags=iceberg_migration_do_not_modify
-                -Dmetacat.event.updateIcebergTablePostEventEnabled=true'
+                -Dmetacat.event.updateIcebergTablePostEventEnabled=true
+                -Dmetacat.parentChildRelationshipProperties.createEnabled=true
+                -Dmetacat.parentChildRelationshipProperties.getEnabled=true
+                -Dmetacat.parentChildRelationshipProperties.renameEnabled=true
+                -Dmetacat.parentChildRelationshipProperties.dropEnabled=true'
         labels:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.war"

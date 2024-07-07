@@ -18,20 +18,20 @@ import java.util.stream.Collectors;
 @Data
 @Slf4j
 public class ParentChildRelationshipProperties {
-    private boolean createEnabled = true;
-    private boolean getEnabled = true;
-    private boolean renameEnabled = true;
-    private boolean dropEnabled = true;
+    private static final String MAX_ALLOW_PER_TABLE_PER_REL_PROPERTY_NAME =
+        "metacat.parentChildRelationshipProperties.maxAllowPerTablePerRelConfig";
+    private static final String MAX_ALLOW_PER_DB_PER_REL_PROPERTY_NAME =
+        "metacat.parentChildRelationshipProperties.maxAllowPerDBPerRelConfig";
+    private static final String DEFAULT_MAX_ALLOW_PER_REL_PROPERTY_NAME =
+        "metacat.parentChildRelationshipProperties.defaultMaxAllowPerRelConfig";
+    private boolean createEnabled;
+    private boolean getEnabled;
+    private boolean renameEnabled;
+    private boolean dropEnabled;
     private int maxAllow = 5;
     private Map<String, Map<String, Integer>> maxAllowPerTablePerRelType = new HashMap<>();
     private Map<String, Map<String, Integer>> maxAllowPerDBPerRelType = new HashMap<>();
     private Map<String, Integer> defaultMaxAllowPerRelType = new HashMap<>();
-    private String maxAllowPerTablePerRelPropertyName =
-        "metacat.parentChildRelationshipProperties.maxAllowPerTablePerRelConfig";
-    private String maxAllowPerDBPerRelPropertyName =
-        "metacat.parentChildRelationshipProperties.maxAllowPerDBPerRelConfig";
-    private String defaultMaxAllowPerRelPropertyName =
-        "metacat.parentChildRelationshipProperties.defaultMaxAllowPerRelConfig";
 
     /**
      * Constructor.
@@ -41,13 +41,13 @@ public class ParentChildRelationshipProperties {
     public ParentChildRelationshipProperties(@Nullable final Environment env) {
         if (env != null) {
             setMaxAllowPerTablePerRelType(
-                env.getProperty(maxAllowPerTablePerRelPropertyName, String.class, "")
+                env.getProperty(MAX_ALLOW_PER_TABLE_PER_REL_PROPERTY_NAME, String.class, "")
             );
             setMaxAllowPerDBPerRelType(
-                env.getProperty(maxAllowPerDBPerRelPropertyName, String.class, "")
+                env.getProperty(MAX_ALLOW_PER_DB_PER_REL_PROPERTY_NAME, String.class, "")
             );
             setDefaultMaxAllowPerRelType(
-                env.getProperty(defaultMaxAllowPerRelPropertyName, String.class, "")
+                env.getProperty(DEFAULT_MAX_ALLOW_PER_REL_PROPERTY_NAME, String.class, "")
             );
         }
     }

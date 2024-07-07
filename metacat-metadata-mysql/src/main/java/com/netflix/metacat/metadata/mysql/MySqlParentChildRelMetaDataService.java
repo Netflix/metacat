@@ -147,8 +147,8 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
 
         if (getChildrenCountPerType(parentName, type) >= maxAllow) {
             final String errorMsg = String.format(
-                "Parent table: %s is not allow to have more than %s child table",
-                parentName, maxAllow);
+                "Parent table: %s is not allow to have more than %s child table for %s relation type",
+                parentName, maxAllow, type);
             throw new ParentChildRelServiceException(errorMsg);
         }
     }
