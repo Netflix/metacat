@@ -61,8 +61,8 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
     static final String SQL_GET_CHILDREN = "SELECT child, child_uuid, relation_type "
         + "FROM parent_child_relation WHERE parent = ?";
 
-    static final String SQL_IS_PARENT_TABLE = "SELECT 1 FROM parent_child_relation WHERE parent = ?";
-    static final String SQL_IS_CHILD_TABLE = "SELECT 1 FROM parent_child_relation WHERE child = ?";
+    static final String SQL_IS_PARENT_TABLE = "SELECT 1 FROM parent_child_relation WHERE parent = ? LIMIT 1";
+    static final String SQL_IS_CHILD_TABLE = "SELECT 1 FROM parent_child_relation WHERE child = ? LIMIT 1";
 
     static final String SQL_GET_PARENT_UUIDS = "SELECT DISTINCT parent_uuid FROM parent_child_relation "
         + "where parent = ?";
