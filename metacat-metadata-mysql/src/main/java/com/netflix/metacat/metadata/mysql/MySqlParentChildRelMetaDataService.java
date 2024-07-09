@@ -117,7 +117,7 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
             true
         );
 
-        // Then check if the parent have configured max allowed on the db config
+        // Then check if the parent has a configured max allowed setting on the db config
         if (maxAllow == null) {
             maxAllow = getMaxAllowedFromNestedMap(
                 parentName,
@@ -127,7 +127,7 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
             );
         }
 
-        // If not specified in maxAllowPerDBPerRelType,check the default max Allow based on relationType
+        // If not specified in maxAllowPerDBPerRelType,check the default maxAllow based on relationType
         if (maxAllow == null) {
             final Integer count = props.getDefaultMaxAllowPerRelType().get(type);
             if (count != null) {
@@ -140,7 +140,7 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
             maxAllow = props.getMaxAllow();
         }
 
-        // if maxAllow < 0, this means we can create as many child table under the parent
+        // if maxAllow < 0, this means we can create unlimited child tables under the parent
         if (maxAllow < 0) {
             return;
         }
@@ -164,7 +164,7 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
         if (!childParents.isEmpty()) {
             throw new ParentChildRelServiceException("Cannot have a child table having more than one parent "
                 + "- Child Table: " + childName
-                + " already have a parent Table=" + childParents.stream().findFirst().get());
+                + " already have a parent Table=" + childParents.stream().findFirst().get().getName());
         }
 
         // Validation to prevent creating a child table as a parent of another child table
@@ -172,7 +172,7 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
         if (!parentParents.isEmpty()) {
             throw new ParentChildRelServiceException("Cannot create a child table as parent "
                 + "- parent table: " + parentName
-                + " already have a parent table = " + parentParents.stream().findFirst().get());
+                + " already have a parent table = " + parentParents.stream().findFirst().get().getName());
         }
 
         // Validation to prevent creating a parent on top of a table that have children
