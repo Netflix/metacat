@@ -36,8 +36,8 @@ import com.netflix.metacat.common.server.events.MetacatEventBus
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent
 import com.netflix.metacat.common.server.model.ChildInfo
-import com.netflix.metacat.common.server.model.ParentInfo
 import com.netflix.metacat.common.server.properties.Config
+import com.netflix.metacat.common.server.properties.ParentChildRelationshipProperties
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig
 import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataConstants
@@ -104,6 +104,26 @@ class TableServiceImplSpec extends Specification {
         service = new TableServiceImpl(connectorManager, connectorTableServiceProxy, databaseService, tagService,
             usermetadataService, new MetacatJsonLocator(),
             eventBus, registry, config, converterUtil, authorizationService, ownerValidationService, parentChildRelSvc)
+    }
+
+    ObjectNode createParentChildRelMetadata(String rootTableName, String rootTableUuid, String childTableUuid) {
+        ObjectMapper mapper = new ObjectMapper()
+        ObjectNode node = mapper.createObjectNode()
+
+        if (rootTableName != null) {
+            node.put(ParentChildRelMetadataConstants.PARENT_NAME, rootTableName)
+        }
+        if (rootTableUuid != null) {
+            node.put(ParentChildRelMetadataConstants.PARENT_UUID, rootTableUuid)
+        }
+        if (childTableUuid != null) {
+            node.put(ParentChildRelMetadataConstants.CHILD_UUID, childTableUuid)
+        }
+
+        ObjectNode outerNode = mapper.createObjectNode()
+        outerNode.set(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO, node)
+
+        return outerNode
     }
 
     def testTableGet() {
@@ -274,7 +294,36 @@ class TableServiceImplSpec extends Specification {
         0 * ownerValidationService.enforceOwnerValidation(_, _, _)
     }
 
-    def "Test Create - Clone Table Fail to create table"() {
+    def 'Test invalid Clone parameters' () {
+        when:
+        def dto = new TableDto()
+        def tableName = QualifiedName.ofTable("prodhive", "clone", "child");
+        dto.setName(tableName)
+        dto.setDefinitionMetadata(createParentChildRelMetadata(parentName, rootTableUuid, childTableUuid))
+        service.create(tableName, dto)
+
+        then:
+        1 * config.isParentChildCreateEnabled() >> true
+        0 * config.getParentChildRelationshipProperties()
+        1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
+        1 * ownerValidationService.isUserValid(_) >> true
+        1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
+        1 * ownerValidationService.isGroupValid(_) >> true
+        _ * connectorTableServiceProxy.exists(_) >> true
+
+        def e = thrown(IllegalArgumentException)
+        assert e.message.contains(message)
+        where:
+        parentName                           | rootTableUuid | childTableUuid | message
+        null                                 | "parent_uuid" | "child_uuid"   | "parent name is not specified"
+        "prodhive/clone/parent"              | null          | "child_uuid"   | "parent_table_uuid is not specified for parent table=prodhive/clone/parent"
+        "prodhive/clone/parent"              | "parent_uuid" | null           | "child_table_uuid is not specified for child table=prodhive/clone/child"
+        "prodhive/parent"                    | "parent_uuid" | "child_uuid"   | "does not refer to a table"
+    }
+
+
+
+    def "Mock Parent Child Relationship Create"() {
         given:
         def childTableName = QualifiedName.ofTable("clone", "clone", "c")
         def parentTableName = QualifiedName.ofTable("clone", "clone", "p")
@@ -292,56 +341,272 @@ class TableServiceImplSpec extends Specification {
             definitionMetadata: outerNode,
             serde: new StorageDto(uri: 's3:/clone/clone/c')
         )
+        def parentChildProps = new ParentChildRelationshipProperties(null)
+        // mock case where create Table Fail as parent table does not exist
         when:
         service.create(childTableName, createTableDto)
         then:
+        1 * config.isParentChildCreateEnabled() >> true
+        0 * config.getParentChildRelationshipProperties()
         1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
         1 * ownerValidationService.isUserValid(_) >> true
         1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
         1 * ownerValidationService.isGroupValid(_) >> true
+        1 * connectorTableServiceProxy.exists(_) >> false
 
-        1 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
+        0 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
+        0 * connectorTableServiceProxy.create(_, _) >> {throw new RuntimeException("Fail to create")}
+        0 * parentChildRelSvc.deleteParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
+        def e = thrown(RuntimeException)
+        assert e.message.contains("does not exist")
+
+        // mock case where create Table Fail and revert function is triggerred
+        when:
+        service.create(childTableName, createTableDto)
+        then:
+        1 * config.isParentChildCreateEnabled() >> true
+        1 * config.getParentChildRelationshipProperties() >> parentChildProps
+        1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
+        1 * ownerValidationService.isUserValid(_) >> true
+        1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
+        1 * ownerValidationService.isGroupValid(_) >> true
+        1 * connectorTableServiceProxy.exists(_) >> true
+
+        1 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE", parentChildProps)
         1 * connectorTableServiceProxy.create(_, _) >> {throw new RuntimeException("Fail to create")}
         1 * parentChildRelSvc.deleteParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
         thrown(RuntimeException)
+
+        // mock case where parent child relationship creation is disabled
+        when:
+        service.create(childTableName, createTableDto)
+
+        then:
+        1 * config.isParentChildCreateEnabled() >> false
+        0 * config.getParentChildRelationshipProperties()
+        1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
+        1 * ownerValidationService.isUserValid(_) >> true
+        1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
+        1 * ownerValidationService.isGroupValid(_) >> true
+        0 * connectorTableServiceProxy.exists(_)
+
+        0 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE", parentChildProps)
+        0 * connectorTableServiceProxy.create(_, _)
+        e = thrown(RuntimeException)
+        assert e.message.contains("is currently disabled")
+
+        // mock successful case
+        when:
+        service.create(childTableName, createTableDto)
+        then:
+        1 * config.isParentChildCreateEnabled() >> true
+        1 * config.getParentChildRelationshipProperties() >> parentChildProps
+        1 * ownerValidationService.extractPotentialOwners(_) >> ["cloneClient"]
+        1 * ownerValidationService.isUserValid(_) >> true
+        1 * ownerValidationService.extractPotentialOwnerGroups(_) >> ["cloneClientGroup"]
+        1 * ownerValidationService.isGroupValid(_) >> true
+        1 * connectorTableServiceProxy.exists(_) >> true
+
+        1 * parentChildRelSvc.createParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE", parentChildProps)
+        1 * connectorTableServiceProxy.create(_, _)
+        0 * parentChildRelSvc.deleteParentChildRelation(parentTableName, "p_uuid", childTableName, "child_uuid", "CLONE")
+        noExceptionThrown()
     }
 
-    def "Test Rename - Clone Table Fail to update parent child relation"() {
+    def "Mock Parent Child Relationship Rename"() {
         given:
         def oldName = QualifiedName.ofTable("clone", "clone", "oldChild")
         def newName = QualifiedName.ofTable("clone", "clone", "newChild")
+        // mock when rename fail and revert happen
         when:
         service.rename(oldName, newName, false)
 
         then:
+        1 * config.isParentChildRenameEnabled() >> true
         1 * config.getNoTableRenameOnTags() >> []
         1 * parentChildRelSvc.rename(oldName, newName)
         1 * connectorTableServiceProxy.rename(oldName, newName, _) >> {throw new RuntimeException("Fail to rename")}
         1 * parentChildRelSvc.rename(newName, oldName)
         thrown(RuntimeException)
+
+        // mock when rename parent child relation is disabled and the table is a child table
+        when:
+        service.rename(oldName, newName, false)
+        then:
+        1 * config.getNoTableRenameOnTags() >> []
+        1 * config.isParentChildRenameEnabled() >> false
+        1 * parentChildRelSvc.isChildTable(oldName) >> true
+        0 * parentChildRelSvc.isParentTable(oldName)
+        0 * parentChildRelSvc.rename(oldName, newName)
+        0 * connectorTableServiceProxy.rename(oldName, newName, _)
+        def e = thrown(RuntimeException)
+        assert e.message.contains("is currently disabled")
+
+        // mock when rename parent child relation is disabled and the table is a parent table
+        when:
+        service.rename(oldName, newName, false)
+        then:
+        1 * config.getNoTableRenameOnTags() >> []
+        1 * config.isParentChildRenameEnabled() >> false
+        1 * parentChildRelSvc.isChildTable(oldName) >> false
+        1 * parentChildRelSvc.isParentTable(oldName) >> true
+        0 * parentChildRelSvc.rename(oldName, newName)
+        0 * connectorTableServiceProxy.rename(oldName, newName, _)
+        e = thrown(RuntimeException)
+        assert e.message.contains("is currently disabled")
+
+        // mock when rename parent child relation is disabled but the table is not a parent nor child table
+        when:
+        service.rename(oldName, newName, false)
+        then:
+        1 * config.getNoTableRenameOnTags() >> []
+        1 * config.isParentChildRenameEnabled() >> false
+        1 * parentChildRelSvc.isChildTable(oldName) >> false
+        1 * parentChildRelSvc.isParentTable(oldName) >> false
+        1 * parentChildRelSvc.rename(oldName, newName)
+        1 * connectorTableServiceProxy.rename(oldName, newName, _)
+        noExceptionThrown()
+
+        // mock normal success case
+        when:
+        service.rename(oldName, newName, false)
+        then:
+        1 * config.getNoTableRenameOnTags() >> []
+        1 * config.isParentChildRenameEnabled() >> true
+        0 * parentChildRelSvc.isChildTable(oldName)
+        0 * parentChildRelSvc.isParentTable(oldName)
+        1 * parentChildRelSvc.rename(oldName, newName)
+        1 * connectorTableServiceProxy.rename(oldName, newName, _)
+        noExceptionThrown()
     }
 
-    def "Test Drop - Clone Table Fail to drop parent child relation"() {
+    def "Mock Parent Child Relationship Drop"() {
         given:
         def name = QualifiedName.ofTable("clone", "clone", "child")
 
+        // drop a parent table that has child
         when:
         service.delete(name)
         then:
-        1 * parentChildRelSvc.getParents(name) >> {[new ParentInfo("parent", "clone", "parent_uuid")] as Set}
-        2 * parentChildRelSvc.getChildren(name) >> {[new ChildInfo("child", "clone", "child_uuid")] as Set}
+        1 * config.isParentChildGetEnabled() >> true
+        1 * config.isParentChildDropEnabled() >> true
+        1 * parentChildRelSvc.getParents(name) >> {[] as Set}
+        1 * parentChildRelSvc.isParentTable(name) >> true
+        1 * parentChildRelSvc.getChildren(name) >> {[new ChildInfo("child", "clone", "child_uuid")] as Set}
         1 * config.getNoTableDeleteOnTags() >> []
-        thrown(RuntimeException)
+        def e = thrown(RuntimeException)
+        assert e.message.contains("because it still has")
 
+        // mock failure to drop the table, should not trigger deletion in parentChildRelSvc
         when:
         service.delete(name)
         then:
+        1 * config.isParentChildGetEnabled() >> true
+        1 * config.isParentChildDropEnabled() >> true
         1 * parentChildRelSvc.getParents(name)
-        2 * parentChildRelSvc.getChildren(name)
+        1 * parentChildRelSvc.isParentTable(name) >> true
+        1 * parentChildRelSvc.getChildren(name)
         1 * config.getNoTableDeleteOnTags() >> []
         1 * connectorTableServiceProxy.delete(_) >> {throw new RuntimeException("Fail to drop")}
-        0 * parentChildRelSvc.drop(_, _)
+        0 * parentChildRelSvc.drop(_)
         thrown(RuntimeException)
+
+        // mock drop is not enabled and it is a child table
+        when:
+        service.delete(name)
+        then:
+        1 * config.isParentChildGetEnabled() >> true
+        1 * config.isParentChildDropEnabled() >> false
+        1 * parentChildRelSvc.isChildTable(name) >> true
+        1 * parentChildRelSvc.isParentTable(name) >> false
+        1 * parentChildRelSvc.getParents(name)
+        0 * parentChildRelSvc.getChildren(name)
+        1 * config.getNoTableDeleteOnTags() >> []
+        0 * connectorTableServiceProxy.delete(_)
+        0 * parentChildRelSvc.drop(_)
+        e = thrown(RuntimeException)
+        assert e.message.contains("is currently disabled")
+
+        // mock drop is not enabled and it is a parent table
+        when:
+        service.delete(name)
+        then:
+        1 * config.isParentChildGetEnabled() >> true
+        1 * config.isParentChildDropEnabled() >> false
+        1 * parentChildRelSvc.isChildTable(name) >> false
+        2 * parentChildRelSvc.isParentTable(name) >> true
+        1 * parentChildRelSvc.getParents(name)
+        0 * parentChildRelSvc.getChildren(name)
+        1 * config.getNoTableDeleteOnTags() >> []
+        0 * connectorTableServiceProxy.delete(_)
+        0 * parentChildRelSvc.drop(_)
+        e = thrown(RuntimeException)
+        assert e.message.contains("is currently disabled")
+
+        // mock drop is not enabled and it is not a parent nor child table
+        // and it doesn't have any children
+        when:
+        service.delete(name)
+        then:
+        1 * config.isParentChildGetEnabled() >> true
+        1 * config.isParentChildDropEnabled() >> false
+        1 * parentChildRelSvc.isChildTable(name) >> false
+        2 * parentChildRelSvc.isParentTable(name) >> false
+        1 * parentChildRelSvc.getParents(name) >> {[] as Set}
+        1 * parentChildRelSvc.getChildren(name) >> {[] as Set}
+        1 * config.getNoTableDeleteOnTags() >> []
+        1 * connectorTableServiceProxy.delete(_)
+        1 * parentChildRelSvc.drop(_)
+        1 * config.canDeleteTableDefinitionMetadata() >> true
+        noExceptionThrown()
+
+        // mock normal successful case
+        when:
+        service.delete(name)
+        then:
+        1 * config.isParentChildGetEnabled() >> true
+        1 * config.isParentChildDropEnabled() >> true
+        0 * parentChildRelSvc.isChildTable(name)
+        1 * parentChildRelSvc.isParentTable(name)
+        1 * parentChildRelSvc.getParents(name) >> {[] as Set}
+        1 * parentChildRelSvc.getChildren(name) >> {[] as Set}
+        1 * config.getNoTableDeleteOnTags() >> []
+        1 * connectorTableServiceProxy.delete(_)
+        1 * parentChildRelSvc.drop(_)
+        1 * config.canDeleteTableDefinitionMetadata() >> true
+        noExceptionThrown()
+    }
+
+    def "Mock Parent Child Relationship Get"() {
+        when:
+        service.get(name,GetTableServiceParameters.builder().
+            disableOnReadMetadataIntercetor(false)
+            .includeDataMetadata(true)
+            .includeDefinitionMetadata(true)
+            .build())
+        then:
+        1 * connectorManager.getCatalogConfig(_) >> catalogConfig
+        1 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
+        1 * usermetadataService.getDataMetadata(_) >> Optional.empty()
+        0 * usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
+        1 * config.isParentChildGetEnabled() >> false
+        0 * parentChildRelSvc.getParents(name)
+        0 * parentChildRelSvc.isParentTable(name)
+
+        when:
+        service.get(name,GetTableServiceParameters.builder().
+            disableOnReadMetadataIntercetor(false)
+            .includeDataMetadata(true)
+            .includeDefinitionMetadata(true)
+            .build())
+        then:
+        1 * connectorManager.getCatalogConfig(_) >> catalogConfig
+        1 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
+        1 * usermetadataService.getDataMetadata(_) >> Optional.empty()
+        0 * usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
+        1 * config.isParentChildGetEnabled() >> true
+        1 * parentChildRelSvc.getParents(name)
+        1 * parentChildRelSvc.isParentTable(name)
     }
 
     def "Will not throw on Successful Table Update with Failed Get"() {

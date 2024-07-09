@@ -154,8 +154,9 @@ public class TableServiceImpl implements TableService {
         return dto;
     }
 
-    private ObjectNode createParentChildObjectNode(@Nullable final Set<ParentInfo> parentInfos,
-                                                   @Nullable final Set<ChildInfo> childInfos) {
+    private ObjectNode createParentChildObjectNode(final QualifiedName name) {
+        final Set<ParentInfo> parentInfos = parentChildRelMetadataService.getParents(name);
+
         final ObjectMapper objectMapper = new ObjectMapper();
         final ObjectNode rootNode = objectMapper.createObjectNode();
 
@@ -173,7 +174,7 @@ public class TableServiceImpl implements TableService {
         }
 
         // For parent table, if it has a child, we will put a field to indicate that the table is a parent table.
-        if (childInfos != null && !childInfos.isEmpty()) {
+        if (parentChildRelMetadataService.isParentTable(name)) {
             rootNode.put(ParentChildRelMetadataConstants.IS_PARENT, true);
         }
         return rootNode;
@@ -184,28 +185,36 @@ public class TableServiceImpl implements TableService {
         if (tableDto.getDefinitionMetadata() != null) {
             final ObjectNode definitionMetadata = tableDto.getDefinitionMetadata();
             if (definitionMetadata.has(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO)) {
+
+                if (!config.isParentChildCreateEnabled()) {
+                    throw new RuntimeException("parent child creation is currently disabled");
+                }
+
                 final JsonNode parentChildRelInfo =
                     definitionMetadata.get(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO);
 
                 String parentName;
                 if (!parentChildRelInfo.has(ParentChildRelMetadataConstants.PARENT_NAME)) {
-                    throw new RuntimeException("parent name is not specified");
+                    throw new IllegalArgumentException("parent name is not specified");
                 }
                 parentName = parentChildRelInfo.path(ParentChildRelMetadataConstants.PARENT_NAME)
                     .asText();
                 final QualifiedName parent = QualifiedName.fromString(parentName);
                 validate(parent);
+                if (!exists(parent)) {
+                    throw new IllegalArgumentException("Parent Table:" + parent + " does not exist");
+                }
 
                 // fetch parent and child uuid
                 String parentUUID;
                 String childUUID;
                 if (!parentChildRelInfo.has(ParentChildRelMetadataConstants.PARENT_UUID)) {
-                    throw new RuntimeException("parent_table_uuid is not specified for parent table="
+                    throw new IllegalArgumentException("parent_table_uuid is not specified for parent table="
                             + parentName);
                 }
 
                 if (!parentChildRelInfo.has(ParentChildRelMetadataConstants.CHILD_UUID)) {
-                    throw new RuntimeException("child_table_uuid is not specified for child table=" + child);
+                    throw new IllegalArgumentException("child_table_uuid is not specified for child table=" + child);
                 }
                 parentUUID = parentChildRelInfo.path(ParentChildRelMetadataConstants.PARENT_UUID).asText();
                 childUUID = parentChildRelInfo.path(ParentChildRelMetadataConstants.CHILD_UUID).asText();
@@ -220,7 +229,7 @@ public class TableServiceImpl implements TableService {
 
                 // Create parent child relationship
                 parentChildRelMetadataService.createParentChildRelation(parent, parentUUID,
-                    child, childUUID, relationType);
+                    child, childUUID, relationType, config.getParentChildRelationshipProperties());
 
                 // Return a Runnable for deleting the relationship
                 return Optional.of(() -> {
@@ -367,6 +376,17 @@ public class TableServiceImpl implements TableService {
             }
         }
 
+        if (!config.isParentChildDropEnabled()) {
+            if (parentChildRelMetadataService.isChildTable(name)) {
+                throw new RuntimeException(name + " is a child table and "
+                    + "dropping a child table is currently disabled");
+            }
+            if (parentChildRelMetadataService.isParentTable(name)) {
+                throw new RuntimeException(name + " is a parent table and "
+                    + "dropping a parent table is currently disabled");
+            }
+        }
+
         final Set<ChildInfo> childInfos = parentChildRelMetadataService.getChildren(name);
         if (childInfos != null && !childInfos.isEmpty()) {
             final StringBuilder errorSb = new StringBuilder();
@@ -498,15 +518,15 @@ public class TableServiceImpl implements TableService {
                 && definitionMetadata.get().has(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO)) {
                 definitionMetadata.get().remove(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO);
             }
-            final Set<ParentInfo> parentInfo = parentChildRelMetadataService.getParents(name);
-            final Set<ChildInfo> childInfos = parentChildRelMetadataService.getChildren(name);
-            final ObjectNode parentChildRelObjectNode = createParentChildObjectNode(parentInfo, childInfos);
-            if (!parentChildRelObjectNode.isEmpty()) {
-                if (!definitionMetadata.isPresent()) {
-                    definitionMetadata = Optional.of(new ObjectMapper().createObjectNode());
+            if (config.isParentChildGetEnabled()) {
+                final ObjectNode parentChildRelObjectNode = createParentChildObjectNode(name);
+                if (!parentChildRelObjectNode.isEmpty()) {
+                    if (!definitionMetadata.isPresent()) {
+                        definitionMetadata = Optional.of(new ObjectMapper().createObjectNode());
+                    }
+                    definitionMetadata.get().set(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO,
+                        parentChildRelObjectNode);
                 }
-                definitionMetadata.get().set(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO,
-                    parentChildRelObjectNode);
             }
             definitionMetadata.ifPresent(table::setDefinitionMetadata);
         }
@@ -567,6 +587,17 @@ public class TableServiceImpl implements TableService {
         if (oldTable != null) {
             //Ignore if the operation is not supported, so that we can at least go ahead and save the user metadata
             eventBus.post(new MetacatRenameTablePreEvent(oldName, metacatRequestContext, this, newName));
+
+            if (!config.isParentChildRenameEnabled()) {
+                if (parentChildRelMetadataService.isChildTable(oldName)) {
+                    throw new RuntimeException(oldName + " is a child table and "
+                        + "renaming on child table is currently disabled");
+                }
+                if (parentChildRelMetadataService.isParentTable(oldName)) {
+                    throw new RuntimeException(oldName + " is a parent table and "
+                        + "renaming on parent table is currently disabled");
+                }
+            }
 
             // Before rename, first rename its parent child relation
             parentChildRelMetadataService.rename(oldName, newName);

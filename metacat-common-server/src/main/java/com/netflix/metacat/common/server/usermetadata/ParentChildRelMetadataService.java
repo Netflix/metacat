@@ -1,8 +1,10 @@
 package com.netflix.metacat.common.server.usermetadata;
 import com.netflix.metacat.common.QualifiedName;
-import com.netflix.metacat.common.dto.notifications.ChildInfoDto;
+import com.netflix.metacat.common.dto.ChildInfoDto;
+import com.netflix.metacat.common.dto.ParentInfoDto;
 import com.netflix.metacat.common.server.model.ChildInfo;
 import com.netflix.metacat.common.server.model.ParentInfo;
+import com.netflix.metacat.common.server.properties.ParentChildRelationshipProperties;
 
 import java.util.Set;
 
@@ -24,13 +26,15 @@ public interface ParentChildRelMetadataService {
      * @param childName     the name of the child entity
      * @param childUUID     the uuid of the child
      * @param relationType  the type of the relationship
+     * @param prop          properties config
      */
     void createParentChildRelation(
         QualifiedName parentName,
         String parentUUID,
         QualifiedName childName,
         String childUUID,
-        String relationType
+        String relationType,
+        ParentChildRelationshipProperties prop
     );
 
     /**
@@ -98,9 +102,30 @@ public interface ParentChildRelMetadataService {
     /**
      * get the set of children dto for the input name.
      * @param name name
-     * @return a set of ChildInfo
+     * @return a set of ChildInfo dto
      */
     Set<ChildInfoDto> getChildrenDto(
         QualifiedName name
     );
+
+    /**
+     * get the set of parent dto for the input name.
+     * @param name name
+     * @return a set of parentInfo dto
+     */
+    Set<ParentInfoDto> getParentsDto(QualifiedName name);
+
+    /**
+     * return whether the table is a parent.
+     * @param tableName tableName
+     * @return true if it exists
+     */
+    boolean isParentTable(final QualifiedName tableName);
+
+    /**
+     * return whether the table is a child.
+     * @param tableName tableName
+     * @return true if it exists
+     */
+    boolean isChildTable(final QualifiedName tableName);
 }

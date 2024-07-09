@@ -23,6 +23,7 @@ import com.netflix.metacat.common.server.properties.MetacatProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 /**
  * Configuration for binding Metacat properties.
@@ -36,12 +37,13 @@ public class PropertiesConfig {
     /**
      * Static properties bindings.
      *
+     * @param env Spring environment
      * @return The metacat properties.
      */
     @Bean
     @ConfigurationProperties("metacat")
-    public MetacatProperties metacatProperties() {
-        return new MetacatProperties();
+    public MetacatProperties metacatProperties(final Environment env) {
+        return new MetacatProperties(env);
     }
 
     /**

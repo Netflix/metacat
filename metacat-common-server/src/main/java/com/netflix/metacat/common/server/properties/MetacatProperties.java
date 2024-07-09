@@ -18,6 +18,7 @@
 package com.netflix.metacat.common.server.properties;
 
 import lombok.NonNull;
+import org.springframework.core.env.Environment;
 
 /**
  * Entry point to entire property tree of Metacat namespace.
@@ -27,6 +28,8 @@ import lombok.NonNull;
  */
 @lombok.Data
 public class MetacatProperties {
+    @NonNull
+    private Environment env;
     @NonNull
     private Data data = new Data();
     @NonNull
@@ -67,4 +70,16 @@ public class MetacatProperties {
     private AliasServiceProperties aliasServiceProperties = new AliasServiceProperties();
     @NonNull
     private RateLimiterProperties rateLimiterProperties = new RateLimiterProperties();
+    @NonNull
+    private ParentChildRelationshipProperties parentChildRelationshipProperties;
+
+    /**
+     * Constructor for MetacatProperties.
+     *
+     * @param env Spring Environment
+     */
+    public MetacatProperties(final Environment env) {
+        this.env = env;
+        this.parentChildRelationshipProperties = new ParentChildRelationshipProperties(env);
+    }
 }

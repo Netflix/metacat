@@ -1,6 +1,5 @@
-package com.netflix.metacat.common.dto.notifications;
+package com.netflix.metacat.common.dto;
 
-import com.netflix.metacat.common.dto.BaseDto;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * ChildInfo information.
+ * ParentInfo dto information.
  */
 @SuppressWarnings("unused")
 @Data
@@ -17,9 +16,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ChildInfoDto extends BaseDto {
-    private static final long serialVersionUID = 9121109874202088789L;
-    /* Name of the child */
+public class ParentInfoDto extends BaseDto {
+    private static final long serialVersionUID = 8121239864203088788L;
+    /* Name of the parent */
     @ApiModelProperty(value = "name of the child")
     private String name;
     /* Type of the relation */
