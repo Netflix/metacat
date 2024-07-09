@@ -69,6 +69,8 @@ import com.netflix.spectator.api.Registry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
+
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
@@ -418,7 +420,7 @@ public class TableServiceImpl implements TableService {
         }
 
         try {
-            parentChildRelMetadataService.drop(name);
+            parentChildRelMetadataService.drop(name, Optional.empty());
         } catch (Exception e) {
             log.error("parentChildRelMetadataService: Failed to drop relation for table={}", name, e);
         }
@@ -599,23 +601,42 @@ public class TableServiceImpl implements TableService {
                 }
             }
 
-            // Before rename, first rename its parent child relation
-            parentChildRelMetadataService.rename(oldName, newName);
-
+            // Before rename, first
+            // duplicate record with newName in parent child relation and get all uuids associated with this newName
+            // that are impacted so later during
+            // either dropping the oldName after successful connectorTableServiceProxy.rename
+            // or dropping the newName after failed connectorTableServiceProxy.rename
+            // we only touch records with those specific uuids
+            final Pair<Set<String>, Set<String>> parentChildUuidsPair =
+                parentChildRelMetadataService.renameSoftInsert(oldName, newName);
             try {
                 connectorTableServiceProxy.rename(oldName, newName, isMView);
             } catch (Exception e) {
                 try {
-                    // if rename operation fail, rename back the parent child relation
-                    parentChildRelMetadataService.rename(newName, oldName);
+                    // if rename operation fail, remove the soft inserted record
+                    if (!parentChildUuidsPair.getLeft().isEmpty() || !parentChildUuidsPair.getRight().isEmpty()) {
+                        parentChildRelMetadataService.drop(newName, Optional.of(parentChildUuidsPair));
+                    }
                 } catch (Exception renameException) {
-                    log.error("parentChildRelMetadataService: Failed to rename parent child relation "
+                    log.error("parentChildRelMetadataService: Fail to rename parent child relation "
                             + "after table fail to rename from {} to {} "
-                            + "with the following parameters oldName={} to newName={}",
-                        oldName, newName, oldName, newName, renameException);
+                            + "with the following parameters oldName={} to newName={} and uuid pairs = {}",
+                        oldName, newName, oldName, newName, parentChildUuidsPair, renameException);
                 }
                 throw e;
             }
+            // if rename everything succeeds, remove records with the oldName
+            try {
+                if (!parentChildUuidsPair.getLeft().isEmpty() || !parentChildUuidsPair.getRight().isEmpty()) {
+                    parentChildRelMetadataService.drop(oldName, Optional.of(parentChildUuidsPair));
+                }
+            } catch (Exception e) {
+                log.error("parentChildRelMetadataService: Fail to rename parent child relation "
+                        + "after table successfully rename from {} to {} "
+                        + "with the following parameters oldName={} to newName={} and uuid pairs = {}",
+                    oldName, newName, oldName, newName, parentChildUuidsPair, e);
+            }
+
             userMetadataService.renameDefinitionMetadataKey(oldName, newName);
             tagService.renameTableTags(oldName, newName.getTableName());
 

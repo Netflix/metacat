@@ -11,6 +11,8 @@ import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataServ
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.transaction.annotation.Isolation;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.PreparedStatement;
 import java.util.Map;
 import java.util.Set;
+import java.util.Optional;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -45,11 +48,6 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
         "DELETE FROM parent_child_relation "
             + "WHERE parent = ? AND parent_uuid = ? AND child = ? AND child_uuid = ? AND relation_type = ?";
 
-    static final String SQL_RENAME_PARENT_ENTITY = "UPDATE parent_child_relation "
-        + "SET parent = ? WHERE parent = ?";
-    static final String SQL_RENAME_CHILD_ENTITY = "UPDATE parent_child_relation "
-        + "SET child = ? WHERE child = ?";
-
     static final String SQL_DROP_CHILD = "DELETE FROM parent_child_relation "
         + "WHERE child = ? ";
     static final String SQL_DROP_PARENT = "DELETE FROM parent_child_relation "
@@ -60,15 +58,25 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
 
     static final String SQL_GET_CHILDREN = "SELECT child, child_uuid, relation_type "
         + "FROM parent_child_relation WHERE parent = ?";
-
-    static final String SQL_IS_PARENT_TABLE = "SELECT 1 FROM parent_child_relation WHERE parent = ? LIMIT 1";
-    static final String SQL_IS_CHILD_TABLE = "SELECT 1 FROM parent_child_relation WHERE child = ? LIMIT 1";
+    static final String SQL_RENAME_SOFT_PARENT_INSERT =
+        "INSERT INTO parent_child_relation (parent, parent_uuid, child, child_uuid, relation_type) "
+            + "SELECT ?, parent_uuid, child, child_uuid, relation_type "
+            + "FROM parent_child_relation "
+            + "WHERE parent = ?";
+    static final String SQL_RENAME_SOFT_CHILD_INSERT =
+        "INSERT INTO parent_child_relation (parent, parent_uuid, child, child_uuid, relation_type) "
+            + "SELECT parent, parent_uuid, ?, child_uuid, relation_type "
+            + "FROM parent_child_relation "
+            + "WHERE child = ?";
 
     static final String SQL_GET_PARENT_UUIDS = "SELECT DISTINCT parent_uuid FROM parent_child_relation "
         + "where parent = ?";
 
     static final String SQL_GET_CHILDREN_UUIDS = "SELECT DISTINCT child_uuid FROM parent_child_relation "
         + "where child = ?";
+
+    static final String SQL_IS_PARENT_TABLE = "SELECT 1 FROM parent_child_relation WHERE parent = ? LIMIT 1";
+    static final String SQL_IS_CHILD_TABLE = "SELECT 1 FROM parent_child_relation WHERE child = ? LIMIT 1";
 
     static final String SQL_GET_CHILDREN_SIZE_PER_REL = "SELECT COUNT(*) FROM parent_child_relation "
         + "where parent = ? and relation_type = ?";
@@ -263,7 +271,7 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public void rename(final QualifiedName oldName, final QualifiedName newName) {
+    public Pair<Set<String>, Set<String>> renameSoftInsert(final QualifiedName oldName, final QualifiedName newName) {
         if (isChildTable(newName)) {
             throw new ParentChildRelServiceException(newName + " is already a child table");
         }
@@ -271,72 +279,103 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
             throw new ParentChildRelServiceException(newName + " is already a parent table");
         }
 
-        renameParent(oldName, newName);
-        renameChild(oldName, newName);
-        log.info("Successfully rename parent child relationship for oldName={}, newName={}",
-            oldName, newName
-        );
+        final Set<String> parentUuids = renameSoftInsertParent(oldName, newName);
+        final Set<String> childUuids = renameSoftInsertChild(oldName, newName);
+
+        if (!parentUuids.isEmpty() || !childUuids.isEmpty()) {
+            log.info("Successfully rename parent child relationship for oldName={}, newName={}",
+                oldName, newName
+            );
+        }
+        return new ImmutablePair<>(parentUuids, childUuids);
     }
 
-    private void renameParent(final QualifiedName oldName, final QualifiedName newName) {
+    private Set<String> renameSoftInsertParent(final QualifiedName oldName, final QualifiedName newName) {
         try {
             jdbcTemplate.update(connection -> {
-                final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_PARENT_ENTITY);
+                final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_SOFT_PARENT_INSERT);
                 ps.setString(1, newName.toString());
                 ps.setString(2, oldName.toString());
 
                 return ps;
             });
+            return getParentUuidsForParent(newName.toString());
         } catch (Exception e) {
             throw new ParentChildRelServiceException("Fail to rename parent from oldName:" + oldName + " to " + newName
                 + " in MySqlParentChildRelMetadataService", e);
         }
     }
 
-    private void renameChild(final QualifiedName oldName, final QualifiedName newName) {
+    private Set<String> renameSoftInsertChild(final QualifiedName oldName, final QualifiedName newName) {
         try {
             jdbcTemplate.update(connection -> {
-                final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_CHILD_ENTITY);
+                final PreparedStatement ps = connection.prepareStatement(SQL_RENAME_SOFT_CHILD_INSERT);
                 ps.setString(1, newName.toString());
                 ps.setString(2, oldName.toString());
                 return ps;
             });
+            return getChildUuidsForChild(newName.toString());
         } catch (Exception e) {
             throw new ParentChildRelServiceException("Fail to rename child from oldName:" + oldName + " to " + newName
                 + " in MySqlParentChildRelMetadataService", e);
         }
     }
 
+    // Note this api is used for 2 cases in TableServiceImpl
+    // 1. dropTable -> it will pass an empty optional, which will delete every records associated with the name
+    // 2. renameTable -> it will pass a non-empty optional, which will delete every records associated with the
+    // name + the uuids
     @Override
-    public void drop(final QualifiedName name) {
-        dropParent(name);
-        dropChild(name);
-        log.info("Successfully drop parent child relationship for name={}", name);
-    }
+    public void drop(final QualifiedName name, final Optional<Pair<Set<String>, Set<String>>> uuids) {
+        Optional<Set<String>> parentUUIDs = Optional.empty();
+        Optional<Set<String>> childUUIDs = Optional.empty();
 
-    private void dropParent(final QualifiedName name) {
-        try {
-            jdbcTemplate.update(connection -> {
-                final PreparedStatement ps = connection.prepareStatement(SQL_DROP_PARENT);
-                ps.setString(1, name.toString());
-                return ps;
-            });
-        } catch (Exception e) {
-            throw new ParentChildRelServiceException("Fail to drop parent:" + name
-                + " in MySqlParentChildRelMetadataService", e);
+        if (uuids.isPresent()) {
+            parentUUIDs = Optional.of(uuids.get().getLeft());
+            childUUIDs = Optional.of(uuids.get().getRight());
+        }
+
+        if (drop(name, parentUUIDs, SQL_DROP_PARENT) > 0 || drop(name, childUUIDs, SQL_DROP_CHILD) > 0) {
+            log.info("Successfully drop parent child relationship for name={} and parentUUIDs = {} and childUUIDs = {}",
+                name, parentUUIDs, childUUIDs);
         }
     }
 
-    private void dropChild(final QualifiedName name) {
+    private int drop(final QualifiedName name, final Optional<Set<String>> uuids, final String sql) {
+        final String sqlWithInClause;
+        final String uuidColumn = sql.equals(SQL_DROP_PARENT) ? "parent_uuid" : "child_uuid";
+
+        if (uuids.isPresent() && !uuids.get().isEmpty()) {
+            final String inClause = uuids.get().stream()
+                .map(uuid -> "?")
+                .collect(Collectors.joining(", "));
+            sqlWithInClause = sql + " AND " + uuidColumn + " IN (" + inClause + ")";
+        } else {
+            sqlWithInClause = sql;
+        }
+
         try {
-            jdbcTemplate.update(connection -> {
-                final PreparedStatement ps = connection.prepareStatement(SQL_DROP_CHILD);
+            return jdbcTemplate.update(connection -> {
+                final PreparedStatement ps = connection.prepareStatement(sqlWithInClause);
                 ps.setString(1, name.toString());
+
+                if (uuids.isPresent()) {
+                    int i = 1;
+                    for (String uuid : uuids.get()) {
+                        ps.setString(++i, uuid);
+                    }
+                }
+
                 return ps;
             });
         } catch (Exception e) {
-            throw new ParentChildRelServiceException("Fail to drop child:" + name
-                + " in MySqlParentChildRelMetadataService", e);
+            if (sql.equals(SQL_DROP_PARENT)) {
+                throw new ParentChildRelServiceException("Fail to drop parent:" + name
+                    + " in MySqlParentChildRelMetadataService", e);
+            } else {
+                throw new ParentChildRelServiceException("Fail to drop child:" + name
+                    + " in MySqlParentChildRelMetadataService", e);
+            }
         }
     }
 
@@ -431,7 +470,6 @@ public class MySqlParentChildRelMetaDataService implements ParentChildRelMetadat
             return ps;
         }, (rs, rowNum) -> rs.getString("child_uuid")));
     }
-
     private void validateUUIDs(final String name,
                                final Set<String> existingUUIDs,
                                final String inputUUID,
