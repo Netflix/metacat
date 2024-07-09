@@ -75,11 +75,11 @@ public class ParentChildRelController {
     }
 
     /**
-     * Return the list of children for a given table.
+     * Return the list of parent for a given table.
      * @param catalogName catalogName
      * @param databaseName databaseName
      * @param tableName tableName
-     * @return list of childInfoDto
+     * @return list of parentInfoDto
      */
     @RequestMapping(method = RequestMethod.GET,
         path = "/parents/catalog/{catalog-name}/database/{database-name}/table/{table-name}")
