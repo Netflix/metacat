@@ -655,7 +655,10 @@ public class MetacatController implements MetacatV1 {
         @ApiParam(value = "Whether to include only the metadata location in the response")
         @RequestParam(
                 name = "includeMetadataLocationOnly",
-                defaultValue = "false") final boolean includeMetadataLocationOnly
+                defaultValue = "false") final boolean includeMetadataLocationOnly,
+        @RequestParam(
+            name = "includeParentChildInfo",
+            defaultValue = "false") final boolean includeParentChildInfo
     ) {
         final Supplier<QualifiedName> qualifiedNameSupplier =
                 () -> QualifiedName.ofTable(catalogName, databaseName, tableName);
@@ -669,6 +672,7 @@ public class MetacatController implements MetacatV1 {
                     .put("includeDataMetadata", String.valueOf(includeDataMetadata))
                     .put("includeMetadataFromConnector", String.valueOf(includeInfoDetails))
                     .put("includeMetadataLocationOnly", String.valueOf(includeMetadataLocationOnly))
+                    .put("includeParentChildInfo", String.valueOf(includeParentChildInfo))
                     .build(),
                 () -> {
                     final Optional<TableDto> table = this.tableService.get(
@@ -680,6 +684,7 @@ public class MetacatController implements MetacatV1 {
                                     .disableOnReadMetadataIntercetor(false)
                                     .includeMetadataFromConnector(includeInfoDetails)
                                     .includeMetadataLocationOnly(includeMetadataLocationOnly)
+                                    .includeParentChildInfo(includeParentChildInfo)
                                     .useCache(true)
                                     .build()
                     );

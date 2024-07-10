@@ -291,7 +291,36 @@ public interface MetacatV1 {
             Boolean includeInfoDetails
     ) {
         return getTable(catalogName, databaseName, tableName, includeInfo,
-                includeDefinitionMetadata, includeDataMetadata, includeInfoDetails, false);
+                includeDefinitionMetadata, includeDataMetadata, includeInfoDetails, false,
+            false);
+    }
+
+    /**
+     * Get the table.
+     * Add this method to maintain backward compatability with dependent services which currently uses metacatClient
+     * @param catalogName               catalog name
+     * @param databaseName              database name
+     * @param tableName                 table name.
+     * @param includeInfo               true if the details need to be included
+     * @param includeDefinitionMetadata true if the definition metadata to be included
+     * @param includeDataMetadata       true if the data metadata to be included
+     * @param includeInfoDetails        true if the more info details to be included
+     * @param includeMetadataLocationOnly true if includeMetadataLocationOnly
+     * @return table
+     */
+    default TableDto getTable(
+        String catalogName,
+        String databaseName,
+        String tableName,
+        Boolean includeInfo,
+        Boolean includeDefinitionMetadata,
+        Boolean includeDataMetadata,
+        Boolean includeInfoDetails,
+        Boolean includeMetadataLocationOnly
+    ) {
+        return getTable(catalogName, databaseName, tableName, includeInfo,
+            includeDefinitionMetadata, includeDataMetadata, includeInfoDetails, includeMetadataLocationOnly,
+            false);
     }
 
     /**
@@ -306,6 +335,7 @@ public interface MetacatV1 {
      * @param includeInfoDetails        true if the more info details to be included
      * @param includeMetadataLocationOnly true if only metadata location needs to be included.
      *                                    All other flags are ignored if this is set to true.
+     * @param includeParentChildInfo    true if includeParentChildInfo
      * @return table
      */
     @GET
@@ -333,7 +363,10 @@ public interface MetacatV1 {
             Boolean includeInfoDetails,
         @DefaultValue("false")
         @QueryParam("includeMetadataLocationOnly")
-            Boolean includeMetadataLocationOnly
+            Boolean includeMetadataLocationOnly,
+        @DefaultValue("false")
+        @QueryParam("includeParentChildInfo")
+        Boolean includeParentChildInfo
     );
 
     /**
