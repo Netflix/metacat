@@ -480,7 +480,7 @@ class TableServiceImplSpec extends Specification {
         noExceptionThrown()
     }
 
-    def "Mock Parent Child Relationship Drop"() {
+    def "Mock Parent Child Relationship Drop with isParentChildGetEnabled enabled and getParameter disabled"() {
         given:
         def name = QualifiedName.ofTable("clone", "clone", "child")
 
@@ -577,7 +577,7 @@ class TableServiceImplSpec extends Specification {
         noExceptionThrown()
     }
 
-    def "Mock Parent Child Relationship Get"() {
+    def "Mock Parent Child Relationship Get with GetTableServiceParameters disabled"() {
         when:
         service.get(name,GetTableServiceParameters.builder().
             disableOnReadMetadataIntercetor(false)
@@ -592,6 +592,39 @@ class TableServiceImplSpec extends Specification {
         1 * config.isParentChildGetEnabled() >> false
         0 * parentChildRelSvc.getParents(name)
         0 * parentChildRelSvc.isParentTable(name)
+
+        when:
+        service.get(name,GetTableServiceParameters.builder().
+            disableOnReadMetadataIntercetor(false)
+            .includeDataMetadata(true)
+            .includeDefinitionMetadata(true)
+            .build())
+        then:
+        1 * connectorManager.getCatalogConfig(_) >> catalogConfig
+        1 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
+        1 * usermetadataService.getDataMetadata(_) >> Optional.empty()
+        0 * usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
+        1 * config.isParentChildGetEnabled() >> true
+        1 * parentChildRelSvc.getParents(name)
+        1 * parentChildRelSvc.isParentTable(name)
+    }
+
+    def "Mock Parent Child Relationship Get with GetTableServiceParameters enabled"() {
+        when:
+        service.get(name,GetTableServiceParameters.builder().
+            disableOnReadMetadataIntercetor(false)
+            .includeDataMetadata(true)
+            .includeDefinitionMetadata(true)
+            .includeParentChildInfo(true)
+            .build())
+        then:
+        1 * connectorManager.getCatalogConfig(_) >> catalogConfig
+        1 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
+        1 * usermetadataService.getDataMetadata(_) >> Optional.empty()
+        0 * usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
+        1 * config.isParentChildGetEnabled() >> false
+        1 * parentChildRelSvc.getParents(name)
+        1 * parentChildRelSvc.isParentTable(name)
 
         when:
         service.get(name,GetTableServiceParameters.builder().
