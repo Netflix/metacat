@@ -4,6 +4,7 @@ set -x
 
 echo PATH is $PATH
 echo DOCKER env is $(env | grep DOCKER)
+echo COMPOSE_FILE is $COMPOSE_FILE
 
 COMPOSE_FILE=$1
 
