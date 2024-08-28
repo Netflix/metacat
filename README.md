@@ -8,9 +8,9 @@
 ## Introduction
 
 Metacat is a unified metadata exploration API service. You can explore Hive, RDS, Teradata, Redshift, S3 and Cassandra.
-Metacat provides you information about what data you have, where it resides and how to process it. Metadata in the end 
-is really data about the data. So the primary purpose of Metacat is to give a place to describe the data so that we 
-could do more useful things with it. 
+Metacat provides you information about what data you have, where it resides and how to process it. Metadata in the end
+is really data about the data. So the primary purpose of Metacat is to give a place to describe the data so that we
+could do more useful things with it.
 
 Metacat focusses on solving these three problems:
 
@@ -39,12 +39,12 @@ cd metacat
 ./gradlew clean build
 ```
 
-Once the build is completed, the metacat WAR file is generated under `metacat-war/build/libs` directory. Metacat needs 
+Once the build is completed, the metacat WAR file is generated under `metacat-war/build/libs` directory. Metacat needs
 two basic configurations:
 
-* `metacat.plugin.config.location`: Path to the directory containing the catalog configuration. Please look at 
+* `metacat.plugin.config.location`: Path to the directory containing the catalog configuration. Please look at
 catalog [samples](https://github.com/Netflix/metacat/tree/master/metacat-functional-tests/metacat-test-cluster/etc-metacat/catalog) used for functional testing.
-* `metacat.usermetadata.config.location`: Path to the configuration file containing the connection properties to store 
+* `metacat.usermetadata.config.location`: Path to the configuration file containing the connection properties to store
 user metadata. Please look at this [sample](https://github.com/Netflix/metacat/blob/master/metacat-functional-tests/metacat-test-cluster/etc-metacat/usermetadata.properties).
 
 ### Running Locally
@@ -59,8 +59,8 @@ Swagger API documentation can be accessed @ [http://localhost:8080/swagger-ui/in
 
 **Pre-requisite: Docker compose is installed**
 
-To start a self contained Metacat environment with some sample catalogs run the command below. 
-This will start a `docker-compose` cluster containing a Metacat container, a Hive Metastore Container, a Cassandra 
+To start a self contained Metacat environment with some sample catalogs run the command below.
+This will start a `docker compose` cluster containing a Metacat container, a Hive Metastore Container, a Cassandra
 container and a PostgreSQL container.
 
 ```
