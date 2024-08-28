@@ -60,7 +60,6 @@ class HiveConnectorTableIISpec extends Specification {
     @Shared
     HiveConnectorDatabaseService hiveConnectorDatabaseService = Mock(HiveConnectorDatabaseService)
 
-    // just a comment
     def setupSpec() {
         registry.createId(_) >>requestId
         registry.clock() >> clock
