@@ -81,7 +81,7 @@ public interface MetacatV1 {
         final boolean includeInfoDetails
     ) {
         return getTable(catalogName, databaseName, tableName, includeInfo, includeDefinitionMetadata,
-                includeDataMetadata, includeInfoDetails, false);
+                includeDataMetadata, includeInfoDetails, false, false);
     }
 
     /**
@@ -96,6 +96,7 @@ public interface MetacatV1 {
      * @param includeInfoDetails          true if the more info details to be included
      * @param includeMetadataLocationOnly true if only metadata location needs to be included.
      *                                    All other flags are ignored
+     * @param includeParentChildInfo      true if includeParentChildInfo needs to be included.
      * @return table
      */
     TableDto getTable(
@@ -106,7 +107,8 @@ public interface MetacatV1 {
             final boolean includeDefinitionMetadata,
             final boolean includeDataMetadata,
             final boolean includeInfoDetails,
-            final boolean includeMetadataLocationOnly
+            final boolean includeMetadataLocationOnly,
+            final boolean includeParentChildInfo
     );
 
     /**
