@@ -832,6 +832,52 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
+    def "Test ignore void transform as partition fields"() {
+        given:
+        def catalogName = 'embedded-fast-hive-metastore'
+        def databaseName = 'iceberg_db'
+        def tableName = 'iceberg_table_6'
+        def uri = isLocalEnv ? String.format('file:/tmp/data/') : null
+        def tableDto = new TableDto(
+            name: QualifiedName.ofTable(catalogName, databaseName, tableName),
+            serde: new StorageDto(
+                owner: 'metacat-test',
+                inputFormat: 'org.apache.hadoop.mapred.TextInputFormat',
+                outputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
+                serializationLib: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
+                parameters: [
+                    'serialization.format': '1'
+                ],
+                uri: uri
+            ),
+            definitionMetadata: null,
+            dataMetadata: null,
+            fields: null
+        )
+
+        def metadataLocation = String.format('/tmp/data/metadata/00001-ba4b775c-7b1a-4a6f-aec0-03d3c851088c.metadata.json')
+        def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
+        tableDto.setMetadata(metadata)
+
+        when:
+        try {api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+        } catch (Exception ignored) {
+        }
+        api.createTable(catalogName, databaseName, tableName, tableDto)
+        def tableDTO = api.getTable(catalogName, databaseName, tableName, true, true, true)
+        def parts = partitionApi.getPartitions(catalogName, databaseName, tableName, null, null, null, null, null, true)
+        def partkeys = partitionApi.getPartitionKeys(catalogName, databaseName, tableName, null, null, null, null, null)
+
+        then:
+        tableDTO.getFields().size() == 4
+        parts.size() == 1
+        partkeys.size() == 1
+
+        cleanup:
+        api.deleteTable(catalogName, databaseName, tableName)
+    }
+
+    @Unroll
     def "Test get partitions from iceberg table using #filter"() {
         def catalogName = 'embedded-fast-hive-metastore'
         def databaseName = 'iceberg_db'
