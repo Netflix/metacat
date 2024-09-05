@@ -869,8 +869,8 @@ class MetacatSmokeSpec extends Specification {
 
         then:
         tableDTO.getFields().size() == 4
-        tableDto.getPartition_keys().size() == 1
-        tableDto.getPartition_keys()[0] == "field1"
+        tableDTO.getPartition_keys().size() == 1
+        tableDTO.getPartition_keys()[0] == "field1"
 
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
