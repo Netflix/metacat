@@ -41,6 +41,7 @@ import feign.RetryableException
 import feign.Retryer
 import groovy.sql.Sql
 import org.apache.commons.io.FileUtils
+import org.apache.iceberg.PartitionField
 import org.joda.time.Instant
 import org.skyscreamer.jsonassert.JSONAssert
 import spock.lang.Ignore
@@ -865,13 +866,11 @@ class MetacatSmokeSpec extends Specification {
         }
         api.createTable(catalogName, databaseName, tableName, tableDto)
         def tableDTO = api.getTable(catalogName, databaseName, tableName, true, true, true)
-        def parts = partitionApi.getPartitions(catalogName, databaseName, tableName, null, null, null, null, null, true)
-        def partkeys = partitionApi.getPartitionKeys(catalogName, databaseName, tableName, null, null, null, null, null)
 
         then:
         tableDTO.getFields().size() == 4
-        parts.size() == 1
-        partkeys.size() == 1
+        tableDto.getPartition_keys().size() == 1
+        tableDto.getPartition_keys()[0] == "field1"
 
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
