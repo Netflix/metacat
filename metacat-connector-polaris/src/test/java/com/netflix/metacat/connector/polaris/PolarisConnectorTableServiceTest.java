@@ -93,7 +93,7 @@ public class PolarisConnectorTableServiceTest {
             polarisStoreService,
             CATALOG_NAME,
             polarisDBService,
-            new HiveConnectorInfoConverter(new HiveTypeConverter()),
+            new HiveConnectorInfoConverter(new HiveTypeConverter(connectorContext.getConfig())),
             new IcebergTableHandler(connectorContext,
                 new IcebergTableCriteriaImpl(connectorContext),
                 new IcebergTableOpWrapper(connectorContext, serviceManager),

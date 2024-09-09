@@ -642,5 +642,12 @@ public interface Config {
      * @return parentChildRelationshipProperties
      */
     ParentChildRelationshipProperties getParentChildRelationshipProperties();
+
+    /**
+     * Whether we want to omit void transform partition from current partitions.
+     *
+     * @return True if it should be omitted
+     */
+    boolean omitVoidTransformEnabled();
 }
 

@@ -77,7 +77,8 @@ services:
                 -Dmetacat.parentChildRelationshipProperties.createEnabled=true
                 -Dmetacat.parentChildRelationshipProperties.getEnabled=true
                 -Dmetacat.parentChildRelationshipProperties.renameEnabled=true
-                -Dmetacat.parentChildRelationshipProperties.dropEnabled=true'
+                -Dmetacat.parentChildRelationshipProperties.dropEnabled=true
+                -Dmetacat.partitionColumnProperties.omitVoidPartitionEnabled=true'
         labels:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.war"

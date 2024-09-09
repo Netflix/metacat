@@ -16,7 +16,8 @@ import javax.annotation.Nonnull;
 public class PolarisConnectorPlugin implements ConnectorPlugin {
 
     private static final String CONNECTOR_TYPE = "polaris";
-    private static final HiveTypeConverter TYPE_CONVERTER = new HiveTypeConverter();
+    private static final HiveTypeConverter TYPE_CONVERTER =
+        new HiveTypeConverter(ConnectorContext.builder().build().getConfig());
     private static final HiveConnectorInfoConverter INFO_CONVERTER
         = new HiveConnectorInfoConverter(TYPE_CONVERTER);
 

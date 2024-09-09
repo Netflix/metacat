@@ -17,6 +17,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
+import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.type.BaseType;
 import com.netflix.metacat.common.type.CharType;
 import com.netflix.metacat.common.type.DecimalType;
@@ -74,6 +75,17 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
     private static final Pattern DECIMAL_TYPE
         = Pattern.compile(DECIMAL_WITH_SCALE + "|" + DECIMAL_WITH_SCALE_AND_PRECISION, Pattern.CASE_INSENSITIVE);
 
+    private final Config config;
+
+    /**
+     * Constructor.
+     *
+     * @param config Environment config
+     */
+    public HiveTypeConverter(final Config config) {
+        this.config = config;
+    }
+
     private static Type getPrimitiveType(final TypeInfo typeInfo) {
         final PrimitiveCategory primitiveCategory = ((PrimitiveTypeInfo) typeInfo).getPrimitiveCategory();
         if (HiveTypeMapping.getHIVE_TO_CANONICAL().containsKey(primitiveCategory.name())) {
@@ -111,11 +123,18 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
     public List<FieldInfo> icebergSchemaTofieldDtos(final Schema schema,
                                                      final List<PartitionField> partitionFields) {
         final List<FieldInfo> fields = Lists.newArrayList();
-        final List<String> partitionNames =
-            partitionFields.stream()
+        final List<String> partitionNames;
+
+        if (config.omitVoidTransformEnabled()) {
+            partitionNames = partitionFields.stream()
                 .filter(f -> f.transform() != null && !f.transform().toString().equals("void"))
                 .map(f -> schema.findField(f.sourceId()).name())
                 .collect(Collectors.toList());
+        } else {
+            partitionNames = partitionFields.stream()
+                .map(f -> schema.findField(f.sourceId()).name())
+                .collect(Collectors.toList());
+        }
 
         for (Types.NestedField field : schema.columns()) {
             final FieldInfo fieldInfo = new FieldInfo();

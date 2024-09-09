@@ -154,7 +154,8 @@ public class HiveConnectorFastTableService extends HiveConnectorTableService {
                 && HiveTableUtil.isCommonView(info)) {
                 final String tableLoc = HiveTableUtil.getCommonViewMetadataLocation(info);
                 return hiveConnectorFastTableServiceProxy.getCommonViewTableInfo(name, tableLoc, info,
-                    new HiveTypeConverter(), connectorContext.getConfig().isIcebergCacheEnabled());
+                    new HiveTypeConverter(connectorContext.getConfig()),
+                        connectorContext.getConfig().isIcebergCacheEnabled());
             }
             if (!connectorContext.getConfig().isIcebergEnabled() || !HiveTableUtil.isIcebergTable(info)) {
                 return info;

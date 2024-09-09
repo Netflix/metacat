@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.connector.hive.converters
 
+import com.netflix.metacat.common.server.properties.Config
 import org.apache.iceberg.PartitionField
 import org.apache.iceberg.transforms.Identity
 import org.apache.iceberg.transforms.VoidTransform
@@ -28,8 +29,14 @@ import spock.lang.Unroll
  * @since 1.0.0
  */
 class HiveTypeConverterSpec extends Specification {
-    @Shared
-    HiveTypeConverter converter = new HiveTypeConverter()
+    Config config = Mock(Config)
+    HiveTypeConverter converter;
+
+    def setup() {
+        // Stub omitVoidPartitionEnabled to always return true
+        this.config.omitVoidTransformEnabled() >> true
+        this.converter = new HiveTypeConverter(this.config)
+    }
 
     @Unroll
     def 'can convert "#typeString" to a presto type and back'(String typeString) {
@@ -276,10 +283,8 @@ class HiveTypeConverterSpec extends Specification {
             new PartitionField(2, 2, "field2", new VoidTransform<String>()),
         ]
 
-        def hiveTypeConverter = new HiveTypeConverter()
-
         when:
-        def fieldDtos = hiveTypeConverter.icebergSchemaTofieldDtos(initialSchema, initialPartitionFields)
+        def fieldDtos = this.converter.icebergSchemaTofieldDtos(initialSchema, initialPartitionFields)
 
         then:
         fieldDtos.size() == 3
