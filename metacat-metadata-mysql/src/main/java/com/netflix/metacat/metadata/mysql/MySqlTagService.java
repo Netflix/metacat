@@ -105,24 +105,23 @@ public class MySqlTagService implements TagService {
     /**
      * Constructor.
      *
-     * @param config                  config
-     * @param jdbcTemplate            JDBC template
-     * @param jdbcTemplateLongTimeout JDBC template for longer running queries
-     * @param lookupService           lookup service
-     * @param metacatJson             json util
-     * @param userMetadataService     user metadata service
+     * @param config              config
+     * @param jdbcTemplate        JDBC template
+     * @param lookupService       lookup service
+     * @param metacatJson         json util
+     * @param userMetadataService user metadata service
      */
     public MySqlTagService(
         final Config config,
         final JdbcTemplate jdbcTemplate,
-        final JdbcTemplate jdbcTemplateLongTimeout,
         final LookupService lookupService,
         final MetacatJson metacatJson,
         final UserMetadataService userMetadataService
     ) {
         this.config = Preconditions.checkNotNull(config, "config is required");
         this.jdbcTemplate = jdbcTemplate;
-        this.jdbcTemplateLongTimeout = jdbcTemplateLongTimeout;
+        this.jdbcTemplateLongTimeout = MySqlServiceUtil.createJdbcTemplate(
+            jdbcTemplate.getDataSource(), config.getLongMetadataQueryTimeout());
         this.lookupService = Preconditions.checkNotNull(lookupService, "lookupService is required");
         this.metacatJson = Preconditions.checkNotNull(metacatJson, "metacatJson is required");
         this.userMetadataService = Preconditions.checkNotNull(userMetadataService, "userMetadataService is required");

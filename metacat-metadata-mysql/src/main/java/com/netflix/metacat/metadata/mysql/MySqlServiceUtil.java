@@ -19,6 +19,7 @@ import com.netflix.metacat.common.server.util.DataSourceManager;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import javax.sql.DataSource;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.FileSystems;
@@ -80,6 +81,19 @@ public final class MySqlServiceUtil {
             throw new Exception(String.format("Unable to read from user metadata config file %s", configLocation), e);
         }
         dataSourceManager.load(UserMetadataService.NAME_DATASOURCE, connectionProperties);
+    }
+
+    /**
+     * Create a JDBC template with a query timeout.
+     *
+     * @param dataSource data source
+     * @param timeoutSec query timeout, in sec
+     * @return the JDBC template
+     */
+    public static JdbcTemplate createJdbcTemplate(final DataSource dataSource, final int timeoutSec) {
+        final JdbcTemplate result = new JdbcTemplate(dataSource);
+        result.setQueryTimeout(timeoutSec);
+        return result;
     }
 }
 

@@ -29,7 +29,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
@@ -92,25 +91,22 @@ public class MySqlUserMetadataConfig {
     /**
      * The tag service to use.
      *
-     * @param jdbcTemplate            JDBC template
-     * @param jdbcTemplateLongTimeout JDBC template for longer running queries
-     * @param config                  System config to use
-     * @param metacatJson             Json Utilities to use
-     * @param lookupService           Look up service implementation to use
-     * @param userMetadataService     User metadata service implementation to use
+     * @param jdbcTemplate        JDBC template
+     * @param config              System config to use
+     * @param metacatJson         Json Utilities to use
+     * @param lookupService       Look up service implementation to use
+     * @param userMetadataService User metadata service implementation to use
      * @return The tag service implementation backed by MySQL
      */
     @Bean
     public TagService tagService(
         @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
-        @Qualifier("metadataJdbcTemplateLongTimeout") final JdbcTemplate jdbcTemplateLongTimeout,
         final Config config,
         final MetacatJson metacatJson,
         final LookupService lookupService,
         final UserMetadataService userMetadataService
     ) {
-        return new MySqlTagService(
-            config, jdbcTemplate, jdbcTemplateLongTimeout, lookupService, metacatJson, userMetadataService);
+        return new MySqlTagService(config, jdbcTemplate, lookupService, metacatJson, userMetadataService);
     }
 
     /**
@@ -163,28 +159,10 @@ public class MySqlUserMetadataConfig {
      * @return metadata JDBC template
      */
     @Bean
-    @Primary
     public JdbcTemplate metadataJdbcTemplate(
         @Qualifier("metadataDataSource") final DataSource mySqlDataSource,
         final Config config) {
-        final JdbcTemplate result = new JdbcTemplate(mySqlDataSource);
-        result.setQueryTimeout(config.getMetadataQueryTimeout());
-        return result;
-    }
-
-    /**
-     * mySql metadata JDBC template for longer running queries.
-     *
-     * @param mySqlDataSource metadata data source
-     * @param config System config to use
-     * @return metadata JDBC template
-     */
-    @Bean
-    public JdbcTemplate metadataJdbcTemplateLongTimeout(
-        @Qualifier("metadataDataSource") final DataSource mySqlDataSource,
-        final Config config) {
-        final JdbcTemplate result = new JdbcTemplate(mySqlDataSource);
-        result.setQueryTimeout(config.getLongMetadataQueryTimeout());
-        return result;
+        return MySqlServiceUtil.createJdbcTemplate(
+            mySqlDataSource, config.getMetadataQueryTimeout());
     }
 }
