@@ -105,11 +105,12 @@ public class MySqlTagService implements TagService {
     /**
      * Constructor.
      *
-     * @param config              config
-     * @param jdbcTemplate        JDBC template
-     * @param lookupService       lookup service
-     * @param metacatJson         json util
-     * @param userMetadataService user metadata service
+     * @param config                  config
+     * @param jdbcTemplate            JDBC template
+     * @param jdbcTemplateLongTimeout JDBC template for longer running queries
+     * @param lookupService           lookup service
+     * @param metacatJson             json util
+     * @param userMetadataService     user metadata service
      */
     public MySqlTagService(
         final Config config,

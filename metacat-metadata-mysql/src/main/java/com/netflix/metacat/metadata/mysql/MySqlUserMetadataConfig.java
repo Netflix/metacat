@@ -92,11 +92,12 @@ public class MySqlUserMetadataConfig {
     /**
      * The tag service to use.
      *
-     * @param jdbcTemplate        JDBC template
-     * @param config              System config to use
-     * @param metacatJson         Json Utilities to use
-     * @param lookupService       Look up service implementation to use
-     * @param userMetadataService User metadata service implementation to use
+     * @param jdbcTemplate            JDBC template
+     * @param jdbcTemplateLongTimeout JDBC template for longer running queries
+     * @param config                  System config to use
+     * @param metacatJson             Json Utilities to use
+     * @param lookupService           Look up service implementation to use
+     * @param userMetadataService     User metadata service implementation to use
      * @return The tag service implementation backed by MySQL
      */
     @Bean
@@ -108,7 +109,8 @@ public class MySqlUserMetadataConfig {
         final LookupService lookupService,
         final UserMetadataService userMetadataService
     ) {
-        return new MySqlTagService(config, jdbcTemplate, jdbcTemplateLongTimeout, lookupService, metacatJson, userMetadataService);
+        return new MySqlTagService(
+            config, jdbcTemplate, jdbcTemplateLongTimeout, lookupService, metacatJson, userMetadataService);
     }
 
     /**
