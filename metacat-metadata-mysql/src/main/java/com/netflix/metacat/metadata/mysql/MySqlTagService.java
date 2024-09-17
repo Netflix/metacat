@@ -23,6 +23,7 @@ import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.model.Lookup;
 import com.netflix.metacat.common.server.model.TagItem;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.properties.UserMetadata;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
@@ -320,7 +321,7 @@ public class MySqlTagService implements TagService {
      * @return list of qualified names of the items
      */
     @Override
-    @Transactional(readOnly = true, timeout = 120)
+    @Transactional(readOnly = true, timeout = UserMetadata.LONG_QUERY_TIMEOUT_IN_SEC)
     public List<QualifiedName> list(
         @Nullable final Set<String> includeTags,
         @Nullable final Set<String> excludeTags,

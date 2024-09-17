@@ -28,9 +28,13 @@ import lombok.NonNull;
  */
 @Data
 public class UserMetadata {
+
+    public static final int QUERY_TIMEOUT_IN_SEC = 60;
+    public static final int LONG_QUERY_TIMEOUT_IN_SEC = 120;
+
     @NonNull
     private Config config = new Config();
-    private int queryTimeoutInSeconds = 60;
+    private int queryTimeoutInSeconds = QUERY_TIMEOUT_IN_SEC;
 
     /**
      * config related properties.
