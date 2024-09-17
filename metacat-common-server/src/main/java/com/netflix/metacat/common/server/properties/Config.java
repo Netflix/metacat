@@ -588,9 +588,9 @@ public interface Config {
     int getMetadataQueryTimeout();
 
     /**
-     * Long metadata query timeout in seconds, for longer running queries.
+     * Metadata query timeout in seconds, for longer running queries.
      *
-     * @return Long metadata query timeout in seconds
+     * @return Metadata query timeout in seconds for longer running queries
      */
     int getLongMetadataQueryTimeout();
 
