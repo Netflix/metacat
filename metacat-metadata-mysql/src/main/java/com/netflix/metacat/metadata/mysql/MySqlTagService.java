@@ -320,7 +320,7 @@ public class MySqlTagService implements TagService {
      * @return list of qualified names of the items
      */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, timeout = 120)
     public List<QualifiedName> list(
         @Nullable final Set<String> includeTags,
         @Nullable final Set<String> excludeTags,
