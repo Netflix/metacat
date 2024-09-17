@@ -162,9 +162,7 @@ public class MySqlUserMetadataConfig {
     public JdbcTemplate metadataJdbcTemplate(
         @Qualifier("metadataDataSource") final DataSource mySqlDataSource,
         final Config config) {
-        final JdbcTemplate result = new JdbcTemplate(mySqlDataSource);
-        result.setQueryTimeout(config.getMetadataQueryTimeout());
-        return result;
+        return MySqlServiceUtil.createJdbcTemplate(
+            mySqlDataSource, config.getMetadataQueryTimeout());
     }
-
 }

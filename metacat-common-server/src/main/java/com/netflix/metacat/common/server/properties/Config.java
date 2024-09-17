@@ -588,6 +588,13 @@ public interface Config {
     int getMetadataQueryTimeout();
 
     /**
+     * Metadata query timeout in seconds, for longer running queries.
+     *
+     * @return Metadata query timeout in seconds for longer running queries
+     */
+    int getLongMetadataQueryTimeout();
+
+    /**
      * Whether to check the existence of the iceberg metadata location before updating the table.
      *
      * @return Whether to check the existence of the iceberg metadata location before updating the table
