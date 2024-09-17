@@ -13,12 +13,12 @@
 
 package com.netflix.metacat.connector.hive.converters
 
-import com.netflix.metacat.common.server.properties.Config
 import org.apache.iceberg.PartitionField
 import org.apache.iceberg.transforms.Identity
 import org.apache.iceberg.transforms.VoidTransform
 import org.apache.iceberg.Schema
 import org.apache.iceberg.types.Types
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -28,11 +28,8 @@ import spock.lang.Unroll
  * @since 1.0.0
  */
 class HiveTypeConverterSpec extends Specification {
-    HiveTypeConverter converter;
-
-    def setup() {
-        this.converter = new HiveTypeConverter()
-    }
+    @Shared
+    HiveTypeConverter converter = new HiveTypeConverter()
 
     @Unroll
     def 'can convert "#typeString" to a presto type and back'(String typeString) {
