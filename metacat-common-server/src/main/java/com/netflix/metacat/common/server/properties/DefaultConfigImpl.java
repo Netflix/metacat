@@ -665,6 +665,11 @@ public class DefaultConfigImpl implements Config {
     }
 
     @Override
+    public int getLongMetadataQueryTimeout() {
+        return this.metacatProperties.getUsermetadata().getLongQueryTimeoutInSeconds();
+    }
+
+    @Override
     public boolean isIcebergPreviousMetadataLocationCheckEnabled() {
         return this.metacatProperties.getHive().getIceberg().isIcebergPreviousMetadataLocationCheckEnabled();
     }

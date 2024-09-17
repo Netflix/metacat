@@ -99,7 +99,8 @@ public class MySqlTagService implements TagService {
     private final LookupService lookupService;
     private final MetacatJson metacatJson;
     private final UserMetadataService userMetadataService;
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplateLongTimeout;
 
     /**
      * Constructor.
@@ -113,12 +114,14 @@ public class MySqlTagService implements TagService {
     public MySqlTagService(
         final Config config,
         final JdbcTemplate jdbcTemplate,
+        final JdbcTemplate jdbcTemplateLongTimeout,
         final LookupService lookupService,
         final MetacatJson metacatJson,
         final UserMetadataService userMetadataService
     ) {
         this.config = Preconditions.checkNotNull(config, "config is required");
         this.jdbcTemplate = jdbcTemplate;
+        this.jdbcTemplateLongTimeout = jdbcTemplateLongTimeout;
         this.lookupService = Preconditions.checkNotNull(lookupService, "lookupService is required");
         this.metacatJson = Preconditions.checkNotNull(metacatJson, "metacatJson is required");
         this.userMetadataService = Preconditions.checkNotNull(userMetadataService, "userMetadataService is required");
@@ -320,7 +323,7 @@ public class MySqlTagService implements TagService {
      * @return list of qualified names of the items
      */
     @Override
-    @Transactional(readOnly = true, timeout = 120)
+    @Transactional(readOnly = true)
     public List<QualifiedName> list(
         @Nullable final Set<String> includeTags,
         @Nullable final Set<String> excludeTags,
@@ -477,7 +480,7 @@ public class MySqlTagService implements TagService {
             new SqlParameterValue(Types.INTEGER, type == null ? 1 : 0),
             new SqlParameterValue(Types.VARCHAR, type == null ? ".*" : type.getRegexValue())
         ).collect(Collectors.toList()));
-        return jdbcTemplate.query(query,
+        return jdbcTemplateLongTimeout.query(query,
             sqlParams.toArray(),
             (rs, rowNum) -> rs.getString("name"));
     }
