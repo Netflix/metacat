@@ -703,9 +703,4 @@ public class DefaultConfigImpl implements Config {
     public ParentChildRelationshipProperties getParentChildRelationshipProperties() {
         return this.metacatProperties.getParentChildRelationshipProperties();
     }
-
-    @Override
-    public boolean omitVoidTransformEnabled() {
-        return this.metacatProperties.getPartitionColumnProperties().isOmitVoidPartitionEnabled();
-    }
 }
