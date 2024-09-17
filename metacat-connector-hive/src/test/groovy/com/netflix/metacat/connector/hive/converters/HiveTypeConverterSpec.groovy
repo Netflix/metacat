@@ -19,7 +19,6 @@ import org.apache.iceberg.transforms.Identity
 import org.apache.iceberg.transforms.VoidTransform
 import org.apache.iceberg.Schema
 import org.apache.iceberg.types.Types
-import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -29,13 +28,10 @@ import spock.lang.Unroll
  * @since 1.0.0
  */
 class HiveTypeConverterSpec extends Specification {
-    Config config = Mock(Config)
     HiveTypeConverter converter;
 
     def setup() {
-        // Stub omitVoidPartitionEnabled to always return true
-        this.config.omitVoidTransformEnabled() >> true
-        this.converter = new HiveTypeConverter(this.config)
+        this.converter = new HiveTypeConverter()
     }
 
     @Unroll

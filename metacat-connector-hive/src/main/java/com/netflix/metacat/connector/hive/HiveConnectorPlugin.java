@@ -32,8 +32,7 @@ import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
  */
 public class HiveConnectorPlugin implements ConnectorPlugin {
     private static final String CONNECTOR_TYPE = "hive";
-    private static final HiveTypeConverter HIVE_TYPE_CONVERTER =
-        new HiveTypeConverter(ConnectorContext.builder().build().getConfig());
+    private static final HiveTypeConverter HIVE_TYPE_CONVERTER = new HiveTypeConverter();
     private static final HiveConnectorInfoConverter INFO_CONVERTER_HIVE
         = new HiveConnectorInfoConverter(HIVE_TYPE_CONVERTER);
 

@@ -65,7 +65,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
 
     private static final Splitter SLASH_SPLITTER = Splitter.on('/');
     private static final Splitter EQUAL_SPLITTER = Splitter.on('=').limit(2);
-    private final HiveTypeConverter hiveTypeConverter;
+    private HiveTypeConverter hiveTypeConverter = new HiveTypeConverter();
 
     /**
      * Constructor.

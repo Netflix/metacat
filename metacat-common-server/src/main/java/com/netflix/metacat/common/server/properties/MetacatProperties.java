@@ -72,8 +72,6 @@ public class MetacatProperties {
     private RateLimiterProperties rateLimiterProperties = new RateLimiterProperties();
     @NonNull
     private ParentChildRelationshipProperties parentChildRelationshipProperties;
-    @NonNull
-    private PartitionColumnProperties partitionColumnProperties;
 
     /**
      * Constructor for MetacatProperties.
@@ -83,6 +81,5 @@ public class MetacatProperties {
     public MetacatProperties(final Environment env) {
         this.env = env;
         this.parentChildRelationshipProperties = new ParentChildRelationshipProperties(env);
-        this.partitionColumnProperties = new PartitionColumnProperties(env);
     }
 }
