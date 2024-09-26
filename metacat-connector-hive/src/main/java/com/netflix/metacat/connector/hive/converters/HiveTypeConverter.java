@@ -112,7 +112,7 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
                                                      final List<PartitionField> partitionFields) {
         final List<FieldInfo> fields = Lists.newArrayList();
         final List<String> partitionNames = partitionFields.stream()
-                .filter(f -> f.transform() != null && !f.transform().toString().equals("void"))
+                .filter(f -> f.transform() != null && !f.transform().toString().equalsIgnoreCase("void"))
                 .map(f -> schema.findField(f.sourceId()).name())
                 .collect(Collectors.toList());
 

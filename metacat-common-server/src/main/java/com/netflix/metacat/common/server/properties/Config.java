@@ -642,6 +642,5 @@ public interface Config {
      * @return parentChildRelationshipProperties
      */
     ParentChildRelationshipProperties getParentChildRelationshipProperties();
-
 }
 
