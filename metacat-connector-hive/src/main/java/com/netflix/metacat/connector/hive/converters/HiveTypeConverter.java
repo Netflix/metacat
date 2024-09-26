@@ -108,12 +108,13 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
      * @param partitionFields partitioned fields
      * @return list of field Info
      */
-    public List<FieldInfo> icebergeSchemaTofieldDtos(final Schema schema,
+    public List<FieldInfo> icebergSchemaTofieldDtos(final Schema schema,
                                                      final List<PartitionField> partitionFields) {
         final List<FieldInfo> fields = Lists.newArrayList();
-        final List<String> partitionNames =
-            partitionFields.stream()
-                .map(f -> schema.findField(f.sourceId()).name()).collect(Collectors.toList());
+        final List<String> partitionNames = partitionFields.stream()
+                .filter(f -> f.transform() != null && !f.transform().toString().equalsIgnoreCase("void"))
+                .map(f -> schema.findField(f.sourceId()).name())
+                .collect(Collectors.toList());
 
         for (Types.NestedField field : schema.columns()) {
             final FieldInfo fieldInfo = new FieldInfo();
