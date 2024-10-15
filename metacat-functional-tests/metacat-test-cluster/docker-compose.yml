@@ -75,7 +75,6 @@ services:
                 -Dmetacat.table.update.noUpdateOnTags=iceberg_migration_do_not_modify
                 -Dmetacat.event.updateIcebergTablePostEventEnabled=true
                 -Dmetacat.parentChildRelationshipProperties.createEnabled=true
-                -Dmetacat.parentChildRelationshipProperties.getEnabled=true
                 -Dmetacat.parentChildRelationshipProperties.renameEnabled=true
                 -Dmetacat.parentChildRelationshipProperties.dropEnabled=true'
         labels:
