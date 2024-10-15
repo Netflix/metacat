@@ -53,7 +53,8 @@ import com.netflix.spectator.api.DefaultRegistry
 import com.netflix.spectator.api.NoopRegistry
 import spock.lang.Specification
 import spock.lang.Unroll
-import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
+import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService
+import org.apache.commons.lang3.tuple.Pair
 
 /**
  * Tests for the TableServiceImpl.
@@ -417,16 +418,22 @@ class TableServiceImplSpec extends Specification {
         given:
         def oldName = QualifiedName.ofTable("clone", "clone", "oldChild")
         def newName = QualifiedName.ofTable("clone", "clone", "newChild")
+        def set1 = new HashSet<String>(['uuid'])
+        def set2 = new HashSet<String>(['uuid'])
+        def pair = Pair.of(set1, set2)
+        def emptyPair = Pair.of(new HashSet<String>(), new HashSet<String>())
+        def leftPair = Pair.of(set1, new HashSet<String>())
+        def rightPair = Pair.of(new HashSet<String>(), set2)
+
         // mock when rename fail and revert happen
         when:
         service.rename(oldName, newName, false)
-
         then:
         1 * config.isParentChildRenameEnabled() >> true
         1 * config.getNoTableRenameOnTags() >> []
-        1 * parentChildRelSvc.rename(oldName, newName)
+        1 * parentChildRelSvc.renameSoftInsert(oldName, newName) >> pair
         1 * connectorTableServiceProxy.rename(oldName, newName, _) >> {throw new RuntimeException("Fail to rename")}
-        1 * parentChildRelSvc.rename(newName, oldName)
+        1 * parentChildRelSvc.drop(newName, Optional.of(pair))
         thrown(RuntimeException)
 
         // mock when rename parent child relation is disabled and the table is a child table
@@ -436,9 +443,11 @@ class TableServiceImplSpec extends Specification {
         1 * config.getNoTableRenameOnTags() >> []
         1 * config.isParentChildRenameEnabled() >> false
         1 * parentChildRelSvc.isChildTable(oldName) >> true
+        0 * parentChildRelSvc.renameSoftInsert(oldName, newName)
         0 * parentChildRelSvc.isParentTable(oldName)
-        0 * parentChildRelSvc.rename(oldName, newName)
+        0 * parentChildRelSvc.renameSoftInsert(oldName, newName)
         0 * connectorTableServiceProxy.rename(oldName, newName, _)
+        0 * parentChildRelSvc.drop(_, _)
         def e = thrown(RuntimeException)
         assert e.message.contains("is currently disabled")
 
@@ -450,8 +459,9 @@ class TableServiceImplSpec extends Specification {
         1 * config.isParentChildRenameEnabled() >> false
         1 * parentChildRelSvc.isChildTable(oldName) >> false
         1 * parentChildRelSvc.isParentTable(oldName) >> true
-        0 * parentChildRelSvc.rename(oldName, newName)
+        0 * parentChildRelSvc.renameSoftInsert(oldName, newName)
         0 * connectorTableServiceProxy.rename(oldName, newName, _)
+        0 * parentChildRelSvc.drop(_, _)
         e = thrown(RuntimeException)
         assert e.message.contains("is currently disabled")
 
@@ -463,11 +473,12 @@ class TableServiceImplSpec extends Specification {
         1 * config.isParentChildRenameEnabled() >> false
         1 * parentChildRelSvc.isChildTable(oldName) >> false
         1 * parentChildRelSvc.isParentTable(oldName) >> false
-        1 * parentChildRelSvc.rename(oldName, newName)
+        1 * parentChildRelSvc.renameSoftInsert(oldName, newName) >> emptyPair
         1 * connectorTableServiceProxy.rename(oldName, newName, _)
+        0 * parentChildRelSvc.drop(oldName, _)
         noExceptionThrown()
 
-        // mock normal success case
+        // mock normal success case that is not a parent nor child table
         when:
         service.rename(oldName, newName, false)
         then:
@@ -475,8 +486,35 @@ class TableServiceImplSpec extends Specification {
         1 * config.isParentChildRenameEnabled() >> true
         0 * parentChildRelSvc.isChildTable(oldName)
         0 * parentChildRelSvc.isParentTable(oldName)
-        1 * parentChildRelSvc.rename(oldName, newName)
+        1 * parentChildRelSvc.renameSoftInsert(oldName, newName) >> emptyPair
         1 * connectorTableServiceProxy.rename(oldName, newName, _)
+        0 * parentChildRelSvc.drop(oldName, Optional.of(emptyPair))
+        noExceptionThrown()
+
+        // mock normal success case that is a parent
+        when:
+        service.rename(oldName, newName, false)
+        then:
+        1 * config.getNoTableRenameOnTags() >> []
+        1 * config.isParentChildRenameEnabled() >> true
+        0 * parentChildRelSvc.isChildTable(oldName)
+        0 * parentChildRelSvc.isParentTable(oldName)
+        1 * parentChildRelSvc.renameSoftInsert(oldName, newName) >> leftPair
+        1 * connectorTableServiceProxy.rename(oldName, newName, _)
+        1 * parentChildRelSvc.drop(oldName, Optional.of(leftPair))
+        noExceptionThrown()
+
+        // mock normal success case that is a child table
+        when:
+        service.rename(oldName, newName, false)
+        then:
+        1 * config.getNoTableRenameOnTags() >> []
+        1 * config.isParentChildRenameEnabled() >> true
+        0 * parentChildRelSvc.isChildTable(oldName)
+        0 * parentChildRelSvc.isParentTable(oldName)
+        1 * parentChildRelSvc.renameSoftInsert(oldName, newName) >> rightPair
+        1 * connectorTableServiceProxy.rename(oldName, newName, _)
+        1 * parentChildRelSvc.drop(oldName, Optional.of(rightPair))
         noExceptionThrown()
     }
 
@@ -508,7 +546,7 @@ class TableServiceImplSpec extends Specification {
         1 * parentChildRelSvc.getChildren(name)
         1 * config.getNoTableDeleteOnTags() >> []
         1 * connectorTableServiceProxy.delete(_) >> {throw new RuntimeException("Fail to drop")}
-        0 * parentChildRelSvc.drop(_)
+        0 * parentChildRelSvc.drop(_, _)
         thrown(RuntimeException)
 
         // mock drop is not enabled and it is a child table
@@ -523,7 +561,7 @@ class TableServiceImplSpec extends Specification {
         0 * parentChildRelSvc.getChildren(name)
         1 * config.getNoTableDeleteOnTags() >> []
         0 * connectorTableServiceProxy.delete(_)
-        0 * parentChildRelSvc.drop(_)
+        0 * parentChildRelSvc.drop(_,_)
         e = thrown(RuntimeException)
         assert e.message.contains("is currently disabled")
 
@@ -539,7 +577,7 @@ class TableServiceImplSpec extends Specification {
         0 * parentChildRelSvc.getChildren(name)
         1 * config.getNoTableDeleteOnTags() >> []
         0 * connectorTableServiceProxy.delete(_)
-        0 * parentChildRelSvc.drop(_)
+        0 * parentChildRelSvc.drop(_,_)
         e = thrown(RuntimeException)
         assert e.message.contains("is currently disabled")
 
@@ -556,7 +594,7 @@ class TableServiceImplSpec extends Specification {
         1 * parentChildRelSvc.getChildren(name) >> {[] as Set}
         1 * config.getNoTableDeleteOnTags() >> []
         1 * connectorTableServiceProxy.delete(_)
-        1 * parentChildRelSvc.drop(_)
+        1 * parentChildRelSvc.drop(name, Optional.empty())
         1 * config.canDeleteTableDefinitionMetadata() >> true
         noExceptionThrown()
 
@@ -572,7 +610,7 @@ class TableServiceImplSpec extends Specification {
         1 * parentChildRelSvc.getChildren(name) >> {[] as Set}
         1 * config.getNoTableDeleteOnTags() >> []
         1 * connectorTableServiceProxy.delete(_)
-        1 * parentChildRelSvc.drop(_)
+        1 * parentChildRelSvc.drop(name, Optional.empty())
         1 * config.canDeleteTableDefinitionMetadata() >> true
         noExceptionThrown()
     }
