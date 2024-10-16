@@ -255,6 +255,7 @@ configure(javaProjects) {
     // Print out full stack traces when our tests fail to assist debugging (e.g., when scanning Jenkins console output)
     tasks.withType(Test) {
         useJUnitPlatform()
+        jvmArgs += ['--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED']
         testLogging {
             exceptionFormat = "full"
             events "PASSED", "FAILED", "SKIPPED"
