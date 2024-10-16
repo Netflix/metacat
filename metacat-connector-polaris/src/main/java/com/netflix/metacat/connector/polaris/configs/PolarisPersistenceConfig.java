@@ -17,11 +17,15 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 /**
  * The Polaris Store Persistence config.
@@ -73,5 +77,10 @@ public class PolarisPersistenceConfig {
   public PolarisStoreService polarisStoreService(
       final PolarisDatabaseRepository repo, final PolarisTableRepository tblRepo) {
     return new PolarisStoreConnector(repo, tblRepo);
+  }
+
+  @Bean
+  public DateTimeProvider dateTimeProvider() {
+    return () -> Optional.of(Instant.now().truncatedTo(ChronoUnit.MICROS));
   }
 }
