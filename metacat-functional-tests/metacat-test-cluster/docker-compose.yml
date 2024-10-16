@@ -17,7 +17,7 @@
 
 services:
     metacat:
-        image: tomcat:8.0-jre8
+        image: tomcat:9.0-jre17
         platform: linux/x86_64
         depends_on:
             - hive-metastore
