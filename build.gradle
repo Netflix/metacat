@@ -61,6 +61,10 @@ allprojects {
     apply plugin:  'java-library'
     apply plugin: "io.franzbecker.gradle-lombok"
 
+    tasks.withType(JavaExec) {
+        jvmArgs += ['--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED']
+    }
+
     lombok {
         version = '1.18.30'
     }
