@@ -87,6 +87,7 @@ idea {
     }
 }
 
+
 configure(javaProjects) {
     apply plugin: "java"
     apply plugin: "checkstyle"
@@ -98,8 +99,11 @@ configure(javaProjects) {
 
     group = "com.netflix.${githubProjectName}"
 
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+//    sourceCompatibility = JavaVersion.VERSION_1_8
+//    targetCompatibility = JavaVersion.VERSION_1_8
+
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 
     dependencyManagement {
         imports {
