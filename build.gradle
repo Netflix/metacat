@@ -251,6 +251,7 @@ configure(javaProjects) {
             exceptionFormat = "full"
             events "PASSED", "FAILED", "SKIPPED"
         }
+        jvmArgs('--add-opens=java.base/java.lang.invoke=ALL-UNNAMED')
     }
 
     javadoc {
