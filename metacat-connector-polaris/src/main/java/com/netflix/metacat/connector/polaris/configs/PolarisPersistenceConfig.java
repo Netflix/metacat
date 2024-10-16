@@ -79,6 +79,11 @@ public class PolarisPersistenceConfig {
     return new PolarisStoreConnector(repo, tblRepo);
   }
 
+  /**
+   * Set timestamp precision for JPA auditing.
+   *
+   * @return The date time provider
+   */
   @Bean
   public DateTimeProvider dateTimeProvider() {
     return () -> Optional.of(Instant.now().truncatedTo(ChronoUnit.MICROS));
