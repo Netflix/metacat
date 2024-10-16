@@ -52,7 +52,7 @@ public class HiveMetastoreClientFactory {
     }
 
     private static Socket createSocksSocket(final HostAndPort proxy) {
-        final SocketAddress address = InetSocketAddress.createUnresolved(proxy.getHostText(), proxy.getPort());
+        final SocketAddress address = InetSocketAddress.createUnresolved(proxy.getHost(), proxy.getPort());
         return new Socket(new Proxy(Proxy.Type.SOCKS, address));
     }
 
