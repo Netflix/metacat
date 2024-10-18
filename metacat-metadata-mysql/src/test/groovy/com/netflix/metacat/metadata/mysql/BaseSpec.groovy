@@ -85,7 +85,7 @@ class BaseSpec extends Specification {
         props.setProperty('javax.jdo.option.password', mysqlServer.getPassword())
         props.setProperty('javax.jdo.option.defaultTransactionIsolation', 'READ_COMMITTED')
         props.setProperty('javax.jdo.option.defaultAutoCommit', 'false')
-        props.setProperty('javax.jdo.option.driverClassName', 'com.mysql.jdbc.Driver')
+        props.setProperty('javax.jdo.option.driverClassName', 'com.mysql.cj.jdbc.Driver')
         URL url = Thread.currentThread().getContextClassLoader().getResource("usermetadata.properties")
         Path filePath
         if (url != null) {
