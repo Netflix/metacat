@@ -64,7 +64,7 @@ import java.util.stream.Collectors;
 /**
  * Hive base connector base service impl.
  *
- * @author zhenl
+ * @author zhenl]
  * @since 1.0.0
  */
 @Getter
