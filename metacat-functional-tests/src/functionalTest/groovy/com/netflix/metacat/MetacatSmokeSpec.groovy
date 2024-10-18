@@ -1933,7 +1933,7 @@ class MetacatSmokeSpec extends Specification {
 
     @Unroll
     @Ignore
-    def "Delete definition metadata for non-existant #name"() {
+    def "dDelete definition metadata for non-existant #name"() {
         when:
         def metacatSource = Sql.newInstance('jdbc:mysql://hive-metastore-db:3306/metacat?useUnicode=true&characterEncoding=latin1&autoReconnect=true&sessionVariables=@@innodb_lock_wait_timeout=120&rewriteBatchedStatements=true', 'metacat_user','metacat_user_password', 'com.mysql.jdbc.Driver')
         metacatSource.execute("insert into definition_metadata(version,created_by,data,date_created,last_updated,last_updated_by,name) values (0,'test', '{}',now(), now(), 'test'," + name+ ")")
