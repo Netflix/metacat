@@ -44,7 +44,7 @@ jobs:
           - cat ./metacat-functional-tests/build/logs/metacat/spring.log
       - name: Upload Test Report
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: functional-test-report
           path: metacat-functional-tests/build/reports/functionalTest/index.html
