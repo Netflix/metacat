@@ -42,9 +42,9 @@ jobs:
           - name=$(date +"%Y-%m-%d") && cat ./metacat-functional-tests/build/logs/metacat/catalina.$name.log
           - name=$(date +"%Y-%m-%d") && cat ./metacat-functional-tests/build/logs/metacat/localhost.$name.log
           - cat ./metacat-functional-tests/build/logs/metacat/spring.log
-      - name: Upload test report
-          if: failure()
-          uses: actions/upload-artifact@v2
-          with:
-            name: functional-test-report
-            path: metacat-functional-tests/build/reports/functionalTest/index.html
+      - name: Upload Test Report
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: functional-test-report
+          path: metacat-functional-tests/build/reports/functionalTest/index.html
