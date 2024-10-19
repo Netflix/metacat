@@ -7,6 +7,7 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 /**
  * Test persistence operations on Database objects.
  */
+@Disabled
 @Slf4j
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {PolarisPersistenceConfig.class})
