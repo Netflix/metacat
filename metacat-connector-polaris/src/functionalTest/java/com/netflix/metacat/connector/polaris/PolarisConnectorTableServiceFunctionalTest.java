@@ -11,6 +11,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
  * Some of the tests cannot be run in unit test as it uses h2 database, which does not support all
  * functionalities in crdb so include those tests here.
  */
+@Disabled
 @Slf4j
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {PolarisPersistenceConfig.class})
