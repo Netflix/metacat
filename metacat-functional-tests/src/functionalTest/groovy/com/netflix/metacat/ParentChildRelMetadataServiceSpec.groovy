@@ -618,4 +618,38 @@ class ParentChildRelMetadataServiceSpec extends Specification{
         1        |  "CLONE,5"               | "CLONE,test,3;OTHER,other,2"|  "CLONE,testhive/test/parent,2"                               | 2
         1        |  "CLONE,5;Other,3"       | "CLONE,test,3;CLONE,other,2"|  "CLONE,testhive/test/parent,2;CLONE,testhive/test/other,2"   | 2
     }
+
+    def "test empty/null input string for config"() {
+        given:
+        def parentChildProps = new ParentChildRelationshipProperties(null)
+
+        when: "Setting properties to non empty string"
+        parentChildProps.setDefaultMaxAllowPerRelType("CLONE,5;Other,3")
+        parentChildProps.setMaxAllowPerDBPerRelType("CLONE,test,3;CLONE,other,2")
+        parentChildProps.setMaxAllowPerTablePerRelType("CLONE,testhive/test/parent,2;CLONE,testhive/test/other,2")
+
+        then:
+        assert parentChildProps.getDefaultMaxAllowPerRelType().size() == 2
+        assert parentChildProps.getMaxAllowPerDBPerRelType().size() == 1
+        assert parentChildProps.getMaxAllowPerTablePerRelType().size() == 1
+
+        when: "Setting properties to empty or null based on the isEmpty flag"
+        if (isEmpty) {
+            parentChildProps.setDefaultMaxAllowPerRelType("")
+            parentChildProps.setMaxAllowPerDBPerRelType("")
+            parentChildProps.setMaxAllowPerTablePerRelType("")
+        } else {
+            parentChildProps.setDefaultMaxAllowPerRelType(null)
+            parentChildProps.setMaxAllowPerDBPerRelType(null)
+            parentChildProps.setMaxAllowPerTablePerRelType(null)
+        }
+
+        then: "The properties should be empty"
+        assert parentChildProps.getDefaultMaxAllowPerRelType().isEmpty()
+        assert parentChildProps.getMaxAllowPerDBPerRelType().isEmpty()
+        assert parentChildProps.getMaxAllowPerTablePerRelType().isEmpty()
+
+        where:
+        isEmpty << [true, false]
+    }
 }

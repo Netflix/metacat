@@ -58,9 +58,6 @@ public class ParentChildRelationshipProperties {
      * @param  configStr configString
      */
     public void setMaxAllowPerTablePerRelType(@Nullable final String configStr) {
-        if (configStr == null || configStr.isEmpty()) {
-            return;
-        }
         try {
             this.maxAllowPerTablePerRelType = parseNestedConfigString(configStr);
         } catch (Exception e) {
@@ -74,9 +71,6 @@ public class ParentChildRelationshipProperties {
      * @param  configStr configString
      */
     public void setMaxAllowPerDBPerRelType(@Nullable final String configStr) {
-        if (configStr == null || configStr.isEmpty()) {
-            return;
-        }
         try {
             this.maxAllowPerDBPerRelType = parseNestedConfigString(configStr);
         } catch (Exception e) {
@@ -89,12 +83,10 @@ public class ParentChildRelationshipProperties {
      * @param  configStr configString
      */
     public void setDefaultMaxAllowPerRelType(@Nullable final String configStr) {
-        if (configStr == null || configStr.isEmpty()) {
-            return;
-        }
         try {
-            this.defaultMaxAllowPerRelType =
-                Arrays.stream(configStr.split(";"))
+            this.defaultMaxAllowPerRelType = configStr == null || configStr.isEmpty()
+                ? new HashMap<>()
+                : Arrays.stream(configStr.split(";"))
                     .map(entry -> entry.split(","))
                     .collect(Collectors.toMap(
                         parts -> parts[0],
@@ -105,7 +97,10 @@ public class ParentChildRelationshipProperties {
         }
     }
 
-    private Map<String, Map<String, Integer>> parseNestedConfigString(final String configStr) {
+    private Map<String, Map<String, Integer>> parseNestedConfigString(@Nullable final String configStr) {
+        if (configStr == null || configStr.isEmpty()) {
+            return new HashMap<>();
+        }
         return Arrays.stream(configStr.split(";"))
             .map(entry -> entry.split(","))
             .collect(Collectors.groupingBy(
