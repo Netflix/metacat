@@ -58,9 +58,6 @@ public class ParentChildRelationshipProperties {
      * @param  configStr configString
      */
     public void setMaxAllowPerTablePerRelType(@Nullable final String configStr) {
-        if (configStr == null || configStr.isEmpty()) {
-            return;
-        }
         try {
             this.maxAllowPerTablePerRelType = parseNestedConfigString(configStr);
         } catch (Exception e) {
@@ -74,9 +71,6 @@ public class ParentChildRelationshipProperties {
      * @param  configStr configString
      */
     public void setMaxAllowPerDBPerRelType(@Nullable final String configStr) {
-        if (configStr == null || configStr.isEmpty()) {
-            return;
-        }
         try {
             this.maxAllowPerDBPerRelType = parseNestedConfigString(configStr);
         } catch (Exception e) {
@@ -90,7 +84,7 @@ public class ParentChildRelationshipProperties {
      */
     public void setDefaultMaxAllowPerRelType(@Nullable final String configStr) {
         if (configStr == null || configStr.isEmpty()) {
-            return;
+            this.defaultMaxAllowPerRelType = new HashMap<>();
         }
         try {
             this.defaultMaxAllowPerRelType =
@@ -106,6 +100,9 @@ public class ParentChildRelationshipProperties {
     }
 
     private Map<String, Map<String, Integer>> parseNestedConfigString(final String configStr) {
+        if (configStr == null || configStr.isEmpty()) {
+            return new HashMap<>();
+        }
         return Arrays.stream(configStr.split(";"))
             .map(entry -> entry.split(","))
             .collect(Collectors.groupingBy(
