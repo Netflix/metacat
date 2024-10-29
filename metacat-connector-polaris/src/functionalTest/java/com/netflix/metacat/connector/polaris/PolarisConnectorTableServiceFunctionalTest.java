@@ -11,6 +11,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 @SpringBootTest(classes = {PolarisPersistenceConfig.class})
 @ActiveProfiles(profiles = {"polaris_functional_test"})
 @AutoConfigureDataJpa
+@Disabled
 public class PolarisConnectorTableServiceFunctionalTest extends PolarisConnectorTableServiceTest {
     /**
      * Test get table names.

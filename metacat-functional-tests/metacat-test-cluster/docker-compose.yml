@@ -87,6 +87,7 @@ services:
         platform: linux/x86_64
         volumes:
             - ./datastores/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+            - ./datastores/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
         environment:
             - MYSQL_ROOT_PASSWORD=root_password
             - MYSQL_USER=metacat_user
