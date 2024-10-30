@@ -19,7 +19,6 @@ package com.netflix.metacat.connector.hive.converters
 import org.apache.iceberg.PartitionField
 import org.apache.iceberg.PartitionSpec
 import org.apache.iceberg.Schema
-import org.apache.iceberg.transforms.Identity
 import org.apache.iceberg.types.Type
 import org.apache.iceberg.types.Types
 import com.netflix.metacat.common.QualifiedName
@@ -59,7 +58,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
     def setup() {
         // Stub this to always return true
         config.isEpochInSeconds() >> true
-        converter = new HiveConnectorInfoConverter(new HiveTypeConverter())
+        converter = new HiveConnectorInfoConverter( new HiveTypeConverter())
     }
 
     def 'test date to epoch seconds'() {
@@ -513,7 +512,6 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         def tableInfo = converter.fromIcebergTableToTableInfo(QualifiedName.ofTable('c', 'd', 't'),
             icebergTableWrapper, "/tmp/test", TableInfo.builder().build() )
         then:
-        2 * field.transform() >> Mock(Identity)
         1 * icebergTable.properties() >> ["test":"abd"]
         2 * icebergTable.spec() >>  partSpec
         1 * partSpec.fields() >> [ field]
