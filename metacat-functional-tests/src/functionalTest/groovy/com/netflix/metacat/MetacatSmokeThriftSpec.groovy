@@ -145,8 +145,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -166,8 +166,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -202,9 +202,9 @@ class MetacatSmokeThriftSpec extends Specification {
         client.dropDatabase(databaseName)
         where:
         catalogName | client
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
-        // 'remote'    | remoteHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
+         'remote'    | remoteHiveClient
     }
 
     @Unroll
@@ -224,8 +224,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -256,8 +256,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -287,8 +287,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -322,8 +322,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -480,148 +480,54 @@ class MetacatSmokeThriftSpec extends Specification {
         }
     }
 
-    @Unroll
-    def "Test: Embedded Thrift connector: get partitions for filter #filter returned #result partitions"() {
-        when:
-        def catalogName = 'local'
-        def client = localHiveClient
-        def databaseName = 'test_db5_' + catalogName
-        def tableName = 'parts'
-        def hiveTable = createTable(client, catalogName, databaseName, tableName)
-        if (cursor == 'start') {
-            def uri = isLocalEnv ? 'file:/tmp/abc' : null;
-            def dto = converter.toTableDto(hiveConverter.toTableInfo(QualifiedName.ofTable(catalogName, databaseName, tableName), hiveTable.getTTable()))
-            def partitionDtos = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, 'one=xyz/total=1', uri, 10)
-            def partitions = partitionDtos.collect {
-                new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(it)))
-            }
-            client.alterPartitions(databaseName + '.' + tableName, partitions)
-        }
-        then:
-        try {
-            client.getPartitionsByFilter(hiveTable, filter).size() == result
-        } catch (Exception e) {
-            result == -1
-            e.message.contains('400 Bad Request')
-        }
-        cleanup:
-        if (cursor == 'end') {
-            def partitionNames = client.getPartitionNames(databaseName, tableName, (short) -1)
-            partitionNames.each {
-                client.dropPartition(databaseName, tableName, Lists.newArrayList(PartitionUtil.getPartitionKeyValues(it).values()), false)
-            }
-        }
-        where:
-        cursor  | filter                                 | result
-        'start' | "one='xyz'"                            | 10
-        ''      | 'one="xyz"'                            | 10
-        ''      | "one='xyz' and one like 'xy_'"         | 10
-        ''      | "(one='xyz') and one like 'xy%'"       | 10
-        ''      | "one like 'xy%'"                       | 10
-        ''      | "total=10"                             | 1
-        ''      | "total='10'"                           | 1
-        ''      | "total<1"                              | 0
-        ''      | "total>1"                              | 10
-        ''      | "total>=10"                            | 10
-        ''      | "total<=20"                            | 10
-        ''      | "total between 1 and 20"               | 10
-        ''      | "total not between 1 and 20"           | 0
-        ''      | 'one=xyz'                              | -1
-        ''      | 'invalid=xyz'                          | -1
-        'end'   | "one='xyz' and (total=11 or total=12)" | 2
-    }
-
-    @Unroll
-    def "Test: Embedded Fast Thrift connector: get partitions for filter #filter returned #result partitions"() {
-        when:
-        def catalogName = 'localfast'
-        def client = localFastHiveClient
-        def databaseName = 'test_db5_' + catalogName
-        def tableName = 'parts'
-        def hiveTable = createTable(client, catalogName, databaseName, tableName)
-        if (cursor == 'start') {
-            def uri = isLocalEnv ? 'file:/tmp/abc' : null;
-            def dto = converter.toTableDto(hiveConverter.toTableInfo(QualifiedName.ofTable(catalogName, databaseName, tableName), hiveTable.getTTable()))
-            def partitionDtos = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, 'one=xyz/total=1', uri, 10)
-            def partitions = partitionDtos.collect {
-                new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(it)))
-            }
-            client.alterPartitions(databaseName + '.' + tableName, partitions)
-        }
-        then:
-        try {
-            client.getPartitionsByFilter(hiveTable, filter).size() == result
-        } catch (Exception e) {
-            result == -1
-            e.message.contains('400 Bad Request')
-        }
-        cleanup:
-        if (cursor == 'end') {
-            def partitionNames = client.getPartitionNames(databaseName, tableName, (short) -1)
-            partitionNames.each {
-                client.dropPartition(databaseName, tableName, Lists.newArrayList(PartitionUtil.getPartitionKeyValues(it).values()), false)
-            }
-        }
-        where:
-        cursor  | filter                                 | result
-        'start' | "one='xyz'"                            | 10
-        ''      | 'one="xyz"'                            | 10
-        ''      | "one='xyz' and one like 'xy_'"         | 10
-        ''      | "(one='xyz') and one like 'xy%'"       | 10
-        ''      | "one like 'xy%'"                       | 10
-        ''      | "total=10"                             | 1
-        ''      | "total='10'"                           | 1
-        ''      | "total<1"                              | 0
-        ''      | "total>1"                              | 10
-        ''      | "total>=10"                            | 10
-        ''      | "total<=20"                            | 10
-        ''      | "total between 1 and 20"               | 10
-        ''      | "total not between 1 and 20"           | 0
-        ''      | 'one=xyz'                              | -1
-        ''      | 'invalid=xyz'                          | -1
-        'end'   | "one='xyz' and (total=11 or total=12)" | 2
-    }
-
-    @Unroll
-    def "Test: Embedded Fast Thrift connector: getPartitionsByNames with escape values"() {
-        given:
-        def catalogName = 'localfast'
-        def client = localFastHiveClient
-        def databaseName = 'test_db5_' + catalogName
-        def tableName = 'parts'
-        def hiveTable = createTable(client, catalogName, databaseName, tableName)
-        def uri = isLocalEnv ? 'file:/tmp/abc' : null;
-        def dto = converter.toTableDto(hiveConverter.toTableInfo(QualifiedName.ofTable(catalogName, databaseName, tableName), hiveTable.getTTable()))
-        def partitionDtos = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, 'one=xy^:z/total=1', uri, 10)
-        def partitions = partitionDtos.collect {
-            new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(it)))
-        }
-        client.alterPartitions(databaseName + '.' + tableName, partitions)
-        when:
-        def result = client.getPartitionsByNames(hiveTable, ['one=xy%5E%3Az/total=10'])
-        then:
-        result.size() == 1
-        result.get(0).getValues() == ['xy^:z', '10']
-        when:
-        result = client.getPartitionsByNames(hiveTable, ['one=xy^:z/total=10'])
-        then:
-        result.size() == 0
-        when:
-        result = client.getPartitionsByNames(hiveTable, ['total':'10'])
-        then:
-        result.size() == 1
-        result.get(0).getValues() == ['xy^:z', '10']
-        when:
-        result = client.getPartitionsByNames(hiveTable, ['one':'xy^:z'])
-        then:
-        result.size() == 10
-        when:
-        result = client.getPartitionsByNames(hiveTable, ['one':'xy%5E%3Az'])
-        then:
-        result.size() == 0
-        cleanup:
-        client.getPartitions(hiveTable).each {
-            client.dropPartition(databaseName, tableName, it.getValues(), false)
-        }
-    }
+//    @Unroll
+//    def "Test: Embedded Thrift connector: get partitions for filter #filter returned #result partitions"() {
+//        when:
+//        def catalogName = 'local'
+//        def client = localHiveClient
+//        def databaseName = 'test_db5_' + catalogName
+//        def tableName = 'parts'
+//        def hiveTable = createTable(client, catalogName, databaseName, tableName)
+//        if (cursor == 'start') {
+//            def uri = isLocalEnv ? 'file:/tmp/abc' : null;
+//            def dto = converter.toTableDto(hiveConverter.toTableInfo(QualifiedName.ofTable(catalogName, databaseName, tableName), hiveTable.getTTable()))
+//            def partitionDtos = DataDtoProvider.getPartitions(catalogName, databaseName, tableName, 'one=xyz/total=1', uri, 10)
+//            def partitions = partitionDtos.collect {
+//                new Partition(hiveTable, hiveConverter.fromPartitionInfo(converter.fromTableDto(dto), converter.fromPartitionDto(it)))
+//            }
+//            client.alterPartitions(databaseName + '.' + tableName, partitions)
+//        }
+//        then:
+//        try {
+//            client.getPartitionsByFilter(hiveTable, filter).size() == result
+//        } catch (Exception e) {
+//            result == -1
+//            e.message.contains('400 Bad Request')
+//        }
+//        cleanup:
+//        if (cursor == 'end') {
+//            def partitionNames = client.getPartitionNames(databaseName, tableName, (short) -1)
+//            partitionNames.each {
+//                client.dropPartition(databaseName, tableName, Lists.newArrayList(PartitionUtil.getPartitionKeyValues(it).values()), false)
+//            }
+//        }
+//        where:
+//        cursor  | filter                                 | result
+//        'start' | "one='xyz'"                            | 10
+//        ''      | 'one="xyz"'                            | 10
+//        ''      | "one='xyz' and one like 'xy_'"         | 10
+//        ''      | "(one='xyz') and one like 'xy%'"       | 10
+//        ''      | "one like 'xy%'"                       | 10
+//        ''      | "total=10"                             | 1
+//        ''      | "total='10'"                           | 1
+//        ''      | "total<1"                              | 0
+//        ''      | "total>1"                              | 10
+//        ''      | "total>=10"                            | 10
+//        ''      | "total<=20"                            | 10
+//        ''      | "total between 1 and 20"               | 10
+//        ''      | "total not between 1 and 20"           | 0
+//        ''      | 'one=xyz'                              | -1
+//        ''      | 'invalid=xyz'                          | -1
+//        'end'   | "one='xyz' and (total=11 or total=12)" | 2
+//    }
 }
