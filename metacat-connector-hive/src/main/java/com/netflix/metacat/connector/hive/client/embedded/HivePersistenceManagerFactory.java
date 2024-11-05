@@ -21,7 +21,10 @@ import com.netflix.metacat.common.server.util.DataSourceManager;
 import com.netflix.metacat.connector.hive.util.HiveConfigConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.SessionFactory;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.hibernate.service.ServiceRegistry;
 
 import javax.sql.DataSource;
 import java.util.Map;
@@ -60,6 +63,8 @@ public final class HivePersistenceManagerFactory {
         if (result == null) {
             final DataSource dataSource = DataSourceManager.get().get(name);
 
+            HiveCustomConnectionProvider connectionProvider = new HiveCustomConnectionProvider(dataSource);
+
             // Configure Hibernate SessionFactory
             Configuration configuration = new Configuration();
             configuration.setProperty("hibernate.connection.datasource", dataSource.toString());
@@ -70,8 +75,15 @@ public final class HivePersistenceManagerFactory {
             configuration.setProperty(HiveConfigConstants.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE, "false");
             configuration.setProperty(HiveConfigConstants.HIBERNATE_CACHE_REGION_FACTORY_CLASS, "org.hibernate.cache.internal.NoCachingRegionFactory");
 
+            configuration.getProperties().put("hibernate.connection.provider_class", HiveCustomConnectionProvider.class.getName());
 
-            result = configuration.buildSessionFactory();
+            // Build the ServiceRegistry with the custom ConnectionProvider
+            ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
+                .applySettings(configuration.getProperties())
+                .addService(ConnectionProvider.class, connectionProvider)
+                .build();
+
+            result = configuration.buildSessionFactory(serviceRegistry);
             factories.put(name, result);
         }
         return result;
