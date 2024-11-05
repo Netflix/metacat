@@ -119,6 +119,113 @@ public final class HiveConfigConstants {
      */
     public static final String ON_RENAME_CONVERT_TO_EXTERNAL = "metacat.on-rename-convert-to-external";
 
+    /**
+     * JAVAX_JDO_DATASTORETIMEOUT.
+     */
+    public static final String JAVAX_JDO_DATASTORETIMEOUT = "javax.jdo.option.DatastoreTimeout";
+    /**
+     * JAVAX_JDO_DATASTOREREADTIMEOUT.
+     */
+    public static final String JAVAX_JDO_DATASTOREREADTIMEOUT = "javax.jdo.option.DatastoreReadTimeoutMillis";
+    /**
+     * JAVAX_JDO_DATASTOREWRITETIMEOUT.
+     */
+    public static final String JAVAX_JDO_DATASTOREWRITETIMEOUT = "javax.jdo.option.DatastoreWriteTimeoutMillis";
+    /**
+     * JAVAX_JDO_PERSISTENCEMANAGER_FACTORY_CLASS.
+     */
+    public static final String JAVAX_JDO_PERSISTENCEMANAGER_FACTORY_CLASS = "javax.jdo.PersistenceManagerFactoryClass";
+    /**
+     * JAVAX_JDO_PERSISTENCEMANAGER_FACTORY.
+     */
+    public static final String JAVAX_JDO_PERSISTENCEMANAGER_FACTORY
+        = "com.netflix.metacat.connector.hive.client.embedded.HivePersistenceManagerFactory";
+
+    /**
+     * DATANUCLEUS_AUTOSTARTMECHANISMMODE.
+     */
+    public static final String DATANUCLEUS_AUTOSTARTMECHANISMMODE = "datanucleus.autoStartMechanismMode";
+    /**
+     * DATANUCLEUS_DETACHALLONCOMMIT.
+     */
+    public static final String DATANUCLEUS_DETACHALLONCOMMIT = "datanucleus.detachAllOnCommit";
+    /**
+     * DATANUCLEUS_DETACHALLONROLLBACK.
+     */
+    public static final String DATANUCLEUS_DETACHALLONROLLBACK = "datanucleus.detachAllOnRollback";
+
+    /**
+     * DATANUCLEUS_PERSISTENCYBYREACHATCOMMIT.
+     */
+    public static final String DATANUCLEUS_PERSISTENCYBYREACHATCOMMIT = "datanucleus.persistenceByReachabilityAtCommit";
+
+    /**
+     * DATANUCLEUS_CACHE_LEVEL2_TYPE.
+     */
+    public static final String DATANUCLEUS_CACHE_LEVEL2_TYPE = "datanucleus.cache.level2.type";
+    /**
+     * DATANUCLEUS_CACHE_LEVEL2.
+     */
+    public static final String DATANUCLEUS_CACHE_LEVEL2 = "datanucleus.cache.level2";
+    /**
+     * DATANUCLEUS_VALIDATECOLUMNS.
+     */
+    public static final String DATANUCLEUS_VALIDATECOLUMNS = "datanucleus.validateColumns";
+    /**
+     * DATANUCLEUS_VALIDATECONSTRAINTS.
+     */
+    public static final String DATANUCLEUS_VALIDATECONSTRAINTS = "datanucleus.validateConstraints";
+    /**
+     * DATANUCLEUS_VALIDATETABLE.
+     */
+    public static final String DATANUCLEUS_VALIDATETABLE = "datanucleus.validateTables";
+    /**
+     * DATANUCLEUS_TRANSACTIONISOLATION.
+     */
+    public static final String DATANUCLEUS_TRANSACTIONISOLATION = "datanucleus.transactionIsolation";
+    /**
+     * DATANUCLEUS_READCOMMITTED.
+     */
+    public static final String DATANUCLEUS_READCOMMITTED = "read-committed";
+    /**
+     * DATANUCLEUS_FIXEDDATASTORE.
+     */
+    public static final String DATANUCLEUS_FIXEDDATASTORE = "datanucleus.fixedDatastore";
+
+    /**
+     * DATANUCLEUS_AUTOCREATESCHEMA.
+     */
+    public static final String DATANUCLEUS_AUTOCREATESCHEMA = "datanucleus.autoCreateSchema";
+    /**
+     * DATANUCLEUS_RDBMS_CHECKEXISTTABLESORVIEWS.
+     */
+    public static final String DATANUCLEUS_RDBMS_CHECKEXISTTABLESORVIEWS = "datanucleus.rdbms.CheckExistTablesOrViews";
+    /**
+     * DATANUCLEUS_RDBMS_INITIALIZECOULUMNINFO.
+     */
+    public static final String DATANUCLEUS_RDBMS_INITIALIZECOULUMNINFO = "datanucleus.rdbms.initializeColumnInfo";
+    /**
+     * DATANUCLEUS_IDENTIFIERFACTORY.
+     */
+    public static final String DATANUCLEUS_IDENTIFIERFACTORY = "datanucleus.identifierFactory";
+
+    /**
+     * DATANUCLEUS_DATANUCLEU1.
+     */
+    public static final String DATANUCLEUS_DATANUCLEU1 = "datanucleus1";
+
+    /**
+     * DATANUCLEUS_CONNECTIONFACTORY.
+     */
+    public static final String DATANUCLEUS_CONNECTIONFACTORY = "datanucleus.ConnectionFactory";
+
+    /**
+     * DATANUCLEUS_RDBMS_USELEGACYNATIVEVALUESTRATEGY.
+     */
+    public static final String DATANUCLEUS_RDBMS_USELEGACYNATIVEVALUESTRATEGY
+        = "datanucleus.rdbms.useLegacyNativeValueStrategy";
+
+
     private HiveConfigConstants() {
     }
 }

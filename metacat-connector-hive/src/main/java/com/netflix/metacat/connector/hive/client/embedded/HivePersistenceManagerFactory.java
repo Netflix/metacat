@@ -64,11 +64,11 @@ public final class HivePersistenceManagerFactory {
             Configuration configuration = new Configuration();
             configuration.setProperty("hibernate.connection.datasource", dataSource.toString());
             configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect");
-            configuration.setProperty(HiveConfigConstants.HIBERNATE_HBM2DDL_AUTO, String.valueOf(props.getOrDefault(HiveConfigConstants.HIBERNATE_HBM2DDL_AUTO, "update")));
-            configuration.setProperty(HiveConfigConstants.HIBERNATE_JDBC_TIMEOUT, String.valueOf(props.getOrDefault(HiveConfigConstants.HIBERNATE_JDBC_TIMEOUT, "30")));
-            configuration.setProperty(HiveConfigConstants.HIBERNATE_CONNECTION_ISOLATION, String.valueOf(props.getOrDefault(HiveConfigConstants.HIBERNATE_CONNECTION_ISOLATION, "2"))); // TRANSACTION_READ_COMMITTED
-            configuration.setProperty(HiveConfigConstants.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE, String.valueOf(props.getOrDefault(HiveConfigConstants.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE, "false")));
-            configuration.setProperty(HiveConfigConstants.HIBERNATE_CACHE_REGION_FACTORY_CLASS, String.valueOf(props.getOrDefault(HiveConfigConstants.HIBERNATE_CACHE_REGION_FACTORY_CLASS, "org.hibernate.cache.internal.NoCachingRegionFactory")));
+            configuration.setProperty(HiveConfigConstants.HIBERNATE_HBM2DDL_AUTO, "update");
+            configuration.setProperty(HiveConfigConstants.HIBERNATE_JDBC_TIMEOUT, "30");
+            configuration.setProperty(HiveConfigConstants.HIBERNATE_CONNECTION_ISOLATION, "2"); // TRANSACTION_READ_COMMITTED
+            configuration.setProperty(HiveConfigConstants.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE, "false");
+            configuration.setProperty(HiveConfigConstants.HIBERNATE_CACHE_REGION_FACTORY_CLASS, "org.hibernate.cache.internal.NoCachingRegionFactory");
 
 
             result = configuration.buildSessionFactory();
