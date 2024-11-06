@@ -41,7 +41,6 @@ import feign.RetryableException
 import feign.Retryer
 import groovy.sql.Sql
 import org.apache.commons.io.FileUtils
-import org.apache.iceberg.PartitionField
 import org.joda.time.Instant
 import org.skyscreamer.jsonassert.JSONAssert
 import spock.lang.Ignore
