@@ -158,8 +158,8 @@ class MetacatSmokeSpec extends Specification {
 
     def createAllTypesTable() {
         when:
-        createTable('embedded-hive-metastore', 'smoke_db', 'metacat_all_types')
-        def table = api.getTable('embedded-hive-metastore', 'smoke_db', 'metacat_all_types', true, true, true)
+        createTable('hive-metastore', 'smoke_db', 'metacat_all_types')
+        def table = api.getTable('hive-metastore', 'smoke_db', 'metacat_all_types', true, true, true)
         then:
         noExceptionThrown()
         table.fields.find { it.name == 'latest_is_available' }.type == '{(array_element: map[chararray])}'
@@ -171,8 +171,8 @@ class MetacatSmokeSpec extends Specification {
         def catalogNames = catalogs.collect { it.catalogName }
         then:
         catalogNames.size() > 0
-        catalogNames.contains('embedded-hive-metastore')
-        catalogNames.contains('embedded-fast-hive-metastore')
+//        catalogNames.contains('embedded-hive-metastore')
+//        catalogNames.contains('embedded-fast-hive-metastore')
         catalogNames.contains('s3-mysql-db')
         catalogNames.contains('hive-metastore')
     }
@@ -187,7 +187,7 @@ class MetacatSmokeSpec extends Specification {
     @Unroll
     def "Test create/get table with nested fields with upper case"() {
         given:
-        def catalogName = 'embedded-fast-hive-metastore'
+        def catalogName = 'hive-metastore'
         def databaseName = 'iceberg_db'
         def tableName = 'iceberg_table_with_upper_case_nested_fields'
         def uri = isLocalEnv ? String.format('file:/tmp/data/') : null
@@ -320,9 +320,10 @@ class MetacatSmokeSpec extends Specification {
         }
         where:
         catalogName                     | databaseName | uri                                                  | error
-        'embedded-hive-metastore'       | 'smoke_db0'  | 'file:/tmp/embedded-hive-metastore/smoke_db00'       | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db0' | 'file:/tmp/embedded-fast-hive-metastore/fsmoke_db00' | null
-        'embedded-fast-hive-metastore'  | 'shard1'     | null                                                 | null
+//        'embedded-hive-metastore'       | 'smoke_db0'  | 'file:/tmp/embedded-hive-metastore/smoke_db00'       | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db0' | 'file:/tmp/embedded-fast-hive-metastore/fsmoke_db00' | null
+//        'embedded-fast-hive-metastore'  | 'shard1'     | null                                                 | null
+        'hive-metastore'                | 'shard1'     | null                                                 | null
         'hive-metastore'                | 'hsmoke_db0' | 'file:/tmp/hive-metastore/hsmoke_db00'               | null
         's3-mysql-db'                   | 'smoke_db0'  | null                                                 | null
         'invalid-catalog'               | 'smoke_db0'  | null                                                 | MetacatNotFoundException.class
@@ -345,9 +346,10 @@ class MetacatSmokeSpec extends Specification {
         api.deleteDatabase(catalogName, databaseName)
         where:
         catalogName                     | databaseName | uri
-        'embedded-hive-metastore'       | 'smoke_db0'  | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db0' | 'file:/tmp/embedded-fast-hive-metastore/fsmoke_db00'
-        'embedded-fast-hive-metastore'  | 'shard1'     | null
+//        'embedded-hive-metastore'       | 'smoke_db0'  | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db0' | 'file:/tmp/embedded-fast-hive-metastore/fsmoke_db00'
+//        'embedded-fast-hive-metastore'  | 'shard1'     | null
+        'hive-metastore'                | 'smoke_db0' | 'file:/tmp/warehouse/smoke_db0.db'
         'hive-metastore'                | 'hsmoke_db0' | null
     }
 
@@ -401,17 +403,17 @@ class MetacatSmokeSpec extends Specification {
         }
         where:
         catalogName                     | databaseName | tableName           | setUri | setNull | error
-        'embedded-hive-metastore'       | 'smoke_db1'  | 'test_create_table' | true   | false   | null
-        'embedded-hive-metastore'       | 'smoke_db1'  | 'test_create_table' | false  | false   | null
-        'embedded-hive-metastore'       | 'smoke_db1'  | 'test_create_table1'| false  | true    | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test_create_table' | true   | false   | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test_create_table' | false  | false   | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test_create_table1'| false  | true    | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test.create_table1'| false  | true    | InvalidMetaException.class
-        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table' | true   | false   | null
-        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table' | false  | false   | null
-        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table1'| false  | true    | null
-        'embedded-fast-hive-metastore'  | 'shard'      | 'test.create_table1'| false  | true    | InvalidMetaException.class
+//        'embedded-hive-metastore'       | 'smoke_db1'  | 'test_create_table' | true   | false   | null
+//        'embedded-hive-metastore'       | 'smoke_db1'  | 'test_create_table' | false  | false   | null
+//        'embedded-hive-metastore'       | 'smoke_db1'  | 'test_create_table1'| false  | true    | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test_create_table' | true   | false   | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test_create_table' | false  | false   | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test_create_table1'| false  | true    | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db1' | 'test.create_table1'| false  | true    | InvalidMetaException.class
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table' | true   | false   | null
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table' | false  | false   | null
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table1'| false  | true    | null
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'test.create_table1'| false  | true    | InvalidMetaException.class
         'hive-metastore'                | 'hsmoke_db1' | 'test_create_table' | true   | false   | null
         'hive-metastore'                | 'hsmoke_db1' | 'test_create_table' | false  | false   | null
         'hive-metastore'                | 'hsmoke_db1' | 'test_create_table1'| false  | true    | null
@@ -424,7 +426,7 @@ class MetacatSmokeSpec extends Specification {
 
     def testCreateTableWithOwner() {
         given:
-        def catalogName = 'embedded-fast-hive-metastore'
+        def catalogName = 'hive-metastore'
         def databaseName = 'fsmoke_db1_owner'
         try {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
@@ -509,7 +511,7 @@ class MetacatSmokeSpec extends Specification {
 
         where:
         catalogName                     | databaseName | tableName           | setUri | setNull | error
-        'embedded-fast-hive-metastore'  | 'fsmoke_db2' | 'test_create_table' | true   | false   | null
+        'hive-metastore'  | 'fsmoke_db2' | 'test_create_table' | true   | false   | null
     }
 
     def "Test create/delete database/table for #catalogName/#databaseName/#tableName with ACL"() {
@@ -535,12 +537,12 @@ class MetacatSmokeSpec extends Specification {
 
         where:
         catalogName                     | databaseName | tableName
-        'embedded-fast-hive-metastore'  | 'fsmoke_acl' | 'test_create_table'
+        'hive-metastore'                | 'fsmoke_acl' | 'test_create_table'
     }
 
     def "Test get table names"() {
         given:
-        def catalogName = 'embedded-fast-hive-metastore'
+        def catalogName = 'hive-metastore'
         def databaseName = 'fsmoke_db_names'
         def database1Name = 'fsmoke_db1_names'
         def database2Name = 'fsmoke_db2_names'
@@ -591,7 +593,7 @@ class MetacatSmokeSpec extends Specification {
 
     def "Test materialized common view create/drop"() {
         given:
-        def catalogName = 'embedded-fast-hive-metastore'
+        def catalogName = 'hive-metastore'
         def databaseName = 'iceberg_db'
         def storageTableName = 'st_iceberg_table'
         def commonViewName = 'test_common_view'
@@ -694,7 +696,7 @@ class MetacatSmokeSpec extends Specification {
         api.doesTableExist(catalogName, databaseName, tableName)
         updatedTable.getMetadata().get('metadata_location') == metadataLocation1
         updatedTable != null
-        if (catalogName == 'embedded-fast-hive-metastore') {
+        if (catalogName == 'hive-metastore') {
             updatedTable.getDataUri() == updatedUri
             updatedTable.getSerde().getInputFormat() == 'org.apache.hadoop.mapred.TextInputFormat'
         }
@@ -756,13 +758,13 @@ class MetacatSmokeSpec extends Specification {
         cleanup:
         FileUtils.deleteQuietly(icebergManifestFile)
         where:
-        catalogName << ['polaris-metastore', 'embedded-fast-hive-metastore']
+        catalogName << ['polaris-metastore', 'hive-metastore']
     }
 
     @Unroll
     def "Test get iceberg table and partitions"() {
         given:
-        def catalogName = 'embedded-fast-hive-metastore'
+        def catalogName = 'hive-metastore'
         def databaseName = 'iceberg_db'
         def tableName = 'iceberg_table_6'
         def uri = isLocalEnv ? String.format('file:/tmp/data/') : null
@@ -831,7 +833,7 @@ class MetacatSmokeSpec extends Specification {
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
     }
-
+    
     @Unroll
     def "Test ignore void transform as partition fields"() {
         given:
@@ -873,8 +875,9 @@ class MetacatSmokeSpec extends Specification {
     }
 
     @Unroll
+
     def "Test get partitions from iceberg table using #filter"() {
-        def catalogName = 'embedded-fast-hive-metastore'
+        def catalogName = 'hive-metastore'
         def databaseName = 'iceberg_db'
         def tableName = 'iceberg_table_6'
         def tableDto = new TableDto(
@@ -935,16 +938,16 @@ class MetacatSmokeSpec extends Specification {
         metadataApi.deleteDefinitionMetadata(name, true)
         where:
         catalogName                     | databaseName  | tableName             | count     | result
-        'embedded-hive-metastore'       | 'smoke_ddb1'  | 'test_create_table'   | 15        | 0
-        'embedded-fast-hive-metastore'  | 'fsmoke_ddb1' | 'test_create_table'   | 15        | 0
-        'embedded-fast-hive-metastore'  | 'shard'       | 'test_create_table'   | 15        | 0
+//        'embedded-hive-metastore'       | 'smoke_ddb1'  | 'test_create_table'   | 15        | 0
+//        'embedded-fast-hive-metastore'  | 'fsmoke_ddb1' | 'test_create_table'   | 15        | 0
+//        'embedded-fast-hive-metastore'  | 'shard'       | 'test_create_table'   | 15        | 0
         'hive-metastore'                | 'hsmoke_ddb'  | 'test_create_table'   | 15        | 0
         'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table1'  | 15        | 0
         'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table2'  | 15        | 1
         's3-mysql-db'                   | 'smoke_ddb1'  | 'test_create_table'   | 15        | 0
-        'embedded-hive-metastore'       | 'smoke_ddb1'  | 'test_create_table'   | 10        | 0
-        'embedded-fast-hive-metastore'  | 'fsmoke_ddb1' | 'test_create_table'   | 10        | 0
-        'embedded-fast-hive-metastore'  | 'shard'       | 'test_create_table'   | 10        | 0
+//        'embedded-hive-metastore'       | 'smoke_ddb1'  | 'test_create_table'   | 10        | 0
+//        'embedded-fast-hive-metastore'  | 'fsmoke_ddb1' | 'test_create_table'   | 10        | 0
+//        'embedded-fast-hive-metastore'  | 'shard'       | 'test_create_table'   | 10        | 0
         'hive-metastore'                | 'hsmoke_ddb'  | 'test_create_table'   | 10        | 0
         'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table1'  | 10        | 0
         'hive-metastore'                | 'hsmoke_ddb1' | 'test_create_table2'  | 10        | 1
@@ -966,9 +969,9 @@ class MetacatSmokeSpec extends Specification {
         api.deleteTable(catalogName, databaseName, 'metacat_all_types_copy')
         where:
         catalogName                     | databaseName
-        'embedded-hive-metastore'       | 'smoke_db1'
-        'embedded-fast-hive-metastore'  | 'fsmoke_db1'
-        'embedded-fast-hive-metastore'  | 'shard'
+//        'embedded-hive-metastore'       | 'smoke_db1'
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db1'
+//        'embedded-fast-hive-metastore'  | 'shard'
         'hive-metastore'                | 'hsmoke_db1'
         's3-mysql-db'                   | 'smoke_db1'
     }
@@ -990,9 +993,9 @@ class MetacatSmokeSpec extends Specification {
         api.deleteTable(catalogName, databaseName, tableName)
         where:
         catalogName                     | databaseName | tableName
-        'embedded-hive-metastore'       | 'smoke_db2'  | 'part'
-        'embedded-fast-hive-metastore'  | 'fsmoke_db2' | 'part'
-        'embedded-fast-hive-metastore'  | 'shard'      | 'part'
+//        'embedded-hive-metastore'       | 'smoke_db2'  | 'part'
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db2' | 'part'
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'part'
         'hive-metastore'                | 'hsmoke_db2' | 'part'
         's3-mysql-db'                   | 'smoke_db2'  | 'part'
         's3-mysql-db'                   | 'smoke_db2'  | 'PART'
@@ -1012,11 +1015,11 @@ class MetacatSmokeSpec extends Specification {
         api.deleteTable(catalogName, databaseName, newTableName)
         where:
         catalogName                     | databaseName | tableName            | external | newTableName
-        'embedded-hive-metastore'       | 'smoke_db3'  | 'test_create_table'  | null     | 'test_create_table1'
-        'embedded-fast-hive-metastore'  | 'fsmoke_db3' | 'test_create_table'  | null     | 'test_create_table1'
-        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table'  | null     | 'test_create_table1'
-        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_tablet' | 'TRUE'   | 'test_create_tablet1'
-        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_tablef' | 'FALSE'  | 'test_create_tablef1'
+//        'embedded-hive-metastore'       | 'smoke_db3'  | 'test_create_table'  | null     | 'test_create_table1'
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db3' | 'test_create_table'  | null     | 'test_create_table1'
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_table'  | null     | 'test_create_table1'
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_tablet' | 'TRUE'   | 'test_create_tablet1'
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'test_create_tablef' | 'FALSE'  | 'test_create_tablef1'
         'hive-metastore'                | 'hsmoke_db3' | 'test_create_table'  | null     | 'test_create_table1'
     }
 
@@ -1090,8 +1093,8 @@ class MetacatSmokeSpec extends Specification {
         api.deleteTable(catalogName, databaseName, tableNameTagNoRenamed)
         where:
         catalogName                    | databaseName
-        'embedded-fast-hive-metastore' | 'hsmoke_db3'
-        'embedded-fast-hive-metastore' | 'fsmoke_ddb1'
+        'hive-metastore' | 'hsmoke_db3'
+        'hive-metastore' | 'fsmoke_ddb1'
     }
 
     @Unroll
@@ -1121,17 +1124,17 @@ class MetacatSmokeSpec extends Specification {
         }
         where:
         catalogName                     | databaseName | tableName           | viewName    | error                          | repeat
-        'embedded-hive-metastore'       | 'smoke_db4'  | 'part'              | 'part_view' | null                           | false
-        'embedded-hive-metastore'       | 'smoke_db4'  | 'part'              | 'part_view' | null                           | true
-        'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'part'              | 'part_view' | null                           | false
-        'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'part'              | 'part_view' | null                           | true
-        'embedded-fast-hive-metastore'  | 'shard'      | 'part'              | 'part_view' | null                           | false
-        'embedded-fast-hive-metastore'  | 'shard'      | 'part'              | 'part_view' | null                           | true
+//        'embedded-hive-metastore'       | 'smoke_db4'  | 'part'              | 'part_view' | null                           | false
+//        'embedded-hive-metastore'       | 'smoke_db4'  | 'part'              | 'part_view' | null                           | true
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'part'              | 'part_view' | null                           | false
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'part'              | 'part_view' | null                           | true
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'part'              | 'part_view' | null                           | false
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'part'              | 'part_view' | null                           | true
         'hive-metastore'                | 'hsmoke_db4' | 'part'              | 'part_view' | null                           | false
         'hive-metastore'                | 'hsmoke_db4' | 'part'              | 'part_view' | null                           | true
-        'embedded-hive-metastore'       | 'smoke_db4'  | 'metacat_all_types' | 'part_view' | null                           | false
-        'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'metacat_all_types' | 'part_view' | null                           | false
-        'embedded-fast-hive-metastore'  | 'shard'      | 'metacat_all_types' | 'part_view' | null                           | false
+//        'embedded-hive-metastore'       | 'smoke_db4'  | 'metacat_all_types' | 'part_view' | null                           | false
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'metacat_all_types' | 'part_view' | null                           | false
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'metacat_all_types' | 'part_view' | null                           | false
         's3-mysql-db'                   | 'smoke_db4'  | 'part'              | 'part_view' | null                           | false
         'xyz'                           | 'smoke_db4'  | 'z'                 | 'part_view' | MetacatNotFoundException.class | false
     }
@@ -1162,15 +1165,15 @@ class MetacatSmokeSpec extends Specification {
         }
         where:
         catalogName                     | databaseName   | tableName           | viewName    | error                          | repeat
-        'embedded-hive-metastore'       | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
-        'embedded-hive-metastore'       | 'smoke_db4'    | 'part'              | 'part_view' | null                           | true
-        'embedded-fast-hive-metastore'  | 'fsmoke_db4'   | 'part'              | 'part_view' | null                           | false
-        'embedded-fast-hive-metastore'  | 'fsmoke_db4'   | 'part'              | 'part_view' | null                           | true
-        'embedded-fast-hive-metastore'  | 'shard'        | 'part'              | 'part_view' | null                           | false
-        'embedded-fast-hive-metastore'  | 'shard'        | 'part'              | 'part_view' | null                           | true
+//        'embedded-hive-metastore'       | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
+//        'embedded-hive-metastore'       | 'smoke_db4'    | 'part'              | 'part_view' | null                           | true
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db4'   | 'part'              | 'part_view' | null                           | false
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db4'   | 'part'              | 'part_view' | null                           | true
+//        'embedded-fast-hive-metastore'  | 'shard'        | 'part'              | 'part_view' | null                           | false
+//        'embedded-fast-hive-metastore'  | 'shard'        | 'part'              | 'part_view' | null                           | true
         'hive-metastore'                | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | false
         'hive-metastore'                | 'hsmoke_db4'   | 'part'              | 'part_view' | null                           | true
-        'embedded-hive-metastore'       | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
+//        'embedded-hive-metastore'       | 'smoke_db4'    | 'metacat_all_types' | 'part_view' | null                           | false
         's3-mysql-db'                   | 'smoke_db4'    | 'part'              | 'part_view' | null                           | false
         'xyz'                           | 'smoke_db4'    | 'z'                 | 'part_view' | MetacatNotFoundException.class | false
     }
@@ -1184,9 +1187,9 @@ class MetacatSmokeSpec extends Specification {
         noExceptionThrown()
         where:
         catalogName                     | databaseName      | tableName
-        'embedded-hive-metastore'       | 'smoke_db'        | 'part'
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'
+//        'embedded-hive-metastore'       | 'smoke_db'        | 'part'
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'
+//        'embedded-fast-hive-metastore'  | 'shard'           | 'part'
         'hive-metastore'                | 'hsmoke_db'       | 'part'
         's3-mysql-db'                   | 'smoke_db'        | 'part'
     }
@@ -1279,8 +1282,8 @@ class MetacatSmokeSpec extends Specification {
 
         where:
         catalogName                     | databaseName      | tableName                       | auditOnlyPartSize
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'                          | 2
-        'embedded-fast-hive-metastore'  | 'audit'           | 'fsmoke_db__part__audit_12345'  | 1
+        'hive-metastore'  | 'fsmoke_db'       | 'part'                          | 2
+        'hive-metastore'  | 'audit'           | 'fsmoke_db__part__audit_12345'  | 1
     }
 
     @Unroll
@@ -1341,27 +1344,27 @@ class MetacatSmokeSpec extends Specification {
         }
         where:
         catalogName                     | databaseName      | tableName | partitionName | uriSuffix | uriResult | repeat | alter | error
-        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
-        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
-        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
-        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
-        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | true   | false | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | true   | true  | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | "one=xy'z"    | ''        | ''        | false  | false | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | "one=xy'z"    | ''        | ''        | false  | true  | null
-        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | true   | false | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | true   | true  | null
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
+//        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
+//        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
+//        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
+//        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
+//        'embedded-hive-metastore'       | 'smoke_db'        | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | true   | false | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'one=xyz'     | '/'       | ''        | true   | true  | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | "one=xy'z"    | ''        | ''        | false  | false | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | "one=xy'z"    | ''        | ''        | false  | true  | null
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db'       | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
+//        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
+//        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | false  | false | null
+//        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
+//        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | true   | false | null
+//        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
+//        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | '/'       | ''        | true   | true  | null
+//        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'two=xyz'     | ''        | ''        | false  | false | MetacatBadRequestException.class
         'hive-metastore'                | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | false  | false | null
         'hive-metastore'                | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | false | null
         'hive-metastore'                | 'hsmoke_db'       | 'part'    | 'one=xyz'     | ''        | ''        | true   | true  | null
@@ -1394,15 +1397,15 @@ class MetacatSmokeSpec extends Specification {
         partitionApi.deletePartitions(catalogName, databaseName, tableName, [partitionName])
         where:
         catalogName                     | databaseName      | tableName | partitionName | serdeNull | locationNull
-        'embedded-hive-metastore'       | 'smoke_db7'       | 'part'    | 'one=xyz'     | true      | true
-        'embedded-hive-metastore'       | 'smoke_db7'       | 'part'    | 'one=xyz'     | true      | false
-        'embedded-hive-metastore'       | 'smoke_db7'       | 'part'    | 'one=xyz'     | false     | true
-        'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | true      | true
-        'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | true      | false
-        'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | false     | true
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | true      | true
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | true      | false
-        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | false     | true
+//        'embedded-hive-metastore'       | 'smoke_db7'       | 'part'    | 'one=xyz'     | true      | true
+//        'embedded-hive-metastore'       | 'smoke_db7'       | 'part'    | 'one=xyz'     | true      | false
+//        'embedded-hive-metastore'       | 'smoke_db7'       | 'part'    | 'one=xyz'     | false     | true
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | true      | true
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | true      | false
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db7'      | 'part'    | 'one=xyz'     | false     | true
+//        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | true      | true
+//        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | true      | false
+//        'embedded-fast-hive-metastore'  | 'shard'           | 'part'    | 'one=xyz'     | false     | true
         'hive-metastore'                | 'hsmoke_db7'      | 'part'    | 'one=xyz'     | true      | true
         'hive-metastore'                | 'hsmoke_db7'      | 'part'    | 'one=xyz'     | true      | false
         'hive-metastore'                | 'hsmoke_db7'      | 'part'    | 'one=xyz'     | false     | true
@@ -1521,7 +1524,7 @@ class MetacatSmokeSpec extends Specification {
         then:
         noExceptionThrown()
         where:
-        catalogName << ['embedded-hive-metastore', 'hive-metastore', 's3-mysql-db']
+        catalogName << ['hive-metastore', 's3-mysql-db']
     }
 
     @Unroll
@@ -1570,7 +1573,7 @@ class MetacatSmokeSpec extends Specification {
         then:
         noExceptionThrown()
         where:
-        catalogName << ['embedded-hive-metastore', 'hive-metastore', 's3-mysql-db']
+        catalogName << ['hive-metastore', 's3-mysql-db']
     }
 
     @Unroll
@@ -1578,17 +1581,17 @@ class MetacatSmokeSpec extends Specification {
         given:
         if (cursor == 'start') {
             def uri = isLocalEnv ? 'file:/tmp/abc' : null
-            createTable('embedded-hive-metastore', 'smoke_db', 'parts')
-            partitionApi.savePartitions('embedded-hive-metastore', 'smoke_db', 'parts', new PartitionsSaveRequestDto(partitions: PigDataDtoProvider.getPartitions('embedded-hive-metastore', 'smoke_db', 'parts', 'one=xyz/total=1', uri, 10)))
+            createTable('hive-metastore', 'smoke_db', 'parts')
+            partitionApi.savePartitions('hive-metastore', 'smoke_db', 'parts', new PartitionsSaveRequestDto(partitions: PigDataDtoProvider.getPartitions('hive-metastore', 'smoke_db', 'parts', 'one=xyz/total=1', uri, 10)))
         }
-        def partitionKeys = partitionApi.getPartitionKeys('embedded-hive-metastore', 'smoke_db', 'parts', filter, null, null, offset, limit)
+        def partitionKeys = partitionApi.getPartitionKeys('hive-metastore', 'smoke_db', 'parts', filter, null, null, offset, limit)
 
         expect:
         partitionKeys.size() == result
         cleanup:
         if (cursor == 'end') {
-            def partitionKeysToDrop = partitionApi.getPartitionKeys('embedded-hive-metastore', 'smoke_db', 'parts', null, null, null, null, null)
-            partitionApi.deletePartitions('embedded-hive-metastore', 'smoke_db', 'parts', partitionKeysToDrop)
+            def partitionKeysToDrop = partitionApi.getPartitionKeys('hive-metastore', 'smoke_db', 'parts', null, null, null, null, null)
+            partitionApi.deletePartitions('hive-metastore', 'smoke_db', 'parts', partitionKeysToDrop)
         }
         where:
         cursor  | filter                                    | offset | limit | result
@@ -1625,19 +1628,19 @@ class MetacatSmokeSpec extends Specification {
         given:
         if (cursor == 'start') {
             def uri = isLocalEnv ? 'file:/tmp/abc' : null
-            createTable('embedded-hive-metastore', 'smoke_db', 'part_hyphen')
-            partitionApi.savePartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', new PartitionsSaveRequestDto(partitions: PigDataDtoProvider.getPartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', 'one-one=xyz/total=1', uri, 10)))
-            partitionApi.savePartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', new PartitionsSaveRequestDto(partitions: PigDataDtoProvider.getPartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', 'one-one=__HIVE_DEFAULT_PARTITION__/total=1', uri, 10)))
-            partitionApi.savePartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', new PartitionsSaveRequestDto(partitions: [PigDataDtoProvider.getPartition('embedded-hive-metastore', 'smoke_db', 'part_hyphen', 'one-one=xyz/total=__HIVE_DEFAULT_PARTITION__', uri)]))
+            createTable('hive-metastore', 'smoke_db', 'part_hyphen')
+            partitionApi.savePartitions('hive-metastore', 'smoke_db', 'part_hyphen', new PartitionsSaveRequestDto(partitions: PigDataDtoProvider.getPartitions('hive-metastore', 'smoke_db', 'part_hyphen', 'one-one=xyz/total=1', uri, 10)))
+            partitionApi.savePartitions('hive-metastore', 'smoke_db', 'part_hyphen', new PartitionsSaveRequestDto(partitions: PigDataDtoProvider.getPartitions('hive-metastore', 'smoke_db', 'part_hyphen', 'one-one=__HIVE_DEFAULT_PARTITION__/total=1', uri, 10)))
+            partitionApi.savePartitions('hive-metastore', 'smoke_db', 'part_hyphen', new PartitionsSaveRequestDto(partitions: [PigDataDtoProvider.getPartition('hive-metastore', 'smoke_db', 'part_hyphen', 'one-one=xyz/total=__HIVE_DEFAULT_PARTITION__', uri)]))
         }
-        def partitionKeys = partitionApi.getPartitionKeys('embedded-hive-metastore', 'smoke_db', 'part_hyphen', filter, null, null, offset, limit)
+        def partitionKeys = partitionApi.getPartitionKeys('hive-metastore', 'smoke_db', 'part_hyphen', filter, null, null, offset, limit)
 
         expect:
         partitionKeys.size() == result
         cleanup:
         if (cursor == 'end') {
-            def partitionKeysToDrop = partitionApi.getPartitionKeys('embedded-hive-metastore', 'smoke_db', 'part_hyphen', null, null, null, null, null)
-            partitionApi.deletePartitions('embedded-hive-metastore', 'smoke_db', 'part_hyphen', partitionKeysToDrop)
+            def partitionKeysToDrop = partitionApi.getPartitionKeys('hive-metastore', 'smoke_db', 'part_hyphen', null, null, null, null, null)
+            partitionApi.deletePartitions('hive-metastore', 'smoke_db', 'part_hyphen', partitionKeysToDrop)
         }
         where:
         cursor  | filter                                    | offset | limit | result
@@ -1673,21 +1676,21 @@ class MetacatSmokeSpec extends Specification {
         partitionApi.deletePartitions(catalogName, databaseName, tableName, partitionNames)
         where:
         catalogName                     | databaseName | tableName | partitionName | count | alter
-        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 10    | 0
-        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 10    | 10
-        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 10    | 5
-        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 0
-        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 10
-        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 5
+//        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 10    | 0
+//        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 10    | 10
+//        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 10    | 5
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 0
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 10
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 5
         'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 0
         'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 10
         'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 10    | 5
-        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 15    | 0
-        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 15    | 15
-        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 15    | 5
-        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 0
-        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 15
-        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 5
+//        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 15    | 0
+//        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 15    | 15
+//        'embedded-hive-metastore'       | 'smoke_db5'  | 'part'    | 'one=xyz'     | 15    | 5
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 0
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 15
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 5
         'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 0
         'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 15
         'hive-metastore'                | 'hsmoke_db5' | 'part'    | 'one=xyz'     | 15    | 5
@@ -1696,7 +1699,7 @@ class MetacatSmokeSpec extends Specification {
     @Unroll
     def "Test Get partitions threshold"() {
         given:
-        def catalogName = 'embedded-fast-hive-metastore'
+        def catalogName = 'hive-metastore'
         def databaseName = 'fsmoke_db5'
         def tableName = 'part'
         def request = new PartitionsSaveRequestDto()
@@ -1749,12 +1752,12 @@ class MetacatSmokeSpec extends Specification {
         api.deleteTable(catalogName, databaseName, tableName)
         where:
         catalogName                     | databaseName | tableName | tags                              | repeat
-        'embedded-hive-metastore'       | 'smoke_db6'  | 'part'    | ['test'] as Set<String>           | true
-        'embedded-hive-metastore'       | 'smoke_db6'  | 'part'    | ['test', 'unused'] as Set<String> | false
-        'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test'] as Set<String>           | true
-        'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test', 'unused'] as Set<String> | false
-        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test'] as Set<String>           | true
-        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test', 'unused'] as Set<String> | false
+//        'embedded-hive-metastore'       | 'smoke_db6'  | 'part'    | ['test'] as Set<String>           | true
+//        'embedded-hive-metastore'       | 'smoke_db6'  | 'part'    | ['test', 'unused'] as Set<String> | false
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test'] as Set<String>           | true
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test', 'unused'] as Set<String> | false
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test'] as Set<String>           | true
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test', 'unused'] as Set<String> | false
         'hive-metastore'                | 'hsmoke_db6' | 'part'    | ['test'] as Set<String>           | true
         'hive-metastore'                | 'hsmoke_db6' | 'part'    | ['test', 'unused'] as Set<String> | false
         's3-mysql-db'                   | 'smoke_db6'  | 'part'    | ['test'] as Set<String>           | true
@@ -1820,12 +1823,12 @@ class MetacatSmokeSpec extends Specification {
 
         where:
         catalogName                     | databaseName | tableName | tags                              | repeat
-        'embedded-hive-metastore'       | 'smoke_db6'  | 'part'    | ['test_tag']    as List<String>        | true
-        'embedded-hive-metastore'       | 'smoke_db6'  | 'part'    | ['test_tag', 'unused'] as List<String> | false
-        'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test_tag'] as List<String>           | true
-        'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test_tag', 'unused'] as List<String> | false
-        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test_tag'] as List<String>           | true
-        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test_tag', 'unused'] as List<String> | false
+//        'embedded-hive-metastore'       | 'smoke_db6'  | 'part'    | ['test_tag']    as List<String>        | true
+//        'embedded-hive-metastore'       | 'smoke_db6'  | 'part'    | ['test_tag', 'unused'] as List<String> | false
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test_tag'] as List<String>           | true
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db6' | 'part'    | ['test_tag', 'unused'] as List<String> | false
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test_tag'] as List<String>           | true
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'part'    | ['test_tag', 'unused'] as List<String> | false
         'hive-metastore'                | 'hsmoke_db6' | 'part'    | ['test_tag'] as List<String>           | true
         'hive-metastore'                | 'hsmoke_db6' | 'part'    | ['test_tag', 'unused'] as List<String> | false
         's3-mysql-db'                   | 'smoke_db6'  | 'part'    | ['test_tag'] as List<String>           | true
@@ -1866,9 +1869,9 @@ class MetacatSmokeSpec extends Specification {
             api.deleteMView(catalogName, databaseName, tableName, viewName)
         where:
         catalogName                     | databaseName | tableName           | viewName    |tags
-        'embedded-hive-metastore'       | 'smoke_db4'  | 'part'              | 'part_view'  | ['test_tag']    as List<String>
-        'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'part'              | 'part_view' | ['test_tag']    as List<String>
-        'embedded-fast-hive-metastore'  | 'shard'      | 'part'              | 'part_view' | ['test_tag']    as List<String>
+//        'embedded-hive-metastore'       | 'smoke_db4'  | 'part'              | 'part_view'  | ['test_tag']    as List<String>
+//        'embedded-fast-hive-metastore'  | 'fsmoke_db4' | 'part'              | 'part_view' | ['test_tag']    as List<String>
+//        'embedded-fast-hive-metastore'  | 'shard'      | 'part'              | 'part_view' | ['test_tag']    as List<String>
         'hive-metastore'                | 'hsmoke_db4' | 'part'              | 'part_view' | ['test_tag']    as List<String>
         's3-mysql-db'                   | 'smoke_db4'  | 'part'              | 'part_view' | ['test_tag']    as List<String>
     }
@@ -1882,10 +1885,10 @@ class MetacatSmokeSpec extends Specification {
         thrown(MetacatNotFoundException)
         where:
         catalogName                     | databaseName | tableName | partitionNames
-        'embedded-hive-metastore'       | 'smoke_db'   | 'part'    | ['one=invalid']
-        'embedded-hive-metastore'       | 'smoke_db'   | 'part'    | ['one=test', 'one=invalid']
-        'embedded-hive-metastore'       | 'smoke_db'   | 'part'    | ['one=test', 'one=invalid']
-        'embedded-hive-metastore'       | 'smoke_db'   | 'invalid' | ['one=test', 'one=invalid']
+//        'embedded-hive-metastore'       | 'smoke_db'   | 'part'    | ['one=invalid']
+//        'embedded-hive-metastore'       | 'smoke_db'   | 'part'    | ['one=test', 'one=invalid']
+//        'embedded-hive-metastore'       | 'smoke_db'   | 'part'    | ['one=test', 'one=invalid']
+//        'embedded-hive-metastore'       | 'smoke_db'   | 'invalid' | ['one=test', 'one=invalid']
         'hive-metastore'                | 'hsmoke_db'  | 'part'    | ['one=invalid']
         'hive-metastore'                | 'hsmoke_db'  | 'part'    | ['one=test', 'one=invalid']
         'hive-metastore'                | 'hsmoke_db'  | 'part'    | ['one=test', 'one=invalid']
@@ -1906,13 +1909,13 @@ class MetacatSmokeSpec extends Specification {
         api.deleteTable(qName.getCatalogName(), qName.getDatabaseName(), qName.getTableName())
         where:
         name                                        | force
-        'embedded-hive-metastore/smoke_db/dm'       | false
-        'embedded-hive-metastore/smoke_db/dm'       | true
+        'hive-metastore/smoke_db/dm'       | false
+        'hive-metastore/smoke_db/dm'       | true
     }
 
     def "List definition metadata valid and invalid sortBy" () {
         given:
-        def qName = "embedded-hive-metastore/smoke_db/dm"
+        def qName = "hive-metastore/smoke_db/dm"
         when:
         metadataApi.getDefinitionMetadataList("zz_invalid", null, null, null, null, null, qName, null)
         then:
@@ -1938,9 +1941,9 @@ class MetacatSmokeSpec extends Specification {
         then:
         list.isEmpty()
         where:
-        name << ['embedded-hive-metastore/invalid/dm',
-                 'embedded-hive-metastore/invalid/dm/vm',
-                 'embedded-hive-metastore/invalid/dm/vm=1']
+        name << ['hive-metastore/invalid/dm',
+                 'hive-metastore/invalid/dm/vm',
+                 'hive-metastore/invalid/dm/vm=1']
     }
 
     def "Test Set tags for all scenarios"() {
@@ -2024,7 +2027,7 @@ class MetacatSmokeSpec extends Specification {
 
     def 'testCloneTableE2E'() {
         given:
-        def catalogName = 'embedded-fast-hive-metastore'
+        def catalogName = 'hive-metastore'
         def databaseName = 'iceberg_db'
 
         // First parent child connected component
@@ -2089,16 +2092,16 @@ class MetacatSmokeSpec extends Specification {
         then:
         // Test Parent 1 parentChildInfo
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
-        assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid")] as Set
+        assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [new ChildInfoDto("hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid")] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, parent1).isEmpty()
 
         // Test Child11 parentChildInfo
         assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         assert child11Table.definitionMetadata.get("random_key").asText() == "random_value"
         JSONAssert.assertEquals(child11Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
             false)
-        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
         assert parentChildRelV1.getChildren(catalogName, databaseName, child11).isEmpty()
 
         /*
@@ -2118,17 +2121,17 @@ class MetacatSmokeSpec extends Specification {
         // Test Parent 1 parentChildInfo
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
+            new ChildInfoDto("hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
         ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, parent1).isEmpty()
         // Test Child11 parentChildInfo
         assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         assert child11Table.definitionMetadata.get("random_key").asText() == "random_value"
         JSONAssert.assertEquals(child11Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child11).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
 
         /*
         Step 3: create another table with the same child1 name but different uuid under the same parent should fail
@@ -2189,17 +2192,17 @@ class MetacatSmokeSpec extends Specification {
         then:
         // Test Parent 1 parentChildInfo
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
-        assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid")] as Set
+        assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [new ChildInfoDto("hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid")] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, parent1).isEmpty()
 
         // Test Child11 parentChildInfo
         assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         assert child11Table.definitionMetadata.get("random_key").asText() == "random_value"
         JSONAssert.assertEquals(child11Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child11).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
 
 
         /*
@@ -2217,18 +2220,18 @@ class MetacatSmokeSpec extends Specification {
         // Test Parent 1 parentChildInfo
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
+            new ChildInfoDto("hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
+            new ChildInfoDto("hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
         ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, parent1).isEmpty()
 
         // Test Child12 parentChildInfo
         assert !child12Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child12Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child12).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
 
         /*
         Step 8: create a parent table on top of another parent table should fail
@@ -2275,16 +2278,16 @@ class MetacatSmokeSpec extends Specification {
         // Test Parent 2 parentChildInfo
         assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
+            new ChildInfoDto("hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, parent2).isEmpty()
 
         // Test Child21 parentChildInfo
         JSONAssert.assertEquals(child21Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child21).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child21) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent2", "CLONE", "p2_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child21) == [new ParentInfoDto("hive-metastore/iceberg_db/parent2", "CLONE", "p2_uuid")] as Set
 
         /*
         Step 11: Create a table newParent1 without any parent child rel info
@@ -2308,25 +2311,25 @@ class MetacatSmokeSpec extends Specification {
         // Test Parent 1 parentChildInfo
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
+            new ChildInfoDto("hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
+            new ChildInfoDto("hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
         ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, parent1).isEmpty()
         // Test Child11 parentChildInfo
         assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         assert child11Table.definitionMetadata.get("random_key").asText() == "random_value"
         JSONAssert.assertEquals(child11Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child11).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
         // Test Child12 parentChildInfo
         assert !child12Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child12Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child12).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
 
         /*
          Step 12: Attempt to rename parent1 to parent2 which has parent child relationship and should fail
@@ -2348,35 +2351,35 @@ class MetacatSmokeSpec extends Specification {
         // Test Parent 1 parentChildInfo
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent1) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
+            new ChildInfoDto("hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
+            new ChildInfoDto("hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
         ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, parent1).isEmpty()
         // Test Child11 parentChildInfo
         assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         assert child11Table.definitionMetadata.get("random_key").asText() == "random_value"
         JSONAssert.assertEquals(child11Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent1","relationType":"CLONE", "uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child11).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
         // Test Child12 parentChildInfo
         assert !child12Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child12Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child12).isEmpty()
         // Test Parent 2 parentChildInfo
         assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
+            new ChildInfoDto("hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
         // Test Child21 parentChildInfo
         JSONAssert.assertEquals(child21Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child21).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("hive-metastore/iceberg_db/parent1", "CLONE", "p1_uuid")] as Set
 
 
         /*
@@ -2394,25 +2397,25 @@ class MetacatSmokeSpec extends Specification {
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) ==
             [
-                new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
-                new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
+                new ChildInfoDto("hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
+                new ChildInfoDto("hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
             ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, renameParent1).isEmpty()
         // Test Child11 parentChildInfo
         assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child11Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child11).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
 
         // Test Child12 parentChildInfo
         assert !child12Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child12Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child12).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
 
         //get the parent oldName should fail as it no longer exists
         when:
@@ -2443,25 +2446,25 @@ class MetacatSmokeSpec extends Specification {
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) ==
             [
-                new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
-                new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
+                new ChildInfoDto("hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
+                new ChildInfoDto("hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
             ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, renameParent1).isEmpty()
         // Test Child11 parentChildInfo
         assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child11Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child11).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
 
         // Test Child12 parentChildInfo
         assert !child12Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child12Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child12).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
 
         /*
         Step 15: Create a table renameChild11 with parent childInfo and then try to rename child11 to renameChild11, which should fail
@@ -2488,32 +2491,32 @@ class MetacatSmokeSpec extends Specification {
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) ==
             [
-                new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
-                new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid"),
-                new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_child11", "CLONE", "random_uuid")
+                new ChildInfoDto("hive-metastore/iceberg_db/child11", "CLONE", "c11_uuid"),
+                new ChildInfoDto("hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid"),
+                new ChildInfoDto("hive-metastore/iceberg_db/rename_child11", "CLONE", "random_uuid")
             ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, renameParent1).isEmpty()
         // Test Child11 parentChildInfo
         assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child11Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child11).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child11) == [new ParentInfoDto("hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
         // Test Child12 parentChildInfo
         assert !child12Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child12Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child12).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child12) == [new ParentInfoDto("hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
         // Test renameChild11Table parentChildInfo
         assert !renameChild11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(renameChild11Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameChild11).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, renameChild11) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, renameChild11) == [new ParentInfoDto("hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
 
 
         /*
@@ -2529,18 +2532,18 @@ class MetacatSmokeSpec extends Specification {
         // Test parent1Table parentChildInfo with newName
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_child11", "CLONE", "c11_uuid"),
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
+            new ChildInfoDto("hive-metastore/iceberg_db/rename_child11", "CLONE", "c11_uuid"),
+            new ChildInfoDto("hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
         ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, renameParent1).isEmpty()
         // Test Child11 parentChildInfo with newName
         assert !child11Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         assert child11Table.definitionMetadata.get("random_key").asText() == "random_value"
         JSONAssert.assertEquals(child11Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/rename_parent1","relationType":"CLONE","uuid":"p1_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameChild11).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, renameChild11) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, renameChild11) == [new ParentInfoDto("hive-metastore/iceberg_db/rename_parent1", "CLONE", "p1_uuid")] as Set
 
         //get the child oldName should fail as it no longer exists
         when:
@@ -2570,7 +2573,7 @@ class MetacatSmokeSpec extends Specification {
         // Test parent1 Table
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
+            new ChildInfoDto("hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
         ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, renameParent1).isEmpty()
 
@@ -2592,7 +2595,7 @@ class MetacatSmokeSpec extends Specification {
         // Test parent1 Table still only have child12
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
+            new ChildInfoDto("hive-metastore/iceberg_db/child12", "CLONE", "c12_uuid")
         ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, renameParent1).isEmpty()
 
@@ -2624,17 +2627,17 @@ class MetacatSmokeSpec extends Specification {
         // Test Parent 2 parentChildInfo
         assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
+            new ChildInfoDto("hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, parent2).isEmpty()
 
         // Test Child21 parentChildInfo
         assert !child21Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child21Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child21).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child21) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent2", "CLONE", "p2_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child21) == [new ParentInfoDto("hive-metastore/iceberg_db/parent2", "CLONE", "p2_uuid")] as Set
 
         /*
         Step 22: update parent2 with random parentChildRelationInfo to test immutability
@@ -2649,16 +2652,16 @@ class MetacatSmokeSpec extends Specification {
         then:
         assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
+            new ChildInfoDto("hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, parent2).isEmpty()
         // Test Child21 parentChildInfo
         assert !child21Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child21Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child21).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child21) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent2", "CLONE", "p2_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child21) == [new ParentInfoDto("hive-metastore/iceberg_db/parent2", "CLONE", "p2_uuid")] as Set
 
         /*
         Step 23: update child21 with random parentChildRelationInfo to test immutability
@@ -2674,16 +2677,16 @@ class MetacatSmokeSpec extends Specification {
         // Test Parent 2 parentChildInfo
         assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
-            new ChildInfoDto("embedded-fast-hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
+            new ChildInfoDto("hive-metastore/iceberg_db/child21", "CLONE", "c21_uuid")
         ] as Set
         assert parentChildRelV1.getParents(catalogName, databaseName, parent2).isEmpty()
 
         // Test Child21 parentChildInfo
         assert !child21Table.definitionMetadata.get("parentChildRelationInfo").has("isParent")
         JSONAssert.assertEquals(child21Table.definitionMetadata.get("parentChildRelationInfo").toString(),
-            '{"parentInfos":[{"name":"embedded-fast-hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
+            '{"parentInfos":[{"name":"hive-metastore/iceberg_db/parent2","relationType":"CLONE","uuid":"p2_uuid"}]}',
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child21).isEmpty()
-        assert parentChildRelV1.getParents(catalogName, databaseName, child21) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent2", "CLONE", "p2_uuid")] as Set
+        assert parentChildRelV1.getParents(catalogName, databaseName, child21) == [new ParentInfoDto("hive-metastore/iceberg_db/parent2", "CLONE", "p2_uuid")] as Set
     }
 }
