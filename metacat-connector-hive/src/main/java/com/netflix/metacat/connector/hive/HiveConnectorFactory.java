@@ -56,7 +56,7 @@ public class HiveConnectorFactory extends SpringConnectorFactory {
             connectorContext.getConfiguration()
                 .getOrDefault(HiveConfigConstants.USE_EMBEDDED_METASTORE, "false")
         );
-        final boolean useFastHiveService = useLocalMetastore && Boolean.parseBoolean(
+        final boolean useFastHiveService = Boolean.parseBoolean(
             connectorContext.getConfiguration()
                 .getOrDefault(HiveConfigConstants.USE_FASTHIVE_SERVICE, "false")
         );
