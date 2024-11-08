@@ -10,18 +10,27 @@ import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 import lombok.Getter;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.auditing.AuditingHandler;
+import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Random;
+
+import static org.mockito.Mockito.when;
 
 /**
  * Test persistence operations on Database objects.
@@ -45,6 +54,20 @@ public class PolarisStoreConnectorTest {
 
     @Autowired
     private PolarisStoreConnector polarisConnector;
+
+    @MockBean
+    private DateTimeProvider dateTimeProvider;
+
+    @SpyBean
+    private AuditingHandler auditingHandler;
+
+    @BeforeEach
+    void beforeEach() {
+        // truncate audit time to micros to match DB so assertions will match
+        when(dateTimeProvider.getNow()).thenReturn(
+            Optional.of(Instant.now().truncatedTo(ChronoUnit.MILLIS)));
+        auditingHandler.setDateTimeProvider(dateTimeProvider);
+    }
 
     public static String generateDatabaseName() {
         return DB_NAME_FOO + "_" + random.nextLong();
