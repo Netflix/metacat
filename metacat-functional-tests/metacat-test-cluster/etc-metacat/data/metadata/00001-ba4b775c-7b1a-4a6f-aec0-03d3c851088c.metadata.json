@@ -1,0 +1,117 @@
+{
+  "format-version" : 1,
+  "table-uuid" : "77ea2333-acd1-4d8b-9870-b3dcece00c87",
+  "location" : "file:/tmp/dat",
+  "last-updated-ms" : 1725487921787,
+  "last-column-id" : 4,
+  "schema" : {
+    "type" : "struct",
+    "schema-id" : 0,
+    "fields" : [ {
+      "id" : 1,
+      "name" : "field1",
+      "required" : false,
+      "type" : "long"
+    }, {
+      "id" : 2,
+      "name" : "field2",
+      "required" : false,
+      "type" : "string"
+    }, {
+      "id" : 3,
+      "name" : "field3",
+      "required" : false,
+      "type" : "long"
+    }, {
+      "id" : 4,
+      "name" : "field4",
+      "required" : false,
+      "type" : "int"
+    } ]
+  },
+  "current-schema-id" : 0,
+  "schemas" : [ {
+    "type" : "struct",
+    "schema-id" : 0,
+    "fields" : [ {
+      "id" : 1,
+      "name" : "field1",
+      "required" : false,
+      "type" : "long"
+    }, {
+      "id" : 2,
+      "name" : "field2",
+      "required" : false,
+      "type" : "string"
+    }, {
+      "id" : 3,
+      "name" : "field3",
+      "required" : false,
+      "type" : "long"
+    }, {
+      "id" : 4,
+      "name" : "field4",
+      "required" : false,
+      "type" : "int"
+    } ]
+  } ],
+  "partition-spec" : [ {
+    "name" : "field1",
+    "transform" : "identity",
+    "source-id" : 1,
+    "field-id" : 1000
+  }, {
+    "name" : "field2",
+    "transform" : "void",
+    "source-id" : 2,
+    "field-id" : 1001
+  } ],
+  "default-spec-id" : 1,
+  "partition-specs" : [ {
+    "spec-id" : 0,
+    "fields" : [ {
+      "name" : "field1",
+      "transform" : "identity",
+      "source-id" : 1,
+      "field-id" : 1000
+    }, {
+      "name" : "field2",
+      "transform" : "identity",
+      "source-id" : 2,
+      "field-id" : 1001
+    } ]
+  }, {
+    "spec-id" : 1,
+    "fields" : [ {
+      "name" : "field1",
+      "transform" : "identity",
+      "source-id" : 1,
+      "field-id" : 1000
+    }, {
+      "name" : "field2",
+      "transform" : "void",
+      "source-id" : 2,
+      "field-id" : 1001
+    } ]
+  } ],
+  "last-partition-id" : 1001,
+  "default-sort-order-id" : 0,
+  "sort-orders" : [ {
+    "order-id" : 0,
+    "fields" : [ ]
+  } ],
+  "properties" : {
+    "owner" : "owner",
+    "acls" : "[{\"format_version\":1,\"principals\":[{\"name\":\"123\",\"principal_type\":\"USER\"}],\"resources\":[{\"resource_type\":\"TABLE\",\"uuid\":\"77ea2333-acd1-4d8b-9870-b3dcece00c87\",\"parent\":{\"resource_type\":\"SCHEMA\",\"name\":\"owner\",\"parent\":{\"resource_type\":\"CATALOG\",\"name\":\"prodhive\",\"parent\":null}}}],\"privileges\":[\"ALL\"],\"grantee\":{\"name\":\"123\",\"principal_type\":\"USER\"},\"with_grant\":true},{\"format_version\":1,\"principals\":[{\"name\":\"123\",\"principal_type\":\"USER\"}],\"resources\":[{\"resource_type\":\"TABLE\",\"uuid\":\"77ea2333-acd1-4d8b-9870-b3dcece00c87\",\"parent\":{\"resource_type\":\"SCHEMA\",\"name\":\"owner\",\"parent\":{\"resource_type\":\"CATALOG\",\"name\":\"prodhive\",\"parent\":null}}}],\"privileges\":[\"ALL\"],\"grantee\":{\"name\":\"123\",\"principal_type\":\"USER\"},\"with_grant\":false}]",
+    "field.metadata.json" : "{\"1\":{},\"2\":{},\"3\":{},\"4\":{}}"
+  },
+  "current-snapshot-id" : -1,
+  "refs" : { },
+  "snapshots" : [ ],
+  "statistics" : [ ],
+  "snapshot-log" : [ ],
+  "metadata-log" : [ {
+    "timestamp-ms" : 1725487921770,
+    "metadata-file" : "file:/tmp/data/metadata/00001-abf48887-aa4f-4bcc-9219-1e1721314ee1.metadata.json"
+  } ]
+}
