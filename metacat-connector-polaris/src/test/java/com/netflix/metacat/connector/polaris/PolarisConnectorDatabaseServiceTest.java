@@ -1,4 +1,3 @@
-
 package com.netflix.metacat.connector.polaris;
 
 import com.google.common.collect.Maps;
@@ -167,4 +166,3 @@ public class PolarisConnectorDatabaseServiceTest {
         Assert.assertFalse(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
     }
 }
-

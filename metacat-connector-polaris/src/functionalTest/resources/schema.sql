@@ -25,5 +25,5 @@ create table TBLS (
   created_date TIMESTAMP not null,
   last_updated_by STRING(255),
   last_updated_date TIMESTAMP not null,
-  foreign key (db_name) references DBS(name) ON DELETE CASCADE ON UPDATE CASCADE
+  foreign key (db_name) references DBS(name) ON DELETE RESTRICT ON UPDATE CASCADE
 );

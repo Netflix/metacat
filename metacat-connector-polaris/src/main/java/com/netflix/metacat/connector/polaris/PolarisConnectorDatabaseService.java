@@ -10,6 +10,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.DatabasePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.connector.polaris.common.PolarisUtils;
@@ -87,11 +88,19 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         try {
             this.polarisStoreService.deleteDatabase(name.getDatabaseName());
         } catch (DataIntegrityViolationException exception) {
+            if (exception.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
+                throw new DatabasePreconditionFailedException(
+                    name,
+                    String.format("Cannot delete database %s because it is not empty.", name.getDatabaseName()),
+                    exception
+                );
+            }
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
             throw new ConnectorException(
                 String.format("Failed deleting polaris database %s", name), exception);
         }
+        System.out.println("DID NOT CATCH THE DB DELETE ERROR");
     }
 
     /**
