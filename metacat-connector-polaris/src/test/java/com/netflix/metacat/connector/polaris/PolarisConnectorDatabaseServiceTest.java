@@ -204,7 +204,8 @@ public class PolarisConnectorDatabaseServiceTest {
         polarisDBService.create(requestContext, info);
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
 
-        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB1_QUALIFIED_NAME.getDatabaseName(), "table1");
+        final QualifiedName qualifiedName = QualifiedName.ofTable(
+            CATALOG_NAME, DB1_QUALIFIED_NAME.getDatabaseName(), "table1");
         final TableInfo tableInfo = TableInfo.builder()
             .name(qualifiedName)
             .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc1"))
