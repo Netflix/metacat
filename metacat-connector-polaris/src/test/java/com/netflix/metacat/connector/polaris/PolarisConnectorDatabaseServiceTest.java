@@ -1,28 +1,16 @@
-
 package com.netflix.metacat.connector.polaris;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
-import com.netflix.metacat.common.server.connectors.exception.DatabasePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
-import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
-import com.netflix.metacat.common.server.util.ThreadServiceManager;
-import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
-import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.spectator.api.NoopRegistry;
 import lombok.Getter;
@@ -31,7 +19,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,7 +31,7 @@ import java.util.Date;
 
 
 /**
- * Test PolarisConnectorDatabaseService.
+ * Test PolarisConnectorTableService.
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {PolarisPersistenceConfig.class})
@@ -69,13 +56,7 @@ public class PolarisConnectorDatabaseServiceTest {
     private ConnectorRequestContext requestContext = new ConnectorRequestContext();
 
     @Shared
-    private ThreadServiceManager serviceManager = Mockito.mock(ThreadServiceManager.class);
-
-    @Shared
     private PolarisConnectorDatabaseService polarisDBService;
-
-    @Shared
-    private PolarisConnectorTableService polarisTableService;
 
     /**
      * Initialization.
@@ -83,24 +64,8 @@ public class PolarisConnectorDatabaseServiceTest {
     @BeforeEach
     public void init() {
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
-            new DefaultConfigImpl(
-                new MetacatProperties(null)
-            ),
-            new NoopRegistry(),
-            null,
-            Maps.newHashMap());
+            new DefaultConfigImpl(new MetacatProperties(null)), new NoopRegistry(), null,  Maps.newHashMap());
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
-        polarisTableService = new PolarisConnectorTableService(
-            polarisStoreService,
-            CATALOG_NAME,
-            polarisDBService,
-            new HiveConnectorInfoConverter(new HiveTypeConverter()),
-            new IcebergTableHandler(connectorContext,
-                new IcebergTableCriteriaImpl(connectorContext),
-                new IcebergTableOpWrapper(connectorContext, serviceManager),
-                new IcebergTableOpsProxy()),
-            new PolarisTableMapper(CATALOG_NAME),
-            connectorContext);
     }
 
     /**
@@ -200,27 +165,4 @@ public class PolarisConnectorDatabaseServiceTest {
         polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME);
         Assert.assertFalse(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
     }
-
-    /**
-     * Test delete database when ON DELETE CASCADE is disabled.
-     */
-    @Test
-    public void testDeleteDbNoCascades() {
-        final DatabaseInfo info = DatabaseInfo.builder().name(DB2_QUALIFIED_NAME).build();
-        polarisDBService.create(requestContext, info);
-        Assert.assertTrue(polarisDBService.exists(requestContext, DB2_QUALIFIED_NAME));
-
-        final QualifiedName qualifiedName = QualifiedName.ofTable(
-            CATALOG_NAME, DB2_QUALIFIED_NAME.getDatabaseName(), "table1");
-        final TableInfo tableInfo = TableInfo.builder()
-            .name(qualifiedName)
-            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc1"))
-            .build();
-        polarisTableService.create(requestContext, tableInfo);
-        Assert.assertTrue(polarisTableService.exists(requestContext, qualifiedName));
-        Assertions.assertThrows(DatabasePreconditionFailedException.class, () ->
-            polarisDBService.delete(requestContext, DB2_QUALIFIED_NAME));
-        Assert.assertTrue(polarisDBService.exists(requestContext, DB2_QUALIFIED_NAME));
-    }
 }
-

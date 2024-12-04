@@ -1,6 +1,7 @@
 package com.netflix.metacat.connector.polaris.store;
 
 
+import com.netflix.metacat.common.server.connectors.exception.DatabasePreconditionFailedException;
 import com.netflix.metacat.connector.polaris.common.PolarisUtils;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
@@ -124,6 +125,22 @@ public class PolarisStoreConnectorTest {
         final PolarisTableEntity tblEntity = createTable(dbName, tblName);
 
         polarisConnector.deleteTable(dbName, tblName);
+        Assert.assertFalse(polarisConnector.tableExistsById(tblEntity.getTblId()));
+    }
+
+    /**
+     * Test table creation if database exists.
+     * Verify table deletion
+     */
+    @Test
+    public void testDbDeletionNoCascade() {
+        final String dbName = generateDatabaseName();
+        final String tblName = generateTableName();
+        final PolarisDatabaseEntity dbEntity = createDB(dbName);
+        final PolarisTableEntity tblEntity = createTable(dbName, tblName);
+
+        Assertions.assertThrows(DatabasePreconditionFailedException.class, () ->
+            polarisConnector.deleteDatabase(dbName));
         Assert.assertFalse(polarisConnector.tableExistsById(tblEntity.getTblId()));
     }
 
