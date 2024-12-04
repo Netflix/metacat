@@ -86,9 +86,22 @@ public class PolarisConnectorDatabaseServiceTest {
      */
     @BeforeEach
     public void init() {
+        final String location = "file://temp";
+        polarisStoreService.createDatabase(DB2_NAME, location, "metacat_user");
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
             new DefaultConfigImpl(new MetacatProperties(null)), new NoopRegistry(), null, Maps.newHashMap());
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
+        polarisTableService = new PolarisConnectorTableService(
+            polarisStoreService,
+            CATALOG_NAME,
+            polarisDBService,
+            new HiveConnectorInfoConverter(new HiveTypeConverter()),
+            new IcebergTableHandler(connectorContext,
+                new IcebergTableCriteriaImpl(connectorContext),
+                new IcebergTableOpWrapper(connectorContext, serviceManager),
+                new IcebergTableOpsProxy()),
+            new PolarisTableMapper(CATALOG_NAME),
+            connectorContext);
     }
 
     /**
@@ -194,26 +207,12 @@ public class PolarisConnectorDatabaseServiceTest {
      */
     @Test
     public void testDeleteDbNoCascades() {
-        final String location = "file://temp";
-        polarisStoreService.createDatabase(DB1_NAME, location, "metacat_user");
-        polarisTableService = new PolarisConnectorTableService(
-            polarisStoreService,
-            CATALOG_NAME,
-            polarisDBService,
-            new HiveConnectorInfoConverter(new HiveTypeConverter()),
-            new IcebergTableHandler(connectorContext,
-                new IcebergTableCriteriaImpl(connectorContext),
-                new IcebergTableOpWrapper(connectorContext, serviceManager),
-                new IcebergTableOpsProxy()),
-            new PolarisTableMapper(CATALOG_NAME),
-            connectorContext);
-
-        final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
+        final DatabaseInfo info = DatabaseInfo.builder().name(DB2_QUALIFIED_NAME).build();
         polarisDBService.create(requestContext, info);
-        Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
+        Assert.assertTrue(polarisDBService.exists(requestContext, DB2_QUALIFIED_NAME));
 
         final QualifiedName qualifiedName = QualifiedName.ofTable(
-            CATALOG_NAME, DB1_QUALIFIED_NAME.getDatabaseName(), "table1");
+            CATALOG_NAME, DB2_QUALIFIED_NAME.getDatabaseName(), "table1");
         final TableInfo tableInfo = TableInfo.builder()
             .name(qualifiedName)
             .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc1"))
@@ -221,8 +220,8 @@ public class PolarisConnectorDatabaseServiceTest {
         polarisTableService.create(requestContext, tableInfo);
         Assert.assertTrue(polarisTableService.exists(requestContext, qualifiedName));
         Assertions.assertThrows(DatabasePreconditionFailedException.class, () ->
-            polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME));
-        Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
+            polarisDBService.delete(requestContext, DB2_QUALIFIED_NAME));
+        Assert.assertTrue(polarisDBService.exists(requestContext, DB2_QUALIFIED_NAME));
     }
 }
 
