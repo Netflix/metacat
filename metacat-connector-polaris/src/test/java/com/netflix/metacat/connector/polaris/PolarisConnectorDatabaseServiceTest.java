@@ -78,9 +78,6 @@ public class PolarisConnectorDatabaseServiceTest {
     @Shared
     private PolarisConnectorTableService polarisTableService;
 
-    @Shared
-    private Environment env = Mockito.mock(Environment.class);
-
     /**
      * Initialization.
      */
