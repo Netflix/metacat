@@ -7,6 +7,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
@@ -219,7 +220,7 @@ public class PolarisConnectorDatabaseServiceTest {
 
         polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME);
 
-        Assertions.assertThrows(DataIntegrityViolationException.class, () ->
+        Assertions.assertThrows(InvalidMetaException.class, () ->
             polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME));
         Assert.assertTrue(polarisDBService.exists(requestContext, qualifiedName));
     }
