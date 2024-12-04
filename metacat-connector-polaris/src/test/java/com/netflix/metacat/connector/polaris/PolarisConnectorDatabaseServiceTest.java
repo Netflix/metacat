@@ -84,7 +84,13 @@ public class PolarisConnectorDatabaseServiceTest {
         final String location = "file://temp2";
         polarisStoreService.createDatabase(DB1_NAME, location, "metacat_user");
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
-            new DefaultConfigImpl(new MetacatProperties(null)), new NoopRegistry(), null,  Maps.newHashMap());
+            new DefaultConfigImpl(
+                new MetacatProperties(null)
+            ),
+            new NoopRegistry(),
+            null,
+            Maps.newHashMap()
+        );
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
 
         polarisTableService = new PolarisConnectorTableService(
@@ -202,7 +208,8 @@ public class PolarisConnectorDatabaseServiceTest {
     public void testDeleteDbNoCascades() {
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
 
-        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB1_QUALIFIED_NAME.getDatabaseName(), "table1");
+        final QualifiedName qualifiedName = QualifiedName.ofTable(
+            CATALOG_NAME, DB1_QUALIFIED_NAME.getDatabaseName(), "table1");
         final TableInfo tableInfo = TableInfo.builder()
             .name(qualifiedName)
             .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc1"))
