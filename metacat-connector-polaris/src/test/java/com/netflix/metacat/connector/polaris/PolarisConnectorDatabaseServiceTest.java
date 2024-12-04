@@ -89,7 +89,12 @@ public class PolarisConnectorDatabaseServiceTest {
         final String location = "file://temp";
         polarisStoreService.createDatabase(DB2_NAME, location, "metacat_user");
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
-            new DefaultConfigImpl(new MetacatProperties(null)), new NoopRegistry(), null, Maps.newHashMap());
+            new DefaultConfigImpl(
+                new MetacatProperties(null)
+            ),
+            new NoopRegistry(),
+            null,
+            Maps.newHashMap());
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
         polarisTableService = new PolarisConnectorTableService(
             polarisStoreService,
