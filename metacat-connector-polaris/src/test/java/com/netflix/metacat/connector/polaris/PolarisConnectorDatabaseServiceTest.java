@@ -8,6 +8,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.DatabasePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
@@ -212,12 +213,8 @@ public class PolarisConnectorDatabaseServiceTest {
             .build();
         polarisTableService.create(requestContext, tableInfo);
         Assert.assertTrue(polarisTableService.exists(requestContext, qualifiedName));
-
-        // Expect an DatabasePreconditionFailedException when trying to delete a non-empty database
-        // Assertions.assertThrows(DatabasePreconditionFailedException.class, () ->
-        polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME);
-
-        // Ensure the database still exists after the failed delete attempt
+        Assertions.assertThrows(DatabasePreconditionFailedException.class, () ->
+            polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME));
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
     }
 }
