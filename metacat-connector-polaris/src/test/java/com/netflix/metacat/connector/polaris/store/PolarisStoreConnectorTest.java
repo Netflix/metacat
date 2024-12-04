@@ -129,8 +129,7 @@ public class PolarisStoreConnectorTest {
     }
 
     /**
-     * Test table creation if database exists.
-     * Verify table deletion
+     * Test database deletion if table exists and ON DELETE CASCADE is disabled.
      */
     @Test
     public void testDbDeletionNoCascade() {
@@ -141,7 +140,7 @@ public class PolarisStoreConnectorTest {
 
         Assertions.assertThrows(DatabasePreconditionFailedException.class, () ->
             polarisConnector.deleteDatabase(dbName));
-        Assert.assertFalse(polarisConnector.tableExistsById(tblEntity.getTblId()));
+        Assert.assertTrue(polarisConnector.databaseExists(dbName));
     }
 
     /**
