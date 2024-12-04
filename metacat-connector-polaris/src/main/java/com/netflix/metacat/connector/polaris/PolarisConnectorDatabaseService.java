@@ -12,7 +12,6 @@ import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExi
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.DatabasePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
-import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.connector.polaris.common.PolarisUtils;
 import com.netflix.metacat.connector.polaris.mappers.PolarisDatabaseMapper;
