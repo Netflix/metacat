@@ -214,7 +214,8 @@ public class PolarisConnectorDatabaseServiceTest {
         polarisTableService.create(requestContext, tableInfo);
         Assert.assertTrue(polarisTableService.exists(requestContext, qualifiedName));
 
-        // Expect an InvalidMetaException when trying to delete a non-empty database
+        polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME);
+        // Expect an DatabasePreconditionFailedException when trying to delete a non-empty database
         Assertions.assertThrows(DatabasePreconditionFailedException.class, () ->
             polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME));
 
