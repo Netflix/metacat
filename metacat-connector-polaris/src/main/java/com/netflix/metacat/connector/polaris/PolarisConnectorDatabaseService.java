@@ -90,13 +90,13 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             this.polarisStoreService.deleteDatabase(name.getDatabaseName());
         } catch (DataIntegrityViolationException exception) {
             String message = exception.getMessage();
-            if (message.contains("violates foreign key constraint") ||
-                (exception.getCause() instanceof SQLException &&
-                    "23503".equals(((SQLException) exception.getCause()).getSQLState()))) {
-                // Log the specific constraint violation details
-                String errorMessage = String.format(
-                    "Failed to delete database %s due to foreign key constraint violation. " +
-                        "Ensure all dependent tables are removed first. Error: %s",
+            if (message.contains("violates foreign key constraint")
+                || (exception.getCause() instanceof SQLException
+                    && "23503".equals(((SQLException) exception.getCause()).getSQLState()))) {
+
+                final String errorMessage = String.format(
+                    "Failed to delete database %s due to foreign key constraint violation. "
+                        + "Ensure all dependent tables are removed first. Error: %s",
                     name, message
                 );
                 throw new DatabasePreconditionFailedException(name, errorMessage, exception);
@@ -177,7 +177,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         try {
             final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
             final List<QualifiedName> qualifiedNames = polarisStoreService.getDatabaseNames(
-                dbPrefix, sort, this.connectorContext.getConfig().getListDatabaseNamesPageSize())
+                    dbPrefix, sort, this.connectorContext.getConfig().getListDatabaseNamesPageSize())
                 .stream()
                 .map(dbName -> QualifiedName.ofDatabase(name.getCatalogName(), dbName))
                 .collect(Collectors.toCollection(ArrayList::new));
