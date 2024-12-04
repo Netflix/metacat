@@ -22,27 +22,30 @@ import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
 import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.SpringConnectorFactory;
 import com.netflix.metacat.connector.druid.configs.DruidConnectorConfig;
-import com.netflix.metacat.connector.druid.configs.DruidHttpClientConfig;
+import com.netflix.metacat.connector.druid.configs.BaseDruidHttpClientConfig;
 import com.netflix.metacat.connector.druid.converter.DruidConnectorInfoConverter;
 
 /**
  * Druid Connector Factory.
  *
- * @author zhenl
+ * @author zhenl jtuglu
  * @since 1.2.0
  */
 public class DruidConnectorFactory extends SpringConnectorFactory {
     /**
      * Constructor.
      *
-     * @param connectorContext connector config
+     * @param druidConnectorInfoConverter connector info converter
+     * @param connectorContext            connector context
+     * @param clientConfigClass           config class to register
      */
-    DruidConnectorFactory(
+    public DruidConnectorFactory(
         final DruidConnectorInfoConverter druidConnectorInfoConverter,
-        final ConnectorContext connectorContext
+        final ConnectorContext connectorContext,
+        final Class<? extends BaseDruidHttpClientConfig> clientConfigClass
     ) {
         super(druidConnectorInfoConverter, connectorContext);
-        super.registerClazz(DruidConnectorConfig.class, DruidHttpClientConfig.class);
+        super.registerClazz(DruidConnectorConfig.class, clientConfigClass);
         super.refresh();
     }
 

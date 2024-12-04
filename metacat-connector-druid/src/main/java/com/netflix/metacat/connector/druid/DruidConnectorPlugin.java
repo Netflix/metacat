@@ -20,12 +20,13 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
+import com.netflix.metacat.connector.druid.configs.DruidHttpClientConfig;
 import com.netflix.metacat.connector.druid.converter.DruidConnectorInfoConverter;
 
 /**
  * Druid Connector Plugin.
  *
- * @author zhenl
+ * @author zhenl jtuglu
  * @since 1.2.0
  */
 public class DruidConnectorPlugin implements ConnectorPlugin {
@@ -45,7 +46,10 @@ public class DruidConnectorPlugin implements ConnectorPlugin {
     @Override
     public ConnectorFactory create(final ConnectorContext connectorContext) {
         return new DruidConnectorFactory(
-            new DruidConnectorInfoConverter(connectorContext.getCatalogName()), connectorContext);
+            new DruidConnectorInfoConverter(connectorContext.getCatalogName()),
+            connectorContext,
+            DruidHttpClientConfig.class
+        );
     }
 
     /**

@@ -37,13 +37,13 @@ import java.util.stream.IntStream;
 /**
  * DruidHttpClientImpl.
  *
- * @author zhenl
+ * @author zhenl jtuglu
  * @since 1.2.0
  */
 @Slf4j
 public class DruidHttpClientImpl implements MetacatDruidClient {
-    private String druidURI;
-    private final RestTemplate restTemplate;
+    protected String druidURI;
+    protected final RestTemplate restTemplate;
     private final MetacatJsonLocator jsonLocator = new MetacatJsonLocator();
 
     /**
@@ -56,16 +56,16 @@ public class DruidHttpClientImpl implements MetacatDruidClient {
                                final RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
         final Map<String, String> config = connectorContext.getConfiguration();
-        final String coordinatorUri = config.get(DruidConfigConstants.DRUID_COORDINATOR_URI);
-        if (coordinatorUri == null) {
+        final String routerUri = config.get(DruidConfigConstants.DRUID_ROUTER_URI);
+        if (routerUri == null) {
             throw new MetacatException("Druid cluster ending point not provided.");
         }
         try {
-            new URI(coordinatorUri);
+            new URI(routerUri);
         } catch (URISyntaxException exception) {
             throw new MetacatException("Druid ending point invalid");
         }
-        this.druidURI = coordinatorUri;
+        this.druidURI = routerUri;
         log.info("druid server uri={}", this.druidURI);
     }
 
