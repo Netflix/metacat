@@ -81,8 +81,6 @@ public class PolarisConnectorDatabaseServiceTest {
      */
     @BeforeEach
     public void init() {
-        final String location = "file://temp2";
-        polarisStoreService.createDatabase(DB1_NAME, location, "metacat_user");
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
             new DefaultConfigImpl(
                 new MetacatProperties(null)
@@ -206,6 +204,8 @@ public class PolarisConnectorDatabaseServiceTest {
 
     @Test
     public void testDeleteDbNoCascades() {
+        final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
+        polarisDBService.create(requestContext, info);
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
 
         final QualifiedName qualifiedName = QualifiedName.ofTable(
