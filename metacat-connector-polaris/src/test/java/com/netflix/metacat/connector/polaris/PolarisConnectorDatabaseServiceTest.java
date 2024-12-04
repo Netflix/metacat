@@ -214,6 +214,7 @@ public class PolarisConnectorDatabaseServiceTest {
         Assert.assertTrue(polarisTableService.exists(requestContext, qualifiedName));
 
         polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME);
+        Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
     }
 }
 
