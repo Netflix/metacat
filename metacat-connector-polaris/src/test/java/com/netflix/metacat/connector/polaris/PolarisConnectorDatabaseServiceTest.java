@@ -86,22 +86,9 @@ public class PolarisConnectorDatabaseServiceTest {
      */
     @BeforeEach
     public void init() {
-        final String location = "file://temp";
-        polarisStoreService.createDatabase(DB1_NAME, location, "metacat_user");
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
             new DefaultConfigImpl(new MetacatProperties(null)), new NoopRegistry(), null, Maps.newHashMap());
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
-        polarisTableService = new PolarisConnectorTableService(
-            polarisStoreService,
-            CATALOG_NAME,
-            polarisDBService,
-            new HiveConnectorInfoConverter(new HiveTypeConverter()),
-            new IcebergTableHandler(connectorContext,
-                new IcebergTableCriteriaImpl(connectorContext),
-                new IcebergTableOpWrapper(connectorContext, serviceManager),
-                new IcebergTableOpsProxy()),
-            new PolarisTableMapper(CATALOG_NAME),
-            connectorContext);
     }
 
     /**
@@ -207,6 +194,20 @@ public class PolarisConnectorDatabaseServiceTest {
      */
     @Test
     public void testDeleteDbNoCascades() {
+        final String location = "file://temp";
+        polarisStoreService.createDatabase(DB1_NAME, location, "metacat_user");
+        polarisTableService = new PolarisConnectorTableService(
+            polarisStoreService,
+            CATALOG_NAME,
+            polarisDBService,
+            new HiveConnectorInfoConverter(new HiveTypeConverter()),
+            new IcebergTableHandler(connectorContext,
+                new IcebergTableCriteriaImpl(connectorContext),
+                new IcebergTableOpWrapper(connectorContext, serviceManager),
+                new IcebergTableOpsProxy()),
+            new PolarisTableMapper(CATALOG_NAME),
+            connectorContext);
+
         final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
         polarisDBService.create(requestContext, info);
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
