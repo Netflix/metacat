@@ -86,11 +86,8 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             throw new DatabaseNotFoundException(name);
         }
         try {
-            System.out.println("BEFORE deleting polaris database " + name.getDatabaseName());
             this.polarisStoreService.deleteDatabase(name.getDatabaseName());
-            System.out.println("AFTER deleting polaris database " + name.getDatabaseName());
         } catch (DataIntegrityViolationException exception) {
-            System.out.println("CAUGHT THE DB DELETE ERROR");
             if (exception.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
                 throw new DatabasePreconditionFailedException(
                     name,

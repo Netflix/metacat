@@ -1,7 +1,6 @@
 package com.netflix.metacat.connector.polaris.store;
 
 
-import com.netflix.metacat.common.server.connectors.exception.DatabasePreconditionFailedException;
 import com.netflix.metacat.connector.polaris.common.PolarisUtils;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
@@ -17,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -138,7 +138,7 @@ public class PolarisStoreConnectorTest {
         final PolarisDatabaseEntity dbEntity = createDB(dbName);
         final PolarisTableEntity tblEntity = createTable(dbName, tblName);
 
-        Assertions.assertThrows(DatabasePreconditionFailedException.class, () ->
+        Assertions.assertThrows(DataIntegrityViolationException.class, () ->
             polarisConnector.deleteDatabase(dbName));
         Assert.assertTrue(polarisConnector.databaseExists(dbName));
     }
