@@ -10,7 +10,9 @@ import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
+import com.netflix.metacat.common.server.connectors.exception.DatabasePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
+import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.connector.polaris.common.PolarisUtils;
 import com.netflix.metacat.connector.polaris.mappers.PolarisDatabaseMapper;
@@ -20,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import javax.annotation.Nullable;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -87,19 +90,23 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         try {
             this.polarisStoreService.deleteDatabase(name.getDatabaseName());
         } catch (DataIntegrityViolationException exception) {
-//            if (exception.getCause() instanceof ConstraintViolationException) {
-//                throw new DatabasePreconditionFailedException(
-//                    name,
-//                    String.format("Cannot delete database %s because it is not empty.", name.getDatabaseName()),
-//                    exception
-//                );
-//            }
+            String message = exception.getMessage();
+            if (message.contains("violates foreign key constraint") ||
+                (exception.getCause() instanceof SQLException &&
+                    "23503".equals(((SQLException) exception.getCause()).getSQLState()))) {
+                // Log the specific constraint violation details
+                String errorMessage = String.format(
+                    "Failed to delete database %s due to foreign key constraint violation. " +
+                        "Ensure all dependent tables are removed first. Error: %s",
+                    name, message
+                );
+                throw new DatabasePreconditionFailedException(name, errorMessage, exception);
+            }
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
             throw new ConnectorException(
                 String.format("Failed deleting polaris database %s", name), exception);
         }
-        System.out.println("DID NOT CATCH THE DB DELETE ERROR");
     }
 
     /**

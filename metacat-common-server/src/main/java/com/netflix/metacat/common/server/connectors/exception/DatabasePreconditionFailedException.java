@@ -41,7 +41,7 @@ public class DatabasePreconditionFailedException extends ConnectorException {
     public DatabasePreconditionFailedException(final QualifiedName name,
                                                @Nullable final String message,
                                                @Nullable final Throwable error) {
-        super(String.format("Precondition failed to update table %s. %s", name, message), error);
+        super(String.format("Precondition failed to update database %s. %s", name, message), error);
     }
 }
 
