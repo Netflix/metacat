@@ -89,15 +89,14 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         try {
             this.polarisStoreService.deleteDatabase(name.getDatabaseName());
         } catch (DataIntegrityViolationException exception) {
-            String message = exception.getMessage();
-            if (message.contains("violates foreign key constraint")
+            if (exception.getMessage().contains("violates foreign key constraint")
                 || (exception.getCause() instanceof SQLException
                     && "23503".equals(((SQLException) exception.getCause()).getSQLState()))) {
 
                 final String errorMessage = String.format(
                     "Failed to delete database %s due to foreign key constraint violation. "
                         + "Ensure all dependent tables are removed first. Error: %s",
-                    name, message
+                    name, exception.getMessage()
                 );
                 throw new DatabasePreconditionFailedException(name, errorMessage, exception);
             }
