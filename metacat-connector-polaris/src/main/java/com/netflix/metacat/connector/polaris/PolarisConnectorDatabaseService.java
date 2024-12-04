@@ -87,6 +87,9 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         try {
             this.polarisStoreService.deleteDatabase(name.getDatabaseName());
         } catch (DataIntegrityViolationException exception) {
+            if (exception.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
+                throw new InvalidMetaException(name, "Cannot delete database because it still contains tables.", exception);
+            }
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
             throw new ConnectorException(
