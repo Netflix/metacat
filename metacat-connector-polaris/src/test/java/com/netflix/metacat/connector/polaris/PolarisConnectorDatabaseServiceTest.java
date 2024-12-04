@@ -1,5 +1,6 @@
 package com.netflix.metacat.connector.polaris;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
@@ -8,9 +9,18 @@ import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExi
 import com.netflix.metacat.common.server.connectors.exception.DatabaseNotFoundException;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
+import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
+import com.netflix.metacat.common.server.util.ThreadServiceManager;
+import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
+import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
+import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.spectator.api.NoopRegistry;
 import lombok.Getter;
@@ -19,9 +29,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -56,16 +68,36 @@ public class PolarisConnectorDatabaseServiceTest {
     private ConnectorRequestContext requestContext = new ConnectorRequestContext();
 
     @Shared
+    private ThreadServiceManager serviceManager = Mockito.mock(ThreadServiceManager.class);
+
+    @Shared
     private PolarisConnectorDatabaseService polarisDBService;
+
+    @Shared
+    private PolarisConnectorTableService polarisTableService;
 
     /**
      * Initialization.
      */
     @BeforeEach
     public void init() {
+        final String location = "file://temp2";
+        polarisStoreService.createDatabase(DB1_NAME, location, "metacat_user");
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
             new DefaultConfigImpl(new MetacatProperties(null)), new NoopRegistry(), null,  Maps.newHashMap());
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
+
+        polarisTableService = new PolarisConnectorTableService(
+            polarisStoreService,
+            CATALOG_NAME,
+            polarisDBService,
+            new HiveConnectorInfoConverter(new HiveTypeConverter()),
+            new IcebergTableHandler(connectorContext,
+                new IcebergTableCriteriaImpl(connectorContext),
+                new IcebergTableOpWrapper(connectorContext, serviceManager),
+                new IcebergTableOpsProxy()),
+            new PolarisTableMapper(CATALOG_NAME),
+            connectorContext);
     }
 
     /**
@@ -164,5 +196,24 @@ public class PolarisConnectorDatabaseServiceTest {
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
         polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME);
         Assert.assertFalse(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
+    }
+
+    @Test
+    public void testDeleteDbNoCascades() {
+        Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
+
+        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB1_QUALIFIED_NAME.getDatabaseName(), "table1");
+        final TableInfo tableInfo = TableInfo.builder()
+            .name(qualifiedName)
+            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc1"))
+            .build();
+        polarisTableService.create(requestContext, tableInfo);
+        Assert.assertTrue(polarisTableService.exists(requestContext, qualifiedName));
+
+        polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME);
+
+        Assertions.assertThrows(DataIntegrityViolationException.class, () ->
+            polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME));
+        Assert.assertTrue(polarisDBService.exists(requestContext, qualifiedName));
     }
 }
