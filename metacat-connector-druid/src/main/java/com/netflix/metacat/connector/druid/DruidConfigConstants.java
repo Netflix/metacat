@@ -19,14 +19,14 @@ package com.netflix.metacat.connector.druid;
 /**
  * Druid Config Constants.
  *
- * @author zhenl
+ * @author zhenl jtuglu
  * @since 1.2.0
  */
 public final class DruidConfigConstants {
     /**
-     * DRUID_COORDINATOR_URI.
+     * DRUID_ROUTER_URI .
      */
-    public static final String DRUID_COORDINATOR_URI = "druid.uri";
+    public static final String DRUID_ROUTER_URI = "druid.uri";
 
     //Http client
     /**

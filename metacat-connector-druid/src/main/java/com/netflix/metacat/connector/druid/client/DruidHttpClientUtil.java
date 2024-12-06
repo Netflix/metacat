@@ -30,7 +30,7 @@ public final class DruidHttpClientUtil {
      * get Latest Segment.
      *
      * @param input segments strings
-     * @return lastest segment id
+     * @return latest segment id
      */
     public static String getLatestSegment(final String input) {
         final String[] segments = input.substring(1, input.length() - 1).split(",");
