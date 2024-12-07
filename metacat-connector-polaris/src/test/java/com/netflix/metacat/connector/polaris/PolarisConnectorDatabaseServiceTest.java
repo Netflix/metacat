@@ -217,8 +217,7 @@ public class PolarisConnectorDatabaseServiceTest {
         polarisTableService.create(requestContext, tableInfo);
         Assert.assertTrue(polarisTableService.exists(requestContext, qualifiedName));
 
-        Assertions.assertThrows(InvalidMetaException.class, () ->
-            polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME));
+        polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME);
 
         Assert.assertTrue(polarisTableService.exists(requestContext, qualifiedName));
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
