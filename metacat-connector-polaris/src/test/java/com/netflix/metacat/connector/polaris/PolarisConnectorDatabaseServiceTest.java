@@ -219,6 +219,8 @@ public class PolarisConnectorDatabaseServiceTest {
         polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME);
 
         Assert.assertTrue(polarisTableService.exists(requestContext, qualifiedName));
+        System.out.println("testDeleteDbNoCascades Table: ");
+        System.out.println(polarisTableService.get(requestContext, qualifiedName));
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
 
     }
