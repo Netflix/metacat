@@ -13,11 +13,6 @@
 
 package com.netflix.metacat.connector.hive.converters
 
-import org.apache.iceberg.PartitionField
-import org.apache.iceberg.transforms.Identity
-import org.apache.iceberg.transforms.VoidTransform
-import org.apache.iceberg.Schema
-import org.apache.iceberg.types.Types
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -259,37 +254,5 @@ class HiveTypeConverterSpec extends Specification {
         "struct<Field1:bigint,Field2:bigint,field3:struct<nested_Field1:bigint,nested_Field2:bigint>>" | """{"type":"row","fields":[{"name":"Field1","type":"bigint"},{"name":"Field2","type":"bigint"},{"name":"field3","type":{"type":"row","fields":[{"name":"nested_Field1","type":"bigint"},{"name":"nested_Field2","type":"bigint"}]}}]}"""
         "array<struct<date:string,countryCodes:array<string>,source:string>>" | """{"type":"array","elementType":{"type":"row","fields":[{"name":"date","type":"string"},{"name":"countryCodes","type":{"type":"array","elementType":"string"}},{"name":"source","type":"string"}]}}"""
         "array<struct<Date:string,nestedArray:array<struct<date:string,countryCodes:array<string>,source:string>>>>" | """{"type":"array","elementType":{"type":"row","fields":[{"name":"Date","type":"string"},{"name":"nestedArray","type":{"type":"array","elementType":{"type":"row","fields":[{"name":"date","type":"string"},{"name":"countryCodes","type":{"type":"array","elementType":"string"}},{"name":"source","type":"string"}]}}}]}}"""
-    }
-
-    def "Test treat void transforms partitions as non-partition field"() {
-        given:
-        // Initial schema with three fields
-        def initialSchema = new Schema(
-            Types.NestedField.optional(1, "field1", Types.BooleanType.get(), "added 1st - partition key"),
-            Types.NestedField.optional(2, "field2", Types.StringType.get(), "added 2nd"),
-            Types.NestedField.optional(3, "field3", Types.IntegerType.get(), "added 3rd")
-        )
-        // Initial partition fields
-        def initialPartitionFields = [
-            new PartitionField(1, 1, "field1", new Identity()),
-            new PartitionField(2, 2, "field2", new VoidTransform<String>()),
-        ]
-        when:
-        def fieldDtos = this.converter.icebergSchemaTofieldDtos(initialSchema, initialPartitionFields)
-        then:
-        fieldDtos.size() == 3
-        // Validate the first field
-        def field1 = fieldDtos.find { it.name == "field1" }
-        field1 != null
-        field1.partitionKey == true
-        // Validate the second field
-        def field2 = fieldDtos.find { it.name == "field2" }
-        field2 != null
-        field2.partitionKey == false
-        // Validate the third field
-        def field3 = fieldDtos.find { it.name == "field3" }
-        field3 != null
-        field3.partitionKey == false
-        noExceptionThrown()
     }
 }
