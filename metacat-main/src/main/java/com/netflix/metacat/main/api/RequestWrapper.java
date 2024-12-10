@@ -160,7 +160,7 @@ public final class RequestWrapper {
         System.out.println("------------------------------------------------");
         System.out.println(MetacatContextManager.getContext());
         System.out.println("------------------------------------------------");
-        tags.put("caller", MetacatContextManager.getContext().getClientAppName());
+//        tags.put("caller", MetacatContextManager.getContext().getClientAppName());
         registry.counter(requestCounterId.withTags(tags)).increment();
 
         try {
@@ -251,7 +251,7 @@ public final class RequestWrapper {
         System.out.println("------------------------------------------------");
         System.out.println(MetacatContextManager.getContext());
         System.out.println("------------------------------------------------");
-        tags.put("caller", MetacatContextManager.getContext().getClientAppName());
+//        tags.put("caller", MetacatContextManager.getContext().getClientAppName());
         registry.counter(requestCounterId.withTags(tags)).increment();
         try {
             MetacatContextManager.getContext().setRequestName(resourceRequestName);
