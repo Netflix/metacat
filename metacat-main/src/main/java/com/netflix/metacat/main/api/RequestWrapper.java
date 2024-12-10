@@ -154,8 +154,13 @@ public final class RequestWrapper {
         if (requestTags != null) {
             tags.putAll(requestTags);
         }
+
         tags.put("request", resourceRequestName);
         tags.put("scheme", MetacatContextManager.getContext().getScheme());
+        System.out.println("------------------------------------------------");
+        System.out.println(MetacatContextManager.getContext());
+        System.out.println("------------------------------------------------");
+        tags.put("caller", MetacatContextManager.getContext().getClientAppName());
         registry.counter(requestCounterId.withTags(tags)).increment();
 
         try {
@@ -243,6 +248,10 @@ public final class RequestWrapper {
         final long start = registry.clock().wallTime();
         final Map<String, String> tags = Maps.newHashMap();
         tags.put("request", resourceRequestName);
+        System.out.println("------------------------------------------------");
+        System.out.println(MetacatContextManager.getContext());
+        System.out.println("------------------------------------------------");
+        tags.put("caller", MetacatContextManager.getContext().getClientAppName());
         registry.counter(requestCounterId.withTags(tags)).increment();
         try {
             MetacatContextManager.getContext().setRequestName(resourceRequestName);
