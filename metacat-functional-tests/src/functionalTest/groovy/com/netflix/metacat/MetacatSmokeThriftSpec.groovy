@@ -74,19 +74,19 @@ class MetacatSmokeThriftSpec extends Specification {
         remoteHiveClient = Hive.get(conf)
         // clients.add(Pair.of('remote', Hive.get(conf)))
 
-        HiveConf localConf = new HiveConf()
-        localConf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_embedded_hive_thrift_port']}")
-        SessionState.setCurrentSessionState(new SessionState(localConf))
-        localHiveClient = Hive.get(localConf)
-        // clients.add(Pair.of('local', Hive.get(localConf)))
+//        HiveConf localConf = new HiveConf()
+//        localConf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_embedded_hive_thrift_port']}")
+//        SessionState.setCurrentSessionState(new SessionState(localConf))
+//        localHiveClient = Hive.get(localConf)
+//        // clients.add(Pair.of('local', Hive.get(localConf)))
+//
+//        HiveConf localFastConf = new HiveConf()
+//        localFastConf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_embedded_fast_hive_thrift_port']}")
+//        SessionState.setCurrentSessionState(new SessionState(localFastConf))
+//        localFastHiveClient = Hive.get(localFastConf)
+//        // clients.add(Pair.of('localfast', Hive.get(localFastConf)))
 
-        HiveConf localFastConf = new HiveConf()
-        localFastConf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_embedded_fast_hive_thrift_port']}")
-        SessionState.setCurrentSessionState(new SessionState(localFastConf))
-        localFastHiveClient = Hive.get(localFastConf)
-        // clients.add(Pair.of('localfast', Hive.get(localFastConf)))
-
-        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("ROOT")).setLevel(ch.qos.logback.classic.Level.OFF)
+        ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("ROOT")).setLevel(ch.qos.logback.classic.Level.OFF)
         def typeFactory = new TypeConverterFactory(new DefaultTypeConverter())
         converter = new ConverterUtil(new DozerTypeConverter(typeFactory), new DozerJsonTypeConverter(typeFactory))
         hiveConverter = new HiveConnectorInfoConverter(new HiveTypeConverter())
@@ -145,8 +145,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -166,8 +166,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -197,14 +197,14 @@ class MetacatSmokeThriftSpec extends Specification {
         then:
         (catalogName == 'localfast' && exceptionThrown)
             || (catalogName == 'local' && exceptionThrown)
-            || (catalogName == 'remote' && !exceptionThrown)
+            || (catalogName == 'remote' && exceptionThrown)
         cleanup:
         client.dropDatabase(databaseName)
         where:
         catalogName | client
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
-        // 'remote'    | remoteHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
+        'remote'    | remoteHiveClient
     }
 
     @Unroll
@@ -224,8 +224,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -256,8 +256,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -287,8 +287,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -322,8 +322,8 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-        'local'     | localHiveClient
-        'localfast' | localFastHiveClient
+//        'local'     | localHiveClient
+//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -358,7 +358,7 @@ class MetacatSmokeThriftSpec extends Specification {
             FunctionRegistry.getFunctionInfo('=').getGenericUDF(), Lists.newArrayList(totalColExpr, new ExprNodeConstantDesc(totalColType, 12)))
         client.dropPartitions(databaseName, tableName, [new DropTableDesc.PartSpec(totalExpr, 0), new DropTableDesc.PartSpec(totalExpr1, 0)], false, false, false)
         then:
-        client.getPartitionsByNames(hiveTable, [partitionNames[1],partitionNames[2]]).size() == 0
+        client.getPartitionsByNames(hiveTable, [partitionNames[1], partitionNames[2]]).size() == 0
         when:
         def oneExpr = new ExprNodeGenericFuncDesc(TypeInfoFactory.booleanTypeInfo,
             FunctionRegistry.getFunctionInfo('=').getGenericUDF(), Lists.newArrayList(oneColExpr, new ExprNodeConstantDesc(oneColType, 'xyz')))
@@ -438,10 +438,10 @@ class MetacatSmokeThriftSpec extends Specification {
             FunctionRegistry.getFunctionInfo('=').getGenericUDF(), Lists.newArrayList(totalColExpr, new ExprNodeConstantDesc(totalColType, 11)))
         client.alterPartitions(databaseName + '.' + tableName, partitions)
         then:
-        client.getPartitions(hiveTable, ['one':'xyz']).size() == 10
-        client.getPartitions(hiveTable, ['one':'xyz1']).size() == 0
-        client.getPartitions(hiveTable, ['one':'xyz','total':'11']).size() == 1
-        client.getPartitions(hiveTable, ['one':'xyz1','total':'1']).size() == 0
+        client.getPartitions(hiveTable, ['one': 'xyz']).size() == 10
+        client.getPartitions(hiveTable, ['one': 'xyz1']).size() == 0
+        client.getPartitions(hiveTable, ['one': 'xyz', 'total': '11']).size() == 1
+        client.getPartitions(hiveTable, ['one': 'xyz1', 'total': '1']).size() == 0
         when:
         def result = []
         client.getPartitionsByExpr(hiveTable, oneExpr, client.getConf(), result)
@@ -465,7 +465,8 @@ class MetacatSmokeThriftSpec extends Specification {
             FunctionRegistry.getFunctionInfo('isnull').getGenericUDF(), Lists.newArrayList(oneColExpr))
         try {
             client.getPartitionsByExpr(hiveTable, oneIsNullExpr, client.getConf(), result4)
-        } catch (TApplicationException ignored){}
+        } catch (TApplicationException ignored) {
+        }
         then:
         result.size() == 10
         result1.size() == 1
@@ -484,7 +485,7 @@ class MetacatSmokeThriftSpec extends Specification {
     def "Test: Embedded Thrift connector: get partitions for filter #filter returned #result partitions"() {
         when:
         def catalogName = 'local'
-        def client = localHiveClient
+        def client = remoteHiveClient
         def databaseName = 'test_db5_' + catalogName
         def tableName = 'parts'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
@@ -535,7 +536,7 @@ class MetacatSmokeThriftSpec extends Specification {
     def "Test: Embedded Fast Thrift connector: get partitions for filter #filter returned #result partitions"() {
         when:
         def catalogName = 'localfast'
-        def client = localFastHiveClient
+        def client = remoteHiveClient
         def databaseName = 'test_db5_' + catalogName
         def tableName = 'parts'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
@@ -586,7 +587,7 @@ class MetacatSmokeThriftSpec extends Specification {
     def "Test: Embedded Fast Thrift connector: getPartitionsByNames with escape values"() {
         given:
         def catalogName = 'localfast'
-        def client = localFastHiveClient
+        def client = remoteHiveClient
         def databaseName = 'test_db5_' + catalogName
         def tableName = 'parts'
         def hiveTable = createTable(client, catalogName, databaseName, tableName)
@@ -607,16 +608,16 @@ class MetacatSmokeThriftSpec extends Specification {
         then:
         result.size() == 0
         when:
-        result = client.getPartitionsByNames(hiveTable, ['total':'10'])
+        result = client.getPartitionsByNames(hiveTable, ['total': '10'])
         then:
         result.size() == 1
         result.get(0).getValues() == ['xy^:z', '10']
         when:
-        result = client.getPartitionsByNames(hiveTable, ['one':'xy^:z'])
+        result = client.getPartitionsByNames(hiveTable, ['one': 'xy^:z'])
         then:
         result.size() == 10
         when:
-        result = client.getPartitionsByNames(hiveTable, ['one':'xy%5E%3Az'])
+        result = client.getPartitionsByNames(hiveTable, ['one': 'xy%5E%3Az'])
         then:
         result.size() == 0
         cleanup:

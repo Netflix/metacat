@@ -17,11 +17,11 @@
  */
 package com.netflix.metacat.common.type;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -41,7 +41,7 @@ public final class TypeRegistry implements TypeManager {
      * Constructor.
      */
     private TypeRegistry() {
-        Preconditions.checkNotNull(types, "types is null");
+        Objects.requireNonNull(types, "types is null");
         addType(BaseType.UNKNOWN);
         addType(BaseType.BIGINT);
         addType(BaseType.BOOLEAN);
@@ -80,7 +80,7 @@ public final class TypeRegistry implements TypeManager {
      * @param type parameter
      */
     public static void verifyTypeClass(final Type type) {
-        Preconditions.checkNotNull(type, "type is null");
+        Objects.requireNonNull(type, "types is null");
     }
 
     /**
@@ -121,9 +121,11 @@ public final class TypeRegistry implements TypeManager {
         }
         final Type instantiatedType = parametricType.createType(parameterTypes.build(),
             signature.getLiteralParameters());
-        Preconditions.checkState(instantiatedType.getTypeSignature().equals(signature),
-            "Instantiated parametric type name (%s) does not match expected name (%s)",
-            instantiatedType, signature);
+        if (!instantiatedType.getTypeSignature().equals(signature)) {
+            throw new IllegalStateException(String.format(
+                "Instantiated parametric type name (%s) does not match expected name (%s)",
+                instantiatedType, signature));
+        }
         return instantiatedType;
     }
 
@@ -135,8 +137,9 @@ public final class TypeRegistry implements TypeManager {
     public void addType(final Type type) {
         verifyTypeClass(type);
         final Type existingType = types.putIfAbsent(type.getTypeSignature(), type);
-        Preconditions.checkState(existingType == null
-            || existingType.equals(type), "Type %s is already registered", type);
+        if (!(existingType == null || existingType.equals(type))) {
+            throw new IllegalStateException(String.format("Type %s is already registered", type));
+        }
     }
 
     /**
@@ -146,8 +149,9 @@ public final class TypeRegistry implements TypeManager {
      */
     public void addParametricType(final ParametricType parametricType) {
         final TypeEnum baseType = parametricType.getBaseType();
-        Preconditions.checkArgument(!parametricTypes.containsKey(baseType),
-            "Parametric type already registered: %s", baseType);
+        if (parametricTypes.containsKey(baseType)) {
+            throw new IllegalArgumentException(String.format("Parametric type already registered: %s", baseType));
+        }
         parametricTypes.putIfAbsent(baseType, parametricType);
     }
 
