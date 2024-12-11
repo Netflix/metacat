@@ -157,19 +157,9 @@ public final class RequestWrapper {
 
         tags.put("request", resourceRequestName);
         tags.put("scheme", MetacatContextManager.getContext().getScheme());
-        log.info("------------------------------------------------");
-        log.info(MetacatContextManager.getContext().toString());
-        log.info(MetacatContextManager.getContext().getClientAppName());
-        log.info("------------------------------------------------");
         String clientAppName =  MetacatContextManager.getContext().getClientAppName();
         if (clientAppName == null) {
-            log.info("------------------------------------------------");
-            log.info(MetacatContextManager.getContext().toString());
-            clientAppName = "I SET IT NULL";
-            log.info(clientAppName);
-            log.info(MetacatContextManager.getContext().toString());
-            log.info("------------------------------------------------");
-
+            clientAppName = "UNKNOWN";
         }
         tags.put("caller", clientAppName);
         registry.counter(requestCounterId.withTags(tags)).increment();
