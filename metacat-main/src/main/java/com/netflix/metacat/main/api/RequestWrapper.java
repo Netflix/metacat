@@ -164,9 +164,10 @@ public final class RequestWrapper {
         String clientAppName =  MetacatContextManager.getContext().getClientAppName();
         if (clientAppName == null) {
             log.info("------------------------------------------------");
-            log.info(clientAppName);
+            log.info(MetacatContextManager.getContext().toString());
             clientAppName = "I SET IT NULL";
             log.info(clientAppName);
+            log.info(MetacatContextManager.getContext().toString());
             log.info("------------------------------------------------");
 
         }
