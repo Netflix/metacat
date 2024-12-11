@@ -92,7 +92,7 @@ public class MetacatRequestContext implements Serializable {
      */
     public MetacatRequestContext() {
         this.userName = null;
-        this.clientAppName = null;
+        this.clientAppName = UNKNOWN;
         this.clientId = null;
         this.jobId = null;
         this.dataTypeContext = null;
@@ -198,6 +198,7 @@ public class MetacatRequestContext implements Serializable {
         MetacatRequestContextBuilder() {
             this.bApiUri = UNKNOWN;
             this.bScheme = UNKNOWN;
+            this.bClientAppName = UNKNOWN;
         }
 
         /**
