@@ -163,7 +163,12 @@ public final class RequestWrapper {
         log.info("------------------------------------------------");
         String clientAppName =  MetacatContextManager.getContext().getClientAppName();
         if (clientAppName == null) {
+            log.info("------------------------------------------------");
+            log.info(clientAppName);
             clientAppName = "I SET IT NULL";
+            log.info(clientAppName);
+            log.info("------------------------------------------------");
+
         }
         tags.put("caller", clientAppName);
         registry.counter(requestCounterId.withTags(tags)).increment();
