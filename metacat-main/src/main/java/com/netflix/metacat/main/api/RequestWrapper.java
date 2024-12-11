@@ -154,8 +154,18 @@ public final class RequestWrapper {
         if (requestTags != null) {
             tags.putAll(requestTags);
         }
+
         tags.put("request", resourceRequestName);
         tags.put("scheme", MetacatContextManager.getContext().getScheme());
+        log.info("------------------------------------------------");
+        log.info(MetacatContextManager.getContext().toString());
+        log.info(MetacatContextManager.getContext().getClientAppName());
+        log.info("------------------------------------------------");
+        String clientAppName =  MetacatContextManager.getContext().getClientAppName();
+        if (clientAppName == null) {
+            clientAppName = "I SET IT NULL";
+        }
+        tags.put("caller", clientAppName);
         registry.counter(requestCounterId.withTags(tags)).increment();
 
         try {
@@ -243,6 +253,7 @@ public final class RequestWrapper {
         final long start = registry.clock().wallTime();
         final Map<String, String> tags = Maps.newHashMap();
         tags.put("request", resourceRequestName);
+        tags.put("caller", MetacatContextManager.getContext().getClientAppName());
         registry.counter(requestCounterId.withTags(tags)).increment();
         try {
             MetacatContextManager.getContext().setRequestName(resourceRequestName);
