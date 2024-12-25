@@ -36,4 +36,5 @@ public class GetTableServiceParameters {
     private final boolean useCache;
     private final boolean includeMetadataFromConnector;
     private final boolean includeMetadataLocationOnly;
+    private final boolean includeParentChildInfo;
 }
