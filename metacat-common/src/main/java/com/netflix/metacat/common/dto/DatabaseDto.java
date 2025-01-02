@@ -21,8 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -36,7 +35,7 @@ import java.util.Map;
 /**
  * Database information.
  */
-@ApiModel(description = "Tables and other information about the given database")
+@Schema(description = "Tables and other information about the given database")
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -44,20 +43,20 @@ public class DatabaseDto extends BaseDto implements HasDefinitionMetadata {
     private static final long serialVersionUID = -4530516372664788451L;
     private Date dateCreated;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "metadata attached to the logical database")
+    @Schema(description = "metadata attached to the logical database")
     @JsonProperty
     private transient ObjectNode definitionMetadata;
     private Date lastUpdated;
-    @ApiModelProperty(value = "the name of this entity", required = true)
+    @Schema(description = "the name of this entity", requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonProperty
     private QualifiedName name;
-    @ApiModelProperty(value = "Names of the tables in this database", required = true)
+    @Schema(description = "Names of the tables in this database", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<String> tables;
-    @ApiModelProperty(value = "Connector type of this catalog", required = true)
+    @Schema(description = "Connector type of this catalog", requiredMode = Schema.RequiredMode.REQUIRED)
     private String type;
-    @ApiModelProperty(value = "Any extra metadata properties of the database")
+    @Schema(description = "Any extra metadata properties of the database")
     private Map<String, String> metadata;
-    @ApiModelProperty(value = "URI of the database. Only applies to certain data sources like hive, S3")
+    @Schema(description = "URI of the database. Only applies to certain data sources like hive, S3")
     private String uri;
 
     @JsonIgnore

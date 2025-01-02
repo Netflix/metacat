@@ -19,7 +19,7 @@ package com.netflix.metacat.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -42,12 +42,12 @@ import java.util.Map;
 public class DatabaseCreateRequestDto extends BaseDto {
     private static final long serialVersionUID = 6308417213106650174L;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "metadata attached to the physical data")
+    @Schema(description = "metadata attached to the physical data")
     @JsonProperty
     private transient ObjectNode definitionMetadata;
-    @ApiModelProperty(value = "Any extra metadata properties of the database")
+    @Schema(description = "Any extra metadata properties of the database")
     private Map<String, String> metadata;
-    @ApiModelProperty(value = "URI of the database. Only applies to certain data sources like hive, S3")
+    @Schema(description = "URI of the database. Only applies to certain data sources like hive, S3")
     private String uri;
 
     private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {

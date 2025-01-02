@@ -18,8 +18,7 @@
 package com.netflix.metacat.common.dto;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,7 +28,7 @@ import lombok.NoArgsConstructor;
 /**
  * Field DTO.
  */
-@ApiModel(description = "Table field/column metadata")
+@Schema(description = "Table field/column metadata")
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -39,32 +38,32 @@ import lombok.NoArgsConstructor;
 public class FieldDto extends BaseDto {
     private static final long serialVersionUID = 9096928516299407324L;
 
-    @ApiModelProperty(value = "Comment of the field/column")
+    @Schema(description = "Comment of the field/column")
     private String comment;
-    @ApiModelProperty(value = "Name of the field/column", required = true)
+    @Schema(description = "Name of the field/column", requiredMode = Schema.RequiredMode.REQUIRED)
     private String name;
-    @ApiModelProperty(value = "Is it a partition Key. If true, it is a partition key.")
+    @Schema(description = "Is it a partition Key. If true, it is a partition key.")
     @SuppressWarnings("checkstyle:membername")
     private boolean partition_key;
-    @ApiModelProperty(value = "Position of the field/column", required = true)
+    @Schema(description = "Position of the field/column", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer pos;
-    @ApiModelProperty(value = "Source type of the field/column")
+    @Schema(description = "Source type of the field/column")
     @SuppressWarnings("checkstyle:membername")
     private String source_type;
-    @ApiModelProperty(value = "Type of the field/column", required = true)
+    @Schema(description = "Type of the field/column", requiredMode = Schema.RequiredMode.REQUIRED)
     private String type;
-    @ApiModelProperty(value = "Type of the field/column in JSON format",
-        accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Type of the field/column in JSON format",
+        accessMode = Schema.AccessMode.READ_ONLY)
     private JsonNode jsonType;
-    @ApiModelProperty(value = "Can the field/column be null")
+    @Schema(description = "Can the field/column be null")
     private Boolean isNullable;
-    @ApiModelProperty(value = "Size of the field/column")
+    @Schema(description = "Size of the field/column")
     private Integer size;
-    @ApiModelProperty(value = "Default value of the column")
+    @Schema(description = "Default value of the column")
     private String defaultValue;
-    @ApiModelProperty(value = "Is the column a sorted key")
+    @Schema(description = "Is the column a sorted key")
     private Boolean isSortKey;
-    @ApiModelProperty(value = "Is the column an index key")
+    @Schema(description = "Is the column an index key")
     private Boolean isIndexKey;
 
     @SuppressWarnings("checkstyle:methodname")

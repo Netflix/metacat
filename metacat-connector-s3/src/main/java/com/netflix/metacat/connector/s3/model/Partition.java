@@ -13,21 +13,21 @@
 
 package com.netflix.metacat.connector.s3.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Index;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.UniqueConstraint;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.UniqueConstraint;
 
 /**
  * Partition.
  */
 @Entity
-@javax.persistence.Table(name = "partition_table",
+@jakarta.persistence.Table(name = "partition_table",
     indexes = { @Index(name = "partition_table_i1", columnList = "name"),
         @Index(name = "partition_table_i2", columnList = "uri") },
     uniqueConstraints = @UniqueConstraint(name = "partition_table_u1", columnNames = { "table_id", "name" }))

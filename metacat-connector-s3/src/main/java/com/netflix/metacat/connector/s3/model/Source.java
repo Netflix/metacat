@@ -13,19 +13,19 @@
 
 package com.netflix.metacat.connector.s3.model;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToMany;
-import javax.persistence.UniqueConstraint;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.UniqueConstraint;
 import java.util.List;
 
 /**
  * Source.
  */
 @Entity
-@javax.persistence.Table(name = "source",
+@jakarta.persistence.Table(name = "source",
     uniqueConstraints = @UniqueConstraint(name = "source_u1", columnNames = "name"))
 public class Source extends IdEntity {
     private String name;

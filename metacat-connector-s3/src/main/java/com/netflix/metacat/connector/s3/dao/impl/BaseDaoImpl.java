@@ -18,9 +18,9 @@ import com.google.common.collect.Lists;
 import com.netflix.metacat.connector.s3.dao.BaseDao;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import javax.inject.Provider;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
+import jakarta.inject.Provider;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import java.util.List;
 
 /**

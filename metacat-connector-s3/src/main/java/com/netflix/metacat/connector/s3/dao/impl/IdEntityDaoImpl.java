@@ -17,11 +17,11 @@ import com.google.common.collect.Lists;
 import com.netflix.metacat.connector.s3.dao.BaseDao;
 import com.netflix.metacat.connector.s3.model.IdEntity;
 
-import javax.inject.Provider;
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import jakarta.inject.Provider;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import java.util.List;
 
 /**

@@ -25,7 +25,7 @@ import com.netflix.metacat.connector.jdbc.services.JdbcConnectorDatabaseService;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.sql.DataSource;
 
 /**

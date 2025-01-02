@@ -18,7 +18,7 @@
 
 package com.netflix.metacat.common.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -38,9 +38,9 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = false)
 public class ViewDto extends BaseDto {
     private static final long serialVersionUID = -1044988220491063480L;
-    @ApiModelProperty(value = "View original text.", required = true)
+    @Schema(description = "View original text.", requiredMode = Schema.RequiredMode.REQUIRED)
     private String viewOriginalText;
 
-    @ApiModelProperty(value = "View expanded text.")
+    @Schema(description = "View expanded text.")
     private String viewExpandedText;
 }

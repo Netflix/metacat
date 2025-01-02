@@ -3,8 +3,8 @@ package com.netflix.metacat.metadata.store.data.converters;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 /**
  * The attribute converter for the QualifiedName type.

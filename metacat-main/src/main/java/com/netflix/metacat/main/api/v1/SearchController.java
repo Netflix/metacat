@@ -20,7 +20,7 @@ package com.netflix.metacat.main.api.v1;
 import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.search.ElasticSearchUtil;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.DependsOn;
@@ -58,7 +58,7 @@ public class SearchController {
     @RequestMapping(method = RequestMethod.GET, path = "/table")
     @ResponseStatus(HttpStatus.OK)
     public List<TableDto> searchTables(
-        @ApiParam(value = "The query parameter", required = true)
+        @Parameter(description = "The query parameter", required = true)
         @RequestParam(name = "q") final String searchString
     ) {
         return this.requestWrapper.processRequest(

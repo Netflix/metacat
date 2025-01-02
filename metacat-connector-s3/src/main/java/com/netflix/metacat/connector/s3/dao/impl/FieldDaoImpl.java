@@ -16,9 +16,9 @@ package com.netflix.metacat.connector.s3.dao.impl;
 import com.netflix.metacat.connector.s3.dao.FieldDao;
 import com.netflix.metacat.connector.s3.model.Field;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.persistence.EntityManager;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.persistence.EntityManager;
 
 /**
  * Field DAO impl.

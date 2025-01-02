@@ -18,7 +18,7 @@
 package com.netflix.metacat.common.dto;
 
 import com.netflix.metacat.common.QualifiedName;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,12 +37,12 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 public class TagRemoveRequestDto extends BaseDto {
     private static final long serialVersionUID = 8698531483258796673L;
-    @ApiModelProperty(value = "The qualified name", required = true)
+    @Schema(description = "The qualified name", requiredMode = Schema.RequiredMode.REQUIRED)
     private QualifiedName name;
 
-    @ApiModelProperty(value = "True to delete all tags")
+    @Schema(description = "True to delete all tags")
     private Boolean deleteAll;
 
-    @ApiModelProperty(value = "Tags to remove")
+    @Schema(description = "Tags to remove")
     private List<String> tags;
 }

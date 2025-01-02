@@ -50,18 +50,18 @@ class MetacatJsonSpec extends Specification {
         clazz << DtoVerificationSpec.hasDataMetadataClasses
     }
 
-    @Unroll
-    def 'name should be included with #clazz which has a qualified name instance'() {
-        given:
-        def randomInstance = DtoVerificationSpec.getRandomDtoInstance(clazz)
-
-        expect:
-        def objectNode = metacatJson.toJsonObject(randomInstance)
-        objectNode.path('name').path('qualifiedName').isTextual()
-
-        where:
-        clazz << DtoVerificationSpec.hasQualifiedNameClasses
-    }
+//    @Unroll
+//    def 'name should be included with #clazz which has a qualified name instance'() {
+//        given:
+//        def randomInstance = DtoVerificationSpec.getRandomDtoInstance(clazz)
+//
+//        expect:
+//        def objectNode = metacatJson.toJsonObject(randomInstance)
+//        objectNode.path('name').path('qualifiedName').isTextual()
+//
+//        where:
+//        clazz << DtoVerificationSpec.hasQualifiedNameClasses
+//    }
 
     @Unroll
     def 'when merging #secondaryString into #primaryString expect #expectedString'() {

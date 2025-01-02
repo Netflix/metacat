@@ -681,11 +681,13 @@ class MetacatSmokeSpec extends Specification {
         tableMetadataOnly.getFields().size() == 0
         tableMetadataOnly.getMetadata().get('metadata_location') != null
         when:
-        FileUtils.moveFile(metadataFile, new File(metadataFile.getAbsolutePath() + '1'))
+        metadataFile.renameTo(metadataFile.getAbsolutePath() + '1')
+        Thread.sleep(1000) // Sleep to ensure the writes have time to settle
         api.getTable(catalogName, databaseName, tableName, true, false, false)
         then:
         thrown(MetacatBadRequestException)
-        FileUtils.moveFile(new File(metadataFile.getAbsolutePath() + '1'), metadataFile)
+        new File(metadataFile.getAbsolutePath() + '1').renameTo(metadataFile)
+        Thread.sleep(1000) // Sleep to ensure the writes have time to settle
         when:
         def updatedTable = api.getTable(catalogName, databaseName, tableName, true, false, false)
         then:

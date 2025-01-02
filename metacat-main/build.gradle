@@ -45,15 +45,12 @@ dependencies {
     api("com.github.rholder:guava-retrying") {
         exclude module: "guava"
     }
-    api("io.springfox:springfox-boot-starter")
     api("org.springframework.boot:spring-boot-starter")
     api("org.springframework.boot:spring-boot-starter-web")
     api("org.springframework.boot:spring-boot-starter-actuator")
     api("org.springframework.boot:spring-boot-starter-hateoas")
     api("org.springframework.boot:spring-boot-starter-logging")
-    api("org.springframework.boot:spring-boot-starter-tomcat")
-    api("javax.validation:validation-api")
-    implementation 'io.springfox:springfox-boot-starter'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui'
 
     /*******************************
      * Provided Dependencies
@@ -76,7 +73,6 @@ dependencies {
     runtimeOnly(project(":metacat-connector-s3"))
     runtimeOnly(project(":metacat-connector-druid"))
 
-    runtimeOnly("io.springfox:springfox-swagger-ui")
     runtimeOnly("org.webjars:hal-browser:3325375")
     runtimeOnly("org.springframework:spring-aspects")
     runtimeOnly("org.apache.logging.log4j:log4j-core")

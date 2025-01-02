@@ -58,6 +58,7 @@ task(console, dependsOn: "testClasses", type: JavaExec) {
 }
 
 war {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archivesBaseName = "metacat"
     doLast{
         copy{

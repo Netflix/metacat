@@ -20,7 +20,7 @@ package com.netflix.metacat.common.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -38,7 +38,7 @@ public class DataMetadataDto extends BaseDto implements HasDataMetadata {
     private static final long serialVersionUID = -874750260731085106L;
     private String uri;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "metadata")
+    @Schema(description = "metadata")
     @JsonProperty
     private transient ObjectNode dataMetadata;
 

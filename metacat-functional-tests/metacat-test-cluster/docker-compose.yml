@@ -17,7 +17,7 @@
 
 services:
     metacat:
-        image: tomcat:9.0-jre17
+        image: tomcat:10.1-jre17
         platform: linux/x86_64
         depends_on:
             - hive-metastore
@@ -178,7 +178,7 @@ services:
         depends_on:
             - metacat
         environment:
-            - TARGETS=metacat:8080,metacat:12001,metacat:12003,metacat:12004
+            - TARGETS=metacat:8080,metacat:12001
             - TIMEOUT=360
         labels:
           - "com.netflix.metacat.oss.test"

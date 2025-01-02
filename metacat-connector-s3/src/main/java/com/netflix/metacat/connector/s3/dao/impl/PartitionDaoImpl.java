@@ -20,11 +20,11 @@ import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.connector.s3.dao.PartitionDao;
 import com.netflix.metacat.connector.s3.model.Partition;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 import java.util.List;
 
 /**

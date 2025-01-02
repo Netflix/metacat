@@ -24,7 +24,7 @@ dependencies {
     api(project(":metacat-common"))
     api(project(":metacat-common-server"))
 
-    api("org.codehaus.groovy:groovy-all")
+    api("org.apache.groovy:groovy-all")
 
     /*******************************
      * Provided Dependencies

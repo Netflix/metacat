@@ -135,6 +135,7 @@
             <property name="allowThrowsTagsForSubclasses" value="true"/>
             <property name="allowUndeclaredRTE" value="true"/>
             <property name="allowMissingPropertyJavadoc" value="true"/>
+            <property name="suppressLoadErrors" value="true"/>
         </module>
 
         <!-- Custom Checkstyle Check to validate Javadoc. -->

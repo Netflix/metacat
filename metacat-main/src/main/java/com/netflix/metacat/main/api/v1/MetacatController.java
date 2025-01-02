@@ -39,11 +39,11 @@ import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.TableService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.DependsOn;
@@ -58,8 +58,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Nullable;
-import javax.validation.Valid;
-import java.net.HttpURLConnection;
+import jakarta.validation.Valid;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -73,11 +72,9 @@ import java.util.function.Supplier;
     path = "/mds/v1",
     produces = MediaType.APPLICATION_JSON_VALUE
 )
-@Api(
-    value = "MetacatV1",
-    description = "Federated metadata operations",
-    produces = MediaType.APPLICATION_JSON_VALUE,
-    consumes = MediaType.APPLICATION_JSON_VALUE
+@Tag(
+    name = "MetacatV1",
+    description = "Federated metadata operations"
 )
 @Slf4j
 @DependsOn("metacatCoreInitService")
@@ -110,16 +107,15 @@ public class MetacatController implements MetacatV1 {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.CREATED)
-    @ApiOperation(
-        position = 3,
-        value = "Creates a new catalog",
-        notes = "Returns success if there were no errors creating the catalog"
+    @Operation(
+        summary = "Creates a new catalog",
+        description = "Returns success if there were no errors creating the catalog"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_IMPLEMENTED,
-                message = "Not yet implemented"
+                responseCode = "501",
+                description = "Not yet implemented"
             )
         }
     )
@@ -140,30 +136,29 @@ public class MetacatController implements MetacatV1 {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.CREATED)
-    @ApiOperation(
-        position = 2,
-        value = "Creates the given database in the given catalog",
-        notes = "Given a catalog and a database name, creates the database in the catalog"
+    @Operation(
+        summary = "Creates the given database in the given catalog",
+        description = "Given a catalog and a database name, creates the database in the catalog"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_CREATED,
-                message = "The database was created"
+                responseCode = "201",
+                description = "The database was created"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database cannot be located"
             )
         }
     )
     @Override
     public void createDatabase(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The database information")
+        @Parameter(description = "The database information")
         @Nullable @RequestBody(required = false) final DatabaseCreateRequestDto databaseCreateRequestDto
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
@@ -201,32 +196,31 @@ public class MetacatController implements MetacatV1 {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.CREATED)
-    @ApiOperation(
-        position = 2,
-        value = "Creates a table",
-        notes = "Creates the given table"
+    @Operation(
+        summary = "Creates a table",
+        description = "Creates the given table"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_CREATED,
-                message = "The table was created"
+                responseCode = "201",
+                description = "The table was created"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     @Override
     public TableDto createTable(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
-        @ApiParam(value = "The table information", required = true)
+        @Parameter(description = "The table information", required = true)
         @Valid @RequestBody final TableDto table
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
@@ -271,40 +265,39 @@ public class MetacatController implements MetacatV1 {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.CREATED)
-    @ApiOperation(
-        position = 2,
-        value = "Creates a metacat view. A staging table that can contain partitions referring to the table partition "
-            + "locations.",
-        notes = "Creates the given metacat view. A staging table that can contain partitions referring to the table "
-            + "partition locations."
+    @Operation(
+        summary = "Creates a metacat view. A staging table that can contain partitions referring to the table partition"
+            + " locations.",
+        description = "Creates the given metacat view. A staging table that can contain partitions referring to the "
+            + "table partition locations."
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_CREATED,
-                message = "The mView was created"
+                responseCode = "201",
+                description = "The mView was created"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     public TableDto createMView(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
-        @ApiParam(value = "The name of the view", required = true)
+        @Parameter(description = "The name of the view", required = true)
         @PathVariable("view-name") final String viewName,
-        @ApiParam(
-            value = "To snapshot a list of partitions of the table to this view. "
+        @Parameter(
+            description = "To snapshot a list of partitions of the table to this view. "
                 + "If true, it will restore the partitions from the table to this view."
         )
         @RequestParam(name = "snapshot", defaultValue = "false") final boolean snapshot,
-        @ApiParam(value = "Filter expression string to use")
+        @Parameter(description = "Filter expression string to use")
         @Nullable @RequestParam(value = "filter", required = false) final String filter
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
@@ -326,27 +319,26 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(method = RequestMethod.DELETE, path = "/catalog/{catalog-name}/database/{database-name}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation(
-        position = 4,
-        value = "Deletes the given database from the given catalog",
-        notes = "Given a catalog and database, deletes the database from the catalog"
+    @Operation(
+        summary = "Deletes the given database from the given catalog",
+        description = "Given a catalog and database, deletes the database from the catalog"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "Database was successfully deleted"
+                responseCode = "200",
+                description = "Database was successfully deleted"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database cannot be located"
             )
         }
     )
     public void deleteDatabase(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
@@ -375,30 +367,29 @@ public class MetacatController implements MetacatV1 {
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}"
     )
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 4,
-        value = "Delete table",
-        notes = "Deletes the given table"
+    @Operation(
+        summary = "Delete table",
+        description = "Deletes the given table"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "Table was successfully deleted"
+                responseCode = "200",
+                description = "Table was successfully deleted"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     @Override
     public TableDto deleteTable(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
@@ -425,31 +416,30 @@ public class MetacatController implements MetacatV1 {
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}"
     )
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 4,
-        value = "Delete metacat view",
-        notes = "Deletes the given metacat view"
+    @Operation(
+        summary = "Delete metacat view",
+        description = "Deletes the given metacat view"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "View was successfully deleted"
+                responseCode = "200",
+                description = "View was successfully deleted"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or metacat view cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or metacat view cannot be located"
             )
         }
     )
     public TableDto deleteMView(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
-        @ApiParam(value = "The name of the metacat view", required = true)
+        @Parameter(description = "The name of the metacat view", required = true)
         @PathVariable("view-name") final String viewName
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
@@ -475,30 +465,29 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(method = RequestMethod.GET, path = "/catalog/{catalog-name}")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 2,
-        value = "Databases for the requested catalog",
-        notes = "The list of databases that belong to the given catalog"
+    @Operation(
+        summary = "Databases for the requested catalog",
+        description = "The list of databases that belong to the given catalog"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "The catalog is returned"
+                responseCode = "200",
+                description = "The catalog is returned"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog cannot be located"
+                responseCode = "404",
+                description = "The requested catalog cannot be located"
             )
         }
     )
     @Override
     public CatalogDto getCatalog(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "Whether to include list of database names")
+        @Parameter(description = "Whether to include list of database names")
         @Nullable @RequestParam(name = "includeDatabaseNames", required = false) final Boolean includeDatabaseNames,
-        @ApiParam(value = "Whether to include user metadata information to the response")
+        @Parameter(description = "Whether to include user metadata information to the response")
         @RequestParam(name = "includeUserMetadata", defaultValue = "true") final boolean includeUserMetadata) {
         final QualifiedName name = this.requestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
         return this.requestWrapper.processRequest(
@@ -518,20 +507,19 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(method = RequestMethod.GET, path = "/catalog")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 1,
-        value = "List registered catalogs",
-        notes = "The names and types of all catalogs registered with this server"
+    @Operation(
+        summary = "List registered catalogs",
+        description = "The names and types of all catalogs registered with this server"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "The catalogs are returned"
+                responseCode = "200",
+                description = "The catalogs are returned"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "No catalogs are registered with the server"
+                responseCode = "404",
+                description = "No catalogs are registered with the server"
             )
         }
     )
@@ -553,32 +541,31 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(method = RequestMethod.GET, path = "/catalog/{catalog-name}/database/{database-name}")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 1,
-        value = "Tables for the requested database",
-        notes = "The list of tables that belong to the given catalog and database"
+    @Operation(
+        summary = "Tables for the requested database",
+        description = "The list of tables that belong to the given catalog and database"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "The database is returned"
+                responseCode = "200",
+                description = "The database is returned"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database cannot be located"
             )
         }
     )
     @Override
     public DatabaseDto getDatabase(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "Whether to include user metadata information to the response")
+        @Parameter(description = "Whether to include user metadata information to the response")
         @RequestParam(name = "includeUserMetadata", defaultValue = "true") final boolean includeUserMetadata,
-        @ApiParam(value = "Whether to include list of table names")
+        @Parameter(description = "Whether to include list of table names")
         @Nullable @RequestParam(name = "includeTableNames", required = false) final Boolean includeTableNames
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
@@ -613,46 +600,45 @@ public class MetacatController implements MetacatV1 {
         method = RequestMethod.GET,
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}"
     )
-    @ApiOperation(
-        position = 1,
-        value = "Table information",
-        notes = "Table information for the given table name under the given catalog and database")
+    @Operation(
+        summary = "Table information",
+        description = "Table information for the given table name under the given catalog and database")
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "The table is returned"
+                responseCode = "200",
+                description = "The table is returned"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     @Override
     public TableDto getTable(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
-        @ApiParam(
-            value = "Whether to include the core information about the table (location, serde, columns) in "
+        @Parameter(
+            description = "Whether to include the core information about the table (location, serde, columns) in "
                 + "the response. You would only say false here if you only want metadata."
         )
         @RequestParam(name = "includeInfo", defaultValue = "true") final boolean includeInfo,
-        @ApiParam(value = "Whether to include user definition metadata information to the response")
+        @Parameter(description = "Whether to include user definition metadata information to the response")
         @RequestParam(
             name = "includeDefinitionMetadata",
             defaultValue = "true"
         ) final boolean includeDefinitionMetadata,
-        @ApiParam(value = "Whether to include user data metadata information to the response")
+        @Parameter(description = "Whether to include user data metadata information to the response")
         @RequestParam(name = "includeDataMetadata", defaultValue = "true") final boolean includeDataMetadata,
-        @ApiParam(value = "Whether to include more info details to the response. This value is considered only if "
-            + "includeInfo is true.")
+        @Parameter(description = "Whether to include more info details to the response. This value is considered only "
+            + "if includeInfo is true.")
         @RequestParam(name = "includeInfoDetails", defaultValue = "false") final boolean includeInfoDetails,
-        @ApiParam(value = "Whether to include only the metadata location in the response")
+        @Parameter(description = "Whether to include only the metadata location in the response")
         @RequestParam(
                 name = "includeMetadataLocationOnly",
                 defaultValue = "false") final boolean includeMetadataLocationOnly
@@ -704,28 +690,27 @@ public class MetacatController implements MetacatV1 {
         method = RequestMethod.HEAD,
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}"
     )
-    @ApiOperation(
-        position = 1,
-        value = "Table information",
-        notes = "Table information for the given table name under the given catalog and database")
+    @Operation(
+        summary = "Table information",
+        description = "Table information for the given table name under the given catalog and database")
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "Table exists"
+                responseCode = "200",
+                description = "Table exists"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "Table does not exists"
+                responseCode = "404",
+                description = "Table does not exists"
             )
         }
     )
     @Override
-    public void tableExists(@ApiParam(value = "The name of the catalog", required = true)
+    public void tableExists(@Parameter(description = "The name of the catalog", required = true)
                                 @PathVariable("catalog-name") final String catalogName,
-                            @ApiParam(value = "The name of the database", required = true)
+                            @Parameter(description = "The name of the database", required = true)
                                 @PathVariable("database-name") final String databaseName,
-                            @ApiParam(value = "The name of the table", required = true)
+                            @Parameter(description = "The name of the table", required = true)
                                 @PathVariable("table-name") final String tableName) {
         final Supplier<QualifiedName> qualifiedNameSupplier =
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName);
@@ -746,29 +731,29 @@ public class MetacatController implements MetacatV1 {
         method = RequestMethod.GET,
         path = "/catalog/{catalog-name}/table-names"
     )
-    @ApiOperation(
-        value = "Filtered list of table names",
-        notes = "Filtered list of table names for the given catalog. The filter expression pattern depends on the "
-            + "catalog")
+    @Operation(
+        summary = "Filtered list of table names",
+        description = "Filtered list of table names for the given catalog. The filter expression pattern depends on "
+            + "the catalog")
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "List of table names is returned"
+                responseCode = "200",
+                description = "List of table names is returned"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog cannot be located"
+                responseCode = "404",
+                description = "The requested catalog cannot be located"
             )
         }
     )
     @Override
     public List<QualifiedName> getTableNames(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "filter expression")
+        @Parameter(description = "filter expression")
         @RequestParam(name = "filter") final String filter,
-        @ApiParam(value = "Size of the list")
+        @Parameter(description = "Size of the list")
         @Nullable @RequestParam(name = "limit", required = false, defaultValue = "-1") final Integer limit) {
         final Supplier<QualifiedName> qualifiedNameSupplier =
             () -> QualifiedName.ofCatalog(catalogName);
@@ -792,31 +777,31 @@ public class MetacatController implements MetacatV1 {
         method = RequestMethod.GET,
         path = "/catalog/{catalog-name}/database/{database-name}/table-names"
     )
-    @ApiOperation(
-        value = "Filtered list of table names",
-        notes = "Filtered list of table names for the given database. The filter expression pattern depends on the "
-            + "catalog")
+    @Operation(
+        summary = "Filtered list of table names",
+        description = "Filtered list of table names for the given database. The filter expression pattern depends on "
+            + "the catalog")
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "List of table names is returned"
+                responseCode = "200",
+                description = "List of table names is returned"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog cannot be located"
+                responseCode = "404",
+                description = "The requested catalog cannot be located"
             )
         }
     )
     @Override
     public List<QualifiedName> getTableNames(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "filter expression")
+        @Parameter(description = "filter expression")
         @RequestParam(name = "filter") final String filter,
-        @ApiParam(value = "Size of the list")
+        @Parameter(description = "Size of the list")
         @Nullable @RequestParam(name = "limit", required = false, defaultValue = "-1") final Integer limit) {
         final Supplier<QualifiedName> qualifiedNameSupplier =
             () -> QualifiedName.ofDatabase(catalogName, databaseName);
@@ -844,25 +829,24 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(method = RequestMethod.GET, path = "/catalog/{catalog-name}/mviews")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 1,
-        value = "List of metacat views",
-        notes = "List of metacat views for a catalog"
+    @Operation(
+        summary = "List of metacat views",
+        description = "List of metacat views for a catalog"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "The list of views is returned"
+                responseCode = "200",
+                description = "The list of views is returned"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog cannot be located"
+                responseCode = "404",
+                description = "The requested catalog cannot be located"
             )
         }
     )
     public List<NameDateDto> getMViews(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
@@ -886,29 +870,28 @@ public class MetacatController implements MetacatV1 {
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mviews"
     )
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 1,
-        value = "List of metacat views",
-        notes = "List of metacat views for a catalog"
+    @Operation(
+        summary = "List of metacat views",
+        description = "List of metacat views for a catalog"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "The list of views is returned"
+                responseCode = "200",
+                description = "The list of views is returned"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog cannot be located"
+                responseCode = "404",
+                description = "The requested catalog cannot be located"
             )
         }
     )
     public List<NameDateDto> getMViews(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
@@ -935,31 +918,30 @@ public class MetacatController implements MetacatV1 {
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}"
     )
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 1,
-        value = "Metacat View information",
-        notes = "View information for the given view name under the given catalog and database"
+    @Operation(
+        summary = "Metacat View information",
+        description = "View information for the given view name under the given catalog and database"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "The view is returned"
+                responseCode = "200",
+                description = "The view is returned"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     public TableDto getMView(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
-        @ApiParam(value = "The name of the view", required = true)
+        @Parameter(description = "The name of the view", required = true)
         @PathVariable("view-name") final String viewName
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
@@ -994,31 +976,30 @@ public class MetacatController implements MetacatV1 {
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/rename"
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation(
-        position = 3,
-        value = "Rename table",
-        notes = "Renames the given table with the new name")
+    @Operation(
+        summary = "Rename table",
+        description = "Renames the given table with the new name")
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "Table successfully renamed"
+                responseCode = "200",
+                description = "Table successfully renamed"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     @Override
     public void renameTable(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @RequestParam("newTableName") final String newTableName
     ) {
         final QualifiedName oldName = this.requestWrapper.qualifyName(
@@ -1049,27 +1030,26 @@ public class MetacatController implements MetacatV1 {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation(
-        position = 4,
-        value = "Updates an existing catalog",
-        notes = "Returns success if there were no errors updating the catalog"
+    @Operation(
+        summary = "Updates an existing catalog",
+        description = "Returns success if there were no errors updating the catalog"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "Catalog successfully updated"
+                responseCode = "200",
+                description = "Catalog successfully updated"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "No catalogs are registered with the server"
+                responseCode = "404",
+                description = "No catalogs are registered with the server"
             )
         }
     )
     public void updateCatalog(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The metadata to update in the catalog", required = true)
+        @Parameter(description = "The metadata to update in the catalog", required = true)
         @RequestBody final CreateCatalogDto createCatalogDto
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
@@ -1097,29 +1077,28 @@ public class MetacatController implements MetacatV1 {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation(
-        position = 3,
-        value = "Updates the given database in the given catalog",
-        notes = "Given a catalog and a database name, updates the database in the catalog"
+    @Operation(
+        summary = "Updates the given database in the given catalog",
+        description = "Given a catalog and a database name, updates the database in the catalog"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "Database successfully updated"
+                responseCode = "200",
+                description = "Database successfully updated"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database cannot be located"
             )
         }
     )
     public void updateDatabase(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The database information", required = true)
+        @Parameter(description = "The database information", required = true)
         @RequestBody final DatabaseCreateRequestDto databaseUpdateRequestDto
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
@@ -1156,33 +1135,32 @@ public class MetacatController implements MetacatV1 {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 3,
-        value = "Update mview",
-        notes = "Updates the given mview"
+    @Operation(
+        summary = "Update mview",
+        description = "Updates the given mview"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "View successfully updated"
+                responseCode = "200",
+                description = "View successfully updated"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     public TableDto updateMView(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
-        @ApiParam(value = "The name of the view", required = true)
+        @Parameter(description = "The name of the view", required = true)
         @PathVariable("view-name") final String viewName,
-        @ApiParam(value = "The view information", required = true)
+        @Parameter(description = "The view information", required = true)
         @RequestBody final TableDto table
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
@@ -1209,32 +1187,31 @@ public class MetacatController implements MetacatV1 {
         path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}",
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @ApiOperation(
-        position = 3,
-        value = "Update table",
-        notes = "Updates the given table"
+    @Operation(
+        summary = "Update table",
+        description = "Updates the given table"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_OK,
-                message = "Table successfully updated"
+                responseCode = "200",
+                description = "Table successfully updated"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     @Override
     public TableDto updateTable(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
-        @ApiParam(value = "The table information", required = true)
+        @Parameter(description = "The table information", required = true)
         @RequestBody final TableDto table
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(

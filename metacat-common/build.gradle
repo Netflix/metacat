@@ -22,13 +22,13 @@ dependencies {
 
     api("com.fasterxml.jackson.core:jackson-databind")
     api("com.github.fge:json-patch")
-    api("io.swagger:swagger-annotations")
 
     /*******************************
      * Implementation Dependencies
      *******************************/
 
     api("com.google.guava:guava")
+    api('org.springdoc:springdoc-openapi-starter-webmvc-ui')
 
     /*******************************
      * Provided Dependencies

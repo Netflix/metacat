@@ -21,8 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -33,20 +32,20 @@ import java.io.ObjectOutputStream;
 /**
  * Information required to create a new catalog.
  */
-@ApiModel(description = "Information required to create a new catalog")
+@Schema(description = "Information required to create a new catalog")
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class CreateCatalogDto extends BaseDto implements HasDefinitionMetadata {
     private static final long serialVersionUID = -6745573078608938941L;
 
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "metadata attached to the logical catalog")
+    @Schema(description = "metadata attached to the logical catalog")
     @JsonProperty
     private transient ObjectNode definitionMetadata;
-    @ApiModelProperty(value = "the name of this entity", required = true)
+    @Schema(description = "the name of this entity", requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonProperty
     private QualifiedName name;
-    @ApiModelProperty(value = "the type of the connector of this catalog", required = true)
+    @Schema(description = "the type of the connector of this catalog", requiredMode = Schema.RequiredMode.REQUIRED)
     private String type;
 
     @Override

@@ -110,7 +110,9 @@ configure(javaProjects) {
         }
         dependencies {
             dependency("com.github.spotbugs:spotbugs-annotations:4.8.2")
-            dependency("org.codehaus.groovy:groovy-all:2.5.9")
+            dependency("org.apache.groovy:groovy:4.0.24")
+            dependency("org.apache.groovy:groovy-all:4.0.24")
+            dependency("org.codehaus.groovy:groovy:3.0.9")
             dependencySet(group: "org.ow2.asm", version: "9.2") {
                 entry "asm"
                 entry "asm-analysis"
@@ -126,11 +128,7 @@ configure(javaProjects) {
             dependencySet(group: "com.netflix.spectator", version: "1.3.9") {
                 entry "spectator-api"
             }
-            dependency("io.springfox:springfox-boot-starter:3.0.0")
-            dependencySet(group: "io.swagger", version: "1.6.2") {
-                entry "swagger-annotations"
-                entry "swagger-jersey2-jaxrs"
-            }
+            dependency("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
             dependency("de.danielbechler:java-object-diff:0.91.1")
             dependency("io.airlift:testing-mysql-server:0.1")
             dependency("net.sf.dozer:dozer:5.5.1")
@@ -178,14 +176,14 @@ configure(javaProjects) {
          * Runtime Dependencies
          *******************************/
         implementation('com.zaxxer:HikariCP')
-        implementation('org.hibernate:hibernate-core')
+        implementation('org.springframework.boot:spring-boot-starter-validation')
 
         /*******************************
          * Test Dependencies
          *******************************/
         testImplementation("log4j:log4j")
         testImplementation("cglib:cglib-nodep")
-        testImplementation("org.codehaus.groovy:groovy-all")
+        testImplementation("org.apache.groovy:groovy-all")
         testImplementation("org.codehaus.gpars:gpars")
         testImplementation("org.objenesis:objenesis:3.2")
         testImplementation("org.spockframework:spock-core")
@@ -195,13 +193,6 @@ configure(javaProjects) {
             exclude group: 'com.vaadin.external.google', module: 'android-json'
         }
         testRuntimeOnly("org.hsqldb:hsqldb")
-        testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.3.1'
-        testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
-        testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
-        testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
-        testRuntimeOnly "org.junit.platform:junit-platform-commons:1.7.0"
-        testImplementation 'org.junit.platform:junit-platform-launcher:1.8.1'
-        testImplementation 'org.junit.platform:junit-platform-runner:1.8.1'
     }
 
     compileJava {

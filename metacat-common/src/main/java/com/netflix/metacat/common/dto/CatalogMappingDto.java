@@ -18,8 +18,7 @@
 package com.netflix.metacat.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,7 +27,7 @@ import lombok.NoArgsConstructor;
 /**
  * The name and type of a catalog.
  */
-@ApiModel(description = "The name and type of a catalog")
+@Schema(description = "The name and type of a catalog")
 @SuppressWarnings("unused")
 @Data
 @AllArgsConstructor
@@ -37,11 +36,11 @@ import lombok.NoArgsConstructor;
 public class CatalogMappingDto extends BaseDto {
     private static final long serialVersionUID = -1223516438943164936L;
 
-    @ApiModelProperty(value = "The name of the catalog", required = true)
+    @Schema(description = "The name of the catalog", requiredMode = Schema.RequiredMode.REQUIRED)
     private String catalogName;
-    @ApiModelProperty(value = "The connector type of the catalog", required = true)
+    @Schema(description = "The connector type of the catalog", requiredMode = Schema.RequiredMode.REQUIRED)
     private String connectorName;
-    @ApiModelProperty(value = "Cluster information referred by this catalog", required = true)
+    @Schema(description = "Cluster information referred by this catalog", requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonProperty
     private ClusterDto clusterDto;
 }

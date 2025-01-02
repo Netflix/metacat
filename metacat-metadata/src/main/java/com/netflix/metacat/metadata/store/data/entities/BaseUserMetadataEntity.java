@@ -10,10 +10,10 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.ColumnDefault;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.MappedSuperclass;
+import jakarta.persistence.Basic;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.MappedSuperclass;
 
 /**
  * Represents a basic user metadata entity.

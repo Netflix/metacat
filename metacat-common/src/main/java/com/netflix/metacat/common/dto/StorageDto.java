@@ -17,8 +17,7 @@
  */
 package com.netflix.metacat.common.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -41,7 +40,7 @@ import java.util.Map;
  * }
  * </pre>
  */
-@ApiModel(description = "Serialization/Deserialization metadata of the table data")
+@Schema(description = "Serialization/Deserialization metadata of the table data")
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -51,18 +50,18 @@ import java.util.Map;
 public class StorageDto extends BaseDto {
     private static final long serialVersionUID = 4933906340321707232L;
 
-    @ApiModelProperty(value = "Input format of the table data stored")
+    @Schema(description = "Input format of the table data stored")
     private String inputFormat;
-    @ApiModelProperty(value = "Output format of the table data stored")
+    @Schema(description = "Output format of the table data stored")
     private String outputFormat;
-    @ApiModelProperty(value = "Owner of the table")
+    @Schema(description = "Owner of the table")
     private String owner;
-    @ApiModelProperty(value = "Extra storage parameters")
+    @Schema(description = "Extra storage parameters")
     private Map<String, String> parameters;
-    @ApiModelProperty(value = "Extra storage parameters")
+    @Schema(description = "Extra storage parameters")
     private Map<String, String> serdeInfoParameters;
-    @ApiModelProperty(value = "Serialization library of the data")
+    @Schema(description = "Serialization library of the data")
     private String serializationLib;
-    @ApiModelProperty(value = "URI of the table. Only applies to certain data sources like hive, S3")
+    @Schema(description = "URI of the table. Only applies to certain data sources like hive, S3")
     private String uri;
 }
