@@ -81,8 +81,8 @@ allprojects {
 
 idea {
     project {
-        jdkName = "8"
-        languageLevel = "8"
+        jdkName = "17"
+        languageLevel = "17"
         vcs = "Git"
     }
 }
@@ -98,8 +98,8 @@ configure(javaProjects) {
 
     group = "com.netflix.${githubProjectName}"
 
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 
     dependencyManagement {
         imports {
@@ -251,6 +251,7 @@ configure(javaProjects) {
             exceptionFormat = "full"
             events "PASSED", "FAILED", "SKIPPED"
         }
+        jvmArgs('--add-opens=java.base/java.lang.invoke=ALL-UNNAMED')
     }
 
     javadoc {
