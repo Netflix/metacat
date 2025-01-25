@@ -27,7 +27,6 @@ dependencies {
     api("com.google.guava:guava")
     api("com.google.inject:guice")
     api("com.google.inject.extensions:guice-persist")
-    api("com.google.inject.extensions:guice-multibindings")
     api("com.google.inject.extensions:guice-servlet")
     api("joda-time:joda-time:2.10.10")
     api("org.hibernate:hibernate-entitymanager")
