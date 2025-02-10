@@ -872,7 +872,6 @@ class MetacatSmokeSpec extends Specification {
         api.deleteTable(catalogName, databaseName, tableName)
     }
 
-
     @Unroll
     def "Test get partitions from iceberg table using #filter"() {
         def catalogName = 'embedded-fast-hive-metastore'
