@@ -1,0 +1,32 @@
+{
+    "annotationProcessor": {
+        "org.projectlombok:lombok": {
+            "locked": "1.18.30"
+        }
+    },
+    "compileClasspath": {
+        "org.projectlombok:lombok": {
+            "locked": "1.18.30"
+        }
+    },
+    "jacocoAgent": {
+        "org.jacoco:org.jacoco.agent": {
+            "locked": "0.8.7"
+        }
+    },
+    "jacocoAnt": {
+        "org.jacoco:org.jacoco.ant": {
+            "locked": "0.8.7"
+        }
+    },
+    "testAnnotationProcessor": {
+        "org.projectlombok:lombok": {
+            "locked": "1.18.30"
+        }
+    },
+    "testCompileClasspath": {
+        "org.projectlombok:lombok": {
+            "locked": "1.18.30"
+        }
+    }
+}
