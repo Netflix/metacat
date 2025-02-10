@@ -50,7 +50,7 @@ public class ConnectorException extends RuntimeException {
      *
      * @param message            message
      * @param cause              cause
-     * @param enableSuppression  eable suppression
+     * @param enableSuppression  enable suppression
      * @param writableStackTrace stacktrace
      */
     public ConnectorException(

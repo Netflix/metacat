@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -125,6 +126,21 @@ public class PolarisStoreConnectorTest {
 
         polarisConnector.deleteTable(dbName, tblName);
         Assert.assertFalse(polarisConnector.tableExistsById(tblEntity.getTblId()));
+    }
+
+    /**
+     * Test database deletion if table exists and ON DELETE CASCADE is disabled.
+     */
+    @Test
+    public void testDbDeletionNoCascade() {
+        final String dbName = generateDatabaseName();
+        final String tblName = generateTableName();
+        final PolarisDatabaseEntity dbEntity = createDB(dbName);
+        final PolarisTableEntity tblEntity = createTable(dbName, tblName);
+
+        Assertions.assertThrows(DataIntegrityViolationException.class, () ->
+            polarisConnector.deleteDatabase(dbName));
+        Assert.assertTrue(polarisConnector.databaseExists(dbName));
     }
 
     /**
