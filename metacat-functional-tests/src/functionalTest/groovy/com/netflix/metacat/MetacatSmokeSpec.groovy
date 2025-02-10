@@ -143,9 +143,9 @@ class MetacatSmokeSpec extends Specification {
     }
 
     static void initializeParentChildRelDefinitionMetadata(TableDto tableDto,
-                                                      String parent,
-                                                      String parent_uuid,
-                                                      String child_uuid) {
+                                                           String parent,
+                                                           String parent_uuid,
+                                                           String child_uuid) {
         def mapper = new ObjectMapper()
         def innerNode = mapper.createObjectNode()
         innerNode.put(ParentChildRelMetadataConstants.PARENT_NAME, parent)
@@ -1822,7 +1822,7 @@ class MetacatSmokeSpec extends Specification {
         assert ret2_new.size() == 0
 
         cleanup:
-            api.deleteMView(catalogName, databaseName, tableName, viewName)
+        api.deleteMView(catalogName, databaseName, tableName, viewName)
         where:
         catalogName                     | databaseName | tableName           | viewName    |tags
         'embedded-hive-metastore'       | 'smoke_db4'  | 'part'              | 'part_view'  | ['test_tag']    as List<String>
@@ -2043,8 +2043,8 @@ class MetacatSmokeSpec extends Specification {
         child11TableDto.definitionMetadata.put("random_key", "random_value")
         api.createTable(catalogName, databaseName, child11, child11TableDto)
 
-        def parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
-        def child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
+        def parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false, false, false, true)
+        def child11Table = api.getTable(catalogName, databaseName, child11, true, true, false, false, false, true)
         then:
         // Test Parent 1 parentChildInfo
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
@@ -2071,8 +2071,8 @@ class MetacatSmokeSpec extends Specification {
         assert e.message.contains("already exists")
 
         when:
-        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
-        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
+        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false, false, false, true)
+        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false, false, false, true)
         then:
         // Test Parent 1 parentChildInfo
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
@@ -2143,8 +2143,8 @@ class MetacatSmokeSpec extends Specification {
         assert e.message.contains("already exists")
 
         when:
-        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
-        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
+        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false, false, false, true)
+        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false, false, false, true)
         then:
         // Test Parent 1 parentChildInfo
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
@@ -2169,8 +2169,8 @@ class MetacatSmokeSpec extends Specification {
         def child12TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, child12, 'amajumdar', child12Uri)
         initializeParentChildRelDefinitionMetadata(child12TableDto, parent1FullName, parent1UUID, child12UUID)
         api.createTable(catalogName, databaseName, child12, child12TableDto)
-        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
-        def child12Table = api.getTable(catalogName, databaseName, child12, true, true, false)
+        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false, false, false, true)
+        def child12Table = api.getTable(catalogName, databaseName, child12, true, true, false, false, false, true)
 
         then:
         // Test Parent 1 parentChildInfo
@@ -2227,8 +2227,8 @@ class MetacatSmokeSpec extends Specification {
         def child21TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, child21, 'amajumdar', child21Uri)
         initializeParentChildRelDefinitionMetadata(child21TableDto, parent2FullName, parent2UUID, child21UUID)
         api.createTable(catalogName, databaseName, child21, child21TableDto)
-        def parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false)
-        def child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
+        def parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false, false, false, true)
+        def child21Table = api.getTable(catalogName, databaseName, child21, true, true, false, false, false, true)
 
         then:
         // Test Parent 2 parentChildInfo
@@ -2259,9 +2259,9 @@ class MetacatSmokeSpec extends Specification {
         assert e.message.contains("already exists")
 
         when:
-        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
-        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
-        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false)
+        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false, false, false, true)
+        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false, false, false, true)
+        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false, false, false, true)
 
         then:
         // Test Parent 1 parentChildInfo
@@ -2298,11 +2298,11 @@ class MetacatSmokeSpec extends Specification {
         assert e.message.contains("is already a parent table")
 
         when:
-        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false)
-        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
-        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false)
-        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false)
-        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
+        parent1Table = api.getTable(catalogName, databaseName, parent1, true, true, false, false, false, true)
+        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false, false, false, true)
+        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false, false, false, true)
+        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false, false, false, true)
+        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false, false, false, true)
         then:
         // Test Parent 1 parentChildInfo
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
@@ -2344,9 +2344,9 @@ class MetacatSmokeSpec extends Specification {
         when:
         api.deleteTable(catalogName, databaseName, renameParent1)
         api.renameTable(catalogName, databaseName, parent1, renameParent1)
-        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
-        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
-        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false, false, false, true)
+        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false, false, false, true)
+        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false, false, false, true)
 
         then:
         // Test Parent 1 parentChildInfo newName
@@ -2375,7 +2375,7 @@ class MetacatSmokeSpec extends Specification {
 
         //get the parent oldName should fail as it no longer exists
         when:
-        api.getTable(catalogName, databaseName, parent1, true, true, false)
+        api.getTable(catalogName, databaseName, parent1, true, true, false, false, false, true)
         then:
         e = thrown(Exception)
         assert e.message.contains("Unable to locate for")
@@ -2394,9 +2394,9 @@ class MetacatSmokeSpec extends Specification {
         assert e.message.contains("already exists")
 
         when:
-        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
-        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
-        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false, false, false, true)
+        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false, false, false, true)
+        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false, false, false, true)
         then:
         // Test Parent 1 parentChildInfo newName
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
@@ -2438,10 +2438,10 @@ class MetacatSmokeSpec extends Specification {
         assert e.message.contains("is already a child table")
 
         when:
-        def renameChild11Table = api.getTable(catalogName, databaseName, renameChild11, true, true, false)
-        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
-        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false)
-        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false)
+        def renameChild11Table = api.getTable(catalogName, databaseName, renameChild11, true, true, false, false, false, true)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false, false, false, true)
+        child11Table = api.getTable(catalogName, databaseName, child11, true, true, false, false, false, true)
+        child12Table = api.getTable(catalogName, databaseName, child12, true, true, false, false, false, true)
         then:
         // Test Parent 1 parentChildInfo newName
         assert parent1Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
@@ -2481,8 +2481,8 @@ class MetacatSmokeSpec extends Specification {
         when:
         api.deleteTable(catalogName, databaseName, renameChild11)
         api.renameTable(catalogName, databaseName, child11, renameChild11)
-        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
-        child11Table = api.getTable(catalogName, databaseName, renameChild11, true, true, false)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false, false, false, true)
+        child11Table = api.getTable(catalogName, databaseName, renameChild11, true, true, false, false, false, true)
 
         then:
         // Test parent1Table parentChildInfo with newName
@@ -2503,7 +2503,7 @@ class MetacatSmokeSpec extends Specification {
 
         //get the child oldName should fail as it no longer exists
         when:
-        api.getTable(catalogName, databaseName, child11, true, true, false)
+        api.getTable(catalogName, databaseName, child11, true, true, false, false, false, true)
         then:
         e = thrown(Exception)
         assert e.message.contains("Unable to locate for")
@@ -2523,7 +2523,7 @@ class MetacatSmokeSpec extends Specification {
          */
         when:
         api.deleteTable(catalogName, databaseName, renameChild11)
-        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false, false, false, true)
 
         then:
         // Test parent1 Table
@@ -2541,8 +2541,8 @@ class MetacatSmokeSpec extends Specification {
         when:
         child11TableDto = PigDataDtoProvider.getTable(catalogName, databaseName, renameChild11, 'amajumdar', child11Uri)
         api.createTable(catalogName, databaseName, renameChild11, child11TableDto)
-        child11Table = api.getTable(catalogName, databaseName, renameChild11, true, true, false)
-        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
+        child11Table = api.getTable(catalogName, databaseName, renameChild11, true, true, false, false, false, true)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false, false, false, true)
         then:
         assert !child11Table.definitionMetadata.has("parentChildRelationInfo")
         assert child11Table.definitionMetadata.get("random_key").asText() == "random_value"
@@ -2560,7 +2560,7 @@ class MetacatSmokeSpec extends Specification {
          */
         when:
         api.deleteTable(catalogName, databaseName, child12)
-        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false)
+        parent1Table = api.getTable(catalogName, databaseName, renameParent1, true, true, false, false, false, true)
         then:
         assert !parent1Table.definitionMetadata.has("parentChildRelationInfo")
         assert parentChildRelV1.getChildren(catalogName, databaseName, renameParent1).isEmpty()
@@ -2571,8 +2571,8 @@ class MetacatSmokeSpec extends Specification {
          */
         when:
         api.deleteTable(catalogName, databaseName, renameParent1)
-        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false)
-        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
+        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false, false, false, true)
+        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false, false, false, true)
 
         then:
         //Since renameParent1 table is dropped
@@ -2603,8 +2603,8 @@ class MetacatSmokeSpec extends Specification {
         initializeParentChildRelDefinitionMetadata(updateParent2Dto, "RANDOM", "RANDOM", "RANDOM")
         api.updateTable(catalogName, databaseName, parent2, updateParent2Dto)
 
-        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false)
-        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
+        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false, false, false, true)
+        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false, false, false, true)
         then:
         assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
         assert parentChildRelV1.getChildren(catalogName, databaseName, parent2) == [
@@ -2627,8 +2627,8 @@ class MetacatSmokeSpec extends Specification {
         initializeParentChildRelDefinitionMetadata(updateParent2Dto, "RANDOM", "RANDOM", "RANDOM")
         api.updateTable(catalogName, databaseName, child21, updateChild21Dto)
 
-        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false)
-        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false)
+        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false, false, false, true)
+        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false, false, false, true)
         then:
         // Test Parent 2 parentChildInfo
         assert parent2Table.definitionMetadata.get("parentChildRelationInfo").get("isParent").booleanValue()
@@ -2644,5 +2644,14 @@ class MetacatSmokeSpec extends Specification {
             false)
         assert parentChildRelV1.getChildren(catalogName, databaseName, child21).isEmpty()
         assert parentChildRelV1.getParents(catalogName, databaseName, child21) == [new ParentInfoDto("embedded-fast-hive-metastore/iceberg_db/parent2", "CLONE", "p2_uuid")] as Set
+
+        // Test if not included the information, nothing related to parent child relation should return
+        when:
+        parent2Table = api.getTable(catalogName, databaseName, parent2, true, true, false, false, false, false)
+        child21Table = api.getTable(catalogName, databaseName, child21, true, true, false, false, false, false)
+
+        then:
+        ! parent2Table.definitionMetadata.has("parentChildRelationInfo")
+        ! child21Table.definitionMetadata.has("parentChildRelationInfo")
     }
 }

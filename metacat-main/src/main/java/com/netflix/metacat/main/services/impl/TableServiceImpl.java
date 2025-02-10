@@ -518,7 +518,7 @@ public class TableServiceImpl implements TableService {
                 && definitionMetadata.get().has(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO)) {
                 definitionMetadata.get().remove(ParentChildRelMetadataConstants.PARENT_CHILD_RELINFO);
             }
-            if (config.isParentChildGetEnabled()) {
+            if (config.isParentChildGetEnabled() || getTableServiceParameters.isIncludeParentChildInfo()) {
                 final ObjectNode parentChildRelObjectNode = createParentChildObjectNode(name);
                 if (!parentChildRelObjectNode.isEmpty()) {
                     if (!definitionMetadata.isPresent()) {
