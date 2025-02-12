@@ -142,7 +142,6 @@ public class HiveConnectorTableService implements ConnectorTableService {
         try {
             final Table table = hiveMetacatConverters.fromTableInfo(tableInfo);
             updateTable(requestContext, table, tableInfo);
-            log.info("creating hive table:\n{}", table);
             metacatHiveClient.createTable(table);
         } catch (AlreadyExistsException exception) {
             throw new TableAlreadyExistsException(tableName, exception);

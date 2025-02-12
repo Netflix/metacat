@@ -59,10 +59,6 @@ class MetacatSmokeThriftSpec extends Specification {
     @Shared
     HiveConnectorInfoConverter hiveConverter
     @Shared
-    Hive localHiveClient
-    @Shared
-    Hive localFastHiveClient
-    @Shared
     Hive remoteHiveClient
 
     def setupSpec() {
@@ -72,19 +68,6 @@ class MetacatSmokeThriftSpec extends Specification {
         conf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_hive_thrift_port']}")
         SessionState.setCurrentSessionState(new SessionState(conf))
         remoteHiveClient = Hive.get(conf)
-        // clients.add(Pair.of('remote', Hive.get(conf)))
-
-//        HiveConf localConf = new HiveConf()
-//        localConf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_embedded_hive_thrift_port']}")
-//        SessionState.setCurrentSessionState(new SessionState(localConf))
-//        localHiveClient = Hive.get(localConf)
-//        // clients.add(Pair.of('local', Hive.get(localConf)))
-//
-//        HiveConf localFastConf = new HiveConf()
-//        localFastConf.set('hive.metastore.uris', "thrift://localhost:${System.properties['metacat_embedded_fast_hive_thrift_port']}")
-//        SessionState.setCurrentSessionState(new SessionState(localFastConf))
-//        localFastHiveClient = Hive.get(localFastConf)
-//        // clients.add(Pair.of('localfast', Hive.get(localFastConf)))
 
         ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("ROOT")).setLevel(ch.qos.logback.classic.Level.OFF)
         def typeFactory = new TypeConverterFactory(new DefaultTypeConverter())
@@ -145,8 +128,6 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-//        'local'     | localHiveClient
-//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -166,8 +147,6 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-//        'local'     | localHiveClient
-//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -202,8 +181,6 @@ class MetacatSmokeThriftSpec extends Specification {
         client.dropDatabase(databaseName)
         where:
         catalogName | client
-//        'local'     | localHiveClient
-//        'localfast' | localFastHiveClient
         'remote'    | remoteHiveClient
     }
 
@@ -224,8 +201,6 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-//        'local'     | localHiveClient
-//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -256,8 +231,6 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-//        'local'     | localHiveClient
-//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -287,8 +260,6 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-//        'local'     | localHiveClient
-//        'localfast' | localFastHiveClient
     }
 
     @Unroll
@@ -322,8 +293,6 @@ class MetacatSmokeThriftSpec extends Specification {
         where:
         catalogName | client
         'remote'    | remoteHiveClient
-//        'local'     | localHiveClient
-//        'localfast' | localFastHiveClient
     }
 
     @Unroll

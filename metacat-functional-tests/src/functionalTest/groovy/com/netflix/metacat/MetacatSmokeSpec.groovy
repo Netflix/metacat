@@ -832,11 +832,11 @@ class MetacatSmokeSpec extends Specification {
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
     }
-    
+
     @Unroll
     def "Test ignore void transform as partition fields"() {
         given:
-        def catalogName = 'embedded-fast-hive-metastore'
+        def catalogName = 'hive-metastore'
         def databaseName = 'iceberg_db'
         def tableName = 'iceberg_table_6'
         def uri = isLocalEnv ? String.format('file:/tmp/data/') : null

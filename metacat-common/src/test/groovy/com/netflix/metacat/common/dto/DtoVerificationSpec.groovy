@@ -55,7 +55,7 @@ class DtoVerificationSpec extends Specification {
 
     public static Set<Class<?>> getHasQualifiedNameClasses() {
         return getDtoClasses().findAll { Class<?> theClass ->
-            return theClass.properties.methods.any { Method method ->
+            return theClass.methods.any { Method method ->
                 method.returnType == QualifiedName
             }
         }
