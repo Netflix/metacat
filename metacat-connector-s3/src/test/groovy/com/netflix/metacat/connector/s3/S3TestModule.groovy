@@ -17,6 +17,7 @@ import com.google.common.collect.Maps
 import com.google.inject.Binder
 import com.google.inject.Module
 import com.google.inject.persist.jpa.JpaPersistModule
+import com.google.inject.persist.jpa.JpaPersistOptions
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -41,7 +42,10 @@ class S3TestModule implements Module{
         }
         Properties props = new Properties()
         props.load(Files.newBufferedReader(filePath))
-        binder.install(new JpaPersistModule("s3").properties(Maps.newHashMap(props)))
+        final JpaPersistOptions options = JpaPersistOptions.builder()
+            .setAutoBeginWorkOnEntityManagerCreation(true)
+            .build();
+        binder.install(new JpaPersistModule("s3", options).properties(Maps.newHashMap(props)))
         S3ConnectorPlugin plugin = new S3ConnectorPlugin();
         Module module = new S3Module("s3", null, (S3ConnectorInfoConverter)plugin.getInfoConverter());
         module.configure(binder)

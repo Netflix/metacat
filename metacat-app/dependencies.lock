@@ -1,0 +1,1921 @@
+{
+    "annotationProcessor": {
+        "org.projectlombok:lombok": {
+            "locked": "1.18.30"
+        }
+    },
+    "checkstyle": {
+        "com.puppycrawl.tools:checkstyle": {
+            "locked": "6.11"
+        }
+    },
+    "compileClasspath": {
+        "com.amazonaws:aws-java-sdk-sns": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "1.11.792"
+        },
+        "com.fasterxml.jackson.core:jackson-databind": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "2.15.4"
+        },
+        "com.github.fge:json-patch": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "1.9"
+        },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.0.0"
+        },
+        "com.github.spotbugs:spotbugs-annotations": {
+            "locked": "4.8.2"
+        },
+        "com.google.guava:guava": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "31.0.1-jre"
+        },
+        "com.google.inject:guice": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "7.0.0"
+        },
+        "com.netflix.metacat:metacat-common": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-common-server": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-main": {
+            "project": true
+        },
+        "com.netflix.metacat:metacat-metadata-mysql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-thrift": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.spectator:spectator-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.3.9"
+        },
+        "com.zaxxer:HikariCP": {
+            "locked": "5.0.1"
+        },
+        "commons-dbutils:commons-dbutils": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "1.6"
+        },
+        "joda-time:joda-time": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.9.5"
+        },
+        "net.sf.dozer:dozer": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "5.5.1"
+        },
+        "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.hive:hive-exec": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.hive:hive-metastore": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.tomcat:tomcat-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "10.1.33"
+        },
+        "org.elasticsearch.client:transport": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "5.4.1"
+        },
+        "org.projectlombok:lombok": {
+            "locked": "1.18.30"
+        },
+        "org.slf4j:slf4j-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "2.0.16"
+        },
+        "org.springdoc:springdoc-openapi-starter-webmvc-ui": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "2.5.0"
+        },
+        "org.springframework.boot:spring-boot-starter": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-actuator": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-hateoas": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-logging": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-validation": {
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-web": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.retry:spring-retry": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "2.0.10"
+        },
+        "org.springframework:spring-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "6.1.15"
+        }
+    },
+    "jacocoAgent": {
+        "org.jacoco:org.jacoco.agent": {
+            "locked": "0.8.8"
+        }
+    },
+    "jacocoAnt": {
+        "org.jacoco:org.jacoco.ant": {
+            "locked": "0.8.8"
+        }
+    },
+    "productionRuntimeClasspath": {
+        "com.amazon.redshift:redshift-jdbc42": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-redshift"
+            ],
+            "locked": "2.1.0.21"
+        },
+        "com.amazonaws:aws-java-sdk-sns": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "1.11.792"
+        },
+        "com.datastax.cassandra:cassandra-driver-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-cassandra"
+            ],
+            "locked": "3.7.2"
+        },
+        "com.esotericsoftware.kryo:kryo": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "2.22"
+        },
+        "com.fasterxml.jackson.core:jackson-databind": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "2.15.4"
+        },
+        "com.github.fge:json-patch": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "1.9"
+        },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.0.0"
+        },
+        "com.google.guava:guava": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "31.0.1-jre"
+        },
+        "com.google.inject.extensions:guice-persist": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3"
+            ],
+            "locked": "7.0.0"
+        },
+        "com.google.inject.extensions:guice-servlet": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3"
+            ],
+            "locked": "7.0.0"
+        },
+        "com.google.inject:guice": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-connector-snowflake"
+            ],
+            "locked": "7.0.0"
+        },
+        "com.h2database:h2": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "2.2.224"
+        },
+        "com.netflix.metacat:metacat-common": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-common-server": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-druid",
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-cassandra": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-druid": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-hive": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-snowflake",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-mysql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-pig": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-polaris": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-postgresql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-redshift": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-s3": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-snowflake": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-main": {
+            "project": true
+        },
+        "com.netflix.metacat:metacat-metadata": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-metadata-mysql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-thrift": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.spectator:spectator-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.3.9"
+        },
+        "com.zaxxer:HikariCP": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-druid",
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-connector-snowflake",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "5.0.1"
+        },
+        "commons-dbutils:commons-dbutils": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "1.6"
+        },
+        "jakarta.persistence:jakarta.persistence-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "3.1.0"
+        },
+        "joda-time:joda-time": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.10.10"
+        },
+        "mysql:mysql-connector-java": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "8.0.27"
+        },
+        "net.sf.dozer:dozer": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "5.5.1"
+        },
+        "net.snowflake:snowflake-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-snowflake"
+            ],
+            "locked": "3.4.2"
+        },
+        "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.hive:hive-exec": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.hive:hive-metastore": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.httpcomponents.client5:httpclient5": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-druid"
+            ],
+            "locked": "5.2.3"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive"
+            ],
+            "locked": "0.13.1"
+        },
+        "org.apache.logging.log4j:log4j-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.21.1"
+        },
+        "org.apache.pig:pig": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-pig"
+            ],
+            "locked": "0.14.0"
+        },
+        "org.apache.tomcat:tomcat-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "10.1.33"
+        },
+        "org.elasticsearch.client:transport": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "5.4.1"
+        },
+        "org.hibernate.orm:hibernate-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "6.4.10.Final"
+        },
+        "org.json:json": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-druid"
+            ],
+            "locked": "20180813"
+        },
+        "org.postgresql:postgresql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-postgresql"
+            ],
+            "locked": "42.6.2"
+        },
+        "org.slf4j:slf4j-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "2.0.16"
+        },
+        "org.springdoc:springdoc-openapi-starter-webmvc-ui": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.5.0"
+        },
+        "org.springframework.boot:spring-boot-configuration-processor": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-actuator": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-aop": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-hateoas": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-logging": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-validation": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-druid",
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-connector-snowflake",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-web": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.data:spring-data-jpa": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.retry:spring-retry": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "2.0.10"
+        },
+        "org.springframework:spring-aspects": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "6.1.15"
+        },
+        "org.springframework:spring-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "6.1.15"
+        },
+        "org.springframework:spring-web": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-druid"
+            ],
+            "locked": "6.1.15"
+        },
+        "org.webjars:hal-browser": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3325375"
+        }
+    },
+    "runtimeClasspath": {
+        "com.amazon.redshift:redshift-jdbc42": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-redshift"
+            ],
+            "locked": "2.1.0.21"
+        },
+        "com.amazonaws:aws-java-sdk-sns": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "1.11.792"
+        },
+        "com.datastax.cassandra:cassandra-driver-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-cassandra"
+            ],
+            "locked": "3.7.2"
+        },
+        "com.esotericsoftware.kryo:kryo": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "2.22"
+        },
+        "com.fasterxml.jackson.core:jackson-databind": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "2.15.4"
+        },
+        "com.github.fge:json-patch": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "1.9"
+        },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.0.0"
+        },
+        "com.google.guava:guava": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "31.0.1-jre"
+        },
+        "com.google.inject.extensions:guice-persist": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3"
+            ],
+            "locked": "7.0.0"
+        },
+        "com.google.inject.extensions:guice-servlet": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3"
+            ],
+            "locked": "7.0.0"
+        },
+        "com.google.inject:guice": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-connector-snowflake"
+            ],
+            "locked": "7.0.0"
+        },
+        "com.h2database:h2": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "2.2.224"
+        },
+        "com.netflix.metacat:metacat-common": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-common-server": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-druid",
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-cassandra": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-druid": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-hive": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-snowflake",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-mysql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-pig": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-polaris": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-postgresql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-redshift": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-s3": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-snowflake": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-main": {
+            "project": true
+        },
+        "com.netflix.metacat:metacat-metadata": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-metadata-mysql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-thrift": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.spectator:spectator-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.3.9"
+        },
+        "com.zaxxer:HikariCP": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-druid",
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-connector-snowflake",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "5.0.1"
+        },
+        "commons-dbutils:commons-dbutils": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "1.6"
+        },
+        "jakarta.persistence:jakarta.persistence-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "3.1.0"
+        },
+        "joda-time:joda-time": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.10.10"
+        },
+        "mysql:mysql-connector-java": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "8.0.27"
+        },
+        "net.sf.dozer:dozer": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "5.5.1"
+        },
+        "net.snowflake:snowflake-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-snowflake"
+            ],
+            "locked": "3.4.2"
+        },
+        "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.hive:hive-exec": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.hive:hive-metastore": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.httpcomponents.client5:httpclient5": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-druid"
+            ],
+            "locked": "5.2.3"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive"
+            ],
+            "locked": "0.13.1"
+        },
+        "org.apache.logging.log4j:log4j-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.21.1"
+        },
+        "org.apache.pig:pig": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-pig"
+            ],
+            "locked": "0.14.0"
+        },
+        "org.apache.tomcat:tomcat-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "10.1.33"
+        },
+        "org.elasticsearch.client:transport": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "5.4.1"
+        },
+        "org.hibernate.orm:hibernate-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "6.4.10.Final"
+        },
+        "org.json:json": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-druid"
+            ],
+            "locked": "20180813"
+        },
+        "org.postgresql:postgresql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-postgresql"
+            ],
+            "locked": "42.6.2"
+        },
+        "org.slf4j:slf4j-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "2.0.16"
+        },
+        "org.springdoc:springdoc-openapi-starter-webmvc-ui": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.5.0"
+        },
+        "org.springframework.boot:spring-boot-configuration-processor": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-actuator": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-aop": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-hateoas": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-logging": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-validation": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-druid",
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-connector-snowflake",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-web": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.data:spring-data-jpa": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.retry:spring-retry": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "2.0.10"
+        },
+        "org.springframework:spring-aspects": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "6.1.15"
+        },
+        "org.springframework:spring-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "6.1.15"
+        },
+        "org.springframework:spring-web": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-druid"
+            ],
+            "locked": "6.1.15"
+        },
+        "org.webjars:hal-browser": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3325375"
+        }
+    },
+    "spotbugs": {
+        "com.github.spotbugs:spotbugs": {
+            "locked": "4.8.2"
+        }
+    },
+    "spotbugsSlf4j": {
+        "org.slf4j:slf4j-simple": {
+            "locked": "2.0.0"
+        }
+    },
+    "testAnnotationProcessor": {
+        "org.projectlombok:lombok": {
+            "locked": "1.18.30"
+        }
+    },
+    "testCompileClasspath": {
+        "cglib:cglib-nodep": {
+            "locked": "3.2.4"
+        },
+        "com.amazonaws:aws-java-sdk-sns": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "1.11.792"
+        },
+        "com.fasterxml.jackson.core:jackson-databind": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "2.15.4"
+        },
+        "com.github.fge:json-patch": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "1.9"
+        },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.0.0"
+        },
+        "com.google.guava:guava": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "31.0.1-jre"
+        },
+        "com.google.inject:guice": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "7.0.0"
+        },
+        "com.netflix.metacat:metacat-common": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-common-server": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-main": {
+            "project": true
+        },
+        "com.netflix.metacat:metacat-metadata-mysql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-thrift": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.spectator:spectator-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.3.9"
+        },
+        "com.zaxxer:HikariCP": {
+            "locked": "5.0.1"
+        },
+        "commons-dbutils:commons-dbutils": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "1.6"
+        },
+        "joda-time:joda-time": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.9.5"
+        },
+        "log4j:log4j": {
+            "locked": "1.2.17"
+        },
+        "net.sf.dozer:dozer": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "5.5.1"
+        },
+        "org.apache.groovy:groovy-all": {
+            "locked": "4.0.24"
+        },
+        "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.hive:hive-exec": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.hive:hive-metastore": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.tomcat:tomcat-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "10.1.33"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1"
+        },
+        "org.elasticsearch.client:transport": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "5.4.1"
+        },
+        "org.objenesis:objenesis": {
+            "locked": "3.2"
+        },
+        "org.projectlombok:lombok": {
+            "locked": "1.18.30"
+        },
+        "org.slf4j:slf4j-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "2.0.16"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "2.3-groovy-4.0"
+        },
+        "org.spockframework:spock-guice": {
+            "locked": "2.3-groovy-4.0"
+        },
+        "org.spockframework:spock-spring": {
+            "locked": "2.3-groovy-4.0"
+        },
+        "org.springdoc:springdoc-openapi-starter-webmvc-ui": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "2.5.0"
+        },
+        "org.springframework.boot:spring-boot-starter": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-actuator": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-hateoas": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-logging": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-test": {
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-validation": {
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-web": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.retry:spring-retry": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "2.0.10"
+        },
+        "org.springframework:spring-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "6.1.15"
+        }
+    },
+    "testRuntimeClasspath": {
+        "cglib:cglib-nodep": {
+            "locked": "3.2.4"
+        },
+        "com.amazon.redshift:redshift-jdbc42": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-redshift"
+            ],
+            "locked": "2.1.0.21"
+        },
+        "com.amazonaws:aws-java-sdk-sns": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "1.11.792"
+        },
+        "com.datastax.cassandra:cassandra-driver-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-cassandra"
+            ],
+            "locked": "3.7.2"
+        },
+        "com.esotericsoftware.kryo:kryo": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "2.22"
+        },
+        "com.fasterxml.jackson.core:jackson-databind": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "2.15.4"
+        },
+        "com.github.fge:json-patch": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common"
+            ],
+            "locked": "1.9"
+        },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.0.0"
+        },
+        "com.google.guava:guava": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "31.0.1-jre"
+        },
+        "com.google.inject.extensions:guice-persist": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3"
+            ],
+            "locked": "7.0.0"
+        },
+        "com.google.inject.extensions:guice-servlet": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3"
+            ],
+            "locked": "7.0.0"
+        },
+        "com.google.inject:guice": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-connector-snowflake"
+            ],
+            "locked": "7.0.0"
+        },
+        "com.h2database:h2": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "2.2.224"
+        },
+        "com.netflix.metacat:metacat-common": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-common-server": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-druid",
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-cassandra": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-druid": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-hive": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-snowflake",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-mysql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-pig": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-polaris": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-postgresql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-redshift": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-s3": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-connector-snowflake": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-main": {
+            "project": true
+        },
+        "com.netflix.metacat:metacat-metadata": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-metadata-mysql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.metacat:metacat-thrift": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "project": true
+        },
+        "com.netflix.spectator:spectator-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.3.9"
+        },
+        "com.zaxxer:HikariCP": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-druid",
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-connector-snowflake",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "5.0.1"
+        },
+        "commons-dbutils:commons-dbutils": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "1.6"
+        },
+        "jakarta.persistence:jakarta.persistence-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "3.1.0"
+        },
+        "joda-time:joda-time": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.10.10"
+        },
+        "log4j:log4j": {
+            "locked": "1.2.17"
+        },
+        "mysql:mysql-connector-java": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "8.0.27"
+        },
+        "net.sf.dozer:dozer": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "5.5.1"
+        },
+        "net.snowflake:snowflake-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-snowflake"
+            ],
+            "locked": "3.4.2"
+        },
+        "org.apache.groovy:groovy-all": {
+            "locked": "4.0.24"
+        },
+        "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.hive:hive-exec": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.hive:hive-metastore": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.httpcomponents.client5:httpclient5": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-druid"
+            ],
+            "locked": "5.2.3"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-hive"
+            ],
+            "locked": "0.13.1"
+        },
+        "org.apache.logging.log4j:log4j-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.21.1"
+        },
+        "org.apache.pig:pig": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-pig"
+            ],
+            "locked": "0.14.0"
+        },
+        "org.apache.tomcat:tomcat-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "10.1.33"
+        },
+        "org.codehaus.gpars:gpars": {
+            "locked": "1.2.1"
+        },
+        "org.elasticsearch.client:transport": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "5.4.1"
+        },
+        "org.hibernate.orm:hibernate-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "6.4.10.Final"
+        },
+        "org.hsqldb:hsqldb": {
+            "locked": "2.7.3"
+        },
+        "org.json:json": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-druid"
+            ],
+            "locked": "20180813"
+        },
+        "org.objenesis:objenesis": {
+            "locked": "3.2"
+        },
+        "org.postgresql:postgresql": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-postgresql"
+            ],
+            "locked": "42.6.2"
+        },
+        "org.slf4j:slf4j-api": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "2.0.16"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "2.3-groovy-4.0"
+        },
+        "org.spockframework:spock-guice": {
+            "locked": "2.3-groovy-4.0"
+        },
+        "org.spockframework:spock-spring": {
+            "locked": "2.3-groovy-4.0"
+        },
+        "org.springdoc:springdoc-openapi-starter-webmvc-ui": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.5.0"
+        },
+        "org.springframework.boot:spring-boot-configuration-processor": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-actuator": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-aop": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-hateoas": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-logging": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-test": {
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-validation": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common",
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-connector-cassandra",
+                "com.netflix.metacat:metacat-connector-druid",
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-connector-jdbc",
+                "com.netflix.metacat:metacat-connector-mysql",
+                "com.netflix.metacat:metacat-connector-pig",
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-connector-postgresql",
+                "com.netflix.metacat:metacat-connector-redshift",
+                "com.netflix.metacat:metacat-connector-s3",
+                "com.netflix.metacat:metacat-connector-snowflake",
+                "com.netflix.metacat:metacat-main",
+                "com.netflix.metacat:metacat-metadata",
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.boot:spring-boot-starter-web": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.data:spring-data-jpa": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata"
+            ],
+            "locked": "3.2.12"
+        },
+        "org.springframework.retry:spring-retry": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata-mysql"
+            ],
+            "locked": "2.0.10"
+        },
+        "org.springframework:spring-aspects": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "6.1.15"
+        },
+        "org.springframework:spring-jdbc": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "6.1.15"
+        },
+        "org.springframework:spring-web": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-connector-druid"
+            ],
+            "locked": "6.1.15"
+        },
+        "org.webjars:hal-browser": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "3325375"
+        }
+    }
+}

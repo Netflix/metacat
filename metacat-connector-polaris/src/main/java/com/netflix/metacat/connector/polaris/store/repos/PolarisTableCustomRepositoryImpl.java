@@ -1,8 +1,8 @@
 package com.netflix.metacat.connector.polaris.store.repos;
 
-import javax.persistence.PersistenceContext;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import org.springframework.transaction.annotation.Transactional;

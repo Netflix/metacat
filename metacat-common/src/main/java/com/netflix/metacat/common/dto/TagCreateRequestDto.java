@@ -18,7 +18,7 @@
 package com.netflix.metacat.common.dto;
 
 import com.netflix.metacat.common.QualifiedName;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,9 +37,9 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 public class TagCreateRequestDto extends BaseDto {
     private static final long serialVersionUID = -990374882621118670L;
-    @ApiModelProperty(value = "The qualified name", required = true)
+    @Schema(description = "The qualified name", requiredMode = Schema.RequiredMode.REQUIRED)
     private QualifiedName name;
 
-    @ApiModelProperty(value = "Tags to insert")
+    @Schema(description = "Tags to insert")
     private List<String> tags;
 }

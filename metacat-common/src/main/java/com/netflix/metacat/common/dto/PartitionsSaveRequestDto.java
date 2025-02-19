@@ -19,8 +19,8 @@ package com.netflix.metacat.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.swagger.annotations.ApiModelProperty;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -37,15 +37,15 @@ import java.util.List;
 public class PartitionsSaveRequestDto extends BaseDto {
     private static final long serialVersionUID = -5922699691074685961L;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "metadata attached to this table")
+    @Schema(description = "metadata attached to this table")
     @JsonProperty
     private transient ObjectNode dataMetadata;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "metadata attached to the physical data")
+    @Schema(description = "metadata attached to the physical data")
     @JsonProperty
     private transient ObjectNode definitionMetadata;
     // List of partitions
-    @ApiParam(value = "List of partitions", required = true)
+    @Parameter(description = "List of partitions", required = true)
     private List<PartitionDto> partitions;
     // List of partition ids/names for deletes
     private List<String> partitionIdsForDeletes;

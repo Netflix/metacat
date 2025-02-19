@@ -35,11 +35,11 @@ import com.netflix.metacat.main.services.GetCatalogServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MViewService;
 import com.netflix.metacat.main.services.TableService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.DependsOn;
@@ -57,7 +57,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Nullable;
 import java.beans.PropertyEditorSupport;
-import java.net.HttpURLConnection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -71,13 +70,12 @@ import java.util.Set;
 @RestController
 @RequestMapping(
     path = "/mds/v1/tag",
-    produces = MediaType.APPLICATION_JSON_VALUE
-)
-@Api(
-    value = "TagV1",
-    description = "Federated metadata tag operations",
     produces = MediaType.APPLICATION_JSON_VALUE,
     consumes = MediaType.APPLICATION_JSON_VALUE
+)
+@Tag(
+    name = "TagV1",
+    description = "Federated metadata tag operations"
 )
 @DependsOn("metacatCoreInitService")
 @RequiredArgsConstructor
@@ -98,10 +96,9 @@ public class TagController {
      */
     @RequestMapping(method = RequestMethod.GET, path = "/tags")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 1,
-        value = "Returns the tags",
-        notes = "Returns the tags"
+    @Operation(
+        summary = "Returns the tags",
+        description = "Returns the tags"
     )
     public Set<String> getTags() {
         return this.requestWrapper.processRequest(
@@ -126,25 +123,24 @@ public class TagController {
         path = "/list"
     )
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 1,
-        value = "Returns the list of qualified names that are tagged with the given tags."
+    @Operation(
+        summary = "Returns the list of qualified names that are tagged with the given tags."
             + " Qualified names will be excluded if the contained tags matches the excluded tags",
-        notes = "Returns the list of qualified names that are tagged with the given tags."
+        description = "Returns the list of qualified names that are tagged with the given tags."
             + " Qualified names will be excluded if the contained tags matches the excluded tags"
     )
     public List<QualifiedName> list(
-        @ApiParam(value = "Set of matching tags")
+        @Parameter(description = "Set of matching tags")
         @Nullable @RequestParam(name = "include", required = false) final Set<String> includeTags,
-        @ApiParam(value = "Set of un-matching tags")
+        @Parameter(description = "Set of un-matching tags")
         @Nullable @RequestParam(name = "exclude", required = false) final Set<String> excludeTags,
-        @ApiParam(value = "Prefix of the source name")
+        @Parameter(description = "Prefix of the source name")
         @Nullable @RequestParam(name = "sourceName", required = false) final String sourceName,
-        @ApiParam(value = "Prefix of the database name")
+        @Parameter(description = "Prefix of the database name")
         @Nullable @RequestParam(name = "databaseName", required = false) final String databaseName,
-        @ApiParam(value = "Prefix of the table name")
+        @Parameter(description = "Prefix of the table name")
         @Nullable @RequestParam(name = "tableName", required = false) final String tableName,
-        @ApiParam(value = "Qualified name type")
+        @Parameter(description = "Qualified name type")
         @Nullable
         @RequestParam(name = "type", required = false) final QualifiedName.Type type
     ) {
@@ -171,19 +167,18 @@ public class TagController {
      */
     @RequestMapping(method = RequestMethod.GET, path = "/search")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 1,
-        value = "Returns the list of qualified names that are tagged with tags containing the given tagText",
-        notes = "Returns the list of qualified names that are tagged with tags containing the given tagText"
+    @Operation(
+        summary = "Returns the list of qualified names that are tagged with tags containing the given tagText",
+        description = "Returns the list of qualified names that are tagged with tags containing the given tagText"
     )
     public List<QualifiedName> search(
-        @ApiParam(value = "Tag partial text")
+        @Parameter(description = "Tag partial text")
         @Nullable @RequestParam(name = "tag", required = false) final String tag,
-        @ApiParam(value = "Prefix of the source name")
+        @Parameter(description = "Prefix of the source name")
         @Nullable @RequestParam(name = "sourceName", required = false) final String sourceName,
-        @ApiParam(value = "Prefix of the database name")
+        @Parameter(description = "Prefix of the database name")
         @Nullable @RequestParam(name = "databaseName", required = false) final String databaseName,
-        @ApiParam(value = "Prefix of the table name")
+        @Parameter(description = "Prefix of the table name")
         @Nullable @RequestParam(name = "tableName", required = false) final String tableName
     ) {
         return this.requestWrapper.processRequest(
@@ -203,24 +198,24 @@ public class TagController {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.CREATED)
-    @ApiOperation(
-        value = "Sets the tags on the given resource",
-        notes = "Sets the tags on the given resource"
+    @Operation(
+        summary = "Sets the tags on the given resource",
+        description = "Sets the tags on the given resource"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_CREATED,
-                message = "The tags were successfully created"
+                responseCode = "201",
+                description = "The tags were successfully created"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     public Set<String> setTags(
-        @ApiParam(value = "Request containing the set of tags and qualifiedName", required = true)
+        @Parameter(description = "Request containing the set of tags and qualifiedName", required = true)
         @RequestBody final TagCreateRequestDto tagCreateRequestDto
     ) {
         return this.requestWrapper.processRequest(
@@ -327,30 +322,30 @@ public class TagController {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.CREATED)
-    @ApiOperation(
-        value = "Sets the tags on the given table",
-        notes = "Sets the tags on the given table"
+    @Operation(
+        summary = "Sets the tags on the given table",
+        description = "Sets the tags on the given table"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_CREATED,
-                message = "The tags were successfully created on the table"
+                responseCode = "201",
+                description = "The tags were successfully created on the table"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     public Set<String> setTableTags(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
-        @ApiParam(value = "Set of tags", required = true)
+        @Parameter(description = "Set of tags", required = true)
         @RequestBody final Set<String> tags
     ) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -406,33 +401,32 @@ public class TagController {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation(
-        position = 4,
-        value = "Remove the tags from the given table",
-        notes = "Remove the tags from the given table"
+    @Operation(
+        summary = "Remove the tags from the given table",
+        description = "Remove the tags from the given table"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NO_CONTENT,
-                message = "The tags were successfully deleted from the table"
+                responseCode = "204",
+                description = "The tags were successfully deleted from the table"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     public void removeTableTags(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
-        @ApiParam(value = "True if all tags need to be removed")
+        @Parameter(description = "True if all tags need to be removed")
         @RequestParam(name = "all", defaultValue = "false") final boolean deleteAll,
-        @ApiParam(value = "Tags to be removed from the given table")
+        @Parameter(description = "Tags to be removed from the given table")
         @Nullable @RequestBody(required = false) final Set<String> tags
     ) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -490,24 +484,24 @@ public class TagController {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation(
-        value = "Remove the tags from the given resource",
-        notes = "Remove the tags from the given resource"
+    @Operation(
+        summary = "Remove the tags from the given resource",
+        description = "Remove the tags from the given resource"
     )
     @ApiResponses(
         {
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NO_CONTENT,
-                message = "The tags were successfully deleted from the table"
+                responseCode = "204",
+                description = "The tags were successfully deleted from the table"
             ),
             @ApiResponse(
-                code = HttpURLConnection.HTTP_NOT_FOUND,
-                message = "The requested catalog or database or table cannot be located"
+                responseCode = "404",
+                description = "The requested catalog or database or table cannot be located"
             )
         }
     )
     public void removeTags(
-        @ApiParam(value = "Request containing the set of tags and qualifiedName", required = true)
+        @Parameter(description = "Request containing the set of tags and qualifiedName", required = true)
         @RequestBody final TagRemoveRequestDto tagRemoveRequestDto
     ) {
 

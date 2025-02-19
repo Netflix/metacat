@@ -13,18 +13,18 @@
 
 package com.netflix.metacat.connector.s3.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.UniqueConstraint;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.UniqueConstraint;
 
 /**
  * Field.
  */
 @Entity
-@javax.persistence.Table(name = "field",
+@jakarta.persistence.Table(name = "field",
     uniqueConstraints = @UniqueConstraint(name = "field_u1", columnNames = { "schema_id", "name", "pos" }))
 public class Field extends IdEntity {
     private int pos;

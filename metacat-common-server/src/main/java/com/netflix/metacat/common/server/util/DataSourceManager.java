@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jdbc.pool.DataSourceFactory;
 import org.apache.tomcat.jdbc.pool.DataSourceProxy;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import javax.management.ObjectName;
 import javax.sql.DataSource;
 import java.util.Iterator;

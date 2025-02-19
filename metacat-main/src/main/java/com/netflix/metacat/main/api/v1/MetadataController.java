@@ -32,9 +32,9 @@ import com.netflix.metacat.main.api.RequestWrapper;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import com.netflix.metacat.main.services.MetacatServiceHelper;
 import com.netflix.metacat.main.services.MetadataService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
@@ -59,13 +59,12 @@ import java.util.Set;
 @RestController
 @RequestMapping(
     path = "/mds/v1/metadata",
-    produces = MediaType.APPLICATION_JSON_VALUE
-)
-@Api(
-    value = "MetadataV1",
-    description = "Federated user metadata operations",
     produces = MediaType.APPLICATION_JSON_VALUE,
     consumes = MediaType.APPLICATION_JSON_VALUE
+)
+@Tag(
+    name = "MetadataV1",
+    description = "Federated user metadata operations"
 )
 @DependsOn("metacatCoreInitService")
 @RequiredArgsConstructor
@@ -83,10 +82,9 @@ public class MetadataController {
      */
     @RequestMapping(method = RequestMethod.POST, path = "/data", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 1,
-        value = "Returns the data metadata",
-        notes = "Returns the data metadata"
+    @Operation(
+        summary = "Returns the data metadata",
+        description = "Returns the data metadata"
     )
     public DataMetadataDto getDataMetadata(@RequestBody final DataMetadataGetRequestDto metadataGetRequestDto) {
         return this.requestWrapper.processRequest(
@@ -127,28 +125,28 @@ public class MetadataController {
      */
     @RequestMapping(method = RequestMethod.GET, path = "/definition/list")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 2,
-        value = "Returns the definition metadata",
-        notes = "Returns the definition metadata"
+    @Operation(
+        summary = "Returns the definition metadata",
+        description = "Returns the definition metadata"
     )
     public List<DefinitionMetadataDto> getDefinitionMetadataList(
-        @ApiParam(value = "Sort the list by this value")
+        @Parameter(description = "Sort the list by this value")
         @Nullable @RequestParam(name = "sortBy", required = false) final String sortBy,
-        @ApiParam(value = "Sorting order to use")
+        @Parameter(description = "Sorting order to use")
         @Nullable @RequestParam(name = "sortOrder", required = false) final SortOrder sortOrder,
-        @ApiParam(value = "Offset of the list returned")
+        @Parameter(description = "Offset of the list returned")
         @Nullable @RequestParam(name = "offset", required = false) final Integer offset,
-        @ApiParam(value = "Size of the list")
+        @Parameter(description = "Size of the list")
         @Nullable @RequestParam(name = "limit", required = false) final Integer limit,
-        @ApiParam(value = "has lifetime set", defaultValue = "false")
+        @Parameter(description = "has lifetime set")
         @RequestParam(name = "lifetime", defaultValue = "false") final boolean lifetime,
-        @ApiParam(value = "Type of the metadata item. Values: database, table, partition")
+        @Parameter(description = "Type of the metadata item. Values: database, table, partition")
         @Nullable @RequestParam(name = "type", required = false) final String type,
-        @ApiParam(value = "Text that matches the name of the metadata (accepts sql wildcards)")
+        @Parameter(description = "Text that matches the name of the metadata (accepts sql wildcards)")
         @Nullable @RequestParam(name = "name", required = false) final String name,
-        @ApiParam(
-            value = "Set of data property names. Filters the returned list that only contains the given property names"
+        @Parameter(
+            description = "Set of data property names. Filters the returned list that only contains the given "
+                + "property names"
         )
         @Nullable @RequestParam(name = "data-property", required = false) final Set<String> dataProperties
     ) {
@@ -196,13 +194,12 @@ public class MetadataController {
      */
     @RequestMapping(method = RequestMethod.GET, path = "/searchByOwners")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 3,
-        value = "Returns the qualified names owned by the given owners",
-        notes = "Returns the qualified names owned by the given owners"
+    @Operation(
+        summary = "Returns the qualified names owned by the given owners",
+        description = "Returns the qualified names owned by the given owners"
     )
     public List<QualifiedName> searchByOwners(
-        @ApiParam(value = "Set of owners", required = true)
+        @Parameter(description = "Set of owners", required = true)
         @RequestParam("owner") final Set<String> owners
     ) {
         return this.requestWrapper.processRequest(
@@ -219,14 +216,15 @@ public class MetadataController {
      */
     @RequestMapping(method = RequestMethod.DELETE, path = "/definition")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation(
-        position = 4,
-        value = "Deletes the given definition metadata"
+    @Operation(
+        summary = "Deletes the given definition metadata"
     )
     public void deleteDefinitionMetadata(
-        @ApiParam(value = "Name of definition metadata to be deleted", required = true)
+        @Parameter(description = "Name of definition metadata to be deleted", required = true)
         @RequestParam(name = "name") final String name,
-        @ApiParam(value = "If true, deletes the metadata without checking if the database/table/partition exists")
+        @Parameter(
+            description = "If true, deletes the metadata without checking if the database/table/partition exists"
+        )
         @RequestParam(name = "force", defaultValue = "false") final boolean force
     ) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -244,9 +242,9 @@ public class MetadataController {
      */
     @RequestMapping(method = RequestMethod.DELETE, path = "/data/cleanup")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation(
+    @Operation(
         hidden = true,
-        value = "Admin API to delete obsolete data metadata"
+        summary = "Admin API to delete obsolete data metadata"
     )
     public void cleanUpDeletedDataMetadata() {
         this.metadataService.cleanUpDeletedDataMetadata();
@@ -257,9 +255,9 @@ public class MetadataController {
      */
     @RequestMapping(method = RequestMethod.DELETE, path = "/definition/cleanup")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation(
+    @Operation(
         hidden = true,
-        value = "Admin API to delete obsolete metadata"
+        summary = "Admin API to delete obsolete metadata"
     )
     public void cleanUpObsoleteMetadata() {
         this.metadataService.cleanUpObsoleteDefinitionMetadata();

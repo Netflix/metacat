@@ -22,8 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,7 +42,7 @@ import java.util.Optional;
 /**
  * Table DTO.
  */
-@ApiModel(description = "Table metadata")
+@Schema(description = "Table metadata")
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -52,25 +51,25 @@ import java.util.Optional;
 @AllArgsConstructor
 public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionMetadata {
     private static final long serialVersionUID = 5922768252406041451L;
-    @ApiModelProperty(value = "Contains information about table changes")
+    @Schema(description = "Contains information about table changes")
     private AuditDto audit;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "metadata attached to the physical data")
+    @Schema(description = "metadata attached to the physical data")
     @JsonProperty
     private transient ObjectNode dataMetadata;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "metadata attached to the logical table")
+    @Schema(description = "metadata attached to the logical table")
     @JsonProperty
     private transient ObjectNode definitionMetadata;
     private List<FieldDto> fields;
-    @ApiModelProperty(value = "Any extra metadata properties of the database table")
+    @Schema(description = "Any extra metadata properties of the database table")
     private Map<String, String> metadata;
-    @ApiModelProperty(value = "the name of this entity", required = true)
+    @Schema(description = "the name of this entity", requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonProperty
     private QualifiedName name;
-    @ApiModelProperty(value = "serialization/deserialization info about the table")
+    @Schema(description = "serialization/deserialization info about the table")
     private StorageDto serde;
-    @ApiModelProperty(value = "Hive virtual view info.")
+    @Schema(description = "Hive virtual view info.")
     //Naming as view required by dozer mapping
     private ViewDto view;
 
@@ -111,7 +110,7 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
      * Returns the list of partition keys.
      * @return list of partition keys
      */
-    @ApiModelProperty(value = "List of partition key names")
+    @Schema(description = "List of partition key names")
     @JsonProperty
     @SuppressWarnings("checkstyle:methodname")
     public List<String> getPartition_keys() {

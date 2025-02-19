@@ -22,9 +22,9 @@ import com.netflix.metacat.common.dto.ResolveByUriResponseDto;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
@@ -45,13 +45,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(
     path = "/mds/v1/resolver",
-    produces = MediaType.APPLICATION_JSON_VALUE
-)
-@Api(
-    value = "ResolverV1",
-    description = "Metadata resolver operations",
     produces = MediaType.APPLICATION_JSON_VALUE,
     consumes = MediaType.APPLICATION_JSON_VALUE
+)
+@Tag(
+    name = "ResolverV1",
+    description = "Metadata resolver operations"
 )
 @DependsOn("metacatCoreInitService")
 @RequiredArgsConstructor
@@ -68,12 +67,12 @@ public class ResolverController {
      */
     @RequestMapping(method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        value = "Returns the list of qualified names of tables and partitions containing the given URI path",
-        notes = "Returns the list of qualified names of tables and partitions containing the given URI path"
+    @Operation(
+        summary = "Returns the list of qualified names of tables and partitions containing the given URI path",
+        description = "Returns the list of qualified names of tables and partitions containing the given URI path"
     )
     public ResolveByUriResponseDto resolveByUri(
-        @ApiParam(value = "do prefix search for URI")
+        @Parameter(description = "do prefix search for URI")
         @RequestParam(name = "prefixSearch", defaultValue = "false") final boolean prefixSearch,
         @RequestBody final ResolveByUriRequestDto resolveByUriRequestDto
     ) {
@@ -95,14 +94,13 @@ public class ResolverController {
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation(
-        position = 1,
-        value = "Returns status 204 if the given URI is being referred more than once."
+    @Operation(
+        summary = "Returns status 204 if the given URI is being referred more than once."
             + " Returns status 404 if the given URI is not found or not being referred more than once.",
-        notes = "Returns status 204 if the given URI is being referred more than once."
+        description = "Returns status 204 if the given URI is being referred more than once."
             + " Returns status 404 if the given URI is not found or not being referred more than once.")
     public void isUriUsedMoreThanOnce(
-        @ApiParam(value = "do prefix search for URI", defaultValue = "false")
+        @Parameter(description = "do prefix search for URI")
         @RequestParam(name = "prefixSearch", defaultValue = "false") final Boolean prefixSearch,
         @RequestBody final ResolveByUriRequestDto resolveByUriRequestDto
     ) {

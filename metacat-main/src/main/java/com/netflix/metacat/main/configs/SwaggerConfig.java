@@ -17,32 +17,24 @@
  */
 package com.netflix.metacat.main.configs;
 
-import com.google.common.collect.Lists;
 import com.netflix.metacat.common.server.properties.Config;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import springfox.bean.validators.configuration.BeanValidatorPluginsConfiguration;
-import springfox.documentation.builders.PathSelectors;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 /**
- * Spring configuration for Swagger via SpringFox.
+ * Spring configuration for Swagger via SpringDoc.
  *
- * see: https://github.com/springfox/springfox
+ * see: https://springdoc.org/#migrating-from-springfox
  * @author tgianos
  * @since 1.1.0
  */
 @Configuration
-@ConditionalOnProperty(value = "springfox.documentation.swagger-ui.enabled", havingValue = "true")
-@EnableSwagger2
-@Import(BeanValidatorPluginsConfiguration.class)
+@ConditionalOnProperty(value = "springdoc.documentation.swagger-ui.enabled", havingValue = "true")
 public class SwaggerConfig {
     /**
      * Configure Spring Fox.
@@ -51,37 +43,16 @@ public class SwaggerConfig {
      * @return The spring fox docket.
      */
     @Bean
-    public Docket api(final Config config) {
-        return new Docket(DocumentationType.SWAGGER_2)
-            .apiInfo(
-                /**
-                 * public ApiInfo(
-                 String title,
-                 String description,
-                 String version,
-                 String termsOfServiceUrl,
-                 Contact contact,
-                 String license,
-                 String licenseUrl,
-                 Collection<VendorExtension> vendorExtensions)
-                 */
-                new ApiInfo(
-                    "Metacat API",
-                    "The set of APIs available in this version of metacat",
-                    "1.1.0", // TODO: Swap out with dynamic from config
-                    null,
-                    new Contact("Netflix, Inc.", "https://jobs.netflix.com/", null),
-                    "Apache 2.0",
-                    "http://www.apache.org/licenses/LICENSE-2.0",
-                    Lists.newArrayList()
-                )
-            )
-            .select()
-            .apis(RequestHandlerSelectors.basePackage("com.netflix.metacat.main.api"))
-            .paths(PathSelectors.any())
-            .build()
-            .pathMapping("/")
-            .useDefaultResponseMessages(false);
+    public OpenAPI api(final Config config) {
+        return new OpenAPI()
+            .info(
+                new Info()
+                    .title("Metacat API")
+                    .description("The set of APIs available in this version of metacat")
+                    .version("1.1.0")
+                    .license(new License().name("Apache 2.0").url("http://springdoc.org"))
+                    .contact(new Contact().name("Netflix, Inc.").url("https://jobs.netflix.com/"))
+            );
     }
 
     //TODO: Update with more detailed swagger configurations

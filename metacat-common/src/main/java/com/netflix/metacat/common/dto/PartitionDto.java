@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -45,22 +45,22 @@ import java.util.Map;
 @NoArgsConstructor
 public class PartitionDto extends BaseDto implements HasDataMetadata, HasDefinitionMetadata {
     private static final long serialVersionUID = 783462697901395508L;
-    @ApiModelProperty(value = "audit information about the partition")
+    @Schema(description = "audit information about the partition")
     private AuditDto audit;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "Physical metadata: metadata about the physical data referred by the partition.")
+    @Schema(description = "Physical metadata: metadata about the physical data referred by the partition.")
     @JsonProperty
     private transient ObjectNode dataMetadata;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "Logical metadata: metadata about the logical construct of the partition.")
+    @Schema(description = "Logical metadata: metadata about the logical construct of the partition.")
     @JsonProperty
     private transient ObjectNode definitionMetadata;
-    @ApiModelProperty(value = "the name of this entity", required = true)
+    @Schema(description = "the name of this entity", requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonProperty
     private QualifiedName name;
-    @ApiModelProperty(value = "Storage/Serialization/Deserialization info of the partition ")
+    @Schema(description = "Storage/Serialization/Deserialization info of the partition ")
     private StorageDto serde;
-    @ApiModelProperty(value = "Any extra metadata properties of the partition")
+    @Schema(description = "Any extra metadata properties of the partition")
     private Map<String, String> metadata;
 
     @Nonnull

@@ -24,13 +24,12 @@ dependencies {
     api(project(":metacat-common-server"))
     api(project(":metacat-connector-pig"))
 
-    api("com.google.guava:guava")
-    api("com.google.inject:guice")
-    api("com.google.inject.extensions:guice-persist")
-    api("com.google.inject.extensions:guice-multibindings")
-    api("com.google.inject.extensions:guice-servlet")
+    implementation 'com.google.guava:guava'
+    implementation 'com.google.inject:guice'
+    implementation 'com.google.inject.extensions:guice-persist'
+    implementation 'com.google.inject.extensions:guice-servlet'
     api("joda-time:joda-time:2.10.10")
-    api("org.hibernate:hibernate-entitymanager")
+    api('org.hibernate.orm:hibernate-core')
 
     /*******************************
      * Provided Dependencies

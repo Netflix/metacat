@@ -5,9 +5,9 @@ import com.netflix.metacat.common.dto.ChildInfoDto;
 import com.netflix.metacat.common.dto.ParentInfoDto;
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataService;
 import com.netflix.metacat.main.api.RequestWrapper;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
@@ -29,13 +29,12 @@ import java.util.Set;
 @RestController
 @RequestMapping(
     path = "/mds/v1/parentChildRel",
-    produces = MediaType.APPLICATION_JSON_VALUE
-)
-@Api(
-    value = "ParentChildRelV1",
-    description = "Federated user metadata operations",
     produces = MediaType.APPLICATION_JSON_VALUE,
     consumes = MediaType.APPLICATION_JSON_VALUE
+)
+@Tag(
+    name = "ParentChildRelV1",
+    description = "Federated user metadata operations"
 )
 @DependsOn("metacatCoreInitService")
 @RequiredArgsConstructor
@@ -53,17 +52,16 @@ public class ParentChildRelController {
     @RequestMapping(method = RequestMethod.GET,
         path = "/children/catalog/{catalog-name}/database/{database-name}/table/{table-name}")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 0,
-        value = "Returns the children",
-        notes = "Returns the children"
+    @Operation(
+        summary = "Returns the children",
+        description = "Returns the children"
     )
     public Set<ChildInfoDto> getChildren(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName
     ) {
         return this.requestWrapper.processRequest(
@@ -84,17 +82,16 @@ public class ParentChildRelController {
     @RequestMapping(method = RequestMethod.GET,
         path = "/parents/catalog/{catalog-name}/database/{database-name}/table/{table-name}")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(
-        position = 1,
-        value = "Returns the parents",
-        notes = "Returns the parents"
+    @Operation(
+        summary = "Returns the parents",
+        description = "Returns the parents"
     )
     public Set<ParentInfoDto> getParents(
-        @ApiParam(value = "The name of the catalog", required = true)
+        @Parameter(description = "The name of the catalog", required = true)
         @PathVariable("catalog-name") final String catalogName,
-        @ApiParam(value = "The name of the database", required = true)
+        @Parameter(description = "The name of the database", required = true)
         @PathVariable("database-name") final String databaseName,
-        @ApiParam(value = "The name of the table", required = true)
+        @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName
     ) {
         return this.requestWrapper.processRequest(

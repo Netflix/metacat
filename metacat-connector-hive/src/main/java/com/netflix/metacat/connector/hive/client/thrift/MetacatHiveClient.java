@@ -151,10 +151,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
                        final String newName) throws TException {
         try (HiveMetastoreClient client = createMetastoreClient()) {
             final Table table = client.get_table(databaseName, oldName);
-            client.drop_table(databaseName, oldName, false);
             table.setDbName(newdatabadeName);
             table.setTableName(newName);
-            client.create_table(table);
+            client.alter_table(databaseName, oldName, table);
         }
     }
 

@@ -20,7 +20,7 @@ package com.netflix.metacat.common.server.connectors.model;
 import com.netflix.metacat.common.type.Type;
 import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.common.type.TypeSignature;
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,7 +39,7 @@ import java.io.Serializable;
  * @author amajumdar
  * @since 1.0.0
  */
-@ApiModel(value = "Table field/column metadata")
+@Schema(description = "Table field/column metadata")
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)

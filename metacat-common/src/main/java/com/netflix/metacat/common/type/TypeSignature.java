@@ -19,7 +19,6 @@ package com.netflix.metacat.common.type;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import lombok.EqualsAndHashCode;
@@ -69,9 +68,10 @@ public class TypeSignature {
     ) {
         if (literalParameters != null) {
             for (final Object literal : literalParameters) {
-                Preconditions.checkArgument(
-                    literal instanceof String || literal instanceof Long,
-                    "Unsupported literal type: %s", literal.getClass());
+                if (!(literal instanceof String || literal instanceof Long)) {
+                    throw new IllegalArgumentException(
+                        String.format("Unsupported literal type: %s", literal.getClass()));
+                }
             }
             this.literalParameters = ImmutableList.copyOf(literalParameters);
         } else {
@@ -119,17 +119,28 @@ public class TypeSignature {
             final char c = signature.charAt(i);
             if (c == '<') {
                 if (bracketCount == 0) {
-                    Preconditions.checkArgument(baseName == null, "Expected baseName to be null");
-                    Preconditions.checkArgument(parameterStart == -1, "Expected parameter start to be -1");
+                    if (baseName != null) {
+                        throw new IllegalArgumentException("Expected baseName to be null");
+                    }
+
+                    if (parameterStart != -1) {
+                        throw new IllegalArgumentException("Expected parameter start to be -1");
+                    }
+
                     baseName = signature.substring(0, i);
                     parameterStart = i + 1;
                 }
                 bracketCount++;
             } else if (c == '>') {
                 bracketCount--;
-                Preconditions.checkArgument(bracketCount >= 0, "Bad type signature: '%s'", signature);
+                if (bracketCount < 0) {
+                    throw new IllegalArgumentException(String.format("Bad type signature: '%s'", signature));
+                }
+
                 if (bracketCount == 0) {
-                    Preconditions.checkArgument(parameterStart >= 0, "Bad type signature: '%s'", signature);
+                    if (parameterStart < 0) {
+                        throw new IllegalArgumentException(String.format("Bad type signature: '%s'", signature));
+                    }
                     parameters.add(parseTypeSignature(signature.substring(parameterStart, i)));
                     parameterStart = i + 1;
                     if (i == signature.length() - 1) {
@@ -138,31 +149,55 @@ public class TypeSignature {
                 }
             } else if (c == ',') {
                 if (bracketCount == 1 && !inLiteralParameters) {
-                    Preconditions.checkArgument(parameterStart >= 0, "Bad type signature: '%s'", signature);
+                    if (parameterStart < 0) {
+                        throw new IllegalArgumentException(String.format("Bad type signature: '%s'", signature));
+                    }
+
                     parameters.add(parseTypeSignature(signature.substring(parameterStart, i)));
                     parameterStart = i + 1;
                 } else if (bracketCount == 0 && inLiteralParameters) {
-                    Preconditions.checkArgument(parameterStart >= 0, "Bad type signature: '%s'", signature);
+                    if (parameterStart < 0) {
+                        throw new IllegalArgumentException(String.format("Bad type signature: '%s'", signature));
+                    }
+
                     literalParameters.add(parseLiteral(signature.substring(parameterStart, i)));
                     parameterStart = i + 1;
                 }
             } else if (c == '(') {
-                Preconditions.checkArgument(!inLiteralParameters, "Bad type signature: '%s'", signature);
+                if (inLiteralParameters) {
+                    throw new IllegalArgumentException(String.format("Bad type signature: '%s'", signature));
+                }
+
                 inLiteralParameters = true;
                 if (bracketCount == 0) {
                     if (baseName == null) {
-                        Preconditions.checkArgument(parameters.isEmpty(), "Expected no parameters");
-                        Preconditions.checkArgument(parameterStart == -1, "Expected parameter start to be -1");
+                        if (!parameters.isEmpty()) {
+                            throw new IllegalArgumentException("Expected no parameters");
+                        }
+
+                        if (parameterStart != -1) {
+                            throw new IllegalArgumentException("Expected parameter start to be -1");
+                        }
+
                         baseName = signature.substring(0, i);
                     }
                     parameterStart = i + 1;
                 }
             } else if (c == ')') {
-                Preconditions.checkArgument(inLiteralParameters, "Bad type signature: '%s'", signature);
+                if (!inLiteralParameters) {
+                    throw new IllegalArgumentException(String.format("Bad type signature: '%s'", signature));
+                }
+
                 inLiteralParameters = false;
                 if (bracketCount == 0) {
-                    Preconditions.checkArgument(i == signature.length() - 1, "Bad type signature: '%s'", signature);
-                    Preconditions.checkArgument(parameterStart >= 0, "Bad type signature: '%s'", signature);
+                    if (i != signature.length() - 1) {
+                        throw new IllegalArgumentException(String.format("Bad type signature: '%s'", signature));
+                    }
+
+                    if (parameterStart < 0) {
+                        throw new IllegalArgumentException(String.format("Bad type signature: '%s'", signature));
+                    }
+
                     literalParameters.add(parseLiteral(signature.substring(parameterStart, i)));
                     return new TypeSignature(baseName, parameters, literalParameters);
                 }
@@ -173,7 +208,9 @@ public class TypeSignature {
 
     private static Object parseLiteral(final String literal) {
         if (literal.startsWith("'") || literal.endsWith("'")) {
-            Preconditions.checkArgument(literal.startsWith("'") && literal.endsWith("'"), "Bad literal: '%s'", literal);
+            if (!(literal.startsWith("'") && literal.endsWith("'"))) {
+                throw new IllegalArgumentException(String.format("Bad literal: '%s'", literal));
+            }
             return literal.substring(1, literal.length() - 1);
         } else {
             return Long.parseLong(literal);

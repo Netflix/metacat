@@ -21,8 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -35,25 +34,37 @@ import java.util.Map;
 /**
  * Information about a catalog.
  */
-@ApiModel(description = "Information about a catalog")
+@Schema(description = "Information about a catalog")
 @SuppressWarnings("unused")
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class CatalogDto extends BaseDto implements HasDefinitionMetadata {
     private static final long serialVersionUID = -5713826608609231492L;
 
-    @ApiModelProperty(value = "a list of the names of the databases that belong to this catalog", required = true)
+    @Schema(
+        description = "a list of the names of the databases that belong to this catalog",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private List<String> databases;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
-    @ApiModelProperty(value = "metadata attached to the logical catalog")
+    @Schema(description = "metadata attached to the logical catalog")
     @JsonProperty
     private transient ObjectNode definitionMetadata;
-    @ApiModelProperty(value = "the name of this entity", required = true)
+    @Schema(
+        description = "the name of this entity",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     @JsonProperty
     private QualifiedName name;
-    @ApiModelProperty(value = "the type of the connector of this catalog", required = true)
+    @Schema(
+        description = "the type of the connector of this catalog",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private String type;
-    @ApiModelProperty(value = "Cluster information referred to by this catalog", required = true)
+    @Schema(
+        description = "Cluster information referred to by this catalog",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     @JsonProperty
     private ClusterDto cluster;
     @JsonProperty

@@ -18,7 +18,7 @@
 package com.netflix.metacat.common;
 
 import com.netflix.metacat.common.dto.BaseDto;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -33,10 +33,10 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = false)
 public class NameDateDto extends BaseDto {
     private static final long serialVersionUID = -5713826608609231492L;
-    @ApiModelProperty(value = "The date the entity was created")
+    @Schema(description = "The date the entity was created")
     private Date createDate;
-    @ApiModelProperty(value = "The date the entity was last updated")
+    @Schema(description = "The date the entity was last updated")
     private Date lastUpdated;
-    @ApiModelProperty(value = "The entity's name", required = true)
+    @Schema(description = "The entity's name", requiredMode = Schema.RequiredMode.REQUIRED)
     private QualifiedName name;
 }

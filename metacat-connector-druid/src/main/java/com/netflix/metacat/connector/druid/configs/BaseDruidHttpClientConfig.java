@@ -4,10 +4,10 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.util.TimeUtil;
 import com.netflix.metacat.connector.druid.DruidConfigConstants;
 import com.netflix.metacat.connector.druid.MetacatDruidClient;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
@@ -61,9 +61,8 @@ public abstract class BaseDruidHttpClientConfig {
         final int poolSize = Integer.parseInt(connectorContext.getConfiguration()
             .getOrDefault(DruidConfigConstants.POOL_SIZE, "10"));
         final RequestConfig config = RequestConfig.custom()
-            .setConnectTimeout(timeout)
-            .setConnectionRequestTimeout(timeout)
-            .setSocketTimeout(timeout)
+            .setConnectionRequestTimeout(timeout, TimeUnit.MILLISECONDS)
+            .setResponseTimeout(timeout, TimeUnit.MILLISECONDS)
             .setMaxRedirects(3)
             .build();
         final PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();

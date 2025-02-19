@@ -17,7 +17,7 @@
  */
 package com.netflix.metacat.common.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,15 +39,15 @@ public class AuditDto extends BaseDto {
     private static final long serialVersionUID = 9221109874202093789L;
 
     /* Created By */
-    @ApiModelProperty(value = "User name who created the table")
+    @Schema(description = "User name who created the table")
     private String createdBy;
     /* Created date */
-    @ApiModelProperty(value = "Creation date")
+    @Schema(description = "Creation date")
     private Date createdDate;
     /* Last modified by */
-    @ApiModelProperty(value = "User name who last modified the table")
+    @Schema(description = "User name who last modified the table")
     private String lastModifiedBy;
     /* Last modified date */
-    @ApiModelProperty(value = "Last modified date")
+    @Schema(description = "Last modified date")
     private Date lastModifiedDate;
 }

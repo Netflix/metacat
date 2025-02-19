@@ -13,20 +13,20 @@
 
 package com.netflix.metacat.connector.s3.model;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.UniqueConstraint;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.UniqueConstraint;
 import java.util.List;
 
 /**
  * Schema.
  */
 @Entity
-@javax.persistence.Table(name = "schema_object",
+@jakarta.persistence.Table(name = "schema_object",
     uniqueConstraints = @UniqueConstraint(name = "schema_object_u1", columnNames = "location_id"))
 public class Schema extends IdEntity {
     private Location location;

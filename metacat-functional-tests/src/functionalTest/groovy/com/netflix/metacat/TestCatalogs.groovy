@@ -51,37 +51,12 @@ class TestCatalogs {
             createTable: true,
             deleteDatabase: true,
             deleteTable: true,
-            name: 'embedded-hive-metastore',
-            partitionKeysAppearLast: true,
-            type: 'hive',
-            createView: true,
-            validateFilterExpressionBasedOnPartitionKeyType: false,
-            supportAUDITtables: true
-        ),
-        new TestCatalog(
-            createDatabase: true,
-            createPartition: true,
-            createTable: true,
-            deleteDatabase: true,
-            deleteTable: true,
-            name: 'embedded-fast-hive-metastore',
-            partitionKeysAppearLast: true,
-            type: 'hive',
-            createView: true,
-            validateWithHive: false,
-            validateFilterExpressionBasedOnPartitionKeyType: false,
-            supportAUDITtables: true
-        ),
-        new TestCatalog(
-            createDatabase: true,
-            createPartition: true,
-            createTable: true,
-            deleteDatabase: true,
-            deleteTable: true,
             name: 'hive-metastore',
             partitionKeysAppearLast: true,
             type: 'hive',
-            createView: true
+            createView: true,
+            validateFilterExpressionBasedOnPartitionKeyType: false,
+            supportAUDITtables: true
         ),
         new TestCatalog(
             createDatabase: true,

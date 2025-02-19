@@ -28,11 +28,10 @@ import com.netflix.metacat.common.exception.MetacatTooManyRequestsException;
 import com.netflix.metacat.common.exception.MetacatUnAuthorizedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
  * Exception mapper for converting exceptions in application to web status error messages.
@@ -42,22 +41,16 @@ import java.io.IOException;
  */
 @Slf4j
 @ControllerAdvice
-public class ExceptionMapper {
-
+public class ExceptionMapper extends ResponseEntityExceptionHandler {
     /**
-     * Handle Metacat Exceptions.
+     * Handle Metacat Exceptions that do not contain a response.
      *
-     * @param response The HTTP response
      * @param e        The exception to handle
-     * @throws IOException on error in sending error
+     * @return The error response
      */
     @ExceptionHandler(MetacatException.class)
-    public void handleMetacatException(
-        final HttpServletResponse response,
-        final MetacatException e
-    ) throws IOException {
+    public ResponseEntity<String> handleException(final MetacatException e) {
         final int status;
-        boolean logErrorLevel = false;
         if (e instanceof MetacatAlreadyExistsException) {
             status = HttpStatus.CONFLICT.value();
         } else if (e instanceof MetacatBadRequestException) {
@@ -67,7 +60,6 @@ public class ExceptionMapper {
         } else if (e instanceof MetacatNotFoundException) {
             status = HttpStatus.NOT_FOUND.value();
         } else if (e instanceof MetacatNotSupportedException) {
-            logErrorLevel = true;
             status = HttpStatus.NOT_IMPLEMENTED.value();
         } else if (e instanceof MetacatUserMetadataException) {
             // TODO: This makes no sense
@@ -77,16 +69,9 @@ public class ExceptionMapper {
         } else if (e instanceof MetacatUnAuthorizedException) {
             status = HttpStatus.FORBIDDEN.value();
         } else {
-            logErrorLevel = true;
             status = HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
-        if (logErrorLevel) {
-            log.error(e.getLocalizedMessage(), e);
-        } else {
-            log.warn(e.getLocalizedMessage(), e);
-        }
-        response.sendError(status, e.getLocalizedMessage());
+        return ResponseEntity.status(status)
+            .body("An error occurred: " + e.getMessage());
     }
-
-
 }

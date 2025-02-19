@@ -20,9 +20,9 @@ import com.netflix.metacat.common.server.connectors.exception.CatalogNotFoundExc
 import com.netflix.metacat.connector.s3.dao.SourceDao;
 import com.netflix.metacat.connector.s3.model.Source;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.persistence.EntityManager;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.persistence.EntityManager;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 

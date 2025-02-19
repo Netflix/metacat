@@ -53,7 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Size;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 

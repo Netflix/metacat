@@ -72,16 +72,6 @@ class MetacatThriftFunctionalSpec extends Specification {
         assert thriftPort, 'Required system property "metacat_hive_thrift_port" is not set'
         TestCatalogs.findByCatalogName('hive-metastore').thriftUri = "thrift://localhost:${thriftPort}".toString()
 
-        Logger.getRootLogger().setLevel(Level.OFF)
-        thriftPort = System.properties['metacat_embedded_hive_thrift_port']?.toString()?.trim()
-        assert thriftPort, 'Required system property "metacat_embedded_hive_thrift_port" is not set'
-        TestCatalogs.findByCatalogName('embedded-hive-metastore').thriftUri = "thrift://localhost:${thriftPort}".toString()
-
-        Logger.getRootLogger().setLevel(Level.OFF)
-        thriftPort = System.properties['metacat_embedded_fast_hive_thrift_port']?.toString()?.trim()
-        assert thriftPort, 'Required system property "metacat_embedded_fast_hive_thrift_port" is not set'
-        TestCatalogs.findByCatalogName('embedded-fast-hive-metastore').thriftUri = "thrift://localhost:${thriftPort}".toString()
-
         thriftPort = System.properties['hive_thrift_port']?.toString()?.trim()
         assert thriftPort, 'Required system property "hive_thrift_port" is not set'
         hiveThriftUri = "thrift://localhost:${thriftPort}".toString()

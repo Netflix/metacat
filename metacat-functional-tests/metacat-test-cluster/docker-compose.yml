@@ -15,11 +15,10 @@
 #
 #
 
-version: "2"
-
 services:
     metacat:
-        image: tomcat:8.0-jre8
+        image: tomcat:10.1-jre17
+        platform: linux/x86_64
         depends_on:
             - hive-metastore
             - hive-metastore-db
@@ -65,8 +64,8 @@ services:
                 -Dmetacat.usermetadata.config.location=/etc/metacat/usermetadata.properties
                 -Dmetacat.cache.enabled=true
                 -Dmetacat.authorization.enabled=true
-                -Dmetacat.authorization.createAcl.createAclStr=embedded-fast-hive-metastore/fsmoke_acl:metacat-prod
-                -Dmetacat.authorization.deleteAcl.deleteAclStr=embedded-fast-hive-metastore/fsmoke_acl:metacat-prod
+                -Dmetacat.authorization.createAcl.createAclStr=hive-metastore/fsmoke_acl:metacat-prod
+                -Dmetacat.authorization.deleteAcl.deleteAclStr=hive-metastore/fsmoke_acl:metacat-prod
                 -Dmetacat.service.tables.error.list.partitions.threshold=100
                 -Dmetacat.hive.commonview.enabled=true
                 -Dmetacat.hive.commonview.deleteStorageTable=true
@@ -85,8 +84,10 @@ services:
     ##TODO: We need to add them back with light images
     hive-metastore-db:
         image: mysql:5.7
+        platform: linux/x86_64
         volumes:
             - ./datastores/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+            - ./datastores/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
         environment:
             - MYSQL_ROOT_PASSWORD=root_password
             - MYSQL_USER=metacat_user
@@ -98,6 +99,7 @@ services:
           - "com.netflix.metacat.oss.test"
     postgresql:
         image: postgres:9.6
+        platform: linux/x86_64
         volumes:
             - ./datastores/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
         environment:
@@ -108,6 +110,7 @@ services:
           - "com.netflix.metacat.oss.test"
     hive-metastore:
         image: danielbwatson/metacat-test-hive-metastore:1.0.0
+        platform: linux/x86_64
         depends_on:
             - hive-metastore-db
         ports:
@@ -120,6 +123,7 @@ services:
           - "com.netflix.metacat.oss.test.hive"
     polaris-crdb:
         image: cockroachdb/cockroach:v21.1.11
+        platform: linux/x86_64
         ports:
             - '26257:26257'
             - '8081:8080'
@@ -129,6 +133,7 @@ services:
             - "com.netflix.metacat.oss.polaris.crdb"
     polaris-crdb-barrier:
         image: martin/wait:latest
+        platform: linux/x86_64
         depends_on:
             - polaris-crdb
         environment:
@@ -138,6 +143,7 @@ services:
             - "com.netflix.metacat.oss.polaris.crdb-barrier"
     polaris-crdb-init:
         image: cockroachdb/cockroach:v21.1.11
+        platform: linux/x86_64
         depends_on:
             - polaris-crdb-barrier
         volumes:
@@ -148,6 +154,7 @@ services:
             - "com.netflix.metacat.oss.polaris.crdb-init"
     storage-barrier:
         image: martin/wait:latest
+        platform: linux/x86_64
         depends_on:
             - hive-metastore-db
             - postgresql
@@ -158,6 +165,7 @@ services:
           - "com.netflix.metacat.oss.test"
     service-barrier:
         image: martin/wait:latest
+        platform: linux/x86_64
         depends_on:
             - hive-metastore
         environment:
@@ -166,10 +174,11 @@ services:
           - "com.netflix.metacat.oss.test"
     metacat-barrier:
         image: martin/wait:latest
+        platform: linux/x86_64
         depends_on:
             - metacat
         environment:
-            - TARGETS=metacat:8080,metacat:12001,metacat:12003,metacat:12004
+            - TARGETS=metacat:8080,metacat:12001
             - TIMEOUT=360
         labels:
           - "com.netflix.metacat.oss.test"

@@ -13,21 +13,21 @@
 
 package com.netflix.metacat.connector.s3.model;
 
-import javax.persistence.CollectionTable;
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.MapKeyColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.UniqueConstraint;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapKeyColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.UniqueConstraint;
 import java.util.Map;
 
 /**
  * Info.
  */
 @Entity
-@javax.persistence.Table(name = "info",
+@jakarta.persistence.Table(name = "info",
     uniqueConstraints = @UniqueConstraint(name = "info_u1", columnNames = "location_id"))
 public class Info extends IdEntity {
     private String inputFormat;

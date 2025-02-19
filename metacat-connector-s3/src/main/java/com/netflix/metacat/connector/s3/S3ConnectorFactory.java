@@ -20,6 +20,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.persist.PersistService;
 import com.google.inject.persist.jpa.JpaPersistModule;
+import com.google.inject.persist.jpa.JpaPersistOptions;
 import com.netflix.metacat.common.server.connectors.ConnectorDatabaseService;
 import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorPartitionService;
@@ -67,7 +68,10 @@ public class S3ConnectorFactory implements ConnectorFactory {
         final Map<String, Object> props = Maps.newHashMap(configuration);
         props.put("hibernate.connection.datasource",
             DataSourceManager.get().load(catalogShardName, configuration).get(catalogShardName));
-        final Module jpaModule = new JpaPersistModule("s3").properties(props);
+        final JpaPersistOptions options = JpaPersistOptions.builder()
+            .setAutoBeginWorkOnEntityManagerCreation(true)
+            .build();
+        final Module jpaModule = new JpaPersistModule("s3", options).properties(props);
         final Module s3Module = new S3Module(catalogName, configuration, infoConverter);
         final Injector injector = Guice.createInjector(jpaModule, s3Module);
         persistService = injector.getInstance(PersistService.class);

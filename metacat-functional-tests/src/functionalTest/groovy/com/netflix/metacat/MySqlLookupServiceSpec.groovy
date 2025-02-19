@@ -26,9 +26,6 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 class MySqlLookupServiceSpec extends Specification{
-    private MySqlLookupService mySqlLookupService;
-    private JdbcTemplate jdbcTemplate;
-
     @Shared
     MySqlLookupService mySqlLookupService
 

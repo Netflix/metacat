@@ -22,8 +22,8 @@ import com.netflix.metacat.connector.s3.dao.TableDao
 import com.netflix.metacat.connector.s3.model.Database
 import com.netflix.metacat.connector.s3.model.Source
 
-import javax.inject.Inject
-import javax.persistence.EntityManager
+import jakarta.inject.Inject
+import jakarta.persistence.EntityManager
 
 /**
  * Created by amajumdar on 10/12/15.

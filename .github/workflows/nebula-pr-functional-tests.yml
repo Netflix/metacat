@@ -7,8 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # test against JDK 8
-        java: [ 8 ]
+        # test against JDK 17
+        java: [ 17 ]
     name: Functional tests with Java ${{ matrix.java }}
     steps:
       - uses: actions/checkout@v1
