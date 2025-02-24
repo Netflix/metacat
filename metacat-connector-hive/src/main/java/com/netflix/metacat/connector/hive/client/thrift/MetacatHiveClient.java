@@ -20,6 +20,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
+import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
+import com.netflix.spectator.api.Counter;
+import com.netflix.spectator.api.Id;
+import com.netflix.spectator.api.Registry;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.DropPartitionsRequest;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
@@ -32,8 +36,13 @@ import org.apache.thrift.transport.TTransportException;
 
 import javax.annotation.Nullable;
 import java.net.URI;
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * MetacatHiveClient.
@@ -46,22 +55,34 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     private HiveMetastoreClientFactory hiveMetastoreClientFactory;
     private final String host;
     private final int port;
+    private final Registry registry;
+    private final Id requestTimerId;
+    private final Counter hiveSqlErrorCounter;
 
     /**
      * Constructor.
      *
+     * @param catalogName                catalogName
      * @param address                    address
      * @param hiveMetastoreClientFactory hiveMetastoreClientFactory
+     * @param registry                   registry
      * @throws MetaException exception
      */
-    public MetacatHiveClient(final URI address,
-                             final HiveMetastoreClientFactory hiveMetastoreClientFactory)
-            throws MetaException {
+    public MetacatHiveClient(final String catalogName,
+                             final URI address,
+                             final HiveMetastoreClientFactory hiveMetastoreClientFactory,
+                             final Registry registry
+    )
+        throws MetaException {
         this.hiveMetastoreClientFactory = hiveMetastoreClientFactory;
         Preconditions.checkArgument(address.getHost() != null, "metastoreUri host is missing: " + address);
         Preconditions.checkArgument(address.getPort() != -1, "metastoreUri port is missing: " + address);
         this.host = address.getHost();
         this.port = address.getPort();
+        this.registry = registry;
+        this.requestTimerId = registry.createId(HiveMetrics.TimerExternalHiveRequest.getMetricName());
+        this.hiveSqlErrorCounter =
+            registry.counter(HiveMetrics.CounterHiveSqlLockError.getMetricName() + "." + catalogName);
     }
 
     /**
@@ -82,9 +103,11 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public List<String> getAllDatabases() throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            return client.get_all_databases();
-        }
+        return callWrap(HiveMetrics.TagGetAllDatabases.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                return client.get_all_databases();
+            }
+        });
     }
 
     /**
@@ -92,9 +115,11 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public List<String> getAllTables(final String databaseName) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            return client.get_all_tables(databaseName);
-        }
+        return callWrap(HiveMetrics.TagGetAllTables.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                return client.get_all_tables(databaseName);
+            }
+        });
     }
 
     /**
@@ -103,9 +128,11 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     @Override
     public List<String> getTableNames(final String databaseName, final String filter, final int limit)
         throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            return client.get_table_names_by_filter(databaseName, filter, (short) limit);
-        }
+        return callWrap(HiveMetrics.TagGetTableNames.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                return client.get_table_names_by_filter(databaseName, filter, (short) limit);
+            }
+        });
     }
 
 
@@ -115,9 +142,11 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     @Override
     public Table getTableByName(final String databaseName,
                                 final String tableName) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            return client.get_table(databaseName, tableName);
-        }
+        return callWrap(HiveMetrics.TagGetTableByName.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                return client.get_table(databaseName, tableName);
+            }
+        });
     }
 
     /**
@@ -125,9 +154,12 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void createTable(final Table table) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            client.create_table(table);
-        }
+        callWrap(HiveMetrics.TagCreateTable.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                client.create_table(table);
+            }
+            return null;
+        });
     }
 
     /**
@@ -136,9 +168,12 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     @Override
     public void dropTable(final String databaseName,
                           final String tableName) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            client.drop_table(databaseName, tableName, false);
-        }
+        callWrap(HiveMetrics.TagDropTable.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                client.drop_table(databaseName, tableName, false);
+            }
+            return null;
+        });
     }
 
     /**
@@ -149,12 +184,15 @@ public class MetacatHiveClient implements IMetacatHiveClient {
                        final String oldName,
                        final String newdatabadeName,
                        final String newName) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            final Table table = client.get_table(databaseName, oldName);
-            table.setDbName(newdatabadeName);
-            table.setTableName(newName);
-            client.alter_table(databaseName, oldName, table);
-        }
+        callWrap(HiveMetrics.TagRename.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                final Table table = client.get_table(databaseName, oldName);
+                table.setDbName(newdatabadeName);
+                table.setTableName(newName);
+                client.alter_table(databaseName, oldName, table);
+            }
+            return null;
+        });
     }
 
     /**
@@ -164,9 +202,12 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     public void alterTable(final String databaseName,
                            final String tableName,
                            final Table table) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            client.alter_table(databaseName, tableName, table);
-        }
+        callWrap(HiveMetrics.TagAlterTable.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                client.alter_table(databaseName, tableName, table);
+            }
+            return null;
+        });
     }
 
     /**
@@ -175,9 +216,12 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     @Override
     public void alterDatabase(final String databaseName,
                               final Database database) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            client.alter_database(databaseName, database);
-        }
+        callWrap(HiveMetrics.TagAlterDatabase.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                client.alter_database(databaseName, database);
+            }
+            return null;
+        });
     }
 
     /**
@@ -185,9 +229,12 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void createDatabase(final Database database) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            client.create_database(database);
-        }
+        callWrap(HiveMetrics.TagCreateDatabase.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                client.create_database(database);
+            }
+            return null;
+        });
     }
 
     /**
@@ -195,9 +242,12 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void dropDatabase(final String dbName) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            client.drop_database(dbName, false, false);
-        }
+        callWrap(HiveMetrics.TagDropDatabase.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                client.drop_database(dbName, false, false);
+            }
+            return null;
+        });
     }
 
 
@@ -206,9 +256,11 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public Database getDatabase(final String databaseName) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            return client.get_database(databaseName);
-        }
+        return callWrap(HiveMetrics.TagGetDatabase.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                return client.get_database(databaseName);
+            }
+        });
     }
 
     /**
@@ -218,13 +270,15 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     public List<Partition> getPartitions(final String databaseName,
                                          final String tableName,
                                          @Nullable final List<String> partitionNames) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            if (partitionNames != null && !partitionNames.isEmpty()) {
-                return client.get_partitions_by_names(databaseName, tableName, partitionNames);
-            } else {
-                return client.get_partitions(databaseName, tableName, ALL_RESULTS);
+        return callWrap(HiveMetrics.TagGetPartitions.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                if (partitionNames != null && !partitionNames.isEmpty()) {
+                    return client.get_partitions_by_names(databaseName, tableName, partitionNames);
+                } else {
+                    return client.get_partitions(databaseName, tableName, ALL_RESULTS);
+                }
             }
-        }
+        });
     }
 
     /**
@@ -234,8 +288,11 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     public void dropPartitions(final String databaseName,
                                final String tableName,
                                final List<String> partitionNames) throws
-            TException {
-        dropHivePartitions(createMetastoreClient(), databaseName, tableName, partitionNames);
+        TException {
+        callWrap(HiveMetrics.TagDropHivePartitions.getMetricName(), () -> {
+            dropHivePartitions(createMetastoreClient(), databaseName, tableName, partitionNames);
+            return null;
+        });
     }
 
     /**
@@ -246,9 +303,11 @@ public class MetacatHiveClient implements IMetacatHiveClient {
                                                   final String tableName,
                                                   final String filter
     ) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            return client.get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS);
-        }
+        return callWrap(HiveMetrics.TagListPartitionsByFilter.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                return client.get_partitions_by_filter(databaseName, tableName, filter, ALL_RESULTS);
+            }
+        });
     }
 
     /**
@@ -257,8 +316,9 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     @Override
     public int getPartitionCount(final String databaseName,
                                  final String tableName) throws TException {
-
-        return getPartitions(databaseName, tableName, null).size();
+        return callWrap(HiveMetrics.TagGetPartitionCount.getMetricName(), () -> {
+            return getPartitions(databaseName, tableName, null).size();
+        });
     }
 
     /**
@@ -267,10 +327,12 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     @Override
     public List<String> getPartitionNames(final String databaseName,
                                           final String tableName)
-            throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            return client.get_partition_names(databaseName, tableName, ALL_RESULTS);
-        }
+        throws TException {
+        return callWrap(HiveMetrics.TagGetPartitionNames.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                return client.get_partition_names(databaseName, tableName, ALL_RESULTS);
+            }
+        });
     }
 
     /**
@@ -278,10 +340,13 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void savePartitions(final List<Partition> partitions)
-            throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            client.add_partitions(partitions);
-        }
+        throws TException {
+        callWrap(HiveMetrics.TagAddPartitions.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                client.add_partitions(partitions);
+            }
+            return null;
+        });
     }
 
     /**
@@ -290,10 +355,13 @@ public class MetacatHiveClient implements IMetacatHiveClient {
     @Override
     public void alterPartitions(final String dbName, final String tableName,
                                 final List<Partition> partitions) throws
-            TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            client.alter_partitions(dbName, tableName, partitions);
-        }
+        TException {
+        callWrap(HiveMetrics.TagAlterPartitions.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                client.alter_partitions(dbName, tableName, partitions);
+            }
+            return null;
+        });
     }
 
     /**
@@ -301,31 +369,58 @@ public class MetacatHiveClient implements IMetacatHiveClient {
      */
     @Override
     public void addDropPartitions(final String dbName, final String tableName,
-                           final List<Partition> partitions,
-                           final List<String> delPartitionNames) throws TException {
-        try (HiveMetastoreClient client = createMetastoreClient()) {
-            try {
-                dropHivePartitions(client, dbName, tableName, delPartitionNames);
-                client.add_partitions(partitions);
-            } catch (MetaException | InvalidObjectException e) {
-                throw new InvalidMetaException("One or more partitions are invalid.", e);
-            } catch (TException e) {
-                throw new TException(
-                    String.format("Internal server error adding/dropping partitions for table %s.%s",
-                        dbName, tableName), e);
+                                  final List<Partition> partitions,
+                                  final List<String> delPartitionNames) throws TException {
+        callWrap(HiveMetrics.TagAddDropPartitions.getMetricName(), () -> {
+            try (HiveMetastoreClient client = createMetastoreClient()) {
+                try {
+                    dropHivePartitions(client, dbName, tableName, delPartitionNames);
+                    client.add_partitions(partitions);
+                } catch (MetaException | InvalidObjectException e) {
+                    throw new InvalidMetaException("One or more partitions are invalid.", e);
+                } catch (TException e) {
+                    throw new TException(
+                        String.format("Internal server error adding/dropping partitions for table %s.%s",
+                            dbName, tableName), e);
+                }
             }
-        }
+            return null;
+        });
     }
 
 
     private void dropHivePartitions(final HiveMetastoreClient client, final String dbName, final String tableName,
                                     final List<String> partitionNames)
-            throws TException {
+        throws TException {
         if (partitionNames != null && !partitionNames.isEmpty()) {
             final DropPartitionsRequest request = new DropPartitionsRequest(dbName, tableName, new RequestPartsSpec(
-                    RequestPartsSpec._Fields.NAMES, partitionNames));
+                RequestPartsSpec._Fields.NAMES, partitionNames));
             request.setDeleteData(false);
             client.drop_partitions_req(request);
+        }
+    }
+
+    private <R> R callWrap(final String requestName, final Callable<R> supplier) throws TException {
+        final long start = registry.clock().wallTime();
+        final Map<String, String> tags = new HashMap<String, String>();
+        tags.put("request", requestName);
+
+        try {
+            return supplier.call();
+        } catch (TException e) {
+            handleSqlException(e);
+            throw e;
+        } catch (Exception e) {
+            throw new TException(e.getMessage(), e.getCause());
+        } finally {
+            final long duration = registry.clock().wallTime() - start;
+            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private void handleSqlException(final Exception ex) {
+        if (ex.getCause() instanceof SQLException) {
+            this.hiveSqlErrorCounter.increment();
         }
     }
 

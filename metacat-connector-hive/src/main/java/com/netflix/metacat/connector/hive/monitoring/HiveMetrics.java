@@ -51,7 +51,9 @@ public enum HiveMetrics {
     /**
      * Timer.
      */
-    TimerHiveRequest(Type.timer, "embeddedclient.requests"), TimerFastHiveRequest(Type.timer, "fast.requests"),
+    TimerHiveRequest(Type.timer, "embeddedclient.requests"),
+    TimerFastHiveRequest(Type.timer, "fast.requests"),
+    TimerExternalHiveRequest(Type.timer, "externalhms.requests"),
     /**
      * hive function names.
      */

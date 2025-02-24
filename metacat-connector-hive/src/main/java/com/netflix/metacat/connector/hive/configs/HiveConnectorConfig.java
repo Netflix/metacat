@@ -144,7 +144,12 @@ public class HiveConnectorConfig {
         );
         final String metastoreUri = connectorContext.getConfiguration().get(HiveConfigConstants.THRIFT_URI);
         try {
-            return new MetacatHiveClient(new URI(metastoreUri), factory);
+            return new MetacatHiveClient(
+                connectorContext.getCatalogName(),
+                new URI(metastoreUri),
+                factory,
+                connectorContext.getRegistry()
+            );
         } catch (Exception e) {
             final String message = String.format("Invalid thrift uri %s", metastoreUri);
             log.info(message);
