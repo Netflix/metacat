@@ -32,13 +32,14 @@ public class MetacatUtils {
 
     public static final String ICEBERG_MIGRATION_DO_NOT_MODIFY_TAG = "iceberg_migration_do_not_modify";
     public static final String NAME_TAGS = "tags";
+    public static final String DATA_HYGIENE = "data_hygiene";
+    public static final String DATA_LOADED = "data_loaded";
 
     /**
      * Iceberg common view field names.
      */
     public static final String COMMON_VIEW = "common_view";
     public static final String STORAGE_TABLE = "storage_table";
-
 
     /**
      * Default Ctor.
@@ -126,6 +127,20 @@ public class MetacatUtils {
             }
         }
         return tags;
+    }
+
+    public static long getTableLastDataLoadedDate(@Nullable final ObjectNode definitionMetadata) {
+        long lastLoadedDate = 0L;
+        if (definitionMetadata == null || definitionMetadata.isNull() || definitionMetadata.isEmpty()) {
+            return lastLoadedDate;
+        }
+        ObjectNode dataHygiene;
+        JsonNode tmp = definitionMetadata.get(DATA_HYGIENE);
+        if (tmp == null || tmp.isNull() || tmp.isEmpty()) {
+            return lastLoadedDate;
+        }
+        dataHygiene = (ObjectNode) tmp;
+        return dataHygiene.get(DATA_LOADED).asLong(0L);
     }
 
     public static String getIcebergMigrationExceptionMsg(final String requestType,

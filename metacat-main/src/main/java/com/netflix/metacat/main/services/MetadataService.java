@@ -29,12 +29,15 @@ import com.netflix.spectator.api.Registry;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
+import org.joda.time.Period;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.netflix.metacat.common.server.util.MetacatUtils.getTableLastDataLoadedDate;
 
 /**
  * Metadata Service. This class includes any common services for the user metadata.
@@ -147,18 +150,27 @@ public class MetadataService {
         int offset = 0;
         final int limit = 10000;
         int totalDeletes = 0;
+        DateTime oneMonthAgo = DateTime.now().minus(Period.months(1));
+
         while (offset == 0 || dtos.size() == limit) {
             dtos = userMetadataService.searchDefinitionMetadata(null, null, null, null,
                 "id", null, offset, limit);
-            final long deletes = dtos.parallelStream().map(dto -> {
-                try {
-                    return deleteDefinitionMetadata(dto.getName(), false, metacatRequestContext);
-                } catch (Exception e) {
-                    log.warn("Failed deleting obsolete definition metadata for table {}", dto.getName(), e);
-                    return false;
-                }
+            final long deletes = dtos.parallelStream()
+                .filter(dto -> {
+                    DateTime lastLoadedDate =  new DateTime(getTableLastDataLoadedDate(dto.getDefinitionMetadata()));
+                    // Check if the metadata is older than one month
+                    return lastLoadedDate.isBefore(oneMonthAgo);
+                })
+                .map(dto -> {
+                    try {
+                        return deleteDefinitionMetadata(dto.getName(), false, metacatRequestContext);
+                    } catch (Exception e) {
+                        log.warn("Failed deleting obsolete definition metadata for table {}", dto.getName(), e);
+                        return false;
+                    }
                 })
                 .filter(b -> b).count();
+
             totalDeletes += deletes;
             offset += limit - deletes;
         }
