@@ -97,7 +97,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         try {
             final PolarisTableEntity entity = polarisTableMapper.toEntity(tableInfo);
             polarisStoreService.createTable(entity.getDbName(), entity.getTblName(),
-                    entity.getMetadataLocation(), createdBy);
+                    entity.getMetadataLocation(), entity.getParams(), createdBy);
         } catch (DataIntegrityViolationException | InvalidMetaException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
@@ -149,7 +149,9 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 .getTable(name.getDatabaseName(), name.getTableName())
                 .orElseThrow(() -> new TableNotFoundException(name));
             final TableInfo info = polarisTableMapper.toInfo(polarisTableEntity);
+            polarisTableMapper.decorateTableInfo(info);
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
+
             // Return the iceberg table with just the metadata location included if requested.
             if (connectorContext.getConfig().shouldFetchOnlyMetadataLocationEnabled()
                     && requestContext.isIncludeMetadataLocationOnly()) {
@@ -224,6 +226,12 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 log.warn("No parameters defined for iceberg table %s, no data update needed", name);
                 return;
             }
+            final Map<String, String> newTableParams = polarisTableMapper.filterMetadata(newTableMetadata);
+            final Map<String, String> existingTableParams = polarisStoreService
+                    .getTable(name.getDatabaseName(), name.getTableName())
+                    .orElseThrow(() -> new TableNotFoundException(name))
+                    .getParams();
+
             final String prevLoc = newTableMetadata.get(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION);
             final String newLoc = newTableMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION);
             if (StringUtils.isBlank(prevLoc)) {
@@ -246,12 +254,14 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 log.error(message);
                 throw new InvalidMetaException(name, message, null);
             }
-            // optimistically attempt to update metadata location
-            final boolean updated = polarisStoreService.updateTableMetadataLocation(
-                    name.getDatabaseName(), name.getTableName(),
-                    prevLoc, newLoc, lastModifiedBy);
+
+            // optimistically attempt to update metadata location and params
+            final boolean locationUpdated = polarisStoreService.updateTableMetadataLocationAndParams(
+                    name.getDatabaseName(), name.getTableName(), prevLoc, newLoc,
+                    existingTableParams, newTableParams, lastModifiedBy);
+
             // if succeeded then done, else try to figure out why and throw corresponding exception
-            if (updated) {
+            if (locationUpdated) {
                 requestContext.setIgnoreErrorsAfterUpdate(true);
                 log.warn("Success servicing Iceberg commit request for table: {}, "
                         + "previousLocation: {}, newLocation: {}",
@@ -348,7 +358,12 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 ConnectorUtils.sort(tbls, sort, Comparator.comparing(t -> t.getTblName()));
             }
             return ConnectorUtils.paginate(tbls, pageable).stream()
-                .map(t -> polarisTableMapper.toInfo(t)).collect(Collectors.toList());
+                .map(t -> {
+                        final TableInfo info = polarisTableMapper.toInfo(t);
+                        polarisTableMapper.decorateTableInfo(info);
+                        return info;
+                    }
+                ).collect(Collectors.toList());
         } catch (Exception exception) {
             final String msg = String.format("Failed polaris list tables %s using prefix %s", name, prefix);
             log.error(msg, exception);
@@ -360,7 +375,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
      * Return the table metadata from cache if exists else make the iceberg call and refresh it.
      * @param tableName             table name
      * @param tableMetadataLocation table metadata location
-     * @param info                  table info stored in hive metastore
+     * @param info                  table info stored in Polaris
      * @param includeInfoDetails    if true, will include more details like the manifest file content
      * @param useCache              true, if table can be retrieved from cache
      * @return TableInfo
