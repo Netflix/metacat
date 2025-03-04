@@ -108,6 +108,7 @@ class MetacatSmokeSpec extends Specification {
         def catalog = api.getCatalog(catalogName)
         if (!catalog.databases.contains(databaseName)) {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+            Thread.sleep(5000)
         }
         def database = api.getDatabase(catalogName, databaseName, false, true)
         def owner = 'amajumdar'
@@ -609,6 +610,7 @@ class MetacatSmokeSpec extends Specification {
         def catalog = api.getCatalog(catalogName)
         if (!catalog.databases.contains(databaseName)) {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+            Thread.sleep(5000)
         }
         api.createTable(catalogName, databaseName, storageTableName, tableDto)
         then:
