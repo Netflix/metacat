@@ -18,7 +18,9 @@ import com.netflix.metacat.common.server.connectors.exception.TableNotFoundExcep
 import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
+import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
@@ -51,6 +53,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     protected final HiveConnectorInfoConverter connectorConverter;
     protected final ConnectorContext connectorContext;
     protected final IcebergTableHandler icebergTableHandler;
+    protected final CommonViewHandler commonViewHandler;
     protected final PolarisTableMapper polarisTableMapper;
     protected final String catalogName;
 
@@ -62,6 +65,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
      * @param polarisConnectorDatabaseService   connector database service
      * @param connectorConverter                converter
      * @param icebergTableHandler               iceberg table handler
+     * @param commonViewHandler                 common view handler
      * @param polarisTableMapper                polaris table polarisTableMapper
      * @param connectorContext                  the connector context
      */
@@ -71,6 +75,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final PolarisConnectorDatabaseService polarisConnectorDatabaseService,
         final HiveConnectorInfoConverter connectorConverter,
         final IcebergTableHandler icebergTableHandler,
+        final CommonViewHandler commonViewHandler,
         final PolarisTableMapper polarisTableMapper,
         final ConnectorContext connectorContext
     ) {
@@ -79,6 +84,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         this.connectorConverter = connectorConverter;
         this.connectorContext = connectorContext;
         this.icebergTableHandler = icebergTableHandler;
+        this.commonViewHandler = commonViewHandler;
         this.polarisTableMapper = polarisTableMapper;
         this.catalogName = catalogName;
     }
@@ -149,7 +155,11 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 .getTable(name.getDatabaseName(), name.getTableName())
                 .orElseThrow(() -> new TableNotFoundException(name));
             final TableInfo info = polarisTableMapper.toInfo(polarisTableEntity);
-            polarisTableMapper.decorateTableInfo(info);
+            final boolean isView = connectorContext.getConfig().isCommonViewEnabled()
+                && HiveTableUtil.isCommonView(info);
+            if (!isView) {
+                polarisTableMapper.decorateTableInfo(info);
+            }
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
 
             // Return the iceberg table with just the metadata location included if requested.
@@ -160,8 +170,12 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                         .fields(Collections.emptyList())
                         .build();
             }
-            return getIcebergTable(name, tableLoc, info,
-                requestContext.isIncludeMetadata(), connectorContext.getConfig().isIcebergCacheEnabled());
+            if (isView) {
+                return getCommonView(name, tableLoc, info, connectorContext.getConfig().isIcebergCacheEnabled());
+            } else {
+                return getIcebergTable(name, tableLoc, info,
+                        requestContext.isIncludeMetadata(), connectorContext.getConfig().isIcebergCacheEnabled());
+            }
         } catch (TableNotFoundException | IllegalArgumentException exception) {
             log.error(String.format("Not found exception for polaris table %s", name), exception);
             throw exception;
@@ -219,7 +233,12 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final QualifiedName name = tableInfo.getName();
         final Config conf = connectorContext.getConfig();
         final String lastModifiedBy = PolarisUtils.getUserOrDefault(requestContext);
-        icebergTableHandler.update(tableInfo);
+        if (connectorContext.getConfig().isCommonViewEnabled()
+            && HiveTableUtil.isCommonView(tableInfo)) {
+            commonViewHandler.update(tableInfo);
+        } else {
+            icebergTableHandler.update(tableInfo);
+        }
         try {
             final Map<String, String> newTableMetadata = tableInfo.getMetadata();
             if (MapUtils.isEmpty(newTableMetadata)) {
@@ -360,7 +379,10 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             return ConnectorUtils.paginate(tbls, pageable).stream()
                 .map(t -> {
                         final TableInfo info = polarisTableMapper.toInfo(t);
-                        polarisTableMapper.decorateTableInfo(info);
+                        if (!connectorContext.getConfig().isCommonViewEnabled()
+                            || !HiveTableUtil.isCommonView(info)) {
+                            polarisTableMapper.decorateTableInfo(info);
+                        }
                         return info;
                     }
                 ).collect(Collectors.toList());
@@ -389,6 +411,24 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final IcebergTableWrapper icebergTable =
             this.icebergTableHandler.getIcebergTable(tableName, tableMetadataLocation, includeInfoDetails);
         return connectorConverter.fromIcebergTableToTableInfo(tableName, icebergTable, tableMetadataLocation, info);
+    }
+
+    /**
+     * Return the view metadata from cache if exists else make the iceberg call and refresh it.
+     * @param tableName             table name
+     * @param tableMetadataLocation table metadata location
+     * @param info                  table info stored in Polaris
+     * @param useCache              true, if table can be retrieved from cache
+     * @return TableInfo
+     */
+    @Cacheable(key = "'iceberg.view.' + #tableMetadataLocation", condition = "#useCache")
+    public TableInfo getCommonView(final QualifiedName tableName,
+                                   final String tableMetadataLocation,
+                                   final TableInfo info,
+                                   final boolean useCache) {
+        return commonViewHandler.getCommonViewTableInfo(
+                tableName, tableMetadataLocation, info, new HiveTypeConverter()
+        );
     }
 
     @Override

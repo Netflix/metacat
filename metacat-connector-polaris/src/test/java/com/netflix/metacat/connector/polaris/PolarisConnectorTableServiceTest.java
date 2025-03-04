@@ -13,6 +13,7 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
+import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
@@ -99,6 +100,7 @@ public class PolarisConnectorTableServiceTest {
                 new IcebergTableCriteriaImpl(connectorContext),
                 new IcebergTableOpWrapper(connectorContext, serviceManager),
                 new IcebergTableOpsProxy()),
+            new CommonViewHandler(connectorContext),
             new PolarisTableMapper(CATALOG_NAME),
             connectorContext);
     }
