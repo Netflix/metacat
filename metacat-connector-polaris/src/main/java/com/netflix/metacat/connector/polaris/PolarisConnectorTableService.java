@@ -255,13 +255,13 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 throw new InvalidMetaException(name, message, null);
             }
 
-            // optimistically attempt to update metadata location and params
-            final boolean locationUpdated = polarisStoreService.updateTableMetadataLocationAndParams(
+            // optimistically attempt to update metadata location and/or params
+            final boolean updated = polarisStoreService.updateTableMetadataLocationAndParams(
                     name.getDatabaseName(), name.getTableName(), prevLoc, newLoc,
                     existingTableParams, newTableParams, lastModifiedBy);
 
             // if succeeded then done, else try to figure out why and throw corresponding exception
-            if (locationUpdated) {
+            if (updated) {
                 requestContext.setIgnoreErrorsAfterUpdate(true);
                 log.warn("Success servicing Iceberg commit request for table: {}, "
                         + "previousLocation: {}, newLocation: {}",

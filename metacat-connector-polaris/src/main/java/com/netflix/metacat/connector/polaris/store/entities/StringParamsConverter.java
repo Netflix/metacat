@@ -17,7 +17,6 @@ import java.util.TreeMap;
 public class StringParamsConverter implements AttributeConverter<Map<String, String>, String> {
     @Override
     public String convertToDatabaseColumn(final Map<String, String> attribute) {
-
         if (attribute == null || attribute.isEmpty()) {
             return null;
         }
