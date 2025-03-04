@@ -43,7 +43,7 @@ services:
             JAVA_OPTS: '-ea
                 -Xms256m
                 -Xmx768m
-                -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
+                -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000
                 -noverify
                 -Dnetflix.environment=test
                 -Dlogging.level.org.springframework.web=INFO
