@@ -1,6 +1,5 @@
 drop table if exists TBLS;
 drop table if exists DBS;
-drop table if exists TBL_PARAMS;
 
 create table DBS (
   version bigint not null,
@@ -27,12 +26,6 @@ create table TBLS (
   last_updated_by varchar(255),
   last_updated_date TIMESTAMP not null,
   foreign key (db_name) references DBS(name) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-create table TBL_PARAMS (
-  polaris_table_entity_id varchar(255) not null,
-  param_key varchar(255) not null,
-  param_value varchar(255) not null
 );
 
 CREATE INDEX DB_NAME_IDX ON TBLS(db_name);
