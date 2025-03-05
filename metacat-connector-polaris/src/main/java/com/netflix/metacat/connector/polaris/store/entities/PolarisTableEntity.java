@@ -1,5 +1,6 @@
 package com.netflix.metacat.connector.polaris.store.entities;
 
+import jakarta.persistence.Convert;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -19,6 +20,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import java.util.Map;
 
 
 /**
@@ -65,6 +67,11 @@ public class PolarisTableEntity {
 
     @Embedded
     private AuditEntity audit;
+
+    @Setter
+    @Convert(converter = StringParamsConverter.class)
+    @Column(name = "params", nullable = true, updatable = true)
+    private Map<String, String> params;
 
     /**
      * Constructor for Polaris Table Entity.

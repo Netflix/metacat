@@ -5,6 +5,7 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntit
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -77,6 +78,18 @@ public interface PolarisStoreService {
     PolarisTableEntity createTable(String dbName, String tableName, String metadataLocation, String createdBy);
 
     /**
+     * Creates entry for new table (with parameters).
+     * @param dbName database name
+     * @param tableName table name
+     * @param metadataLocation metadata location of the table.
+     * @param params table parameters
+     * @param createdBy user creating this table.
+     * @return entity corresponding to created table entry
+     */
+    PolarisTableEntity createTable(String dbName, String tableName,
+                                   String metadataLocation, Map<String, String> params, String createdBy);
+
+    /**
      * Fetches table entry.
      * @param dbName database name
      * @param tableName table name
@@ -137,4 +150,22 @@ public interface PolarisStoreService {
         String databaseName, String tableName,
         String expectedLocation, String newLocation,
         String lastModifiedBy);
+
+    /**
+     * Do an atomic compare-and-swap to update the table's metdata location and params.
+     * @param databaseName database name of the table
+     * @param tableName table name
+     * @param expectedLocation expected current metadata-location of the table
+     * @param newLocation new metadata location of the table
+     * @param expectedParams expected current parameters of the table
+     * @param newParams new parameters of the table (should only include changed values)
+     * @param lastModifiedBy user updating the location
+     * @return true, if the location update was successful. false, otherwise
+     */
+    boolean updateTableMetadataLocationAndParams(
+        final String databaseName, final String tableName,
+        final String expectedLocation, final String newLocation,
+        final Map<String, String> expectedParams, final Map<String, String> newParams,
+        final String lastModifiedBy
+    );
 }
