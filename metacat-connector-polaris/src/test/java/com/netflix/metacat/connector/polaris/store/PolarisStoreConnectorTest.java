@@ -168,7 +168,7 @@ public class PolarisStoreConnectorTest {
     }
 
     /**
-     * Test table creation if database exists.
+     * Test table creation with params if database exists.
      * Verify table deletion
      */
     @Test
@@ -186,7 +186,7 @@ public class PolarisStoreConnectorTest {
      * Test to verify that table name can be updated.
      */
     @Test
-    public void testTableUpdate() throws InterruptedException {
+    public void testTableUpdate() {
         // Create Table Entity in DB
         final String dbName = generateDatabaseName();
         final String tblName = generateTableName();

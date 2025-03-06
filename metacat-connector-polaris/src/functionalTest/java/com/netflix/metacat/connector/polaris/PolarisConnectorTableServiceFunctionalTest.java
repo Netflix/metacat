@@ -53,8 +53,7 @@ public class PolarisConnectorTableServiceFunctionalTest extends PolarisConnector
         final QualifiedName name3 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table3");
         final TableInfo tableInfo3 = TableInfo.builder()
             .name(name3)
-            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc3",
-                "other_param", "param_value"))
+            .metadata(ImmutableMap.of("table_type", "ICEBERG", "metadata_location", "loc3"))
             .build();
         getPolarisTableService().create(getRequestContext(), tableInfo3);
 
