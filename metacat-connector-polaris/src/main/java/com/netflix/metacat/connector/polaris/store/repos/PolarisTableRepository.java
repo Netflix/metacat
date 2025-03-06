@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -89,6 +90,36 @@ public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity
         @Param("tableName") final String tableName,
         @Param("expectedLocation") final String expectedLocation,
         @Param("newLocation") final String newLocation,
+        @Param("lastModifiedBy") final String lastModifiedBy,
+        @Param("lastModifiedDate") final Instant lastModifiedDate);
+
+    /**
+     * Do an atomic compare-and-swap on the metadata location and parameters of the table.
+     * @param dbName database name of the table
+     * @param tableName table name
+     * @param expectedLocation expected metadata location before the update is done.
+     * @param newLocation new metadata location of the table.
+     * @param expectedParams expected parameters of the table
+     * @param newParams new parameters of the table
+     * @param lastModifiedBy user updating the location.
+     * @param lastModifiedDate timestamp for when the location was updated.
+     * @return number of rows that are updated.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE PolarisTableEntity t SET t.metadataLocation = :newLocation, t.params = :newParams,"
+        + "t.audit.lastModifiedBy = :lastModifiedBy, t.audit.lastModifiedDate = :lastModifiedDate, "
+        + "t.previousMetadataLocation = t.metadataLocation, t.version = t.version + 1 "
+        + "WHERE t.metadataLocation = :expectedLocation "
+        + "AND ((t.params IS NULL AND :expectedParams IS NULL) OR t.params = :expectedParams)"
+        + "AND t.dbName = :dbName AND t.tblName = :tableName")
+    @Transactional
+    int updateMetadataLocationAndParams(
+        @Param("dbName") final String dbName,
+        @Param("tableName") final String tableName,
+        @Param("expectedLocation") final String expectedLocation,
+        @Param("newLocation") final String newLocation,
+        @Param("expectedParams") final Map<String, String> expectedParams,
+        @Param("newParams") final Map<String, String> newParams,
         @Param("lastModifiedBy") final String lastModifiedBy,
         @Param("lastModifiedDate") final Instant lastModifiedDate);
 }
