@@ -2685,4 +2685,36 @@ class MetacatSmokeSpec extends Specification {
         assert parentChildRelV1.getChildren(catalogName, databaseName, child21).isEmpty()
         assert parentChildRelV1.getParents(catalogName, databaseName, child21) == [new ParentInfoDto("hive-metastore/iceberg_db/parent2", "CLONE", "p2_uuid")] as Set
     }
+
+    def "Test remove migrated_data_location before soft delete"() {
+        given:
+        def catalogName = 'hive-metastore'
+        def databaseName = 'smoke_db'
+        def tableName = 'test_table_migrated_data_location'
+        def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
+        def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'gtret', uri)
+        tableDto.definitionMetadata.put('migrated_data_location', 's3://old/location')
+
+        when:
+        try {
+            api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+        } catch (Exception ignored) {
+        }
+        api.createTable(catalogName, databaseName, tableName, tableDto)
+        api.deleteTable(catalogName, databaseName, tableName)
+
+        then:
+        noExceptionThrown()
+
+        when:
+        def definitions = metadataApi.getDefinitionMetadataList(null, null, null, null, null, null, "$catalogName/$databaseName/$tableName", null)
+
+        then:
+        definitions.each { definition ->
+            assert !definition.getDefinitionMetadata().has("migrated_data_location")
+        }
+
+        cleanup:
+        api.deleteTable(catalogName, databaseName, tableName)
+    }
 }
