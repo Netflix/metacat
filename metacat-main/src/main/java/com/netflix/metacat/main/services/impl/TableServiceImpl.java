@@ -435,6 +435,7 @@ public class TableServiceImpl implements TableService {
                 if (tableDto.getDefinitionMetadata() != null
                     && tableDto.getDefinitionMetadata().has(MetacatUtils.MIGRATED_DATA_LOCATION)) {
                     tableDto.getDefinitionMetadata().remove(MetacatUtils.MIGRATED_DATA_LOCATION);
+                    userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
                 }
                 userMetadataService.softDeleteDataMetadata(metacatRequestContext.getUserName(),
                     Lists.newArrayList(tableDto.getDataUri()));
