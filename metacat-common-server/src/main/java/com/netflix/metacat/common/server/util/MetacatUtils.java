@@ -34,13 +34,13 @@ public class MetacatUtils {
     public static final String NAME_TAGS = "tags";
     private static final String DATA_DEPENDENCY_NODE = "data_dependency";
     private static final String VTTS_FIELD = "valid_thru_utc_ts";
+    public static final String MIGRATED_DATA_LOCATION = "migrated_data_location";
 
     /**
      * Iceberg common view field names.
      */
     public static final String COMMON_VIEW = "common_view";
     public static final String STORAGE_TABLE = "storage_table";
-
 
     /**
      * Default Ctor.
