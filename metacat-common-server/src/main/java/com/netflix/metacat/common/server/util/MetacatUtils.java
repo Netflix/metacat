@@ -32,13 +32,13 @@ public class MetacatUtils {
 
     public static final String ICEBERG_MIGRATION_DO_NOT_MODIFY_TAG = "iceberg_migration_do_not_modify";
     public static final String NAME_TAGS = "tags";
+    public static final String MIGRATED_DATA_LOCATION = "migrated_data_location";
 
     /**
      * Iceberg common view field names.
      */
     public static final String COMMON_VIEW = "common_view";
     public static final String STORAGE_TABLE = "storage_table";
-
 
     /**
      * Default Ctor.
