@@ -438,7 +438,7 @@ public class TableServiceImpl implements TableService {
                     userMetadataService.saveDefinitionMetadata(tableDto.getName(),
                         metacatRequestContext.getUserName(),
                         Optional.of(tableDto.getDefinitionMetadata()),
-                            true);
+                            false);
                 }
                 userMetadataService.softDeleteDataMetadata(metacatRequestContext.getUserName(),
                     Lists.newArrayList(tableDto.getDataUri()));

@@ -2690,7 +2690,7 @@ class MetacatSmokeSpec extends Specification {
         def tableName = 'test_table_migrated_data_location'
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'gtret', uri)
-        tableDto.setDefinitionMetadata(toObjectNode('{"migrated_data_location": "s3://old/location"}'))
+        tableDto.definitionMetadata.put('migrated_data_location': 's3://old/location')
 
         when:
         try {
