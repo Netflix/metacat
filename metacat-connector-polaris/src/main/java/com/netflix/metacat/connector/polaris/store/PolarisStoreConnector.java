@@ -251,7 +251,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @param tableName table name
      * @param expectedLocation expected current metadata-location of the table
      * @param newLocation new metadata location of the table
-     * @param expectedParams expected current parameters of the table
+     * @param existingParams current parameters of the table
      * @param newParams new parameters of the table (should only include changed values)
      * @param lastModifiedBy user updating the location
      * @return true, if the location update was successful. false, otherwise
@@ -259,14 +259,14 @@ public class PolarisStoreConnector implements PolarisStoreService {
     public boolean updateTableMetadataLocationAndParams(
         final String databaseName, final String tableName,
         final String expectedLocation, final String newLocation,
-        final Map<String, String> expectedParams, final Map<String, String> newParams,
+        final Map<String, String> existingParams, final Map<String, String> newParams,
         final String lastModifiedBy) {
-        final Map<String, String> mergedParams = expectedParams == null
-            ? new HashMap<>() : new HashMap<>(expectedParams);
+        final Map<String, String> mergedParams = existingParams == null
+            ? new HashMap<>() : new HashMap<>(existingParams);
         mergedParams.putAll(newParams);
         final int updatedRowCount =
             tblRepo.updateMetadataLocationAndParams(databaseName, tableName,
-                expectedLocation, newLocation, expectedParams, mergedParams, lastModifiedBy, Instant.now());
+                expectedLocation, newLocation, mergedParams, lastModifiedBy, Instant.now());
         return updatedRowCount > 0;
     }
 }

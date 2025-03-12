@@ -45,29 +45,33 @@ public class PolarisTableMapper implements
     }
 
     /**
-     * Decorate the TableInfo with some common metadata for Iceberg tables.
-     * Replaces existing metadata, with the goal of removing extraneous params.
-     * @param tableInfo TableInfo to be decorated
-     */
-    public void decorateTableInfo(final TableInfo tableInfo) {
-        final Map<String, String> metadata = new HashMap<>();
-        metadata.put(DirectSqlTable.PARAM_METADATA_LOCATION,
-            tableInfo.getMetadata().get(DirectSqlTable.PARAM_METADATA_LOCATION));
-        metadata.put(PARAMETER_EXTERNAL, "TRUE");
-        metadata.put(PARAMETER_SPARK_SQL_PROVIDER, "iceberg");
-        metadata.put(DirectSqlTable.PARAM_TABLE_TYPE, DirectSqlTable.ICEBERG_TABLE_TYPE);
-        tableInfo.setMetadata(metadata);
-    }
-
-    /**
      * {@inheritDoc}.
      */
     @Override
     public TableInfo toInfo(final PolarisTableEntity entity) {
+        return toInfo(entity, false);
+    }
+
+    /**
+     * Maps an Entity to the Info object.
+     *
+     * @param entity The entity to map from.
+     * @param isView Whether the given entity represents a common view
+     * @return The result info object.
+     */
+    public TableInfo toInfo(final PolarisTableEntity entity, final boolean isView) {
         final int uriIndex = entity.getMetadataLocation().indexOf(PARAMETER_METADATA_PREFIX);
 
-        final HashMap<String, String> metadata = new HashMap<>(entity.getParams());
+        final HashMap<String, String> metadata = new HashMap<>();
         metadata.put(DirectSqlTable.PARAM_METADATA_LOCATION, entity.getMetadataLocation());
+
+        if (isView) {
+            metadata.putAll(entity.getParams());
+        } else {
+            metadata.put(PARAMETER_EXTERNAL, "TRUE");
+            metadata.put(PARAMETER_SPARK_SQL_PROVIDER, "iceberg");
+            metadata.put(DirectSqlTable.PARAM_TABLE_TYPE, DirectSqlTable.ICEBERG_TABLE_TYPE);
+        }
 
         final TableInfo tableInfo = TableInfo.builder()
             .name(QualifiedName.ofTable(catalogName, entity.getDbName(), entity.getTblName()))

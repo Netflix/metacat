@@ -157,7 +157,7 @@ public interface PolarisStoreService {
      * @param tableName table name
      * @param expectedLocation expected current metadata-location of the table
      * @param newLocation new metadata location of the table
-     * @param expectedParams expected current parameters of the table
+     * @param existingParams current parameters of the table
      * @param newParams new parameters of the table (should only include changed values)
      * @param lastModifiedBy user updating the location
      * @return true, if the location update was successful. false, otherwise
@@ -165,7 +165,7 @@ public interface PolarisStoreService {
     boolean updateTableMetadataLocationAndParams(
         final String databaseName, final String tableName,
         final String expectedLocation, final String newLocation,
-        final Map<String, String> expectedParams, final Map<String, String> newParams,
+        final Map<String, String> existingParams, final Map<String, String> newParams,
         final String lastModifiedBy
     );
 }

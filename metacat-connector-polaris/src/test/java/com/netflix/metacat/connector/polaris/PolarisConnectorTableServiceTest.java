@@ -213,7 +213,7 @@ public class PolarisConnectorTableServiceTest {
     }
 
     /**
-     * Test table params not returned during table get
+     * Test table params not stored/returned during table create/get
      */
     @Test
     public void testTableParams() {
@@ -231,10 +231,10 @@ public class PolarisConnectorTableServiceTest {
         Assert.assertEquals(tableResult.getMetadata().get("metadata_location"), location);
         Assert.assertFalse(tableResult.getMetadata().containsKey("test_metadata_key"));
 
-        // Even though it doesn't show in the response, we want the params to be there in the DB.
+        // For a normal table, confirm we don't store the params
         PolarisTableEntity entity = polarisStoreService.getTable(DB_NAME, "table1")
             .orElseThrow(() -> new RuntimeException("Expected table entity to be present"));
-        Assert.assertTrue(entity.getParams().get("test_metadata_key").equals("test_metadata_value"));
+        Assert.assertFalse(entity.getParams().containsKey("test_metadata_key"));
     }
 
     /**
@@ -270,6 +270,12 @@ public class PolarisConnectorTableServiceTest {
         final TableInfo tableInfo3 = TableInfo.builder().name(qualifiedName).metadata(metadata).build();
         Assertions.assertThrows(TablePreconditionFailedException.class,
             () -> polarisTableService.update(requestContext, tableInfo3));
+        // check update location without setting location but including other param fails
+        metadata.remove("metadata_location");
+        metadata.put("param_key", "param_value");
+        final TableInfo tableInfo4 = TableInfo.builder().name(qualifiedName).metadata(metadata).build();
+        Assertions.assertThrows(InvalidMetaException.class,
+            () -> polarisTableService.update(requestContext, tableInfo4));
     }
 
     /**
@@ -297,7 +303,7 @@ public class PolarisConnectorTableServiceTest {
     }
 
     /**
-     * Test update table using metadata json resource file and new param.
+     * Test update table using metadata json resource file and new param (confirm params aren't processed).
      */
     @Test
     public void testUpdateTableAcceptWithParams() {
@@ -312,9 +318,9 @@ public class PolarisConnectorTableServiceTest {
         Assert.assertEquals(tableResult0.getMetadata().get("metadata_location"), location0);
         Assert.assertFalse(tableResult0.getMetadata().containsKey("test_param_key"));
 
-        PolarisTableEntity entity = polarisStoreService.getTable(DB_NAME, "table1")
+        PolarisTableEntity updatedEntity = polarisStoreService.getTable(DB_NAME, "table1")
             .orElseThrow(() -> new RuntimeException("Expected table entity to be present"));
-        Assert.assertTrue(entity.getParams().get("test_param_key").equals("test_param_value"));
+        Assert.assertFalse(updatedEntity.getParams().containsKey("test_param_key"));
 
         final String location1 = "src/test/resources/metadata/00001-abf48887-aa4f-4bcc-9219-1e1721314ee1.metadata.json";
         final TableInfo tableInfo1 = TableInfo.builder()
@@ -328,68 +334,42 @@ public class PolarisConnectorTableServiceTest {
         Assert.assertEquals(tableResult1.getMetadata().get("table_type"), "ICEBERG");
         Assert.assertFalse(tableResult1.getMetadata().containsKey("test_param_key"));
 
-        PolarisTableEntity updatedEntity = polarisStoreService.getTable(DB_NAME, "table1")
+        updatedEntity = polarisStoreService.getTable(DB_NAME, "table1")
             .orElseThrow(() -> new RuntimeException("Expected table entity to be present"));
-        Assert.assertTrue(updatedEntity.getParams().get("test_param_key").equals("test_param_value2"));
+        Assert.assertFalse(updatedEntity.getParams().containsKey("test_param_key"));
     }
 
     /**
-     * Test update passes but metadata is unchanged when only params are provided, no location.
+     * Quick validation for view create/update behavior in Polaris
      */
     @Test
-    public void testUpdateTableSkipOnlyParams() {
-        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
+    public void testCreateAndUpdateView() {
+        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "view1");
+
         final String location0 = "src/test/resources/metadata/00000-9b5d4c36-130c-4288-9599-7d850c203d11.metadata.json";
-        final TableInfo tableInfo0 = TableInfo.builder()
+        final TableInfo viewInfo0 = TableInfo.builder()
             .name(qualifiedName)
-            .metadata(ImmutableMap.of("metadata_location", location0))
+            .metadata(ImmutableMap.of("metadata_location", location0, "common_view", "true",
+                "storage_table", "st_blah"))
             .build();
-        polarisTableService.create(requestContext, tableInfo0);
-        final TableInfo tableResult0 = polarisTableService.get(requestContext, qualifiedName);
-        Assert.assertEquals(tableResult0.getMetadata().get("metadata_location"), location0);
-        final TableInfo tableInfo1 = TableInfo.builder()
+        polarisTableService.create(requestContext, viewInfo0);
+        final TableInfo viewResult0 = polarisTableService.get(requestContext, qualifiedName);
+        Assert.assertEquals(viewResult0.getMetadata().get("metadata_location"), location0);
+        Assert.assertEquals(viewResult0.getMetadata().get("common_view"), "true");
+        Assert.assertEquals(viewResult0.getMetadata().get("storage_table"), "st_blah");
+
+        final String location1 = "src/test/resources/metadata/00001-abf48887-aa4f-4bcc-9219-1e1721314ee1.metadata.json";
+        final TableInfo viewInfo1 = TableInfo.builder()
             .name(qualifiedName)
-            .metadata(ImmutableMap.of("new_param_key", "new_param_value"))
+            .metadata(ImmutableMap.of("previous_metadata_location", location0, "metadata_location", location1,
+                "test_param_key", "test_param_value", "common_view", "true"))
             .build();
-        polarisTableService.update(requestContext, tableInfo1);
-        final TableInfo tableResult1 = polarisTableService.get(requestContext, qualifiedName);
-        Assert.assertEquals(tableResult1.getMetadata().get("metadata_location"), location0);
-    }
-
-    /**
-     * Test update passes and params are updated when params are provided, and the location
-     * is provided but unchanged.
-     */
-    @Test
-    public void testUpdateTableAcceptOnlyParamsChange() {
-        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
-        final String location0 = "src/test/resources/metadata/00000-9b5d4c36-130c-4288-9599-7d850c203d11.metadata.json";
-        final TableInfo tableInfo0 = TableInfo.builder()
-            .name(qualifiedName)
-            .metadata(ImmutableMap.of("metadata_location", location0))
-            .build();
-        polarisTableService.create(requestContext, tableInfo0);
-        final TableInfo tableResult0 = polarisTableService.get(requestContext, qualifiedName);
-        Assert.assertEquals(tableResult0.getMetadata().get("metadata_location"), location0);
-
-        PolarisTableEntity entity = polarisStoreService.getTable(DB_NAME, "table1")
-            .orElseThrow(() -> new RuntimeException("Expected table entity to be present"));
-        Assert.assertTrue(entity.getParams().isEmpty());
-
-        final TableInfo tableInfo1 = TableInfo.builder()
-            .name(qualifiedName)
-            .metadata(ImmutableMap.of(
-                "previous_metadata_location", location0,
-                "metadata_location", location0,
-                "new_param_key", "new_param_value"))
-            .build();
-        polarisTableService.update(requestContext, tableInfo1);
-        final TableInfo tableResult1 = polarisTableService.get(requestContext, qualifiedName);
-        Assert.assertEquals(tableResult1.getMetadata().get("metadata_location"), location0);
-        Assert.assertFalse(tableResult1.getMetadata().containsKey("new_param_key"));
-
-        PolarisTableEntity updatedEntity = polarisStoreService.getTable(DB_NAME, "table1")
-            .orElseThrow(() -> new RuntimeException("Expected table entity to be present"));
-        Assert.assertTrue(updatedEntity.getParams().get("new_param_key").equals("new_param_value"));
+        polarisTableService.update(requestContext, viewInfo1);
+        final TableInfo viewResult1 = polarisTableService.get(requestContext, qualifiedName);
+        Assert.assertEquals(viewResult1.getMetadata().get("metadata_location"), location1);
+        Assert.assertFalse(viewResult1.getMetadata().containsKey("table_type"));
+        Assert.assertEquals(viewResult1.getMetadata().get("common_view"), "true");
+        Assert.assertEquals(viewResult1.getMetadata().get("storage_table"), "st_blah");
+        Assert.assertEquals(viewResult1.getMetadata().get("test_param_key"), "test_param_value");
     }
 }

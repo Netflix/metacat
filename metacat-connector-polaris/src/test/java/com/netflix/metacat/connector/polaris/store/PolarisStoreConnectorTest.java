@@ -286,7 +286,7 @@ public class PolarisStoreConnectorTest {
     }
 
     /**
-     * Test to verify that compare-and-swap update of the metadata location and params works as expected.
+     * Test to verify that compare-and-swap update of the metadata location and update of params works as expected.
      */
     @Test
     public void updateMetadataLocationAndParams() {
@@ -339,12 +339,13 @@ public class PolarisStoreConnectorTest {
         Assert.assertEquals(updatedEntity2.getMetadataLocation(), newLocation);
         Assert.assertEquals(updatedEntity2.getParams(), updatedParams);
 
-        // after the successful update, the same call should fail, since the current params have changed.
+        // after the successful update, this call should succeed, since we don't validate params.
         updatedSuccess = polarisConnector.updateTableMetadataLocationAndParams(dbName, tblName, newLocation,
             newLocation, params, new HashMap<>(), PolarisUtils.DEFAULT_METACAT_USER);
-        Assert.assertFalse(updatedSuccess);
+        Assert.assertTrue(updatedSuccess);
+        Assert.assertEquals(updatedEntity.getMetadataLocation(), newLocation);
 
-        // after the successful update, the same call should fail, since the current metadata has changed.
+        // This call should fail, since the current metadata has changed.
         updatedSuccess = polarisConnector.updateTableMetadataLocationAndParams(dbName, tblName, metadataLocation,
             newLocation, updatedParams, new HashMap<>(), PolarisUtils.DEFAULT_METACAT_USER);
         Assert.assertFalse(updatedSuccess);

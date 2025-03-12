@@ -18,6 +18,7 @@ import com.netflix.metacat.common.server.connectors.exception.TableNotFoundExcep
 import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.util.MetacatUtils;
 import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
@@ -102,8 +103,13 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         }
         try {
             final PolarisTableEntity entity = polarisTableMapper.toEntity(tableInfo);
-            polarisStoreService.createTable(entity.getDbName(), entity.getTblName(),
+            if (HiveTableUtil.isCommonView(tableInfo)) {
+                polarisStoreService.createTable(entity.getDbName(), entity.getTblName(),
                     entity.getMetadataLocation(), entity.getParams(), createdBy);
+            } else {
+                polarisStoreService.createTable(entity.getDbName(), entity.getTblName(),
+                    entity.getMetadataLocation(), createdBy);
+            }
         } catch (DataIntegrityViolationException | InvalidMetaException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
@@ -154,12 +160,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             final PolarisTableEntity polarisTableEntity = polarisStoreService
                 .getTable(name.getDatabaseName(), name.getTableName())
                 .orElseThrow(() -> new TableNotFoundException(name));
-            final TableInfo info = polarisTableMapper.toInfo(polarisTableEntity);
-            final boolean isView = connectorContext.getConfig().isCommonViewEnabled()
-                && HiveTableUtil.isCommonView(info);
-            if (!isView) {
-                polarisTableMapper.decorateTableInfo(info);
-            }
+            final boolean isView = MetacatUtils.isCommonView(polarisTableEntity.getParams());
+            final TableInfo info = polarisTableMapper.toInfo(polarisTableEntity, isView);
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
 
             // Return the iceberg table with just the metadata location included if requested.
@@ -233,8 +235,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final QualifiedName name = tableInfo.getName();
         final Config conf = connectorContext.getConfig();
         final String lastModifiedBy = PolarisUtils.getUserOrDefault(requestContext);
-        if (connectorContext.getConfig().isCommonViewEnabled()
-            && HiveTableUtil.isCommonView(tableInfo)) {
+        final boolean isView = HiveTableUtil.isCommonView(tableInfo);
+        if (isView) {
             commonViewHandler.update(tableInfo);
         } else {
             icebergTableHandler.update(tableInfo);
@@ -245,11 +247,6 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 log.warn("No parameters defined for iceberg table %s, no data update needed", name);
                 return;
             }
-            final Map<String, String> newTableParams = polarisTableMapper.filterMetadata(newTableMetadata);
-            final Map<String, String> existingTableParams = polarisStoreService
-                    .getTable(name.getDatabaseName(), name.getTableName())
-                    .orElseThrow(() -> new TableNotFoundException(name))
-                    .getParams();
 
             final String prevLoc = newTableMetadata.get(DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION);
             final String newLoc = newTableMetadata.get(DirectSqlTable.PARAM_METADATA_LOCATION);
@@ -274,10 +271,23 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 throw new InvalidMetaException(name, message, null);
             }
 
-            // optimistically attempt to update metadata location and/or params
-            final boolean updated = polarisStoreService.updateTableMetadataLocationAndParams(
+            boolean updated = false;
+            if (isView) {
+                final Map<String, String> newTableParams = polarisTableMapper.filterMetadata(newTableMetadata);
+                final Map<String, String> existingTableParams = polarisStoreService
+                    .getTable(name.getDatabaseName(), name.getTableName())
+                    .orElseThrow(() -> new TableNotFoundException(name))
+                    .getParams();
+                // optimistically attempt to update metadata location and/or params
+                updated = polarisStoreService.updateTableMetadataLocationAndParams(
                     name.getDatabaseName(), name.getTableName(), prevLoc, newLoc,
                     existingTableParams, newTableParams, lastModifiedBy);
+            } else {
+                // optimistically attempt to update metadata location
+                updated = polarisStoreService.updateTableMetadataLocation(
+                    name.getDatabaseName(), name.getTableName(), prevLoc, newLoc, lastModifiedBy
+                );
+            }
 
             // if succeeded then done, else try to figure out why and throw corresponding exception
             if (updated) {
@@ -377,15 +387,10 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 ConnectorUtils.sort(tbls, sort, Comparator.comparing(t -> t.getTblName()));
             }
             return ConnectorUtils.paginate(tbls, pageable).stream()
-                .map(t -> {
-                        final TableInfo info = polarisTableMapper.toInfo(t);
-                        if (!connectorContext.getConfig().isCommonViewEnabled()
-                            || !HiveTableUtil.isCommonView(info)) {
-                            polarisTableMapper.decorateTableInfo(info);
-                        }
-                        return info;
-                    }
-                ).collect(Collectors.toList());
+                .map(
+                    t -> polarisTableMapper.toInfo(t, MetacatUtils.isCommonView(t.getParams()))
+                )
+                .collect(Collectors.toList());
         } catch (Exception exception) {
             final String msg = String.format("Failed polaris list tables %s using prefix %s", name, prefix);
             log.error(msg, exception);
