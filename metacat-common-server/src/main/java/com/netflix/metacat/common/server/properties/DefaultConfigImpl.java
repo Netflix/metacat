@@ -670,6 +670,11 @@ public class DefaultConfigImpl implements Config {
     }
 
     @Override
+    public int getVttsCommitRetries() {
+        return this.metacatProperties.getUsermetadata().getVttsCommitRetries();
+    }
+
+    @Override
     public boolean isIcebergPreviousMetadataLocationCheckEnabled() {
         return this.metacatProperties.getHive().getIceberg().isIcebergPreviousMetadataLocationCheckEnabled();
     }

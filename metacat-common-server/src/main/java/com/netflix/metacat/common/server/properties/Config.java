@@ -595,6 +595,13 @@ public interface Config {
     int getLongMetadataQueryTimeout();
 
     /**
+     * Vtts commit retry count for definition metadata update.
+     *
+     * @return Vtts commit retry count for definition metadata update
+     */
+    int getVttsCommitRetries();
+
+    /**
      * Whether to check the existence of the iceberg metadata location before updating the table.
      *
      * @return Whether to check the existence of the iceberg metadata location before updating the table

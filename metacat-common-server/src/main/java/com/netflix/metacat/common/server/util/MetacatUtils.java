@@ -32,6 +32,8 @@ public class MetacatUtils {
 
     public static final String ICEBERG_MIGRATION_DO_NOT_MODIFY_TAG = "iceberg_migration_do_not_modify";
     public static final String NAME_TAGS = "tags";
+    private static final String DATA_DEPENDENCY_NODE = "data_dependency";
+    private static final String VTTS_FIELD = "valid_thru_utc_ts";
 
     /**
      * Iceberg common view field names.
@@ -126,6 +128,21 @@ public class MetacatUtils {
             }
         }
         return tags;
+    }
+
+    public static long getVtts(final ObjectNode metadata) {
+        if (metadata == null) {
+            return -1;
+        }
+        JsonNode tmp = metadata.get(DATA_DEPENDENCY_NODE);
+        if (tmp == null || !tmp.isObject()) {
+            return -1;
+        }
+        JsonNode vttsNode = tmp.get(VTTS_FIELD);
+        if (vttsNode == null || !vttsNode.canConvertToLong()) {
+            return -1;
+        }
+        return vttsNode.asLong();
     }
 
     public static String getIcebergMigrationExceptionMsg(final String requestType,
