@@ -684,6 +684,14 @@ public class TableServiceImpl implements TableService {
                 log.info("Saving user metadata for table {}", name);
                 final long start = registry.clock().wallTime();
                 userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
+                final long vtts = MetacatUtils.getVtts(tableDto.getDefinitionMetadata());
+                if (vtts > 0) {
+                    log.info("Received vtts update for {} to {}", name, vtts);
+                    for (int i = 0; i < 3; i++) {
+                        userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
+                    }
+                }
+
                 final long duration = registry.clock().wallTime() - start;
                 log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
                 registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
