@@ -19,6 +19,7 @@ create table TBLS (
   tbl_name varchar(255) not null,
   previous_metadata_location varchar(8192),
   metadata_location varchar(8192),
+  params TEXT,
   constraint uniq_name unique(db_name, tbl_name),
   created_by STRING(255),
   created_date TIMESTAMP not null,
