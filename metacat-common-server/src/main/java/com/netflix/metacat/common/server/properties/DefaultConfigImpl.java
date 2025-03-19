@@ -640,6 +640,11 @@ public class DefaultConfigImpl implements Config {
     }
 
     @Override
+    public boolean isAuroraDataSourceEnabled() {
+        return this.metacatProperties.getService().isAuroraDataSourceEnabled();
+    }
+
+    @Override
     public int getListTableEntitiesPageSize() {
         return this.metacatProperties.getService().getListTableEntitiesPageSize();
     }
