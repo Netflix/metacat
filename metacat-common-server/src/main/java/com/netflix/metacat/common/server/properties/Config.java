@@ -553,6 +553,13 @@ public interface Config {
     boolean listDatabaseNameByDefaultOnGetCatalog();
 
     /**
+     * Whether aurora data source is enabled.
+     *
+     * @return True if it is.
+     */
+    boolean isAuroraDataSourceEnabled();
+
+    /**
      * Get the page size when listing table entities.
      *
      * @return size of the page

@@ -63,8 +63,9 @@ public class PolarisStoreConnector implements PolarisStoreService {
     public List<PolarisDatabaseEntity> getDatabases(
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
-        final int pageSize) {
-        return (List<PolarisDatabaseEntity>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, true);
+        final int pageSize,
+        final boolean auroraEnabled) {
+        return (List<PolarisDatabaseEntity>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, true, auroraEnabled);
     }
 
     @Override
@@ -72,8 +73,9 @@ public class PolarisStoreConnector implements PolarisStoreService {
     public List<String> getDatabaseNames(
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
-        final int pageSize) {
-        return (List<String>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, false);
+        final int pageSize,
+        final boolean auroraEnabled) {
+        return (List<String>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, false, auroraEnabled);
     }
 
     /**
@@ -149,9 +151,10 @@ public class PolarisStoreConnector implements PolarisStoreService {
     @Transactional(propagation = Propagation.SUPPORTS)
     public List<PolarisTableEntity> getTableEntities(final String databaseName,
                                                      final String tableNamePrefix,
-                                                     final int pageFetchSize) {
+                                                     final int pageFetchSize,
+                                                     boolean auroraEnabled) {
         return (List<PolarisTableEntity>)
-            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, true);
+            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, true, auroraEnabled);
     }
 
     /**
@@ -198,9 +201,9 @@ public class PolarisStoreConnector implements PolarisStoreService {
      */
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
-    public List<String> getTables(final String databaseName, final String tableNamePrefix, final int pageFetchSize) {
+    public List<String> getTables(final String databaseName, final String tableNamePrefix, final int pageFetchSize, boolean auroraEnabled) {
         return (List<String>)
-            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, false);
+            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, false, auroraEnabled);
     }
 
     /**

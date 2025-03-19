@@ -1,18 +1,17 @@
 package com.netflix.metacat.connector.polaris.store.repos;
 
-import javax.persistence.PersistenceContext;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -64,10 +63,12 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
     @Override
     @Transactional
     public List<?> findAllTablesByDbNameAndTablePrefix(
-        final String dbName, final String tableNamePrefix, final int pageFetchSize, final boolean selectAllColumns) {
+        final String dbName, final String tableNamePrefix, final int pageFetchSize, final boolean selectAllColumns, final boolean auroraEnabled) {
         Pageable page = PageRequest.of(0, pageFetchSize, Sort.by("tbl_name").ascending());
-        entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
-            .executeUpdate();
+        if (!auroraEnabled) {
+            entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
+                .executeUpdate();
+        }
         final List<Object> retval = new ArrayList<>();
         final String tblPrefix =  tableNamePrefix == null ? "" : tableNamePrefix;
         Slice<?> tbls;
