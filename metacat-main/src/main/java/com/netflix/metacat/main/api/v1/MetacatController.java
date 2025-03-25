@@ -69,8 +69,7 @@ import java.util.function.Supplier;
  */
 @RestController
 @RequestMapping(
-    path = "/mds/v1",
-    produces = MediaType.APPLICATION_JSON_VALUE
+    path = "/mds/v1"
 )
 @Tag(
     name = "MetacatV1",
@@ -103,8 +102,7 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog"
     )
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
@@ -132,8 +130,7 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}"
     )
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
@@ -192,8 +189,7 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}"
     )
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
@@ -261,8 +257,7 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}"
     )
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
@@ -1026,8 +1021,7 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(
         method = RequestMethod.PUT,
-        path = "/catalog/{catalog-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}"
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
@@ -1073,8 +1067,7 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(
         method = RequestMethod.PUT,
-        path = "/catalog/{catalog-name}/database/{database-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}"
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
@@ -1131,8 +1124,7 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(
         method = RequestMethod.PUT,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}"
     )
     @ResponseStatus(HttpStatus.OK)
     @Operation(
@@ -1184,8 +1176,7 @@ public class MetacatController implements MetacatV1 {
      */
     @RequestMapping(
         method = RequestMethod.PUT,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}"
     )
     @Operation(
         summary = "Update table",

@@ -28,9 +28,7 @@ import java.util.Set;
 
 @RestController
 @RequestMapping(
-    path = "/mds/v1/parentChildRel",
-    produces = MediaType.APPLICATION_JSON_VALUE,
-    consumes = MediaType.APPLICATION_JSON_VALUE
+    path = "/mds/v1/parentChildRel"
 )
 @Tag(
     name = "ParentChildRelV1",

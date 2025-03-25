@@ -58,9 +58,7 @@ import java.util.Set;
  */
 @RestController
 @RequestMapping(
-    path = "/mds/v1/metadata",
-    produces = MediaType.APPLICATION_JSON_VALUE,
-    consumes = MediaType.APPLICATION_JSON_VALUE
+    path = "/mds/v1/metadata"
 )
 @Tag(
     name = "MetadataV1",
@@ -80,7 +78,7 @@ public class MetadataController {
      * @param metadataGetRequestDto metadata request
      * @return data metadata
      */
-    @RequestMapping(method = RequestMethod.POST, path = "/data", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(method = RequestMethod.POST, path = "/data")
     @ResponseStatus(HttpStatus.OK)
     @Operation(
         summary = "Returns the data metadata",

@@ -40,8 +40,7 @@ import java.util.List;
 @ConditionalOnProperty(value = "metacat.elasticsearch.enabled", havingValue = "true")
 @RestController
 @RequestMapping(
-    path = "/mds/v1/search",
-    produces = MediaType.APPLICATION_JSON_VALUE
+    path = "/mds/v1/search"
 )
 @DependsOn("metacatCoreInitService")
 @RequiredArgsConstructor
