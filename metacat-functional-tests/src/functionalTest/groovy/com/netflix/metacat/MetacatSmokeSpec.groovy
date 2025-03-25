@@ -108,7 +108,6 @@ class MetacatSmokeSpec extends Specification {
         def catalog = api.getCatalog(catalogName)
         if (!catalog.databases.contains(databaseName)) {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
-            Thread.sleep(5000)
         }
         def database = api.getDatabase(catalogName, databaseName, false, true)
         def owner = 'amajumdar'
@@ -591,6 +590,7 @@ class MetacatSmokeSpec extends Specification {
 
     def "Test materialized common view create/drop"() {
         given:
+        def catalogName = 'hive-metastore'
         def databaseName = 'iceberg_db'
         def storageTableName = 'st_iceberg_table'
         def commonViewName = 'test_common_view'
@@ -610,7 +610,6 @@ class MetacatSmokeSpec extends Specification {
         def catalog = api.getCatalog(catalogName)
         if (!catalog.databases.contains(databaseName)) {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
-            Thread.sleep(5000)
         }
         api.createTable(catalogName, databaseName, storageTableName, tableDto)
         then:
@@ -624,8 +623,6 @@ class MetacatSmokeSpec extends Specification {
         api.getTable(catalogName, databaseName, storageTableName, true, false, false)
         then:
         thrown(MetacatNotFoundException)
-        where:
-        catalogName << ['polaris-metastore', 'hive-metastore']
     }
 
     @Unroll

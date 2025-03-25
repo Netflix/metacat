@@ -3,7 +3,6 @@ package com.netflix.metacat.connector.polaris.configs;
 import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
-import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteria;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
@@ -68,7 +67,6 @@ public class PolarisConnectorConfig {
      * @param connectorConverter        connector converter
      * @param connectorDatabaseService  polaris database service
      * @param icebergTableHandler       iceberg table handler
-     * @param commonViewHandler         common view handler
      * @param polarisTableMapper        polaris table mapper
      * @param connectorContext          connector context
      * @return PolarisConnectorTableService
@@ -80,7 +78,6 @@ public class PolarisConnectorConfig {
         final HiveConnectorInfoConverter connectorConverter,
         final PolarisConnectorDatabaseService connectorDatabaseService,
         final IcebergTableHandler icebergTableHandler,
-        final CommonViewHandler commonViewHandler,
         final PolarisTableMapper polarisTableMapper,
         final ConnectorContext connectorContext
     ) {
@@ -90,7 +87,6 @@ public class PolarisConnectorConfig {
             connectorDatabaseService,
             connectorConverter,
             icebergTableHandler,
-            commonViewHandler,
             polarisTableMapper,
             connectorContext
         );
@@ -124,16 +120,6 @@ public class PolarisConnectorConfig {
             icebergTableCriteria,
             icebergTableOpWrapper,
             icebergTableOpsProxy);
-    }
-
-    /**
-     * Create common view handler.
-     * @param connectorContext server context
-     * @return CommonViewHandler
-     */
-    @Bean
-    public CommonViewHandler commonViewHandler(final ConnectorContext connectorContext) {
-        return new CommonViewHandler(connectorContext);
     }
 
     /**

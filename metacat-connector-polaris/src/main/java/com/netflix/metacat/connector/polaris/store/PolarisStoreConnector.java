@@ -12,9 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nullable;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -117,24 +115,6 @@ public class PolarisStoreConnector implements PolarisStoreService {
                                           final String tableName,
                                           final String metadataLocation,
                                           final String createdBy) {
-        return createTable(dbName, tableName, metadataLocation, new HashMap<>(), createdBy);
-    }
-
-    /**
-     * Creates entry for new table (with parameters).
-     * @param dbName database name
-     * @param tableName table name
-     * @param metadataLocation metadata location of the table.
-     * @param params table parameters
-     * @param createdBy user creating this table.
-     * @return entity corresponding to created table entry
-     */
-    @Override
-    public PolarisTableEntity createTable(final String dbName,
-                                          final String tableName,
-                                          final String metadataLocation,
-                                          final Map<String, String> params,
-                                          final String createdBy) {
         final AuditEntity auditEntity = AuditEntity.builder()
                 .createdBy(createdBy)
                 .lastModifiedBy(createdBy)
@@ -144,7 +124,6 @@ public class PolarisStoreConnector implements PolarisStoreService {
                 .dbName(dbName)
                 .tblName(tableName)
                 .metadataLocation(metadataLocation)
-                .params(params)
                 .build();
         return tblRepo.save(e);
     }
@@ -242,31 +221,6 @@ public class PolarisStoreConnector implements PolarisStoreService {
         final int updatedRowCount =
                 tblRepo.updateMetadataLocation(databaseName, tableName,
                         expectedLocation, newLocation, lastModifiedBy, Instant.now());
-        return updatedRowCount > 0;
-    }
-
-    /**
-     * Do an atomic compare-and-swap to update the table's metdata location and params.
-     * @param databaseName database name of the table
-     * @param tableName table name
-     * @param expectedLocation expected current metadata-location of the table
-     * @param newLocation new metadata location of the table
-     * @param existingParams current parameters of the table
-     * @param newParams new parameters of the table (should only include changed values)
-     * @param lastModifiedBy user updating the location
-     * @return true, if the location update was successful. false, otherwise
-     */
-    public boolean updateTableMetadataLocationAndParams(
-        final String databaseName, final String tableName,
-        final String expectedLocation, final String newLocation,
-        final Map<String, String> existingParams, final Map<String, String> newParams,
-        final String lastModifiedBy) {
-        final Map<String, String> mergedParams = existingParams == null
-            ? new HashMap<>() : new HashMap<>(existingParams);
-        mergedParams.putAll(newParams);
-        final int updatedRowCount =
-            tblRepo.updateMetadataLocationAndParams(databaseName, tableName,
-                expectedLocation, newLocation, mergedParams, lastModifiedBy, Instant.now());
         return updatedRowCount > 0;
     }
 }
