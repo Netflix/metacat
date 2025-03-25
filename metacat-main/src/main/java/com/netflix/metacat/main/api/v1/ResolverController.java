@@ -28,7 +28,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -44,9 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping(
-    path = "/mds/v1/resolver",
-    produces = MediaType.APPLICATION_JSON_VALUE,
-    consumes = MediaType.APPLICATION_JSON_VALUE
+    path = "/mds/v1/resolver"
 )
 @Tag(
     name = "ResolverV1",
@@ -65,7 +62,7 @@ public class ResolverController {
      * @param prefixSearch           search by prefix flag
      * @return the qualified name of uri
      */
-    @RequestMapping(method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.OK)
     @Operation(
         summary = "Returns the list of qualified names of tables and partitions containing the given URI path",
@@ -90,8 +87,7 @@ public class ResolverController {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/isUriUsedMoreThanOnce",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/isUriUsedMoreThanOnce"
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(

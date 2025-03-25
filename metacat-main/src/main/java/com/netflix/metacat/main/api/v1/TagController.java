@@ -44,7 +44,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -69,9 +68,7 @@ import java.util.Set;
  */
 @RestController
 @RequestMapping(
-    path = "/mds/v1/tag",
-    produces = MediaType.APPLICATION_JSON_VALUE,
-    consumes = MediaType.APPLICATION_JSON_VALUE
+    path = "/mds/v1/tag"
 )
 @Tag(
     name = "TagV1",
@@ -194,8 +191,7 @@ public class TagController {
      * @return set of tags
      */
     @RequestMapping(
-        method = RequestMethod.POST,
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        method = RequestMethod.POST
     )
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
@@ -318,8 +314,7 @@ public class TagController {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}"
     )
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
@@ -397,8 +392,7 @@ public class TagController {
      */
     @RequestMapping(
         method = RequestMethod.DELETE,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}"
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
@@ -480,8 +474,7 @@ public class TagController {
      * @param tagRemoveRequestDto remove tag request dto
      */
     @RequestMapping(
-        method = RequestMethod.DELETE,
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        method = RequestMethod.DELETE
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(

@@ -38,7 +38,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,9 +59,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping(
-    path = "/mds/v1/partition",
-    produces = MediaType.APPLICATION_JSON_VALUE,
-    consumes = MediaType.APPLICATION_JSON_VALUE
+    path = "/mds/v1/partition"
 )
 @Tag(name = "PartitionV1",
     description = "Federated partition metadata operations"
@@ -86,8 +83,7 @@ public class PartitionController implements PartitionV1 {
      */
     @RequestMapping(
         method = RequestMethod.DELETE,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}"
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
@@ -148,8 +144,7 @@ public class PartitionController implements PartitionV1 {
      */
     @RequestMapping(
         method = RequestMethod.DELETE,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}"
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
@@ -365,8 +360,7 @@ public class PartitionController implements PartitionV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/request",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/request"
     )
     @ResponseStatus(HttpStatus.OK)
     @Operation(
@@ -436,8 +430,7 @@ public class PartitionController implements PartitionV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/request",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/request"
     )
     @ResponseStatus(HttpStatus.OK)
     @Operation(
@@ -640,8 +633,7 @@ public class PartitionController implements PartitionV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/keys-request",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/keys-request"
     )
     @ResponseStatus(HttpStatus.OK)
     @Operation(
@@ -706,8 +698,7 @@ public class PartitionController implements PartitionV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/keys-request",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/keys-request"
     )
     @ResponseStatus(HttpStatus.OK)
     @Operation(
@@ -906,8 +897,7 @@ public class PartitionController implements PartitionV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/uris-request",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/uris-request"
     )
     @ResponseStatus(HttpStatus.OK)
     @Operation(
@@ -971,8 +961,7 @@ public class PartitionController implements PartitionV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/uris-request",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}/uris-request"
     )
     @ResponseStatus(HttpStatus.OK)
     @Operation(
@@ -1034,8 +1023,7 @@ public class PartitionController implements PartitionV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}"
     )
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
@@ -1104,8 +1092,7 @@ public class PartitionController implements PartitionV1 {
      */
     @RequestMapping(
         method = RequestMethod.POST,
-        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/mview/{view-name}"
     )
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(

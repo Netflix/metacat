@@ -19,7 +19,6 @@ create table TBLS (
     tbl_name varchar(255) not null,
     previous_metadata_location varchar(8192),
     metadata_location varchar(8192),
-    params text,
     created_by STRING(255),
     created_date TIMESTAMP not null,
     last_updated_by STRING(255),

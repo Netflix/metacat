@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -40,8 +39,7 @@ import java.util.List;
 @ConditionalOnProperty(value = "metacat.elasticsearch.enabled", havingValue = "true")
 @RestController
 @RequestMapping(
-    path = "/mds/v1/search",
-    produces = MediaType.APPLICATION_JSON_VALUE
+    path = "/mds/v1/search"
 )
 @DependsOn("metacatCoreInitService")
 @RequiredArgsConstructor
