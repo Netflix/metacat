@@ -131,6 +131,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
     public TableInfo toTableInfo(final QualifiedName name, final Table table) {
         final List<FieldSchema> nonPartitionColumns =
             (table.getSd() != null) ? table.getSd().getCols() : Collections.emptyList();
+        log.debug("Hey Size = " + nonPartitionColumns.size());
         // add the data fields to the nonPartitionColumns
         //ignore all exceptions
         try {
