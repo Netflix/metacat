@@ -32,6 +32,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataPreMergeInterceptor;
 import com.netflix.metacat.common.server.usermetadata.MetadataSqlInterceptor;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -78,7 +79,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     private final Config config;
     private JdbcTemplate jdbcTemplate;
     private final MetadataInterceptor metadataInterceptor;
-    private final MetadataSqlInterceptor metadataSQLInterceptor;
+    private final MetadataPreMergeInterceptor metadataPreMergeInterceptor;
+    private final MetadataSqlInterceptor metadataSqlInterceptor;
 
     /**
      * Constructor.
@@ -87,20 +89,23 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param metacatJson         json utility
      * @param config              config
      * @param metadataInterceptor metadata interceptor
-     * @param metadataSQLInterceptor metadataSQLInterceptor
+     * @param metadataPreMergeInterceptor metadataPreMergeInterceptor
+     * @param metadataSqlInterceptor metadataSQLInterceptor
      */
     public MysqlUserMetadataService(
         final JdbcTemplate jdbcTemplate,
         final MetacatJson metacatJson,
         final Config config,
         final MetadataInterceptor metadataInterceptor,
-        final MetadataSqlInterceptor metadataSQLInterceptor
+        final MetadataPreMergeInterceptor metadataPreMergeInterceptor,
+        final MetadataSqlInterceptor metadataSqlInterceptor
     ) {
         this.metacatJson = metacatJson;
         this.config = config;
         this.jdbcTemplate = jdbcTemplate;
         this.metadataInterceptor = metadataInterceptor;
-        this.metadataSQLInterceptor = metadataSQLInterceptor;
+        this.metadataPreMergeInterceptor = metadataPreMergeInterceptor;
+        this.metadataSqlInterceptor = metadataSqlInterceptor;
     }
 
     @Override
@@ -586,6 +591,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         if (existingData.isPresent() && metadata.isPresent()) {
             ObjectNode merged = existingData.get();
             if (merge) {
+                // validate existing metadata and new metadata here
+                metadataPreMergeInterceptor.onWrite(this, name, existingData.get(), metadata.get());
                 metacatJson.mergeIntoPrimary(merged, metadata.get());
             } else {
                 merged = metadata.get();
@@ -597,8 +604,10 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 throwIfPartitionDefinitionMetadataDisabled();
                 query = SQL.UPDATE_PARTITION_DEFINITION_METADATA;
             } else {
-                // add additional where clause into the sql query
-                query = metadataSQLInterceptor.interceptSQL(SQL.UPDATE_DEFINITION_METADATA);
+                // add additional where clause into the sql query to make sure when we write
+                // the merged result, the existing metadata we use in metadataPreMergeInterceptor
+                // for validation has not changed
+                query = metadataSqlInterceptor.interceptSQL(SQL.UPDATE_DEFINITION_METADATA);
             }
             count = executeUpdateForKey(
                 query,
@@ -610,7 +619,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 throw new IllegalStateException("Please retry your request: Fail to update definitionMetadata for  "
                     + name
                     + ":likely cause = "
-                    + metadataSQLInterceptor.failureMessage(name, existingData.get(), metadata.get()));
+                    + metadataSqlInterceptor.failureMessage(name, existingData.get(), metadata.get()));
             }
         } else {
             // apply interceptor to change the object node

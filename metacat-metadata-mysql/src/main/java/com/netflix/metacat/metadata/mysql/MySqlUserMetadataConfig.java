@@ -17,6 +17,8 @@ import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
+import com.netflix.metacat.common.server.usermetadata.MetadataPreMergeInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataPreMergeInterceptorImpl;
 import com.netflix.metacat.common.server.usermetadata.MetadataSqlInterceptor;
 import com.netflix.metacat.common.server.usermetadata.MetadataSqlInterceptorImpl;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
@@ -68,13 +70,25 @@ public class MySqlUserMetadataConfig {
     }
 
     /**
+     * MetadataSQLInterceptor layer.
+     * @return MetadataSQLInterceptor
+     */
+    @Bean
+    @ConditionalOnMissingBean(MetadataPreMergeInterceptor.class)
+    public MetadataPreMergeInterceptor metadataPreMergeInterceptor(
+    ) {
+        return new MetadataPreMergeInterceptorImpl();
+    }
+
+    /**
      * User Metadata service.
      *
      * @param jdbcTemplate JDBC template
      * @param config       System config to use
      * @param metacatJson  Json Utilities to use
      * @param metadataInterceptor  business metadata manager
-     * @param metadataSQLInterceptor metadataSQLInterceptor
+     * @param metadataPreMergeInterceptor metadataPreMergeInterceptor
+     * @param metadataSqlInterceptor metadataSQLInterceptor
      * @return User metadata service based on MySql
      */
     @Bean
@@ -83,14 +97,16 @@ public class MySqlUserMetadataConfig {
         final Config config,
         final MetacatJson metacatJson,
         final MetadataInterceptor metadataInterceptor,
-        final MetadataSqlInterceptor metadataSQLInterceptor
+        final MetadataPreMergeInterceptor metadataPreMergeInterceptor,
+        final MetadataSqlInterceptor metadataSqlInterceptor
         ) {
         return new MysqlUserMetadataService(
             jdbcTemplate,
             metacatJson,
             config,
             metadataInterceptor,
-            metadataSQLInterceptor
+            metadataPreMergeInterceptor,
+            metadataSqlInterceptor
         );
     }
 
