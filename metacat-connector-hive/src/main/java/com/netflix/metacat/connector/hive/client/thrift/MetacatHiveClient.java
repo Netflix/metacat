@@ -17,6 +17,7 @@
 package com.netflix.metacat.connector.hive.client.thrift;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.connector.hive.IMetacatHiveClient;
@@ -24,8 +25,10 @@ import com.netflix.metacat.connector.hive.monitoring.HiveMetrics;
 import com.netflix.spectator.api.Counter;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
+import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.DropPartitionsRequest;
+import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -190,6 +193,10 @@ public class MetacatHiveClient implements IMetacatHiveClient {
                 table.setDbName(newdatabadeName);
                 table.setTableName(newName);
                 client.alter_table(databaseName, oldName, table);
+                EnvironmentContext envContext = new EnvironmentContext(
+                    ImmutableMap.of(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE)
+                );
+                client.alter_table_with_environment_context(databaseName, oldName, table,envContext);
             }
             return null;
         });

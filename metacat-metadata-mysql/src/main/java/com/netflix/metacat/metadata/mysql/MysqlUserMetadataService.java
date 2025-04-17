@@ -32,6 +32,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataSQLInterceptor;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Data;
@@ -77,6 +78,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     private final Config config;
     private JdbcTemplate jdbcTemplate;
     private final MetadataInterceptor metadataInterceptor;
+    private final MetadataSQLInterceptor metadataSQLInterceptor;
 
     /**
      * Constructor.
@@ -90,13 +92,14 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         final JdbcTemplate jdbcTemplate,
         final MetacatJson metacatJson,
         final Config config,
-        final MetadataInterceptor metadataInterceptor
-
+        final MetadataInterceptor metadataInterceptor,
+        final MetadataSQLInterceptor metadataSQLInterceptor
     ) {
         this.metacatJson = metacatJson;
         this.config = config;
         this.jdbcTemplate = jdbcTemplate;
         this.metadataInterceptor = metadataInterceptor;
+        this.metadataSQLInterceptor = metadataSQLInterceptor;
     }
 
     @Override
@@ -578,28 +581,36 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
         throws InvalidMetadataException {
         final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
-        final int count;
+        int count = 0;
         if (existingData.isPresent() && metadata.isPresent()) {
-            ObjectNode merged = existingData.get();
-            if (merge) {
-                metacatJson.mergeIntoPrimary(merged, metadata.get());
-            } else {
-                merged = metadata.get();
+            // TODO: retry here with small exponential back off
+            int retryCount = 3;
+            while (count == 0 && retryCount > 0) {
+                ObjectNode merged = existingData.get();
+                if (merge) {
+                    // Do processing on the metadata object before merge
+                    metadataSQLInterceptor.onWrite(name, existingData.get(), metadata.get(), this);
+                    metacatJson.mergeIntoPrimary(merged, metadata.get());
+                } else {
+                    merged = metadata.get();
+                }
+                //apply interceptor to change the object node
+                this.metadataInterceptor.onWrite(this, name, merged);
+                String query;
+                if (name.isPartitionDefinition()) {
+                    throwIfPartitionDefinitionMetadataDisabled();
+                    query = SQL.UPDATE_PARTITION_DEFINITION_METADATA;
+                } else {
+                    // add additional where clause into the sql query
+                    query = metadataSQLInterceptor.interceptSQL(SQL.UPDATE_DEFINITION_METADATA);
+                }
+                count = executeUpdateForKey(
+                    query,
+                    merged.toString(),
+                    userId,
+                    name.toString());
+                retryCount --;
             }
-            //apply interceptor to change the object node
-            this.metadataInterceptor.onWrite(this, name, merged);
-            String query;
-            if (name.isPartitionDefinition()) {
-                throwIfPartitionDefinitionMetadataDisabled();
-                query = SQL.UPDATE_PARTITION_DEFINITION_METADATA;
-            } else {
-                query = SQL.UPDATE_DEFINITION_METADATA;
-            }
-            count = executeUpdateForKey(
-                query,
-                merged.toString(),
-                userId,
-                name.toString());
 
         } else {
             // apply interceptor to change the object node
