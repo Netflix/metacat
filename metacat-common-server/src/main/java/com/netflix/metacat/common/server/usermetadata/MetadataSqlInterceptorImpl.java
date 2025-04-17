@@ -15,14 +15,6 @@ public class MetadataSqlInterceptorImpl implements MetadataSqlInterceptor {
         return sql;
     }
 
-    @Override
-    public void onWrite(final QualifiedName name,
-                        final ObjectNode existing,
-                        final ObjectNode newMetadata,
-                        final UserMetadataService userMetadataService
-    ) {
-
-    }
 
     @Override
     public String failureMessage(final QualifiedName name, final ObjectNode existing, final ObjectNode newMetadata) {

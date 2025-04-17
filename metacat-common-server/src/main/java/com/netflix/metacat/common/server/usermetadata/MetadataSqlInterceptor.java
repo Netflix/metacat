@@ -23,19 +23,6 @@ public interface MetadataSqlInterceptor {
      * @param name qualifiedName
      * @param existing existing definition metadata in the db
      * @param newMetadata new definition metadata
-     * @param userMetadataService userMetadataService
-     */
-    void onWrite(QualifiedName name,
-                        ObjectNode existing,
-                        ObjectNode newMetadata,
-                        final UserMetadataService userMetadataService
-    );
-
-    /**
-     * Intercept the newMetadata during write.
-     * @param name qualifiedName
-     * @param existing existing definition metadata in the db
-     * @param newMetadata new definition metadata
      * @return Failure Message String
      *
      */

@@ -582,37 +582,36 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
         throws InvalidMetadataException {
         final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
-        int count = 0;
+        final int count;
         if (existingData.isPresent() && metadata.isPresent()) {
-            // TODO: retry here with small exponential back off
-            int retryCount = 3;
-            while (count == 0 && retryCount > 0) {
-                ObjectNode merged = existingData.get();
-                if (merge) {
-                    // Do processing on the metadata object before merge
-                    metadataSQLInterceptor.onWrite(name, existingData.get(), metadata.get(), this);
-                    metacatJson.mergeIntoPrimary(merged, metadata.get());
-                } else {
-                    merged = metadata.get();
-                }
-                //apply interceptor to change the object node
-                this.metadataInterceptor.onWrite(this, name, merged);
-                String query;
-                if (name.isPartitionDefinition()) {
-                    throwIfPartitionDefinitionMetadataDisabled();
-                    query = SQL.UPDATE_PARTITION_DEFINITION_METADATA;
-                } else {
-                    // add additional where clause into the sql query
-                    query = metadataSQLInterceptor.interceptSQL(SQL.UPDATE_DEFINITION_METADATA);
-                }
-                count = executeUpdateForKey(
-                    query,
-                    merged.toString(),
-                    userId,
-                    name.toString());
-                retryCount--;
+            ObjectNode merged = existingData.get();
+            if (merge) {
+                metacatJson.mergeIntoPrimary(merged, metadata.get());
+            } else {
+                merged = metadata.get();
             }
-            // if retryCount is exhausted, then this mean the value is still conflicting
+            //apply interceptor to change the object node
+            this.metadataInterceptor.onWrite(this, name, merged);
+            String query;
+            if (name.isPartitionDefinition()) {
+                throwIfPartitionDefinitionMetadataDisabled();
+                query = SQL.UPDATE_PARTITION_DEFINITION_METADATA;
+            } else {
+                // add additional where clause into the sql query
+                query = metadataSQLInterceptor.interceptSQL(SQL.UPDATE_DEFINITION_METADATA);
+            }
+            count = executeUpdateForKey(
+                query,
+                merged.toString(),
+                userId,
+                name.toString());
+
+            if (count == 0) {
+                throw new IllegalStateException("Please retry your request: Fail to update definitionMetadata for  "
+                    + name
+                    + ":likely cause = "
+                    + metadataSQLInterceptor.failureMessage(name, existingData.get(), metadata.get()));
+            }
         } else {
             // apply interceptor to change the object node
             if (metadata.isPresent()) {
