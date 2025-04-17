@@ -97,7 +97,7 @@ public class CommonViewHandler {
      * @param tableInfo         table info
      * @param tableMetadataLocation the common view table metadata location.
      */
-    @CacheEvict(key = "'iceberg.view.' + #tableMetadataLocation", beforeInvocation = true)
+    @CacheEvict(cacheNames = "metacat", key = "'iceberg.view.' + #tableMetadataLocation", beforeInvocation = true)
     public void handleUpdate(final ConnectorRequestContext requestContext,
                              final DirectSqlTable directSqlTable,
                              final TableInfo tableInfo,
