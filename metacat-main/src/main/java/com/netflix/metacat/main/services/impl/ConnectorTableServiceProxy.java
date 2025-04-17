@@ -79,9 +79,9 @@ public class ConnectorTableServiceProxy {
      * @param name table name
      */
     @Caching(evict = {
-            @CacheEvict(key = "'table.' + #name", beforeInvocation = true),
-            @CacheEvict(key = "'table.includeInfoDetails.' + #name", beforeInvocation = true),
-            @CacheEvict(key = "'table.metadataLocationOnly.' + #name", beforeInvocation = true)
+            @CacheEvict(cacheNames = "metacat", key = "'table.' + #name", beforeInvocation = true),
+            @CacheEvict(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name", beforeInvocation = true),
+            @CacheEvict(cacheNames = "metacat", key = "'table.metadataLocationOnly.' + #name", beforeInvocation = true)
     })
     public void delete(final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -100,7 +100,7 @@ public class ConnectorTableServiceProxy {
      * @param useCache true, if the location can be retrieved from the cache
      * @return The table info object with the metadata location.
      */
-    @Cacheable(key = "'table.metadataLocationOnly.' + #name", condition = "#useCache")
+    @Cacheable(cacheNames = "metacat", key = "'table.metadataLocationOnly.' + #name", condition = "#useCache")
     public TableInfo getWithMetadataLocationOnly(final QualifiedName name,
                                                  final GetTableServiceParameters getTableServiceParameters,
                                                  final boolean useCache) {
@@ -115,7 +115,7 @@ public class ConnectorTableServiceProxy {
      * @param useCache true, if the location can be retrieved from the cache
      * @return The table info object
      */
-    @Cacheable(key = "'table.includeInfoDetails.' + #name", condition = "#useCache")
+    @Cacheable(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name", condition = "#useCache")
     public TableInfo getWithInfoDetails(final QualifiedName name,
                                         final GetTableServiceParameters getTableServiceParameters,
                                         final boolean useCache) {
@@ -131,7 +131,7 @@ public class ConnectorTableServiceProxy {
      * @param useCache true, if table can be retrieved from cache
      * @return table dto
      */
-    @Cacheable(key = "'table.' + #name", condition = "#useCache")
+    @Cacheable(cacheNames = "metacat", key = "'table.' + #name", condition = "#useCache")
     public TableInfo get(final QualifiedName name,
                          final GetTableServiceParameters getTableServiceParameters,
                          final boolean useCache) {
@@ -162,9 +162,17 @@ public class ConnectorTableServiceProxy {
      * @param isMView true, if the object is a view
      */
     @Caching(evict = {
-            @CacheEvict(key = "'table.' + #oldName", beforeInvocation = true),
-            @CacheEvict(key = "'table.includeInfoDetails.' + #oldName", beforeInvocation = true),
-            @CacheEvict(key = "'table.metadataLocationOnly.' + #oldName", beforeInvocation = true)
+            @CacheEvict(cacheNames = "metacat", key = "'table.' + #oldName", beforeInvocation = true),
+            @CacheEvict(
+                cacheNames = "metacat",
+                key = "'table.includeInfoDetails.' + #oldName",
+                beforeInvocation = true
+            ),
+            @CacheEvict(
+                cacheNames = "metacat",
+                key = "'table.metadataLocationOnly.' + #oldName",
+                beforeInvocation = true
+            )
     })
     public void rename(
         final QualifiedName oldName,
@@ -190,9 +198,9 @@ public class ConnectorTableServiceProxy {
      * @return true if errors after this should be ignored.
      */
     @Caching(evict = {
-            @CacheEvict(key = "'table.' + #name", beforeInvocation = true),
-            @CacheEvict(key = "'table.includeInfoDetails.' + #name", beforeInvocation = true),
-            @CacheEvict(key = "'table.metadataLocationOnly.' + #name", beforeInvocation = true)
+            @CacheEvict(cacheNames = "metacat", key = "'table.' + #name", beforeInvocation = true),
+            @CacheEvict(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name", beforeInvocation = true),
+            @CacheEvict(cacheNames = "metacat", key = "'table.metadataLocationOnly.' + #name", beforeInvocation = true)
     })
     public boolean update(final QualifiedName name, final TableInfo tableInfo) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();

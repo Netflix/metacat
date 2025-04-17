@@ -30,6 +30,7 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
  * table service for polaris connector.
  */
 @Slf4j
+@CacheConfig(cacheNames = "metacat")
 public class PolarisConnectorTableService implements ConnectorTableService {
     protected final PolarisStoreService polarisStoreService;
     protected final PolarisConnectorDatabaseService polarisConnectorDatabaseService;
@@ -365,7 +367,11 @@ public class PolarisConnectorTableService implements ConnectorTableService {
      * @param useCache              true, if table can be retrieved from cache
      * @return TableInfo
      */
-    @Cacheable(key = "'iceberg.table.' + #includeInfoDetails + '.' + #tableMetadataLocation", condition = "#useCache")
+    @Cacheable(
+        cacheNames = "metacat",
+        key = "'iceberg.table.' + #includeInfoDetails + '.' + #tableMetadataLocation",
+        condition = "#useCache"
+    )
     public TableInfo getIcebergTable(final QualifiedName tableName,
                                      final String tableMetadataLocation,
                                      final TableInfo info,
