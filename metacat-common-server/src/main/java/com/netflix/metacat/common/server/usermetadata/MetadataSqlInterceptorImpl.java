@@ -12,7 +12,7 @@ import com.netflix.metacat.common.QualifiedName;
 public class MetadataSqlInterceptorImpl implements MetadataSqlInterceptor {
     @Override
     public String interceptSQL(final String sql) {
-        return "";
+        return sql;
     }
 
     @Override
