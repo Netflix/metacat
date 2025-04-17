@@ -23,4 +23,9 @@ public class MetadataSqlInterceptorImpl implements MetadataSqlInterceptor {
     ) {
 
     }
+
+    @Override
+    public String failureMessage(final QualifiedName name, final ObjectNode existing, final ObjectNode newMetadata) {
+        return "";
+    }
 }
