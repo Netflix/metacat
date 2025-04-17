@@ -15,7 +15,11 @@ public class IcebergTableOpsProxy {
      * @param useCache true, if table can be retrieved from cache
      * @return TableMetadata
      */
-    @Cacheable(cacheNames = "metacat", key = "'iceberg.' + #icebergTableOps.currentMetadataLocation()", condition = "#useCache")
+    @Cacheable(
+        cacheNames = "metacat",
+        key = "'iceberg.' + #icebergTableOps.currentMetadataLocation()",
+        condition = "#useCache"
+    )
     public TableMetadata getMetadata(final IcebergTableOps icebergTableOps, final boolean useCache) {
         return icebergTableOps.refresh();
     }

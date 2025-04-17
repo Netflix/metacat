@@ -61,7 +61,11 @@ public class HiveConnectorFastTableServiceProxy {
      * @param useCache true, if table can be retrieved from cache
      * @return TableInfo
      */
-    @Cacheable(cacheNames = "metacat", key = "'iceberg.table.' + #includeInfoDetails + '.' + #tableMetadataLocation", condition = "#useCache")
+    @Cacheable(
+        cacheNames = "metacat",
+        key = "'iceberg.table.' + #includeInfoDetails + '.' + #tableMetadataLocation",
+        condition = "#useCache"
+    )
     public TableInfo getIcebergTable(final QualifiedName tableName,
                                      final String tableMetadataLocation,
                                      final TableInfo info,

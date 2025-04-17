@@ -163,8 +163,16 @@ public class ConnectorTableServiceProxy {
      */
     @Caching(evict = {
             @CacheEvict(cacheNames = "metacat", key = "'table.' + #oldName", beforeInvocation = true),
-            @CacheEvict(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #oldName", beforeInvocation = true),
-            @CacheEvict(cacheNames = "metacat", key = "'table.metadataLocationOnly.' + #oldName", beforeInvocation = true)
+            @CacheEvict(
+                cacheNames = "metacat",
+                key = "'table.includeInfoDetails.' + #oldName",
+                beforeInvocation = true
+            ),
+            @CacheEvict(
+                cacheNames = "metacat",
+                key = "'table.metadataLocationOnly.' + #oldName",
+                beforeInvocation = true
+            )
     })
     public void rename(
         final QualifiedName oldName,
