@@ -32,7 +32,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
-import com.netflix.metacat.common.server.usermetadata.MetadataSQLInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataSqlInterceptor;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Data;
@@ -78,7 +78,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     private final Config config;
     private JdbcTemplate jdbcTemplate;
     private final MetadataInterceptor metadataInterceptor;
-    private final MetadataSQLInterceptor metadataSQLInterceptor;
+    private final MetadataSqlInterceptor metadataSQLInterceptor;
 
     /**
      * Constructor.
@@ -87,13 +87,14 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param metacatJson         json utility
      * @param config              config
      * @param metadataInterceptor metadata interceptor
+     * @param metadataSQLInterceptor metadataSQLInterceptor
      */
     public MysqlUserMetadataService(
         final JdbcTemplate jdbcTemplate,
         final MetacatJson metacatJson,
         final Config config,
         final MetadataInterceptor metadataInterceptor,
-        final MetadataSQLInterceptor metadataSQLInterceptor
+        final MetadataSqlInterceptor metadataSQLInterceptor
     ) {
         this.metacatJson = metacatJson;
         this.config = config;
@@ -609,9 +610,9 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     merged.toString(),
                     userId,
                     name.toString());
-                retryCount --;
+                retryCount--;
             }
-
+            // if retryCount is exhausted, then this mean the value is still conflicting
         } else {
             // apply interceptor to change the object node
             if (metadata.isPresent()) {
