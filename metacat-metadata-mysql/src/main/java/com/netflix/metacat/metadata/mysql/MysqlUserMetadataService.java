@@ -607,7 +607,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 // add additional where clause into the sql query to make sure when we write
                 // the merged result, the existing metadata we use in metadataPreMergeInterceptor
                 // for validation has not changed
-                query = metadataSqlInterceptor.interceptSQL(SQL.UPDATE_DEFINITION_METADATA);
+                query = metadataSqlInterceptor.interceptSQL(SQL.UPDATE_DEFINITION_METADATA, name);
             }
             count = executeUpdateForKey(
                 query,

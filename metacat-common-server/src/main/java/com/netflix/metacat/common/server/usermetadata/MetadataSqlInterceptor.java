@@ -14,9 +14,10 @@ public interface MetadataSqlInterceptor {
     /**
      * Intercept the definition metadata sql update statement into the db.
      * @param sql base sql statement
+     * @param name qualifiedName
      * @return the modified sql string
      */
-    String interceptSQL(String sql);
+    String interceptSQL(String sql, QualifiedName name);
 
     /**
      * Intercept the newMetadata during write.
