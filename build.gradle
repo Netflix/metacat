@@ -77,6 +77,10 @@ allprojects {
             url 'https://jitpack.io'
         }
     }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs.add("-parameters")
+    }
 }
 
 idea {
