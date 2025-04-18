@@ -15,6 +15,7 @@ package com.netflix.metacat.metadata.mysql;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -580,14 +581,13 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
-    @Override
-    public void saveDefinitionMetadata(
-        @Nonnull final QualifiedName name,
-        @Nonnull final String userId,
-        @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
-        throws InvalidMetadataException {
-        final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
-        final int count;
+    @VisibleForTesting
+    private Optional<ObjectNode> prepareDefinitionMetadataNode(
+        final QualifiedName name,
+        final Optional<ObjectNode> existingData,
+        final Optional<ObjectNode> metadata,
+        final boolean merge
+    ) {
         if (existingData.isPresent() && metadata.isPresent()) {
             ObjectNode merged = existingData.get();
             if (merge) {
@@ -599,6 +599,30 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             }
             //apply interceptor to change the object node
             this.metadataInterceptor.onWrite(this, name, merged);
+            return Optional.of(merged);
+        } else {
+            // apply interceptor to change the object node
+            if (metadata.isPresent()) {
+                this.metadataInterceptor.onWrite(this, name, metadata.get());
+            }
+            return metadata;
+        }
+    }
+
+    @VisibleForTesting
+    private void executeSaveDefinitionMetadataSql(
+        final QualifiedName name,
+        final String userId,
+        final Optional<ObjectNode> existingData,
+        final Optional<ObjectNode> metadata,
+        final Optional<ObjectNode> finalNode
+    ) {
+        final int count;
+        if (existingData.isPresent() && metadata.isPresent()) {
+            if (!finalNode.isPresent()) {
+                throw new IllegalStateException("Metacat internal error  "  + name + " merged node should not be empty "
+                    + "existingData = " + existingData.get() + ", metadata = " + metadata.get());
+            }
             String query;
             if (name.isPartitionDefinition()) {
                 throwIfPartitionDefinitionMetadataDisabled();
@@ -611,7 +635,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             }
             count = executeUpdateForKey(
                 query,
-                merged.toString(),
+                finalNode.toString(),
                 userId,
                 name.toString());
 
@@ -622,10 +646,6 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                     + metadataSqlInterceptor.failureMessage(name, existingData.get(), metadata.get()));
             }
         } else {
-            // apply interceptor to change the object node
-            if (metadata.isPresent()) {
-                this.metadataInterceptor.onWrite(this, name, metadata.get());
-            }
             String queryToExecute;
             if (name.isPartitionDefinition()) {
                 throwIfPartitionDefinitionMetadataDisabled();
@@ -641,10 +661,21 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 name.toString()
             )).orElse(1);
         }
-
         if (count != 1) {
             throw new IllegalStateException("Expected one row to be insert or update for " + name);
         }
+    }
+
+    @Override
+    public void saveDefinitionMetadata(
+        @Nonnull final QualifiedName name,
+        @Nonnull final String userId,
+        @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
+        throws InvalidMetadataException {
+        final Optional<ObjectNode> existingMetaData = getDefinitionMetadata(name);
+        final Optional<ObjectNode> finalMetadata =
+            prepareDefinitionMetadataNode(name, existingMetaData, metadata, merge);
+        executeSaveDefinitionMetadataSql(name, userId, existingMetaData, metadata, finalMetadata);
     }
 
     @Override
