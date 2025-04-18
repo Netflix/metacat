@@ -17,6 +17,8 @@ import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
+import com.netflix.metacat.common.server.usermetadata.MetadataSqlInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataSqlInterceptorImpl;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
@@ -55,12 +57,24 @@ public class MySqlUserMetadataConfig {
     }
 
     /**
+     * MetadataSQLInterceptor layer.
+     * @return MetadataSQLInterceptor
+     */
+    @Bean
+    @ConditionalOnMissingBean(MetadataSqlInterceptor.class)
+    public MetadataSqlInterceptor metadataSqlInterceptor(
+    ) {
+        return new MetadataSqlInterceptorImpl();
+    }
+
+    /**
      * User Metadata service.
      *
      * @param jdbcTemplate JDBC template
      * @param config       System config to use
      * @param metacatJson  Json Utilities to use
      * @param metadataInterceptor  business metadata manager
+     * @param metadataSQLInterceptor metadataSQLInterceptor
      * @return User metadata service based on MySql
      */
     @Bean
@@ -68,9 +82,16 @@ public class MySqlUserMetadataConfig {
         @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
         final Config config,
         final MetacatJson metacatJson,
-        final MetadataInterceptor metadataInterceptor
-    ) {
-        return new MysqlUserMetadataService(jdbcTemplate, metacatJson, config, metadataInterceptor);
+        final MetadataInterceptor metadataInterceptor,
+        final MetadataSqlInterceptor metadataSQLInterceptor
+        ) {
+        return new MysqlUserMetadataService(
+            jdbcTemplate,
+            metacatJson,
+            config,
+            metadataInterceptor,
+            metadataSQLInterceptor
+        );
     }
 
 
