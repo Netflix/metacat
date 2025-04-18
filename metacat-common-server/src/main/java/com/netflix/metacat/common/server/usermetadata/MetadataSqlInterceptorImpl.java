@@ -11,7 +11,7 @@ import com.netflix.metacat.common.QualifiedName;
  */
 public class MetadataSqlInterceptorImpl implements MetadataSqlInterceptor {
     @Override
-    public String interceptSQL(final String sql, final QualifiedName name) {
+    public String interceptSQL(final String sql, final QualifiedName name, final ObjectNode existingMetadata) {
         return sql;
     }
 
