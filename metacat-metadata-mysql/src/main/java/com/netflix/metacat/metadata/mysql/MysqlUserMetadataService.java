@@ -589,7 +589,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         final boolean merge
     ) {
         if (existingData.isPresent() && metadata.isPresent()) {
-            ObjectNode merged = existingData.get();
+            // need to do deep copy, otherwise the existingData will change
+            ObjectNode merged = existingData.get().deepCopy();
             if (merge) {
                 // validate existing metadata and new metadata here
                 metadataPreMergeInterceptor.onWrite(this, name, existingData.get(), metadata.get());
