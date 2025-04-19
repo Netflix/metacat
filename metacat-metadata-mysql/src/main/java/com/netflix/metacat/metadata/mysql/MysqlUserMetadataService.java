@@ -15,6 +15,7 @@ package com.netflix.metacat.metadata.mysql;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -32,6 +33,8 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataPreMergeInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataSqlInterceptor;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Data;
@@ -77,6 +80,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     private final Config config;
     private JdbcTemplate jdbcTemplate;
     private final MetadataInterceptor metadataInterceptor;
+    private final MetadataPreMergeInterceptor metadataPreMergeInterceptor;
+    private final MetadataSqlInterceptor metadataSqlInterceptor;
 
     /**
      * Constructor.
@@ -85,18 +90,23 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param metacatJson         json utility
      * @param config              config
      * @param metadataInterceptor metadata interceptor
+     * @param metadataPreMergeInterceptor metadataPreMergeInterceptor
+     * @param metadataSqlInterceptor metadataSQLInterceptor
      */
     public MysqlUserMetadataService(
         final JdbcTemplate jdbcTemplate,
         final MetacatJson metacatJson,
         final Config config,
-        final MetadataInterceptor metadataInterceptor
-
+        final MetadataInterceptor metadataInterceptor,
+        final MetadataPreMergeInterceptor metadataPreMergeInterceptor,
+        final MetadataSqlInterceptor metadataSqlInterceptor
     ) {
         this.metacatJson = metacatJson;
         this.config = config;
         this.jdbcTemplate = jdbcTemplate;
         this.metadataInterceptor = metadataInterceptor;
+        this.metadataPreMergeInterceptor = metadataPreMergeInterceptor;
+        this.metadataSqlInterceptor = metadataSqlInterceptor;
     }
 
     @Override
@@ -571,41 +581,72 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
-    @Override
-    public void saveDefinitionMetadata(
-        @Nonnull final QualifiedName name,
-        @Nonnull final String userId,
-        @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
-        throws InvalidMetadataException {
-        final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
-        final int count;
+    @VisibleForTesting
+    private Optional<ObjectNode> prepareDefinitionMetadataNode(
+        final QualifiedName name,
+        final Optional<ObjectNode> existingData,
+        final Optional<ObjectNode> metadata,
+        final boolean merge
+    ) {
         if (existingData.isPresent() && metadata.isPresent()) {
-            ObjectNode merged = existingData.get();
+            // need to do deep copy, otherwise the existingData will change
+            ObjectNode merged = existingData.get().deepCopy();
             if (merge) {
+                // validate existing metadata and new metadata here
+                metadataPreMergeInterceptor.onWrite(this, name, existingData.get(), metadata.get());
                 metacatJson.mergeIntoPrimary(merged, metadata.get());
             } else {
                 merged = metadata.get();
             }
             //apply interceptor to change the object node
             this.metadataInterceptor.onWrite(this, name, merged);
-            String query;
-            if (name.isPartitionDefinition()) {
-                throwIfPartitionDefinitionMetadataDisabled();
-                query = SQL.UPDATE_PARTITION_DEFINITION_METADATA;
-            } else {
-                query = SQL.UPDATE_DEFINITION_METADATA;
-            }
-            count = executeUpdateForKey(
-                query,
-                merged.toString(),
-                userId,
-                name.toString());
-
+            return Optional.of(merged);
         } else {
             // apply interceptor to change the object node
             if (metadata.isPresent()) {
                 this.metadataInterceptor.onWrite(this, name, metadata.get());
             }
+            return metadata;
+        }
+    }
+
+    @VisibleForTesting
+    private void executeSaveDefinitionMetadataSql(
+        final QualifiedName name,
+        final String userId,
+        final Optional<ObjectNode> existingData,
+        final Optional<ObjectNode> metadata,
+        final Optional<ObjectNode> finalNode
+    ) {
+        final int count;
+        if (existingData.isPresent() && metadata.isPresent()) {
+            if (!finalNode.isPresent()) {
+                throw new IllegalStateException("Metacat internal error  "  + name + " merged node should not be empty "
+                    + "existingData = " + existingData.get() + ", metadata = " + metadata.get());
+            }
+            String query;
+            if (name.isPartitionDefinition()) {
+                throwIfPartitionDefinitionMetadataDisabled();
+                query = SQL.UPDATE_PARTITION_DEFINITION_METADATA;
+            } else {
+                // add additional where clause into the sql query to make sure when we write
+                // the merged result, the existing metadata we use in metadataPreMergeInterceptor
+                // for validation has not changed
+                query = metadataSqlInterceptor.interceptSQL(SQL.UPDATE_DEFINITION_METADATA, name, existingData.get());
+            }
+            count = executeUpdateForKey(
+                query,
+                finalNode.get().toString(),
+                userId,
+                name.toString());
+
+            if (count == 0) {
+                throw new IllegalStateException("Please retry your request: Fail to update definitionMetadata for  "
+                    + name
+                    + ":likely cause = "
+                    + metadataSqlInterceptor.failureMessage(name, existingData.get(), metadata.get()));
+            }
+        } else {
             String queryToExecute;
             if (name.isPartitionDefinition()) {
                 throwIfPartitionDefinitionMetadataDisabled();
@@ -621,10 +662,21 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 name.toString()
             )).orElse(1);
         }
-
         if (count != 1) {
             throw new IllegalStateException("Expected one row to be insert or update for " + name);
         }
+    }
+
+    @Override
+    public void saveDefinitionMetadata(
+        @Nonnull final QualifiedName name,
+        @Nonnull final String userId,
+        @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
+        throws InvalidMetadataException {
+        final Optional<ObjectNode> existingMetaData = getDefinitionMetadata(name);
+        final Optional<ObjectNode> finalMetadata =
+            prepareDefinitionMetadataNode(name, existingMetaData, metadata, merge);
+        executeSaveDefinitionMetadataSql(name, userId, existingMetaData, metadata, finalMetadata);
     }
 
     @Override
