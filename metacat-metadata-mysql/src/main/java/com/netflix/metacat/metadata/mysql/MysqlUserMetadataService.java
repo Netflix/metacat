@@ -635,7 +635,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             }
             count = executeUpdateForKey(
                 query,
-                finalNode.toString(),
+                finalNode.get().toString(),
                 userId,
                 name.toString());
 
