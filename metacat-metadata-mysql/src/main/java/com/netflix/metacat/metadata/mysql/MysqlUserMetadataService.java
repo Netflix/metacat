@@ -70,17 +70,17 @@ import java.util.stream.Collectors;
 @SuppressFBWarnings
 @Transactional("metadataTxManager")
 public class MysqlUserMetadataService extends BaseUserMetadataService {
-    private static final String NAME_OWNER = "owner";
-    private static final String NAME_USERID = "userId";
-    private static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
+    protected static final String NAME_OWNER = "owner";
+    protected static final String NAME_USERID = "userId";
+    protected static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
         "id", "date_created", "created_by", "last_updated_by", "name", "last_updated");
-    private static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
-    private final MetacatJson metacatJson;
-    private final Config config;
-    private JdbcTemplate jdbcTemplate;
-    private final MetadataInterceptor metadataInterceptor;
-    private final MetadataPreMergeInterceptor metadataPreMergeInterceptor;
-    private final MetadataSqlInterceptor metadataSqlInterceptor;
+    protected static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
+    protected final MetacatJson metacatJson;
+    protected final Config config;
+    protected JdbcTemplate jdbcTemplate;
+    protected final MetadataInterceptor metadataInterceptor;
+    protected final MetadataPreMergeInterceptor metadataPreMergeInterceptor;
+    protected final MetadataSqlInterceptor metadataSqlInterceptor;
 
     /**
      * Constructor.
@@ -537,7 +537,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param keyValues parameters
      * @return number of updated rows
      */
-    private int executeUpdateForKey(final String query, final String... keyValues) {
+    protected int executeUpdateForKey(final String query, final String... keyValues) {
         try {
             final SqlParameterValue[] values =
                 Arrays.stream(keyValues).map(keyValue -> new SqlParameterValue(Types.VARCHAR, keyValue))
@@ -550,7 +550,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
-    private void throwIfPartitionDefinitionMetadataDisabled() {
+    protected void throwIfPartitionDefinitionMetadataDisabled() {
         if (config.disablePartitionDefinitionMetadata()) {
             throw new MetacatBadRequestException("Partition Definition metadata updates are disabled");
         }
