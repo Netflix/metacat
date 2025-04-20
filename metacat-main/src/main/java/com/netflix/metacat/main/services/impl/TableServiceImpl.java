@@ -732,7 +732,8 @@ public class TableServiceImpl implements TableService {
                                  final boolean ignoreErrorsAfterUpdate,
                                  final String request,
                                  final Exception ex) {
-        if (ignoreErrorsAfterUpdate && !(ex instanceof IllegalArgumentException) && !(ex instanceof IllegalStateException)) {
+        if (ignoreErrorsAfterUpdate
+            && !(ex instanceof IllegalArgumentException) && !(ex instanceof IllegalStateException)) {
             log.warn("Failed {} for table {}. Error: {}", request, name, ex.getMessage());
             registry.counter(registry.createId(
                 Metrics.CounterTableUpdateIgnoredException.getMetricName()).withTags(name.parts())
