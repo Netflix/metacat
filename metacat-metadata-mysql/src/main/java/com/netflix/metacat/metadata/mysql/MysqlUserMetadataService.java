@@ -585,13 +585,15 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         @Nonnull final QualifiedName name,
         @Nonnull final String userId,
         @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
-        throws InvalidMetadataException {
+        throws InvalidMetadataException, IllegalArgumentException {
         final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
         final int count;
         if (existingData.isPresent() && metadata.isPresent()) {
-            ObjectNode merged = existingData.get();
+            // deep copy the merged object so it does not change the existingData
+            ObjectNode merged = existingData.get().deepCopy();
             if (merge) {
                 // validate existing metadata and new metadata here
+                // if validation failed, IllegalArgumentException exception will be thrown
                 metadataPreMergeInterceptor.onWrite(this, name, existingData.get(), metadata.get());
                 metacatJson.mergeIntoPrimary(merged, metadata.get());
             } else {
@@ -618,7 +620,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             if (count == 0) {
                 throw new IllegalStateException("Please retry your request: Fail to update definitionMetadata for  "
                     + name
-                    + ":likely cause = "
+                    + ":due to  "
                     + metadataSqlInterceptor.failureMessage(name, existingData.get(), metadata.get()));
             }
         } else {

@@ -684,11 +684,6 @@ public class TableServiceImpl implements TableService {
                 log.info("Saving user metadata for table {}", name);
                 final long start = registry.clock().wallTime();
                 userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
-                final long vtts = MetacatUtils.getVtts(tableDto.getDefinitionMetadata());
-                if (vtts > 0) {
-                    log.info("Received vtts update for {} to {}", name, vtts);
-                    userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
-                }
 
                 final long duration = registry.clock().wallTime() - start;
                 log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
@@ -737,7 +732,7 @@ public class TableServiceImpl implements TableService {
                                  final boolean ignoreErrorsAfterUpdate,
                                  final String request,
                                  final Exception ex) {
-        if (ignoreErrorsAfterUpdate) {
+        if (ignoreErrorsAfterUpdate && !(ex instanceof IllegalArgumentException) && !(ex instanceof IllegalStateException)) {
             log.warn("Failed {} for table {}. Error: {}", request, name, ex.getMessage());
             registry.counter(registry.createId(
                 Metrics.CounterTableUpdateIgnoredException.getMetricName()).withTags(name.parts())
