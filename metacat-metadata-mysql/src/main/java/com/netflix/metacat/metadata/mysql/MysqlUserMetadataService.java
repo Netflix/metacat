@@ -68,15 +68,15 @@ import java.util.stream.Collectors;
 @SuppressFBWarnings
 @Transactional("metadataTxManager")
 public class MysqlUserMetadataService extends BaseUserMetadataService {
-    private static final String NAME_OWNER = "owner";
-    private static final String NAME_USERID = "userId";
-    private static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
+    protected static final String NAME_OWNER = "owner";
+    protected static final String NAME_USERID = "userId";
+    protected static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
         "id", "date_created", "created_by", "last_updated_by", "name", "last_updated");
-    private static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
-    private final MetacatJson metacatJson;
-    private final Config config;
-    private JdbcTemplate jdbcTemplate;
-    private final MetadataInterceptor metadataInterceptor;
+    protected static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
+    protected final MetacatJson metacatJson;
+    protected final Config config;
+    protected JdbcTemplate jdbcTemplate;
+    protected final MetadataInterceptor metadataInterceptor;
 
     /**
      * Constructor.
@@ -521,6 +521,19 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
+    public int executeUpdateForKey(final String query, final long... longValues) {
+        try {
+            final SqlParameterValue[] values =
+                Arrays.stream(longValues).mapToObj(keyValue -> new SqlParameterValue(Types.BIGINT, keyValue))
+                    .toArray(SqlParameterValue[]::new);
+            return jdbcTemplate.update(query, (Object[]) values);
+        } catch (Exception e) {
+            final String message = String.format("Failed to save data for %s", Arrays.toString(longValues));
+            log.error(message, e);
+            throw new UserMetadataServiceException(message, e);
+        }
+    }
+
     /**
      * executeUpdateForKey.
      *
@@ -528,7 +541,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param keyValues parameters
      * @return number of updated rows
      */
-    private int executeUpdateForKey(final String query, final String... keyValues) {
+    protected int executeUpdateForKey(final String query, final String... keyValues) {
         try {
             final SqlParameterValue[] values =
                 Arrays.stream(keyValues).map(keyValue -> new SqlParameterValue(Types.VARCHAR, keyValue))
@@ -541,7 +554,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
-    private void throwIfPartitionDefinitionMetadataDisabled() {
+    protected void throwIfPartitionDefinitionMetadataDisabled() {
         if (config.disablePartitionDefinitionMetadata()) {
             throw new MetacatBadRequestException("Partition Definition metadata updates are disabled");
         }
