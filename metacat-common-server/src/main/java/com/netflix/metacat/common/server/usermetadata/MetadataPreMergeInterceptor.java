@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetadataException;
 
+import java.util.Optional;
+
 /**
  * MetadataPreMergeInterceptor: This interceptor runs before merging the existing metadata and the new metadata.
  * @author yingjianw
@@ -20,8 +22,8 @@ public interface MetadataPreMergeInterceptor {
      */
     default void onWrite(final UserMetadataService userMetadataService,
                          final QualifiedName name,
-                         final ObjectNode existingMetadata,
-                         final ObjectNode newMetadata) throws InvalidMetadataException {
+                         final Optional<ObjectNode> existingMetadata,
+                         final Optional<ObjectNode> newMetadata) throws InvalidMetadataException {
 
     }
 }
