@@ -116,7 +116,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Nonnull
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = false)
     public Optional<ObjectNode> getDefinitionMetadataWithInterceptor(
         @Nonnull final QualifiedName name,
         final GetMetadataInterceptorParameters getMetadataInterceptorParameters) {
