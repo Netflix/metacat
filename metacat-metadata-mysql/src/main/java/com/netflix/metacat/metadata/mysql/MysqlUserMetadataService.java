@@ -32,6 +32,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataPostProcessor;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Data;
@@ -77,6 +78,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     protected final Config config;
     protected JdbcTemplate jdbcTemplate;
     protected final MetadataInterceptor metadataInterceptor;
+    protected final MetadataPostProcessor metadataPostProcessor;
 
     /**
      * Constructor.
@@ -85,18 +87,20 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param metacatJson         json utility
      * @param config              config
      * @param metadataInterceptor metadata interceptor
+     * @param metadataPostProcessor metadataPostProcessor
      */
     public MysqlUserMetadataService(
         final JdbcTemplate jdbcTemplate,
         final MetacatJson metacatJson,
         final Config config,
-        final MetadataInterceptor metadataInterceptor
-
+        final MetadataInterceptor metadataInterceptor,
+        final MetadataPostProcessor metadataPostProcessor
     ) {
         this.metacatJson = metacatJson;
         this.config = config;
         this.jdbcTemplate = jdbcTemplate;
         this.metadataInterceptor = metadataInterceptor;
+        this.metadataPostProcessor = metadataPostProcessor;
     }
 
     @Override
@@ -595,6 +599,11 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         throws InvalidMetadataException {
         final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
         final int count;
+        ObjectNode userIntendedMetadata = null;
+        if (metadata.isPresent()) {
+            userIntendedMetadata = metadata.get().deepCopy();
+        }
+
         if (existingData.isPresent() && metadata.isPresent()) {
             ObjectNode merged = existingData.get();
             if (merge) {
@@ -616,7 +625,6 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 merged.toString(),
                 userId,
                 name.toString());
-
         } else {
             // apply interceptor to change the object node
             if (metadata.isPresent()) {
@@ -637,6 +645,12 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 name.toString()
             )).orElse(1);
         }
+
+        metadataPostProcessor.postProcess(
+            this,
+            name,
+            userIntendedMetadata
+        );
 
         if (count != 1) {
             throw new IllegalStateException("Expected one row to be insert or update for " + name);
