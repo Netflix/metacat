@@ -68,15 +68,15 @@ import java.util.stream.Collectors;
 @SuppressFBWarnings
 @Transactional("metadataTxManager")
 public class MysqlUserMetadataService extends BaseUserMetadataService {
-    private static final String NAME_OWNER = "owner";
-    private static final String NAME_USERID = "userId";
-    private static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
+    protected static final String NAME_OWNER = "owner";
+    protected static final String NAME_USERID = "userId";
+    protected static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
         "id", "date_created", "created_by", "last_updated_by", "name", "last_updated");
-    private static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
-    private final MetacatJson metacatJson;
-    private final Config config;
-    private JdbcTemplate jdbcTemplate;
-    private final MetadataInterceptor metadataInterceptor;
+    protected static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
+    protected final MetacatJson metacatJson;
+    protected final Config config;
+    protected JdbcTemplate jdbcTemplate;
+    protected final MetadataInterceptor metadataInterceptor;
 
     /**
      * Constructor.
@@ -528,7 +528,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param keyValues parameters
      * @return number of updated rows
      */
-    private int executeUpdateForKey(final String query, final String... keyValues) {
+    protected int executeUpdateForKey(final String query, final String... keyValues) {
         try {
             final SqlParameterValue[] values =
                 Arrays.stream(keyValues).map(keyValue -> new SqlParameterValue(Types.VARCHAR, keyValue))
@@ -541,7 +541,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
-    private void throwIfPartitionDefinitionMetadataDisabled() {
+    protected void throwIfPartitionDefinitionMetadataDisabled() {
         if (config.disablePartitionDefinitionMetadata()) {
             throw new MetacatBadRequestException("Partition Definition metadata updates are disabled");
         }
@@ -982,7 +982,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         static final String GET_DATA_METADATAS =
             "select uri name,data from data_metadata where uri in (%s)";
         static final String GET_DEFINITION_METADATA =
-            "select name, data from definition_metadata where name=?";
+            "select name, data from definition_metadata where name=? for update";
         static final String GET_PARTITION_DEFINITION_METADATA =
             "select name, data from partition_definition_metadata where name=?";
         static final String GET_DEFINITION_METADATAS =
