@@ -18,12 +18,14 @@ public interface MetadataPreMergeInterceptor {
      * @param name                qualified name
      * @param existingMetadata    existing metadata
      * @param newMetadata         newMetadata
+     * @param throwException  whether to throw exception from the interceptor
      * @throws InvalidMetadataException business validation exception
      */
     default void onWrite(final UserMetadataService userMetadataService,
                          final QualifiedName name,
                          final Optional<ObjectNode> existingMetadata,
-                         final Optional<ObjectNode> newMetadata) throws InvalidMetadataException {
+                         final Optional<ObjectNode> newMetadata,
+                         final boolean throwException) throws InvalidMetadataException {
 
     }
 }

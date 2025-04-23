@@ -202,11 +202,29 @@ public interface UserMetadataService {
      * @param userId   username
      * @param metadata metadata
      * @param merge    if true, will merge with existing metadata
+     * @param throwExceptionFromInterceptor if true, will start throwing exception
      */
     default void saveDefinitionMetadata(
         QualifiedName name,
         String userId,
         Optional<ObjectNode> metadata,
+        boolean merge,
+        boolean throwExceptionFromInterceptor
+    ) {
+    }
+
+    /**
+     * update definition metadata with interceptor applied.
+     *
+     * @param name     name
+     * @param userId   username
+     * @param metadata metadata
+     * @param merge    if true, will merge with existing metadata
+     */
+    default void updateDefinitionMetadata(
+        QualifiedName name,
+        String userId,
+        ObjectNode metadata,
         boolean merge
     ) {
     }

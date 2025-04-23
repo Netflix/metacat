@@ -104,6 +104,16 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     }
 
     @Override
+    public void updateDefinitionMetadata(
+        final QualifiedName name,
+        final String userId,
+        final ObjectNode definitionMetadata,
+        final boolean merge) {
+
+        saveDefinitionMetadata(name, userId, Optional.of(definitionMetadata), merge, true);
+    }
+
+    @Override
     public void saveMetadata(final String userId, final HasMetadata holder, final boolean merge) {
         super.saveMetadata(userId, holder, merge);
     }
@@ -589,7 +599,9 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     public void saveDefinitionMetadata(
         @Nonnull final QualifiedName name,
         @Nonnull final String userId,
-        @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
+        @Nonnull final Optional<ObjectNode> metadata,
+        final boolean merge,
+        final boolean throwExceptionFromInterceptor)
         throws InvalidMetadataException {
         final Optional<ObjectNode> existingData =
             config.isDefinitionMetadataSelectForUpdateEnabled()
@@ -598,7 +610,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             this,
             name,
             existingData,
-            metadata
+            metadata,
+            throwExceptionFromInterceptor
         );
         final int count;
         if (existingData.isPresent() && metadata.isPresent()) {
