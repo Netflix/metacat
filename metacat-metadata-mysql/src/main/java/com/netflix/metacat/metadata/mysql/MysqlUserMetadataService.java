@@ -87,6 +87,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param metacatJson         json utility
      * @param config              config
      * @param metadataInterceptor metadata interceptor
+     * @param metadataPreMergeInterceptor metadataPreMergeInterceptor
      */
     public MysqlUserMetadataService(
         final JdbcTemplate jdbcTemplate,

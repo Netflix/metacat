@@ -74,6 +74,7 @@ public class MySqlUserMetadataConfig {
      * @param config       System config to use
      * @param metacatJson  Json Utilities to use
      * @param metadataInterceptor  business metadata manager
+     * @param metadataPreMergeInterceptor metadataPreMergeInterceptor
      * @return User metadata service based on MySql
      */
     @Bean
@@ -84,7 +85,13 @@ public class MySqlUserMetadataConfig {
         final MetadataInterceptor metadataInterceptor,
         final MetadataPreMergeInterceptor metadataPreMergeInterceptor
         ) {
-        return new MysqlUserMetadataService(jdbcTemplate, metacatJson, config, metadataInterceptor, metadataPreMergeInterceptor);
+        return new MysqlUserMetadataService(
+            jdbcTemplate,
+            metacatJson,
+            config,
+            metadataInterceptor,
+            metadataPreMergeInterceptor
+        );
     }
 
 
