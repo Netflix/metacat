@@ -32,6 +32,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataPreMergeInterceptor;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Data;
@@ -77,6 +78,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     protected final Config config;
     protected JdbcTemplate jdbcTemplate;
     protected final MetadataInterceptor metadataInterceptor;
+    protected final MetadataPreMergeInterceptor metadataPreMergeInterceptor;
 
     /**
      * Constructor.
@@ -90,13 +92,14 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         final JdbcTemplate jdbcTemplate,
         final MetacatJson metacatJson,
         final Config config,
-        final MetadataInterceptor metadataInterceptor
-
+        final MetadataInterceptor metadataInterceptor,
+        final MetadataPreMergeInterceptor metadataPreMergeInterceptor
     ) {
         this.metacatJson = metacatJson;
         this.config = config;
         this.jdbcTemplate = jdbcTemplate;
         this.metadataInterceptor = metadataInterceptor;
+        this.metadataPreMergeInterceptor = metadataPreMergeInterceptor;
     }
 
     @Override
