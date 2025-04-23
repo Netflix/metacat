@@ -358,6 +358,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Nonnull
     @Override
+    @Transactional(readOnly = false)
     public Optional<ObjectNode> getDefinitionMetadata(
         @Nonnull final QualifiedName name) {
         final Optional<ObjectNode> retData = getJsonForKey(
