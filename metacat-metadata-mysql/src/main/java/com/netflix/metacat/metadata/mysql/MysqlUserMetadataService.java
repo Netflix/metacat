@@ -521,15 +521,18 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
-    public int executeUpdateForKey(final String query, final long... longValues) {
+    @Override
+    public int executeUpdate(final String query, final Object[] params) {
         try {
-            final SqlParameterValue[] values =
-                Arrays.stream(longValues).mapToObj(keyValue -> new SqlParameterValue(Types.BIGINT, keyValue))
-                    .toArray(SqlParameterValue[]::new);
-            return jdbcTemplate.update(query, (Object[]) values);
+            // Execute the update query with the parameter values
+            return jdbcTemplate.update(query, params);
         } catch (Exception e) {
-            final String message = String.format("Failed to save data for %s", Arrays.toString(longValues));
+            // Log the error with the parameters that caused the failure
+            final String message =
+                String.format("Failed to execute update for query: %s with values: %s", query, Arrays.toString(params));
             log.error(message, e);
+
+            // Throw a custom exception with the error message and original exception
             throw new UserMetadataServiceException(message, e);
         }
     }

@@ -338,4 +338,15 @@ public interface UserMetadataService {
      */
     default void populateOwnerIfMissing(HasDefinitionMetadata holder, String owner) {
     }
+
+    /**
+     * Execute an update query in the metadataService.
+     *
+     * @param query query
+     * @param params params passed into query
+     * @return number of rows updated
+     */
+    default int executeUpdate(final String query, final Object[] params) {
+        return 0;
+    }
 }
