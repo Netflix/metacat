@@ -116,7 +116,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Nonnull
     @Override
-    @Transactional(readOnly = false)
+    @Transactional(readOnly = true)
     public Optional<ObjectNode> getDefinitionMetadataWithInterceptor(
         @Nonnull final QualifiedName name,
         final GetMetadataInterceptorParameters getMetadataInterceptorParameters) {
@@ -358,11 +358,21 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
 
     @Nonnull
     @Override
-    @Transactional(readOnly = false)
+    @Transactional(readOnly = true)
     public Optional<ObjectNode> getDefinitionMetadata(
         @Nonnull final QualifiedName name) {
         final Optional<ObjectNode> retData = getJsonForKey(
             name.isPartitionDefinition() ? SQL.GET_PARTITION_DEFINITION_METADATA : SQL.GET_DEFINITION_METADATA,
+            name.toString());
+        return retData;
+    }
+
+    @Nonnull
+    protected Optional<ObjectNode> getDefinitionMetadataForUpdate(
+        @Nonnull final QualifiedName name) {
+        final Optional<ObjectNode> retData = getJsonForKey(
+            name.isPartitionDefinition()
+                ? SQL.GET_PARTITION_DEFINITION_METADATA : SQL.GET_DEFINITION_METADATA_FOR_UPDATE,
             name.toString());
         return retData;
     }
@@ -581,7 +591,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         @Nonnull final String userId,
         @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
         throws InvalidMetadataException {
-        final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
+        final Optional<ObjectNode> existingData = getDefinitionMetadataForUpdate(name);
         metadataPreMergeInterceptor.onWrite(
             this,
             name,
@@ -992,6 +1002,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         static final String GET_DATA_METADATAS =
             "select uri name,data from data_metadata where uri in (%s)";
         static final String GET_DEFINITION_METADATA =
+            "select name, data from definition_metadata where name=?";
+        static final String GET_DEFINITION_METADATA_FOR_UPDATE =
             "select name, data from definition_metadata where name=? for update";
         static final String GET_PARTITION_DEFINITION_METADATA =
             "select name, data from partition_definition_metadata where name=?";
