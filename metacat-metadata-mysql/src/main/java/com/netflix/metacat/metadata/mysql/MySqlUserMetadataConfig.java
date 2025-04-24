@@ -17,6 +17,8 @@ import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
+import com.netflix.metacat.common.server.usermetadata.MetadataPostProcessor;
+import com.netflix.metacat.common.server.usermetadata.MetadataPostProcessorImpl;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.LookupService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
@@ -55,12 +57,24 @@ public class MySqlUserMetadataConfig {
     }
 
     /**
+     * MetadataPostProcessor.
+     * @return MetadataPostProcessorImpl
+     */
+    @Bean
+    @ConditionalOnMissingBean(MetadataPostProcessor.class)
+    public MetadataPostProcessor metadataSqlInterceptor(
+    ) {
+        return new MetadataPostProcessorImpl();
+    }
+
+    /**
      * User Metadata service.
      *
      * @param jdbcTemplate JDBC template
      * @param config       System config to use
      * @param metacatJson  Json Utilities to use
      * @param metadataInterceptor  business metadata manager
+     * @param metadataPostProcessor metadataPostProcessor
      * @return User metadata service based on MySql
      */
     @Bean
@@ -68,9 +82,16 @@ public class MySqlUserMetadataConfig {
         @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
         final Config config,
         final MetacatJson metacatJson,
-        final MetadataInterceptor metadataInterceptor
+        final MetadataInterceptor metadataInterceptor,
+        final MetadataPostProcessor metadataPostProcessor
     ) {
-        return new MysqlUserMetadataService(jdbcTemplate, metacatJson, config, metadataInterceptor);
+        return new MysqlUserMetadataService(
+            jdbcTemplate,
+            metacatJson,
+            config,
+            metadataInterceptor,
+            metadataPostProcessor
+        );
     }
 
 

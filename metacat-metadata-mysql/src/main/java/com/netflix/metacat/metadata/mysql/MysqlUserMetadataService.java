@@ -32,6 +32,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataPostProcessor;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Data;
@@ -68,15 +69,16 @@ import java.util.stream.Collectors;
 @SuppressFBWarnings
 @Transactional("metadataTxManager")
 public class MysqlUserMetadataService extends BaseUserMetadataService {
-    private static final String NAME_OWNER = "owner";
-    private static final String NAME_USERID = "userId";
-    private static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
+    protected static final String NAME_OWNER = "owner";
+    protected static final String NAME_USERID = "userId";
+    protected static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
         "id", "date_created", "created_by", "last_updated_by", "name", "last_updated");
-    private static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
-    private final MetacatJson metacatJson;
-    private final Config config;
-    private JdbcTemplate jdbcTemplate;
-    private final MetadataInterceptor metadataInterceptor;
+    protected static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
+    protected final MetacatJson metacatJson;
+    protected final Config config;
+    protected JdbcTemplate jdbcTemplate;
+    protected final MetadataInterceptor metadataInterceptor;
+    protected final MetadataPostProcessor metadataPostProcessor;
 
     /**
      * Constructor.
@@ -85,18 +87,20 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param metacatJson         json utility
      * @param config              config
      * @param metadataInterceptor metadata interceptor
+     * @param metadataPostProcessor metadataPostProcessor
      */
     public MysqlUserMetadataService(
         final JdbcTemplate jdbcTemplate,
         final MetacatJson metacatJson,
         final Config config,
-        final MetadataInterceptor metadataInterceptor
-
+        final MetadataInterceptor metadataInterceptor,
+        final MetadataPostProcessor metadataPostProcessor
     ) {
         this.metacatJson = metacatJson;
         this.config = config;
         this.jdbcTemplate = jdbcTemplate;
         this.metadataInterceptor = metadataInterceptor;
+        this.metadataPostProcessor = metadataPostProcessor;
     }
 
     @Override
@@ -521,6 +525,22 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
+    @Override
+    public int executeUpdate(final String query, final Object[] params) {
+        try {
+            // Execute the update query with the parameter values
+            return jdbcTemplate.update(query, params);
+        } catch (Exception e) {
+            // Log the error with the parameters that caused the failure
+            final String message =
+                String.format("Failed to execute update for query: %s with values: %s", query, Arrays.toString(params));
+            log.error(message, e);
+
+            // Throw a custom exception with the error message and original exception
+            throw new UserMetadataServiceException(message, e);
+        }
+    }
+
     /**
      * executeUpdateForKey.
      *
@@ -528,7 +548,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param keyValues parameters
      * @return number of updated rows
      */
-    private int executeUpdateForKey(final String query, final String... keyValues) {
+    protected int executeUpdateForKey(final String query, final String... keyValues) {
         try {
             final SqlParameterValue[] values =
                 Arrays.stream(keyValues).map(keyValue -> new SqlParameterValue(Types.VARCHAR, keyValue))
@@ -541,7 +561,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
-    private void throwIfPartitionDefinitionMetadataDisabled() {
+    protected void throwIfPartitionDefinitionMetadataDisabled() {
         if (config.disablePartitionDefinitionMetadata()) {
             throw new MetacatBadRequestException("Partition Definition metadata updates are disabled");
         }
@@ -579,6 +599,11 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         throws InvalidMetadataException {
         final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
         final int count;
+        ObjectNode userIntendedMetadata = null;
+        if (metadata.isPresent()) {
+            userIntendedMetadata = metadata.get().deepCopy();
+        }
+
         if (existingData.isPresent() && metadata.isPresent()) {
             ObjectNode merged = existingData.get();
             if (merge) {
@@ -600,7 +625,6 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 merged.toString(),
                 userId,
                 name.toString());
-
         } else {
             // apply interceptor to change the object node
             if (metadata.isPresent()) {
@@ -621,6 +645,12 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
                 name.toString()
             )).orElse(1);
         }
+
+        metadataPostProcessor.postProcess(
+            this,
+            name,
+            userIntendedMetadata
+        );
 
         if (count != 1) {
             throw new IllegalStateException("Expected one row to be insert or update for " + name);
