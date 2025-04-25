@@ -101,6 +101,13 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         this.jdbcTemplate = jdbcTemplate;
         this.metadataInterceptor = metadataInterceptor;
         this.metadataPreMergeInterceptor = metadataPreMergeInterceptor;
+        checkReadCommittedIsolation();
+    }
+
+    protected void checkReadCommittedIsolation() {
+        final String isolationLevel = jdbcTemplate.queryForObject(
+            "SELECT @@session.transaction_isolation", String.class);
+        System.out.println("Hey, Current Isolation Level: " + isolationLevel);
     }
 
     @Override
@@ -120,6 +127,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     public Optional<ObjectNode> getDefinitionMetadataWithInterceptor(
         @Nonnull final QualifiedName name,
         final GetMetadataInterceptorParameters getMetadataInterceptorParameters) {
+        checkReadCommittedIsolation();
         //not applying interceptor
         final Optional<ObjectNode> retData = getDefinitionMetadata(name);
         retData.ifPresent(objectNode ->
@@ -361,6 +369,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @Transactional(readOnly = true)
     public Optional<ObjectNode> getDefinitionMetadata(
         @Nonnull final QualifiedName name) {
+        checkReadCommittedIsolation();
         final Optional<ObjectNode> retData = getJsonForKey(
             name.isPartitionDefinition() ? SQL.GET_PARTITION_DEFINITION_METADATA : SQL.GET_DEFINITION_METADATA,
             name.toString());
@@ -370,6 +379,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     @Nonnull
     protected Optional<ObjectNode> getDefinitionMetadataForUpdate(
         @Nonnull final QualifiedName name) {
+        checkReadCommittedIsolation();
         final Optional<ObjectNode> retData = getJsonForKey(
             name.isPartitionDefinition()
                 ? SQL.GET_PARTITION_DEFINITION_METADATA : SQL.GET_DEFINITION_METADATA_FOR_UPDATE,
