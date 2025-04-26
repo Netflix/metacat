@@ -41,7 +41,6 @@ public class ServiceProperties {
     private int listTableNamesPageSize = 10000;
     private int listDatabaseEntitiesPageSize = 1000;
     private int listDatabaseNamesPageSize = 10000;
-
     /**
      * Max related properties.
      *

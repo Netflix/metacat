@@ -591,7 +591,9 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         @Nonnull final String userId,
         @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
         throws InvalidMetadataException {
-        final Optional<ObjectNode> existingData = getDefinitionMetadataForUpdate(name);
+        final Optional<ObjectNode> existingData =
+            config.isDefinitionMetadataSelectForUpdateEnabled()
+                ? getDefinitionMetadataForUpdate(name) : getDefinitionMetadata(name);
         metadataPreMergeInterceptor.onWrite(
             this,
             name,
