@@ -32,6 +32,7 @@ public class UserMetadata {
     private Config config = new Config();
     private int queryTimeoutInSeconds = 60;
     private int longQueryTimeoutInSeconds = 120;
+    private boolean definitionMetadataSelectForUpdateEnabled;
 
     /**
      * config related properties.

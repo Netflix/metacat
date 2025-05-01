@@ -649,5 +649,13 @@ public interface Config {
      * @return parentChildRelationshipProperties
      */
     ParentChildRelationshipProperties getParentChildRelationshipProperties();
+
+
+    /**
+     * Whether we enable select for update during saveDefinitionMetadata.
+     *
+     * @return True if it should be.
+     */
+    boolean isDefinitionMetadataSelectForUpdateEnabled();
 }
 

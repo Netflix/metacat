@@ -32,6 +32,7 @@ import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.BaseUserMetadataService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor;
+import com.netflix.metacat.common.server.usermetadata.MetadataPreMergeInterceptor;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Data;
@@ -68,15 +69,16 @@ import java.util.stream.Collectors;
 @SuppressFBWarnings
 @Transactional("metadataTxManager")
 public class MysqlUserMetadataService extends BaseUserMetadataService {
-    private static final String NAME_OWNER = "owner";
-    private static final String NAME_USERID = "userId";
-    private static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
+    protected static final String NAME_OWNER = "owner";
+    protected static final String NAME_USERID = "userId";
+    protected static final List<String> DEFINITION_METADATA_SORT_BY_COLUMNS = Arrays.asList(
         "id", "date_created", "created_by", "last_updated_by", "name", "last_updated");
-    private static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
-    private final MetacatJson metacatJson;
-    private final Config config;
-    private JdbcTemplate jdbcTemplate;
-    private final MetadataInterceptor metadataInterceptor;
+    protected static final List<String> VALID_SORT_ORDER = Arrays.asList("ASC", "DESC");
+    protected final MetacatJson metacatJson;
+    protected final Config config;
+    protected JdbcTemplate jdbcTemplate;
+    protected final MetadataInterceptor metadataInterceptor;
+    protected final MetadataPreMergeInterceptor metadataPreMergeInterceptor;
 
     /**
      * Constructor.
@@ -85,18 +87,20 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param metacatJson         json utility
      * @param config              config
      * @param metadataInterceptor metadata interceptor
+     * @param metadataPreMergeInterceptor metadataPreMergeInterceptor
      */
     public MysqlUserMetadataService(
         final JdbcTemplate jdbcTemplate,
         final MetacatJson metacatJson,
         final Config config,
-        final MetadataInterceptor metadataInterceptor
-
+        final MetadataInterceptor metadataInterceptor,
+        final MetadataPreMergeInterceptor metadataPreMergeInterceptor
     ) {
         this.metacatJson = metacatJson;
         this.config = config;
         this.jdbcTemplate = jdbcTemplate;
         this.metadataInterceptor = metadataInterceptor;
+        this.metadataPreMergeInterceptor = metadataPreMergeInterceptor;
     }
 
     @Override
@@ -363,6 +367,16 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         return retData;
     }
 
+    @Nonnull
+    protected Optional<ObjectNode> getDefinitionMetadataForUpdate(
+        @Nonnull final QualifiedName name) {
+        final Optional<ObjectNode> retData = getJsonForKey(
+            name.isPartitionDefinition()
+                ? SQL.GET_PARTITION_DEFINITION_METADATA : SQL.GET_DEFINITION_METADATA_FOR_UPDATE,
+            name.toString());
+        return retData;
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<QualifiedName> getDescendantDefinitionNames(@Nonnull final QualifiedName name) {
@@ -528,7 +542,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
      * @param keyValues parameters
      * @return number of updated rows
      */
-    private int executeUpdateForKey(final String query, final String... keyValues) {
+    protected int executeUpdateForKey(final String query, final String... keyValues) {
         try {
             final SqlParameterValue[] values =
                 Arrays.stream(keyValues).map(keyValue -> new SqlParameterValue(Types.VARCHAR, keyValue))
@@ -541,7 +555,7 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
     }
 
-    private void throwIfPartitionDefinitionMetadataDisabled() {
+    protected void throwIfPartitionDefinitionMetadataDisabled() {
         if (config.disablePartitionDefinitionMetadata()) {
             throw new MetacatBadRequestException("Partition Definition metadata updates are disabled");
         }
@@ -577,7 +591,15 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         @Nonnull final String userId,
         @Nonnull final Optional<ObjectNode> metadata, final boolean merge)
         throws InvalidMetadataException {
-        final Optional<ObjectNode> existingData = getDefinitionMetadata(name);
+        final Optional<ObjectNode> existingData =
+            config.isDefinitionMetadataSelectForUpdateEnabled()
+                ? getDefinitionMetadataForUpdate(name) : getDefinitionMetadata(name);
+        metadataPreMergeInterceptor.onWrite(
+            this,
+            name,
+            existingData,
+            metadata
+        );
         final int count;
         if (existingData.isPresent() && metadata.isPresent()) {
             ObjectNode merged = existingData.get();
@@ -983,6 +1005,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
             "select uri name,data from data_metadata where uri in (%s)";
         static final String GET_DEFINITION_METADATA =
             "select name, data from definition_metadata where name=?";
+        static final String GET_DEFINITION_METADATA_FOR_UPDATE =
+            "select name, data from definition_metadata where name=? for update";
         static final String GET_PARTITION_DEFINITION_METADATA =
             "select name, data from partition_definition_metadata where name=?";
         static final String GET_DEFINITION_METADATAS =

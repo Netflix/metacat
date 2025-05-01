@@ -708,4 +708,9 @@ public class DefaultConfigImpl implements Config {
     public ParentChildRelationshipProperties getParentChildRelationshipProperties() {
         return this.metacatProperties.getParentChildRelationshipProperties();
     }
+
+    @Override
+    public boolean isDefinitionMetadataSelectForUpdateEnabled() {
+        return this.metacatProperties.getUsermetadata().isDefinitionMetadataSelectForUpdateEnabled();
+    }
 }
