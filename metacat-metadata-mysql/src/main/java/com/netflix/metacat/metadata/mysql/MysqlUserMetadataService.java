@@ -645,7 +645,8 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
         }
 
         if (count != 1) {
-            throw new IllegalStateException("Expected one row to be insert or update for " + name);
+            throw new IllegalStateException("Expected one row to be insert or update for " + name
+                + (metadata.isPresent() ? metadata.get().toPrettyString() : ""));
         }
     }
 
