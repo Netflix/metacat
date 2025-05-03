@@ -114,7 +114,8 @@ public class DatabaseServiceImpl implements DatabaseService {
      * {@inheritDoc}
      */
     @Override
-    public void update(final QualifiedName name, final DatabaseDto dto) {
+    public void update(final QualifiedName name, final DatabaseDto dto,
+                       final boolean shouldThrowExceptionOnMetadataSaveFailure) {
         validate(name);
         log.info("Updating schema {}", name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -138,8 +139,9 @@ public class DatabaseServiceImpl implements DatabaseService {
      * {@inheritDoc}
      */
     @Override
-    public DatabaseDto updateAndReturn(final QualifiedName name, final DatabaseDto dto) {
-        update(name, dto);
+    public DatabaseDto updateAndReturn(final QualifiedName name, final DatabaseDto dto,
+                                       final boolean shouldThrowExceptionOnMetadataSaveFailure) {
+        update(name, dto, shouldThrowExceptionOnMetadataSaveFailure);
         return get(name);
     }
 

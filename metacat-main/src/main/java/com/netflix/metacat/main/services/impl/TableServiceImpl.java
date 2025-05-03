@@ -635,15 +635,17 @@ public class TableServiceImpl implements TableService {
      * {@inheritDoc}
      */
     @Override
-    public void update(final QualifiedName name, final TableDto tableDto) {
-        updateAndReturn(name, tableDto);
+    public void update(final QualifiedName name, final TableDto tableDto,
+                       final boolean shouldThrowExceptionOnMetadataSaveFailure) {
+        updateAndReturn(name, tableDto, shouldThrowExceptionOnMetadataSaveFailure);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public TableDto updateAndReturn(final QualifiedName name, final TableDto tableDto) {
+    public TableDto updateAndReturn(final QualifiedName name, final TableDto tableDto,
+                                    final boolean shouldThrowExceptionOnMetadataSaveFailure) {
         validate(name);
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final TableDto oldTable = get(name, GetTableServiceParameters.builder()
@@ -691,7 +693,11 @@ public class TableServiceImpl implements TableService {
                     .record(duration, TimeUnit.MILLISECONDS);
             }
         } catch (Exception e) {
-            handleException(name, ignoreErrorsAfterUpdate, "saveMetadata", e);
+            if (shouldThrowExceptionOnMetadataSaveFailure) {
+                handleException(name, false, "saveMetadata", e);
+            } else {
+                handleException(name, ignoreErrorsAfterUpdate, "saveMetadata", e);
+            }
         }
 
         // ignoreErrorsAfterUpdate is currently set only for iceberg tables

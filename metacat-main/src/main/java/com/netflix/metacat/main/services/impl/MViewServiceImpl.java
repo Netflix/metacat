@@ -215,21 +215,23 @@ public class MViewServiceImpl implements MViewService {
      * {@inheritDoc}
      */
     @Override
-    public void update(final QualifiedName name, final TableDto tableDto) {
-        updateAndReturn(name, tableDto);
+    public void update(final QualifiedName name, final TableDto tableDto,
+                       final boolean shouldThrowExceptionOnMetadataSaveFailure) {
+        updateAndReturn(name, tableDto, shouldThrowExceptionOnMetadataSaveFailure);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public TableDto updateAndReturn(final QualifiedName name, final TableDto tableDto) {
+    public TableDto updateAndReturn(final QualifiedName name, final TableDto tableDto,
+                                    final boolean shouldThrowExceptionOnMetadataSaveFailure) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         eventBus.post(new MetacatUpdateMViewPreEvent(name, metacatRequestContext, this, tableDto));
         final QualifiedName viewQName =
             QualifiedName.ofTable(name.getCatalogName(), VIEW_DB_NAME, createViewName(name));
         log.info("Updating view {}.", viewQName);
-        tableService.update(viewQName, tableDto);
+        tableService.update(viewQName, tableDto, shouldThrowExceptionOnMetadataSaveFailure);
         final TableDto updatedDto = getOpt(name, GetTableServiceParameters.builder()
             .includeInfo(true)
             .includeDefinitionMetadata(false)

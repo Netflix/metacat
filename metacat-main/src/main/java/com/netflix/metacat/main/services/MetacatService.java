@@ -39,8 +39,10 @@ public interface MetacatService<T extends BaseDto> {
      *
      * @param name qualified name of the object
      * @param dto  object dto
+     * @param shouldThrowExceptionOnMetadataSaveFailure shouldThrowExceptionOnMetadataSaveFailure
+     *
      */
-    void update(QualifiedName name, T dto);
+    void update(QualifiedName name, T dto, boolean shouldThrowExceptionOnMetadataSaveFailure);
 
 
     /**
@@ -48,9 +50,10 @@ public interface MetacatService<T extends BaseDto> {
      *
      * @param name qualified name of the object
      * @param dto  object dto
+     * @param shouldThrowExceptionOnMetadataSaveFailure whether to throw exception when fail to save Metadata
      * @return updated object
      */
-    T updateAndReturn(QualifiedName name, T dto);
+    T updateAndReturn(QualifiedName name, T dto, boolean shouldThrowExceptionOnMetadataSaveFailure);
 
     /**
      * Deletes the object. Returns the metadata of the object deleted.
