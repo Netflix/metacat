@@ -57,6 +57,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Nullable;
+
 import jakarta.validation.Valid;
 import java.util.Collections;
 import java.util.List;
@@ -1105,7 +1106,7 @@ public class MetacatController implements MetacatV1 {
                 newDto.setUri(databaseUpdateRequestDto.getUri());
                 newDto.setMetadata(databaseUpdateRequestDto.getMetadata());
                 newDto.setDefinitionMetadata(databaseUpdateRequestDto.getDefinitionMetadata());
-                this.databaseService.update(name, newDto);
+                this.databaseService.update(name, newDto, false /*no-op*/);
                 return null;
             }
         );
@@ -1160,7 +1161,7 @@ public class MetacatController implements MetacatV1 {
         return this.requestWrapper.processRequest(
             name,
             "getMView",
-            () -> this.mViewService.updateAndReturn(name, table)
+            () -> this.mViewService.updateAndReturn(name, table, false)
         );
     }
 
@@ -1202,7 +1203,10 @@ public class MetacatController implements MetacatV1 {
         @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
         @Parameter(description = "The table information", required = true)
-        @RequestBody final TableDto table
+        @RequestBody final TableDto table,
+        @RequestParam(
+            name = "shouldThrowExceptionOnMetadataSaveFailure",
+            defaultValue = "false") final boolean shouldThrowExceptionOnMetadataSaveFailure
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
@@ -1216,7 +1220,7 @@ public class MetacatController implements MetacatV1 {
                     ),
                     "Table name does not match the name in the table"
                 );
-                return this.tableService.updateAndReturn(name, table);
+                return this.tableService.updateAndReturn(name, table, shouldThrowExceptionOnMetadataSaveFailure);
             }
         );
     }

@@ -174,11 +174,37 @@ public interface MetacatV1 {
      * @param table        table
      * @return table
      */
+    default TableDto updateTable(
+        String catalogName,
+        String databaseName,
+        String tableName,
+        TableDto table
+    ) {
+        return updateTable(
+            catalogName,
+            databaseName,
+            tableName,
+            table,
+            false
+        );
+    }
+
+    /**
+     * Update table.
+     *
+     * @param catalogName  catalog name
+     * @param databaseName database name
+     * @param tableName    table name
+     * @param table        table
+     * @param shouldThrowExceptionOnMetadataSaveFailure shouldThrowExceptionOnMetadataSaveFailure
+     * @return table
+     */
     TableDto updateTable(
         final String catalogName,
         final String databaseName,
         final String tableName,
-        final TableDto table
+        final TableDto table,
+        final boolean shouldThrowExceptionOnMetadataSaveFailure
     );
 
     /**

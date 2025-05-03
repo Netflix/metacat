@@ -563,6 +563,31 @@ public interface MetacatV1 {
      * @param table        table
      * @return table
      */
+    default TableDto updateTable(
+        String catalogName,
+        String databaseName,
+        String tableName,
+        TableDto table
+    ) {
+        return updateTable(
+            catalogName,
+            databaseName,
+            tableName,
+            table,
+            false
+        );
+    }
+
+    /**
+     * Update table.
+     *
+     * @param catalogName  catalog name
+     * @param databaseName database name
+     * @param tableName    table name
+     * @param table        table
+     * @param shouldThrowExceptionOnMetadataSaveFailure shouldThrowExceptionOnMetadataSaveFailure
+     * @return table
+     */
     @PUT
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -574,6 +599,9 @@ public interface MetacatV1 {
             String databaseName,
         @PathParam("table-name")
             String tableName,
-        TableDto table
+        TableDto table,
+        @DefaultValue("false")
+        @QueryParam("shouldThrowExceptionOnMetadataSaveFailure")
+        boolean shouldThrowExceptionOnMetadataSaveFailure
     );
 }

@@ -99,6 +99,4 @@ public interface TableService extends MetacatService<TableDto> {
      * @return list of table names
      */
     List<QualifiedName> getQualifiedNames(QualifiedName name, GetTableNamesServiceParameters parameters);
-
-
 }

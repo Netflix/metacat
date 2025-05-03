@@ -564,7 +564,8 @@ public class PartitionServiceImpl implements PartitionService {
      * {@inheritDoc}
      */
     @Override
-    public void update(final QualifiedName name, final PartitionDto partitionDto) {
+    public void update(final QualifiedName name, final PartitionDto partitionDto,
+                       final boolean shouldThrowExceptionOnMetadataSaveFailure) {
         final PartitionsSaveRequestDto dto = new PartitionsSaveRequestDto();
         dto.setPartitions(Lists.newArrayList(partitionDto));
         save(name, dto);
@@ -574,8 +575,9 @@ public class PartitionServiceImpl implements PartitionService {
      * {@inheritDoc}
      */
     @Override
-    public PartitionDto updateAndReturn(final QualifiedName name, final PartitionDto dto) {
-        update(name, dto);
+    public PartitionDto updateAndReturn(final QualifiedName name, final PartitionDto dto,
+                                        final boolean shouldThrowExceptionOnMetadataSaveFailure) {
+        update(name, dto, shouldThrowExceptionOnMetadataSaveFailure);
         return dto;
     }
 

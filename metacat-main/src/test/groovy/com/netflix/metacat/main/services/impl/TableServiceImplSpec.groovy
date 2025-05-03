@@ -265,7 +265,7 @@ class TableServiceImplSpec extends Specification {
         def updatedTableDto = new TableDto(name: name, serde: new StorageDto(uri: 's3:/a/b/c'))
 
         when:
-        def result = service.updateAndReturn(name, updatedTableDto)
+        def result = service.updateAndReturn(name, updatedTableDto, false)
 
         then:
         2 * usermetadataService.getDefinitionMetadataWithInterceptor(_, _) >> Optional.empty()
@@ -281,14 +281,14 @@ class TableServiceImplSpec extends Specification {
 
         when:
         updatedTableDto.setDefinitionMetadata(toObjectNode("{\"owner\":{\"userId\":\"ssarma\"}}"))
-        service.updateAndReturn(name, updatedTableDto)
+        service.updateAndReturn(name, updatedTableDto, false)
 
         then:
         1 * ownerValidationService.enforceOwnerValidation("updateTable", name, updatedTableDto)
 
         when:
         tableDto.setDefinitionMetadata(toObjectNode("{\"owner\":{\"userId\":\"ssarma\"}}"))
-        service.updateAndReturn(name, updatedTableDto)
+        service.updateAndReturn(name, updatedTableDto, false)
 
         then:
         0 * ownerValidationService.enforceOwnerValidation(_, _, _)
@@ -614,7 +614,7 @@ class TableServiceImplSpec extends Specification {
         def updatedTableDto = new TableDto(name: name, serde: new StorageDto(uri: 's3:/a/b/c'))
 
         when:
-        def result = service.updateAndReturn(name, updatedTableDto)
+        def result = service.updateAndReturn(name, updatedTableDto, false)
 
         then:
         1 * converterUtil.toTableDto(_) >> this.tableDto
@@ -628,7 +628,7 @@ class TableServiceImplSpec extends Specification {
         noExceptionThrown()
 
         when:
-        result = service.updateAndReturn(name, updatedTableDto)
+        result = service.updateAndReturn(name, updatedTableDto, false)
 
         then:
         1 * converterUtil.toTableDto(_) >> this.tableDto
