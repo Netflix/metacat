@@ -644,83 +644,7 @@ public class TableServiceImpl implements TableService {
      */
     @Override
     public TableDto updateAndReturn(final QualifiedName name, final TableDto tableDto) {
-        validate(name);
-        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
-        final TableDto oldTable = get(name, GetTableServiceParameters.builder()
-            .disableOnReadMetadataIntercetor(false)
-            .includeInfo(true)
-            .includeDataMetadata(true)
-            .includeDefinitionMetadata(true)
-            .build()).orElseThrow(() -> new TableNotFoundException(name));
-        eventBus.post(new MetacatUpdateTablePreEvent(name, metacatRequestContext, this, oldTable, tableDto));
-
-        if (MetacatUtils.hasDoNotModifyForIcebergMigrationTag(oldTable, config.getNoTableUpdateOnTags())) {
-            throw new TableMigrationInProgressException(
-                    MetacatUtils.getIcebergMigrationExceptionMsg("Updates", name.toString()));
-        }
-
-        //
-        // Check if the table schema info is provided. If provided, we should continue calling the update on the table
-        // schema. Uri may exist in the serde when updating data metadata for a table.
-        //
-        boolean ignoreErrorsAfterUpdate = false;
-        if (isTableInfoProvided(tableDto, oldTable)) {
-            ignoreErrorsAfterUpdate = connectorTableServiceProxy.update(name, converterUtil.fromTableDto(tableDto));
-        }
-
-        // we do ownership validation and enforcement only if table owner is set in the dto
-        // because if it is null, we do not update the owner in the existing metadata record
-        if (tableDto.getTableOwner().isPresent()) {
-            // only if the owner is different from the previous, we run the enforcement
-            // for backwards compatibility
-            if (!tableDto.getTableOwner().get().equals(oldTable.getTableOwner().orElse(null))) {
-                ownerValidationService.enforceOwnerValidation("updateTable", name, tableDto);
-            }
-        }
-
-        try {
-            // Merge in metadata if the user sent any
-            if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
-                log.info("Saving user metadata for table {}", name);
-                final long start = registry.clock().wallTime();
-                userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
-
-                final long duration = registry.clock().wallTime() - start;
-                log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
-                registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
-                    .record(duration, TimeUnit.MILLISECONDS);
-            }
-        } catch (Exception e) {
-            handleException(name, ignoreErrorsAfterUpdate, "saveMetadata", e);
-        }
-
-        // ignoreErrorsAfterUpdate is currently set only for iceberg tables
-        if (config.isUpdateIcebergTableAsyncPostEventEnabled() && ignoreErrorsAfterUpdate) {
-            eventBus.post(new MetacatUpdateIcebergTablePostEvent(name,
-                metacatRequestContext, this, oldTable, tableDto));
-            return tableDto;
-        } else {
-            TableDto updatedDto = tableDto;
-            try {
-                updatedDto = get(name,
-                    GetTableServiceParameters.builder()
-                        .disableOnReadMetadataIntercetor(false)
-                        .includeInfo(true)
-                        .includeDataMetadata(true)
-                        .includeDefinitionMetadata(true)
-                        .build()).orElse(tableDto);
-            } catch (Exception e) {
-                handleException(name, ignoreErrorsAfterUpdate, "getTable", e);
-            }
-
-            try {
-                eventBus.post(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable,
-                    updatedDto, updatedDto != tableDto));
-            } catch (Exception e) {
-                handleException(name, ignoreErrorsAfterUpdate, "postEvent", e);
-            }
-            return updatedDto;
-        }
+        return updateAndReturn(name, tableDto, false);
     }
 
     /**
@@ -923,6 +847,92 @@ public class TableServiceImpl implements TableService {
             throw new MetacatBadRequestException("Filter expression cannot be empty");
         }
         return connectorTableServiceProxy.getQualifiedNames(name, parameters);
+    }
+
+    @Override
+    public TableDto updateAndReturn(final QualifiedName name, final TableDto tableDto,
+                                    final boolean shouldThrowExceptionOnMetadataSaveFailure) {
+        validate(name);
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final TableDto oldTable = get(name, GetTableServiceParameters.builder()
+            .disableOnReadMetadataIntercetor(false)
+            .includeInfo(true)
+            .includeDataMetadata(true)
+            .includeDefinitionMetadata(true)
+            .build()).orElseThrow(() -> new TableNotFoundException(name));
+        eventBus.post(new MetacatUpdateTablePreEvent(name, metacatRequestContext, this, oldTable, tableDto));
+
+        if (MetacatUtils.hasDoNotModifyForIcebergMigrationTag(oldTable, config.getNoTableUpdateOnTags())) {
+            throw new TableMigrationInProgressException(
+                MetacatUtils.getIcebergMigrationExceptionMsg("Updates", name.toString()));
+        }
+
+        //
+        // Check if the table schema info is provided. If provided, we should continue calling the update on the table
+        // schema. Uri may exist in the serde when updating data metadata for a table.
+        //
+        boolean ignoreErrorsAfterUpdate = false;
+        if (isTableInfoProvided(tableDto, oldTable)) {
+            ignoreErrorsAfterUpdate = connectorTableServiceProxy.update(name, converterUtil.fromTableDto(tableDto));
+        }
+
+        // we do ownership validation and enforcement only if table owner is set in the dto
+        // because if it is null, we do not update the owner in the existing metadata record
+        if (tableDto.getTableOwner().isPresent()) {
+            // only if the owner is different from the previous, we run the enforcement
+            // for backwards compatibility
+            if (!tableDto.getTableOwner().get().equals(oldTable.getTableOwner().orElse(null))) {
+                ownerValidationService.enforceOwnerValidation("updateTable", name, tableDto);
+            }
+        }
+
+        try {
+            // Merge in metadata if the user sent any
+            if (tableDto.getDataMetadata() != null || tableDto.getDefinitionMetadata() != null) {
+                log.info("Saving user metadata for table {}", name);
+                final long start = registry.clock().wallTime();
+                userMetadataService.saveMetadata(metacatRequestContext.getUserName(), tableDto, true);
+
+                final long duration = registry.clock().wallTime() - start;
+                log.info("Time taken to save user metadata for table {} is {} ms", name, duration);
+                registry.timer(registry.createId(Metrics.TimerSaveTableMetadata.getMetricName()).withTags(name.parts()))
+                    .record(duration, TimeUnit.MILLISECONDS);
+            }
+        } catch (Exception e) {
+            if (shouldThrowExceptionOnMetadataSaveFailure) {
+                handleException(name, false, "saveMetadata", e);
+            } else {
+                handleException(name, ignoreErrorsAfterUpdate, "saveMetadata", e);
+            }
+        }
+
+        // ignoreErrorsAfterUpdate is currently set only for iceberg tables
+        if (config.isUpdateIcebergTableAsyncPostEventEnabled() && ignoreErrorsAfterUpdate) {
+            eventBus.post(new MetacatUpdateIcebergTablePostEvent(name,
+                metacatRequestContext, this, oldTable, tableDto));
+            return tableDto;
+        } else {
+            TableDto updatedDto = tableDto;
+            try {
+                updatedDto = get(name,
+                    GetTableServiceParameters.builder()
+                        .disableOnReadMetadataIntercetor(false)
+                        .includeInfo(true)
+                        .includeDataMetadata(true)
+                        .includeDefinitionMetadata(true)
+                        .build()).orElse(tableDto);
+            } catch (Exception e) {
+                handleException(name, ignoreErrorsAfterUpdate, "getTable", e);
+            }
+
+            try {
+                eventBus.post(new MetacatUpdateTablePostEvent(name, metacatRequestContext, this, oldTable,
+                    updatedDto, updatedDto != tableDto));
+            } catch (Exception e) {
+                handleException(name, ignoreErrorsAfterUpdate, "postEvent", e);
+            }
+            return updatedDto;
+        }
     }
 
     private TableInfo getFromTableServiceProxy(final QualifiedName name,

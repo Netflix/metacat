@@ -100,5 +100,13 @@ public interface TableService extends MetacatService<TableDto> {
      */
     List<QualifiedName> getQualifiedNames(QualifiedName name, GetTableNamesServiceParameters parameters);
 
-
+    /**
+     * Updates the object and return the updated object.
+     *
+     * @param name qualified name of the object
+     * @param dto  object dto
+     * @param shouldThrowExceptionOnMetadataSaveFailure shouldThrowExceptionOnMetadataSaveFailure
+     * @return updated object
+     */
+    TableDto updateAndReturn(QualifiedName name, TableDto dto, boolean shouldThrowExceptionOnMetadataSaveFailure);
 }

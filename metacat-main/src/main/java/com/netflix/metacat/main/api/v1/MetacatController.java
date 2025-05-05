@@ -57,6 +57,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Nullable;
+
 import jakarta.validation.Valid;
 import java.util.Collections;
 import java.util.List;
@@ -634,42 +635,42 @@ public class MetacatController implements MetacatV1 {
         @RequestParam(name = "includeInfoDetails", defaultValue = "false") final boolean includeInfoDetails,
         @Parameter(description = "Whether to include only the metadata location in the response")
         @RequestParam(
-                name = "includeMetadataLocationOnly",
-                defaultValue = "false") final boolean includeMetadataLocationOnly
+            name = "includeMetadataLocationOnly",
+            defaultValue = "false") final boolean includeMetadataLocationOnly
     ) {
         final Supplier<QualifiedName> qualifiedNameSupplier =
-                () -> QualifiedName.ofTable(catalogName, databaseName, tableName);
+            () -> QualifiedName.ofTable(catalogName, databaseName, tableName);
         final QualifiedName name = this.requestWrapper.qualifyName(qualifiedNameSupplier);
         return this.requestWrapper.processRequest(
-                name,
-                "getTable",
-                ImmutableMap.<String, String>builder()
-                    .put("includeInfo", String.valueOf(includeInfo))
-                    .put("includeDefinitionMetadata", String.valueOf(includeDefinitionMetadata))
-                    .put("includeDataMetadata", String.valueOf(includeDataMetadata))
-                    .put("includeMetadataFromConnector", String.valueOf(includeInfoDetails))
-                    .put("includeMetadataLocationOnly", String.valueOf(includeMetadataLocationOnly))
-                    .build(),
-                () -> {
-                    final Optional<TableDto> table = this.tableService.get(
-                            name,
-                            GetTableServiceParameters.builder()
-                                    .includeInfo(includeInfo)
-                                    .includeDefinitionMetadata(includeDefinitionMetadata)
-                                    .includeDataMetadata(includeDataMetadata)
-                                    .disableOnReadMetadataIntercetor(false)
-                                    .includeMetadataFromConnector(includeInfoDetails)
-                                    .includeMetadataLocationOnly(includeMetadataLocationOnly)
-                                    .useCache(true)
-                                    .build()
-                    );
+            name,
+            "getTable",
+            ImmutableMap.<String, String>builder()
+                .put("includeInfo", String.valueOf(includeInfo))
+                .put("includeDefinitionMetadata", String.valueOf(includeDefinitionMetadata))
+                .put("includeDataMetadata", String.valueOf(includeDataMetadata))
+                .put("includeMetadataFromConnector", String.valueOf(includeInfoDetails))
+                .put("includeMetadataLocationOnly", String.valueOf(includeMetadataLocationOnly))
+                .build(),
+            () -> {
+                final Optional<TableDto> table = this.tableService.get(
+                    name,
+                    GetTableServiceParameters.builder()
+                        .includeInfo(includeInfo)
+                        .includeDefinitionMetadata(includeDefinitionMetadata)
+                        .includeDataMetadata(includeDataMetadata)
+                        .disableOnReadMetadataIntercetor(false)
+                        .includeMetadataFromConnector(includeInfoDetails)
+                        .includeMetadataLocationOnly(includeMetadataLocationOnly)
+                        .useCache(true)
+                        .build()
+                );
 
-                    final TableDto tableDto = table.orElseThrow(() -> new TableNotFoundException(name));
-                    // Set the name to whatever the request was for because
-                    // for aliases, this could've been set to the original name
-                    tableDto.setName(qualifiedNameSupplier.get());
-                    return tableDto;
-                }
+                final TableDto tableDto = table.orElseThrow(() -> new TableNotFoundException(name));
+                // Set the name to whatever the request was for because
+                // for aliases, this could've been set to the original name
+                tableDto.setName(qualifiedNameSupplier.get());
+                return tableDto;
+            }
         );
     }
 
@@ -701,11 +702,11 @@ public class MetacatController implements MetacatV1 {
     )
     @Override
     public void tableExists(@Parameter(description = "The name of the catalog", required = true)
-                                @PathVariable("catalog-name") final String catalogName,
+                            @PathVariable("catalog-name") final String catalogName,
                             @Parameter(description = "The name of the database", required = true)
-                                @PathVariable("database-name") final String databaseName,
+                            @PathVariable("database-name") final String databaseName,
                             @Parameter(description = "The name of the table", required = true)
-                                @PathVariable("table-name") final String tableName) {
+                            @PathVariable("table-name") final String tableName) {
         final Supplier<QualifiedName> qualifiedNameSupplier =
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName);
         final QualifiedName name = this.requestWrapper.qualifyName(qualifiedNameSupplier);
@@ -1202,7 +1203,10 @@ public class MetacatController implements MetacatV1 {
         @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName,
         @Parameter(description = "The table information", required = true)
-        @RequestBody final TableDto table
+        @RequestBody final TableDto table,
+        @RequestParam(
+            name = "shouldThrowExceptionOnMetadataSaveFailure",
+            defaultValue = "false") final boolean shouldThrowExceptionOnMetadataSaveFailure
     ) {
         final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
@@ -1216,7 +1220,7 @@ public class MetacatController implements MetacatV1 {
                     ),
                     "Table name does not match the name in the table"
                 );
-                return this.tableService.updateAndReturn(name, table);
+                return this.tableService.updateAndReturn(name, table, shouldThrowExceptionOnMetadataSaveFailure);
             }
         );
     }
