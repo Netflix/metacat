@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.auditing.AuditingHandler;
 import org.springframework.data.auditing.DateTimeProvider;
@@ -180,6 +181,24 @@ public class PolarisStoreConnectorTest {
 
         polarisConnector.deleteTable(dbName, tblName);
         Assert.assertFalse(polarisConnector.tableExistsById(tblEntity.getTblId()));
+    }
+
+    /**
+     * Test database deletion if table exists and ON DELETE CASCADE is disabled.
+     */
+    @Test
+    public void testDbDeletionNoCascade() {
+        final String dbName = generateDatabaseName();
+        final String tblName = generateTableName();
+        final PolarisDatabaseEntity dbEntity = createDB(dbName);
+        final PolarisTableEntity tblEntity = createTable(dbName, tblName);
+
+        Assert.assertTrue(polarisConnector.databaseExists(dbName));
+        Assert.assertTrue(polarisConnector.tableExists(dbName, tblName));
+        Assertions.assertThrows(DataIntegrityViolationException.class, () ->
+            polarisConnector.deleteDatabase(dbName));
+        Assert.assertTrue(polarisConnector.databaseExists(dbName));
+        Assert.assertTrue(polarisConnector.tableExists(dbName, tblName));
     }
 
     /**
