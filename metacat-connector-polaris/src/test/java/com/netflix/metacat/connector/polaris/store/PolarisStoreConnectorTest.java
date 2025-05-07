@@ -193,9 +193,12 @@ public class PolarisStoreConnectorTest {
         final PolarisDatabaseEntity dbEntity = createDB(dbName);
         final PolarisTableEntity tblEntity = createTable(dbName, tblName);
 
+        Assert.assertTrue(polarisConnector.databaseExists(dbName));
+        Assert.assertTrue(polarisConnector.tableExists(dbName, tblName));
         Assertions.assertThrows(DataIntegrityViolationException.class, () ->
             polarisConnector.deleteDatabase(dbName));
         Assert.assertTrue(polarisConnector.databaseExists(dbName));
+        Assert.assertTrue(polarisConnector.tableExists(dbName, tblName));
     }
 
     /**

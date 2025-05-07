@@ -100,7 +100,6 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             throw new ConnectorException(
                 String.format("Failed deleting polaris database %s", name), exception);
         }
-        System.out.println("DID NOT CATCH THE DB DELETE ERROR");
     }
 
     /**
