@@ -72,9 +72,9 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     void createDatabase(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         DatabaseCreateRequestDto databaseCreateRequestDto
     );
 
@@ -93,11 +93,11 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     TableDto createTable(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         @PathParam("table-name")
-            String tableName,
+        String tableName,
         TableDto table
     );
 
@@ -118,18 +118,18 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     TableDto createMView(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         @PathParam("table-name")
-            String tableName,
+        String tableName,
         @PathParam("view-name")
-            String viewName,
+        String viewName,
         @DefaultValue("false")
         @QueryParam("snapshot")
-            Boolean snapshot,
+        Boolean snapshot,
         @QueryParam("filter")
-            String filter
+        String filter
     );
 
     /**
@@ -144,9 +144,9 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     void deleteDatabase(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName
+        String databaseName
     );
 
     /**
@@ -163,11 +163,11 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     TableDto deleteTable(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         @PathParam("table-name")
-            String tableName
+        String tableName
     );
 
     /**
@@ -185,13 +185,13 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     TableDto deleteMView(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         @PathParam("table-name")
-            String tableName,
+        String tableName,
         @PathParam("view-name")
-            String viewName
+        String viewName
     );
 
     /**
@@ -206,7 +206,7 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     CatalogDto getCatalog(
         @PathParam("catalog-name")
-            String catalogName
+        String catalogName
     );
 
     /**
@@ -235,15 +235,15 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     DatabaseDto getDatabase(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         @DefaultValue("true")
         @QueryParam("includeUserMetadata")
-            Boolean includeUserMetadata,
+        Boolean includeUserMetadata,
         @DefaultValue("true")
         @QueryParam("includeTableNames")
-            Boolean includeTableNames
+        Boolean includeTableNames
     );
 
     /**
@@ -258,12 +258,12 @@ public interface MetacatV1 {
      * @return table
      */
     default TableDto getTable(
-            String catalogName,
-            String databaseName,
-            String tableName,
-            Boolean includeInfo,
-            Boolean includeDefinitionMetadata,
-            Boolean includeDataMetadata
+        String catalogName,
+        String databaseName,
+        String tableName,
+        Boolean includeInfo,
+        Boolean includeDefinitionMetadata,
+        Boolean includeDataMetadata
     ) {
         return getTable(catalogName, databaseName, tableName, includeInfo,
             includeDefinitionMetadata, includeDataMetadata, false);
@@ -282,16 +282,16 @@ public interface MetacatV1 {
      * @return table
      */
     default TableDto getTable(
-            String catalogName,
-            String databaseName,
-            String tableName,
-            Boolean includeInfo,
-            Boolean includeDefinitionMetadata,
-            Boolean includeDataMetadata,
-            Boolean includeInfoDetails
+        String catalogName,
+        String databaseName,
+        String tableName,
+        Boolean includeInfo,
+        Boolean includeDefinitionMetadata,
+        Boolean includeDataMetadata,
+        Boolean includeInfoDetails
     ) {
         return getTable(catalogName, databaseName, tableName, includeInfo,
-                includeDefinitionMetadata, includeDataMetadata, includeInfoDetails, false);
+            includeDefinitionMetadata, includeDataMetadata, includeInfoDetails, false);
     }
 
     /**
@@ -314,26 +314,26 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     TableDto getTable(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         @PathParam("table-name")
-            String tableName,
+        String tableName,
         @DefaultValue("true")
         @QueryParam("includeInfo")
-            Boolean includeInfo,
+        Boolean includeInfo,
         @DefaultValue("true")
         @QueryParam("includeDefinitionMetadata")
-            Boolean includeDefinitionMetadata,
+        Boolean includeDefinitionMetadata,
         @DefaultValue("true")
         @QueryParam("includeDataMetadata")
-            Boolean includeDataMetadata,
+        Boolean includeDataMetadata,
         @DefaultValue("false")
         @QueryParam("includeInfoDetails")
-            Boolean includeInfoDetails,
+        Boolean includeInfoDetails,
         @DefaultValue("false")
         @QueryParam("includeMetadataLocationOnly")
-            Boolean includeMetadataLocationOnly
+        Boolean includeMetadataLocationOnly
     );
 
     /**
@@ -363,11 +363,11 @@ public interface MetacatV1 {
     @HEAD
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}")
     void tableExists(@PathParam("catalog-name")
-                         String catalogName,
+                     String catalogName,
                      @PathParam("database-name")
-                         String databaseName,
+                     String databaseName,
                      @PathParam("table-name")
-                         String tableName);
+                     String tableName);
 
     /**
      * Returns a filtered list of table names.
@@ -381,11 +381,11 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     List<QualifiedName> getTableNames(
         @PathParam("catalog-name")
-            final String catalogName,
+        final String catalogName,
         @QueryParam("filter")
-            final String filter,
+        final String filter,
         @QueryParam("limit")
-            Integer limit
+        Integer limit
     );
 
     /**
@@ -407,7 +407,7 @@ public interface MetacatV1 {
         @QueryParam("filter")
         final String filter,
         @QueryParam("limit")
-            Integer limit
+        Integer limit
     );
 
     /**
@@ -422,7 +422,7 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     List<NameDateDto> getMViews(
         @PathParam("catalog-name")
-            String catalogName
+        String catalogName
     );
 
     /**
@@ -439,11 +439,11 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     List<NameDateDto> getMViews(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         @PathParam("table-name")
-            String tableName
+        String tableName
     );
 
     /**
@@ -461,13 +461,13 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     TableDto getMView(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         @PathParam("table-name")
-            String tableName,
+        String tableName,
         @PathParam("view-name")
-            String viewName
+        String viewName
     );
 
     /**
@@ -484,13 +484,13 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     void renameTable(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         @PathParam("table-name")
-            String tableName,
+        String tableName,
         @QueryParam("newTableName")
-            String newTableName
+        String newTableName
     );
 
     /**
@@ -505,7 +505,7 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     void updateCatalog(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         CreateCatalogDto createCatalogDto
     );
 
@@ -522,9 +522,9 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     void updateDatabase(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         DatabaseCreateRequestDto databaseUpdateRequestDto
     );
 
@@ -544,13 +544,13 @@ public interface MetacatV1 {
     @Produces(MediaType.APPLICATION_JSON)
     TableDto updateMView(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         @PathParam("table-name")
-            String tableName,
+        String tableName,
         @PathParam("view-name")
-            String viewName,
+        String viewName,
         TableDto table
     );
 
@@ -563,17 +563,45 @@ public interface MetacatV1 {
      * @param table        table
      * @return table
      */
+    default TableDto updateTable(
+        String catalogName,
+        String databaseName,
+        String tableName,
+        TableDto table
+    ) {
+        return updateTable(
+            catalogName,
+            databaseName,
+            tableName,
+            table,
+            false
+        );
+    }
+
+    /**
+     * Update table.
+     *
+     * @param catalogName  catalog name
+     * @param databaseName database name
+     * @param tableName    table name
+     * @param table        table
+     * @param shouldThrowExceptionOnMetadataSaveFailure shouldThrowExceptionOnMetadataSaveFailure
+     * @return table
+     */
     @PUT
     @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     TableDto updateTable(
         @PathParam("catalog-name")
-            String catalogName,
+        String catalogName,
         @PathParam("database-name")
-            String databaseName,
+        String databaseName,
         @PathParam("table-name")
-            String tableName,
-        TableDto table
+        String tableName,
+        TableDto table,
+        @DefaultValue("false")
+        @QueryParam("shouldThrowExceptionOnMetadataSaveFailure")
+        boolean shouldThrowExceptionOnMetadataSaveFailure
     );
 }

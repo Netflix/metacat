@@ -81,7 +81,7 @@ public interface MetacatV1 {
         final boolean includeInfoDetails
     ) {
         return getTable(catalogName, databaseName, tableName, includeInfo, includeDefinitionMetadata,
-                includeDataMetadata, includeInfoDetails, false);
+            includeDataMetadata, includeInfoDetails, false);
     }
 
     /**
@@ -99,14 +99,14 @@ public interface MetacatV1 {
      * @return table
      */
     TableDto getTable(
-            final String catalogName,
-            final String databaseName,
-            final String tableName,
-            final boolean includeInfo,
-            final boolean includeDefinitionMetadata,
-            final boolean includeDataMetadata,
-            final boolean includeInfoDetails,
-            final boolean includeMetadataLocationOnly
+        final String catalogName,
+        final String databaseName,
+        final String tableName,
+        final boolean includeInfo,
+        final boolean includeDefinitionMetadata,
+        final boolean includeDataMetadata,
+        final boolean includeInfoDetails,
+        final boolean includeMetadataLocationOnly
     );
 
     /**
@@ -174,11 +174,37 @@ public interface MetacatV1 {
      * @param table        table
      * @return table
      */
+    default TableDto updateTable(
+        String catalogName,
+        String databaseName,
+        String tableName,
+        TableDto table
+    ) {
+        return updateTable(
+            catalogName,
+            databaseName,
+            tableName,
+            table,
+            false
+        );
+    }
+
+    /**
+     * Update table.
+     *
+     * @param catalogName  catalog name
+     * @param databaseName database name
+     * @param tableName    table name
+     * @param table        table
+     * @param shouldThrowExceptionOnMetadataSaveFailure shouldThrowExceptionOnMetadataSaveFailure
+     * @return table
+     */
     TableDto updateTable(
         final String catalogName,
         final String databaseName,
         final String tableName,
-        final TableDto table
+        final TableDto table,
+        final boolean shouldThrowExceptionOnMetadataSaveFailure
     );
 
     /**
@@ -251,7 +277,7 @@ public interface MetacatV1 {
      * @return database with details
      */
     DatabaseDto getDatabase(final String catalogName, final String databaseName, final boolean includeUserMetadata,
-        final Boolean includeTableNames);
+                            final Boolean includeTableNames);
 
     /**
      * Get the catalog by name.

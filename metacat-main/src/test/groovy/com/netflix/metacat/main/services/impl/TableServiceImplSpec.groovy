@@ -685,4 +685,40 @@ class TableServiceImplSpec extends Specification {
     ObjectNode toObjectNode(jsonString) {
         return jsonString == null ? null : (objectMapper.readTree(jsonString as String) as ObjectNode)
     }
+
+
+    def "updateAndReturn with shouldThrowExceptionOnMetadataSaveFailure"() {
+        given:
+        def updatedTableDto = new TableDto(name: name, serde: new StorageDto(uri: 's3:/a/b/c'))
+        updatedTableDto.setDefinitionMetadata(toObjectNode("{\"owner\":{\"userId\":\"ssarma\"}}"))
+
+        when:
+        service.updateAndReturn(name, updatedTableDto, true)
+        then:
+        thrown(InvalidMetadataException)
+        1 * converterUtil.toTableDto(_) >> this.tableDto
+        1 * eventBus.post(_ as MetacatUpdateTablePreEvent)
+        1 * usermetadataService.saveMetadata(_,_, _) >> { throw new InvalidMetadataException("fail to save metadata") }
+        0 * eventBus.post({
+            MetacatUpdateTablePostEvent e ->
+                !e.latestCurrentTable && e.currentTable == updatedTableDto
+        })
+
+        when:
+        def result = service.updateAndReturn(name, updatedTableDto, false)
+        then:
+        noExceptionThrown()
+        1 * usermetadataService.saveMetadata(_,_, _) >> { throw new InvalidMetadataException("fail to save metadata") }
+        2 * usermetadataService.getDefinitionMetadataWithInterceptor(_, _) >> Optional.empty()
+        2 * usermetadataService.getDataMetadata(_) >> Optional.empty()
+        2 * converterUtil.toTableDto(_) >> this.tableDto
+        1 * eventBus.post(_ as MetacatUpdateTablePreEvent)
+        1 * eventBus.post({
+            MetacatUpdateTablePostEvent e ->
+                e.latestCurrentTable && e.currentTable == this.tableDto
+        })
+        result == this.tableDto
+        1 * ownerValidationService.enforceOwnerValidation("updateTable", name, updatedTableDto)
+        1 * connectorTableService.update(_,_) >> {args -> ((ConnectorRequestContext) args[0]).setIgnoreErrorsAfterUpdate(true)}
+    }
 }
