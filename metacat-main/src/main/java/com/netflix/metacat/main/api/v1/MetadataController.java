@@ -38,6 +38,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -235,6 +236,50 @@ public class MetadataController {
     }
 
     /**
+     * Update table.
+     *
+     * @param catalogName           catalog name
+     * @param databaseName          database name
+     * @param tableName             table name
+     * @param definitionMetadata    definitionMetadata
+     *
+     */
+    @RequestMapping(method = RequestMethod.POST,
+        path = "/catalog/{catalog-name}/database/{database-name}/table/{table-name}/definition")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(
+        summary = "Returns the data metadata",
+        description = "Returns the data metadata"
+    )
+    public void updateDefinitionMetadata(
+        @Parameter(description = "The name of the catalog", required = true)
+        @PathVariable("catalog-name") final String catalogName,
+        @Parameter(description = "The name of the database", required = true)
+        @PathVariable("database-name") final String databaseName,
+        @Parameter(description = "The name of the table", required = true)
+        @PathVariable("table-name") final String tableName,
+        @Parameter(description = "The table information", required = true)
+        @RequestBody final ObjectNode definitionMetadata
+    ) {
+        final QualifiedName name = this.requestWrapper.qualifyName(
+            () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
+        );
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        this.requestWrapper.processRequest(
+            "updateDefinitionMetadata",
+            () -> {
+                this.userMetadataService.updateDefinitionMetadata(name,
+                    metacatRequestContext.getUserName(),
+                    definitionMetadata,
+                    true
+                );
+                return null;
+            }
+        );
+    }
+
+
+    /**
      * Deletes the data metadata marked for deletion.
      */
     @RequestMapping(method = RequestMethod.DELETE, path = "/data/cleanup")
@@ -259,5 +304,4 @@ public class MetadataController {
     public void cleanUpObsoleteMetadata() {
         this.metadataService.cleanUpObsoleteDefinitionMetadata();
     }
-
 }

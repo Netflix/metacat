@@ -17,6 +17,7 @@
  */
 package com.netflix.metacat.client.api;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DataMetadataDto;
 import com.netflix.metacat.common.dto.DataMetadataGetRequestDto;
@@ -28,7 +29,9 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -119,5 +122,27 @@ public interface MetadataV1 {
         @DefaultValue("false")
         @QueryParam("force")
             Boolean force
+    );
+
+    /**
+     * Update table.
+     *
+     * @param catalogName           catalog name
+     * @param databaseName          database name
+     * @param tableName             table name
+     * @param definitionMetadata    definitionMetadata
+     */
+    @PUT
+    @Path("catalog/{catalog-name}/database/{database-name}/table/{table-name}/definition")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    void updateDefinitionMetadata(
+        @PathParam("catalog-name")
+        String catalogName,
+        @PathParam("database-name")
+        String databaseName,
+        @PathParam("table-name")
+        String tableName,
+        ObjectNode definitionMetadata
     );
 }

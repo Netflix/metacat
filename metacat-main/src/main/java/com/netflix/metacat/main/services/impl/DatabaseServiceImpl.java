@@ -98,7 +98,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         if (dto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for schema {}", name);
             userMetadataService.saveDefinitionMetadata(name, metacatRequestContext.getUserName(),
-                Optional.of(dto.getDefinitionMetadata()), true);
+                Optional.of(dto.getDefinitionMetadata()), true, false);
         }
         final DatabaseDto createdDto = get(name,
             GetDatabaseServiceParameters.builder()
@@ -129,7 +129,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         if (dto.getDefinitionMetadata() != null) {
             log.info("Saving user metadata for schema {}", name);
             userMetadataService.saveDefinitionMetadata(name, metacatRequestContext.getUserName(),
-                Optional.of(dto.getDefinitionMetadata()), true);
+                Optional.of(dto.getDefinitionMetadata()), true, false);
         }
         eventBus.post(new MetacatUpdateDatabasePostEvent(name, metacatRequestContext, this));
     }

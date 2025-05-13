@@ -256,7 +256,7 @@ public class MySqlTagService implements TagService {
                 data.put(NAME_TAGS, Sets.newHashSet());
                 userMetadataService
                     .saveDefinitionMetadata(name, "admin", Optional.of(metacatJson.toJsonObject(data)),
-                        true);
+                        true, false);
             }
         } catch (Exception e) {
             final String message = String.format("Failed to delete all tags for name %s", name);
@@ -290,7 +290,7 @@ public class MySqlTagService implements TagService {
                 data.put(NAME_TAGS, tagItem.getValues());
                 userMetadataService
                     .saveDefinitionMetadata(name, "admin", Optional.of(metacatJson.toJsonObject(data)),
-                        true);
+                        true, false);
             }
         } catch (Exception e) {
             final String message = String.format("Failed to remove tags for name %s", name);
@@ -424,7 +424,7 @@ public class MySqlTagService implements TagService {
                 data.put(NAME_TAGS, values);
                 userMetadataService
                     .saveDefinitionMetadata(name, "admin", Optional.of(metacatJson.toJsonObject(data)),
-                        true);
+                        true, false);
             }
         } catch (Exception e) {
             final String message = String.format("Failed to remove tags for name %s", name);
