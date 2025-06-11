@@ -66,8 +66,8 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
     public List<?> findAllTablesByDbNameAndTablePrefix(
         final String dbName, final String tableNamePrefix, final int pageFetchSize, final boolean selectAllColumns) {
         Pageable page = PageRequest.of(0, pageFetchSize, Sort.by("tbl_name").ascending());
-        entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
-            .executeUpdate();
+        /*entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
+            .executeUpdate();*/
         final List<Object> retval = new ArrayList<>();
         final String tblPrefix =  tableNamePrefix == null ? "" : tableNamePrefix;
         Slice<?> tbls;
