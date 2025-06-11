@@ -19,11 +19,11 @@ version: "3"
 
 services:
     crdb:
-        image: cockroachdb/cockroach:v21.1.11
+        image: cockroachdb/cockroach
         ports:
           - '26257:26257'
           - '8080:8080'
-        command: start-single-node --insecure --listen-addr=0.0.0.0
+        command: start-single-node --insecure
         labels:
           - "com.netflix.metacat.oss.crdb"
     crdb-barrier:
