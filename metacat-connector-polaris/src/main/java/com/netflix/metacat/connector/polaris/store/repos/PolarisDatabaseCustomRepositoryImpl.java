@@ -83,8 +83,8 @@ public class PolarisDatabaseCustomRepositoryImpl implements PolarisDatabaseCusto
         }
 
         Pageable page = PageRequest.of(0, pageSize, dbSort);
-        entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
-            .executeUpdate();
+        /*entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
+            .executeUpdate();*/
         Slice<?> dbs;
         boolean hasNext;
         do {

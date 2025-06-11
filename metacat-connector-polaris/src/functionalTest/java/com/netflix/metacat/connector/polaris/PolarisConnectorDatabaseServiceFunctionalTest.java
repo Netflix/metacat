@@ -9,6 +9,7 @@ import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
@@ -33,6 +34,7 @@ public class PolarisConnectorDatabaseServiceFunctionalTest extends PolarisConnec
      * Test SimpleDBList.
      */
     @Test
+    @Disabled("no longer following follower_read_timestamp")
     public void testSimpleListDb() {
         // Simulate a delay so that the dbs schema is visible
         TestUtil.simulateDelay();
