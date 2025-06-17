@@ -122,7 +122,7 @@ services:
           - "com.netflix.metacat.oss.test"
           - "com.netflix.metacat.oss.test.hive"
     polaris-crdb:
-        image: cockroachdb/cockroach:v21.1.11
+        image: cockroachdb/cockroach:v21.2.0
         platform: linux/x86_64
         ports:
             - '26257:26257'
@@ -142,7 +142,7 @@ services:
             - "com.netflix.metacat.oss.test"
             - "com.netflix.metacat.oss.polaris.crdb-barrier"
     polaris-crdb-init:
-        image: cockroachdb/cockroach:v21.1.11
+        image: cockroachdb/cockroach:v21.2.0
         platform: linux/x86_64
         depends_on:
             - polaris-crdb-barrier

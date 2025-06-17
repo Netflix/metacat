@@ -156,6 +156,7 @@ functionalTest {
         systemProperties = properties
     }
 
+
     testLogging {
         showStandardStreams = true
     }
