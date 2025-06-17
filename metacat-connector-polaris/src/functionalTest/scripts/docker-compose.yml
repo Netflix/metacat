@@ -19,7 +19,7 @@ version: "3"
 
 services:
     crdb:
-        image: cockroachdb/cockroach:v21.1.11
+        image: cockroachdb/cockroach:v21.2.0
         ports:
           - '26257:26257'
           - '8080:8080'
