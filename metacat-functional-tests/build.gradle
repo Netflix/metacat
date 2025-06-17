@@ -156,6 +156,7 @@ functionalTest {
         systemProperties = properties
     }
 
+
     testLogging {
         showStandardStreams = true
     }
@@ -165,7 +166,6 @@ functionalTest {
 }
 
 clean {
-
     delete "derby.log"
     delete "metastore_db"
 }
