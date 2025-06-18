@@ -450,9 +450,9 @@ public class PolarisStoreConnectorFunctionalTest {
      */
     @Test
     public void testPaginatedFetch() {
-        String[] activeProfiles = environment.getActiveProfiles();
+        final String[] activeProfiles = environment.getActiveProfiles();
         assert activeProfiles.length  == 1;
-        boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
+        final boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
 
         final String dbName = generateDatabaseName();
         createDB(dbName);
@@ -481,9 +481,9 @@ public class PolarisStoreConnectorFunctionalTest {
     @Test
     public void testGetTableEntities() {
         // Create the db
-        String[] activeProfiles = environment.getActiveProfiles();
+        final String[] activeProfiles = environment.getActiveProfiles();
         assert activeProfiles.length  == 1;
-        boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
+        final boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
 
         final String dbName = generateDatabaseName();
         createDB(dbName);
@@ -535,9 +535,9 @@ public class PolarisStoreConnectorFunctionalTest {
      */
     @Test
     public void testListDbPage() {
-        String[] activeProfiles = environment.getActiveProfiles();
+        final String[] activeProfiles = environment.getActiveProfiles();
         assert activeProfiles.length  == 1;
-        boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
+        final boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
 
         createDB("db1");
         createDB("db2");

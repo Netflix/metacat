@@ -110,13 +110,14 @@ public class PolarisConnectorTableServiceFunctionalTest {
     public void init() {
         final String location = "file://temp";
         polarisStoreService.createDatabase(DB_NAME, location, "metacat_user");
-        String[] activeProfiles = environment.getActiveProfiles();
+        final String[] activeProfiles = environment.getActiveProfiles();
         assert activeProfiles.length  == 1;
 
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
             new DefaultConfigImpl(new MetacatProperties(
                 null,
-                activeProfiles[0].equals("polaris_functional_aurora_test"))), new NoopRegistry(), null,  Maps.newHashMap());
+                activeProfiles[0].equals("polaris_functional_aurora_test"))), new NoopRegistry(), null,
+            Maps.newHashMap());
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
         polarisTableService = new PolarisConnectorTableService(
             polarisStoreService,

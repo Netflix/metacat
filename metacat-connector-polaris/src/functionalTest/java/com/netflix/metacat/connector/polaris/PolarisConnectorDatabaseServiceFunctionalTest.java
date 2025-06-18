@@ -94,7 +94,7 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
     @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
     @BeforeEach
     public void init() {
-        String[] activeProfiles = environment.getActiveProfiles();
+        final String[] activeProfiles = environment.getActiveProfiles();
         assert activeProfiles.length  == 1;
 
         connectorContext = new ConnectorContext(
