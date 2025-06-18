@@ -30,7 +30,6 @@ import javax.sql.DataSource;
         entityManagerFactoryRef = "readerEntityManagerFactory",
         transactionManagerRef = "readerTransactionManager"
 )
-@EnableJpaAuditing
 @EnableTransactionManagement(proxyTargetClass = true)
 @ImportAutoConfiguration({DataSourceAutoConfiguration.class,
         DataSourceTransactionManagerAutoConfiguration.class, HibernateJpaAutoConfiguration.class,
