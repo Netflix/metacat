@@ -1,6 +1,7 @@
 package com.netflix.metacat.connector.polaris.configs;
 
 import com.zaxxer.hikari.HikariDataSource;
+import jakarta.persistence.EntityManager;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -63,5 +64,10 @@ public class PolarisPersistenceReaderConfig {
     @Bean(name = "readerTransactionManager")
     public PlatformTransactionManager readerTransactionManager(EntityManagerFactory readerEntityManagerFactory) {
         return new JpaTransactionManager(readerEntityManagerFactory);
+    }
+
+    @Bean(name = "readerEntityManager")
+    public EntityManager readerEntityManager(EntityManagerFactory readerEntityManagerFactory) {
+        return readerEntityManagerFactory.createEntityManager();
     }
 }
