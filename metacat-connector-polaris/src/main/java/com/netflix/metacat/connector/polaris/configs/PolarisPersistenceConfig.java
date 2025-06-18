@@ -120,9 +120,9 @@ public class PolarisPersistenceConfig {
      * @param readerEntityManagerFactory EntityManagerFactory
      * @return EntityManager
      */
-    @Bean(name = "readEntityManager")
+    @Bean(name = "readerEntityManager")
     @ConditionalOnProperty(name = "spring.datasource.reader.url")
-    public EntityManager readEntityManager(
+    public EntityManager readerEntityManager(
         @Qualifier("readerEntityManagerFactory") final EntityManagerFactory readerEntityManagerFactory) {
         return readerEntityManagerFactory.createEntityManager();
     }

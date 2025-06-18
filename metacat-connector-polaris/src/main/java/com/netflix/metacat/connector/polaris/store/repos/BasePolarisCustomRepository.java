@@ -32,18 +32,17 @@ public class BasePolarisCustomRepository {
     protected EntityManager getEntityManager() {
         // Logic to choose which EntityManager to use
         if (readerEntityManager.isPresent()) {
-            throw new RuntimeException("readerEntityManager is present");
-//            try {
-//                Connection readConnection = readerEntityManager.get().unwrap(Connection.class);
-//                DatabaseMetaData readMetaData = readConnection.getMetaData();
-//
-//                Connection primaryConnection = defaultEntityManager.unwrap(Connection.class);
-//                DatabaseMetaData primaryMetaData = primaryConnection.getMetaData();
-//                throw new RuntimeException(
-//                        "hey replica url = " + readMetaData.getURL() + " primary url = " + primaryMetaData.getURL());
-//            } catch (Exception e) {
-//                throw new RuntimeException(e);
-//            }
+            try {
+                Connection readConnection = readerEntityManager.get().unwrap(Connection.class);
+                DatabaseMetaData readMetaData = readConnection.getMetaData();
+
+                Connection primaryConnection = defaultEntityManager.unwrap(Connection.class);
+                DatabaseMetaData primaryMetaData = primaryConnection.getMetaData();
+                throw new RuntimeException(
+                        "hey replica url = " + readMetaData.getURL() + " primary url = " + primaryMetaData.getURL());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
         return readerEntityManager.orElse(defaultEntityManager);
     }
