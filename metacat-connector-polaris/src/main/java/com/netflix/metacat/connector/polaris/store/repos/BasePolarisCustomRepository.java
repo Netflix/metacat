@@ -31,7 +31,6 @@ public class BasePolarisCustomRepository {
     public BasePolarisCustomRepository(
         final EntityManager entityManager) {
         this.entityManager = entityManager;
-        throw new RuntimeException("Hey = " + retrieveJdbcUrl() + " result = ");
     }
 
     protected String retrieveJdbcUrl() {
