@@ -7,6 +7,7 @@ import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import org.springframework.orm.jpa.EntityManagerFactoryInfo;
 
 import java.sql.Connection;
@@ -19,6 +20,8 @@ import java.util.Optional;
  */
 @Getter
 public class BasePolarisCustomRepository {
+    @Autowired
+    ApplicationContext applicationContext;
     private final EntityManager entityManager;
 
     /**
@@ -29,7 +32,12 @@ public class BasePolarisCustomRepository {
     public BasePolarisCustomRepository(
         final EntityManager entityManager) {
         this.entityManager = entityManager;
-        throw new RuntimeException("Hey = " + retrieveJdbcUrl());
+        String[] beanNames = applicationContext.getBeanNamesForType(EntityManager.class);
+        String result = "";
+        for (String beanName : beanNames) {
+            result = result + beanName + " | ";
+        }
+        throw new RuntimeException("Hey = " + retrieveJdbcUrl() + " result = " + result);
     }
 
     protected String retrieveJdbcUrl() {
