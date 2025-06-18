@@ -1,45 +1,54 @@
 package com.netflix.metacat.connector.polaris.configs;
 
 import com.zaxxer.hikari.HikariDataSource;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
+import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
-/**
- * Configuration for the reader data source.
- */
 @Configuration
+@EntityScan("com.netflix.metacat.connector.polaris.store.entities")
+@EnableJpaRepositories("com.netflix.metacat.connector.polaris.store.repos")
+@EnableJpaAuditing
+@EnableTransactionManagement(proxyTargetClass = true)
+@ImportAutoConfiguration({DataSourceAutoConfiguration.class,
+        DataSourceTransactionManagerAutoConfiguration.class, HibernateJpaAutoConfiguration.class,
+        TransactionAutoConfiguration.class})
+@ConditionalOnProperty(prefix = "spring.datasource.reader", name = "url")
 public class PolarisPersistenceReaderConfig {
 
     @Bean
-    @ConditionalOnProperty(name = "spring.datasource.reader.url")
-    @ConfigurationProperties(prefix = "spring.datasource.reader")
+    @ConfigurationProperties(prefix = "spring.datasource.reader.hikari")
+    public DataSource readerDataSource(final DataSourceProperties readerDataSourceProperties) {
+        return readerDataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
+    }
+
+    @Bean
+    @ConfigurationProperties("spring.datasource.reader")
     public DataSourceProperties readerDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean
-    @ConditionalOnProperty(name = "spring.datasource.reader.url")
-    @ConfigurationProperties(prefix = "spring.datasource.reader.hikari")
-    public DataSource readerDataSource() {
-        return readerDataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
-    }
-
-    @Bean(name = "readerEntityManagerFactory")
-    @ConditionalOnProperty(name = "spring.datasource.reader.url")
-    public LocalContainerEntityManagerFactoryBean readerEntityManagerFactory(
-        @Qualifier("readerDataSource") DataSource readerDataSource) {
+    public LocalContainerEntityManagerFactoryBean readerEntityManagerFactory(DataSource readerDataSource) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(readerDataSource);
         em.setPackagesToScan("com.netflix.metacat.connector.polaris.store.entities");
@@ -47,17 +56,13 @@ public class PolarisPersistenceReaderConfig {
         return em;
     }
 
-    @Bean(name = "readEntityManager")
-    @ConditionalOnProperty(name = "spring.datasource.reader.url")
-    public EntityManager readEntityManager(
-        @Qualifier("readerEntityManagerFactory") EntityManagerFactory readerEntityManagerFactory) {
+    @Bean
+    public EntityManager readerEntityManager(EntityManagerFactory readerEntityManagerFactory) {
         return readerEntityManagerFactory.createEntityManager();
     }
 
-    @Bean(name = "readerTransactionManager")
-    @ConditionalOnProperty(name = "spring.datasource.reader.url")
-    public PlatformTransactionManager readerTransactionManager(
-        @Qualifier("readerEntityManagerFactory") EntityManagerFactory readerEntityManagerFactory) {
+    @Bean
+    public PlatformTransactionManager readerTransactionManager(EntityManagerFactory readerEntityManagerFactory) {
         return new JpaTransactionManager(readerEntityManagerFactory);
     }
 }
