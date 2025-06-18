@@ -1,12 +1,14 @@
 package com.netflix.metacat.connector.polaris.store.repos.replica;
 
 import com.netflix.metacat.common.dto.Sort;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 /**
  * Custom JPA repository implementation for storing PolarisDatabaseEntity.
  */
+@Repository
 public interface PolarisDatabaseReplicaCustomRepository {
     /**
      * Fetch db entities for given database using AS OF SYSTEM TIME follower_read_timestamp().
