@@ -20,8 +20,8 @@ import java.util.Optional;
  */
 @Getter
 public class BasePolarisCustomRepository {
-    @Autowired
-    ApplicationContext applicationContext;
+//    @Autowired
+//    ApplicationContext applicationContext;
     private final EntityManager entityManager;
 
     /**
@@ -32,12 +32,12 @@ public class BasePolarisCustomRepository {
     public BasePolarisCustomRepository(
         final EntityManager entityManager) {
         this.entityManager = entityManager;
-        String[] beanNames = applicationContext.getBeanNamesForType(EntityManager.class);
-        String result = "";
-        for (String beanName : beanNames) {
-            result = result + beanName + " | ";
-        }
-        throw new RuntimeException("Hey = " + retrieveJdbcUrl() + " result = " + result);
+//        String[] beanNames = applicationContext.getBeanNamesForType(EntityManager.class);
+//        String result = "";
+//        for (String beanName : beanNames) {
+//            result = result + beanName + " | ";
+//        }
+        throw new RuntimeException("Hey = " + retrieveJdbcUrl() + " result = ");
     }
 
     protected String retrieveJdbcUrl() {
