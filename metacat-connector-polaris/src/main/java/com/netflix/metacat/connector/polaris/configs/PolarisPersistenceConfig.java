@@ -73,13 +73,4 @@ public class PolarisPersistenceConfig {
     public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
     }
-
-    @Bean
-    public PolarisStoreService polarisStoreService(
-        final PolarisDatabaseRepository repo,
-        final PolarisTableRepository tblRepo,
-        final PolarisDatabaseReplicaCustomRepository replicaDatabaseRepo,
-        final PolarisTableReplicaCustomRepository replicaTableRepo) {
-        return new PolarisStoreConnector(repo, tblRepo, replicaDatabaseRepo, replicaTableRepo);
-    }
 }
