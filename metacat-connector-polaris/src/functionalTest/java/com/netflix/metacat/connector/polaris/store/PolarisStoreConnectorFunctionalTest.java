@@ -4,6 +4,7 @@ import com.netflix.metacat.connector.polaris.TestUtil;
 import com.netflix.metacat.connector.polaris.common.PolarisUtils;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceReaderConfig;
+import com.netflix.metacat.connector.polaris.configs.PolarisStoreConfig;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.repos.primary.PolarisDatabaseRepository;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
  * Test persistence operations on Database objects.
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = {PolarisPersistenceConfig.class, PolarisPersistenceReaderConfig.class})
+@SpringBootTest(classes = {PolarisStoreConfig.class, PolarisPersistenceConfig.class, PolarisPersistenceReaderConfig.class})
 //@ActiveProfiles(profiles = {"polaris_functional_test"})
 @AutoConfigureDataJpa
 @Getter

@@ -27,6 +27,7 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceReaderConfig;
+import com.netflix.metacat.connector.polaris.configs.PolarisStoreConfig;
 import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
@@ -58,7 +59,7 @@ import java.util.stream.Collectors;
  * Test PolarisConnectorTableService.
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = {PolarisPersistenceConfig.class, PolarisPersistenceReaderConfig.class})
+@SpringBootTest(classes = {PolarisStoreConfig.class, PolarisPersistenceConfig.class, PolarisPersistenceReaderConfig.class})
 //@ActiveProfiles(profiles = {"polaris_functional_test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureDataJpa
