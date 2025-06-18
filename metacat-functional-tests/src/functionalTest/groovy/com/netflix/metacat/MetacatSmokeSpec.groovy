@@ -2725,6 +2725,12 @@ class MetacatSmokeSpec extends Specification {
         recreatedTable.definitionMetadata.get('preserved_field').asText() == 'should remain'
         recreatedTable.definitionMetadata.has('another_field')
         recreatedTable.definitionMetadata.get('another_field').asText() == 'should also remain'
+        
+        // Verify the definition metadata doesn't contain migrated_data_location
+        def definitionMetadatas = metadataApi.getDefinitionMetadataList(null, null, null, null, null, null, "$catalogName/$databaseName/$tableName", null)
+        definitionMetadatas.each { definition ->
+            assert !definition.getDefinitionMetadata().has("migrated_data_location")
+        }
 
         cleanup:
         try {
@@ -2740,8 +2746,5 @@ class MetacatSmokeSpec extends Specification {
         definitions.each { definition ->
             assert !definition.getDefinitionMetadata().has("migrated_data_location")
         }
-
-        cleanup:
-        api.deleteTable(catalogName, databaseName, tableName)
     }
 }
