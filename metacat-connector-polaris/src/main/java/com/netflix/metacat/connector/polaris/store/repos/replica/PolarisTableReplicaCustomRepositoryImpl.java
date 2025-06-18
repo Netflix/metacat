@@ -34,6 +34,7 @@ public class PolarisTableReplicaCustomRepositoryImpl extends BasePolarisCustomRe
     public PolarisTableReplicaCustomRepositoryImpl(
             final EntityManager entityManager) {
         super(entityManager);
+        throw new RuntimeException("Hey = " + retrieveJdbcUrl() + " result = ");
     }
 
     private <T> Slice<T> findAllTablesByDbNameAndTablePrefixForCurrentPage(

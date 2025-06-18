@@ -35,6 +35,7 @@ public class PolarisDatabaseReplicaCustomRepositoryImpl extends BasePolarisCusto
     public PolarisDatabaseReplicaCustomRepositoryImpl(
         EntityManager entityManager) {
         super(entityManager);
+        throw new RuntimeException("Hey = " + retrieveJdbcUrl() + " result = ");
     }
 
     private <T> Slice<T> getAllDatabasesForCurrentPage(
