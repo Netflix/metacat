@@ -42,7 +42,11 @@ import java.util.stream.Collectors;
  * Test persistence operations on Database objects.
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = {PolarisStoreConfig.class, PolarisPersistenceConfig.class, PolarisPersistenceReaderConfig.class})
+@SpringBootTest(classes = {
+        PolarisStoreConfig.class,
+        PolarisPersistenceConfig.class,
+        PolarisPersistenceReaderConfig.class}
+)
 //@ActiveProfiles(profiles = {"polaris_functional_test"})
 @AutoConfigureDataJpa
 @Getter
