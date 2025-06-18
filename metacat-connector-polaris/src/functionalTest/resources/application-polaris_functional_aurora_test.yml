@@ -18,6 +18,13 @@ spring:
       username: aurora_user
       password: aurora_password
       driver-class-name: org.postgresql.Driver
+      hikari:
+        connection-timeout: 5000 # 5 seconds
+        max-lifetime: 580000 # 9 minutes 40 seconds
+        data-source-properties:
+          loginTimeout: 5 # 5 seconds
+          socketTimeout: 30 # 30 seconds
+          ApplicationName: polaris
 
   jpa:
     hibernate:
