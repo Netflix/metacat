@@ -5,6 +5,7 @@ import com.netflix.metacat.connector.polaris.store.repos.BasePolarisCustomReposi
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -31,7 +32,7 @@ public class PolarisTableReplicaCustomRepositoryImpl extends BasePolarisCustomRe
      */
     @Autowired
     public PolarisTableReplicaCustomRepositoryImpl(
-        final EntityManager entityManager) {
+            @Qualifier("readerEntityManagerFactory") final EntityManager entityManager) {
         super(entityManager);
     }
 
