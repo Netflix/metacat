@@ -20,6 +20,7 @@ import java.util.Optional;
  */
 @Getter
 public class BasePolarisCustomRepository {
+    @PersistenceContext(unitName="reader")
     private final EntityManager entityManager;
 
     /**
