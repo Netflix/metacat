@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
  * JPA repository implementation for storing PolarisTableEntity.
  */
 @Repository
-public interface PolarisTableReplicaRepository
-    extends JpaRepository<PolarisTableEntity, String>, PolarisTableReplicaCustomRepository {
+public interface PolarisTableReplicaRepository extends PolarisTableReplicaCustomRepository {
 
 }
