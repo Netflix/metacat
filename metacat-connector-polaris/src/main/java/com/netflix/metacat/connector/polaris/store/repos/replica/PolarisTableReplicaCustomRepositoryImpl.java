@@ -32,7 +32,7 @@ public class PolarisTableReplicaCustomRepositoryImpl extends BasePolarisCustomRe
      */
     @Autowired
     public PolarisTableReplicaCustomRepositoryImpl(
-            @Qualifier("readerEntityManagerFactory") final EntityManager entityManager) {
+            final EntityManager entityManager) {
         super(entityManager);
     }
 

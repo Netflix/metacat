@@ -1,6 +1,7 @@
 package com.netflix.metacat.connector.polaris.store.repos;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.Getter;
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -18,6 +19,7 @@ import java.util.Optional;
  */
 @Getter
 public class BasePolarisCustomRepository {
+    @PersistenceContext(unitName = "reader")
     private final EntityManager entityManager;
 
     /**
@@ -32,7 +34,7 @@ public class BasePolarisCustomRepository {
         throw new RuntimeException("Hey = " + retrieveJdbcUrl());
     }
 
-    private String retrieveJdbcUrl() {
+    protected String retrieveJdbcUrl() {
         try {
             EntityManagerFactoryInfo info = (EntityManagerFactoryInfo) entityManager.getEntityManagerFactory();
             Connection connection = info.getDataSource().getConnection();
