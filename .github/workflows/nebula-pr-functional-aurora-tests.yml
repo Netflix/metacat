@@ -1,0 +1,53 @@
+name: "Run [aurora]functional tests on pull requests"
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # test against JDK 17
+        java: [ 17 ]
+    name: Functional tests with Java ${{ matrix.java }}
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup jdk
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - uses: actions/cache@v4
+        id: gradle-cache
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/dependency-locks/*.lockfile') }}
+          restore-keys: |
+            - ${{ runner.os }}-gradle-
+      - uses: actions/cache@v4
+        id: gradle-wrapper-cache
+        with:
+          path: ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradlewrapper-${{ hashFiles('gradle/wrapper/*') }}
+          restore-keys: |
+            - ${{ runner.os }}-gradlewrapper-
+      - name: Build with Gradle
+        run: ./gradlew --info --stacktrace functionalTestAurora
+        env:
+          CI_NAME: github_actions
+          CI_BUILD_NUMBER: ${{ github.sha }}
+          CI_BUILD_URL: 'https://github.com/${{ github.repository }}'
+          CI_BRANCH: ${{ github.ref }}
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ failure() }} |
+          - name=$(date +"%Y-%m-%d") && cat ./metacat-functional-tests/build/logs/metacat/catalina.$name.log
+          - name=$(date +"%Y-%m-%d") && cat ./metacat-functional-tests/build/logs/metacat/localhost.$name.log
+          - cat ./metacat-functional-tests/build/logs/metacat/spring.log
+
+      # Add a step to upload the test report
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: |
+            **/build/reports/tests/functionalTestAurora

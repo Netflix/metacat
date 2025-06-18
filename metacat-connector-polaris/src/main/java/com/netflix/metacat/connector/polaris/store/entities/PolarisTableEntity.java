@@ -27,6 +27,7 @@ import java.util.Map;
  * Entity class for Table object.
  */
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder(toBuilder = true)
@@ -51,24 +52,20 @@ public class PolarisTableEntity {
     private String dbName;
 
     @Basic
-    @Setter
     @Column(name = "tbl_name", nullable = false)
     private String tblName;
 
     @Basic
-    @Setter
     @Column(name = "previous_metadata_location", nullable = true, updatable = true)
     private String previousMetadataLocation;
 
     @Basic
-    @Setter
     @Column(name = "metadata_location", nullable = true, updatable = true)
     private String metadataLocation;
 
     @Embedded
     private AuditEntity audit;
 
-    @Setter
     @Convert(converter = StringParamsConverter.class)
     @Column(name = "params", nullable = true, updatable = true)
     private Map<String, String> params;
