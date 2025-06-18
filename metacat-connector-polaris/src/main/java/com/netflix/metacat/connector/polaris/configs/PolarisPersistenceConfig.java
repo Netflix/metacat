@@ -44,18 +44,21 @@ import javax.sql.DataSource;
 public class PolarisPersistenceConfig {
 
     @Bean
+    @Primary
     @ConfigurationProperties(prefix = "spring.datasource.hikari")
     public DataSource dataSource(final DataSourceProperties dataSourceProperties) {
         return dataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
     @Bean
+    @Primary
     @ConfigurationProperties("spring.datasource")
     public DataSourceProperties dataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean(name = "entityManagerFactory")
+    @Primary
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(
         DataSource dataSource, EntityManagerFactoryBuilder builder) {
         return builder
@@ -66,6 +69,7 @@ public class PolarisPersistenceConfig {
     }
 
     @Bean(name = "transactionManager")
+    @Primary
     public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
     }

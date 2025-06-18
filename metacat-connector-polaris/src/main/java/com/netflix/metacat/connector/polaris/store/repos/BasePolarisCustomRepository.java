@@ -19,7 +19,6 @@ import java.util.Optional;
  */
 @Getter
 public class BasePolarisCustomRepository {
-    @PersistenceContext(unitName = "reader")
     private final EntityManager entityManager;
 
     /**
@@ -27,7 +26,6 @@ public class BasePolarisCustomRepository {
      *
      * @param entityManager - entityManager
      */
-    @Autowired
     public BasePolarisCustomRepository(
         final EntityManager entityManager) {
         this.entityManager = entityManager;
