@@ -34,7 +34,7 @@ import javax.sql.DataSource;
 @ImportAutoConfiguration({DataSourceAutoConfiguration.class,
         DataSourceTransactionManagerAutoConfiguration.class, HibernateJpaAutoConfiguration.class,
         TransactionAutoConfiguration.class})
-@ConditionalOnProperty(prefix = "spring.datasource.reader", name = "url")
+//@ConditionalOnProperty(prefix = "spring.datasource.reader", name = "url")
 public class PolarisPersistenceReaderConfig {
 
     @Bean
