@@ -80,17 +80,11 @@ public class PolarisConnectorDatabaseServiceFunctionalTest implements Applicatio
         // Inspect the beans in the application context
         System.out.println("Beans in the application context:");
         String[] beanNames = applicationContext.getBeanDefinitionNames();
+        String result = "";
         for (String beanName : beanNames) {
-            System.out.println(beanName);
+            result += beanName + " | ";
         }
-
-        // Specifically check for readerEntityManagerFactory and readerTransactionManager
-        try {
-            System.out.println("Reader EntityManagerFactory: " + applicationContext.getBean("readerEntityManagerFactory"));
-            System.out.println("Reader TransactionManager: " + applicationContext.getBean("readerTransactionManager"));
-        } catch (Exception e) {
-            System.err.println("Error retrieving beans: " + e.getMessage());
-        }
+        throw new RuntimeException(result);
     }
 
     @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
