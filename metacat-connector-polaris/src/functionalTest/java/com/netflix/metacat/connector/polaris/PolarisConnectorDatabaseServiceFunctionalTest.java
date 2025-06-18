@@ -79,7 +79,7 @@ public class PolarisConnectorDatabaseServiceFunctionalTest implements Applicatio
     @Override
     public void run(ApplicationArguments args) throws Exception {
         // Inspect the beans in the application context
-        Log.error("Beans in the application context:");
+        Log.error("gizz");
         String[] beanNames = applicationContext.getBeanDefinitionNames();
         String result = "hey = ";
         for (String beanName : beanNames) {
