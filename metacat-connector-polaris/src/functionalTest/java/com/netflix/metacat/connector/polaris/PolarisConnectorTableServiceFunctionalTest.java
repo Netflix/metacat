@@ -1,5 +1,6 @@
 package com.netflix.metacat.connector.polaris;
 
+import com.github.javaparser.utils.Log;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -31,6 +32,7 @@ import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.spectator.api.NoopRegistry;
+import groovy.util.logging.Slf4j;
 import lombok.Getter;
 import org.apache.iceberg.shaded.org.apache.orc.storage.common.util.SuppressFBWarnings;
 import org.junit.Assert;
@@ -64,6 +66,7 @@ import java.util.stream.Collectors;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureDataJpa
 @Getter
+@Slf4j
 public class PolarisConnectorTableServiceFunctionalTest implements ApplicationRunner {
 
     public static final String CATALOG_NAME = "catalog_name";
@@ -100,13 +103,13 @@ public class PolarisConnectorTableServiceFunctionalTest implements ApplicationRu
     @Override
     public void run(ApplicationArguments args) throws Exception {
         // Inspect the beans in the application context
-        System.out.println("Beans in the application context:");
+        Log.error("Beans in the application context:");
         String[] beanNames = applicationContext.getBeanDefinitionNames();
-        String result = "";
+        String result = "hey = ";
         for (String beanName : beanNames) {
             result += beanName + " | ";
         }
-        throw new RuntimeException(result);
+        Log.error(result);
     }
 
     @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")

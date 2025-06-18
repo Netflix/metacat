@@ -1,5 +1,6 @@
 package com.netflix.metacat.connector.polaris;
 
+import com.github.javaparser.utils.Log;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
@@ -78,13 +79,13 @@ public class PolarisConnectorDatabaseServiceFunctionalTest implements Applicatio
     @Override
     public void run(ApplicationArguments args) throws Exception {
         // Inspect the beans in the application context
-        System.out.println("Beans in the application context:");
+        Log.error("Beans in the application context:");
         String[] beanNames = applicationContext.getBeanDefinitionNames();
-        String result = "";
+        String result = "hey = ";
         for (String beanName : beanNames) {
             result += beanName + " | ";
         }
-        throw new RuntimeException(result);
+        Log.error(result);
     }
 
     @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
