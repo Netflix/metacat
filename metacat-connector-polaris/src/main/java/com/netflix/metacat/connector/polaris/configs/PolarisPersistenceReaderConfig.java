@@ -2,6 +2,7 @@ package com.netflix.metacat.connector.polaris.configs;
 
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.persistence.EntityManager;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -14,8 +15,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -41,7 +40,7 @@ public class PolarisPersistenceReaderConfig {
 
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource.reader.hikari")
-    public DataSource readerDataSource(final DataSourceProperties readerDataSourceProperties) {
+    public DataSource readerDataSource(@Qualifier("readerDataSourceProperties") DataSourceProperties readerDataSourceProperties) {
         return readerDataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
@@ -53,7 +52,7 @@ public class PolarisPersistenceReaderConfig {
 
     @Bean(name = "readerEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean readerEntityManagerFactory(
-            DataSource readerDataSource, EntityManagerFactoryBuilder builder) {
+            @Qualifier("readerDataSource") DataSource readerDataSource, EntityManagerFactoryBuilder builder) {
         return builder
                 .dataSource(readerDataSource)
                 .packages("com.netflix.metacat.connector.polaris.store.entities")
@@ -62,12 +61,14 @@ public class PolarisPersistenceReaderConfig {
     }
 
     @Bean(name = "readerTransactionManager")
-    public PlatformTransactionManager readerTransactionManager(EntityManagerFactory readerEntityManagerFactory) {
+    public PlatformTransactionManager readerTransactionManager(
+            @Qualifier("readerEntityManagerFactory") EntityManagerFactory readerEntityManagerFactory) {
         return new JpaTransactionManager(readerEntityManagerFactory);
     }
 
     @Bean(name = "readerEntityManager")
-    public EntityManager readerEntityManager(EntityManagerFactory readerEntityManagerFactory) {
+    public EntityManager readerEntityManager(
+            @Qualifier("readerEntityManagerFactory") EntityManagerFactory readerEntityManagerFactory) {
         return readerEntityManagerFactory.createEntityManager();
     }
 }
