@@ -1,6 +1,5 @@
 package com.netflix.metacat.connector.polaris.store.repos.replica;
 
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 

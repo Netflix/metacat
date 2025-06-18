@@ -1,7 +1,6 @@
 package com.netflix.metacat.connector.polaris.store.repos.replica;
 
 import com.netflix.metacat.common.dto.Sort;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 

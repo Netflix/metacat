@@ -1,7 +1,6 @@
 package com.netflix.metacat.connector.polaris.store.repos.replica;
 
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
-import com.netflix.metacat.connector.polaris.store.repos.primary.PolarisDatabaseCustomRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,5 +9,5 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface PolarisDatabaseReplicaRepository
-    extends JpaRepository<PolarisDatabaseEntity, String>, PolarisDatabaseCustomRepository {
+    extends JpaRepository<PolarisDatabaseEntity, String>, PolarisDatabaseReplicaCustomRepository {
 }
