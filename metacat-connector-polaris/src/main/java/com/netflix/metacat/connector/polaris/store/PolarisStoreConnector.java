@@ -6,9 +6,7 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntit
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.repos.primary.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.primary.PolarisTableRepository;
-import com.netflix.metacat.connector.polaris.store.repos.replica.PolarisDatabaseReplicaCustomRepository;
 import com.netflix.metacat.connector.polaris.store.repos.replica.PolarisDatabaseReplicaRepository;
-import com.netflix.metacat.connector.polaris.store.repos.replica.PolarisTableReplicaCustomRepository;
 import com.netflix.metacat.connector.polaris.store.repos.replica.PolarisTableReplicaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Propagation;
