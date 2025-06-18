@@ -13,6 +13,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -38,18 +39,21 @@ import javax.sql.DataSource;
 public class PolarisPersistenceReaderConfig {
 
     @Bean
+    @Primary
     @ConfigurationProperties(prefix = "spring.datasource.reader.hikari")
     public DataSource readerDataSource(final DataSourceProperties readerDataSourceProperties) {
         return readerDataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
     @Bean
+    @Primary
     @ConfigurationProperties("spring.datasource.reader")
     public DataSourceProperties readerDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean(name = "readerEntityManagerFactory")
+    @Primary
     public LocalContainerEntityManagerFactoryBean readerEntityManagerFactory(
             DataSource readerDataSource, EntityManagerFactoryBuilder builder) {
         return builder
@@ -60,6 +64,7 @@ public class PolarisPersistenceReaderConfig {
     }
 
     @Bean(name = "readerTransactionManager")
+    @Primary
     public PlatformTransactionManager readerTransactionManager(EntityManagerFactory readerEntityManagerFactory) {
         return new JpaTransactionManager(readerEntityManagerFactory);
     }
