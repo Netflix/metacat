@@ -7,7 +7,9 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.repos.primary.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.primary.PolarisTableRepository;
 import com.netflix.metacat.connector.polaris.store.repos.replica.PolarisDatabaseReplicaCustomRepository;
+import com.netflix.metacat.connector.polaris.store.repos.replica.PolarisDatabaseReplicaRepository;
 import com.netflix.metacat.connector.polaris.store.repos.replica.PolarisTableReplicaCustomRepository;
+import com.netflix.metacat.connector.polaris.store.repos.replica.PolarisTableReplicaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +29,8 @@ import java.util.Optional;
 public class PolarisStoreConnector implements PolarisStoreService {
     private final PolarisDatabaseRepository dbRepo;
     private final PolarisTableRepository tblRepo;
-    private final PolarisDatabaseReplicaCustomRepository replicaDatabaseRepo;
-    private final PolarisTableReplicaCustomRepository replicaTableRepo;
-
+    private final PolarisDatabaseReplicaRepository replicaDatabaseRepo;
+    private final PolarisTableReplicaRepository replicaTableRepo;
     /**
      * Creates entry for new database.
      * @param databaseName database name
