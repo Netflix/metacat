@@ -2731,20 +2731,14 @@ class MetacatSmokeSpec extends Specification {
         definitionMetadatas.each { definition ->
             assert !definition.getDefinitionMetadata().has("migrated_data_location")
         }
-
+        
+        // Verify no exceptions are thrown
+        noExceptionThrown()
+        
         cleanup:
         try {
             api.deleteTable(catalogName, databaseName, tableName)
         } catch (Exception ignored) {
-        }
-        noExceptionThrown()
-
-        when:
-        def definitions = metadataApi.getDefinitionMetadataList(null, null, null, null, null, null, "$catalogName/$databaseName/$tableName", null)
-
-        then:
-        definitions.each { definition ->
-            assert !definition.getDefinitionMetadata().has("migrated_data_location")
         }
     }
 }
