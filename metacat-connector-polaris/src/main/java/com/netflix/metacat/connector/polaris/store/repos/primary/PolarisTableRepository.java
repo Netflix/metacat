@@ -1,4 +1,4 @@
-package com.netflix.metacat.connector.polaris.store.repos;
+package com.netflix.metacat.connector.polaris.store.repos.primary;
 
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import org.springframework.data.domain.Pageable;

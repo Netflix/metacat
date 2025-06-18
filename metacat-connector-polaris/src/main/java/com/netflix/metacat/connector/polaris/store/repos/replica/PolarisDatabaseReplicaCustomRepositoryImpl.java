@@ -1,43 +1,40 @@
-package com.netflix.metacat.connector.polaris.store.repos;
+package com.netflix.metacat.connector.polaris.store.repos.replica;
 
 import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
+import com.netflix.metacat.connector.polaris.store.repos.BasePolarisCustomRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nullable;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Implementation for Custom JPA repository implementation for interacting with PolarisDatabaseEntity.
  */
 @Repository
-public class PolarisDatabaseCustomRepositoryImpl extends BasePolarisCustomRepository
-    implements PolarisDatabaseCustomRepository {
+public class PolarisDatabaseReplicaCustomRepositoryImpl extends BasePolarisCustomRepository
+    implements PolarisDatabaseReplicaCustomRepository {
 
     /**
-     * Initialize {@link PolarisDatabaseCustomRepositoryImpl}.
+     * Initialize {@link PolarisDatabaseReplicaCustomRepositoryImpl}.
      *
-     * @param defaultEntityManager    - defaultEntityManager
-     * @param readerEntityManager - readerEntityManager
+     * @param entityManager - entityManager
      */
     @Autowired
-    public PolarisDatabaseCustomRepositoryImpl(
-        @Qualifier("entityManager") final EntityManager defaultEntityManager, // Ensures use of primary EntityManager
-        @Qualifier("readEntityManager") final Optional<EntityManager> readerEntityManager) {
-        super(defaultEntityManager, readerEntityManager);
+    public PolarisDatabaseReplicaCustomRepositoryImpl(
+        EntityManager entityManager) {
+        super(entityManager);
     }
 
     private <T> Slice<T> getAllDatabasesForCurrentPage(

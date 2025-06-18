@@ -1,42 +1,38 @@
-package com.netflix.metacat.connector.polaris.store.repos;
-
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
+package com.netflix.metacat.connector.polaris.store.repos.replica;
 
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
+import com.netflix.metacat.connector.polaris.store.repos.BasePolarisCustomRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Implementation for Custom JPA repository implementation for storing PolarisTableEntity.
  */
 @Repository
-public class PolarisTableCustomRepositoryImpl extends BasePolarisCustomRepository
-    implements PolarisTableCustomRepository {
+public class PolarisTableReplicaCustomRepositoryImpl extends BasePolarisCustomRepository
+    implements PolarisTableReplicaCustomRepository {
 
     /**
-     * Initialize {@link PolarisTableCustomRepositoryImpl}.
+     * Initialize {@link PolarisTableReplicaCustomRepositoryImpl}.
      *
-     * @param defaultEntityManager - defaultEntityManager
-     * @param readerEntityManager  - readerEntityManager
+     * @param entityManager - entityManager
      */
     @Autowired
-    public PolarisTableCustomRepositoryImpl(
-        @Qualifier("entityManager") final EntityManager defaultEntityManager, // Ensures use of primary EntityManager
-        @Qualifier("readEntityManager") final Optional<EntityManager> readerEntityManager) {
-        super(defaultEntityManager, readerEntityManager);
+    public PolarisTableReplicaCustomRepositoryImpl(
+        final EntityManager entityManager) {
+        super(entityManager);
     }
 
     private <T> Slice<T> findAllTablesByDbNameAndTablePrefixForCurrentPage(
