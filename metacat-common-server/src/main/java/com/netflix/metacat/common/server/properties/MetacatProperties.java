@@ -82,4 +82,16 @@ public class MetacatProperties {
         this.env = env;
         this.parentChildRelationshipProperties = new ParentChildRelationshipProperties(env);
     }
+
+    /**
+     * Constructor for MetacatProperties.
+     *
+     * @param env Spring Environment
+     * @param isAuroraEnabled isAuroraEnabled
+     */
+    public MetacatProperties(final Environment env, final boolean isAuroraEnabled) {
+        this.env = env;
+        this.parentChildRelationshipProperties = new ParentChildRelationshipProperties(env);
+        this.getService().setAuroraDataSourceEnabled(isAuroraEnabled);
+    }
 }

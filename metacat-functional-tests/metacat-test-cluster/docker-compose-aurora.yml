@@ -1,0 +1,215 @@
+#
+# Copyright 2016 Netflix, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+
+version: '3.8'
+
+x-postgres-common: &postgres-common
+  image: postgres:16
+  platform: linux/x86_64
+  user: postgres
+  restart: always
+
+services:
+  metacat:
+    image: tomcat:10.1-jre17
+    platform: linux/x86_64
+    depends_on:
+      - hive-metastore
+      - hive-metastore-db
+      - postgresql
+      - polaris-aurora
+      - polaris-aurora-reader
+    ports:
+      - '8080'
+      - '8000'
+      - '12001'
+      - '12003'
+      - '12004'
+    volumes:
+      - ../build/metacat-war-expanded/ROOT:/usr/local/tomcat/webapps/ROOT
+      - ./resources/log4j.properties:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/log4j.properties
+      - ./resources/logging.properties:/usr/local/tomcat/conf/logging.properties
+      - ../build/logs/metacat:/usr/local/tomcat/logs
+      - ../build/logs/metacat:/var/log/metacat
+      - ./etc-metacat:/etc/metacat:ro
+      - ./etc-metacat/data/:/tmp/data
+    environment:
+      VIRTUAL_HOST: metacat.docker
+      JAVA_OPTS: '-ea
+                -Xms256m
+                -Xmx768m
+                -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000
+                -noverify
+                -Dnetflix.environment=test
+                -Dlogging.level.org.springframework.web=INFO
+                -Dlogging.level.org.hibernate=INFO
+                -Dnetflix.discovery.registration.enabled=false
+                -Dnetflix.appinfo.validateInstanceId=false
+                -Dnetflix.appinfo.vipAddress=
+                -Dnetflix.appinfo.metadata.route53NamePrefix=
+                -Dnetflix.appinfo.metadata.enableRoute53=false
+                -Dmetacat.plugin.config.location=/etc/metacat/catalog-with-aurora
+                -Dmetacat.metrics.default-registry.enabled=true
+                -Dmetacat.mysqlmetadataservice.enabled=true
+                -Dmetacat.type.converter=com.netflix.metacat.connector.pig.converters.PigTypeConverter
+                -Dmetacat.definition.metadata.delete.enableForTable=false
+                -Dmetacat.definition.metadata.delete.enableDeleteForQualifiedNames=hive-metastore/hsmoke_ddb,hive-metastore/hsmoke_ddb1/test_create_table1,embedded-hive-metastore,embedded-fast-hive-metastore/fsmoke_db1,embedded-fast-hive-metastore/fsmoke_ddb1,embedded-fast-hive-metastore/shard,embedded-fast-hive-metastore/fsmoke_db4,s3-mysql-db,mysql-56-db
+                -Dmetacat.hive.metastore.batchSize=10
+                -Dmetacat.hive.iceberg.enabled=true
+                -Dmetacat.usermetadata.config.location=/etc/metacat/usermetadata.properties
+                -Dmetacat.cache.enabled=true
+                -Dmetacat.authorization.enabled=true
+                -Dmetacat.authorization.createAcl.createAclStr=hive-metastore/fsmoke_acl:metacat-prod
+                -Dmetacat.authorization.deleteAcl.deleteAclStr=hive-metastore/fsmoke_acl:metacat-prod
+                -Dmetacat.service.tables.error.list.partitions.threshold=100
+                -Dmetacat.service.auroraDataSourceEnabled=true
+                -Dmetacat.hive.commonview.enabled=true
+                -Dmetacat.hive.commonview.deleteStorageTable=true
+                -Dmetacat.table.delete.noDeleteOnTags=do_not_drop,iceberg_migration_do_not_modify
+                -Dmetacat.table.rename.noRenameOnTags=do_not_rename,iceberg_migration_do_not_modify
+                -Dmetacat.table.update.noUpdateOnTags=iceberg_migration_do_not_modify
+                -Dmetacat.event.updateIcebergTablePostEventEnabled=true
+                -Dmetacat.parentChildRelationshipProperties.createEnabled=true
+                -Dmetacat.parentChildRelationshipProperties.getEnabled=true
+                -Dmetacat.parentChildRelationshipProperties.renameEnabled=true
+                -Dmetacat.parentChildRelationshipProperties.dropEnabled=true'
+    labels:
+      - "com.netflix.metacat.oss.test"
+      - "com.netflix.metacat.oss.test.war"
+
+  hive-metastore-db:
+    image: mysql:5.7
+    platform: linux/x86_64
+    volumes:
+      - ./datastores/mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+      - ./datastores/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_USER=metacat_user
+      - MYSQL_PASSWORD=metacat_user_password
+      - MYSQL_DATABASE=metacat
+    ports:
+      - '3306:3306'
+    labels:
+      - "com.netflix.metacat.oss.test"
+
+  postgresql:
+    image: postgres:9.6
+    platform: linux/x86_64
+    volumes:
+      - ./datastores/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+    environment:
+      - POSTGRES_USER=metacat_user
+      - POSTGRES_PASSWORD=metacat_user_password
+      - POSTGRES_DB=metacat
+    labels:
+      - "com.netflix.metacat.oss.test"
+
+  hive-metastore:
+    image: danielbwatson/metacat-test-hive-metastore:1.0.0
+    platform: linux/x86_64
+    depends_on:
+      - hive-metastore-db
+    ports:
+      - '9083'
+      - '8005'
+    environment:
+      - HIVE_METASTORE_HADOOP_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8005 -Dhive.metastore.client.socket.timeout=60
+    labels:
+      - "com.netflix.metacat.oss.test"
+      - "com.netflix.metacat.oss.test.hive"
+
+  polaris-aurora:
+    <<: *postgres-common
+    ports:
+      - '5438:5432'
+    environment:
+      POSTGRES_USER: aurora_user
+      POSTGRES_PASSWORD: aurora_password
+      POSTGRES_DB: aurora_db
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256\nhost replication all 0.0.0.0/0 md5"
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    command: |
+      postgres
+      -c wal_level=replica
+      -c hot_standby=on
+      -c max_wal_senders=10
+      -c max_replication_slots=10
+      -c hot_standby_feedback=on
+    volumes:
+      - ./datastores/aurora/docker-entrypoint-initdb-primary.d:/docker-entrypoint-initdb.d:ro
+    labels:
+      - "com.netflix.metacat.oss.test"
+      - "com.netflix.metacat.oss.aurora"
+
+  polaris-aurora-reader:
+    <<: *postgres-common
+    ports:
+      - '5439:5432'
+    environment:
+      PGUSER: aurora_user
+      PGPASSWORD: aurora_password
+    command: |
+      bash -c "
+      until pg_basebackup --pgdata=/var/lib/postgresql/data -R --slot=replication_slot --host=polaris-aurora --port=5432
+      do
+      echo 'Waiting for primary to connect...'
+      sleep 1s
+      done
+      echo 'Backup done, starting replica...'
+      chmod 0700 /var/lib/postgresql/data
+      postgres
+      "
+    depends_on:
+      - polaris-aurora
+    labels:
+      - "com.netflix.metacat.oss.test"
+      - "com.netflix.metacat.oss.aurora.reader"
+
+  storage-barrier:
+    image: martin/wait:latest
+    platform: linux/x86_64
+    depends_on:
+      - hive-metastore-db
+      - postgresql
+      - polaris-aurora
+      - polaris-aurora-reader
+    environment:
+      - TARGETS=postgresql:5432,hive-metastore-db:3306,polaris-aurora:5432,polaris-aurora-reader:5432
+    labels:
+      - "com.netflix.metacat.oss.test"
+
+  service-barrier:
+    image: martin/wait:latest
+    platform: linux/x86_64
+    depends_on:
+      - hive-metastore
+    environment:
+      - TARGETS=hive-metastore:9083
+    labels:
+      - "com.netflix.metacat.oss.test"
+
+  metacat-barrier:
+    image: martin/wait:latest
+    platform: linux/x86_64
+    depends_on:
+      - metacat
+    environment:
+      - TARGETS=metacat:8080,metacat:12001
+      - TIMEOUT=360
+    labels:
+      - "com.netflix.metacat.oss.test"
