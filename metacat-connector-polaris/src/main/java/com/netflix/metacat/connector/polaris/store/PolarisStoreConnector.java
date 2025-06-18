@@ -65,8 +65,15 @@ public class PolarisStoreConnector implements PolarisStoreService {
     public List<PolarisDatabaseEntity> getDatabases(
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
-        final int pageSize) {
-        return (List<PolarisDatabaseEntity>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, true);
+        final int pageSize,
+        final boolean isAuroraEnabled) {
+        return (List<PolarisDatabaseEntity>) dbRepo.getAllDatabases(
+            dbNamePrefix,
+            sort,
+            pageSize,
+            true,
+            isAuroraEnabled
+        );
     }
 
     @Override
@@ -74,8 +81,14 @@ public class PolarisStoreConnector implements PolarisStoreService {
     public List<String> getDatabaseNames(
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
-        final int pageSize) {
-        return (List<String>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, false);
+        final int pageSize,
+        final boolean isAuroraEnabled) {
+        return (List<String>) dbRepo.getAllDatabases(
+            dbNamePrefix,
+            sort,
+            pageSize,
+            false,
+            isAuroraEnabled);
     }
 
     /**
@@ -164,15 +177,23 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * Fetch table entities for given database.
      * @param databaseName database name
      * @param tableNamePrefix table name prefix. can be empty.
+     * @param isAuroraEnabled isAuroraEnabled
      * @return table entities in the database.
      */
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
     public List<PolarisTableEntity> getTableEntities(final String databaseName,
                                                      final String tableNamePrefix,
-                                                     final int pageFetchSize) {
+                                                     final int pageFetchSize,
+                                                     final boolean isAuroraEnabled) {
         return (List<PolarisTableEntity>)
-            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, true);
+            tblRepo.findAllTablesByDbNameAndTablePrefix(
+                databaseName,
+                tableNamePrefix,
+                pageFetchSize,
+                true,
+                isAuroraEnabled
+            );
     }
 
     /**
@@ -215,13 +236,25 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * Fetch table names for given database.
      * @param databaseName database name
      * @param tableNamePrefix table name prefix. can be empty.
+     * @param isAuroraEnabled isAuroraEnabled
      * @return table names in the database.
      */
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
-    public List<String> getTables(final String databaseName, final String tableNamePrefix, final int pageFetchSize) {
+    public List<String> getTables(
+        final String databaseName,
+        final String tableNamePrefix,
+        final int pageFetchSize,
+        final boolean isAuroraEnabled
+    ) {
         return (List<String>)
-            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, false);
+            tblRepo.findAllTablesByDbNameAndTablePrefix(
+                databaseName,
+                tableNamePrefix,
+                pageFetchSize,
+                false,
+                isAuroraEnabled
+            );
     }
 
     /**

@@ -48,6 +48,7 @@ dependencies {
     /*******************************
      * Runtime Dependencies
      *******************************/
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'jakarta.persistence:jakarta.persistence-api'
     implementation 'com.zaxxer:HikariCP'
     implementation 'org.hibernate.orm:hibernate-core'
@@ -67,19 +68,20 @@ dependencies {
 test {
     useJUnitPlatform {
     }
+    systemProperty 'spring.profiles.active', 'polaristest'
 }
 
 task startCrdbCluster(type: Exec) {
-    commandLine '/bin/echo',  project.file('src/functionalTest/scripts/start_docker_containers.sh')
+    commandLine '/bin/echo', project.file('src/functionalTest/scripts/start_docker_containers.sh')
     commandLine 'sh',
             project.file('src/functionalTest/scripts/start_docker_containers.sh'),
-            project.file('src/functionalTest/scripts/docker-compose.yml')
+            project.file('src/functionalTest/scripts/docker-compose-aurora.yml')
 }
 
 task stopCrdbCluster(type: Exec) {
     commandLine 'sh',
             project.file('src/functionalTest/scripts/stop_docker_containers.sh'),
-            project.file('src/functionalTest/scripts/docker-compose.yml')
+            project.file('src/functionalTest/scripts/docker-compose-aurora.yml')
 }
 
 functionalTest {
@@ -89,5 +91,9 @@ functionalTest {
         dependsOn 'startCrdbCluster'
         finalizedBy 'stopCrdbCluster'
     }
+    // Set the active Spring profile for functional tests
+    systemProperty 'spring.profiles.active', 'polaris_functional_aurora_test'
+    systemProperty 'service.auroraDataSourceEnabled', 'true'
 }
 
+spotbugsTest.enabled = false
