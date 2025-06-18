@@ -26,7 +26,11 @@ import javax.sql.DataSource;
 
 @Configuration
 @EntityScan("com.netflix.metacat.connector.polaris.store.entities")
-@EnableJpaRepositories("com.netflix.metacat.connector.polaris.store.repos")
+@EnableJpaRepositories(
+        basePackages = "com.netflix.metacat.connector.polaris.store.repos",
+        entityManagerFactoryRef = "readerEntityManagerFactory",
+        transactionManagerRef = "readerTransactionManager"
+)
 @EnableJpaAuditing
 @EnableTransactionManagement(proxyTargetClass = true)
 @ImportAutoConfiguration({DataSourceAutoConfiguration.class,
@@ -47,7 +51,7 @@ public class PolarisPersistenceReaderConfig {
         return new DataSourceProperties();
     }
 
-    @Bean
+    @Bean(name = "readerEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean readerEntityManagerFactory(DataSource readerDataSource) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(readerDataSource);
@@ -56,12 +60,12 @@ public class PolarisPersistenceReaderConfig {
         return em;
     }
 
-    @Bean
+    @Bean(name = "readerEntityManager")
     public EntityManager readerEntityManager(EntityManagerFactory readerEntityManagerFactory) {
         return readerEntityManagerFactory.createEntityManager();
     }
 
-    @Bean
+    @Bean(name = "readerTransactionManager")
     public PlatformTransactionManager readerTransactionManager(EntityManagerFactory readerEntityManagerFactory) {
         return new JpaTransactionManager(readerEntityManagerFactory);
     }
