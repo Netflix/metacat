@@ -15,6 +15,7 @@ import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
+import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceReaderConfig;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.spectator.api.NoopRegistry;
 import lombok.Getter;
@@ -42,7 +43,7 @@ import java.util.List;
  * Test PolarisConnectorTableService.
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = {PolarisPersistenceConfig.class})
+@SpringBootTest(classes = {PolarisPersistenceConfig.class, PolarisPersistenceReaderConfig.class})
 //@ActiveProfiles(profiles = {"polaris_functional_test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureDataJpa
