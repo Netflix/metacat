@@ -1,4 +1,3 @@
-
 package com.netflix.metacat.connector.polaris;
 
 import com.google.common.collect.ImmutableList;
@@ -41,8 +40,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -54,34 +56,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 /**
  * Test PolarisConnectorTableService.
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {PolarisStoreConfig.class, PolarisPersistenceConfig.class, PolarisPersistenceReaderConfig.class})
-//@ActiveProfiles(profiles = {"polaris_functional_test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureDataJpa
 @Getter
-public class PolarisConnectorTableServiceFunctionalTest {
-    /**
-     * The name of the catalog.
-     */
+public class PolarisConnectorTableServiceFunctionalTest implements ApplicationRunner {
+
     public static final String CATALOG_NAME = "catalog_name";
-
-    /**
-     * The name of the database.
-     */
     public static final String DB_NAME = "db_name";
-
-    /**
-     * The qualified name of the database, which includes the catalog name and the database name.
-     */
     public static final QualifiedName DB_QUALIFIED_NAME = QualifiedName.ofDatabase(CATALOG_NAME, DB_NAME);
 
     @Autowired
     private PolarisStoreService polarisStoreService;
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Shared
     private ConnectorRequestContext requestContext = new ConnectorRequestContext();
@@ -104,21 +97,36 @@ public class PolarisConnectorTableServiceFunctionalTest {
     @Autowired
     private Environment environment;
 
-    /**
-     * Initialization.
-     */
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        // Inspect the beans in the application context
+        System.out.println("Beans in the application context:");
+        String[] beanNames = applicationContext.getBeanDefinitionNames();
+        for (String beanName : beanNames) {
+            System.out.println(beanName);
+        }
+
+        // Specifically check for readerEntityManagerFactory and readerTransactionManager
+        try {
+            System.out.println("Reader EntityManagerFactory: " + applicationContext.getBean("readerEntityManagerFactory"));
+            System.out.println("Reader TransactionManager: " + applicationContext.getBean("readerTransactionManager"));
+        } catch (Exception e) {
+            System.err.println("Error retrieving beans: " + e.getMessage());
+        }
+    }
+
     @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
     @BeforeEach
     public void init() {
         final String location = "file://temp";
         polarisStoreService.createDatabase(DB_NAME, location, "metacat_user");
         String[] activeProfiles = environment.getActiveProfiles();
-        assert activeProfiles.length  == 1;
+        assert activeProfiles.length == 1;
 
         connectorContext = new ConnectorContext(CATALOG_NAME, CATALOG_NAME, "polaris",
             new DefaultConfigImpl(new MetacatProperties(
                 null,
-                activeProfiles[0].equals("polaris_functional_aurora_test"))), new NoopRegistry(), null,  Maps.newHashMap());
+                activeProfiles[0].equals("polaris_functional_aurora_test"))), new NoopRegistry(), null, Maps.newHashMap());
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
         polarisTableService = new PolarisConnectorTableService(
             polarisStoreService,
@@ -134,9 +142,7 @@ public class PolarisConnectorTableServiceFunctionalTest {
             connectorContext);
     }
 
-    /**
-     * Test table exists.
-     */
+    // Test methods...
     @Test
     public void testTableExists() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
@@ -151,9 +157,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertTrue(exists);
     }
 
-    /**
-     * Test table rename.
-     */
     @Test
     public void testTableRename() {
         final QualifiedName nameOld = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
@@ -174,9 +177,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertTrue(existsNew);
     }
 
-    /**
-     * Test delete table.
-     */
     @Test
     public void testDeleteTable() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table");
@@ -192,9 +192,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertFalse(exists);
     }
 
-    /**
-     * Test get table using metadata json resource file.
-     */
     @Test
     public void testGetTable() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
@@ -205,7 +202,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
             .build();
         polarisTableService.create(requestContext, tableInfo);
         final TableInfo tableResult = polarisTableService.get(requestContext, qualifiedName);
-        // check schema info correctly parsed from iceberg metadata file
         final List<FieldInfo> fields = tableResult.getFields();
         Assert.assertEquals(fields.size(), 3);
         Assert.assertEquals(fields.get(0).getName(), "id");
@@ -219,9 +215,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertEquals(fields.get(2).getSourceType(), "int");
     }
 
-    /**
-     * Test table serde fields.
-     */
     @Test
     public void testTableSerde() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
@@ -232,18 +225,13 @@ public class PolarisConnectorTableServiceFunctionalTest {
             .build();
         polarisTableService.create(requestContext, tableInfo);
         final TableInfo tableResult = polarisTableService.get(requestContext, qualifiedName);
-        // check serde info
         Assert.assertNotNull(tableResult.getSerde());
         Assert.assertEquals(tableResult.getSerde().getUri(), "src/test/resources");
         Assert.assertEquals(tableResult.getSerde().getInputFormat(), "org.apache.hadoop.mapred.FileInputFormat");
         Assert.assertEquals(tableResult.getSerde().getOutputFormat(), "org.apache.hadoop.mapred.FileOutputFormat");
-        Assert.assertEquals(tableResult.getSerde().getSerializationLib(),
-            "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe");
+        Assert.assertEquals(tableResult.getSerde().getSerializationLib(), "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe");
     }
 
-    /**
-     * Test table params not stored/returned during table create/get.
-     */
     @Test
     public void testTableParams() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
@@ -256,19 +244,14 @@ public class PolarisConnectorTableServiceFunctionalTest {
             .build();
         polarisTableService.create(requestContext, tableInfo);
         final TableInfo tableResult = polarisTableService.get(requestContext, qualifiedName);
-        // We don't want the test_metadata_key value to appear in GET requests.
         Assert.assertEquals(tableResult.getMetadata().get("metadata_location"), location);
         Assert.assertFalse(tableResult.getMetadata().containsKey("test_metadata_key"));
 
-        // For a normal table, confirm we don't store the params
         final PolarisTableEntity entity = polarisStoreService.getTable(DB_NAME, "table1")
             .orElseThrow(() -> new RuntimeException("Expected table entity to be present"));
         Assert.assertFalse(entity.getParams().containsKey("test_metadata_key"));
     }
 
-    /**
-     * Test update table reject cases.
-     */
     @Test
     public void testUpdateTableReject() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
@@ -281,25 +264,21 @@ public class PolarisConnectorTableServiceFunctionalTest {
         polarisTableService.create(requestContext, tableInfo0);
         final TableInfo tableResult0 = polarisTableService.get(requestContext, qualifiedName);
         Assert.assertEquals(tableResult0.getMetadata().get("metadata_location"), location0);
-        // check update location without setting location fails
         metadata.put("previous_metadata_location", location1);
         metadata.remove("metadata_location");
         final TableInfo tableInfo1 = TableInfo.builder().name(qualifiedName).metadata(metadata).build();
         Assertions.assertThrows(InvalidMetaException.class,
             () -> polarisTableService.update(requestContext, tableInfo1));
-        // check update location to new location equals blank fails
         metadata.put("previous_metadata_location", location0);
         metadata.put("metadata_location", "");
         final TableInfo tableInfo2 = TableInfo.builder().name(qualifiedName).metadata(metadata).build();
         Assertions.assertThrows(InvalidMetaException.class,
             () -> polarisTableService.update(requestContext, tableInfo2));
-        // check update location existing and previous location do not match fails
         metadata.put("previous_metadata_location", location1);
         metadata.put("metadata_location", location2);
         final TableInfo tableInfo3 = TableInfo.builder().name(qualifiedName).metadata(metadata).build();
         Assertions.assertThrows(TablePreconditionFailedException.class,
             () -> polarisTableService.update(requestContext, tableInfo3));
-        // check update location without setting location but including other param fails
         metadata.remove("metadata_location");
         metadata.put("param_key", "param_value");
         final TableInfo tableInfo4 = TableInfo.builder().name(qualifiedName).metadata(metadata).build();
@@ -307,9 +286,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
             () -> polarisTableService.update(requestContext, tableInfo4));
     }
 
-    /**
-     * Test update table using metadata json resource file.
-     */
     @Test
     public void testUpdateTableAccept() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
@@ -331,9 +307,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertEquals(tableResult1.getMetadata().get("metadata_location"), location1);
     }
 
-    /**
-     * Test update table using metadata json resource file and new param (confirm params aren't processed).
-     */
     @Test
     public void testUpdateTableAcceptWithParams() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
@@ -368,9 +341,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertFalse(updatedEntity.getParams().containsKey("test_param_key"));
     }
 
-    /**
-     * Quick validation for view create/update behavior in Polaris.
-     */
     @Test
     public void testCreateAndUpdateView() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "view1");
@@ -402,9 +372,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertEquals(viewResult1.getMetadata().get("test_param_key"), "test_param_value");
     }
 
-    /**
-     * Test get table names.
-     */
     @Test
     public void testGetTableNames() {
         final QualifiedName name1 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
@@ -434,9 +401,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertEquals(tables, ImmutableList.of(name1, name2, name3));
     }
 
-    /**
-     * Test empty list tables.
-     */
     @Test
     public void testListTablesEmpty() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "");
@@ -449,9 +413,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertEquals(names, Arrays.asList());
     }
 
-    /**
-     * Test table creation then list tables.
-     */
     @Test
     public void testTableCreationAndList() {
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
@@ -469,9 +430,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertEquals(names, Arrays.asList(qualifiedName));
     }
 
-    /**
-     * Test table list.
-     */
     @Test
     public void testList() {
         final QualifiedName name1 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table1");
@@ -487,7 +445,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
             .build();
         this.getPolarisTableService().create(this.getRequestContext(), tableInfo2);
 
-
         final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "");
 
         TestUtil.simulateDelay();
@@ -499,9 +456,6 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertEquals(tables.stream().map(TableInfo::getName).collect(Collectors.toSet()),
             ImmutableSet.of(name1, name2));
 
-        // Create a 3rd table, but this time does not sleep
-        // so this table should not be included if we are on crdb
-        // but should be 3 if we are on aurora
         final QualifiedName name3 = QualifiedName.ofTable(CATALOG_NAME, DB_NAME, "table3");
         final TableInfo tableInfo3 = TableInfo.builder()
             .name(name3)

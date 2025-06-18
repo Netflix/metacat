@@ -1,4 +1,3 @@
-
 package com.netflix.metacat.connector.polaris;
 
 import com.google.common.collect.Maps;
@@ -27,8 +26,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -39,40 +41,20 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-
 /**
  * Test PolarisConnectorTableService.
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {PolarisStoreConfig.class, PolarisPersistenceConfig.class, PolarisPersistenceReaderConfig.class})
-//@ActiveProfiles(profiles = {"polaris_functional_test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureDataJpa
 @Getter
-public class PolarisConnectorDatabaseServiceFunctionalTest {
-    /**
-     * The name of the catalog used for the databases.
-     */
+public class PolarisConnectorDatabaseServiceFunctionalTest implements ApplicationRunner {
+
     public static final String CATALOG_NAME = "catalog_name";
-
-    /**
-     * The name of the first database.
-     */
     public static final String DB1_NAME = "db1_name";
-
-    /**
-     * The name of the second database.
-     */
     public static final String DB2_NAME = "db2_name";
-
-    /**
-     * The qualified name of the first database, which includes the catalog name and the first database name.
-     */
     public static final QualifiedName DB1_QUALIFIED_NAME = QualifiedName.ofDatabase(CATALOG_NAME, DB1_NAME);
-
-    /**
-     * The qualified name of the second database, which includes the catalog name and the second database name.
-     */
     public static final QualifiedName DB2_QUALIFIED_NAME = QualifiedName.ofDatabase(CATALOG_NAME, DB2_NAME);
 
     @Autowired
@@ -80,6 +62,9 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
 
     @Autowired
     private PolarisStoreService polarisStoreService;
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Shared
     private ConnectorContext connectorContext;
@@ -90,14 +75,29 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
     @Shared
     private PolarisConnectorDatabaseService polarisDBService;
 
-    /**
-     * Initialization.
-     */
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        // Inspect the beans in the application context
+        System.out.println("Beans in the application context:");
+        String[] beanNames = applicationContext.getBeanDefinitionNames();
+        for (String beanName : beanNames) {
+            System.out.println(beanName);
+        }
+
+        // Specifically check for readerEntityManagerFactory and readerTransactionManager
+        try {
+            System.out.println("Reader EntityManagerFactory: " + applicationContext.getBean("readerEntityManagerFactory"));
+            System.out.println("Reader TransactionManager: " + applicationContext.getBean("readerTransactionManager"));
+        } catch (Exception e) {
+            System.err.println("Error retrieving beans: " + e.getMessage());
+        }
+    }
+
     @SuppressFBWarnings("NP_NONNULL_PARAM_VIOLATION")
     @BeforeEach
     public void init() {
         String[] activeProfiles = environment.getActiveProfiles();
-        assert activeProfiles.length  == 1;
+        assert activeProfiles.length == 1;
 
         connectorContext = new ConnectorContext(
             CATALOG_NAME,
@@ -111,9 +111,6 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
     }
 
-    /**
-     * Test create database.
-     */
     @Test
     public void testCreateDb() {
         final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
@@ -121,9 +118,6 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         Assert.assertTrue(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
     }
 
-    /**
-     * Test get database that exists.
-     */
     @Test
     public void testGetDb() {
         final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).uri("uri").build();
@@ -132,18 +126,12 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         Assert.assertEquals(info, result);
     }
 
-    /**
-     * Test get database not found.
-     */
     @Test
     public void testGetDbNotFound() {
         Assertions.assertThrows(DatabaseNotFoundException.class,
             () -> polarisDBService.get(requestContext, DB1_QUALIFIED_NAME));
     }
 
-    /**
-     * Test create database that already exists.
-     */
     @Test
     public void testCreateDbAlreadyExists() {
         final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
@@ -153,9 +141,6 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
             () -> polarisDBService.create(requestContext, info));
     }
 
-    /**
-     * Test create database with no uri set should fallback to default uri.
-     */
     @Test
     public void testCreateDbDefaultUri() {
         final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
@@ -166,9 +151,6 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         Assert.assertEquals(infoExpected, result);
     }
 
-    /**
-     * Test create database get audit info.
-     */
     @Test
     public void testDbAudit() {
         final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
@@ -184,9 +166,6 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         Assert.assertEquals(auditInfo.getCreatedDate(), auditInfo.getLastModifiedDate());
     }
 
-    /**
-     * Test update database.
-     */
     @Test
     public void testUpdateDb() {
         final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).uri("uri").build();
@@ -197,9 +176,6 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         Assert.assertEquals(info, result);
     }
 
-    /**
-     * Test delete database.
-     */
     @Test
     public void testDeleteDb() {
         final DatabaseInfo info = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).build();
@@ -209,13 +185,8 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         Assert.assertFalse(polarisDBService.exists(requestContext, DB1_QUALIFIED_NAME));
     }
 
-
-    /**
-     * Test SimpleDBList.
-     */
     @Test
     public void testSimpleListDb() {
-        // Simulate a delay so that the dbs schema is visible
         TestUtil.simulateDelay();
         final DatabaseInfo db1 = DatabaseInfo.builder().name(DB1_QUALIFIED_NAME).uri("uri1").build();
         final DatabaseInfo db2 = DatabaseInfo.builder().name(DB2_QUALIFIED_NAME).uri("uri2").build();
@@ -227,20 +198,15 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         List<QualifiedName> dbNames = new ArrayList<>();
         List<DatabaseInfo> dbs = new ArrayList<>();
 
-        // Since crdb uses follower_read_timestamp, we will not immediately get the newly created dbs
         if (!connectorContext.getConfig().isAuroraDataSourceEnabled()) {
-            dbNames =
-                getPolarisDBService().listNames(
-                    getRequestContext(), QualifiedName.ofCatalog(CATALOG_NAME), null, null, null);
-            dbs =
-                getPolarisDBService().list(
-                    getRequestContext(), QualifiedName.ofCatalog(CATALOG_NAME), null, null, null);
+            dbNames = getPolarisDBService().listNames(
+                getRequestContext(), QualifiedName.ofCatalog(CATALOG_NAME), null, null, null);
+            dbs = getPolarisDBService().list(
+                getRequestContext(), QualifiedName.ofCatalog(CATALOG_NAME), null, null, null);
             Assert.assertTrue("Expected dbNames to be empty", dbNames.isEmpty());
             Assert.assertTrue("Expected dbs to be empty", dbs.isEmpty());
         }
 
-
-        // After sufficient time, the dbs should return using follower_read_timestamp
         TestUtil.simulateDelay();
         dbNames = getPolarisDBService().listNames(
             getRequestContext(), QualifiedName.ofCatalog(CATALOG_NAME), null, null, null);
@@ -249,7 +215,6 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
             getRequestContext(), QualifiedName.ofCatalog(CATALOG_NAME), null, null, null);
         Assert.assertEquals(dbs, Arrays.asList(db1, db2));
 
-        // Test Prefix
         dbNames = getPolarisDBService().listNames(
             getRequestContext(),
             QualifiedName.ofCatalog(CATALOG_NAME), QualifiedName.ofDatabase(CATALOG_NAME, "db"),
@@ -279,7 +244,6 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
             null);
         Assert.assertEquals(dbs, Arrays.asList(db1));
 
-        // Test Order desc
         dbNames = getPolarisDBService().listNames(
             getRequestContext(),
             QualifiedName.ofCatalog(CATALOG_NAME),
@@ -295,7 +259,6 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
             null);
         Assert.assertEquals(dbs, Arrays.asList(db2, db1));
 
-        // Test pageable
         dbNames = getPolarisDBService().listNames(
             getRequestContext(),
             QualifiedName.ofCatalog(CATALOG_NAME),
@@ -339,4 +302,3 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         Assert.assertEquals(dbs, Arrays.asList(db2));
     }
 }
-
