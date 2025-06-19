@@ -2699,18 +2699,21 @@ class MetacatSmokeSpec extends Specification {
         tableDto.definitionMetadata.put('preserved_field', 'should remain')
         tableDto.definitionMetadata.put('another_field', 'should also remain')
 
-        when:
         try {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
         } catch (Exception ignored) {
         }
 
+        when:
         def createdTable = api.createTable(catalogName, databaseName, tableName, tableDto)
+
+        then:
         assert createdTable.definitionMetadata.has('migrated_data_location')
         assert createdTable.definitionMetadata.has('preserved_field')
         assert createdTable.definitionMetadata.has('another_field')
 
         // Soft delete the table
+        when:
         api.deleteTable(catalogName, databaseName, tableName)
 
         // Recreate the table with the same name and verify migrated_data_location is gone
@@ -2725,16 +2728,16 @@ class MetacatSmokeSpec extends Specification {
         recreatedTable.definitionMetadata.get('preserved_field').asText() == 'should remain'
         recreatedTable.definitionMetadata.has('another_field')
         recreatedTable.definitionMetadata.get('another_field').asText() == 'should also remain'
-        
+
         // Verify the definition metadata doesn't contain migrated_data_location
         def definitionMetadatas = metadataApi.getDefinitionMetadataList(null, null, null, null, null, null, "$catalogName/$databaseName/$tableName", null)
         definitionMetadatas.each { definition ->
             assert !definition.getDefinitionMetadata().has("migrated_data_location")
         }
-        
+
         // Verify no exceptions are thrown
         noExceptionThrown()
-        
+
         cleanup:
         try {
             api.deleteTable(catalogName, databaseName, tableName)
