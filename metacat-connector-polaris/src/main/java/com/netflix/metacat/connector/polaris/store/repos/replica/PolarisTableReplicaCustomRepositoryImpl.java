@@ -32,7 +32,7 @@ public class PolarisTableReplicaCustomRepositoryImpl extends BasePolarisCustomRe
      */
     @Autowired
     public PolarisTableReplicaCustomRepositoryImpl(
-            final EntityManager entityManager) {
+            @Qualifier("readerEntityManager") final EntityManager entityManager) {
         super(entityManager);
         throw new RuntimeException("Hey = " + retrieveJdbcUrl() + " result = ");
     }
