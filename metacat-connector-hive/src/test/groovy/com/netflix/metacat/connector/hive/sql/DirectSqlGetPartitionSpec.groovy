@@ -39,7 +39,7 @@ import java.time.Instant
  * @since 1.1.0
  */
 class DirectSqlGetPartitionSpec extends Specification {
-    def config = new DefaultConfigImpl(new MetacatProperties())
+    def config = new DefaultConfigImpl(new MetacatProperties(null))
     def typeFactory = new TypeConverterFactory(new DefaultTypeConverter())
     def converter = new ConverterUtil(new DozerTypeConverter(typeFactory), new DozerJsonTypeConverter(typeFactory))
     def registry = new NoopRegistry()
