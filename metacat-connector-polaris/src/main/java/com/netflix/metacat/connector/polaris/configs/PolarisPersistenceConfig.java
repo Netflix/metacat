@@ -57,7 +57,6 @@ public class PolarisPersistenceConfig {
         return new DataSourceProperties();
     }
 
-    @Bean(name = "entityManagerFactory")
     @Primary
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(
         DataSource dataSource, EntityManagerFactoryBuilder builder) {
@@ -68,7 +67,6 @@ public class PolarisPersistenceConfig {
             .build();
     }
 
-    @Bean(name = "transactionManager")
     @Primary
     public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);

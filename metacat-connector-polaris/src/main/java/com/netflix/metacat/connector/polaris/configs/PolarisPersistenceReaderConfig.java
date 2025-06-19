@@ -65,10 +65,4 @@ public class PolarisPersistenceReaderConfig {
             @Qualifier("readerEntityManagerFactory") EntityManagerFactory readerEntityManagerFactory) {
         return new JpaTransactionManager(readerEntityManagerFactory);
     }
-
-    @Bean(name = "readerEntityManager")
-    public EntityManager readerEntityManager(
-            @Qualifier("readerEntityManagerFactory") EntityManagerFactory readerEntityManagerFactory) {
-        return readerEntityManagerFactory.createEntityManager();
-    }
 }
