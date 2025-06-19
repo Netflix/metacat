@@ -2685,4 +2685,63 @@ class MetacatSmokeSpec extends Specification {
         assert parentChildRelV1.getChildren(catalogName, databaseName, child21).isEmpty()
         assert parentChildRelV1.getParents(catalogName, databaseName, child21) == [new ParentInfoDto("hive-metastore/iceberg_db/parent2", "CLONE", "p2_uuid")] as Set
     }
+
+    def "Test remove migrated_data_location before soft delete"() {
+        given:
+        def catalogName = 'hive-metastore'
+        def databaseName = 'smoke_db'
+        def tableName = 'test_table_migrated_data_location'
+        def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
+        def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'gtret', uri)
+
+        // Add multiple metadata fields to verify they persist
+        tableDto.definitionMetadata.put('migrated_data_location', 's3://old/location')
+        tableDto.definitionMetadata.put('preserved_field', 'should remain')
+        tableDto.definitionMetadata.put('another_field', 'should also remain')
+
+        try {
+            api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+        } catch (Exception ignored) {
+        }
+
+        when:
+        def createdTable = api.createTable(catalogName, databaseName, tableName, tableDto)
+
+        then:
+        assert createdTable.definitionMetadata.has('migrated_data_location')
+        assert createdTable.definitionMetadata.has('preserved_field')
+        assert createdTable.definitionMetadata.has('another_field')
+
+        // Soft delete the table
+        when:
+        api.deleteTable(catalogName, databaseName, tableName)
+
+        // Recreate the table with the same name and verify migrated_data_location is gone
+        def newTableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'gtret', uri)
+        def recreatedTable = api.createTable(catalogName, databaseName, tableName, newTableDto)
+
+        then:
+        // Verify migrated_data_location is not present
+        !recreatedTable.definitionMetadata.has('migrated_data_location')
+        // Verify other fields are still present
+        recreatedTable.definitionMetadata.has('preserved_field')
+        recreatedTable.definitionMetadata.get('preserved_field').asText() == 'should remain'
+        recreatedTable.definitionMetadata.has('another_field')
+        recreatedTable.definitionMetadata.get('another_field').asText() == 'should also remain'
+
+        // Verify the definition metadata doesn't contain migrated_data_location
+        def definitionMetadatas = metadataApi.getDefinitionMetadataList(null, null, null, null, null, null, "$catalogName/$databaseName/$tableName", null)
+        definitionMetadatas.each { definition ->
+            assert !definition.getDefinitionMetadata().has("migrated_data_location")
+        }
+
+        // Verify no exceptions are thrown
+        noExceptionThrown()
+
+        cleanup:
+        try {
+            api.deleteTable(catalogName, databaseName, tableName)
+        } catch (Exception ignored) {
+        }
+    }
 }

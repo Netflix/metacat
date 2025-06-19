@@ -431,6 +431,15 @@ public class TableServiceImpl implements TableService {
             tagService.delete(name, false);
         } else {
             if (config.canSoftDeleteDataMetadata() && tableDto.isDataExternal()) {
+                // Remove the migrated_data_location field before soft deleting to allow for cleanup of old prefixes
+                if (tableDto.getDefinitionMetadata() != null
+                    && tableDto.getDefinitionMetadata().has(MetacatUtils.MIGRATED_DATA_LOCATION)) {
+                    tableDto.getDefinitionMetadata().remove(MetacatUtils.MIGRATED_DATA_LOCATION);
+                    userMetadataService.saveDefinitionMetadata(tableDto.getName(),
+                        metacatRequestContext.getUserName(),
+                        Optional.of(tableDto.getDefinitionMetadata()),
+                            false);
+                }
                 userMetadataService.softDeleteDataMetadata(metacatRequestContext.getUserName(),
                     Lists.newArrayList(tableDto.getDataUri()));
             }
@@ -452,6 +461,8 @@ public class TableServiceImpl implements TableService {
         }
         return false;
     }
+
+
 
     /**
      * Returns true
